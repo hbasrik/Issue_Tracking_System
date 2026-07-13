@@ -1,0 +1,22 @@
+---
+description: Git commit conventions for the Karea project
+alwaysApply: true
+---
+
+# Git commit rules
+
+- After finishing each small, independently working change (a single
+  file, a single function, a single endpoint, a single component),
+  create a git commit for just that change. Do not wait until an entire
+  task or prompt is fully done to commit — commit incrementally as you
+  go, many small commits instead of one large one.
+- Never bundle unrelated changes into a single commit.
+- Write the full commit message in lowercase — including the type
+  prefix and the description, with no exceptions (e.g.
+  "fix: correct vin trigram index name", not "Fix: Correct VIN...").
+- Use Conventional Commits prefixes: feat, fix, chore, docs, refactor,
+  test, style, perf. Format: "<type>: <short description>".
+- Keep the summary line under 72 characters.
+- Stage only the files touched by that specific change
+  (`git add <specific files>`), never a blanket `git add .` when other
+  unrelated files are also dirty.
