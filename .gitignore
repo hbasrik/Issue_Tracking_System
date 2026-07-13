@@ -1,0 +1,34 @@
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Dependencies
+node_modules/
+web/node_modules/
+mobile/node_modules/
+
+# Build outputs
+backend/api
+backend/bin/
+web/dist/
+mobile/.expo/
+mobile/dist/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs
+*.log
+npm-debug.log*
+
+# Test / coverage
+coverage/
+*.out
