@@ -21,6 +21,7 @@ type VehicleService struct {
 	vehicles  repository.VehicleRepository
 	checklist repository.ChecklistProgressRepository
 	audit     repository.AuditRepository
+	uow       repository.TransactionManager
 }
 
 // NewVehicleService wires the usecase with its repositories.
@@ -28,8 +29,9 @@ func NewVehicleService(
 	vehicles repository.VehicleRepository,
 	checklist repository.ChecklistProgressRepository,
 	audit repository.AuditRepository,
+	uow repository.TransactionManager,
 ) *VehicleService {
-	return &VehicleService{vehicles: vehicles, checklist: checklist, audit: audit}
+	return &VehicleService{vehicles: vehicles, checklist: checklist, audit: audit, uow: uow}
 }
 
 // GetByVIN returns a single vehicle by exact VIN.
@@ -117,20 +119,22 @@ func (s *VehicleService) ChangeStatus(ctx context.Context, vin string, target do
 		return nil, err
 	}
 
-	if err := s.vehicles.UpdateStatus(ctx, vin, target); err != nil {
+	performedBy := actorID
+	err = s.uow.WithinTx(ctx, func(txCtx context.Context) error {
+		if err := s.vehicles.UpdateStatus(txCtx, vin, target); err != nil {
+			return err
+		}
+		return s.audit.Append(txCtx, domain.AuditLog{
+			VIN:         vin,
+			EventType:   domain.AuditEventStatusChange,
+			OldValue:    string(previousStatus),
+			NewValue:    string(target),
+			PerformedBy: &performedBy,
+		})
+	})
+	if err != nil {
 		return nil, err
 	}
 	vehicle.CurrentGlobalStatus = target
-
-	performedBy := actorID
-	if err := s.audit.Append(ctx, domain.AuditLog{
-		VIN:         vin,
-		EventType:   domain.AuditEventStatusChange,
-		OldValue:    string(previousStatus),
-		NewValue:    string(target),
-		PerformedBy: &performedBy,
-	}); err != nil {
-		return nil, err
-	}
 	return vehicle, nil
 }

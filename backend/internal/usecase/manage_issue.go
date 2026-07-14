@@ -12,11 +12,12 @@ import (
 type IssueManager struct {
 	issues repository.IssueRepository
 	audit  repository.AuditRepository
+	uow    repository.TransactionManager
 }
 
 // NewIssueManager wires the usecase with its repositories.
-func NewIssueManager(issues repository.IssueRepository, audit repository.AuditRepository) *IssueManager {
-	return &IssueManager{issues: issues, audit: audit}
+func NewIssueManager(issues repository.IssueRepository, audit repository.AuditRepository, uow repository.TransactionManager) *IssueManager {
+	return &IssueManager{issues: issues, audit: audit, uow: uow}
 }
 
 // CreateIssueInput is the request to create a new issue.
@@ -80,19 +81,21 @@ func (m *IssueManager) TransitionStatus(ctx context.Context, id int64, target do
 	if err := AuthorizeIssueTransition(issue.Status, target, actorRole); err != nil {
 		return err
 	}
-	if err := m.issues.UpdateStatus(ctx, id, target, actorID); err != nil {
-		return err
-	}
 
 	performedBy := actorID
-	return m.audit.Append(ctx, domain.AuditLog{
-		VIN:         issue.VIN,
-		EventType:   domain.AuditEventIssueStatusChange,
-		OldValue:    string(issue.Status),
-		NewValue:    string(target),
-		StationID:   issue.StationID,
-		PerformedBy: &performedBy,
-		Metadata:    map[string]any{"issue_id": id},
+	return m.uow.WithinTx(ctx, func(txCtx context.Context) error {
+		if err := m.issues.UpdateStatus(txCtx, id, target, actorID); err != nil {
+			return err
+		}
+		return m.audit.Append(txCtx, domain.AuditLog{
+			VIN:         issue.VIN,
+			EventType:   domain.AuditEventIssueStatusChange,
+			OldValue:    string(issue.Status),
+			NewValue:    string(target),
+			StationID:   issue.StationID,
+			PerformedBy: &performedBy,
+			Metadata:    map[string]any{"issue_id": id},
+		})
 	})
 }
 
