@@ -6,17 +6,28 @@
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "splash": {
-      "backgroundColor": "#0f172a"
+      "backgroundColor": "#0B0F14"
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.karea.mobile"
+      "bundleIdentifier": "com.karea.mobile",
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "Attach optional photos when reporting issues."
+      }
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#0f172a"
+        "backgroundColor": "#0B0F14"
       },
       "package": "com.karea.mobile"
-    }
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Attach optional photos when reporting issues."
+        }
+      ]
+    ]
   }
 }

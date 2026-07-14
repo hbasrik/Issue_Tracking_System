@@ -1,45 +1,27 @@
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import HomeScreen from './src/screens/HomeScreen';
-import ScanScreen from './src/screens/ScanScreen';
+import { AuthProvider } from './src/auth/AuthProvider';
+import { ThemeProvider, useTheme } from './src/theme/ThemeProvider';
+import { RootNavigator } from './src/navigation/RootNavigator';
 
-export type RootStackParamList = {
-  MainTabs: undefined;
-};
-
-export type MainTabParamList = {
-  Home: undefined;
-  Scan: undefined;
-};
-
-const Stack = createNativeStackNavigator<RootStackParamList>();
-const Tab = createBottomTabNavigator<MainTabParamList>();
-
-function MainTabs() {
+function AppShell() {
+  const { mode } = useTheme();
   return (
-    <Tab.Navigator screenOptions={{ headerShown: false }}>
-      <Tab.Screen name="Home" component={HomeScreen} />
-      <Tab.Screen name="Scan" component={ScanScreen} />
-    </Tab.Navigator>
+    <>
+      <StatusBar style={mode === 'dark' ? 'light' : 'dark'} />
+      <RootNavigator />
+    </>
   );
 }
 
 export default function App() {
   return (
     <SafeAreaProvider>
-      <NavigationContainer>
-        <StatusBar style="auto" />
-        <Stack.Navigator>
-          <Stack.Screen
-            name="MainTabs"
-            component={MainTabs}
-            options={{ headerShown: false }}
-          />
-        </Stack.Navigator>
-      </NavigationContainer>
+      <ThemeProvider>
+        <AuthProvider>
+          <AppShell />
+        </AuthProvider>
+      </ThemeProvider>
     </SafeAreaProvider>
   );
 }
