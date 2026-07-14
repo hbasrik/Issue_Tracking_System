@@ -8,7 +8,7 @@ import { ErrorText, PrimaryButton, Screen, Subtitle, Title } from '../components
 export default function LoginScreen() {
   const { login } = useAuth();
   const { tokens } = useTheme();
-  const [email, setEmail] = useState('operator1@karea.local');
+  const [email, setEmail] = useState('operator.one@karea.local');
   const [password, setPassword] = useState('changeme123');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);

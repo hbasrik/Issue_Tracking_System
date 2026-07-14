@@ -28,4 +28,4 @@ CORS (`CORS_ALLOWED_ORIGIN`) only applies to browsers; React Native `fetch` is n
 
 ## Seed login
 
-`operator1@karea.local` / `changeme123` (see `/database/seed`).
+`operator.one@karea.local` / `changeme123` (see `/database/seed`).
