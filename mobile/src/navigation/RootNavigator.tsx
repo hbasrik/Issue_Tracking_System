@@ -11,6 +11,7 @@ import UnauthorizedScreen from '../screens/UnauthorizedScreen';
 import HomeScreen from '../screens/HomeScreen';
 import SearchScreen from '../screens/SearchScreen';
 import MyStationScreen from '../screens/MyStationScreen';
+import DurumScreen from '../screens/DurumScreen';
 import MyIssuesScreen from '../screens/MyIssuesScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import VehiclePhaseScreen from '../screens/VehiclePhaseScreen';
@@ -52,6 +53,13 @@ function MainTabs() {
         component={SearchScreen}
         options={{
           tabBarLabel: ({ color }) => <TabLabel label="Ara" color={color} />,
+        }}
+      />
+      <Tab.Screen
+        name="Durum"
+        component={DurumScreen}
+        options={{
+          tabBarLabel: ({ color }) => <TabLabel label="Durum" color={color} />,
         }}
       />
       <Tab.Screen

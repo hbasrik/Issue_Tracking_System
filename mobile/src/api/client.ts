@@ -236,6 +236,35 @@ export const api = {
   listStations() {
     return request<{ items: Station[] }>('/stations');
   },
+
+  /** Current-state open-issue severity by VIN (Decision Log #9; no filters). */
+  vehicleSeverityBreakdown() {
+    return request<{ items: VehicleSeverityBreakdown[] }>(
+      '/analysis/vehicle-severity-breakdown',
+    );
+  },
+
+  /** Current-state open issue counts per station (Decision Log #9; no filters). */
+  defectRatePerStation() {
+    return request<{ items: StationDefectRate[] }>(
+      '/analysis/defect-rate-per-station',
+    );
+  },
 };
+
+export interface VehicleSeverityBreakdown {
+  VIN: string;
+  TotalOpenIssues: number;
+  CriticalCount: number;
+  MediumCount: number;
+  LowCount: number;
+}
+
+export interface StationDefectRate {
+  StationID: number;
+  StationName: string;
+  VehiclesWithIssue: number;
+  IssueCount: number;
+}
 
 export { API_BASE_URL };
