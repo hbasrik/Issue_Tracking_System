@@ -155,7 +155,7 @@ CREATE TABLE checklist_template_items (
 -- =====================================================================
 
 CREATE TABLE vehicles (
-    vin                         CHAR(17) PRIMARY KEY,
+    vin                         VARCHAR(17) PRIMARY KEY,
     vehicle_model_id            INT NOT NULL REFERENCES vehicle_models(id),
     current_global_status       vehicle_status_enum NOT NULL DEFAULT 'IN_PRODUCTION',
     current_phase               SMALLINT NOT NULL DEFAULT 1 CHECK (current_phase BETWEEN 1 AND 8),
@@ -180,7 +180,7 @@ COMMENT ON COLUMN vehicles.current_global_status IS
 
 CREATE TABLE issue_list (
     id                     BIGSERIAL PRIMARY KEY,
-    vin                    CHAR(17) NOT NULL REFERENCES vehicles(vin) ON DELETE CASCADE,
+    vin                    VARCHAR(17) NOT NULL REFERENCES vehicles(vin) ON DELETE CASCADE,
 
     source_type            issue_source_enum NOT NULL,
     source_checkpoint_id   INT REFERENCES checkpoints(id),
@@ -225,7 +225,7 @@ CREATE TABLE issue_list (
 
 CREATE TABLE production_phase_progress (
     id                BIGSERIAL PRIMARY KEY,
-    vin               CHAR(17) NOT NULL REFERENCES vehicles(vin) ON DELETE CASCADE,
+    vin               VARCHAR(17) NOT NULL REFERENCES vehicles(vin) ON DELETE CASCADE,
     phase_number      SMALLINT NOT NULL REFERENCES phases(phase_number),
     checkpoint_id     INT NOT NULL REFERENCES checkpoints(id),
 
@@ -248,7 +248,7 @@ CREATE TABLE production_phase_progress (
 
 CREATE TABLE eol_and_shipment_checklist_progress (
     id                BIGSERIAL PRIMARY KEY,
-    vin               CHAR(17) NOT NULL REFERENCES vehicles(vin) ON DELETE CASCADE,
+    vin               VARCHAR(17) NOT NULL REFERENCES vehicles(vin) ON DELETE CASCADE,
     checklist_type    checklist_type_enum NOT NULL,
     check_item_id     INT NOT NULL REFERENCES checklist_template_items(id),
 
@@ -295,7 +295,7 @@ CREATE TABLE eol_and_shipment_checklist_progress (
 
 CREATE TABLE audit_logs (
     id             BIGSERIAL PRIMARY KEY,
-    vin            CHAR(17) NOT NULL REFERENCES vehicles(vin) ON DELETE CASCADE,
+    vin            VARCHAR(17) NOT NULL REFERENCES vehicles(vin) ON DELETE CASCADE,
     event_type     audit_event_enum NOT NULL,
     old_value      TEXT,
     new_value      TEXT,
