@@ -71,14 +71,16 @@ func NewRouter(deps Deps) http.Handler {
 			// Issue lifecycle: route is open to both roles; the DONE->APPROVED
 			// (manager-only) rule is enforced in the usecase layer.
 			r.Patch("/issues/{id}/status", s.handleIssueStatus)
+			// Operator read visibility into current problem status (Decision Log #9).
+			// Current-state views only — filtered Analysis tool stays Manager/Admin.
+			r.Get("/analysis/vehicle-severity-breakdown", s.handleVehicleSeverityBreakdown)
+			r.Get("/analysis/defect-rate-per-station", s.handleDefectRatePerStation)
 
 			// Manager/Admin only (web dashboard).
 			r.Group(func(r chi.Router) {
 				r.Use(RequireRole(domain.UserRoleManagerAdmin))
 				r.Patch("/vehicles/{vin}/status", s.handleVehicleStatus)
 				r.Get("/analysis/daily-pending-issues", s.handleDailyPendingIssues)
-				r.Get("/analysis/vehicle-severity-breakdown", s.handleVehicleSeverityBreakdown)
-				r.Get("/analysis/defect-rate-per-station", s.handleDefectRatePerStation)
 				r.Get("/analysis/mttr", s.handleMTTR)
 			})
 
