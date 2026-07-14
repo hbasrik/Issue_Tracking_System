@@ -1,27 +1,37 @@
-import { Routes, Route, Link } from 'react-router-dom';
-import HomePage from './pages/HomePage';
+import { Navigate, Route, Routes } from 'react-router-dom';
+import { RequireManager } from './auth/RequireManager';
+import { AppShell } from './components/AppShell';
 import AnalysisPage from './pages/AnalysisPage';
+import HomePage from './pages/HomePage';
+import IssuesPage from './pages/IssuesPage';
+import LoginPage from './pages/LoginPage';
+import NotAuthorizedPage from './pages/NotAuthorizedPage';
+import SettingsPage from './pages/SettingsPage';
+import TemplatesPage from './pages/TemplatesPage';
+import UsersPage from './pages/UsersPage';
+import VehicleDetailPage from './pages/VehicleDetailPage';
+import VehiclesPage from './pages/VehiclesPage';
 
 export default function App() {
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
-      <header className="border-b border-slate-800 px-6 py-4">
-        <nav className="flex items-center gap-6">
-          <span className="text-lg font-semibold">Karea</span>
-          <Link to="/" className="text-sm text-slate-300 hover:text-white">
-            Dashboard
-          </Link>
-          <Link to="/analysis" className="text-sm text-slate-300 hover:text-white">
-            Analysis
-          </Link>
-        </nav>
-      </header>
-      <main className="p-6">
-        <Routes>
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/not-authorized" element={<NotAuthorizedPage />} />
+
+      <Route element={<RequireManager />}>
+        <Route element={<AppShell />}>
           <Route path="/" element={<HomePage />} />
+          <Route path="/vehicles" element={<VehiclesPage />} />
+          <Route path="/vehicles/:vin" element={<VehicleDetailPage />} />
+          <Route path="/issues" element={<IssuesPage />} />
           <Route path="/analysis" element={<AnalysisPage />} />
-        </Routes>
-      </main>
-    </div>
+          <Route path="/templates" element={<TemplatesPage />} />
+          <Route path="/users" element={<UsersPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
+        </Route>
+      </Route>
+
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 }
