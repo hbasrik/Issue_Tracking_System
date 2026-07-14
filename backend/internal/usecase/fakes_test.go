@@ -38,6 +38,18 @@ func (f *fakeVehicleRepo) GetByVIN(_ context.Context, vin string) (*domain.Vehic
 	return v, nil
 }
 
+func (f *fakeVehicleRepo) List(_ context.Context, _ domain.VehicleListFilter) ([]domain.Vehicle, error) {
+	var out []domain.Vehicle
+	for _, v := range f.vehicles {
+		out = append(out, *v)
+	}
+	return out, nil
+}
+
+func (f *fakeVehicleRepo) Count(_ context.Context, _ domain.VehicleListFilter) (int, error) {
+	return len(f.vehicles), nil
+}
+
 func (f *fakeVehicleRepo) SearchByVINSuffix(_ context.Context, suffix string, limit int) ([]domain.Vehicle, error) {
 	var out []domain.Vehicle
 	for _, v := range f.vehicles {
