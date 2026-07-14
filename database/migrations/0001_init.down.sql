@@ -2,6 +2,7 @@
 
 -- Analysis views
 DROP VIEW IF EXISTS vw_vehicle_completion_split;
+DROP VIEW IF EXISTS vw_issues_pending_quality_approval;
 DROP VIEW IF EXISTS vw_vehicle_open_issue_severity_breakdown;
 DROP VIEW IF EXISTS vw_issue_mttr;
 DROP VIEW IF EXISTS vw_defect_rate_per_station;

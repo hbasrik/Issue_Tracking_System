@@ -49,9 +49,10 @@ CREATE TYPE checklist_type_enum AS ENUM (
 );
 
 CREATE TYPE issue_status_enum AS ENUM (
-    'OPEN',
-    'IN_PROGRESS',
-    'DONE'
+    'OPEN',         -- Bekliyor: reported, not yet picked up
+    'IN_PROGRESS',  -- Islemde: technician actively repairing
+    'DONE',         -- Tamamlandi: repair finished, awaiting quality sign-off
+    'APPROVED'      -- Kalite Onay: quality/manager approved; terminal closed state
 );
 
 CREATE TYPE issue_severity_enum AS ENUM (
@@ -672,7 +673,7 @@ CREATE TRIGGER trg_link_latest_issue_to_source
 -- Daily Pending Issues — trend line + KPI card
 CREATE OR REPLACE VIEW vw_daily_pending_issues AS
 SELECT date_trunc('day', issue_date)::date AS day,
-       count(*) FILTER (WHERE status IN ('OPEN', 'IN_PROGRESS')) AS pending_count
+       count(*) FILTER (WHERE status IN ('OPEN', 'IN_PROGRESS', 'DONE')) AS pending_count
 FROM issue_list
 GROUP BY 1
 ORDER BY 1;
@@ -712,9 +713,21 @@ SELECT vin,
        count(*) FILTER (WHERE severity = 'MEDIUM') AS medium_count,
        count(*) FILTER (WHERE severity = 'LOW') AS low_count
 FROM issue_list
-WHERE status IN ('OPEN', 'IN_PROGRESS')
+WHERE status IN ('OPEN', 'IN_PROGRESS', 'DONE')
 GROUP BY vin
 ORDER BY total_open_issues DESC;
+
+-- Kalite Onay Kuyrugu — issues repaired (DONE) but awaiting quality/manager
+-- APPROVED sign-off. Oldest finished first so the queue is FIFO.
+CREATE OR REPLACE VIEW vw_issues_pending_quality_approval AS
+SELECT id,
+       vin,
+       severity,
+       finish_date,
+       finish_reporter_id
+FROM issue_list
+WHERE status = 'DONE'
+ORDER BY finish_date ASC;
 
 -- Biten / Devam Eden İşler (Pie chart source) — vehicle completion split
 CREATE OR REPLACE VIEW vw_vehicle_completion_split AS
