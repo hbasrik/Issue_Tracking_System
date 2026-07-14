@@ -24,6 +24,17 @@ func (s VehicleStatus) Valid() bool {
 	}
 }
 
+// VehicleListFilter carries the filters for the web vehicle-list table
+// (VIN fragment, status, model) plus pagination. Non-empty/non-nil fields are
+// combined with AND semantics.
+type VehicleListFilter struct {
+	VINContains string
+	Status      *VehicleStatus
+	ModelID     *int
+	Limit       int
+	Offset      int
+}
+
 // Vehicle mirrors the vehicles table (master vehicle identity).
 type Vehicle struct {
 	VIN                     string

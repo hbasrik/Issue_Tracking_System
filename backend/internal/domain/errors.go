@@ -24,6 +24,10 @@ var (
 	ErrInvalidStatusTransition = errors.New("invalid status transition")
 	// ErrForbidden indicates the acting role may not perform the operation.
 	ErrForbidden = errors.New("operation not permitted for role")
+	// ErrInvalidCredentials indicates a failed authentication attempt. It is
+	// deliberately generic so callers cannot distinguish "unknown email" from
+	// "wrong password".
+	ErrInvalidCredentials = errors.New("invalid credentials")
 )
 
 // GateBlockedError is returned when a hard-block quality gate (EoL or
