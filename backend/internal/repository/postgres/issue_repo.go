@@ -70,7 +70,10 @@ func (r *IssueRepo) GetByID(ctx context.Context, id int64) (*domain.Issue, error
 }
 
 // UpdateStatus transitions an issue and stamps the acting user against the
-// appropriate lifecycle column (process on IN_PROGRESS, finish on DONE).
+// appropriate lifecycle column. Every reachable target has an explicit case
+// with a query whose placeholder count matches the arguments passed; any
+// unsupported target returns an error immediately without building a query
+// (this avoids the previous parameter-count mismatch bug).
 func (r *IssueRepo) UpdateStatus(ctx context.Context, id int64, status domain.IssueStatus, actorID int) error {
 	var query string
 	switch status {
@@ -82,8 +85,12 @@ func (r *IssueRepo) UpdateStatus(ctx context.Context, id int64, status domain.Is
 		query = `UPDATE issue_list
 		         SET status = $2, finish_reporter_id = $3, finish_date = now()
 		         WHERE id = $1`
+	case domain.IssueStatusApproved:
+		query = `UPDATE issue_list
+		         SET status = $2, approve_reporter_id = $3, approve_date = now()
+		         WHERE id = $1`
 	default:
-		query = `UPDATE issue_list SET status = $2 WHERE id = $1`
+		return domain.ErrInvalidStatusTransition
 	}
 
 	tag, err := r.pool.Exec(ctx, query, id, string(status), actorID)
