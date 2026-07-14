@@ -6,15 +6,16 @@ import "time"
 type IssueStatus string
 
 const (
-	IssueStatusOpen       IssueStatus = "OPEN"
-	IssueStatusInProgress IssueStatus = "IN_PROGRESS"
-	IssueStatusDone       IssueStatus = "DONE"
+	IssueStatusOpen       IssueStatus = "OPEN"        // Bekliyor
+	IssueStatusInProgress IssueStatus = "IN_PROGRESS" // Islemde
+	IssueStatusDone       IssueStatus = "DONE"        // Tamamlandi: repair finished, awaiting sign-off
+	IssueStatusApproved   IssueStatus = "APPROVED"    // Kalite Onay: terminal closed state
 )
 
 // Valid reports whether the issue status is a known enum value.
 func (s IssueStatus) Valid() bool {
 	switch s {
-	case IssueStatusOpen, IssueStatusInProgress, IssueStatusDone:
+	case IssueStatusOpen, IssueStatusInProgress, IssueStatusDone, IssueStatusApproved:
 		return true
 	default:
 		return false
