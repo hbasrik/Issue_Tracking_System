@@ -27,6 +27,7 @@ type Deps struct {
 	Checkpoints        *usecase.CheckpointResultRecorder
 	Checklists         *usecase.ChecklistResultRecorder
 	Issues             *usecase.IssueManager
+	Stations           *usecase.StationService
 	Analysis           *usecase.AnalysisMetricsReader
 	CORSAllowedOrigins []string
 }
@@ -59,8 +60,14 @@ func NewRouter(deps Deps) http.Handler {
 			r.Use(RequireAuth(deps.Issuer))
 
 			// Both roles.
+			r.Get("/vehicles", s.handleVehicleList)
 			r.Get("/vehicles/search", s.handleVehicleSearch)
 			r.Get("/vehicles/{vin}", s.handleVehicleGet)
+			r.Get("/vehicles/{vin}/checkpoints", s.handleVehicleCheckpoints)
+			r.Get("/vehicles/{vin}/checklist/{type}", s.handleVehicleChecklistGet)
+			r.Get("/issues", s.handleIssueList)
+			r.Get("/issues/{id}", s.handleIssueGet)
+			r.Get("/stations", s.handleStationList)
 			// Issue lifecycle: route is open to both roles; the DONE->APPROVED
 			// (manager-only) rule is enforced in the usecase layer.
 			r.Patch("/issues/{id}/status", s.handleIssueStatus)
@@ -68,7 +75,6 @@ func NewRouter(deps Deps) http.Handler {
 			// Manager/Admin only (web dashboard).
 			r.Group(func(r chi.Router) {
 				r.Use(RequireRole(domain.UserRoleManagerAdmin))
-				r.Get("/vehicles", s.handleVehicleList)
 				r.Patch("/vehicles/{vin}/status", s.handleVehicleStatus)
 				r.Get("/analysis/daily-pending-issues", s.handleDailyPendingIssues)
 				r.Get("/analysis/vehicle-severity-breakdown", s.handleVehicleSeverityBreakdown)

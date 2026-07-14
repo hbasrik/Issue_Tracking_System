@@ -154,6 +154,14 @@ func (f *fakeCheckpointRepo) ListByVIN(_ context.Context, vin string) ([]domain.
 	return f.rows[vin], nil
 }
 
+func (f *fakeCheckpointRepo) ListCatalogueWithProgress(_ context.Context, _ string) ([]domain.CheckpointItemView, error) {
+	return nil, nil
+}
+
+func (f *fakeCheckpointRepo) CountOpenIssuesByPhase(_ context.Context, _ string) (map[int16]int, error) {
+	return map[int16]int{}, nil
+}
+
 func (f *fakeCheckpointRepo) SaveResult(_ context.Context, vin string, checkpointID int, status domain.CheckpointStatus, checkedBy int) error {
 	rows := f.rows[vin]
 	for i := range rows {
@@ -184,6 +192,14 @@ func (f *fakeChecklistRepo) ListByVINAndType(_ context.Context, vin string, t do
 		}
 	}
 	return out, nil
+}
+
+func (f *fakeChecklistRepo) ResolveDefaultTemplateID(_ context.Context, _ domain.ChecklistType) (int, error) {
+	return 1, nil
+}
+
+func (f *fakeChecklistRepo) ListItemsWithProgress(_ context.Context, _ string, _ domain.ChecklistType, _ int) ([]domain.ChecklistItemView, error) {
+	return nil, nil
 }
 
 func (f *fakeChecklistRepo) SaveResult(_ context.Context, result domain.ChecklistProgress) error {
@@ -244,6 +260,22 @@ func (f *fakeIssueRepo) GetByID(_ context.Context, id int64) (*domain.Issue, err
 		return nil, domain.ErrNotFound
 	}
 	return issue, nil
+}
+
+func (f *fakeIssueRepo) ListForUser(_ context.Context, userID int, status *domain.IssueStatus) ([]domain.Issue, error) {
+	var out []domain.Issue
+	for _, issue := range f.issues {
+		if issue.IssueReporterID != userID &&
+			(issue.ProcessReporterID == nil || *issue.ProcessReporterID != userID) &&
+			(issue.FinishReporterID == nil || *issue.FinishReporterID != userID) {
+			continue
+		}
+		if status != nil && issue.Status != *status {
+			continue
+		}
+		out = append(out, *issue)
+	}
+	return out, nil
 }
 
 func (f *fakeIssueRepo) UpdateStatus(_ context.Context, id int64, status domain.IssueStatus, _ int) error {

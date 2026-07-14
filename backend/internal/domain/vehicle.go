@@ -31,6 +31,7 @@ type VehicleListFilter struct {
 	VINContains string
 	Status      *VehicleStatus
 	ModelID     *int
+	PhaseNumber *int16
 	Limit       int
 	Offset      int
 }

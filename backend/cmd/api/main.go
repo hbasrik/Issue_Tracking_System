@@ -30,6 +30,7 @@ func main() {
 	checkpointRepo := postgres.NewCheckpointProgressRepo(pool)
 	checklistRepo := postgres.NewChecklistProgressRepo(pool)
 	issueRepo := postgres.NewIssueRepo(pool)
+	stationRepo := postgres.NewStationRepo(pool)
 	analysisRepo := postgres.NewAnalysisRepo(pool)
 	userRepo := postgres.NewUserRepo(pool)
 	auditRepo := postgres.NewAuditRepo(pool)
@@ -44,6 +45,7 @@ func main() {
 		Checkpoints:        usecase.NewCheckpointResultRecorder(vehicleRepo, checkpointRepo),
 		Checklists:         usecase.NewChecklistResultRecorder(vehicleRepo, checklistRepo),
 		Issues:             usecase.NewIssueManager(issueRepo, auditRepo, uow),
+		Stations:           usecase.NewStationService(stationRepo),
 		Analysis:           usecase.NewAnalysisMetricsReader(analysisRepo),
 		CORSAllowedOrigins: cfg.CORSAllowedOrigins,
 	})

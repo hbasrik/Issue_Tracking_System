@@ -9,8 +9,7 @@ import (
 	"github.com/karea/backend/internal/domain"
 )
 
-// handleVehicleList serves the filterable/paginated vehicle table
-// (Manager/Admin only).
+// handleVehicleList serves the filterable/paginated vehicle table (both roles).
 func (s *server) handleVehicleList(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 	filter := domain.VehicleListFilter{VINContains: q.Get("vin")}
@@ -30,6 +29,15 @@ func (s *server) handleVehicleList(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		filter.ModelID = &modelID
+	}
+	if raw := q.Get("phase"); raw != "" {
+		phase, err := strconv.Atoi(raw)
+		if err != nil || phase < 1 || phase > int(domain.TotalPhases) {
+			badRequest(w, "phase must be an integer between 1 and 8")
+			return
+		}
+		p := int16(phase)
+		filter.PhaseNumber = &p
 	}
 
 	page := 1
@@ -71,6 +79,39 @@ func (s *server) handleVehicleSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"items": vehicles})
+}
+
+// handleVehicleCheckpoints returns catalogue checkpoints with per-vehicle
+// progress and open issue counts per phase.
+func (s *server) handleVehicleCheckpoints(w http.ResponseWriter, r *http.Request) {
+	vin := chi.URLParam(r, "vin")
+	result, err := s.deps.Checkpoints.ListForVehicle(r.Context(), vin)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, result)
+}
+
+// handleVehicleChecklistGet returns checklist template items joined with
+// per-vehicle progress for eol or shipment.
+func (s *server) handleVehicleChecklistGet(w http.ResponseWriter, r *http.Request) {
+	vin := chi.URLParam(r, "vin")
+	checklistType, ok := parseChecklistType(chi.URLParam(r, "type"))
+	if !ok {
+		badRequest(w, "type must be one of: eol, shipment")
+		return
+	}
+
+	items, err := s.deps.Checklists.ListForVehicle(r.Context(), vin, checklistType)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	if items == nil {
+		items = []domain.ChecklistItemView{}
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"items": items})
 }
 
 type vehicleStatusRequest struct {

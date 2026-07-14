@@ -68,6 +68,10 @@ func vehicleFilterClause(f domain.VehicleListFilter) (string, []any) {
 		args = append(args, *f.ModelID)
 		conds = append(conds, fmt.Sprintf("vehicle_model_id = $%d", len(args)))
 	}
+	if f.PhaseNumber != nil {
+		args = append(args, *f.PhaseNumber)
+		conds = append(conds, fmt.Sprintf("current_phase = $%d", len(args)))
+	}
 	if len(conds) == 0 {
 		return "", args
 	}
