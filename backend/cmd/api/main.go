@@ -1,32 +1,20 @@
 // Package main is the HTTP API entrypoint for the Karea backend. It loads
-// configuration, opens the database pool, and wires the repositories,
-// usecases and auth issuer together. HTTP routing beyond /health is added in
-// Prompt 4.
+// configuration, opens the database pool, wires the repositories, usecases and
+// auth issuer together, and serves the HTTP API.
 package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/http"
 	"time"
 
+	deliveryhttp "github.com/karea/backend/internal/delivery/http"
 	"github.com/karea/backend/internal/platform/auth"
 	"github.com/karea/backend/internal/platform/config"
 	"github.com/karea/backend/internal/repository/postgres"
 	"github.com/karea/backend/internal/usecase"
 )
-
-// application holds the wired dependencies. It is the seam the Prompt 4 HTTP
-// handlers will be built against.
-type application struct {
-	checkpoints *usecase.CheckpointResultRecorder
-	checklists  *usecase.ChecklistResultRecorder
-	vehicles    *usecase.VehicleSearcher
-	issues      *usecase.IssueManager
-	analysis    *usecase.AnalysisMetricsReader
-	issuer      *auth.Issuer
-}
 
 func main() {
 	cfg := config.Load()
@@ -43,27 +31,23 @@ func main() {
 	checklistRepo := postgres.NewChecklistProgressRepo(pool)
 	issueRepo := postgres.NewIssueRepo(pool)
 	analysisRepo := postgres.NewAnalysisRepo(pool)
+	userRepo := postgres.NewUserRepo(pool)
 
-	app := &application{
-		checkpoints: usecase.NewCheckpointResultRecorder(vehicleRepo, checkpointRepo),
-		checklists:  usecase.NewChecklistResultRecorder(vehicleRepo, checklistRepo),
-		vehicles:    usecase.NewVehicleSearcher(vehicleRepo),
-		issues:      usecase.NewIssueManager(issueRepo),
-		analysis:    usecase.NewAnalysisMetricsReader(analysisRepo),
-		issuer:      auth.NewIssuer(cfg.JWTSecret, 24*time.Hour),
-	}
-	_ = app // handlers are wired in Prompt 4
+	issuer := auth.NewIssuer(cfg.JWTSecret, 24*time.Hour)
 
-	mux := http.NewServeMux()
-	mux.HandleFunc("GET /health", func(w http.ResponseWriter, _ *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte(`{"status":"ok"}`))
+	router := deliveryhttp.NewRouter(deliveryhttp.Deps{
+		Issuer:        issuer,
+		Auth:          usecase.NewAuthenticator(userRepo),
+		Vehicles:      usecase.NewVehicleService(vehicleRepo, checklistRepo),
+		Checkpoints:   usecase.NewCheckpointResultRecorder(vehicleRepo, checkpointRepo),
+		Checklists:    usecase.NewChecklistResultRecorder(vehicleRepo, checklistRepo),
+		Issues:        usecase.NewIssueManager(issueRepo),
+		Analysis:      usecase.NewAnalysisMetricsReader(analysisRepo),
 	})
 
-	addr := fmt.Sprintf(":%s", cfg.Port)
+	addr := ":" + cfg.Port
 	log.Printf("karea backend listening on %s", addr)
-	if err := http.ListenAndServe(addr, mux); err != nil {
+	if err := http.ListenAndServe(addr, router); err != nil {
 		log.Fatal(err)
 	}
 }
