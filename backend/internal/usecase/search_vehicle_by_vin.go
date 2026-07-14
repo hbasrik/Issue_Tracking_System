@@ -20,14 +20,16 @@ const defaultVehiclePageSize = 20
 type VehicleService struct {
 	vehicles  repository.VehicleRepository
 	checklist repository.ChecklistProgressRepository
+	audit     repository.AuditRepository
 }
 
 // NewVehicleService wires the usecase with its repositories.
 func NewVehicleService(
 	vehicles repository.VehicleRepository,
 	checklist repository.ChecklistProgressRepository,
+	audit repository.AuditRepository,
 ) *VehicleService {
-	return &VehicleService{vehicles: vehicles, checklist: checklist}
+	return &VehicleService{vehicles: vehicles, checklist: checklist, audit: audit}
 }
 
 // GetByVIN returns a single vehicle by exact VIN.
@@ -82,7 +84,8 @@ func (s *VehicleService) SearchByVINSuffix(ctx context.Context, suffix string, l
 // enforcing the shipment hard-block gate independently of the database trigger
 // (defense in depth, FR-4.3). Moving a vehicle to WITH_CUSTOMER or SHIPPED is
 // rejected with a *domain.GateBlockedError when any shipment checklist item is
-// not OK/CONDITIONAL_OK.
+// not OK/CONDITIONAL_OK. On success it records a STATUS_CHANGE audit entry
+// attributed to actorID so the change is traceable to the acting user (FR-1.2).
 func (s *VehicleService) ChangeStatus(ctx context.Context, vin string, target domain.VehicleStatus, actorID int) (*domain.Vehicle, error) {
 	if !target.Valid() {
 		return nil, domain.ErrInvalidEnumValue
@@ -92,6 +95,7 @@ func (s *VehicleService) ChangeStatus(ctx context.Context, vin string, target do
 	if err != nil {
 		return nil, err
 	}
+	previousStatus := vehicle.CurrentGlobalStatus
 
 	shipmentGateOpen := true
 	if target == domain.VehicleStatusWithCustomer || target == domain.VehicleStatusShipped {
@@ -117,6 +121,16 @@ func (s *VehicleService) ChangeStatus(ctx context.Context, vin string, target do
 		return nil, err
 	}
 	vehicle.CurrentGlobalStatus = target
-	_ = actorID // reserved for audit logging in a later iteration
+
+	performedBy := actorID
+	if err := s.audit.Append(ctx, domain.AuditLog{
+		VIN:         vin,
+		EventType:   domain.AuditEventStatusChange,
+		OldValue:    string(previousStatus),
+		NewValue:    string(target),
+		PerformedBy: &performedBy,
+	}); err != nil {
+		return nil, err
+	}
 	return vehicle, nil
 }

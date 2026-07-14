@@ -7,14 +7,16 @@ import (
 	"github.com/karea/backend/internal/repository"
 )
 
-// IssueManager handles the issue lifecycle: OPEN -> IN_PROGRESS -> DONE.
+// IssueManager handles the issue lifecycle: OPEN -> IN_PROGRESS -> DONE ->
+// APPROVED.
 type IssueManager struct {
 	issues repository.IssueRepository
+	audit  repository.AuditRepository
 }
 
-// NewIssueManager wires the usecase with its repository.
-func NewIssueManager(issues repository.IssueRepository) *IssueManager {
-	return &IssueManager{issues: issues}
+// NewIssueManager wires the usecase with its repositories.
+func NewIssueManager(issues repository.IssueRepository, audit repository.AuditRepository) *IssueManager {
+	return &IssueManager{issues: issues, audit: audit}
 }
 
 // CreateIssueInput is the request to create a new issue.
@@ -67,7 +69,9 @@ func (m *IssueManager) Create(ctx context.Context, in CreateIssueInput) (*domain
 }
 
 // TransitionStatus moves an issue to a new status, enforcing both the valid
-// state machine and role-based authorization (Decision Log #4).
+// state machine and role-based authorization (Decision Log #4). It records an
+// ISSUE_STATUS_CHANGE audit entry attributed to actorID so every state change
+// is traceable to the user who performed it (FR-1.2).
 func (m *IssueManager) TransitionStatus(ctx context.Context, id int64, target domain.IssueStatus, actorID int, actorRole domain.UserRole) error {
 	issue, err := m.issues.GetByID(ctx, id)
 	if err != nil {
@@ -76,7 +80,20 @@ func (m *IssueManager) TransitionStatus(ctx context.Context, id int64, target do
 	if err := AuthorizeIssueTransition(issue.Status, target, actorRole); err != nil {
 		return err
 	}
-	return m.issues.UpdateStatus(ctx, id, target, actorID)
+	if err := m.issues.UpdateStatus(ctx, id, target, actorID); err != nil {
+		return err
+	}
+
+	performedBy := actorID
+	return m.audit.Append(ctx, domain.AuditLog{
+		VIN:         issue.VIN,
+		EventType:   domain.AuditEventIssueStatusChange,
+		OldValue:    string(issue.Status),
+		NewValue:    string(target),
+		StationID:   issue.StationID,
+		PerformedBy: &performedBy,
+		Metadata:    map[string]any{"issue_id": id},
+	})
 }
 
 // AuthorizeIssueTransition validates an issue status transition for a role.
