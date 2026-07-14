@@ -12,6 +12,7 @@ mobile/node_modules/
 backend/api
 backend/bin/
 web/dist/
+web/*.tsbuildinfo
 mobile/.expo/
 mobile/dist/
 
