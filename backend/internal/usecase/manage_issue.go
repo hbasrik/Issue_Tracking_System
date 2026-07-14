@@ -81,9 +81,11 @@ func (m *IssueManager) TransitionStatus(ctx context.Context, id int64, target do
 
 // AuthorizeIssueTransition validates an issue status transition for a role.
 //
-// State machine: OPEN -> IN_PROGRESS -> DONE (no skips, no reversals).
-// RBAC: an OPERATOR may only move OPEN -> IN_PROGRESS; only a MANAGER_ADMIN
-// may finish/approve an issue (IN_PROGRESS -> DONE).
+// State machine: OPEN -> IN_PROGRESS -> DONE -> APPROVED (no skips, no
+// reversals). RBAC (enforced here in the usecase layer, not just the handler):
+// an OPERATOR may drive the repair chain OPEN -> IN_PROGRESS -> DONE; only a
+// MANAGER_ADMIN may give final quality sign-off DONE -> APPROVED. Any other
+// attempted transition, by either role, is rejected.
 func AuthorizeIssueTransition(current, target domain.IssueStatus, role domain.UserRole) error {
 	if !target.Valid() {
 		return domain.ErrInvalidEnumValue
@@ -97,6 +99,10 @@ func AuthorizeIssueTransition(current, target domain.IssueStatus, role domain.Us
 		// Both roles may pick up an open issue.
 		return nil
 	case current == domain.IssueStatusInProgress && target == domain.IssueStatusDone:
+		// Both roles: the technician (operator) finishes the repair.
+		return nil
+	case current == domain.IssueStatusDone && target == domain.IssueStatusApproved:
+		// Quality sign-off is manager-only.
 		if role != domain.UserRoleManagerAdmin {
 			return domain.ErrForbidden
 		}
