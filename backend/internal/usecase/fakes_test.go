@@ -132,3 +132,54 @@ func (f *fakeChecklistRepo) SaveResult(_ context.Context, result domain.Checklis
 	}
 	return domain.ErrNotFound
 }
+
+// fakeIssueRepo is an in-memory IssueRepository keyed by issue id.
+type fakeIssueRepo struct {
+	issues map[int64]*domain.Issue
+	nextID int64
+}
+
+func newFakeIssueRepo() *fakeIssueRepo {
+	return &fakeIssueRepo{issues: map[int64]*domain.Issue{}, nextID: 1}
+}
+
+func (f *fakeIssueRepo) Create(_ context.Context, issue *domain.Issue) (int64, error) {
+	id := f.nextID
+	f.nextID++
+	stored := *issue
+	stored.ID = id
+	f.issues[id] = &stored
+	return id, nil
+}
+
+func (f *fakeIssueRepo) GetByID(_ context.Context, id int64) (*domain.Issue, error) {
+	issue, ok := f.issues[id]
+	if !ok {
+		return nil, domain.ErrNotFound
+	}
+	return issue, nil
+}
+
+func (f *fakeIssueRepo) UpdateStatus(_ context.Context, id int64, status domain.IssueStatus, _ int) error {
+	issue, ok := f.issues[id]
+	if !ok {
+		return domain.ErrNotFound
+	}
+	issue.Status = status
+	return nil
+}
+
+// fakeAuditRepo is an in-memory AuditRepository that records appended entries so
+// tests can assert what was written (e.g. that performed_by is populated).
+type fakeAuditRepo struct {
+	entries []domain.AuditLog
+}
+
+func newFakeAuditRepo() *fakeAuditRepo {
+	return &fakeAuditRepo{}
+}
+
+func (f *fakeAuditRepo) Append(_ context.Context, entry domain.AuditLog) error {
+	f.entries = append(f.entries, entry)
+	return nil
+}
