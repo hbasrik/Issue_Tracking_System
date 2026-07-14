@@ -45,3 +45,21 @@ type PhaseCheckpointProgress struct {
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
 }
+
+// CheckpointItemView is the operator-facing join of catalogue checkpoints with
+// per-vehicle progress.
+type CheckpointItemView struct {
+	ID             int
+	PhaseNumber    int16
+	SequenceNo     int16
+	Name           string
+	StationID      *int
+	Status         CheckpointStatus
+	RelatedIssueID *int64
+}
+
+// VehicleCheckpointsResult is returned by GET /vehicles/{vin}/checkpoints.
+type VehicleCheckpointsResult struct {
+	Items             []CheckpointItemView
+	OpenIssuesByPhase map[string]int
+}

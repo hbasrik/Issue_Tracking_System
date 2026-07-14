@@ -81,3 +81,15 @@ type ChecklistProgress struct {
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
 }
+
+// ChecklistItemView is the operator-facing join of template items with
+// per-vehicle checklist progress.
+type ChecklistItemView struct {
+	ItemID          int
+	ItemNo          int16
+	ItemText        string
+	Status          CheckStatus
+	ReworkDesc      string
+	ConditionalDesc string
+	RejectedDesc    string
+}

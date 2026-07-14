@@ -100,3 +100,36 @@ func (r *ChecklistResultRecorder) Record(ctx context.Context, in RecordChecklist
 
 	return out, nil
 }
+
+// ListForVehicle returns checklist template items joined with per-vehicle
+// progress, resolving the template from the vehicle or the active default.
+func (r *ChecklistResultRecorder) ListForVehicle(ctx context.Context, vin string, checklistType domain.ChecklistType) ([]domain.ChecklistItemView, error) {
+	if !checklistType.Valid() {
+		return nil, domain.ErrInvalidEnumValue
+	}
+
+	vehicle, err := r.vehicles.GetByVIN(ctx, vin)
+	if err != nil {
+		return nil, err
+	}
+
+	var templateID *int
+	switch checklistType {
+	case domain.ChecklistTypeEOL:
+		templateID = vehicle.EOLTemplateID
+	case domain.ChecklistTypeShipment:
+		templateID = vehicle.ShipmentTemplateID
+	}
+
+	resolved := 0
+	if templateID != nil {
+		resolved = *templateID
+	} else {
+		resolved, err = r.checklist.ResolveDefaultTemplateID(ctx, checklistType)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return r.checklist.ListItemsWithProgress(ctx, vin, checklistType, resolved)
+}

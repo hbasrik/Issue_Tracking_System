@@ -2,7 +2,9 @@ package postgres
 
 import (
 	"context"
+	"errors"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/karea/backend/internal/domain"
@@ -49,6 +51,54 @@ func (r *ChecklistProgressRepo) ListByVINAndType(ctx context.Context, vin string
 		p.ChecklistType = domain.ChecklistType(clType)
 		p.CheckStatus = domain.CheckStatus(status)
 		out = append(out, p)
+	}
+	return out, rows.Err()
+}
+
+// ResolveDefaultTemplateID returns the active default template for a type.
+func (r *ChecklistProgressRepo) ResolveDefaultTemplateID(ctx context.Context, checklistType domain.ChecklistType) (int, error) {
+	var id int
+	err := r.pool.QueryRow(ctx,
+		`SELECT id FROM checklist_templates
+		 WHERE vehicle_model_id IS NULL AND type = $1 AND is_active = TRUE
+		 ORDER BY id LIMIT 1`, string(checklistType)).Scan(&id)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return 0, domain.ErrNotFound
+	}
+	if err != nil {
+		return 0, err
+	}
+	return id, nil
+}
+
+// ListItemsWithProgress joins template items with per-vehicle progress.
+func (r *ChecklistProgressRepo) ListItemsWithProgress(ctx context.Context, vin string, checklistType domain.ChecklistType, templateID int) ([]domain.ChecklistItemView, error) {
+	rows, err := r.pool.Query(ctx,
+		`SELECT cti.id, cti.item_no, cti.item_text,
+		        COALESCE(p.check_status::text, 'PENDING'),
+		        COALESCE(p.rework_desc, ''), COALESCE(p.conditional_desc, ''), COALESCE(p.rejected_desc, '')
+		 FROM checklist_template_items cti
+		 LEFT JOIN eol_and_shipment_checklist_progress p
+		   ON p.check_item_id = cti.id AND p.vin = $1 AND p.checklist_type = $2
+		 WHERE cti.template_id = $3 AND cti.is_active = TRUE
+		 ORDER BY cti.item_no`, vin, string(checklistType), templateID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var out []domain.ChecklistItemView
+	for rows.Next() {
+		var item domain.ChecklistItemView
+		var status string
+		if err := rows.Scan(
+			&item.ItemID, &item.ItemNo, &item.ItemText, &status,
+			&item.ReworkDesc, &item.ConditionalDesc, &item.RejectedDesc,
+		); err != nil {
+			return nil, err
+		}
+		item.Status = domain.CheckStatus(status)
+		out = append(out, item)
 	}
 	return out, rows.Err()
 }

@@ -66,3 +66,30 @@ func (r *CheckpointResultRecorder) Record(ctx context.Context, in RecordCheckpoi
 		CurrentPhase:            currentPhase,
 	}, nil
 }
+
+// ListForVehicle returns catalogue checkpoints joined with progress and open
+// issue counts per phase for the given VIN.
+func (r *CheckpointResultRecorder) ListForVehicle(ctx context.Context, vin string) (*domain.VehicleCheckpointsResult, error) {
+	if _, err := r.vehicles.GetByVIN(ctx, vin); err != nil {
+		return nil, err
+	}
+
+	items, err := r.progress.ListCatalogueWithProgress(ctx, vin)
+	if err != nil {
+		return nil, err
+	}
+	counts, err := r.progress.CountOpenIssuesByPhase(ctx, vin)
+	if err != nil {
+		return nil, err
+	}
+
+	byPhase := make(map[string]int, domain.TotalPhases)
+	for phase := int16(1); phase <= domain.TotalPhases; phase++ {
+		byPhase[formatPhaseKey(phase)] = counts[phase]
+	}
+
+	return &domain.VehicleCheckpointsResult{
+		Items:             items,
+		OpenIssuesByPhase: byPhase,
+	}, nil
+}

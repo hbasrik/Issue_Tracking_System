@@ -67,3 +67,62 @@ func (r *CheckpointProgressRepo) SaveResult(ctx context.Context, vin string, che
 	}
 	return nil
 }
+
+// ListCatalogueWithProgress joins active catalogue checkpoints with progress
+// rows for the given VIN.
+func (r *CheckpointProgressRepo) ListCatalogueWithProgress(ctx context.Context, vin string) ([]domain.CheckpointItemView, error) {
+	rows, err := r.pool.Query(ctx,
+		`SELECT c.id, c.phase_number, c.sequence_no, c.name, c.station_id,
+		        COALESCE(p.status::text, 'PENDING'), p.related_issue_id
+		 FROM checkpoints c
+		 LEFT JOIN production_phase_progress p
+		   ON p.checkpoint_id = c.id AND p.vin = $1
+		 WHERE c.is_active = TRUE
+		 ORDER BY c.phase_number, c.sequence_no`, vin)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var out []domain.CheckpointItemView
+	for rows.Next() {
+		var item domain.CheckpointItemView
+		var status string
+		if err := rows.Scan(
+			&item.ID, &item.PhaseNumber, &item.SequenceNo, &item.Name, &item.StationID,
+			&status, &item.RelatedIssueID,
+		); err != nil {
+			return nil, err
+		}
+		item.Status = domain.CheckpointStatus(status)
+		out = append(out, item)
+	}
+	return out, rows.Err()
+}
+
+// CountOpenIssuesByPhase counts issues in OPEN, IN_PROGRESS, or DONE status
+// grouped by the phase of their source checkpoint.
+func (r *CheckpointProgressRepo) CountOpenIssuesByPhase(ctx context.Context, vin string) (map[int16]int, error) {
+	rows, err := r.pool.Query(ctx,
+		`SELECT c.phase_number, count(*)
+		 FROM issue_list i
+		 JOIN checkpoints c ON i.source_checkpoint_id = c.id
+		 WHERE i.vin = $1
+		   AND i.status IN ('OPEN', 'IN_PROGRESS', 'DONE')
+		 GROUP BY c.phase_number`, vin)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make(map[int16]int)
+	for rows.Next() {
+		var phase int16
+		var count int
+		if err := rows.Scan(&phase, &count); err != nil {
+			return nil, err
+		}
+		out[phase] = count
+	}
+	return out, rows.Err()
+}
