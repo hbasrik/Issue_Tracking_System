@@ -85,6 +85,7 @@ CREATE TABLE users (
     id            SERIAL PRIMARY KEY,
     full_name     VARCHAR(150) NOT NULL,
     email         VARCHAR(200) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,  -- bcrypt hash, never store or return plaintext
     role          user_role_enum NOT NULL,
     is_active     BOOLEAN NOT NULL DEFAULT TRUE,
     created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
