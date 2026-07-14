@@ -93,7 +93,7 @@ func (r *IssueRepo) UpdateStatus(ctx context.Context, id int64, status domain.Is
 		return domain.ErrInvalidStatusTransition
 	}
 
-	tag, err := r.pool.Exec(ctx, query, id, string(status), actorID)
+	tag, err := executor(ctx, r.pool).Exec(ctx, query, id, string(status), actorID)
 	if err != nil {
 		return err
 	}

@@ -23,7 +23,7 @@ var _ repository.AuditRepository = (*AuditRepo)(nil)
 
 // Append inserts a new audit log row.
 func (r *AuditRepo) Append(ctx context.Context, entry domain.AuditLog) error {
-	_, err := r.pool.Exec(ctx,
+	_, err := executor(ctx, r.pool).Exec(ctx,
 		`INSERT INTO audit_logs
 		    (vin, event_type, old_value, new_value, phase_number, station_id, performed_by, metadata)
 		 VALUES ($1, $2, NULLIF($3, ''), NULLIF($4, ''), $5, $6, $7, $8)`,

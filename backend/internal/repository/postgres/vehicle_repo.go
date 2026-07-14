@@ -44,7 +44,7 @@ func scanVehicle(row pgx.Row) (*domain.Vehicle, error) {
 
 // GetByVIN returns the vehicle with the exact VIN.
 func (r *VehicleRepo) GetByVIN(ctx context.Context, vin string) (*domain.Vehicle, error) {
-	row := r.pool.QueryRow(ctx, `SELECT `+vehicleColumns+` FROM vehicles WHERE vin = $1`, vin)
+	row := executor(ctx, r.pool).QueryRow(ctx, `SELECT `+vehicleColumns+` FROM vehicles WHERE vin = $1`, vin)
 	v, err := scanVehicle(row)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, domain.ErrNotFound
@@ -130,7 +130,7 @@ func (r *VehicleRepo) SearchByVINSuffix(ctx context.Context, suffix string, limi
 
 // UpdateProgress persists the recomputed completion percentage and phase.
 func (r *VehicleRepo) UpdateProgress(ctx context.Context, vin string, percentage float64, currentPhase int16) error {
-	tag, err := r.pool.Exec(ctx,
+	tag, err := executor(ctx, r.pool).Exec(ctx,
 		`UPDATE vehicles SET total_progress_percentage = $2, current_phase = $3 WHERE vin = $1`,
 		vin, percentage, currentPhase)
 	if err != nil {
@@ -145,7 +145,7 @@ func (r *VehicleRepo) UpdateProgress(ctx context.Context, vin string, percentage
 // UpdateStatus persists a new global status. The database's
 // fn_enforce_manual_status_change trigger provides a second, independent guard.
 func (r *VehicleRepo) UpdateStatus(ctx context.Context, vin string, status domain.VehicleStatus) error {
-	tag, err := r.pool.Exec(ctx,
+	tag, err := executor(ctx, r.pool).Exec(ctx,
 		`UPDATE vehicles SET current_global_status = $2 WHERE vin = $1`,
 		vin, string(status))
 	if err != nil {
