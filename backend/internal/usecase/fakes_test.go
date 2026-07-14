@@ -2,9 +2,54 @@ package usecase_test
 
 import (
 	"context"
+	"errors"
 
 	"github.com/karea/backend/internal/domain"
 )
+
+// passthroughFakeUoW runs fn without transactional semantics (for tests that
+// only care about successful paths).
+type passthroughFakeUoW struct{}
+
+func (p *passthroughFakeUoW) WithinTx(ctx context.Context, fn func(context.Context) error) error {
+	return fn(ctx)
+}
+
+// snapshotFakeUoW simulates database transaction commit/rollback for in-memory
+// fakes: if fn returns an error, all mutations made during fn are reverted.
+type snapshotFakeUoW struct {
+	vehicles *fakeVehicleRepo
+	issues   *fakeIssueRepo
+	audit    *fakeAuditRepo
+}
+
+func (s *snapshotFakeUoW) WithinTx(ctx context.Context, fn func(context.Context) error) error {
+	var vSnap vehicleSnapshot
+	var iSnap issueSnapshot
+	var aSnap auditSnapshot
+	if s.vehicles != nil {
+		vSnap = s.vehicles.snapshot()
+	}
+	if s.issues != nil {
+		iSnap = s.issues.snapshot()
+	}
+	if s.audit != nil {
+		aSnap = s.audit.snapshot()
+	}
+	if err := fn(ctx); err != nil {
+		if s.vehicles != nil {
+			s.vehicles.restore(vSnap)
+		}
+		if s.issues != nil {
+			s.issues.restore(iSnap)
+		}
+		if s.audit != nil {
+			s.audit.restore(aSnap)
+		}
+		return err
+	}
+	return nil
+}
 
 // fakeVehicleRepo is an in-memory VehicleRepository for unit tests. It records
 // status/progress updates so tests can assert whether a transition was
@@ -14,6 +59,8 @@ type fakeVehicleRepo struct {
 	statusUpdates  []statusUpdate
 	progressUpdate *progressUpdate
 }
+
+type vehicleSnapshot map[string]domain.Vehicle
 
 type statusUpdate struct {
 	vin    string
@@ -28,6 +75,22 @@ type progressUpdate struct {
 
 func newFakeVehicleRepo() *fakeVehicleRepo {
 	return &fakeVehicleRepo{vehicles: map[string]*domain.Vehicle{}}
+}
+
+func (f *fakeVehicleRepo) snapshot() vehicleSnapshot {
+	snap := make(vehicleSnapshot, len(f.vehicles))
+	for vin, v := range f.vehicles {
+		snap[vin] = *v
+	}
+	return snap
+}
+
+func (f *fakeVehicleRepo) restore(snap vehicleSnapshot) {
+	f.vehicles = make(map[string]*domain.Vehicle, len(snap))
+	for vin, v := range snap {
+		copied := v
+		f.vehicles[vin] = &copied
+	}
 }
 
 func (f *fakeVehicleRepo) GetByVIN(_ context.Context, vin string) (*domain.Vehicle, error) {
@@ -68,6 +131,11 @@ func (f *fakeVehicleRepo) UpdateProgress(_ context.Context, vin string, percenta
 }
 
 func (f *fakeVehicleRepo) UpdateStatus(_ context.Context, vin string, status domain.VehicleStatus) error {
+	v, ok := f.vehicles[vin]
+	if !ok {
+		return domain.ErrNotFound
+	}
+	v.CurrentGlobalStatus = status
 	f.statusUpdates = append(f.statusUpdates, statusUpdate{vin: vin, status: status})
 	return nil
 }
@@ -139,8 +207,26 @@ type fakeIssueRepo struct {
 	nextID int64
 }
 
+type issueSnapshot map[int64]domain.Issue
+
 func newFakeIssueRepo() *fakeIssueRepo {
 	return &fakeIssueRepo{issues: map[int64]*domain.Issue{}, nextID: 1}
+}
+
+func (f *fakeIssueRepo) snapshot() issueSnapshot {
+	snap := make(issueSnapshot, len(f.issues))
+	for id, issue := range f.issues {
+		snap[id] = *issue
+	}
+	return snap
+}
+
+func (f *fakeIssueRepo) restore(snap issueSnapshot) {
+	f.issues = make(map[int64]*domain.Issue, len(snap))
+	for id, issue := range snap {
+		copied := issue
+		f.issues[id] = &copied
+	}
 }
 
 func (f *fakeIssueRepo) Create(_ context.Context, issue *domain.Issue) (int64, error) {
@@ -172,6 +258,11 @@ func (f *fakeIssueRepo) UpdateStatus(_ context.Context, id int64, status domain.
 // fakeAuditRepo is an in-memory AuditRepository that records appended entries so
 // tests can assert what was written (e.g. that performed_by is populated).
 type fakeAuditRepo struct {
+	entries   []domain.AuditLog
+	appendErr error
+}
+
+type auditSnapshot struct {
 	entries []domain.AuditLog
 }
 
@@ -179,7 +270,22 @@ func newFakeAuditRepo() *fakeAuditRepo {
 	return &fakeAuditRepo{}
 }
 
+func (f *fakeAuditRepo) snapshot() auditSnapshot {
+	copied := make([]domain.AuditLog, len(f.entries))
+	copy(copied, f.entries)
+	return auditSnapshot{entries: copied}
+}
+
+func (f *fakeAuditRepo) restore(snap auditSnapshot) {
+	f.entries = snap.entries
+}
+
 func (f *fakeAuditRepo) Append(_ context.Context, entry domain.AuditLog) error {
+	if f.appendErr != nil {
+		return f.appendErr
+	}
 	f.entries = append(f.entries, entry)
 	return nil
 }
+
+var errAuditInsertFailed = errors.New("audit insert failed")

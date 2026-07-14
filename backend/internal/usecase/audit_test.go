@@ -19,7 +19,7 @@ func TestVehicleStatusChangeRecordsPerformedBy(t *testing.T) {
 		CurrentGlobalStatus: domain.VehicleStatusInProduction,
 	}
 	audit := newFakeAuditRepo()
-	svc := usecase.NewVehicleService(vehicles, newFakeChecklistRepo(), audit)
+	svc := usecase.NewVehicleService(vehicles, newFakeChecklistRepo(), audit, &passthroughFakeUoW{})
 
 	_, err := svc.ChangeStatus(context.Background(), "VIN0000000000001", domain.VehicleStatusOnHold, actorID)
 	if err != nil {
@@ -58,7 +58,7 @@ func TestIssueStatusChangeRecordsPerformedBy(t *testing.T) {
 		t.Fatalf("seed issue: %v", err)
 	}
 	audit := newFakeAuditRepo()
-	mgr := usecase.NewIssueManager(issues, audit)
+	mgr := usecase.NewIssueManager(issues, audit, &passthroughFakeUoW{})
 
 	err = mgr.TransitionStatus(context.Background(), id, domain.IssueStatusInProgress, actorID, domain.UserRoleOperator)
 	if err != nil {
