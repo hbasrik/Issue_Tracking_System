@@ -21,13 +21,14 @@ import (
 
 // Deps holds the collaborators the HTTP layer delegates to.
 type Deps struct {
-	Issuer      *auth.Issuer
-	Auth        *usecase.Authenticator
-	Vehicles    *usecase.VehicleService
-	Checkpoints *usecase.CheckpointResultRecorder
-	Checklists  *usecase.ChecklistResultRecorder
-	Issues      *usecase.IssueManager
-	Analysis    *usecase.AnalysisMetricsReader
+	Issuer             *auth.Issuer
+	Auth               *usecase.Authenticator
+	Vehicles           *usecase.VehicleService
+	Checkpoints        *usecase.CheckpointResultRecorder
+	Checklists         *usecase.ChecklistResultRecorder
+	Issues             *usecase.IssueManager
+	Analysis           *usecase.AnalysisMetricsReader
+	CORSAllowedOrigins []string
 }
 
 type server struct {
@@ -43,6 +44,7 @@ func NewRouter(deps Deps) http.Handler {
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
 	r.Use(middleware.Recoverer)
+	r.Use(CORS(deps.CORSAllowedOrigins))
 
 	r.Get("/health", func(w http.ResponseWriter, _ *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})

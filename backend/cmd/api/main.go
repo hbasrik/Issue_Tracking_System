@@ -38,13 +38,14 @@ func main() {
 	issuer := auth.NewIssuer(cfg.JWTSecret, 24*time.Hour)
 
 	router := deliveryhttp.NewRouter(deliveryhttp.Deps{
-		Issuer:        issuer,
-		Auth:          usecase.NewAuthenticator(userRepo),
-		Vehicles:      usecase.NewVehicleService(vehicleRepo, checklistRepo, auditRepo, uow),
-		Checkpoints:   usecase.NewCheckpointResultRecorder(vehicleRepo, checkpointRepo),
-		Checklists:    usecase.NewChecklistResultRecorder(vehicleRepo, checklistRepo),
-		Issues:        usecase.NewIssueManager(issueRepo, auditRepo, uow),
-		Analysis:      usecase.NewAnalysisMetricsReader(analysisRepo),
+		Issuer:             issuer,
+		Auth:               usecase.NewAuthenticator(userRepo),
+		Vehicles:           usecase.NewVehicleService(vehicleRepo, checklistRepo, auditRepo, uow),
+		Checkpoints:        usecase.NewCheckpointResultRecorder(vehicleRepo, checkpointRepo),
+		Checklists:         usecase.NewChecklistResultRecorder(vehicleRepo, checklistRepo),
+		Issues:             usecase.NewIssueManager(issueRepo, auditRepo, uow),
+		Analysis:           usecase.NewAnalysisMetricsReader(analysisRepo),
+		CORSAllowedOrigins: cfg.CORSAllowedOrigins,
 	})
 
 	addr := ":" + cfg.Port
