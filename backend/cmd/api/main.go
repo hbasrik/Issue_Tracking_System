@@ -32,16 +32,17 @@ func main() {
 	issueRepo := postgres.NewIssueRepo(pool)
 	analysisRepo := postgres.NewAnalysisRepo(pool)
 	userRepo := postgres.NewUserRepo(pool)
+	auditRepo := postgres.NewAuditRepo(pool)
 
 	issuer := auth.NewIssuer(cfg.JWTSecret, 24*time.Hour)
 
 	router := deliveryhttp.NewRouter(deliveryhttp.Deps{
 		Issuer:        issuer,
 		Auth:          usecase.NewAuthenticator(userRepo),
-		Vehicles:      usecase.NewVehicleService(vehicleRepo, checklistRepo),
+		Vehicles:      usecase.NewVehicleService(vehicleRepo, checklistRepo, auditRepo),
 		Checkpoints:   usecase.NewCheckpointResultRecorder(vehicleRepo, checkpointRepo),
 		Checklists:    usecase.NewChecklistResultRecorder(vehicleRepo, checklistRepo),
-		Issues:        usecase.NewIssueManager(issueRepo),
+		Issues:        usecase.NewIssueManager(issueRepo, auditRepo),
 		Analysis:      usecase.NewAnalysisMetricsReader(analysisRepo),
 	})
 
