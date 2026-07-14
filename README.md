@@ -99,3 +99,4 @@ Use the Expo Go app or a simulator to run the operator shell.
 ## Documentation
 
 See `/docs` for PRD, database schema, UI/UX guidelines, and Cursor master prompts.
+
