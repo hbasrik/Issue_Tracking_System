@@ -3,6 +3,8 @@ package postgres
 import (
 	"context"
 	"errors"
+	"fmt"
+	"strings"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -48,6 +50,60 @@ func (r *VehicleRepo) GetByVIN(ctx context.Context, vin string) (*domain.Vehicle
 		return nil, domain.ErrNotFound
 	}
 	return v, err
+}
+
+// vehicleFilterClause builds a shared WHERE fragment for List and Count.
+func vehicleFilterClause(f domain.VehicleListFilter) (string, []any) {
+	var conds []string
+	var args []any
+	if f.VINContains != "" {
+		args = append(args, f.VINContains)
+		conds = append(conds, fmt.Sprintf("vin ILIKE '%%' || $%d || '%%'", len(args)))
+	}
+	if f.Status != nil {
+		args = append(args, string(*f.Status))
+		conds = append(conds, fmt.Sprintf("current_global_status = $%d", len(args)))
+	}
+	if f.ModelID != nil {
+		args = append(args, *f.ModelID)
+		conds = append(conds, fmt.Sprintf("vehicle_model_id = $%d", len(args)))
+	}
+	if len(conds) == 0 {
+		return "", args
+	}
+	return " WHERE " + strings.Join(conds, " AND "), args
+}
+
+// List returns a filtered, paginated page of vehicles.
+func (r *VehicleRepo) List(ctx context.Context, f domain.VehicleListFilter) ([]domain.Vehicle, error) {
+	where, args := vehicleFilterClause(f)
+	args = append(args, f.Limit, f.Offset)
+	query := `SELECT ` + vehicleColumns + ` FROM vehicles` + where +
+		fmt.Sprintf(" ORDER BY updated_at DESC, vin LIMIT $%d OFFSET $%d", len(args)-1, len(args))
+
+	rows, err := r.pool.Query(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var out []domain.Vehicle
+	for rows.Next() {
+		v, err := scanVehicle(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, *v)
+	}
+	return out, rows.Err()
+}
+
+// Count returns the number of vehicles matching the filter (ignoring paging).
+func (r *VehicleRepo) Count(ctx context.Context, f domain.VehicleListFilter) (int, error) {
+	where, args := vehicleFilterClause(f)
+	var total int
+	err := r.pool.QueryRow(ctx, `SELECT count(*) FROM vehicles`+where, args...).Scan(&total)
+	return total, err
 }
 
 // SearchByVINSuffix returns vehicles whose VIN contains the given fragment,

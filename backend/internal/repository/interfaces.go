@@ -12,6 +12,11 @@ import (
 type VehicleRepository interface {
 	// GetByVIN returns the vehicle with the exact VIN, or domain.ErrNotFound.
 	GetByVIN(ctx context.Context, vin string) (*domain.Vehicle, error)
+	// List returns vehicles matching the filter (with pagination).
+	List(ctx context.Context, f domain.VehicleListFilter) ([]domain.Vehicle, error)
+	// Count returns the total number of vehicles matching the filter, ignoring
+	// pagination (used to compute page counts).
+	Count(ctx context.Context, f domain.VehicleListFilter) (int, error)
 	// SearchByVINSuffix returns vehicles whose VIN contains the given suffix
 	// (partial trigram search), capped at limit rows.
 	SearchByVINSuffix(ctx context.Context, suffix string, limit int) ([]domain.Vehicle, error)
