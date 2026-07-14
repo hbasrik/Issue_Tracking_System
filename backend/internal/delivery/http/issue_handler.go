@@ -51,6 +51,46 @@ func (s *server) handleCreateIssue(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, issue)
 }
 
+// handleIssueList returns issues where the authenticated user is a reporter.
+func (s *server) handleIssueList(w http.ResponseWriter, r *http.Request) {
+	var status *domain.IssueStatus
+	if raw := r.URL.Query().Get("status"); raw != "" {
+		s := domain.IssueStatus(raw)
+		if !s.Valid() {
+			badRequest(w, "invalid status filter")
+			return
+		}
+		status = &s
+	}
+
+	claims, _ := ClaimsFromContext(r.Context())
+	items, err := s.deps.Issues.ListForUser(r.Context(), claims.UserID, status)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	if items == nil {
+		items = []domain.Issue{}
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"items": items})
+}
+
+// handleIssueGet returns a single issue by id (any authenticated user).
+func (s *server) handleIssueGet(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	if err != nil {
+		badRequest(w, "id must be an integer")
+		return
+	}
+
+	issue, err := s.deps.Issues.GetByID(r.Context(), id)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, issue)
+}
+
 type issueStatusRequest struct {
 	Status string `json:"status"`
 }

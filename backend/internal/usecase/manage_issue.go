@@ -69,6 +69,19 @@ func (m *IssueManager) Create(ctx context.Context, in CreateIssueInput) (*domain
 	return issue, nil
 }
 
+// ListForUser returns issues where the user is a reporter at any lifecycle stage.
+func (m *IssueManager) ListForUser(ctx context.Context, userID int, status *domain.IssueStatus) ([]domain.Issue, error) {
+	if status != nil && !status.Valid() {
+		return nil, domain.ErrInvalidEnumValue
+	}
+	return m.issues.ListForUser(ctx, userID, status)
+}
+
+// GetByID returns a single issue by id (any authenticated caller).
+func (m *IssueManager) GetByID(ctx context.Context, id int64) (*domain.Issue, error) {
+	return m.issues.GetByID(ctx, id)
+}
+
 // TransitionStatus moves an issue to a new status, enforcing both the valid
 // state machine and role-based authorization (Decision Log #4). It records an
 // ISSUE_STATUS_CHANGE audit entry attributed to actorID so every state change

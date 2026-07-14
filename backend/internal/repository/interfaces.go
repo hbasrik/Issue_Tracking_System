@@ -32,6 +32,12 @@ type VehicleRepository interface {
 type CheckpointProgressRepository interface {
 	// ListByVIN returns all checkpoint progress rows for a vehicle.
 	ListByVIN(ctx context.Context, vin string) ([]domain.PhaseCheckpointProgress, error)
+	// ListCatalogueWithProgress joins the checkpoint catalogue with progress for
+	// the given VIN.
+	ListCatalogueWithProgress(ctx context.Context, vin string) ([]domain.CheckpointItemView, error)
+	// CountOpenIssuesByPhase counts open/in-progress/done issues per production
+	// phase for the VIN (keyed by phase number).
+	CountOpenIssuesByPhase(ctx context.Context, vin string) (map[int16]int, error)
 	// SaveResult updates the status (and checker/timestamp) of a single
 	// pre-materialized checkpoint progress row.
 	SaveResult(ctx context.Context, vin string, checkpointID int, status domain.CheckpointStatus, checkedBy int) error
@@ -43,6 +49,12 @@ type ChecklistProgressRepository interface {
 	// ListByVINAndType returns all checklist progress rows of a given type for
 	// a vehicle.
 	ListByVINAndType(ctx context.Context, vin string, checklistType domain.ChecklistType) ([]domain.ChecklistProgress, error)
+	// ResolveDefaultTemplateID returns the active default template (vehicle_model_id
+	// IS NULL) for the given checklist type.
+	ResolveDefaultTemplateID(ctx context.Context, checklistType domain.ChecklistType) (int, error)
+	// ListItemsWithProgress joins template items with per-vehicle progress for
+	// the given template.
+	ListItemsWithProgress(ctx context.Context, vin string, checklistType domain.ChecklistType, templateID int) ([]domain.ChecklistItemView, error)
 	// SaveResult updates a single pre-materialized checklist progress row.
 	SaveResult(ctx context.Context, result domain.ChecklistProgress) error
 }
@@ -53,9 +65,18 @@ type IssueRepository interface {
 	Create(ctx context.Context, issue *domain.Issue) (int64, error)
 	// GetByID returns the issue with the given ID, or domain.ErrNotFound.
 	GetByID(ctx context.Context, id int64) (*domain.Issue, error)
+	// ListForUser returns issues where the user is issue, process, or finish
+	// reporter. When status is non-nil, results are filtered to that status.
+	ListForUser(ctx context.Context, userID int, status *domain.IssueStatus) ([]domain.Issue, error)
 	// UpdateStatus transitions an issue to a new status, recording the acting
 	// user against the appropriate lifecycle timestamp column.
 	UpdateStatus(ctx context.Context, id int64, status domain.IssueStatus, actorID int) error
+}
+
+// StationRepository reads the station catalogue.
+type StationRepository interface {
+	// List returns all stations ordered by phase then id.
+	List(ctx context.Context) ([]domain.Station, error)
 }
 
 // AnalysisRepository reads the Analysis-tab SQL views.
