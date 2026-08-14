@@ -12,6 +12,7 @@ import (
 	deliveryhttp "github.com/karea/backend/internal/delivery/http"
 	"github.com/karea/backend/internal/platform/auth"
 	"github.com/karea/backend/internal/platform/config"
+	"github.com/karea/backend/internal/platform/storage"
 	"github.com/karea/backend/internal/repository/postgres"
 	"github.com/karea/backend/internal/usecase"
 )
@@ -35,10 +36,12 @@ func main() {
 	userRepo := postgres.NewUserRepo(pool)
 	roleRepo := postgres.NewRoleRepo(pool)
 	eolRepo := postgres.NewEOLWorkflowRepo(pool)
+	mediaRepo := postgres.NewMediaRepo(pool)
 	auditRepo := postgres.NewAuditRepo(pool)
 	uow := postgres.NewUnitOfWork(pool)
 
 	issuer := auth.NewIssuer(cfg.JWTSecret, 24*time.Hour)
+	mediaStore := storage.NewLocalDisk(cfg.UploadDir)
 
 	router := deliveryhttp.NewRouter(deliveryhttp.Deps{
 		Issuer:             issuer,
@@ -54,6 +57,7 @@ func main() {
 		EOLBranchShip:      usecase.NewEOLBranchShipper(vehicleRepo, issueRepo, eolRepo, uow),
 		EOLDepotRelease:    usecase.NewEOLDepotReleaser(vehicleRepo, issueRepo, eolRepo, uow),
 		EOLDocumentApprove: usecase.NewEOLDocumentApprover(vehicleRepo, eolRepo, uow),
+		Media:              usecase.NewMediaUploader(mediaRepo, mediaStore),
 		CORSAllowedOrigins: cfg.CORSAllowedOrigins,
 	})
 

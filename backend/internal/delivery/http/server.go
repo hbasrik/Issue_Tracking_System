@@ -35,6 +35,7 @@ type Deps struct {
 	EOLBranchShip      *usecase.EOLBranchShipper
 	EOLDepotRelease    *usecase.EOLDepotReleaser
 	EOLDocumentApprove *usecase.EOLDocumentApprover
+	Media              *usecase.MediaUploader
 	CORSAllowedOrigins []string
 }
 
@@ -74,6 +75,9 @@ func NewRouter(deps Deps) http.Handler {
 				r.Use(permissions.RequirePermission(domain.PermissionVehicleView))
 				r.Get("/vehicles", s.handleVehicleList)
 				r.Get("/vehicles/search", s.handleVehicleSearch)
+				// Static segments win over {vin} in chi's trie, so /resolve
+				// and /search are reachable despite the wildcard sibling.
+				r.Get("/vehicles/resolve", s.handleVehicleResolve)
 				r.Get("/vehicles/{vin}", s.handleVehicleGet)
 				r.Get("/vehicles/{vin}/station-steps", s.handleVehicleStationSteps)
 				r.Get("/vehicles/{vin}/checklist/{type}", s.handleVehicleChecklistGet)
@@ -87,6 +91,15 @@ func NewRouter(deps Deps) http.Handler {
 				// filtered Analysis tool permission.
 				r.Get("/analysis/vehicle-severity-breakdown", s.handleVehicleSeverityBreakdown)
 				r.Get("/analysis/defect-rate-per-station", s.handleDefectRatePerStation)
+
+				// Media attachments (Karar 8). Both the read and the upload
+				// sit on vehicle.view because Section 11 seeds no media
+				// permission yet: attaching evidence is part of the same
+				// shop-floor work as the reads above, and a role with no
+				// grants is still denied. A dedicated media.upload code
+				// belongs in the next role-matrix migration.
+				r.Get("/media", s.handleMediaList)
+				r.Post("/media", s.handleMediaUpload)
 			})
 
 			// Issue lifecycle. One route serves every transition, so the
