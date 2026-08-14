@@ -26,5 +26,6 @@ seed:
 verify-seed:
 	@test -n "$(DATABASE_URL)" || (echo "DATABASE_URL is not set" && exit 1)
 	@psql "$(DATABASE_URL)" -v ON_ERROR_STOP=1 -c "\
-		SELECT count(*) AS checkpoint_count FROM checkpoints; \
+		SELECT count(*) AS station_count FROM stations; \
+		SELECT count(*) AS station_step_count FROM station_steps; \
 		SELECT count(*) AS checklist_item_count FROM checklist_template_items;"

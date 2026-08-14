@@ -56,7 +56,7 @@ migrate -path database/migrations -database "$DATABASE_URL" down 1
 
 ```bash
 # Example once seed scripts exist:
-# psql "$DATABASE_URL" -f database/seed/01_phases.sql
+# psql "$DATABASE_URL" -f database/seed/01_stations.sql
 ```
 
 ### 5. Backend API
