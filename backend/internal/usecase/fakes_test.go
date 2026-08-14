@@ -321,3 +321,35 @@ func (f *fakeAuditRepo) Append(_ context.Context, entry domain.AuditLog) error {
 }
 
 var errAuditInsertFailed = errors.New("audit insert failed")
+
+// operatorPermissions and managerPermissions mirror the role_permissions rows
+// migration 0002 seeds for the two roles that exist today, so usecase tests
+// exercise the same permission sets the running system resolves.
+func operatorPermissions() domain.PermissionSet {
+	return domain.NewPermissionSet([]domain.Permission{
+		{Code: domain.PermissionVehicleView},
+		{Code: domain.PermissionStationStepUpdate},
+		{Code: domain.PermissionChecklistItemUpdate},
+		{Code: domain.PermissionIssueCreate},
+		{Code: domain.PermissionIssueTransitionInProgress},
+		{Code: domain.PermissionIssueTransitionDone},
+	})
+}
+
+func managerPermissions() domain.PermissionSet {
+	return domain.NewPermissionSet([]domain.Permission{
+		{Code: domain.PermissionVehicleView},
+		{Code: domain.PermissionStationStepUpdate},
+		{Code: domain.PermissionChecklistItemUpdate},
+		{Code: domain.PermissionIssueCreate},
+		{Code: domain.PermissionIssueTransitionInProgress},
+		{Code: domain.PermissionIssueTransitionDone},
+		{Code: domain.PermissionIssueTransitionApprove},
+		{Code: domain.PermissionIssueTransitionConditionalApprove},
+		{Code: domain.PermissionEOLBranchShip},
+		{Code: domain.PermissionEOLDepotRelease},
+		{Code: domain.PermissionEOLDocumentApprove},
+		{Code: domain.PermissionAnalysisView},
+		{Code: domain.PermissionAdminManageMasters},
+	})
+}
