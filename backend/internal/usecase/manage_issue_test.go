@@ -9,13 +9,21 @@ import (
 )
 
 // TestAuthorizeIssueTransition_OperatorCannotApprove proves the key RBAC rule:
-// an OPERATOR may not give quality sign-off (DONE -> APPROVED) because the
-// seeded matrix withholds issue.transition.approve from that role.
+// an OPERATOR may not give quality sign-off, on either branch, because the
+// seeded matrix withholds issue.transition.approve and
+// issue.transition.conditional_approve from that role.
 func TestAuthorizeIssueTransition_OperatorCannotApprove(t *testing.T) {
-	err := usecase.AuthorizeIssueTransition(
-		domain.IssueStatusDone, domain.IssueStatusApproved, operatorPermissions())
-	if !errors.Is(err, domain.ErrForbidden) {
-		t.Fatalf("expected ErrForbidden for operator DONE->APPROVED, got %v", err)
+	for _, target := range []domain.IssueStatus{
+		domain.IssueStatusApproved,
+		domain.IssueStatusConditionalApproved,
+	} {
+		t.Run(string(target), func(t *testing.T) {
+			err := usecase.AuthorizeIssueTransition(
+				domain.IssueStatusDone, target, operatorPermissions())
+			if !errors.Is(err, domain.ErrForbidden) {
+				t.Fatalf("expected ErrForbidden for operator DONE->%s, got %v", target, err)
+			}
+		})
 	}
 }
 
@@ -32,6 +40,7 @@ func TestAuthorizeIssueTransition_AllowedPaths(t *testing.T) {
 		{"operator opens", domain.IssueStatusOpen, domain.IssueStatusInProgress, operatorPermissions()},
 		{"operator finishes", domain.IssueStatusInProgress, domain.IssueStatusDone, operatorPermissions()},
 		{"manager approves", domain.IssueStatusDone, domain.IssueStatusApproved, managerPermissions()},
+		{"manager conditionally approves", domain.IssueStatusDone, domain.IssueStatusConditionalApproved, managerPermissions()},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -54,7 +63,15 @@ func TestAuthorizeIssueTransition_IllegalPathsRejected(t *testing.T) {
 	}{
 		{"skip to done", domain.IssueStatusOpen, domain.IssueStatusDone, managerPermissions()},
 		{"skip to approved", domain.IssueStatusInProgress, domain.IssueStatusApproved, managerPermissions()},
+		{"skip to conditional approved", domain.IssueStatusInProgress, domain.IssueStatusConditionalApproved, managerPermissions()},
 		{"reversal", domain.IssueStatusDone, domain.IssueStatusInProgress, managerPermissions()},
+
+		// Karar 6 gives the lifecycle two terminal states. Neither may be
+		// left, and neither may be converted into the other.
+		{"approved is terminal", domain.IssueStatusApproved, domain.IssueStatusConditionalApproved, managerPermissions()},
+		{"conditional approved is terminal", domain.IssueStatusConditionalApproved, domain.IssueStatusApproved, managerPermissions()},
+		{"conditional approved cannot reopen", domain.IssueStatusConditionalApproved, domain.IssueStatusInProgress, managerPermissions()},
+		{"conditional approved cannot repeat", domain.IssueStatusConditionalApproved, domain.IssueStatusConditionalApproved, managerPermissions()},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -77,6 +94,7 @@ func TestAuthorizeIssueTransition_NoPermissionsForbidden(t *testing.T) {
 		{"open to in progress", domain.IssueStatusOpen, domain.IssueStatusInProgress},
 		{"in progress to done", domain.IssueStatusInProgress, domain.IssueStatusDone},
 		{"done to approved", domain.IssueStatusDone, domain.IssueStatusApproved},
+		{"done to conditional approved", domain.IssueStatusDone, domain.IssueStatusConditionalApproved},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
