@@ -13,6 +13,9 @@ type Config struct {
 	DatabaseURL        string
 	JWTSecret          string
 	CORSAllowedOrigins []string
+	// UploadDir is where media attachments are written. Karar 8 defers the
+	// cloud-storage decision, so uploads live on local disk for now.
+	UploadDir string
 }
 
 // Load reads configuration from the process environment.
@@ -23,6 +26,7 @@ func Load() Config {
 		DatabaseURL:        os.Getenv("DATABASE_URL"),
 		JWTSecret:          os.Getenv("JWT_SECRET"),
 		CORSAllowedOrigins: parseCSVOrigins(envOrDefault("CORS_ALLOWED_ORIGIN", "http://localhost:5173")),
+		UploadDir:          envOrDefault("UPLOAD_DIR", "uploads"),
 	}
 }
 

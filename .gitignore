@@ -16,6 +16,9 @@ web/*.tsbuildinfo
 mobile/.expo/
 mobile/dist/
 
+# Uploaded media (local-disk storage backend, Karar 8)
+backend/uploads/
+
 # OS
 .DS_Store
 Thumbs.db
