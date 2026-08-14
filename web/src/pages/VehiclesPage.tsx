@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { api, type Vehicle } from '../lib/api';
 import { StatusBadge } from '../components/StatusBadge';
 import { VinSearchBox } from '../components/VinSearchBox';
+import { VehicleNumberSearchBox } from '../components/VehicleNumberSearchBox';
+import { VehicleIdentity } from '../components/VehicleIdentity';
 
 const STATUSES = [
   '',
@@ -73,6 +75,9 @@ export default function VehiclesPage() {
             className="mt-1"
           />
         </div>
+        <div className="w-64">
+          <VehicleNumberSearchBox />
+        </div>
         <div>
           <label className="text-[13px] text-[var(--text-secondary)]">
             Status
@@ -114,7 +119,7 @@ export default function VehiclesPage() {
               <th className="px-4 py-3 font-medium">VIN</th>
               <th className="px-4 py-3 font-medium">Model</th>
               <th className="px-4 py-3 font-medium">Status</th>
-              <th className="px-4 py-3 font-medium">Phase</th>
+              <th className="px-4 py-3 font-medium">Station</th>
               <th className="px-4 py-3 font-medium">Completion %</th>
             </tr>
           </thead>
@@ -142,20 +147,21 @@ export default function VehiclesPage() {
                 <td className="px-4 py-3">
                   <Link
                     to={`/vehicles/${v.VIN}`}
-                    className="font-semibold text-[var(--accent)] hover:underline"
+                    className="hover:underline"
                   >
-                    …{v.VIN.slice(-5)}
+                    <VehicleIdentity
+                      vin={v.VIN}
+                      vehicleNumber={v.VehicleNumber}
+                      compact
+                    />
                   </Link>
-                  <div className="text-[13px] text-[var(--text-secondary)]">
-                    {v.VIN}
-                  </div>
                 </td>
                 <td className="px-4 py-3">#{v.VehicleModelID}</td>
                 <td className="px-4 py-3">
                   <StatusBadge kind="vehicle" value={v.CurrentGlobalStatus} />
                 </td>
                 <td className="px-4 py-3">
-                  {v.CurrentPhase}/8
+                  {v.CurrentStationID ?? '—'}
                 </td>
                 <td className="px-4 py-3">
                   {Number(v.TotalProgressPercentage).toFixed(1)}%
