@@ -21,26 +21,26 @@ type VehicleRepository interface {
 	// (partial trigram search), capped at limit rows.
 	SearchByVINSuffix(ctx context.Context, suffix string, limit int) ([]domain.Vehicle, error)
 	// UpdateProgress persists the recomputed completion percentage and current
-	// phase for a vehicle.
-	UpdateProgress(ctx context.Context, vin string, percentage float64, currentPhase int16) error
+	// station for a vehicle.
+	UpdateProgress(ctx context.Context, vin string, percentage float64, currentStationID *int) error
 	// UpdateStatus persists a new global status for a vehicle.
 	UpdateStatus(ctx context.Context, vin string, status domain.VehicleStatus) error
 }
 
-// CheckpointProgressRepository persists and queries per-vehicle checkpoint
-// progress (production_phase_progress).
-type CheckpointProgressRepository interface {
-	// ListByVIN returns all checkpoint progress rows for a vehicle.
-	ListByVIN(ctx context.Context, vin string) ([]domain.PhaseCheckpointProgress, error)
-	// ListCatalogueWithProgress joins the checkpoint catalogue with progress for
-	// the given VIN.
-	ListCatalogueWithProgress(ctx context.Context, vin string) ([]domain.CheckpointItemView, error)
-	// CountOpenIssuesByPhase counts open/in-progress/done issues per production
-	// phase for the VIN (keyed by phase number).
-	CountOpenIssuesByPhase(ctx context.Context, vin string) (map[int16]int, error)
+// StationStepProgressRepository persists and queries per-vehicle station step
+// progress (vehicle_station_step_progress).
+type StationStepProgressRepository interface {
+	// ListByVIN returns all station step progress rows for a vehicle.
+	ListByVIN(ctx context.Context, vin string) ([]domain.VehicleStationStepProgress, error)
+	// ListCatalogueWithProgress joins the station step catalogue with progress
+	// for the given VIN.
+	ListCatalogueWithProgress(ctx context.Context, vin string) ([]domain.StationStepItemView, error)
+	// CountOpenIssuesByStation counts open/in-progress/done issues per station
+	// for the VIN (keyed by station id).
+	CountOpenIssuesByStation(ctx context.Context, vin string) (map[int]int, error)
 	// SaveResult updates the status (and checker/timestamp) of a single
-	// pre-materialized checkpoint progress row.
-	SaveResult(ctx context.Context, vin string, checkpointID int, status domain.CheckpointStatus, checkedBy int) error
+	// pre-materialized station step progress row.
+	SaveResult(ctx context.Context, vin string, stationStepID int, status domain.StationStepStatus, checkedBy int) error
 }
 
 // ChecklistProgressRepository persists and queries per-vehicle checklist
@@ -68,6 +68,10 @@ type IssueRepository interface {
 	// ListForUser returns issues where the user is issue, process, or finish
 	// reporter. When status is non-nil, results are filtered to that status.
 	ListForUser(ctx context.Context, userID int, status *domain.IssueStatus) ([]domain.Issue, error)
+	// ListOpenByVIN returns the vehicle's issues that are not yet closed
+	// (OPEN/IN_PROGRESS/DONE), which is what the EOL gates are evaluated
+	// against.
+	ListOpenByVIN(ctx context.Context, vin string) ([]domain.Issue, error)
 	// UpdateStatus transitions an issue to a new status, recording the acting
 	// user against the appropriate lifecycle timestamp column.
 	UpdateStatus(ctx context.Context, id int64, status domain.IssueStatus, actorID int) error
@@ -75,7 +79,7 @@ type IssueRepository interface {
 
 // StationRepository reads the station catalogue.
 type StationRepository interface {
-	// List returns all stations ordered by phase then id.
+	// List returns all stations in line order.
 	List(ctx context.Context) ([]domain.Station, error)
 }
 
@@ -92,6 +96,27 @@ type AnalysisRepository interface {
 type UserRepository interface {
 	GetByEmail(ctx context.Context, email string) (*domain.User, error)
 	GetByID(ctx context.Context, id int) (*domain.User, error)
+}
+
+// EOLWorkflowRepository persists and queries the three-stage EOL workflow
+// (Karar 2, vehicle_eol_workflow).
+type EOLWorkflowRepository interface {
+	// Get returns the vehicle's workflow row, or domain.ErrNotFound.
+	Get(ctx context.Context, vin string) (*domain.EOLWorkflow, error)
+	// GetView returns the workflow resolved for display, with the acting
+	// user's name attached to each completed stage.
+	GetView(ctx context.Context, vin string) (*domain.EOLWorkflowView, error)
+	// MarkBranchShipped records the branch shipment together with the
+	// soft-warning snapshot of how many issues were still open, and advances
+	// the workflow to DEPOT.
+	MarkBranchShipped(ctx context.Context, vin string, actorID, openIssueCount int) error
+	// MarkDepotReleased records the depot release and advances the workflow to
+	// DOCUMENT. fn_enforce_depot_release rejects the write if open issues
+	// remain, so this fails even when the caller skipped the gate check.
+	MarkDepotReleased(ctx context.Context, vin string, actorID int) error
+	// MarkDocumentApproved records the final sign-off and completes the
+	// workflow.
+	MarkDocumentApproved(ctx context.Context, vin string, actorID int) error
 }
 
 // RoleRepository reads the table-driven RBAC catalogue (Karar 3).

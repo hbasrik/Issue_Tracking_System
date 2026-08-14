@@ -50,3 +50,31 @@ func (e *GateBlockedError) Error() string {
 		e.ChecklistType, len(e.BlockingItemIDs), strings.Join(ids, ", "),
 	)
 }
+
+// BlockingIssue identifies one issue that holds a hard-block gate shut.
+type BlockingIssue struct {
+	ID       int64         `json:"id"`
+	Status   IssueStatus   `json:"status"`
+	Severity IssueSeverity `json:"severity"`
+}
+
+// DepotReleaseBlockedError is returned when depot release is attempted while
+// open issues remain (Karar 2, EOL stage 2 hard-block gate). It carries the
+// offending issues so the UI can list exactly what blocks the release, the
+// same way GateBlockedError does for checklist items.
+type DepotReleaseBlockedError struct {
+	VIN            string
+	BlockingIssues []BlockingIssue
+}
+
+// Error implements the error interface.
+func (e *DepotReleaseBlockedError) Error() string {
+	ids := make([]string, len(e.BlockingIssues))
+	for i, issue := range e.BlockingIssues {
+		ids[i] = fmt.Sprintf("%d", issue.ID)
+	}
+	return fmt.Sprintf(
+		"depot release blocked for %s: %d open issue(s) remain (issue ids: %s)",
+		e.VIN, len(e.BlockingIssues), strings.Join(ids, ", "),
+	)
+}

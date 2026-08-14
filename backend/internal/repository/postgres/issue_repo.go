@@ -23,16 +23,42 @@ func NewIssueRepo(pool *pgxpool.Pool) *IssueRepo {
 
 var _ repository.IssueRepository = (*IssueRepo)(nil)
 
+const issueColumns = `id, vin, source_type, source_station_step_id, source_check_item_id, station_id,
+	        issue_type_id, severity, description, COALESCE(picture_url, ''), status,
+	        issue_reporter_id, issue_date, process_reporter_id, process_date,
+	        finish_reporter_id, finish_date, approve_reporter_id, approve_date,
+	        COALESCE(issue_picture_done_url, ''), COALESCE(solution_description, ''),
+	        created_at, updated_at`
+
+// scanIssue reads one issue row in issueColumns order.
+func scanIssue(row pgx.Row) (*domain.Issue, error) {
+	var i domain.Issue
+	var source, severity, status string
+	if err := row.Scan(
+		&i.ID, &i.VIN, &source, &i.SourceStationStepID, &i.SourceCheckItemID, &i.StationID,
+		&i.IssueTypeID, &severity, &i.Description, &i.PictureURL, &status,
+		&i.IssueReporterID, &i.IssueDate, &i.ProcessReporterID, &i.ProcessDate,
+		&i.FinishReporterID, &i.FinishDate, &i.ApproveReporterID, &i.ApproveDate,
+		&i.IssuePictureDoneURL, &i.SolutionDescription, &i.CreatedAt, &i.UpdatedAt,
+	); err != nil {
+		return nil, err
+	}
+	i.SourceType = domain.IssueSource(source)
+	i.Severity = domain.IssueSeverity(severity)
+	i.Status = domain.IssueStatus(status)
+	return &i, nil
+}
+
 // Create inserts a new issue and returns its generated ID.
 func (r *IssueRepo) Create(ctx context.Context, issue *domain.Issue) (int64, error) {
 	var id int64
-	err := r.pool.QueryRow(ctx,
+	err := executor(ctx, r.pool).QueryRow(ctx,
 		`INSERT INTO issue_list
-		    (vin, source_type, source_checkpoint_id, source_check_item_id, station_id,
+		    (vin, source_type, source_station_step_id, source_check_item_id, station_id,
 		     issue_type_id, severity, description, picture_url, status, issue_reporter_id)
 		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NULLIF($9, ''), $10, $11)
 		 RETURNING id`,
-		issue.VIN, string(issue.SourceType), issue.SourceCheckpointID, issue.SourceCheckItemID,
+		issue.VIN, string(issue.SourceType), issue.SourceStationStepID, issue.SourceCheckItemID,
 		issue.StationID, issue.IssueTypeID, string(issue.Severity), issue.Description,
 		issue.PictureURL, string(issue.Status), issue.IssueReporterID,
 	).Scan(&id)
@@ -41,32 +67,12 @@ func (r *IssueRepo) Create(ctx context.Context, issue *domain.Issue) (int64, err
 
 // GetByID returns the issue with the given ID.
 func (r *IssueRepo) GetByID(ctx context.Context, id int64) (*domain.Issue, error) {
-	var i domain.Issue
-	var source, severity, status string
-	err := r.pool.QueryRow(ctx,
-		`SELECT id, vin, source_type, source_checkpoint_id, source_check_item_id, station_id,
-		        issue_type_id, severity, description, COALESCE(picture_url, ''), status,
-		        issue_reporter_id, issue_date, process_reporter_id, process_date,
-		        finish_reporter_id, finish_date, approve_reporter_id, approve_date,
-		        COALESCE(issue_picture_done_url, ''), COALESCE(solution_description, ''),
-		        created_at, updated_at
-		 FROM issue_list WHERE id = $1`, id).Scan(
-		&i.ID, &i.VIN, &source, &i.SourceCheckpointID, &i.SourceCheckItemID, &i.StationID,
-		&i.IssueTypeID, &severity, &i.Description, &i.PictureURL, &status,
-		&i.IssueReporterID, &i.IssueDate, &i.ProcessReporterID, &i.ProcessDate,
-		&i.FinishReporterID, &i.FinishDate, &i.ApproveReporterID, &i.ApproveDate,
-		&i.IssuePictureDoneURL, &i.SolutionDescription, &i.CreatedAt, &i.UpdatedAt,
-	)
+	row := executor(ctx, r.pool).QueryRow(ctx, `SELECT `+issueColumns+` FROM issue_list WHERE id = $1`, id)
+	i, err := scanIssue(row)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, domain.ErrNotFound
 	}
-	if err != nil {
-		return nil, err
-	}
-	i.SourceType = domain.IssueSource(source)
-	i.Severity = domain.IssueSeverity(severity)
-	i.Status = domain.IssueStatus(status)
-	return &i, nil
+	return i, err
 }
 
 // ListForUser returns issues where the user is issue, process, or finish reporter.
@@ -76,12 +82,7 @@ func (r *IssueRepo) ListForUser(ctx context.Context, userID int, status *domain.
 		statusArg = string(*status)
 	}
 	rows, err := r.pool.Query(ctx,
-		`SELECT id, vin, source_type, source_checkpoint_id, source_check_item_id, station_id,
-		        issue_type_id, severity, description, COALESCE(picture_url, ''), status,
-		        issue_reporter_id, issue_date, process_reporter_id, process_date,
-		        finish_reporter_id, finish_date, approve_reporter_id, approve_date,
-		        COALESCE(issue_picture_done_url, ''), COALESCE(solution_description, ''),
-		        created_at, updated_at
+		`SELECT `+issueColumns+`
 		 FROM issue_list
 		 WHERE (issue_reporter_id = $1 OR process_reporter_id = $1 OR finish_reporter_id = $1)
 		   AND ($2::issue_status_enum IS NULL OR status = $2::issue_status_enum)
@@ -89,25 +90,34 @@ func (r *IssueRepo) ListForUser(ctx context.Context, userID int, status *domain.
 	if err != nil {
 		return nil, err
 	}
+	return collectIssues(rows)
+}
+
+// ListOpenByVIN returns the vehicle's not-yet-closed issues. The status set
+// matches fn_enforce_depot_release so the application-layer gate check and the
+// database trigger agree on what "open" means.
+func (r *IssueRepo) ListOpenByVIN(ctx context.Context, vin string) ([]domain.Issue, error) {
+	rows, err := executor(ctx, r.pool).Query(ctx,
+		`SELECT `+issueColumns+`
+		 FROM issue_list
+		 WHERE vin = $1 AND status IN ('OPEN', 'IN_PROGRESS', 'DONE')
+		 ORDER BY severity, id`, vin)
+	if err != nil {
+		return nil, err
+	}
+	return collectIssues(rows)
+}
+
+func collectIssues(rows pgx.Rows) ([]domain.Issue, error) {
 	defer rows.Close()
 
 	var out []domain.Issue
 	for rows.Next() {
-		var i domain.Issue
-		var source, severity, st string
-		if err := rows.Scan(
-			&i.ID, &i.VIN, &source, &i.SourceCheckpointID, &i.SourceCheckItemID, &i.StationID,
-			&i.IssueTypeID, &severity, &i.Description, &i.PictureURL, &st,
-			&i.IssueReporterID, &i.IssueDate, &i.ProcessReporterID, &i.ProcessDate,
-			&i.FinishReporterID, &i.FinishDate, &i.ApproveReporterID, &i.ApproveDate,
-			&i.IssuePictureDoneURL, &i.SolutionDescription, &i.CreatedAt, &i.UpdatedAt,
-		); err != nil {
+		i, err := scanIssue(rows)
+		if err != nil {
 			return nil, err
 		}
-		i.SourceType = domain.IssueSource(source)
-		i.Severity = domain.IssueSeverity(severity)
-		i.Status = domain.IssueStatus(st)
-		out = append(out, i)
+		out = append(out, *i)
 	}
 	return out, rows.Err()
 }
