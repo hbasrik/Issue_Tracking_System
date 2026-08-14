@@ -103,6 +103,14 @@ func newPermissionRouter(issuer *auth.Issuer, roles repository.RoleRepository) h
 		r.With(checker.RequirePermission(domain.PermissionIssueCreate)).
 			Get("/issues", okHandler)
 
+		// EOL workflow (Karar 2) — one permission per stage.
+		r.With(checker.RequirePermission(domain.PermissionEOLBranchShip)).
+			Get("/eol/branch-ship", okHandler)
+		r.With(checker.RequirePermission(domain.PermissionEOLDepotRelease)).
+			Get("/eol/depot-release", okHandler)
+		r.With(checker.RequirePermission(domain.PermissionEOLDocumentApprove)).
+			Get("/eol/document-approve", okHandler)
+
 		// Stacked gates: both must pass, and both must share one lookup.
 		r.With(
 			checker.RequirePermission(domain.PermissionVehicleView),
@@ -169,6 +177,15 @@ func TestRBACMiddleware(t *testing.T) {
 		{"manager reaches station-step route", "/station-steps", managerToken, http.StatusOK},
 		{"operator reaches issue-create route", "/issues", operatorToken, http.StatusOK},
 		{"manager reaches issue-create route", "/issues", managerToken, http.StatusOK},
+
+		// eol.* — each stage is separately gated, and the seed grants all
+		// three to Manager/Admin only.
+		{"manager reaches eol branch-ship", "/eol/branch-ship", managerToken, http.StatusOK},
+		{"operator blocked from eol branch-ship", "/eol/branch-ship", operatorToken, http.StatusForbidden},
+		{"manager reaches eol depot-release", "/eol/depot-release", managerToken, http.StatusOK},
+		{"operator blocked from eol depot-release", "/eol/depot-release", operatorToken, http.StatusForbidden},
+		{"manager reaches eol document-approve", "/eol/document-approve", managerToken, http.StatusOK},
+		{"operator blocked from eol document-approve", "/eol/document-approve", operatorToken, http.StatusForbidden},
 
 		// A role with no rows in role_permissions is denied everywhere.
 		{"unpermissioned role blocked from vehicles", "/vehicles", strangerToken, http.StatusForbidden},

@@ -3,6 +3,8 @@ package usecase_test
 import (
 	"context"
 	"errors"
+	"sort"
+	"time"
 
 	"github.com/karea/backend/internal/domain"
 )
@@ -70,7 +72,7 @@ type statusUpdate struct {
 type progressUpdate struct {
 	vin        string
 	percentage float64
-	phase      int16
+	stationID  *int
 }
 
 func newFakeVehicleRepo() *fakeVehicleRepo {
@@ -125,8 +127,8 @@ func (f *fakeVehicleRepo) SearchByVINSuffix(_ context.Context, suffix string, li
 	return out, nil
 }
 
-func (f *fakeVehicleRepo) UpdateProgress(_ context.Context, vin string, percentage float64, phase int16) error {
-	f.progressUpdate = &progressUpdate{vin: vin, percentage: percentage, phase: phase}
+func (f *fakeVehicleRepo) UpdateProgress(_ context.Context, vin string, percentage float64, stationID *int) error {
+	f.progressUpdate = &progressUpdate{vin: vin, percentage: percentage, stationID: stationID}
 	return nil
 }
 
@@ -140,32 +142,32 @@ func (f *fakeVehicleRepo) UpdateStatus(_ context.Context, vin string, status dom
 	return nil
 }
 
-// fakeCheckpointRepo is an in-memory CheckpointProgressRepository keyed by
-// (vin, checkpointID).
-type fakeCheckpointRepo struct {
-	rows map[string][]domain.PhaseCheckpointProgress
+// fakeStationStepRepo is an in-memory StationStepProgressRepository keyed by
+// (vin, stationStepID).
+type fakeStationStepRepo struct {
+	rows map[string][]domain.VehicleStationStepProgress
 }
 
-func newFakeCheckpointRepo() *fakeCheckpointRepo {
-	return &fakeCheckpointRepo{rows: map[string][]domain.PhaseCheckpointProgress{}}
+func newFakeStationStepRepo() *fakeStationStepRepo {
+	return &fakeStationStepRepo{rows: map[string][]domain.VehicleStationStepProgress{}}
 }
 
-func (f *fakeCheckpointRepo) ListByVIN(_ context.Context, vin string) ([]domain.PhaseCheckpointProgress, error) {
+func (f *fakeStationStepRepo) ListByVIN(_ context.Context, vin string) ([]domain.VehicleStationStepProgress, error) {
 	return f.rows[vin], nil
 }
 
-func (f *fakeCheckpointRepo) ListCatalogueWithProgress(_ context.Context, _ string) ([]domain.CheckpointItemView, error) {
+func (f *fakeStationStepRepo) ListCatalogueWithProgress(_ context.Context, _ string) ([]domain.StationStepItemView, error) {
 	return nil, nil
 }
 
-func (f *fakeCheckpointRepo) CountOpenIssuesByPhase(_ context.Context, _ string) (map[int16]int, error) {
-	return map[int16]int{}, nil
+func (f *fakeStationStepRepo) CountOpenIssuesByStation(_ context.Context, _ string) (map[int]int, error) {
+	return map[int]int{}, nil
 }
 
-func (f *fakeCheckpointRepo) SaveResult(_ context.Context, vin string, checkpointID int, status domain.CheckpointStatus, checkedBy int) error {
+func (f *fakeStationStepRepo) SaveResult(_ context.Context, vin string, stationStepID int, status domain.StationStepStatus, checkedBy int) error {
 	rows := f.rows[vin]
 	for i := range rows {
-		if rows[i].CheckpointID == checkpointID {
+		if rows[i].StationStepID == stationStepID {
 			rows[i].Status = status
 			rows[i].CheckedBy = &checkedBy
 			f.rows[vin] = rows
@@ -278,6 +280,17 @@ func (f *fakeIssueRepo) ListForUser(_ context.Context, userID int, status *domai
 	return out, nil
 }
 
+func (f *fakeIssueRepo) ListOpenByVIN(_ context.Context, vin string) ([]domain.Issue, error) {
+	var out []domain.Issue
+	for _, issue := range f.issues {
+		if issue.VIN == vin && issue.Status.IsOpen() {
+			out = append(out, *issue)
+		}
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].ID < out[j].ID })
+	return out, nil
+}
+
 func (f *fakeIssueRepo) UpdateStatus(_ context.Context, id int64, status domain.IssueStatus, _ int) error {
 	issue, ok := f.issues[id]
 	if !ok {
@@ -321,6 +334,86 @@ func (f *fakeAuditRepo) Append(_ context.Context, entry domain.AuditLog) error {
 }
 
 var errAuditInsertFailed = errors.New("audit insert failed")
+
+// fakeEOLWorkflowRepo is an in-memory EOLWorkflowRepository. Each Mark* method
+// advances current_stage the same way the vehicle_eol_workflow triggers do, so
+// usecase tests observe the stage transitions the real repository produces.
+type fakeEOLWorkflowRepo struct {
+	rows map[string]*domain.EOLWorkflow
+}
+
+func newFakeEOLWorkflowRepo() *fakeEOLWorkflowRepo {
+	return &fakeEOLWorkflowRepo{rows: map[string]*domain.EOLWorkflow{}}
+}
+
+// seed registers a vehicle's workflow row the way fn_initialize_vehicle_progress
+// does on vehicle insert.
+func (f *fakeEOLWorkflowRepo) seed(vin string) *domain.EOLWorkflow {
+	w := &domain.EOLWorkflow{VIN: vin, CurrentStage: domain.EOLStageBranch}
+	f.rows[vin] = w
+	return w
+}
+
+func (f *fakeEOLWorkflowRepo) Get(_ context.Context, vin string) (*domain.EOLWorkflow, error) {
+	w, ok := f.rows[vin]
+	if !ok {
+		return nil, domain.ErrNotFound
+	}
+	copied := *w
+	return &copied, nil
+}
+
+func (f *fakeEOLWorkflowRepo) GetView(_ context.Context, vin string) (*domain.EOLWorkflowView, error) {
+	w, ok := f.rows[vin]
+	if !ok {
+		return nil, domain.ErrNotFound
+	}
+	return &domain.EOLWorkflowView{
+		VIN:                            w.VIN,
+		CurrentStage:                   w.CurrentStage,
+		BranchShip:                     domain.EOLStageRecord{At: w.BranchShippedAt, ByUserID: w.BranchShippedBy},
+		DepotRelease:                   domain.EOLStageRecord{At: w.DepotReleasedAt, ByUserID: w.DepotReleasedBy},
+		DocumentApprove:                domain.EOLStageRecord{At: w.DocumentApprovedAt, ByUserID: w.DocumentApprovedBy},
+		BranchOpenIssueCountAtShipment: w.BranchOpenIssueCountAtShipment,
+	}, nil
+}
+
+func (f *fakeEOLWorkflowRepo) MarkBranchShipped(_ context.Context, vin string, actorID, openIssueCount int) error {
+	w, ok := f.rows[vin]
+	if !ok || w.BranchShippedAt != nil {
+		return domain.ErrNotFound
+	}
+	now := time.Now()
+	w.BranchShippedAt = &now
+	w.BranchShippedBy = &actorID
+	w.BranchOpenIssueCountAtShipment = &openIssueCount
+	w.CurrentStage = domain.EOLStageDepot
+	return nil
+}
+
+func (f *fakeEOLWorkflowRepo) MarkDepotReleased(_ context.Context, vin string, actorID int) error {
+	w, ok := f.rows[vin]
+	if !ok || w.DepotReleasedAt != nil {
+		return domain.ErrNotFound
+	}
+	now := time.Now()
+	w.DepotReleasedAt = &now
+	w.DepotReleasedBy = &actorID
+	w.CurrentStage = domain.EOLStageDocument
+	return nil
+}
+
+func (f *fakeEOLWorkflowRepo) MarkDocumentApproved(_ context.Context, vin string, actorID int) error {
+	w, ok := f.rows[vin]
+	if !ok || w.DocumentApprovedAt != nil {
+		return domain.ErrNotFound
+	}
+	now := time.Now()
+	w.DocumentApprovedAt = &now
+	w.DocumentApprovedBy = &actorID
+	w.CurrentStage = domain.EOLStageCompleted
+	return nil
+}
 
 // operatorPermissions and managerPermissions mirror the role_permissions rows
 // migration 0002 seeds for the two roles that exist today, so usecase tests
