@@ -94,6 +94,13 @@ type UserRepository interface {
 	GetByID(ctx context.Context, id int) (*domain.User, error)
 }
 
+// RoleRepository reads the table-driven RBAC catalogue (Karar 3).
+type RoleRepository interface {
+	// GetPermissionsForUser returns every permission granted to the user
+	// through their role, resolved in a single query.
+	GetPermissionsForUser(ctx context.Context, userID int) ([]domain.Permission, error)
+}
+
 // AuditRepository appends rows to the append-only audit log.
 type AuditRepository interface {
 	Append(ctx context.Context, entry domain.AuditLog) error

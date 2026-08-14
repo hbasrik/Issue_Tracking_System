@@ -96,9 +96,9 @@ type issueStatusRequest struct {
 }
 
 // handleIssueStatus advances an issue through the OPEN -> IN_PROGRESS -> DONE
-// -> APPROVED lifecycle. Role rules are enforced in the usecase: OPERATOR may
-// report/finish (up to DONE), only MANAGER_ADMIN may APPROVE. Illegal
-// transitions return 409; a role that is not permitted returns 403.
+// -> APPROVED lifecycle. The required issue.transition.* permission depends on
+// the target status, so it is enforced in the usecase rather than in routing.
+// Illegal transitions return 409; a missing permission returns 403.
 func (s *server) handleIssueStatus(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {
@@ -118,7 +118,12 @@ func (s *server) handleIssueStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	claims, _ := ClaimsFromContext(r.Context())
-	if err := s.deps.Issues.TransitionStatus(r.Context(), id, target, claims.UserID, claims.Role); err != nil {
+	ctx, permissions, err := s.permissions.Resolve(r.Context())
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	if err := s.deps.Issues.TransitionStatus(ctx, id, target, claims.UserID, permissions); err != nil {
 		writeError(w, err)
 		return
 	}

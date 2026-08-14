@@ -33,6 +33,7 @@ func main() {
 	stationRepo := postgres.NewStationRepo(pool)
 	analysisRepo := postgres.NewAnalysisRepo(pool)
 	userRepo := postgres.NewUserRepo(pool)
+	roleRepo := postgres.NewRoleRepo(pool)
 	auditRepo := postgres.NewAuditRepo(pool)
 	uow := postgres.NewUnitOfWork(pool)
 
@@ -41,6 +42,7 @@ func main() {
 	router := deliveryhttp.NewRouter(deliveryhttp.Deps{
 		Issuer:             issuer,
 		Auth:               usecase.NewAuthenticator(userRepo),
+		Roles:              roleRepo,
 		Vehicles:           usecase.NewVehicleService(vehicleRepo, checklistRepo, auditRepo, uow),
 		Checkpoints:        usecase.NewCheckpointResultRecorder(vehicleRepo, checkpointRepo),
 		Checklists:         usecase.NewChecklistResultRecorder(vehicleRepo, checklistRepo),

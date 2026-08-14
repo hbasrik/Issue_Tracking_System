@@ -23,21 +23,25 @@ func NewUserRepo(pool *pgxpool.Pool) *UserRepo {
 
 var _ repository.UserRepository = (*UserRepo)(nil)
 
-const userColumns = `id, full_name, email, password_hash, role, is_active, created_at`
+// userSelect joins roles because the role is a foreign key row since migration
+// 0002 (Karar 3), not an enum column on users.
+const userSelect = `SELECT u.id, u.full_name, u.email, u.password_hash,
+	   r.id, r.code, r.name, u.is_active, u.created_at
+	  FROM users u
+	  JOIN roles r ON r.id = u.role_id`
 
 func scanUser(row pgx.Row) (*domain.User, error) {
 	var u domain.User
-	var role string
-	if err := row.Scan(&u.ID, &u.FullName, &u.Email, &u.PasswordHash, &role, &u.IsActive, &u.CreatedAt); err != nil {
+	if err := row.Scan(&u.ID, &u.FullName, &u.Email, &u.PasswordHash,
+		&u.Role.ID, &u.Role.Code, &u.Role.Name, &u.IsActive, &u.CreatedAt); err != nil {
 		return nil, err
 	}
-	u.Role = domain.UserRole(role)
 	return &u, nil
 }
 
 // GetByEmail returns the user with the given email.
 func (r *UserRepo) GetByEmail(ctx context.Context, email string) (*domain.User, error) {
-	row := r.pool.QueryRow(ctx, `SELECT `+userColumns+` FROM users WHERE email = $1`, email)
+	row := r.pool.QueryRow(ctx, userSelect+` WHERE u.email = $1`, email)
 	u, err := scanUser(row)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, domain.ErrNotFound
@@ -47,7 +51,7 @@ func (r *UserRepo) GetByEmail(ctx context.Context, email string) (*domain.User, 
 
 // GetByID returns the user with the given ID.
 func (r *UserRepo) GetByID(ctx context.Context, id int) (*domain.User, error) {
-	row := r.pool.QueryRow(ctx, `SELECT `+userColumns+` FROM users WHERE id = $1`, id)
+	row := r.pool.QueryRow(ctx, userSelect+` WHERE u.id = $1`, id)
 	u, err := scanUser(row)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, domain.ErrNotFound

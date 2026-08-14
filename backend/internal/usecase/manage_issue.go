@@ -83,15 +83,15 @@ func (m *IssueManager) GetByID(ctx context.Context, id int64) (*domain.Issue, er
 }
 
 // TransitionStatus moves an issue to a new status, enforcing both the valid
-// state machine and role-based authorization (Decision Log #4). It records an
+// state machine and permission-based authorization. It records an
 // ISSUE_STATUS_CHANGE audit entry attributed to actorID so every state change
 // is traceable to the user who performed it (FR-1.2).
-func (m *IssueManager) TransitionStatus(ctx context.Context, id int64, target domain.IssueStatus, actorID int, actorRole domain.UserRole) error {
+func (m *IssueManager) TransitionStatus(ctx context.Context, id int64, target domain.IssueStatus, actorID int, actorPermissions domain.PermissionSet) error {
 	issue, err := m.issues.GetByID(ctx, id)
 	if err != nil {
 		return err
 	}
-	if err := AuthorizeIssueTransition(issue.Status, target, actorRole); err != nil {
+	if err := AuthorizeIssueTransition(issue.Status, target, actorPermissions); err != nil {
 		return err
 	}
 
@@ -112,35 +112,34 @@ func (m *IssueManager) TransitionStatus(ctx context.Context, id int64, target do
 	})
 }
 
-// AuthorizeIssueTransition validates an issue status transition for a role.
+// AuthorizeIssueTransition validates an issue status transition against the
+// caller's permissions.
 //
 // State machine: OPEN -> IN_PROGRESS -> DONE -> APPROVED (no skips, no
-// reversals). RBAC (enforced here in the usecase layer, not just the handler):
-// an OPERATOR may drive the repair chain OPEN -> IN_PROGRESS -> DONE; only a
-// MANAGER_ADMIN may give final quality sign-off DONE -> APPROVED. Any other
-// attempted transition, by either role, is rejected.
-func AuthorizeIssueTransition(current, target domain.IssueStatus, role domain.UserRole) error {
+// reversals). Authorization is enforced here in the usecase layer rather than
+// in routing because a single endpoint serves every transition, so the required
+// permission depends on the target status. The seeded matrix grants the repair
+// chain (issue.transition.in_progress, issue.transition.done) to OPERATOR and
+// quality sign-off (issue.transition.approve) to MANAGER_ADMIN only.
+func AuthorizeIssueTransition(current, target domain.IssueStatus, permissions domain.PermissionSet) error {
 	if !target.Valid() {
 		return domain.ErrInvalidEnumValue
 	}
-	if !role.Valid() {
-		return domain.ErrForbidden
-	}
 
+	var required string
 	switch {
 	case current == domain.IssueStatusOpen && target == domain.IssueStatusInProgress:
-		// Both roles may pick up an open issue.
-		return nil
+		required = domain.PermissionIssueTransitionInProgress
 	case current == domain.IssueStatusInProgress && target == domain.IssueStatusDone:
-		// Both roles: the technician (operator) finishes the repair.
-		return nil
+		required = domain.PermissionIssueTransitionDone
 	case current == domain.IssueStatusDone && target == domain.IssueStatusApproved:
-		// Quality sign-off is manager-only.
-		if role != domain.UserRoleManagerAdmin {
-			return domain.ErrForbidden
-		}
-		return nil
+		required = domain.PermissionIssueTransitionApprove
 	default:
 		return domain.ErrInvalidStatusTransition
 	}
+
+	if !permissions.Has(required) {
+		return domain.ErrForbidden
+	}
+	return nil
 }

@@ -16,6 +16,7 @@ import (
 
 	"github.com/karea/backend/internal/domain"
 	"github.com/karea/backend/internal/platform/auth"
+	"github.com/karea/backend/internal/repository"
 	"github.com/karea/backend/internal/usecase"
 )
 
@@ -23,6 +24,7 @@ import (
 type Deps struct {
 	Issuer             *auth.Issuer
 	Auth               *usecase.Authenticator
+	Roles              repository.RoleRepository
 	Vehicles           *usecase.VehicleService
 	Checkpoints        *usecase.CheckpointResultRecorder
 	Checklists         *usecase.ChecklistResultRecorder
@@ -33,14 +35,16 @@ type Deps struct {
 }
 
 type server struct {
-	deps Deps
+	deps        Deps
+	permissions *PermissionChecker
 }
 
 // NewRouter builds the fully-wired HTTP handler with routing, RBAC middleware,
 // and the route→usecase mapping inferred from the UI/UX page hierarchy
 // (07_KAREA_UIUX_Tasarim_Rehberi.md Section 2).
 func NewRouter(deps Deps) http.Handler {
-	s := &server{deps: deps}
+	permissions := NewPermissionChecker(deps.Roles)
+	s := &server{deps: deps, permissions: permissions}
 
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
@@ -55,42 +59,57 @@ func NewRouter(deps Deps) http.Handler {
 		// Public: authentication.
 		r.Post("/auth/login", s.handleLogin)
 
-		// Authenticated routes.
+		// Authenticated routes. Every gate below is a permission code, never a
+		// role code, so extending the role matrix is a role_permissions insert
+		// rather than a routing change (Karar 3).
 		r.Group(func(r chi.Router) {
 			r.Use(RequireAuth(deps.Issuer))
 
-			// Both roles.
-			r.Get("/vehicles", s.handleVehicleList)
-			r.Get("/vehicles/search", s.handleVehicleSearch)
-			r.Get("/vehicles/{vin}", s.handleVehicleGet)
-			r.Get("/vehicles/{vin}/checkpoints", s.handleVehicleCheckpoints)
-			r.Get("/vehicles/{vin}/checklist/{type}", s.handleVehicleChecklistGet)
-			r.Get("/issues", s.handleIssueList)
-			r.Get("/issues/{id}", s.handleIssueGet)
-			r.Get("/stations", s.handleStationList)
-			// Issue lifecycle: route is open to both roles; the DONE->APPROVED
-			// (manager-only) rule is enforced in the usecase layer.
-			r.Patch("/issues/{id}/status", s.handleIssueStatus)
-			// Operator read visibility into current problem status (Decision Log #9).
-			// Current-state views only — filtered Analysis tool stays Manager/Admin.
-			r.Get("/analysis/vehicle-severity-breakdown", s.handleVehicleSeverityBreakdown)
-			r.Get("/analysis/defect-rate-per-station", s.handleDefectRatePerStation)
-
-			// Manager/Admin only (web dashboard).
+			// Read access. Both seeded roles hold vehicle.view.
 			r.Group(func(r chi.Router) {
-				r.Use(RequireRole(domain.UserRoleManagerAdmin))
-				r.Patch("/vehicles/{vin}/status", s.handleVehicleStatus)
+				r.Use(permissions.RequirePermission(domain.PermissionVehicleView))
+				r.Get("/vehicles", s.handleVehicleList)
+				r.Get("/vehicles/search", s.handleVehicleSearch)
+				r.Get("/vehicles/{vin}", s.handleVehicleGet)
+				r.Get("/vehicles/{vin}/checkpoints", s.handleVehicleCheckpoints)
+				r.Get("/vehicles/{vin}/checklist/{type}", s.handleVehicleChecklistGet)
+				r.Get("/issues", s.handleIssueList)
+				r.Get("/issues/{id}", s.handleIssueGet)
+				r.Get("/stations", s.handleStationList)
+				// Operator read visibility into current problem status
+				// (Decision Log #9). These are gated on vehicle.view, not
+				// analysis.view, because analysis.view is the Manager/Admin-only
+				// filtered Analysis tool permission.
+				r.Get("/analysis/vehicle-severity-breakdown", s.handleVehicleSeverityBreakdown)
+				r.Get("/analysis/defect-rate-per-station", s.handleDefectRatePerStation)
+			})
+
+			// Issue lifecycle. One route serves every transition, so the
+			// specific issue.transition.* permission is checked in the usecase
+			// against the target status rather than here.
+			r.Patch("/issues/{id}/status", s.handleIssueStatus)
+
+			// Filtered Analysis tool.
+			r.Group(func(r chi.Router) {
+				r.Use(permissions.RequirePermission(domain.PermissionAnalysisView))
 				r.Get("/analysis/daily-pending-issues", s.handleDailyPendingIssues)
 				r.Get("/analysis/mttr", s.handleMTTR)
 			})
 
-			// Operator only (mobile field app).
+			// Manual override of a vehicle's global status is an administrative
+			// action.
 			r.Group(func(r chi.Router) {
-				r.Use(RequireRole(domain.UserRoleOperator))
-				r.Post("/vehicles/{vin}/checkpoints/{checkpointId}", s.handleRecordCheckpoint)
-				r.Post("/vehicles/{vin}/checklist/{type}/{itemId}", s.handleRecordChecklist)
-				r.Post("/issues", s.handleCreateIssue)
+				r.Use(permissions.RequirePermission(domain.PermissionAdminManageMasters))
+				r.Patch("/vehicles/{vin}/status", s.handleVehicleStatus)
 			})
+
+			// Shop-floor writes.
+			r.With(permissions.RequirePermission(domain.PermissionStationStepUpdate)).
+				Post("/vehicles/{vin}/checkpoints/{checkpointId}", s.handleRecordCheckpoint)
+			r.With(permissions.RequirePermission(domain.PermissionChecklistItemUpdate)).
+				Post("/vehicles/{vin}/checklist/{type}/{itemId}", s.handleRecordChecklist)
+			r.With(permissions.RequirePermission(domain.PermissionIssueCreate)).
+				Post("/issues", s.handleCreateIssue)
 		})
 	})
 

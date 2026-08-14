@@ -2,8 +2,7 @@ package http
 
 import (
 	"net/http"
-
-	"github.com/karea/backend/internal/domain"
+	"time"
 )
 
 type loginRequest struct {
@@ -12,8 +11,20 @@ type loginRequest struct {
 }
 
 type loginResponse struct {
-	Token string       `json:"token"`
-	User  *domain.User `json:"user"`
+	Token string    `json:"token"`
+	User  loginUser `json:"user"`
+}
+
+// loginUser is the wire shape of the authenticated user. Role is flattened to
+// its code so the API contract is unchanged now that domain.User.Role is a
+// table row rather than an enum value.
+type loginUser struct {
+	ID        int       `json:"ID"`
+	FullName  string    `json:"FullName"`
+	Email     string    `json:"Email"`
+	Role      string    `json:"Role"`
+	IsActive  bool      `json:"IsActive"`
+	CreatedAt time.Time `json:"CreatedAt"`
 }
 
 // handleLogin verifies credentials and returns a signed JWT carrying the user
@@ -37,11 +48,21 @@ func (s *server) handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := s.deps.Issuer.Issue(user.ID, user.Role)
+	token, err := s.deps.Issuer.Issue(user.ID, user.Role.Code)
 	if err != nil {
 		writeError(w, err)
 		return
 	}
 
-	writeJSON(w, http.StatusOK, loginResponse{Token: token, User: user})
+	writeJSON(w, http.StatusOK, loginResponse{
+		Token: token,
+		User: loginUser{
+			ID:        user.ID,
+			FullName:  user.FullName,
+			Email:     user.Email,
+			Role:      user.Role.Code,
+			IsActive:  user.IsActive,
+			CreatedAt: user.CreatedAt,
+		},
+	})
 }

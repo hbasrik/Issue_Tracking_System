@@ -7,11 +7,15 @@ import (
 
 	"github.com/karea/backend/internal/domain"
 	"github.com/karea/backend/internal/platform/auth"
+	"github.com/karea/backend/internal/repository"
 )
 
 type contextKey int
 
-const claimsContextKey contextKey = iota
+const (
+	claimsContextKey contextKey = iota
+	permissionsContextKey
+)
 
 // CORS returns middleware that allows browser clients only when the request
 // Origin is in allowedOrigins (from CORS_ALLOWED_ORIGIN). Matching origins get
@@ -69,30 +73,67 @@ func RequireAuth(issuer *auth.Issuer) func(http.Handler) http.Handler {
 	}
 }
 
-// RequireRole returns middleware that allows the request only if the
-// authenticated user's role is in allowed. It must be chained after
-// RequireAuth. On mismatch it responds 403 (RBAC, Decision Log #4).
-func RequireRole(allowed ...domain.UserRole) func(http.Handler) http.Handler {
+// PermissionChecker resolves a caller's permissions from the RBAC tables and
+// turns them into route middleware (Karar 3).
+type PermissionChecker struct {
+	roles repository.RoleRepository
+}
+
+// NewPermissionChecker constructs a PermissionChecker over the role catalogue.
+func NewPermissionChecker(roles repository.RoleRepository) *PermissionChecker {
+	return &PermissionChecker{roles: roles}
+}
+
+// RequirePermission returns middleware that allows the request only if the
+// authenticated user holds the given permission code. It must be chained after
+// RequireAuth. On a missing permission it responds 403.
+func (pc *PermissionChecker) RequirePermission(code string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			claims, ok := ClaimsFromContext(r.Context())
-			if !ok {
-				writeError(w, auth.ErrInvalidToken)
-				return
-			}
-			if err := auth.Authorize(claims.Role, allowed...); err != nil {
+			ctx, permissions, err := pc.Resolve(r.Context())
+			if err != nil {
 				writeError(w, err)
 				return
 			}
-			next.ServeHTTP(w, r)
+			if err := auth.Authorize(permissions, code); err != nil {
+				writeError(w, err)
+				return
+			}
+			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
+}
+
+// Resolve returns the caller's permission set along with a context carrying it.
+// The set is looked up at most once per request: stacked RequirePermission
+// middleware and handlers that need the set reuse the cached value instead of
+// re-querying.
+func (pc *PermissionChecker) Resolve(ctx context.Context) (context.Context, domain.PermissionSet, error) {
+	if permissions, ok := PermissionsFromContext(ctx); ok {
+		return ctx, permissions, nil
+	}
+	claims, ok := ClaimsFromContext(ctx)
+	if !ok {
+		return ctx, nil, auth.ErrInvalidToken
+	}
+	granted, err := pc.roles.GetPermissionsForUser(ctx, claims.UserID)
+	if err != nil {
+		return ctx, nil, err
+	}
+	permissions := domain.NewPermissionSet(granted)
+	return context.WithValue(ctx, permissionsContextKey, permissions), permissions, nil
 }
 
 // ClaimsFromContext returns the authenticated claims stored by RequireAuth.
 func ClaimsFromContext(ctx context.Context) (*auth.Claims, bool) {
 	claims, ok := ctx.Value(claimsContextKey).(*auth.Claims)
 	return claims, ok
+}
+
+// PermissionsFromContext returns the permission set cached by Resolve.
+func PermissionsFromContext(ctx context.Context) (domain.PermissionSet, bool) {
+	permissions, ok := ctx.Value(permissionsContextKey).(domain.PermissionSet)
+	return permissions, ok
 }
 
 // bearerToken extracts the token from an "Authorization: Bearer <token>" header.

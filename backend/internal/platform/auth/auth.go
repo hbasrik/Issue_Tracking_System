@@ -1,7 +1,6 @@
-// Package auth provides JWT issuing/parsing and role-based access control
-// helpers. The HTTP middleware that consumes these is built in Prompt 4; this
-// package intentionally has no net/http dependency so the token logic stays
-// unit-testable in isolation.
+// Package auth provides JWT issuing/parsing and permission-based access
+// control helpers. This package intentionally has no net/http dependency so
+// the token logic stays unit-testable in isolation.
 //
 // Tokens are signed with HS256 using only the standard library, avoiding a
 // third-party JWT dependency for what is a small, well-understood format.
@@ -24,13 +23,19 @@ import (
 var (
 	ErrInvalidToken = errors.New("invalid token")
 	ErrExpiredToken = errors.New("token expired")
-	ErrForbidden    = errors.New("role not permitted")
+	ErrForbidden    = errors.New("permission not granted")
 )
 
-// Claims is the JWT payload. Role drives RBAC (Decision Log #4).
+// Claims is the JWT payload.
+//
+// RoleCode is carried for coarse client-side decisions (which app shell to
+// render). It is deliberately NOT the basis for endpoint authorization: since
+// Karar 3 the permission set is table-driven and resolved per request, so
+// putting it in the token would let a revoked permission stay valid until the
+// token expired.
 type Claims struct {
-	UserID int             `json:"sub"`
-	Role   domain.UserRole `json:"role"`
+	UserID   int    `json:"sub"`
+	RoleCode string `json:"role_code"`
 	// IssuedAt and ExpiresAt are Unix seconds (standard "iat"/"exp" claims).
 	IssuedAt  int64 `json:"iat"`
 	ExpiresAt int64 `json:"exp"`
@@ -53,11 +58,11 @@ type jwtHeader struct {
 }
 
 // Issue mints a signed token for a user with the configured TTL.
-func (i *Issuer) Issue(userID int, role domain.UserRole) (string, error) {
+func (i *Issuer) Issue(userID int, roleCode string) (string, error) {
 	now := time.Now()
 	claims := Claims{
 		UserID:    userID,
-		Role:      role,
+		RoleCode:  roleCode,
 		IssuedAt:  now.Unix(),
 		ExpiresAt: now.Add(i.ttl).Unix(),
 	}
@@ -97,7 +102,7 @@ func (i *Issuer) Parse(token string) (*Claims, error) {
 	if err := json.Unmarshal(claimsJSON, &claims); err != nil {
 		return nil, ErrInvalidToken
 	}
-	if !claims.Role.Valid() {
+	if claims.UserID == 0 || claims.RoleCode == "" {
 		return nil, ErrInvalidToken
 	}
 	if time.Now().Unix() >= claims.ExpiresAt {
@@ -116,15 +121,13 @@ func encodeSegment(b []byte) string {
 	return base64.RawURLEncoding.EncodeToString(b)
 }
 
-// Authorize reports whether a role is allowed to access a resource, given the
-// set of roles permitted for it. This is the RBAC decision function the HTTP
-// middleware (Prompt 4) will call after Parse. Exactly two roles exist:
-// OPERATOR (mobile-only) and MANAGER_ADMIN (web-only).
-func Authorize(role domain.UserRole, allowed ...domain.UserRole) error {
-	for _, a := range allowed {
-		if role == a {
-			return nil
-		}
+// Authorize reports whether a resolved permission set grants the permission a
+// resource requires. This is the RBAC decision function the HTTP middleware
+// calls after Parse. It takes a permission code rather than a role so adding a
+// role to the matrix never requires touching this code path (Karar 3).
+func Authorize(permissions domain.PermissionSet, required string) error {
+	if permissions.Has(required) {
+		return nil
 	}
 	return ErrForbidden
 }
