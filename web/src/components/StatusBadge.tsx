@@ -1,7 +1,7 @@
 import { statusColors } from '../theme/tokens';
 
 type BadgeKind =
-  | 'checkpoint'
+  | 'stationStep'
   | 'eol'
   | 'shipment'
   | 'vehicle'
@@ -40,7 +40,7 @@ function resolve(
   const v = value.toUpperCase();
 
   switch (kind) {
-    case 'checkpoint':
+    case 'stationStep':
       if (v === 'OK' || v === 'TAMAMLANDI') {
         return { color: statusColors.ok, label: 'Tamamlandı' };
       }
@@ -90,6 +90,9 @@ function resolve(
       // DONE / APPROVED / RESOLVED → resolved (green) per Section 5 spirit
       if (v === 'DONE' || v === 'APPROVED' || v === 'RESOLVED') {
         return { color: statusColors.issueResolved, label: v };
+      }
+      if (v === 'CONDITIONAL_APPROVED') {
+        return { color: statusColors.conditionalOk, label: 'ŞARTLI ONAY' };
       }
       return { color: statusColors.pending, label: v };
 

@@ -73,7 +73,7 @@ export default function UsersPage() {
                 </td>
                 <td className="px-4 py-3">
                   <StatusBadge
-                    kind="checkpoint"
+                    kind="stationStep"
                     value={u.isActive ? 'OK' : 'PENDING'}
                   />
                 </td>

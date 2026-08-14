@@ -44,7 +44,7 @@ export default function AnalysisPage() {
   // Draft filters (applied on "Uygula")
   const [draftFrom, setDraftFrom] = useState(searchParams.get('from') ?? '');
   const [draftTo, setDraftTo] = useState(searchParams.get('to') ?? '');
-  const [draftPhase, setDraftPhase] = useState(searchParams.get('phase') ?? '');
+  const [draftStation, setDraftStation] = useState(searchParams.get('station') ?? searchParams.get('phase') ?? '');
   const [draftStatus, setDraftStatus] = useState(searchParams.get('status') ?? '');
   const [draftIssueType, setDraftIssueType] = useState(
     searchParams.get('issue_type') ?? '',
@@ -56,7 +56,7 @@ export default function AnalysisPage() {
       from: searchParams.get('from') ?? undefined,
       to: searchParams.get('to') ?? undefined,
       vin_suffix: searchParams.get('vin_suffix') ?? undefined,
-      phase: searchParams.get('phase') ?? undefined,
+      station: searchParams.get('station') ?? searchParams.get('phase') ?? undefined,
       status: searchParams.get('status') ?? undefined,
       issue_type: searchParams.get('issue_type') ?? undefined,
     }),
@@ -93,7 +93,7 @@ export default function AnalysisPage() {
     const next = new URLSearchParams();
     if (draftFrom) next.set('from', draftFrom);
     if (draftTo) next.set('to', draftTo);
-    if (draftPhase) next.set('phase', draftPhase);
+    if (draftStation) next.set('station', draftStation);
     if (draftStatus) next.set('status', draftStatus);
     if (draftIssueType) next.set('issue_type', draftIssueType);
     if (draftVin.trim()) next.set('vin_suffix', draftVin.trim());
@@ -193,7 +193,7 @@ export default function AnalysisPage() {
   const filterSummary = [
     applied.from && `from ${applied.from}`,
     applied.to && `to ${applied.to}`,
-    applied.phase && `phase ${applied.phase}`,
+    applied.station && `station ${applied.station}`,
     applied.status && `status ${applied.status}`,
     applied.issue_type && `issue type ${applied.issue_type}`,
     applied.vin_suffix && `VIN …${applied.vin_suffix}`,
@@ -243,17 +243,17 @@ export default function AnalysisPage() {
             style={{ borderColor: 'var(--border)' }}
           />
         </Field>
-        <Field label="Phase">
+        <Field label="Station">
           <select
-            value={draftPhase}
-            onChange={(e) => setDraftPhase(e.target.value)}
+            value={draftStation}
+            onChange={(e) => setDraftStation(e.target.value)}
             className="rounded-lg border bg-[var(--bg-page)] px-3 py-2 text-[15px]"
             style={{ borderColor: 'var(--border)' }}
           >
             <option value="">All</option>
             {Array.from({ length: 8 }, (_, i) => i + 1).map((p) => (
               <option key={p} value={String(p)}>
-                Phase {p}
+                Station {p}
               </option>
             ))}
           </select>
