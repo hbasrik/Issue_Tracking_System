@@ -27,6 +27,7 @@ const issueColumns = `id, vin, source_type, source_station_step_id, source_check
 	        issue_type_id, severity, description, COALESCE(picture_url, ''), status,
 	        issue_reporter_id, issue_date, process_reporter_id, process_date,
 	        finish_reporter_id, finish_date, approve_reporter_id, approve_date,
+	        conditional_approve_reporter_id, conditional_approve_date,
 	        COALESCE(issue_picture_done_url, ''), COALESCE(solution_description, ''),
 	        created_at, updated_at`
 
@@ -39,6 +40,7 @@ func scanIssue(row pgx.Row) (*domain.Issue, error) {
 		&i.IssueTypeID, &severity, &i.Description, &i.PictureURL, &status,
 		&i.IssueReporterID, &i.IssueDate, &i.ProcessReporterID, &i.ProcessDate,
 		&i.FinishReporterID, &i.FinishDate, &i.ApproveReporterID, &i.ApproveDate,
+		&i.ConditionalApproveReporterID, &i.ConditionalApproveDate,
 		&i.IssuePictureDoneURL, &i.SolutionDescription, &i.CreatedAt, &i.UpdatedAt,
 	); err != nil {
 		return nil, err
@@ -141,6 +143,11 @@ func (r *IssueRepo) UpdateStatus(ctx context.Context, id int64, status domain.Is
 	case domain.IssueStatusApproved:
 		query = `UPDATE issue_list
 		         SET status = $2, approve_reporter_id = $3, approve_date = now()
+		         WHERE id = $1`
+	case domain.IssueStatusConditionalApproved:
+		query = `UPDATE issue_list
+		         SET status = $2, conditional_approve_reporter_id = $3,
+		             conditional_approve_date = now()
 		         WHERE id = $1`
 	default:
 		return domain.ErrInvalidStatusTransition

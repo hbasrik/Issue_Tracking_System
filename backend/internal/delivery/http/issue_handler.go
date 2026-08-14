@@ -96,9 +96,12 @@ type issueStatusRequest struct {
 }
 
 // handleIssueStatus advances an issue through the OPEN -> IN_PROGRESS -> DONE
-// -> APPROVED lifecycle. The required issue.transition.* permission depends on
-// the target status, so it is enforced in the usecase rather than in routing.
-// Illegal transitions return 409; a missing permission returns 403.
+// lifecycle and on to one of the two terminal quality decisions, APPROVED or
+// CONDITIONAL_APPROVED (Karar 6). The required issue.transition.* permission
+// depends on the target status, so it is enforced in the usecase rather than
+// in routing. Illegal transitions — including any attempt to move an issue
+// that already carries a quality decision — return 409; a missing permission
+// returns 403.
 func (s *server) handleIssueStatus(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {

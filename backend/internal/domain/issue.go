@@ -10,16 +10,27 @@ const (
 	IssueStatusInProgress IssueStatus = "IN_PROGRESS" // Islemde
 	IssueStatusDone       IssueStatus = "DONE"        // Tamamlandi: repair finished, awaiting sign-off
 	IssueStatusApproved   IssueStatus = "APPROVED"    // Kalite Onay: terminal closed state
+	// IssueStatusConditionalApproved is Karar 6's second terminal state: the
+	// quality decision closed the issue with a reservation rather than a full
+	// approval. It is a sibling of APPROVED, not a step before it.
+	IssueStatusConditionalApproved IssueStatus = "CONDITIONAL_APPROVED" // Sartli Onay
 )
 
 // Valid reports whether the issue status is a known enum value.
 func (s IssueStatus) Valid() bool {
 	switch s {
-	case IssueStatusOpen, IssueStatusInProgress, IssueStatusDone, IssueStatusApproved:
+	case IssueStatusOpen, IssueStatusInProgress, IssueStatusDone,
+		IssueStatusApproved, IssueStatusConditionalApproved:
 		return true
 	default:
 		return false
 	}
+}
+
+// IsTerminal reports whether the issue has received a quality decision and can
+// no longer be transitioned. Karar 6 gives the lifecycle two terminal states.
+func (s IssueStatus) IsTerminal() bool {
+	return s == IssueStatusApproved || s == IssueStatusConditionalApproved
 }
 
 // IssueSeverity mirrors the issue_severity_enum type (Decision Log #7).
@@ -63,8 +74,9 @@ func (s IssueSource) Valid() bool {
 
 // IsOpen reports whether the issue still counts against the EOL depot-release
 // hard-block gate. It mirrors the OPEN/IN_PROGRESS/DONE predicate used by
-// fn_enforce_depot_release and idx_issue_list_open_by_vin: only APPROVED is
-// considered closed, because DONE still awaits quality sign-off.
+// fn_enforce_depot_release and idx_issue_list_open_by_vin: an issue is closed
+// only once it reaches a terminal state, because DONE still awaits quality
+// sign-off.
 func (s IssueStatus) IsOpen() bool {
 	switch s {
 	case IssueStatusOpen, IssueStatusInProgress, IssueStatusDone:
@@ -95,8 +107,12 @@ type Issue struct {
 	FinishDate          *time.Time
 	ApproveReporterID   *int
 	ApproveDate         *time.Time
-	IssuePictureDoneURL string
-	SolutionDescription string
-	CreatedAt           time.Time
-	UpdatedAt           time.Time
+	// ConditionalApprove* mirror the Karar 6 columns, written instead of the
+	// Approve* pair when the quality decision was a conditional sign-off.
+	ConditionalApproveReporterID *int
+	ConditionalApproveDate       *time.Time
+	IssuePictureDoneURL          string
+	SolutionDescription          string
+	CreatedAt                    time.Time
+	UpdatedAt                    time.Time
 }

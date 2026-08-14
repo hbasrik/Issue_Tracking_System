@@ -8,7 +8,7 @@ import (
 )
 
 // IssueManager handles the issue lifecycle: OPEN -> IN_PROGRESS -> DONE ->
-// APPROVED.
+// APPROVED or CONDITIONAL_APPROVED.
 type IssueManager struct {
 	issues repository.IssueRepository
 	audit  repository.AuditRepository
@@ -115,15 +115,23 @@ func (m *IssueManager) TransitionStatus(ctx context.Context, id int64, target do
 // AuthorizeIssueTransition validates an issue status transition against the
 // caller's permissions.
 //
-// State machine: OPEN -> IN_PROGRESS -> DONE -> APPROVED (no skips, no
-// reversals). Authorization is enforced here in the usecase layer rather than
-// in routing because a single endpoint serves every transition, so the required
+// State machine: OPEN -> IN_PROGRESS -> DONE, then a quality decision that
+// branches to either APPROVED or, per Karar 6, CONDITIONAL_APPROVED. No skips
+// and no reversals, and both branches are terminal — an issue that already
+// carries a quality decision cannot be moved again.
+//
+// Authorization is enforced here in the usecase layer rather than in routing
+// because a single endpoint serves every transition, so the required
 // permission depends on the target status. The seeded matrix grants the repair
 // chain (issue.transition.in_progress, issue.transition.done) to OPERATOR and
-// quality sign-off (issue.transition.approve) to MANAGER_ADMIN only.
+// both sign-off branches (issue.transition.approve,
+// issue.transition.conditional_approve) to MANAGER_ADMIN only.
 func AuthorizeIssueTransition(current, target domain.IssueStatus, permissions domain.PermissionSet) error {
 	if !target.Valid() {
 		return domain.ErrInvalidEnumValue
+	}
+	if current.IsTerminal() {
+		return domain.ErrInvalidStatusTransition
 	}
 
 	var required string
@@ -134,6 +142,8 @@ func AuthorizeIssueTransition(current, target domain.IssueStatus, permissions do
 		required = domain.PermissionIssueTransitionDone
 	case current == domain.IssueStatusDone && target == domain.IssueStatusApproved:
 		required = domain.PermissionIssueTransitionApprove
+	case current == domain.IssueStatusDone && target == domain.IssueStatusConditionalApproved:
+		required = domain.PermissionIssueTransitionConditionalApprove
 	default:
 		return domain.ErrInvalidStatusTransition
 	}
