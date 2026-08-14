@@ -1,14 +1,19 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { api, ApiError, type Vehicle } from '../lib/api';
+import { api, ApiError, type Station, type Vehicle } from '../lib/api';
 import { StatusBadge } from '../components/StatusBadge';
+import { VehicleIdentity } from '../components/VehicleIdentity';
+import { ChecklistPanel } from '../components/ChecklistPanel';
+import { EolWorkflowTab } from '../components/EolWorkflowTab';
+import { MediaGallery } from '../components/MediaGallery';
 
-type Tab = 'overview' | 'eol' | 'shipment' | 'issues' | 'audit';
+type Tab = 'overview' | 'eol' | 'shipment' | 'test' | 'issues' | 'audit';
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'overview', label: 'Overview' },
   { id: 'eol', label: 'EoL' },
   { id: 'shipment', label: 'Shipment' },
+  { id: 'test', label: 'Test' },
   { id: 'issues', label: 'Issues' },
   { id: 'audit', label: 'Audit Log' },
 ];
@@ -21,25 +26,36 @@ const STATUS_OPTIONS = [
   'ON_HOLD',
 ] as const;
 
-/** Vehicle detail with Overview / EoL / Shipment / Issues / Audit Log tabs — §2.1 / §4.3. */
+/** Vehicle detail with Overview / EoL / Shipment / Test / Issues / Audit Log tabs. */
 export default function VehicleDetailPage() {
   const { vin = '' } = useParams();
   const [tab, setTab] = useState<Tab>('overview');
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
+  const [stations, setStations] = useState<Station[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [statusDraft, setStatusDraft] = useState('');
   const [blockingModal, setBlockingModal] = useState<number[] | null>(null);
   const [busy, setBusy] = useState(false);
+
+  const loadVehicle = useCallback(async () => {
+    const v = await api.getVehicle(vin);
+    setVehicle(v);
+    setStatusDraft(v.CurrentGlobalStatus);
+  }, [vin]);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       setError(null);
       try {
-        const v = await api.getVehicle(vin);
+        const [v, stationRes] = await Promise.all([
+          api.getVehicle(vin),
+          api.listStations().catch(() => ({ items: [] as Station[] })),
+        ]);
         if (cancelled) return;
         setVehicle(v);
         setStatusDraft(v.CurrentGlobalStatus);
+        setStations(stationRes.items ?? []);
       } catch (err) {
         if (!cancelled) {
           setError(err instanceof Error ? err.message : 'Failed to load vehicle');
@@ -89,6 +105,7 @@ export default function VehicleDetailPage() {
   }
 
   const pct = Number(vehicle.TotalProgressPercentage);
+  const currentStation = stations.find((s) => s.ID === vehicle.CurrentStationID);
 
   return (
     <section>
@@ -98,12 +115,15 @@ export default function VehicleDetailPage() {
       <div className="mt-4 flex flex-wrap items-start gap-6">
         <ProgressRing percentage={pct} />
         <div>
-          <h1 className="text-2xl font-semibold">…{vehicle.VIN.slice(-5)}</h1>
-          <p className="text-[13px] text-[var(--text-secondary)]">{vehicle.VIN}</p>
+          <VehicleIdentity vin={vehicle.VIN} vehicleNumber={vehicle.VehicleNumber} />
           <div className="mt-2 flex items-center gap-2">
             <StatusBadge kind="vehicle" value={vehicle.CurrentGlobalStatus} />
             <span className="text-[13px] text-[var(--text-secondary)]">
-              Phase {vehicle.CurrentPhase}/8 · Model #{vehicle.VehicleModelID}
+              {currentStation
+                ? `${currentStation.Name} · seq ${currentStation.SequenceNo}`
+                : 'No current station'}
+              {' · '}
+              Model #{vehicle.VehicleModelID}
             </span>
           </div>
         </div>
@@ -134,84 +154,108 @@ export default function VehicleDetailPage() {
 
       <div className="mt-6">
         {tab === 'overview' && (
-          <div
-            className="rounded-xl border bg-[var(--bg-surface-1)] p-5"
-            style={{ borderColor: 'var(--border)' }}
-          >
-            <h2 className="text-lg font-semibold">Status editor</h2>
-            <p className="mt-1 text-[13px] text-[var(--text-secondary)]">
-              Hard-block transitions return 409 with blocking item IDs (§4.3).
-            </p>
-            <div className="mt-4 flex flex-wrap items-end gap-3">
-              <select
-                value={statusDraft}
-                onChange={(e) => setStatusDraft(e.target.value)}
-                className="rounded-lg border bg-[var(--bg-page)] px-3 py-2 text-[15px]"
-                style={{ borderColor: 'var(--border)' }}
-              >
-                {STATUS_OPTIONS.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
-              <button
-                type="button"
-                disabled={busy}
-                onClick={saveStatus}
-                className="rounded-lg bg-[var(--accent)] px-4 py-2 text-[15px] text-white disabled:opacity-60"
-              >
-                Kaydet
-              </button>
-            </div>
-            {error && (
-              <p className="mt-3 text-[13px]" style={{ color: 'var(--status-not-ok)' }}>
-                {error}
+          <div className="space-y-5">
+            <div
+              className="rounded-xl border bg-[var(--bg-surface-1)] p-5"
+              style={{ borderColor: 'var(--border)' }}
+            >
+              <h2 className="text-lg font-semibold">Status editor</h2>
+              <p className="mt-1 text-[13px] text-[var(--text-secondary)]">
+                Hard-block transitions return 409 with blocking item IDs (§4.3).
               </p>
-            )}
-            <div className="mt-6">
-              <h3 className="text-[15px] font-medium">8-phase stepper</h3>
-              <div className="mt-3 flex gap-2">
-                {Array.from({ length: 8 }, (_, i) => i + 1).map((phase) => {
-                  const done = phase < vehicle.CurrentPhase;
-                  const active = phase === vehicle.CurrentPhase;
-                  return (
-                    <div
-                      key={phase}
-                      className="flex h-9 w-9 items-center justify-center rounded-full text-[13px] font-medium"
-                      style={{
-                        backgroundColor: done || active ? 'var(--accent)' : 'transparent',
-                        color: done || active ? '#fff' : 'var(--text-secondary)',
-                        outline: active ? '2px solid var(--accent)' : '1px solid var(--border)',
-                        outlineOffset: active ? '2px' : 0,
-                        opacity: done ? 1 : active ? 1 : 0.5,
-                      }}
-                    >
-                      {phase}
-                    </div>
-                  );
-                })}
+              <div className="mt-4 flex flex-wrap items-end gap-3">
+                <select
+                  value={statusDraft}
+                  onChange={(e) => setStatusDraft(e.target.value)}
+                  className="rounded-lg border bg-[var(--bg-page)] px-3 py-2 text-[15px]"
+                  style={{ borderColor: 'var(--border)' }}
+                >
+                  {STATUS_OPTIONS.map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={saveStatus}
+                  className="rounded-lg bg-[var(--accent)] px-4 py-2 text-[15px] text-white disabled:opacity-60"
+                >
+                  Kaydet
+                </button>
               </div>
+              {error && (
+                <p className="mt-3 text-[13px]" style={{ color: 'var(--status-not-ok)' }}>
+                  {error}
+                </p>
+              )}
+              <div className="mt-6">
+                <h3 className="text-[15px] font-medium">Station stepper</h3>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {stations
+                    .slice()
+                    .sort((a, b) => a.SequenceNo - b.SequenceNo)
+                    .map((station) => {
+                      const active = station.ID === vehicle.CurrentStationID;
+                      const past =
+                        currentStation != null &&
+                        station.SequenceNo < currentStation.SequenceNo;
+                      return (
+                        <div
+                          key={station.ID}
+                          title={station.Name}
+                          className="flex h-9 min-w-9 items-center justify-center rounded-full px-2 text-[13px] font-medium"
+                          style={{
+                            backgroundColor:
+                              past || active ? 'var(--accent)' : 'transparent',
+                            color: past || active ? '#fff' : 'var(--text-secondary)',
+                            outline: active
+                              ? '2px solid var(--accent)'
+                              : '1px solid var(--border)',
+                            outlineOffset: active ? '2px' : 0,
+                            opacity: past ? 1 : active ? 1 : 0.5,
+                          }}
+                        >
+                          {station.SequenceNo}
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+            </div>
+            <div
+              className="rounded-xl border bg-[var(--bg-surface-1)] p-5"
+              style={{ borderColor: 'var(--border)' }}
+            >
+              <MediaGallery entityType="VEHICLE" entityId={vehicle.VIN} />
             </div>
           </div>
         )}
 
         {tab === 'eol' && (
-          <PlaceholderPanel
-            title="EoL checklist"
-            body="Model-based EoL template items (13+) and exit-gate status will be listed here once dedicated read endpoints are available."
-          />
+          <EolWorkflowTab vin={vehicle.VIN} onVehicleChanged={() => void loadVehicle()} />
         )}
         {tab === 'shipment' && (
-          <PlaceholderPanel
+          <ChecklistPanel
+            vin={vehicle.VIN}
+            type="shipment"
             title="Shipment checklist"
-            body="Model-based shipment template items (43+) and shipment-gate status will be listed here once dedicated read endpoints are available."
+            hint="Hard-block gate: incomplete items block WITH_CUSTOMER / SHIPPED."
+          />
+        )}
+        {tab === 'test' && (
+          <ChecklistPanel
+            vin={vehicle.VIN}
+            type="test"
+            title="Test checklist"
+            hint="Informational quality tracking — no vehicle-status gate."
           />
         )}
         {tab === 'issues' && (
           <PlaceholderPanel
             title="Vehicle issues"
-            body="Open and historical issues for this VIN. Use the Issues page for the global queue; quality approval (DONE → APPROVED) is Manager-only."
+            body="Open and historical issues for this VIN. Use the Issues page for the global queue; quality approval (DONE → APPROVED or Şartlı Onay) is Manager-only."
           />
         )}
         {tab === 'audit' && (
