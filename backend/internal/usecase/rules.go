@@ -78,13 +78,19 @@ func ValidateChecklistDescription(status domain.CheckStatus, reworkDesc, conditi
 	return nil
 }
 
-// GateTargetStatus returns the vehicle status a passing checklist gate unlocks:
-// EoL opens the move to IN_WAREHOUSE, Shipment opens the move to WITH_CUSTOMER.
-func GateTargetStatus(checklistType domain.ChecklistType) domain.VehicleStatus {
-	if checklistType == domain.ChecklistTypeShipment {
-		return domain.VehicleStatusWithCustomer
+// GateTargetStatus returns the vehicle status a passing checklist gate
+// unlocks: EoL opens the move to IN_WAREHOUSE and Shipment opens the move to
+// WITH_CUSTOMER. The Test checklist (Karar 4) has no gate, so ok is false and
+// no transition may be derived from it.
+func GateTargetStatus(checklistType domain.ChecklistType) (target domain.VehicleStatus, ok bool) {
+	switch checklistType {
+	case domain.ChecklistTypeShipment:
+		return domain.VehicleStatusWithCustomer, true
+	case domain.ChecklistTypeEOL:
+		return domain.VehicleStatusInWarehouse, true
+	default:
+		return "", false
 	}
-	return domain.VehicleStatusInWarehouse
 }
 
 // AuthorizeStatusTransition enforces, in the application layer, the same

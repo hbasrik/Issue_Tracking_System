@@ -8,10 +8,27 @@ type ChecklistType string
 const (
 	ChecklistTypeEOL      ChecklistType = "EOL"
 	ChecklistTypeShipment ChecklistType = "SHIPMENT"
+	// ChecklistTypeTest is Karar 4's third checklist. It reuses the same
+	// template and progress machinery as the other two but, unlike them, is
+	// informational quality tracking rather than a shipping gate.
+	ChecklistTypeTest ChecklistType = "TEST"
 )
 
 // Valid reports whether the checklist type is a known enum value.
 func (t ChecklistType) Valid() bool {
+	switch t {
+	case ChecklistTypeEOL, ChecklistTypeShipment, ChecklistTypeTest:
+		return true
+	default:
+		return false
+	}
+}
+
+// HasStatusGate reports whether completing this checklist unlocks a vehicle
+// status transition. EoL and Shipment are hard-block gates (FR-3.5/FR-4.3);
+// the Test checklist deliberately has none, so its results never move a
+// vehicle through the status machine.
+func (t ChecklistType) HasStatusGate() bool {
 	return t == ChecklistTypeEOL || t == ChecklistTypeShipment
 }
 

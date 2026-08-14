@@ -7,8 +7,9 @@ import (
 	"github.com/karea/backend/internal/repository"
 )
 
-// ChecklistResultRecorder records EoL/Shipment checklist item results and
-// enforces the hard-block gate when a gate exit is requested.
+// ChecklistResultRecorder records checklist item results for every checklist
+// type (EoL, Shipment and Karar 4's Test) and enforces the hard-block gate
+// when a gate exit is requested on one of the two gated types.
 type ChecklistResultRecorder struct {
 	vehicles  repository.VehicleRepository
 	checklist repository.ChecklistProgressRepository
@@ -85,13 +86,19 @@ func (r *ChecklistResultRecorder) Record(ctx context.Context, in RecordChecklist
 	out := &RecordChecklistOutput{GateOpen: open}
 
 	if in.RequestGateExit {
+		target, gated := GateTargetStatus(in.ChecklistType)
+		if !gated {
+			// The Test checklist tracks quality, it does not ship vehicles.
+			// Refusing here (rather than silently ignoring the flag) keeps a
+			// caller from believing it moved the vehicle.
+			return nil, domain.ErrInvalidStatusTransition
+		}
 		if !open {
 			return nil, &domain.GateBlockedError{
 				ChecklistType:   in.ChecklistType,
 				BlockingItemIDs: blocking,
 			}
 		}
-		target := GateTargetStatus(in.ChecklistType)
 		if err := r.vehicles.UpdateStatus(ctx, in.VIN, target); err != nil {
 			return nil, err
 		}
@@ -119,6 +126,8 @@ func (r *ChecklistResultRecorder) ListForVehicle(ctx context.Context, vin string
 		templateID = vehicle.EOLTemplateID
 	case domain.ChecklistTypeShipment:
 		templateID = vehicle.ShipmentTemplateID
+	case domain.ChecklistTypeTest:
+		templateID = vehicle.TestTemplateID
 	}
 
 	resolved := 0

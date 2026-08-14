@@ -19,17 +19,19 @@ type checklistRequest struct {
 	RequestGateExit bool   `json:"request_gate_exit"`
 }
 
-// handleRecordChecklist records an EoL/Shipment checklist item result (Operator
-// only). The URL type segment is eol|shipment. Hard-block semantics apply: a
+// handleRecordChecklist records a checklist item result (Operator only). The
+// URL type segment is eol|shipment|test, and the mandatory-description rule
+// (FR-3.3) is validated identically for all three before persistence
+// (returning 400). Hard-block semantics apply to the two gated types: a
 // requested gate exit with any non-passing item returns 409 with the blocking
-// item IDs, and the mandatory-description rule (FR-3.3) is validated before
-// persistence (returning 400).
+// item IDs. The Test checklist has no gate, so a gate exit requested against
+// it is rejected rather than silently ignored.
 func (s *server) handleRecordChecklist(w http.ResponseWriter, r *http.Request) {
 	vin := chi.URLParam(r, "vin")
 
 	checklistType, ok := parseChecklistType(chi.URLParam(r, "type"))
 	if !ok {
-		badRequest(w, "type must be one of: eol, shipment")
+		badRequest(w, "type must be one of: eol, shipment, test")
 		return
 	}
 
@@ -69,13 +71,16 @@ func (s *server) handleRecordChecklist(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, out)
 }
 
-// parseChecklistType maps the URL segment (eol|shipment) to the domain enum.
+// parseChecklistType maps the URL segment (eol|shipment|test) to the domain
+// enum.
 func parseChecklistType(raw string) (domain.ChecklistType, bool) {
 	switch strings.ToLower(raw) {
 	case "eol":
 		return domain.ChecklistTypeEOL, true
 	case "shipment":
 		return domain.ChecklistTypeShipment, true
+	case "test":
+		return domain.ChecklistTypeTest, true
 	default:
 		return "", false
 	}

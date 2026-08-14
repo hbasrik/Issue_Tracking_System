@@ -98,7 +98,7 @@ func (s *server) handleVehicleChecklistGet(w http.ResponseWriter, r *http.Reques
 	vin := chi.URLParam(r, "vin")
 	checklistType, ok := parseChecklistType(chi.URLParam(r, "type"))
 	if !ok {
-		badRequest(w, "type must be one of: eol, shipment")
+		badRequest(w, "type must be one of: eol, shipment, test")
 		return
 	}
 
