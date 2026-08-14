@@ -39,6 +39,18 @@ func (s *VehicleService) GetByVIN(ctx context.Context, vin string) (*domain.Vehi
 	return s.vehicles.GetByVIN(ctx, vin)
 }
 
+// GetByVehicleNumber resolves the short factory number printed on the vehicle
+// to the same record GetByVIN returns. Karar 5 keeps that number on the
+// vehicles row instead of a separate lookup table, so this is a plain lookup
+// with no join. An unknown number is domain.ErrNotFound.
+func (s *VehicleService) GetByVehicleNumber(ctx context.Context, vehicleNumber string) (*domain.Vehicle, error) {
+	vehicleNumber = strings.TrimSpace(vehicleNumber)
+	if vehicleNumber == "" {
+		return nil, domain.ErrInvalidEnumValue
+	}
+	return s.vehicles.GetByVehicleNumber(ctx, vehicleNumber)
+}
+
 // VehicleListResult is a page of vehicles plus the total match count.
 type VehicleListResult struct {
 	Items []domain.Vehicle

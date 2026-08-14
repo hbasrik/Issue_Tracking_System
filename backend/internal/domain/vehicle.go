@@ -29,11 +29,14 @@ func (s VehicleStatus) Valid() bool {
 // combined with AND semantics.
 type VehicleListFilter struct {
 	VINContains string
-	Status      *VehicleStatus
-	ModelID     *int
-	StationID   *int
-	Limit       int
-	Offset      int
+	// VehicleNumber matches the Karar 5 short factory number exactly, unlike
+	// VINContains which is a fragment search.
+	VehicleNumber string
+	Status        *VehicleStatus
+	ModelID       *int
+	StationID     *int
+	Limit         int
+	Offset        int
 }
 
 // Vehicle mirrors the vehicles table (master vehicle identity). Karar 1

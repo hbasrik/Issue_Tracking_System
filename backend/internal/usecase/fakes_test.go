@@ -3,7 +3,9 @@ package usecase_test
 import (
 	"context"
 	"errors"
+	"io"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/karea/backend/internal/domain"
@@ -113,6 +115,15 @@ func (f *fakeVehicleRepo) List(_ context.Context, _ domain.VehicleListFilter) ([
 
 func (f *fakeVehicleRepo) Count(_ context.Context, _ domain.VehicleListFilter) (int, error) {
 	return len(f.vehicles), nil
+}
+
+func (f *fakeVehicleRepo) GetByVehicleNumber(_ context.Context, vehicleNumber string) (*domain.Vehicle, error) {
+	for _, v := range f.vehicles {
+		if v.VehicleNumber == vehicleNumber {
+			return v, nil
+		}
+	}
+	return nil, domain.ErrNotFound
 }
 
 func (f *fakeVehicleRepo) SearchByVINSuffix(_ context.Context, suffix string, limit int) ([]domain.Vehicle, error) {
@@ -461,4 +472,72 @@ func managerPermissions() domain.PermissionSet {
 		{Code: domain.PermissionAnalysisView},
 		{Code: domain.PermissionAdminManageMasters},
 	})
+}
+
+// fakeMediaRepo is an in-memory media_attachments table. existing holds the
+// entity keys the fake considers real, standing in for the rows a polymorphic
+// entity_id could point at.
+type fakeMediaRepo struct {
+	rows     []domain.MediaAttachment
+	existing map[string]bool
+	nextID   int64
+}
+
+func newFakeMediaRepo() *fakeMediaRepo {
+	return &fakeMediaRepo{existing: map[string]bool{}, nextID: 1}
+}
+
+// seedEntity marks one entity as existing, so an upload against it is allowed.
+func (f *fakeMediaRepo) seedEntity(entityType domain.MediaEntityType, entityID string) {
+	f.existing[string(entityType)+"|"+entityID] = true
+}
+
+func (f *fakeMediaRepo) Create(_ context.Context, attachment *domain.MediaAttachment) (int64, error) {
+	id := f.nextID
+	f.nextID++
+
+	stored := *attachment
+	stored.ID = id
+	stored.UploadedAt = time.Now()
+	f.rows = append(f.rows, stored)
+	return id, nil
+}
+
+func (f *fakeMediaRepo) ListForEntity(_ context.Context, entityType domain.MediaEntityType, entityID string) ([]domain.MediaAttachment, error) {
+	var out []domain.MediaAttachment
+	for _, row := range f.rows {
+		if row.EntityType == entityType && row.EntityID == entityID {
+			out = append(out, row)
+		}
+	}
+	return out, nil
+}
+
+func (f *fakeMediaRepo) EntityExists(_ context.Context, entityType domain.MediaEntityType, entityID string) (bool, error) {
+	return f.existing[string(entityType)+"|"+entityID], nil
+}
+
+// fakeMediaStore records what was written instead of touching the filesystem,
+// which also lets a test assert that a rejected upload stored nothing.
+type fakeMediaStore struct {
+	saved []string
+	err   error
+}
+
+func (f *fakeMediaStore) Save(
+	_ context.Context,
+	entityType domain.MediaEntityType,
+	entityID, fileName string,
+	content io.Reader,
+) (string, int64, error) {
+	if f.err != nil {
+		return "", 0, f.err
+	}
+	body, err := io.ReadAll(content)
+	if err != nil {
+		return "", 0, err
+	}
+	path := strings.ToLower(string(entityType)) + "/" + entityID + "/" + fileName
+	f.saved = append(f.saved, path)
+	return path, int64(len(body)), nil
 }

@@ -17,6 +17,9 @@ type VehicleRepository interface {
 	// Count returns the total number of vehicles matching the filter, ignoring
 	// pagination (used to compute page counts).
 	Count(ctx context.Context, f domain.VehicleListFilter) (int, error)
+	// GetByVehicleNumber returns the vehicle carrying the given short factory
+	// number (Karar 5), or domain.ErrNotFound.
+	GetByVehicleNumber(ctx context.Context, vehicleNumber string) (*domain.Vehicle, error)
 	// SearchByVINSuffix returns vehicles whose VIN contains the given suffix
 	// (partial trigram search), capped at limit rows.
 	SearchByVINSuffix(ctx context.Context, suffix string, limit int) ([]domain.Vehicle, error)
@@ -117,6 +120,20 @@ type EOLWorkflowRepository interface {
 	// MarkDocumentApproved records the final sign-off and completes the
 	// workflow.
 	MarkDocumentApproved(ctx context.Context, vin string, actorID int) error
+}
+
+// MediaRepository persists and queries polymorphic file attachments
+// (Karar 8, media_attachments).
+type MediaRepository interface {
+	// Create inserts an attachment and returns its generated ID.
+	Create(ctx context.Context, attachment *domain.MediaAttachment) (int64, error)
+	// ListForEntity returns every attachment hanging off one entity, newest
+	// first. An entity with no attachments yields an empty slice, not an error.
+	ListForEntity(ctx context.Context, entityType domain.MediaEntityType, entityID string) ([]domain.MediaAttachment, error)
+	// EntityExists reports whether the referenced row is really there.
+	// media_attachments carries no foreign key — it cannot, being polymorphic
+	// — so this is the application's stand-in for referential integrity.
+	EntityExists(ctx context.Context, entityType domain.MediaEntityType, entityID string) (bool, error)
 }
 
 // RoleRepository reads the table-driven RBAC catalogue (Karar 3).
