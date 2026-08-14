@@ -25,9 +25,9 @@ var _ repository.AuditRepository = (*AuditRepo)(nil)
 func (r *AuditRepo) Append(ctx context.Context, entry domain.AuditLog) error {
 	_, err := executor(ctx, r.pool).Exec(ctx,
 		`INSERT INTO audit_logs
-		    (vin, event_type, old_value, new_value, phase_number, station_id, performed_by, metadata)
-		 VALUES ($1, $2, NULLIF($3, ''), NULLIF($4, ''), $5, $6, $7, $8)`,
+		    (vin, event_type, old_value, new_value, station_id, performed_by, metadata)
+		 VALUES ($1, $2, NULLIF($3, ''), NULLIF($4, ''), $5, $6, $7)`,
 		entry.VIN, string(entry.EventType), entry.OldValue, entry.NewValue,
-		entry.PhaseNumber, entry.StationID, entry.PerformedBy, entry.Metadata)
+		entry.StationID, entry.PerformedBy, entry.Metadata)
 	return err
 }

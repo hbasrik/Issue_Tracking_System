@@ -22,16 +22,16 @@ func NewIssueManager(issues repository.IssueRepository, audit repository.AuditRe
 
 // CreateIssueInput is the request to create a new issue.
 type CreateIssueInput struct {
-	VIN                string
-	SourceType         domain.IssueSource
-	SourceCheckpointID *int
-	SourceCheckItemID  *int
-	StationID          *int
-	IssueTypeID        *int
-	Severity           domain.IssueSeverity
-	Description        string
-	PictureURL         string
-	ReporterID         int
+	VIN                 string
+	SourceType          domain.IssueSource
+	SourceStationStepID *int
+	SourceCheckItemID   *int
+	StationID           *int
+	IssueTypeID         *int
+	Severity            domain.IssueSeverity
+	Description         string
+	PictureURL          string
+	ReporterID          int
 }
 
 // Create validates and inserts a new issue. Severity is mandatory
@@ -48,17 +48,17 @@ func (m *IssueManager) Create(ctx context.Context, in CreateIssueInput) (*domain
 	}
 
 	issue := &domain.Issue{
-		VIN:                in.VIN,
-		SourceType:         in.SourceType,
-		SourceCheckpointID: in.SourceCheckpointID,
-		SourceCheckItemID:  in.SourceCheckItemID,
-		StationID:          in.StationID,
-		IssueTypeID:        in.IssueTypeID,
-		Severity:           in.Severity,
-		Description:        in.Description,
-		PictureURL:         in.PictureURL,
-		Status:             domain.IssueStatusOpen,
-		IssueReporterID:    in.ReporterID,
+		VIN:                 in.VIN,
+		SourceType:          in.SourceType,
+		SourceStationStepID: in.SourceStationStepID,
+		SourceCheckItemID:   in.SourceCheckItemID,
+		StationID:           in.StationID,
+		IssueTypeID:         in.IssueTypeID,
+		Severity:            in.Severity,
+		Description:         in.Description,
+		PictureURL:          in.PictureURL,
+		Status:              domain.IssueStatusOpen,
+		IssueReporterID:     in.ReporterID,
 	}
 
 	id, err := m.issues.Create(ctx, issue)

@@ -45,15 +45,29 @@ func (s IssueSeverity) Valid() bool {
 type IssueSource string
 
 const (
-	IssueSourcePhaseCheckpoint IssueSource = "PHASE_CHECKPOINT"
-	IssueSourceEOLItem         IssueSource = "EOL_ITEM"
-	IssueSourceShipmentItem    IssueSource = "SHIPMENT_ITEM"
+	IssueSourceStationStep  IssueSource = "STATION_STEP"
+	IssueSourceEOLItem      IssueSource = "EOL_ITEM"
+	IssueSourceShipmentItem IssueSource = "SHIPMENT_ITEM"
+	IssueSourceTestItem     IssueSource = "TEST_ITEM"
 )
 
 // Valid reports whether the issue source is a known enum value.
 func (s IssueSource) Valid() bool {
 	switch s {
-	case IssueSourcePhaseCheckpoint, IssueSourceEOLItem, IssueSourceShipmentItem:
+	case IssueSourceStationStep, IssueSourceEOLItem, IssueSourceShipmentItem, IssueSourceTestItem:
+		return true
+	default:
+		return false
+	}
+}
+
+// IsOpen reports whether the issue still counts against the EOL depot-release
+// hard-block gate. It mirrors the OPEN/IN_PROGRESS/DONE predicate used by
+// fn_enforce_depot_release and idx_issue_list_open_by_vin: only APPROVED is
+// considered closed, because DONE still awaits quality sign-off.
+func (s IssueStatus) IsOpen() bool {
+	switch s {
+	case IssueStatusOpen, IssueStatusInProgress, IssueStatusDone:
 		return true
 	default:
 		return false
@@ -65,7 +79,7 @@ type Issue struct {
 	ID                  int64
 	VIN                 string
 	SourceType          IssueSource
-	SourceCheckpointID  *int
+	SourceStationStepID *int
 	SourceCheckItemID   *int
 	StationID           *int
 	IssueTypeID         *int

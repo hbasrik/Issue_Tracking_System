@@ -30,14 +30,13 @@ func (s *server) handleVehicleList(w http.ResponseWriter, r *http.Request) {
 		}
 		filter.ModelID = &modelID
 	}
-	if raw := q.Get("phase"); raw != "" {
-		phase, err := strconv.Atoi(raw)
-		if err != nil || phase < 1 || phase > int(domain.TotalPhases) {
-			badRequest(w, "phase must be an integer between 1 and 8")
+	if raw := q.Get("station"); raw != "" {
+		stationID, err := strconv.Atoi(raw)
+		if err != nil || stationID < 1 {
+			badRequest(w, "station must be a positive integer id")
 			return
 		}
-		p := int16(phase)
-		filter.PhaseNumber = &p
+		filter.StationID = &stationID
 	}
 
 	page := 1
@@ -81,11 +80,11 @@ func (s *server) handleVehicleSearch(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"items": vehicles})
 }
 
-// handleVehicleCheckpoints returns catalogue checkpoints with per-vehicle
-// progress and open issue counts per phase.
-func (s *server) handleVehicleCheckpoints(w http.ResponseWriter, r *http.Request) {
+// handleVehicleStationSteps returns the station step catalogue with
+// per-vehicle progress and open issue counts per station.
+func (s *server) handleVehicleStationSteps(w http.ResponseWriter, r *http.Request) {
 	vin := chi.URLParam(r, "vin")
-	result, err := s.deps.Checkpoints.ListForVehicle(r.Context(), vin)
+	result, err := s.deps.StationSteps.ListForVehicle(r.Context(), vin)
 	if err != nil {
 		writeError(w, err)
 		return

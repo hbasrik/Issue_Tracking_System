@@ -21,11 +21,11 @@ func NewStationRepo(pool *pgxpool.Pool) *StationRepo {
 
 var _ repository.StationRepository = (*StationRepo)(nil)
 
-// List returns all stations ordered by phase then id.
+// List returns all stations in line order.
 func (r *StationRepo) List(ctx context.Context) ([]domain.Station, error) {
 	rows, err := r.pool.Query(ctx,
-		`SELECT id, name, phase_number FROM stations
-		 ORDER BY phase_number NULLS LAST, id`)
+		`SELECT id, name, sequence_no, is_active FROM stations
+		 ORDER BY sequence_no`)
 	if err != nil {
 		return nil, err
 	}
@@ -34,7 +34,7 @@ func (r *StationRepo) List(ctx context.Context) ([]domain.Station, error) {
 	var out []domain.Station
 	for rows.Next() {
 		var s domain.Station
-		if err := rows.Scan(&s.ID, &s.Name, &s.PhaseNumber); err != nil {
+		if err := rows.Scan(&s.ID, &s.Name, &s.SequenceNo, &s.IsActive); err != nil {
 			return nil, err
 		}
 		out = append(out, s)

@@ -23,8 +23,8 @@ func (s *StationService) List(ctx context.Context) ([]domain.Station, error) {
 	return s.stations.List(ctx)
 }
 
-// formatPhaseKey converts a phase number to the string key used in
-// open_issues_by_phase JSON responses.
-func formatPhaseKey(phase int16) string {
-	return strconv.Itoa(int(phase))
+// formatStationKey converts a station id to the string key used in
+// open_issues_by_station JSON responses.
+func formatStationKey(stationID int) string {
+	return strconv.Itoa(stationID)
 }

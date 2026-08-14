@@ -7,7 +7,7 @@ import "time"
 type AnalysisFilter struct {
 	From          *time.Time
 	To            *time.Time
-	PhaseNumber   *int16
+	StationID     *int
 	VehicleStatus *VehicleStatus
 	Severity      *IssueSeverity
 	VINSuffix     string

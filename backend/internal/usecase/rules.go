@@ -7,38 +7,41 @@ import (
 )
 
 // ComputeProgress recomputes a vehicle's completion percentage and current
-// phase from its checkpoint progress rows.
+// station from its station step progress rows.
 //
 // This is the application-layer mirror of the fn_recalculate_vehicle_progress
-// database trigger (defense in depth). Soft-warning rule (FR-2.5): only OK
-// checkpoints count toward completion; a NOT_OK (or PENDING) checkpoint is
-// simply excluded from the percentage and never blocks progress elsewhere.
+// database trigger (defense in depth). Soft-warning rule (FR-2.5, unchanged by
+// Karar 1): only OK steps count toward completion; a NOT_OK (or PENDING) step
+// is simply excluded from the percentage and never blocks progress elsewhere.
 //
-// The current phase is the lowest phase that is not yet fully OK; when every
-// checkpoint is OK it returns TotalPhases (8), matching the DDL's
-// COALESCE(MIN(...), 8) behaviour.
-func ComputeProgress(items []domain.PhaseCheckpointProgress) (percentage float64, currentPhase int16) {
+// The current station is the earliest station that is not yet fully OK; when
+// every step is OK it is the last station the vehicle has rows for, matching
+// the DDL's COALESCE(MIN(...), MAX(...)) behaviour. Callers pass the rows in
+// station order, which the repository guarantees.
+func ComputeProgress(items []domain.VehicleStationStepProgress) (percentage float64, currentStationID *int) {
 	total := len(items)
 	done := 0
-	currentPhase = domain.TotalPhases
-	foundIncomplete := false
 
-	for _, it := range items {
-		if it.Status == domain.CheckpointStatusOK {
+	for i, it := range items {
+		if it.Status == domain.StationStepStatusOK {
 			done++
 			continue
 		}
-		if !foundIncomplete || it.PhaseNumber < currentPhase {
-			currentPhase = it.PhaseNumber
-			foundIncomplete = true
+		if currentStationID == nil {
+			stationID := items[i].StationID
+			currentStationID = &stationID
 		}
 	}
 
 	if total == 0 {
-		return 0, currentPhase
+		return 0, nil
+	}
+	if currentStationID == nil {
+		lastStationID := items[total-1].StationID
+		currentStationID = &lastStationID
 	}
 	percentage = round2(float64(done) / float64(total) * 100)
-	return percentage, currentPhase
+	return percentage, currentStationID
 }
 
 // EvaluateChecklistGate reports whether a hard-block quality gate is open,

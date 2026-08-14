@@ -11,15 +11,15 @@ import (
 )
 
 type createIssueRequest struct {
-	VIN                string `json:"vin"`
-	SourceType         string `json:"source_type"`
-	SourceCheckpointID *int   `json:"source_checkpoint_id"`
-	SourceCheckItemID  *int   `json:"source_check_item_id"`
-	StationID          *int   `json:"station_id"`
-	IssueTypeID        *int   `json:"issue_type_id"`
-	Severity           string `json:"severity"`
-	Description        string `json:"description"`
-	PictureURL         string `json:"picture_url"`
+	VIN                 string `json:"vin"`
+	SourceType          string `json:"source_type"`
+	SourceStationStepID *int   `json:"source_station_step_id"`
+	SourceCheckItemID   *int   `json:"source_check_item_id"`
+	StationID           *int   `json:"station_id"`
+	IssueTypeID         *int   `json:"issue_type_id"`
+	Severity            string `json:"severity"`
+	Description         string `json:"description"`
+	PictureURL          string `json:"picture_url"`
 }
 
 // handleCreateIssue creates a new issue (Operator only). Severity is mandatory
@@ -33,16 +33,16 @@ func (s *server) handleCreateIssue(w http.ResponseWriter, r *http.Request) {
 
 	claims, _ := ClaimsFromContext(r.Context())
 	issue, err := s.deps.Issues.Create(r.Context(), usecase.CreateIssueInput{
-		VIN:                req.VIN,
-		SourceType:         domain.IssueSource(req.SourceType),
-		SourceCheckpointID: req.SourceCheckpointID,
-		SourceCheckItemID:  req.SourceCheckItemID,
-		StationID:          req.StationID,
-		IssueTypeID:        req.IssueTypeID,
-		Severity:           domain.IssueSeverity(req.Severity),
-		Description:        req.Description,
-		PictureURL:         req.PictureURL,
-		ReporterID:         claims.UserID,
+		VIN:                 req.VIN,
+		SourceType:          domain.IssueSource(req.SourceType),
+		SourceStationStepID: req.SourceStationStepID,
+		SourceCheckItemID:   req.SourceCheckItemID,
+		StationID:           req.StationID,
+		IssueTypeID:         req.IssueTypeID,
+		Severity:            domain.IssueSeverity(req.Severity),
+		Description:         req.Description,
+		PictureURL:          req.PictureURL,
+		ReporterID:          claims.UserID,
 	})
 	if err != nil {
 		writeError(w, err)

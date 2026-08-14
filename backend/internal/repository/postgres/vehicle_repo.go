@@ -25,16 +25,17 @@ func NewVehicleRepo(pool *pgxpool.Pool) *VehicleRepo {
 
 var _ repository.VehicleRepository = (*VehicleRepo)(nil)
 
-const vehicleColumns = `vin, vehicle_model_id, current_global_status, current_phase,
-	total_progress_percentage, eol_template_id, shipment_template_id, created_at, updated_at`
+const vehicleColumns = `vin, COALESCE(vehicle_number, ''), vehicle_model_id,
+	current_global_status, current_station_id, total_progress_percentage,
+	eol_template_id, shipment_template_id, test_template_id, created_at, updated_at`
 
 func scanVehicle(row pgx.Row) (*domain.Vehicle, error) {
 	var v domain.Vehicle
 	var status string
 	if err := row.Scan(
-		&v.VIN, &v.VehicleModelID, &status, &v.CurrentPhase,
+		&v.VIN, &v.VehicleNumber, &v.VehicleModelID, &status, &v.CurrentStationID,
 		&v.TotalProgressPercentage, &v.EOLTemplateID, &v.ShipmentTemplateID,
-		&v.CreatedAt, &v.UpdatedAt,
+		&v.TestTemplateID, &v.CreatedAt, &v.UpdatedAt,
 	); err != nil {
 		return nil, err
 	}
@@ -68,9 +69,9 @@ func vehicleFilterClause(f domain.VehicleListFilter) (string, []any) {
 		args = append(args, *f.ModelID)
 		conds = append(conds, fmt.Sprintf("vehicle_model_id = $%d", len(args)))
 	}
-	if f.PhaseNumber != nil {
-		args = append(args, *f.PhaseNumber)
-		conds = append(conds, fmt.Sprintf("current_phase = $%d", len(args)))
+	if f.StationID != nil {
+		args = append(args, *f.StationID)
+		conds = append(conds, fmt.Sprintf("current_station_id = $%d", len(args)))
 	}
 	if len(conds) == 0 {
 		return "", args
@@ -132,11 +133,11 @@ func (r *VehicleRepo) SearchByVINSuffix(ctx context.Context, suffix string, limi
 	return out, rows.Err()
 }
 
-// UpdateProgress persists the recomputed completion percentage and phase.
-func (r *VehicleRepo) UpdateProgress(ctx context.Context, vin string, percentage float64, currentPhase int16) error {
+// UpdateProgress persists the recomputed completion percentage and station.
+func (r *VehicleRepo) UpdateProgress(ctx context.Context, vin string, percentage float64, currentStationID *int) error {
 	tag, err := executor(ctx, r.pool).Exec(ctx,
-		`UPDATE vehicles SET total_progress_percentage = $2, current_phase = $3 WHERE vin = $1`,
-		vin, percentage, currentPhase)
+		`UPDATE vehicles SET total_progress_percentage = $2, current_station_id = $3 WHERE vin = $1`,
+		vin, percentage, currentStationID)
 	if err != nil {
 		return err
 	}

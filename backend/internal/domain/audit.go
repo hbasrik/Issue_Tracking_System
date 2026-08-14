@@ -6,24 +6,24 @@ import "time"
 type AuditEvent string
 
 const (
-	AuditEventStatusChange       AuditEvent = "STATUS_CHANGE"
-	AuditEventLocationChange     AuditEvent = "LOCATION_CHANGE"
-	AuditEventPhaseEnter         AuditEvent = "PHASE_ENTER"
-	AuditEventPhaseExit          AuditEvent = "PHASE_EXIT"
-	AuditEventStationEnter       AuditEvent = "STATION_ENTER"
-	AuditEventStationExit        AuditEvent = "STATION_EXIT"
+	AuditEventStatusChange        AuditEvent = "STATUS_CHANGE"
+	AuditEventLocationChange      AuditEvent = "LOCATION_CHANGE"
+	AuditEventStationEnter        AuditEvent = "STATION_ENTER"
+	AuditEventStationExit         AuditEvent = "STATION_EXIT"
 	AuditEventChecklistItemUpdate AuditEvent = "CHECKLIST_ITEM_UPDATE"
-	AuditEventIssueStatusChange  AuditEvent = "ISSUE_STATUS_CHANGE"
+	AuditEventIssueStatusChange   AuditEvent = "ISSUE_STATUS_CHANGE"
+	AuditEventEOLWorkflowStage    AuditEvent = "EOL_WORKFLOW_STAGE_CHANGE"
+	AuditEventMediaUploaded       AuditEvent = "MEDIA_UPLOADED"
 )
 
-// AuditLog mirrors the append-only audit_logs table.
+// AuditLog mirrors the append-only audit_logs table. Karar 1 dropped
+// phase_number; location is now carried solely by StationID.
 type AuditLog struct {
 	ID          int64
 	VIN         string
 	EventType   AuditEvent
 	OldValue    string
 	NewValue    string
-	PhaseNumber *int16
 	StationID   *int
 	PerformedBy *int
 	EventAt     time.Time
