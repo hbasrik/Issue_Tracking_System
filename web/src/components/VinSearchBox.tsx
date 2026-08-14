@@ -101,6 +101,7 @@ export function VinSearchBox({
                   </span>
                   <span className="ml-2 text-[13px] text-[var(--text-secondary)]">
                     {vin}
+                    {v.VehicleNumber ? ` · No. ${v.VehicleNumber}` : ''}
                   </span>
                 </div>
                 <StatusBadge kind="vehicle" value={v.CurrentGlobalStatus} />
