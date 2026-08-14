@@ -29,7 +29,7 @@ func (r *ChecklistProgressRepo) ListByVINAndType(ctx context.Context, vin string
 		`SELECT id, vin, checklist_type, check_item_id, check_status, checker_id, check_date,
 		        COALESCE(rework_desc, ''), COALESCE(conditional_desc, ''), COALESCE(rejected_desc, ''),
 		        related_issue_id, created_at, updated_at
-		 FROM eol_and_shipment_checklist_progress
+		 FROM checklist_item_progress
 		 WHERE vin = $1 AND checklist_type = $2
 		 ORDER BY check_item_id`, vin, string(checklistType))
 	if err != nil {
@@ -76,9 +76,10 @@ func (r *ChecklistProgressRepo) ListItemsWithProgress(ctx context.Context, vin s
 	rows, err := r.pool.Query(ctx,
 		`SELECT cti.id, cti.item_no, cti.item_text,
 		        COALESCE(p.check_status::text, 'PENDING'),
-		        COALESCE(p.rework_desc, ''), COALESCE(p.conditional_desc, ''), COALESCE(p.rejected_desc, '')
+		        COALESCE(p.rework_desc, ''), COALESCE(p.conditional_desc, ''), COALESCE(p.rejected_desc, ''),
+		        cti.eol_phase::text
 		 FROM checklist_template_items cti
-		 LEFT JOIN eol_and_shipment_checklist_progress p
+		 LEFT JOIN checklist_item_progress p
 		   ON p.check_item_id = cti.id AND p.vin = $1 AND p.checklist_type = $2
 		 WHERE cti.template_id = $3 AND cti.is_active = TRUE
 		 ORDER BY cti.item_no`, vin, string(checklistType), templateID)
@@ -91,13 +92,19 @@ func (r *ChecklistProgressRepo) ListItemsWithProgress(ctx context.Context, vin s
 	for rows.Next() {
 		var item domain.ChecklistItemView
 		var status string
+		var eolPhase *string
 		if err := rows.Scan(
 			&item.ItemID, &item.ItemNo, &item.ItemText, &status,
 			&item.ReworkDesc, &item.ConditionalDesc, &item.RejectedDesc,
+			&eolPhase,
 		); err != nil {
 			return nil, err
 		}
 		item.Status = domain.CheckStatus(status)
+		if eolPhase != nil && *eolPhase != "" {
+			p := domain.EOLItemPhase(*eolPhase)
+			item.EolPhase = &p
+		}
 		out = append(out, item)
 	}
 	return out, rows.Err()
@@ -108,7 +115,7 @@ func (r *ChecklistProgressRepo) ListItemsWithProgress(ctx context.Context, vin s
 // database constraint (defense in depth).
 func (r *ChecklistProgressRepo) SaveResult(ctx context.Context, result domain.ChecklistProgress) error {
 	tag, err := r.pool.Exec(ctx,
-		`UPDATE eol_and_shipment_checklist_progress
+		`UPDATE checklist_item_progress
 		 SET check_status = $3,
 		     checker_id = $4,
 		     check_date = now(),

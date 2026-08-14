@@ -71,6 +71,15 @@ type ChecklistTemplate struct {
 	IsActive       bool
 }
 
+// EOLItemPhase tags an EoL checklist item as Branch or Depot (Karar 2).
+// Document approval has no checklist of its own.
+type EOLItemPhase string
+
+const (
+	EOLItemPhaseBranch EOLItemPhase = "BRANCH"
+	EOLItemPhaseDepot  EOLItemPhase = "DEPOT"
+)
+
 // ChecklistTemplateItem mirrors the checklist_template_items table.
 type ChecklistTemplateItem struct {
 	ID         int
@@ -78,10 +87,11 @@ type ChecklistTemplateItem struct {
 	ItemNo     int16
 	ItemText   string
 	StationID  *int
+	EolPhase   *EOLItemPhase
 	IsActive   bool
 }
 
-// ChecklistProgress mirrors the eol_and_shipment_checklist_progress table: a
+// ChecklistProgress mirrors the checklist_item_progress table: a
 // vehicle-scoped evaluation of a single checklist item.
 type ChecklistProgress struct {
 	ID              int64
@@ -100,7 +110,8 @@ type ChecklistProgress struct {
 }
 
 // ChecklistItemView is the operator-facing join of template items with
-// per-vehicle checklist progress.
+// per-vehicle checklist progress. EolPhase is set only for EoL items so the
+// Vehicle Detail stepper can split Branch vs Depot without a second query.
 type ChecklistItemView struct {
 	ItemID          int
 	ItemNo          int16
@@ -109,4 +120,5 @@ type ChecklistItemView struct {
 	ReworkDesc      string
 	ConditionalDesc string
 	RejectedDesc    string
+	EolPhase        *EOLItemPhase
 }

@@ -47,7 +47,7 @@ type StationStepProgressRepository interface {
 }
 
 // ChecklistProgressRepository persists and queries per-vehicle checklist
-// progress (eol_and_shipment_checklist_progress).
+// progress (checklist_item_progress).
 type ChecklistProgressRepository interface {
 	// ListByVINAndType returns all checklist progress rows of a given type for
 	// a vehicle.
