@@ -31,6 +31,7 @@ DROP FUNCTION IF EXISTS fn_recalculate_vehicle_progress();
 DROP FUNCTION IF EXISTS fn_initialize_vehicle_progress();
 DROP FUNCTION IF EXISTS fn_assign_checklist_templates();
 DROP FUNCTION IF EXISTS set_updated_at();
+DROP INDEX IF EXISTS idx_issue_list_issue_date_day;
 DROP FUNCTION IF EXISTS immutable_utc_date(TIMESTAMPTZ);
 
 -- Tables in foreign-key-safe reverse order
