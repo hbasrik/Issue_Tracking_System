@@ -27,13 +27,14 @@ func main() {
 	defer pool.Close()
 
 	vehicleRepo := postgres.NewVehicleRepo(pool)
-	checkpointRepo := postgres.NewCheckpointProgressRepo(pool)
+	stationStepRepo := postgres.NewStationStepProgressRepo(pool)
 	checklistRepo := postgres.NewChecklistProgressRepo(pool)
 	issueRepo := postgres.NewIssueRepo(pool)
 	stationRepo := postgres.NewStationRepo(pool)
 	analysisRepo := postgres.NewAnalysisRepo(pool)
 	userRepo := postgres.NewUserRepo(pool)
 	roleRepo := postgres.NewRoleRepo(pool)
+	eolRepo := postgres.NewEOLWorkflowRepo(pool)
 	auditRepo := postgres.NewAuditRepo(pool)
 	uow := postgres.NewUnitOfWork(pool)
 
@@ -44,11 +45,15 @@ func main() {
 		Auth:               usecase.NewAuthenticator(userRepo),
 		Roles:              roleRepo,
 		Vehicles:           usecase.NewVehicleService(vehicleRepo, checklistRepo, auditRepo, uow),
-		Checkpoints:        usecase.NewCheckpointResultRecorder(vehicleRepo, checkpointRepo),
+		StationSteps:       usecase.NewStationStepResultRecorder(vehicleRepo, stationStepRepo),
 		Checklists:         usecase.NewChecklistResultRecorder(vehicleRepo, checklistRepo),
 		Issues:             usecase.NewIssueManager(issueRepo, auditRepo, uow),
 		Stations:           usecase.NewStationService(stationRepo),
 		Analysis:           usecase.NewAnalysisMetricsReader(analysisRepo),
+		EOLWorkflow:        usecase.NewEOLWorkflowReader(eolRepo),
+		EOLBranchShip:      usecase.NewEOLBranchShipper(vehicleRepo, issueRepo, eolRepo, uow),
+		EOLDepotRelease:    usecase.NewEOLDepotReleaser(vehicleRepo, issueRepo, eolRepo, uow),
+		EOLDocumentApprove: usecase.NewEOLDocumentApprover(vehicleRepo, eolRepo, uow),
 		CORSAllowedOrigins: cfg.CORSAllowedOrigins,
 	})
 

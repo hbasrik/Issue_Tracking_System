@@ -11,11 +11,13 @@ import (
 )
 
 // errorResponse is the uniform error envelope returned to clients. For a
-// blocked hard-block gate it also carries the offending checklist item IDs so
-// the UI can list exactly what is blocking the transition (FR-3.7).
+// blocked hard-block gate it also carries what is blocking the transition so
+// the UI can list it (FR-3.7): checklist item IDs for the shipment gate, or
+// the open issues for the EOL depot-release gate.
 type errorResponse struct {
-	Error           string `json:"error"`
-	BlockingItemIDs []int  `json:"blocking_item_ids,omitempty"`
+	Error           string                 `json:"error"`
+	BlockingItemIDs []int                  `json:"blocking_item_ids,omitempty"`
+	BlockingIssues  []domain.BlockingIssue `json:"blocking_issues,omitempty"`
 }
 
 // writeJSON serializes v as JSON with the given status code.
@@ -34,11 +36,17 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 // This is the single place transport concerns meet domain errors.
 func writeError(w http.ResponseWriter, err error) {
 	var gate *domain.GateBlockedError
+	var depot *domain.DepotReleaseBlockedError
 	switch {
 	case errors.As(err, &gate):
 		writeJSON(w, http.StatusConflict, errorResponse{
 			Error:           gate.Error(),
 			BlockingItemIDs: gate.BlockingItemIDs,
+		})
+	case errors.As(err, &depot):
+		writeJSON(w, http.StatusConflict, errorResponse{
+			Error:          depot.Error(),
+			BlockingIssues: depot.BlockingIssues,
 		})
 	case errors.Is(err, domain.ErrNotFound):
 		writeJSON(w, http.StatusNotFound, errorResponse{Error: err.Error()})

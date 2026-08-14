@@ -26,11 +26,15 @@ type Deps struct {
 	Auth               *usecase.Authenticator
 	Roles              repository.RoleRepository
 	Vehicles           *usecase.VehicleService
-	Checkpoints        *usecase.CheckpointResultRecorder
+	StationSteps       *usecase.StationStepResultRecorder
 	Checklists         *usecase.ChecklistResultRecorder
 	Issues             *usecase.IssueManager
 	Stations           *usecase.StationService
 	Analysis           *usecase.AnalysisMetricsReader
+	EOLWorkflow        *usecase.EOLWorkflowReader
+	EOLBranchShip      *usecase.EOLBranchShipper
+	EOLDepotRelease    *usecase.EOLDepotReleaser
+	EOLDocumentApprove *usecase.EOLDocumentApprover
 	CORSAllowedOrigins []string
 }
 
@@ -71,8 +75,9 @@ func NewRouter(deps Deps) http.Handler {
 				r.Get("/vehicles", s.handleVehicleList)
 				r.Get("/vehicles/search", s.handleVehicleSearch)
 				r.Get("/vehicles/{vin}", s.handleVehicleGet)
-				r.Get("/vehicles/{vin}/checkpoints", s.handleVehicleCheckpoints)
+				r.Get("/vehicles/{vin}/station-steps", s.handleVehicleStationSteps)
 				r.Get("/vehicles/{vin}/checklist/{type}", s.handleVehicleChecklistGet)
+				r.Get("/vehicles/{vin}/eol", s.handleEOLWorkflowGet)
 				r.Get("/issues", s.handleIssueList)
 				r.Get("/issues/{id}", s.handleIssueGet)
 				r.Get("/stations", s.handleStationList)
@@ -105,11 +110,21 @@ func NewRouter(deps Deps) http.Handler {
 
 			// Shop-floor writes.
 			r.With(permissions.RequirePermission(domain.PermissionStationStepUpdate)).
-				Post("/vehicles/{vin}/checkpoints/{checkpointId}", s.handleRecordCheckpoint)
+				Post("/vehicles/{vin}/station-steps/{stationStepId}", s.handleRecordStationStep)
 			r.With(permissions.RequirePermission(domain.PermissionChecklistItemUpdate)).
 				Post("/vehicles/{vin}/checklist/{type}/{itemId}", s.handleRecordChecklist)
 			r.With(permissions.RequirePermission(domain.PermissionIssueCreate)).
 				Post("/issues", s.handleCreateIssue)
+
+			// EOL workflow (Karar 2). Each stage has its own permission so the
+			// three sign-offs can be delegated to different roles as the v2
+			// role matrix grows.
+			r.With(permissions.RequirePermission(domain.PermissionEOLBranchShip)).
+				Post("/vehicles/{vin}/eol/branch-ship", s.handleEOLBranchShip)
+			r.With(permissions.RequirePermission(domain.PermissionEOLDepotRelease)).
+				Post("/vehicles/{vin}/eol/depot-release", s.handleEOLDepotRelease)
+			r.With(permissions.RequirePermission(domain.PermissionEOLDocumentApprove)).
+				Post("/vehicles/{vin}/eol/document-approve", s.handleEOLDocumentApprove)
 		})
 	})
 
