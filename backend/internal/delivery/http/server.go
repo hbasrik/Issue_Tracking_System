@@ -13,6 +13,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
 
 	"github.com/karea/backend/internal/domain"
 	"github.com/karea/backend/internal/platform/auth"
@@ -54,7 +55,19 @@ func NewRouter(deps Deps) http.Handler {
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
 	r.Use(middleware.Recoverer)
-	r.Use(CORS(deps.CORSAllowedOrigins))
+	// CORS runs as router-level middleware so it sees a preflight before chi
+	// matches methods. No route declares OPTIONS, so anything reaching the
+	// method dispatch would be answered 405 with no CORS headers — which the
+	// browser reports as a CORS failure. cors.Handler answers every preflight
+	// itself and stops the chain, which also keeps RequireAuth off requests
+	// that by specification carry no Authorization header.
+	r.Use(cors.Handler(cors.Options{
+		AllowedOrigins:   deps.CORSAllowedOrigins,
+		AllowedMethods:   []string{"GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Authorization", "Content-Type"},
+		AllowCredentials: true,
+		MaxAge:           300,
+	}))
 
 	r.Get("/health", func(w http.ResponseWriter, _ *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
