@@ -71,6 +71,43 @@ func (s *server) handleRecordChecklist(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, out)
 }
 
+// handleChecklistTemplateList serves the /templates admin page: every
+// checklist template with a live count of its active items. Manager/Admin
+// only (admin.manage_masters). The v1 page hardcoded EOL=13 / SHIPMENT=43
+// and omitted TEST; this is the live replacement.
+func (s *server) handleChecklistTemplateList(w http.ResponseWriter, r *http.Request) {
+	if s.deps.Checklists == nil {
+		writeJSON(w, http.StatusOK, map[string]any{"items": []domain.ChecklistTemplateSummary{}})
+		return
+	}
+	items, err := s.deps.Checklists.ListTemplates(r.Context())
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"items": items})
+}
+
+// handleChecklistTemplateItems returns the active items of one template for
+// the editor pane on /templates.
+func (s *server) handleChecklistTemplateItems(w http.ResponseWriter, r *http.Request) {
+	if s.deps.Checklists == nil {
+		writeJSON(w, http.StatusOK, map[string]any{"items": []domain.ChecklistTemplateItem{}})
+		return
+	}
+	templateID, err := strconv.Atoi(chi.URLParam(r, "id"))
+	if err != nil {
+		badRequest(w, "id must be an integer")
+		return
+	}
+	items, err := s.deps.Checklists.ListTemplateItems(r.Context(), templateID)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"items": items})
+}
+
 // parseChecklistType maps the URL segment (eol|shipment|test) to the domain
 // enum.
 func parseChecklistType(raw string) (domain.ChecklistType, bool) {

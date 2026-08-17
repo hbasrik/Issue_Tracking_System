@@ -71,6 +71,17 @@ type ChecklistTemplate struct {
 	IsActive       bool
 }
 
+// ChecklistTemplateSummary is the /templates admin row: a template plus the
+// live count of its active items, so the page never has to hardcode 13/43.
+type ChecklistTemplateSummary struct {
+	ID             int
+	VehicleModelID *int
+	Type           ChecklistType
+	Name           string
+	IsActive       bool
+	ItemCount      int
+}
+
 // EOLItemPhase tags an EoL checklist item as Branch or Depot (Karar 2).
 // Document approval has no checklist of its own.
 type EOLItemPhase string

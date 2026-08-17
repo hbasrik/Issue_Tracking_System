@@ -133,3 +133,71 @@ func (r *ChecklistProgressRepo) SaveResult(ctx context.Context, result domain.Ch
 	}
 	return nil
 }
+
+// ListTemplates returns every checklist template with a live count of its
+// active items. Inactive items are excluded from the count so the admin page
+// matches what operators see on the vehicle checklists.
+func (r *ChecklistProgressRepo) ListTemplates(ctx context.Context) ([]domain.ChecklistTemplateSummary, error) {
+	rows, err := r.pool.Query(ctx,
+		`SELECT ct.id, ct.vehicle_model_id, ct.type::text, ct.name, ct.is_active,
+		        COUNT(cti.id) FILTER (WHERE cti.is_active = TRUE)::int AS item_count
+		 FROM checklist_templates ct
+		 LEFT JOIN checklist_template_items cti ON cti.template_id = ct.id
+		 GROUP BY ct.id
+		 ORDER BY CASE ct.type::text
+		            WHEN 'EOL' THEN 1
+		            WHEN 'SHIPMENT' THEN 2
+		            WHEN 'TEST' THEN 3
+		            ELSE 4
+		          END,
+		          ct.id`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var out []domain.ChecklistTemplateSummary
+	for rows.Next() {
+		var row domain.ChecklistTemplateSummary
+		var typeText string
+		if err := rows.Scan(
+			&row.ID, &row.VehicleModelID, &typeText, &row.Name, &row.IsActive, &row.ItemCount,
+		); err != nil {
+			return nil, err
+		}
+		row.Type = domain.ChecklistType(typeText)
+		out = append(out, row)
+	}
+	return out, rows.Err()
+}
+
+// ListTemplateItems returns the active items of one template in display order.
+func (r *ChecklistProgressRepo) ListTemplateItems(ctx context.Context, templateID int) ([]domain.ChecklistTemplateItem, error) {
+	rows, err := r.pool.Query(ctx,
+		`SELECT id, template_id, item_no, item_text, station_id, eol_phase::text, is_active
+		 FROM checklist_template_items
+		 WHERE template_id = $1 AND is_active = TRUE
+		 ORDER BY item_no`, templateID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var out []domain.ChecklistTemplateItem
+	for rows.Next() {
+		var item domain.ChecklistTemplateItem
+		var eolPhase *string
+		if err := rows.Scan(
+			&item.ID, &item.TemplateID, &item.ItemNo, &item.ItemText,
+			&item.StationID, &eolPhase, &item.IsActive,
+		); err != nil {
+			return nil, err
+		}
+		if eolPhase != nil && *eolPhase != "" {
+			p := domain.EOLItemPhase(*eolPhase)
+			item.EolPhase = &p
+		}
+		out = append(out, item)
+	}
+	return out, rows.Err()
+}

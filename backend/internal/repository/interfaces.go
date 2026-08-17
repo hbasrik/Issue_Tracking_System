@@ -60,6 +60,13 @@ type ChecklistProgressRepository interface {
 	ListItemsWithProgress(ctx context.Context, vin string, checklistType domain.ChecklistType, templateID int) ([]domain.ChecklistItemView, error)
 	// SaveResult updates a single pre-materialized checklist progress row.
 	SaveResult(ctx context.Context, result domain.ChecklistProgress) error
+	// ListTemplates returns every checklist template with a live count of its
+	// active items. The /templates admin page uses this so EOL/SHIPMENT/TEST
+	// counts always match checklist_template_items rather than a hardcoded seed.
+	ListTemplates(ctx context.Context) ([]domain.ChecklistTemplateSummary, error)
+	// ListTemplateItems returns the active items of one template, in item_no
+	// order, for the template editor pane.
+	ListTemplateItems(ctx context.Context, templateID int) ([]domain.ChecklistTemplateItem, error)
 }
 
 // IssueRepository persists and queries issues.

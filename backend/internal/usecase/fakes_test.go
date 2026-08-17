@@ -230,6 +230,14 @@ func (f *fakeChecklistRepo) SaveResult(_ context.Context, result domain.Checklis
 	return domain.ErrNotFound
 }
 
+func (f *fakeChecklistRepo) ListTemplates(_ context.Context) ([]domain.ChecklistTemplateSummary, error) {
+	return nil, nil
+}
+
+func (f *fakeChecklistRepo) ListTemplateItems(_ context.Context, _ int) ([]domain.ChecklistTemplateItem, error) {
+	return nil, nil
+}
+
 // fakeIssueRepo is an in-memory IssueRepository keyed by issue id.
 type fakeIssueRepo struct {
 	issues map[int64]*domain.Issue

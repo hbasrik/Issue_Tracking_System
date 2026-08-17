@@ -142,3 +142,28 @@ func (r *ChecklistResultRecorder) ListForVehicle(ctx context.Context, vin string
 
 	return r.checklist.ListItemsWithProgress(ctx, vin, checklistType, resolved)
 }
+
+// ListTemplates returns every checklist template with a live item count for
+// the /templates admin page.
+func (r *ChecklistResultRecorder) ListTemplates(ctx context.Context) ([]domain.ChecklistTemplateSummary, error) {
+	items, err := r.checklist.ListTemplates(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if items == nil {
+		items = []domain.ChecklistTemplateSummary{}
+	}
+	return items, nil
+}
+
+// ListTemplateItems returns the active items of one template for the editor.
+func (r *ChecklistResultRecorder) ListTemplateItems(ctx context.Context, templateID int) ([]domain.ChecklistTemplateItem, error) {
+	items, err := r.checklist.ListTemplateItems(ctx, templateID)
+	if err != nil {
+		return nil, err
+	}
+	if items == nil {
+		items = []domain.ChecklistTemplateItem{}
+	}
+	return items, nil
+}

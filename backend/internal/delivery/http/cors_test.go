@@ -43,6 +43,7 @@ func TestCORSPreflightIsAnsweredForEveryRoute(t *testing.T) {
 		"/api/v1/vehicles/resolve",
 		"/api/v1/media",
 		"/api/v1/issues/1/status",
+		"/api/v1/checklist-templates",
 	}
 
 	for _, route := range routes {
