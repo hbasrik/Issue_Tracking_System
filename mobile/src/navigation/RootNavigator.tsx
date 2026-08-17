@@ -18,6 +18,7 @@ import VehicleStationScreen from '../screens/VehicleStationScreen';
 import IssueReportScreen from '../screens/IssueReportScreen';
 import EOLChecklistScreen from '../screens/EOLChecklistScreen';
 import ShipmentChecklistScreen from '../screens/ShipmentChecklistScreen';
+import TestChecklistScreen from '../screens/TestChecklistScreen';
 import IssueDetailScreen from '../screens/IssueDetailScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -150,6 +151,11 @@ export function RootNavigator() {
               name="ShipmentChecklist"
               component={ShipmentChecklistScreen}
               options={{ title: 'Shipment Checklist' }}
+            />
+            <Stack.Screen
+              name="TestChecklist"
+              component={TestChecklistScreen}
+              options={{ title: 'Test Checklist' }}
             />
             <Stack.Screen
               name="IssueDetail"

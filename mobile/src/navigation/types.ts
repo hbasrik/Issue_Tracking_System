@@ -12,6 +12,7 @@ export type RootStackParamList = {
   };
   EOLChecklist: { vin: string };
   ShipmentChecklist: { vin: string };
+  TestChecklist: { vin: string };
   IssueDetail: { id: number };
 };
 

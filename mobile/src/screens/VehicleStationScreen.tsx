@@ -154,6 +154,12 @@ export default function VehicleStationScreen() {
             onPress={() => navigation.navigate('EOLChecklist', { vin })}
           />
         </View>
+        <View style={{ marginBottom: 12 }}>
+          <OutlineButton
+            label="Test Checklist"
+            onPress={() => navigation.navigate('TestChecklist', { vin })}
+          />
+        </View>
         <View style={{ marginBottom: 16 }}>
           <OutlineButton
             label="Shipment Checklist"
