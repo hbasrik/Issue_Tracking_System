@@ -19,8 +19,9 @@ type checklistRequest struct {
 	RequestGateExit bool   `json:"request_gate_exit"`
 }
 
-// handleRecordChecklist records a checklist item result (Operator only). The
-// URL type segment is eol|shipment|test, and the mandatory-description rule
+// handleRecordChecklist records a checklist item result. Both Operator and
+// Manager/Admin hold checklist_item.update (seeded role_permissions); the
+// URL type segment is eol|shipment|test. The mandatory-description rule
 // (FR-3.3) is validated identically for all three before persistence
 // (returning 400). Hard-block semantics apply to the two gated types: a
 // requested gate exit with any non-passing item returns 409 with the blocking

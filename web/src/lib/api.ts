@@ -163,6 +163,31 @@ export const api = {
     );
   },
 
+  recordChecklist(
+    vin: string,
+    type: ChecklistType,
+    itemId: number,
+    body: {
+      status: string;
+      rework_desc?: string;
+      conditional_desc?: string;
+      rejected_desc?: string;
+    },
+  ) {
+    return request(
+      `/vehicles/${encodeURIComponent(vin)}/checklist/${type}/${itemId}`,
+      { method: 'POST', body: JSON.stringify(body) },
+    );
+  },
+
+  resetEOLWorkflow(vin: string) {
+    return request<{
+      vin: string;
+      current_stage: EOLStage;
+      vehicle_status: string;
+    }>(`/vehicles/${encodeURIComponent(vin)}/eol/reset`, { method: 'POST' });
+  },
+
   getEOLWorkflow(vin: string) {
     return request<EOLWorkflowView>(
       `/vehicles/${encodeURIComponent(vin)}/eol`,
@@ -307,6 +332,7 @@ export interface ChecklistItem {
   ConditionalDesc: string;
   RejectedDesc: string;
   EolPhase?: 'BRANCH' | 'DEPOT' | null;
+  ProgressID?: number | null;
 }
 
 export type EOLStage = 'BRANCH' | 'DEPOT' | 'DOCUMENT' | 'COMPLETED';

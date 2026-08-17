@@ -34,6 +34,29 @@ export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
   const [blocking, setBlocking] = useState<BlockingIssue[] | null>(null);
   const [busy, setBusy] = useState(false);
 
+  async function resetWorkflow() {
+    if (
+      !window.confirm(
+        'Reset this vehicle’s EoL workflow to Branch / IN_PRODUCTION? Test-only — not available outside development.',
+      )
+    ) {
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    setBlocking(null);
+    try {
+      await api.resetEOLWorkflow(vin);
+      setWarning(null);
+      await load();
+      onVehicleChanged();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'EoL reset failed');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   const load = useCallback(async () => {
     setError(null);
     try {
@@ -151,6 +174,23 @@ export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
         style={{ borderColor: 'var(--border)' }}
       >
         <h2 className="text-lg font-semibold">EoL workflow</h2>
+        {import.meta.env.DEV && (
+          <div className="mt-3 rounded-lg border px-3 py-2" style={{ borderColor: 'var(--status-conditional-ok)' }}>
+            <p className="text-[13px]" style={{ color: 'var(--status-conditional-ok)' }}>
+              Test-only tool — resets EoL to Branch and vehicle status to
+              IN_PRODUCTION. Hidden and 404 outside APP_ENV=development.
+            </p>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => void resetWorkflow()}
+              className="mt-2 rounded-lg border px-3 py-1.5 text-[13px] disabled:opacity-60"
+              style={{ borderColor: 'var(--border)' }}
+            >
+              Reset EoL Workflow
+            </button>
+          </div>
+        )}
         <ol className="mt-4 flex items-center gap-2">
           {STAGES.map((stage, i) => {
             const done = i < currentIndex;
