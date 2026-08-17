@@ -123,6 +123,8 @@ type ChecklistProgress struct {
 // ChecklistItemView is the operator-facing join of template items with
 // per-vehicle checklist progress. EolPhase is set only for EoL items so the
 // Vehicle Detail stepper can split Branch vs Depot without a second query.
+// ProgressID is the checklist_item_progress row id, used as entity_id when
+// attaching media (CHECKLIST_ITEM_PROGRESS).
 type ChecklistItemView struct {
 	ItemID          int
 	ItemNo          int16
@@ -132,4 +134,5 @@ type ChecklistItemView struct {
 	ConditionalDesc string
 	RejectedDesc    string
 	EolPhase        *EOLItemPhase
+	ProgressID      *int64
 }

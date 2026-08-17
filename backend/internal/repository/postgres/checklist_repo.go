@@ -77,7 +77,7 @@ func (r *ChecklistProgressRepo) ListItemsWithProgress(ctx context.Context, vin s
 		`SELECT cti.id, cti.item_no, cti.item_text,
 		        COALESCE(p.check_status::text, 'PENDING'),
 		        COALESCE(p.rework_desc, ''), COALESCE(p.conditional_desc, ''), COALESCE(p.rejected_desc, ''),
-		        cti.eol_phase::text
+		        cti.eol_phase::text, p.id
 		 FROM checklist_template_items cti
 		 LEFT JOIN checklist_item_progress p
 		   ON p.check_item_id = cti.id AND p.vin = $1 AND p.checklist_type = $2
@@ -96,7 +96,7 @@ func (r *ChecklistProgressRepo) ListItemsWithProgress(ctx context.Context, vin s
 		if err := rows.Scan(
 			&item.ItemID, &item.ItemNo, &item.ItemText, &status,
 			&item.ReworkDesc, &item.ConditionalDesc, &item.RejectedDesc,
-			&eolPhase,
+			&eolPhase, &item.ProgressID,
 		); err != nil {
 			return nil, err
 		}
