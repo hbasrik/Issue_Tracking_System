@@ -12,7 +12,7 @@ import {
   useRoute,
   type RouteProp,
 } from '@react-navigation/native';
-import { ApiError, api } from '../api/client';
+import { ApiError, api, type LocalFile } from '../api/client';
 import {
   Badge,
   Card,
@@ -33,7 +33,7 @@ const SEVERITIES = [
   { value: 'LOW', label: 'Low', color: statusColors.severityLow },
 ] as const;
 
-/** Hata girme formu — §3.3. Soft-warning: after save, return to phase screen (no block). */
+/** Hata girme formu — §3.3. Soft-warning: after save, return to station screen (no block). */
 export default function IssueReportScreen() {
   const route = useRoute<RouteProp<RootStackParamList, 'IssueReport'>>();
   const navigation = useNavigation();
@@ -43,7 +43,10 @@ export default function IssueReportScreen() {
 
   const [description, setDescription] = useState('');
   const [severity, setSeverity] = useState<'CRITICAL' | 'MEDIUM' | 'LOW' | null>(null);
-  const [photoUri, setPhotoUri] = useState<string | null>(null);
+  const [photo, setPhoto] = useState<LocalFile | null>(null);
+  // Set once the issue exists, so a failed photo upload can be retried without
+  // creating a second issue.
+  const [createdIssueId, setCreatedIssueId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -54,11 +57,35 @@ export default function IssueReportScreen() {
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ['images'],
       quality: 0.6,
     });
-    if (!result.canceled && result.assets[0]) {
-      setPhotoUri(result.assets[0].uri);
+    const asset = result.canceled ? null : result.assets[0];
+    if (asset) {
+      setPhoto({
+        uri: asset.uri,
+        name: asset.fileName || `issue-${Date.now()}.jpg`,
+        type: asset.mimeType || 'image/jpeg',
+      });
+    }
+  }
+
+  /**
+   * Attaches the picked photo to an issue. media_attachments is keyed by an
+   * existing entity, so this can only run once the issue has an id.
+   */
+  async function uploadPhoto(issueId: number): Promise<boolean> {
+    if (!photo) return true;
+    try {
+      await api.uploadMedia('ISSUE', String(issueId), photo);
+      return true;
+    } catch (err) {
+      setError(
+        `Hata #${issueId} kaydedildi, fotoğraf yüklenemedi: ${
+          err instanceof Error ? err.message : 'upload failed'
+        }`,
+      );
+      return false;
     }
   }
 
@@ -74,17 +101,23 @@ export default function IssueReportScreen() {
     }
     setBusy(true);
     try {
-      await api.createIssue({
-        vin,
-        source_type: 'STATION_STEP',
-        source_station_step_id: stationStepId,
-        station_id: stationId,
-        severity,
-        description: description.trim(),
-        picture_url: photoUri ?? undefined,
-      });
-      // Soft-warning UX: return immediately — station screen stays navigable
-      navigation.goBack();
+      let issueId = createdIssueId;
+      if (issueId == null) {
+        const issue = await api.createIssue({
+          vin,
+          source_type: 'STATION_STEP',
+          source_station_step_id: stationStepId,
+          station_id: stationId,
+          severity,
+          description: description.trim(),
+        });
+        issueId = issue.ID;
+        setCreatedIssueId(issueId);
+      }
+      if (await uploadPhoto(issueId)) {
+        // Soft-warning UX: return immediately — station screen stays navigable
+        navigation.goBack();
+      }
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Failed to create issue');
     } finally {
@@ -164,7 +197,11 @@ export default function IssueReportScreen() {
 
         <View style={{ marginTop: 16 }}>
           <OutlineButton
-            label={photoUri ? 'Photo attached (tap to change)' : 'Add photo (optional)'}
+            label={
+              photo
+                ? `Fotoğraf seçildi: ${photo.name} (değiştir)`
+                : 'Fotoğraf ekle (opsiyonel)'
+            }
             onPress={pickPhoto}
           />
         </View>
@@ -173,11 +210,25 @@ export default function IssueReportScreen() {
 
         <View style={{ marginTop: 24 }}>
           <PrimaryButton
-            label={busy ? 'Saving…' : 'Hatayı Kaydet ve Devam Et'}
+            label={
+              busy
+                ? 'Saving…'
+                : createdIssueId != null
+                  ? 'Fotoğrafı Tekrar Yükle'
+                  : 'Hatayı Kaydet ve Devam Et'
+            }
             onPress={submit}
             disabled={busy}
           />
         </View>
+        {createdIssueId != null ? (
+          <View style={{ marginTop: 12 }}>
+            <OutlineButton
+              label="Fotoğrafsız devam et"
+              onPress={() => navigation.goBack()}
+            />
+          </View>
+        ) : null}
       </ScrollView>
     </Screen>
   );

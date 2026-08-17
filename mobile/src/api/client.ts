@@ -49,7 +49,13 @@ export function setTokenGetter(fn: TokenGetter): void {
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const headers = new Headers(options.headers);
-  if (!headers.has('Content-Type') && options.body) {
+  // A multipart body has to keep the boundary fetch generates for it, so only
+  // JSON bodies get an explicit content type.
+  if (
+    !headers.has('Content-Type') &&
+    options.body &&
+    !(options.body instanceof FormData)
+  ) {
     headers.set('Content-Type', 'application/json');
   }
   const token = getToken();
@@ -163,6 +169,31 @@ export interface Station {
   Name: string;
   SequenceNo: number;
   IsActive: boolean;
+}
+
+export type MediaEntityType =
+  | 'VEHICLE'
+  | 'ISSUE'
+  | 'CHECKLIST_ITEM_PROGRESS'
+  | 'STATION_STEP_PROGRESS';
+
+export interface MediaAttachment {
+  id: number;
+  entity_type: MediaEntityType;
+  entity_id: string;
+  file_name: string;
+  storage_path: string;
+  mime_type: string;
+  file_size: number;
+  uploaded_by: number | null;
+  uploaded_at: string;
+}
+
+/** A photo picked on the device, in the shape React Native's fetch uploads. */
+export interface LocalFile {
+  uri: string;
+  name: string;
+  type: string;
 }
 
 export const api = {
@@ -289,6 +320,28 @@ export const api = {
 
   listStations() {
     return request<{ items: Station[] }>('/stations');
+  },
+
+  listMedia(entityType: MediaEntityType, entityId: string) {
+    const q = new URLSearchParams({
+      entity_type: entityType,
+      entity_id: entityId,
+    });
+    return request<{ items: MediaAttachment[] }>(`/media?${q}`);
+  },
+
+  /**
+   * Attaches a photo to an existing entity (Karar 8). The entity has to exist
+   * already — for an issue that means uploading after the issue is created.
+   */
+  uploadMedia(entityType: MediaEntityType, entityId: string, file: LocalFile) {
+    const body = new FormData();
+    body.append('entity_type', entityType);
+    body.append('entity_id', entityId);
+    // React Native's fetch accepts this file descriptor where the DOM would
+    // require a Blob.
+    body.append('file', file as unknown as Blob);
+    return request<MediaAttachment>('/media', { method: 'POST', body });
   },
 
   /** Current-state open-issue severity by VIN (Decision Log #9; no filters). */
