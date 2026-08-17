@@ -107,6 +107,21 @@ func (r *EOLWorkflowRepo) MarkDepotReleased(ctx context.Context, vin string, act
 		vin, actorID)
 }
 
+// ResetToBranch clears every stage timestamp and returns the workflow to BRANCH.
+// The vehicle status change is the caller's job (IN_PRODUCTION) so this stays
+// a single-table write.
+func (r *EOLWorkflowRepo) ResetToBranch(ctx context.Context, vin string) error {
+	return r.mark(ctx,
+		`UPDATE vehicle_eol_workflow
+		 SET current_stage = 'BRANCH',
+		     branch_shipped_at = NULL, branch_shipped_by = NULL,
+		     branch_open_issue_count_at_shipment = NULL,
+		     depot_released_at = NULL, depot_released_by = NULL,
+		     document_approved_at = NULL, document_approved_by = NULL
+		 WHERE vin = $1`,
+		vin)
+}
+
 // MarkDocumentApproved records the final EOL sign-off.
 func (r *EOLWorkflowRepo) MarkDocumentApproved(ctx context.Context, vin string, actorID int) error {
 	return r.mark(ctx,

@@ -450,6 +450,22 @@ func (f *fakeEOLWorkflowRepo) MarkDocumentApproved(_ context.Context, vin string
 	return nil
 }
 
+func (f *fakeEOLWorkflowRepo) ResetToBranch(_ context.Context, vin string) error {
+	w, ok := f.rows[vin]
+	if !ok {
+		return domain.ErrNotFound
+	}
+	w.CurrentStage = domain.EOLStageBranch
+	w.BranchShippedAt = nil
+	w.BranchShippedBy = nil
+	w.BranchOpenIssueCountAtShipment = nil
+	w.DepotReleasedAt = nil
+	w.DepotReleasedBy = nil
+	w.DocumentApprovedAt = nil
+	w.DocumentApprovedBy = nil
+	return nil
+}
+
 // operatorPermissions and managerPermissions mirror the role_permissions rows
 // migration 0002 seeds for the two roles that exist today, so usecase tests
 // exercise the same permission sets the running system resolves.

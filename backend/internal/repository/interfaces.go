@@ -127,6 +127,9 @@ type EOLWorkflowRepository interface {
 	// MarkDocumentApproved records the final sign-off and completes the
 	// workflow.
 	MarkDocumentApproved(ctx context.Context, vin string, actorID int) error
+	// ResetToBranch clears every stage timestamp and returns the workflow to
+	// BRANCH. Dev-only: the HTTP layer 404s this outside APP_ENV=development.
+	ResetToBranch(ctx context.Context, vin string) error
 }
 
 // MediaRepository persists and queries polymorphic file attachments

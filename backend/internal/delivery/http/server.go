@@ -10,6 +10,7 @@ package http
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -36,8 +37,11 @@ type Deps struct {
 	EOLBranchShip      *usecase.EOLBranchShipper
 	EOLDepotRelease    *usecase.EOLDepotReleaser
 	EOLDocumentApprove *usecase.EOLDocumentApprover
+	EOLReset           *usecase.EOLWorkflowResetter
 	Media              *usecase.MediaUploader
 	CORSAllowedOrigins []string
+	// AppEnv is APP_ENV. The EoL reset route 404s unless this is "development".
+	AppEnv string
 }
 
 type server struct {
@@ -76,6 +80,16 @@ func NewRouter(deps Deps) http.Handler {
 	r.Route("/api/v1", func(r chi.Router) {
 		// Public: authentication.
 		r.Post("/auth/login", s.handleLogin)
+
+		// Development-only EoL rewind. requireDevelopment 404s before auth so
+		// a production probe cannot distinguish "exists but forbidden" from
+		// "no such route".
+		r.Group(func(r chi.Router) {
+			r.Use(s.requireDevelopment)
+			r.Use(RequireAuth(deps.Issuer))
+			r.With(permissions.RequirePermission(domain.PermissionAdminManageMasters)).
+				Post("/vehicles/{vin}/eol/reset", s.handleEOLWorkflowReset)
+		})
 
 		// Authenticated routes. Every gate below is a permission code, never a
 		// role code, so extending the role matrix is a role_permissions insert
@@ -157,4 +171,20 @@ func NewRouter(deps Deps) http.Handler {
 	})
 
 	return r
+}
+
+// requireDevelopment 404s every request when APP_ENV is not development, so
+// the EoL reset tool cannot be discovered as a 401/403 in other environments.
+func (s *server) requireDevelopment(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !s.isDevelopment() {
+			writeError(w, domain.ErrNotFound)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (s *server) isDevelopment() bool {
+	return strings.EqualFold(strings.TrimSpace(s.deps.AppEnv), "development")
 }

@@ -57,8 +57,10 @@ func main() {
 		EOLBranchShip:      usecase.NewEOLBranchShipper(vehicleRepo, issueRepo, eolRepo, uow),
 		EOLDepotRelease:    usecase.NewEOLDepotReleaser(vehicleRepo, issueRepo, eolRepo, uow),
 		EOLDocumentApprove: usecase.NewEOLDocumentApprover(vehicleRepo, eolRepo, uow),
+		EOLReset:           usecase.NewEOLWorkflowResetter(vehicleRepo, eolRepo, auditRepo, uow),
 		Media:              usecase.NewMediaUploader(mediaRepo, mediaStore),
 		CORSAllowedOrigins: cfg.CORSAllowedOrigins,
+		AppEnv:             cfg.AppEnv,
 	})
 
 	addr := ":" + cfg.Port

@@ -16,10 +16,12 @@ type eolFixture struct {
 	vehicles *fakeVehicleRepo
 	issues   *fakeIssueRepo
 	workflow *fakeEOLWorkflowRepo
+	audit    *fakeAuditRepo
 
 	branchShip      *usecase.EOLBranchShipper
 	depotRelease    *usecase.EOLDepotReleaser
 	documentApprove *usecase.EOLDocumentApprover
+	reset           *usecase.EOLWorkflowResetter
 }
 
 func newEOLFixture(t *testing.T) *eolFixture {
@@ -33,15 +35,18 @@ func newEOLFixture(t *testing.T) *eolFixture {
 	issues := newFakeIssueRepo()
 	workflow := newFakeEOLWorkflowRepo()
 	workflow.seed(eolTestVIN)
+	audit := newFakeAuditRepo()
 	uow := &passthroughFakeUoW{}
 
 	return &eolFixture{
 		vehicles:        vehicles,
 		issues:          issues,
 		workflow:        workflow,
+		audit:           audit,
 		branchShip:      usecase.NewEOLBranchShipper(vehicles, issues, workflow, uow),
 		depotRelease:    usecase.NewEOLDepotReleaser(vehicles, issues, workflow, uow),
 		documentApprove: usecase.NewEOLDocumentApprover(vehicles, workflow, uow),
+		reset:           usecase.NewEOLWorkflowResetter(vehicles, workflow, audit, uow),
 	}
 }
 
@@ -240,4 +245,54 @@ func TestEOLStagesMustRunInOrder(t *testing.T) {
 			t.Errorf("expected ErrInvalidStatusTransition, got %v", err)
 		}
 	})
+}
+
+// TestEOLReset_ReturnsShippedVehicleToBranch is the development rewind: a
+// vehicle that has already left BRANCH is put back to BRANCH / IN_PRODUCTION
+// and the rewind is recorded on audit_logs, not silent.
+func TestEOLReset_ReturnsShippedVehicleToBranch(t *testing.T) {
+	f := newEOLFixture(t)
+	ctx := context.Background()
+	if _, err := f.branchShip.Ship(ctx, eolTestVIN, 7); err != nil {
+		t.Fatalf("branch ship: %v", err)
+	}
+
+	out, err := f.reset.Reset(ctx, eolTestVIN, 9)
+	if err != nil {
+		t.Fatalf("reset: %v", err)
+	}
+	if out.CurrentStage != domain.EOLStageBranch {
+		t.Errorf("stage = %q, want %q", out.CurrentStage, domain.EOLStageBranch)
+	}
+	if out.VehicleStatus != domain.VehicleStatusInProduction {
+		t.Errorf("reported status = %q, want %q", out.VehicleStatus, domain.VehicleStatusInProduction)
+	}
+	if got := f.vehicles.vehicles[eolTestVIN].CurrentGlobalStatus; got != domain.VehicleStatusInProduction {
+		t.Errorf("vehicle status = %q, want %q", got, domain.VehicleStatusInProduction)
+	}
+
+	workflow, err := f.workflow.Get(ctx, eolTestVIN)
+	if err != nil {
+		t.Fatalf("get workflow: %v", err)
+	}
+	if workflow.CurrentStage != domain.EOLStageBranch {
+		t.Errorf("stored stage = %q, want BRANCH", workflow.CurrentStage)
+	}
+	if workflow.BranchShippedAt != nil || workflow.DepotReleasedAt != nil || workflow.DocumentApprovedAt != nil {
+		t.Errorf("stage timestamps still set: %+v", workflow)
+	}
+
+	if len(f.audit.entries) != 1 {
+		t.Fatalf("audit entries = %d, want 1", len(f.audit.entries))
+	}
+	entry := f.audit.entries[0]
+	if entry.EventType != domain.AuditEventEOLWorkflowStage {
+		t.Errorf("event = %q, want %q", entry.EventType, domain.AuditEventEOLWorkflowStage)
+	}
+	if entry.OldValue != string(domain.EOLStageDepot) || entry.NewValue != string(domain.EOLStageBranch) {
+		t.Errorf("audit %q -> %q, want DEPOT -> BRANCH", entry.OldValue, entry.NewValue)
+	}
+	if entry.Metadata["dev_reset"] != true {
+		t.Errorf("metadata = %+v, want dev_reset=true", entry.Metadata)
+	}
 }

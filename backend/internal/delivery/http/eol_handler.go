@@ -4,6 +4,8 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+
+	"github.com/karea/backend/internal/domain"
 )
 
 // handleEOLBranchShip performs EOL stage 1. Open issues produce a warning in
@@ -60,4 +62,21 @@ func (s *server) handleEOLWorkflowGet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, view)
+}
+
+// handleEOLWorkflowReset is the development-only rewind of the three-stage
+// EoL workflow. requireDevelopment already 404'd non-development requests.
+func (s *server) handleEOLWorkflowReset(w http.ResponseWriter, r *http.Request) {
+	if s.deps.EOLReset == nil {
+		writeError(w, domain.ErrNotFound)
+		return
+	}
+	vin := chi.URLParam(r, "vin")
+	claims, _ := ClaimsFromContext(r.Context())
+	out, err := s.deps.EOLReset.Reset(r.Context(), vin, claims.UserID)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, out)
 }
