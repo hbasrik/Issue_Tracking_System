@@ -192,6 +192,16 @@ export const api = {
     return request<Vehicle>(`/vehicles/${encodeURIComponent(vin)}`);
   },
 
+  /**
+   * Looks up the vehicle carrying the short factory number printed on the
+   * body (Karar 5). Returns the same record as the by-VIN read; 404 when the
+   * number is unknown.
+   */
+  resolveVehicle(vehicleNumber: string) {
+    const q = new URLSearchParams({ vehicle_number: vehicleNumber });
+    return request<Vehicle>(`/vehicles/resolve?${q}`);
+  },
+
   getStationSteps(vin: string) {
     return request<{
       Items: StationStepItem[];
