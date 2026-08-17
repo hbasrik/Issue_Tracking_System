@@ -1,53 +1,64 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { api, type ChecklistTemplate, type ChecklistTemplateItem } from '../lib/api';
 import { StatusBadge } from '../components/StatusBadge';
 
-interface TemplateRow {
-  id: number;
-  model: string;
-  type: 'EOL' | 'SHIPMENT';
-  name: string;
-  itemCount: number;
-  isActive: boolean;
+function typeBadgeValue(type: ChecklistTemplate['Type']): string {
+  if (type === 'EOL') return 'OK';
+  if (type === 'TEST') return 'PENDING';
+  return 'CONDITIONAL_OK';
 }
 
-const SEED: TemplateRow[] = [
-  {
-    id: 1,
-    model: 'Default (all models)',
-    type: 'EOL',
-    name: 'Default EoL Template (13 items)',
-    itemCount: 13,
-    isActive: true,
-  },
-  {
-    id: 2,
-    model: 'Default (all models)',
-    type: 'SHIPMENT',
-    name: 'Default Shipment Template (43 items)',
-    itemCount: 43,
-    isActive: true,
-  },
-];
+function modelLabel(modelId: number | null): string {
+  return modelId == null ? 'Default (all models)' : `Model #${modelId}`;
+}
 
-/** Checklist Templates admin — §4.5 list + editor shell. */
+/** Checklist Templates admin — live catalogue from GET /checklist-templates. */
 export default function TemplatesPage() {
-  const [selected, setSelected] = useState<TemplateRow | null>(null);
-  const [items, setItems] = useState<string[]>([]);
+  const [templates, setTemplates] = useState<ChecklistTemplate[]>([]);
+  const [selected, setSelected] = useState<ChecklistTemplate | null>(null);
+  const [items, setItems] = useState<ChecklistTemplateItem[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  function openEditor(row: TemplateRow) {
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await api.listChecklistTemplates();
+      setTemplates(res.items ?? []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'failed to load templates');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  async function openEditor(row: ChecklistTemplate) {
     setSelected(row);
-    // Placeholder item text until a templates API exists.
-    setItems(
-      Array.from({ length: row.itemCount }, (_, i) => `Item ${i + 1}`),
-    );
+    setItems([]);
+    try {
+      const res = await api.listChecklistTemplateItems(row.ID);
+      setItems(res.items ?? []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'failed to load template items');
+    }
   }
 
   return (
     <section>
       <h1 className="text-2xl font-semibold">Checklist Templates</h1>
       <p className="mt-1 text-[13px] text-[var(--text-secondary)]">
-        Multi-template admin — model × EOL / SHIPMENT
+        Multi-template admin — model × EOL / SHIPMENT / TEST
       </p>
+      {error && (
+        <p className="mt-3 text-[13px]" style={{ color: 'var(--status-not-ok)' }}>
+          {error}
+        </p>
+      )}
 
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
         <div
@@ -67,24 +78,35 @@ export default function TemplatesPage() {
               </tr>
             </thead>
             <tbody>
-              {SEED.map((row) => (
+              {loading && (
+                <tr>
+                  <td className="px-4 py-3 text-[var(--text-secondary)]" colSpan={4}>
+                    Loading…
+                  </td>
+                </tr>
+              )}
+              {!loading && templates.length === 0 && (
+                <tr>
+                  <td className="px-4 py-3 text-[var(--text-secondary)]" colSpan={4}>
+                    No templates
+                  </td>
+                </tr>
+              )}
+              {templates.map((row) => (
                 <tr
-                  key={row.id}
+                  key={row.ID}
                   className="cursor-pointer border-t hover:bg-[var(--bg-surface-2)]"
                   style={{ borderColor: 'var(--border)' }}
-                  onClick={() => openEditor(row)}
+                  onClick={() => void openEditor(row)}
                 >
-                  <td className="px-4 py-3">{row.model}</td>
+                  <td className="px-4 py-3">{modelLabel(row.VehicleModelID)}</td>
                   <td className="px-4 py-3">
-                    <StatusBadge
-                      kind="eol"
-                      value={row.type === 'EOL' ? 'OK' : 'CONDITIONAL_OK'}
-                    />{' '}
-                    {row.type}
+                    <StatusBadge kind="eol" value={typeBadgeValue(row.Type)} />{' '}
+                    {row.Type}
                   </td>
-                  <td className="px-4 py-3">{row.itemCount}</td>
+                  <td className="px-4 py-3">{row.ItemCount}</td>
                   <td className="px-4 py-3">
-                    {row.isActive ? 'Active' : 'Inactive'}
+                    {row.IsActive ? 'Active' : 'Inactive'}
                   </td>
                 </tr>
               ))}
@@ -99,40 +121,28 @@ export default function TemplatesPage() {
           <h2 className="text-lg font-semibold">Template editor</h2>
           {!selected && (
             <p className="mt-2 text-[15px] text-[var(--text-secondary)]">
-              Select a template to edit items.
+              Select a template to view items.
             </p>
           )}
           {selected && (
             <>
-              <p className="mt-2 text-[15px]">{selected.name}</p>
+              <p className="mt-2 text-[15px]">{selected.Name}</p>
+              <p className="mt-1 text-[13px] text-[var(--text-secondary)]">
+                {selected.ItemCount} live items — edits are not saved from this
+                screen yet
+              </p>
               <ul className="mt-4 max-h-80 space-y-2 overflow-auto">
-                {items.map((text, idx) => (
+                {items.map((item) => (
                   <li
-                    key={idx}
+                    key={item.ID}
                     className="flex items-center gap-2 rounded-lg border px-3 py-2 text-[15px]"
                     style={{ borderColor: 'var(--border)' }}
                   >
-                    <span className="text-[var(--text-secondary)]">{idx + 1}.</span>
-                    <input
-                      value={text}
-                      onChange={(e) => {
-                        const next = [...items];
-                        next[idx] = e.target.value;
-                        setItems(next);
-                      }}
-                      className="flex-1 bg-transparent outline-none"
-                    />
+                    <span className="text-[var(--text-secondary)]">{item.ItemNo}.</span>
+                    <span className="flex-1">{item.ItemText}</span>
                   </li>
                 ))}
               </ul>
-              <button
-                type="button"
-                className="mt-4 rounded-lg border px-3 py-2 text-[15px]"
-                style={{ borderColor: 'var(--border)' }}
-                onClick={() => setItems((prev) => [...prev, `Item ${prev.length + 1}`])}
-              >
-                Add item
-              </button>
             </>
           )}
         </div>

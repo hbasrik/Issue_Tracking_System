@@ -147,6 +147,16 @@ export const api = {
     return request<{ items: Station[] }>('/stations');
   },
 
+  listChecklistTemplates() {
+    return request<{ items: ChecklistTemplate[] }>('/checklist-templates');
+  },
+
+  listChecklistTemplateItems(templateId: number) {
+    return request<{ items: ChecklistTemplateItem[] }>(
+      `/checklist-templates/${templateId}/items`,
+    );
+  },
+
   getVehicleChecklist(vin: string, type: ChecklistType) {
     return request<{ items: ChecklistItem[] }>(
       `/vehicles/${encodeURIComponent(vin)}/checklist/${type}`,
@@ -262,6 +272,27 @@ export interface Station {
   ID: number;
   Name: string;
   SequenceNo: number;
+  IsActive: boolean;
+}
+
+export type ChecklistTemplateType = 'EOL' | 'SHIPMENT' | 'TEST';
+
+export interface ChecklistTemplate {
+  ID: number;
+  VehicleModelID: number | null;
+  Type: ChecklistTemplateType;
+  Name: string;
+  IsActive: boolean;
+  ItemCount: number;
+}
+
+export interface ChecklistTemplateItem {
+  ID: number;
+  TemplateID: number;
+  ItemNo: number;
+  ItemText: string;
+  StationID: number | null;
+  EolPhase: 'BRANCH' | 'DEPOT' | null;
   IsActive: boolean;
 }
 
