@@ -38,7 +38,8 @@ export default function IssueReportScreen() {
   const route = useRoute<RouteProp<RootStackParamList, 'IssueReport'>>();
   const navigation = useNavigation();
   const { tokens } = useTheme();
-  const { vin, checkpointId, phase, stationId, checkpointName } = route.params;
+  const { vin, stationStepId, stationId, stationName, stationStepName } =
+    route.params;
 
   const [description, setDescription] = useState('');
   const [severity, setSeverity] = useState<'CRITICAL' | 'MEDIUM' | 'LOW' | null>(null);
@@ -75,14 +76,14 @@ export default function IssueReportScreen() {
     try {
       await api.createIssue({
         vin,
-        source_type: 'PHASE_CHECKPOINT',
-        source_checkpoint_id: checkpointId,
+        source_type: 'STATION_STEP',
+        source_station_step_id: stationStepId,
         station_id: stationId,
         severity,
         description: description.trim(),
         picture_url: photoUri ?? undefined,
       });
-      // Soft-warning UX: return immediately — phase screen stays navigable
+      // Soft-warning UX: return immediately — station screen stays navigable
       navigation.goBack();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Failed to create issue');
@@ -95,18 +96,15 @@ export default function IssueReportScreen() {
     <Screen padded={false}>
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
         <Title>Hata Bildir</Title>
-        <Subtitle>Checkpoint failure report</Subtitle>
+        <Subtitle>Station step failure report</Subtitle>
 
         <Card>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             <Badge label={vin} color={tokens.accent} />
-            <Badge label={`Phase ${phase}`} color={statusColors.info} />
-            {stationId != null ? (
-              <Badge label={`Station ${stationId}`} color={tokens.textSecondary} />
-            ) : null}
+            <Badge label={stationName} color={statusColors.info} />
           </View>
           <Text style={{ color: tokens.textSecondary, marginTop: 10, fontSize: 13 }}>
-            {checkpointName} (read-only)
+            {stationStepName} (read-only)
           </Text>
           <Text style={{ color: tokens.textSecondary, marginTop: 4, fontSize: 12 }}>
             {new Date().toLocaleString()}

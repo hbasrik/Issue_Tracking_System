@@ -47,7 +47,7 @@ export default function MyStationScreen() {
   }, [activeStationId, setActiveStationId]);
 
   const loadQueue = useCallback(async () => {
-    if (!active?.PhaseNumber) {
+    if (!active) {
       setVehicles([]);
       setLoading(false);
       return;
@@ -55,7 +55,7 @@ export default function MyStationScreen() {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.listVehicles({ phase: active.PhaseNumber });
+      const res = await api.listVehicles({ station: active.ID });
       setVehicles(res.Items ?? []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load queue');
@@ -126,12 +126,10 @@ export default function MyStationScreen() {
           refreshControl={
             <RefreshControl refreshing={loading} onRefresh={loadQueue} />
           }
-          ListEmptyComponent={
-            <Subtitle>No vehicles at this station phase</Subtitle>
-          }
+          ListEmptyComponent={<Subtitle>No vehicles at this station</Subtitle>}
           renderItem={({ item }) => (
             <Pressable
-              onPress={() => navigation.navigate('VehiclePhase', { vin: item.VIN })}
+              onPress={() => navigation.navigate('VehicleStation', { vin: item.VIN })}
             >
               <Card>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>

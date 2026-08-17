@@ -134,7 +134,7 @@ export default function DurumScreen() {
         }
         renderItem={({ item }) => (
           <Pressable
-            onPress={() => navigation.navigate('VehiclePhase', { vin: item.VIN })}
+            onPress={() => navigation.navigate('VehicleStation', { vin: item.VIN })}
           >
             <Card>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>

@@ -80,22 +80,25 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 
 export interface Vehicle {
   VIN: string;
+  /** Short factory number printed on the vehicle (Karar 5). */
+  VehicleNumber: string;
   VehicleModelID: number;
   CurrentGlobalStatus: string;
-  CurrentPhase: number;
+  CurrentStationID: number | null;
   TotalProgressPercentage: number;
   EOLTemplateID?: number | null;
   ShipmentTemplateID?: number | null;
+  TestTemplateID?: number | null;
   CreatedAt?: string;
   UpdatedAt?: string;
 }
 
-export interface CheckpointItem {
+export interface StationStepItem {
   ID: number;
-  PhaseNumber: number;
+  StationID: number;
+  StationName: string;
   SequenceNo: number;
   Name: string;
-  StationID?: number | null;
   Status: 'PENDING' | 'OK' | 'NOT_OK';
   RelatedIssueID?: number | null;
 }
@@ -114,13 +117,18 @@ export interface Issue {
   ID: number;
   VIN: string;
   SourceType: string;
-  SourceCheckpointID?: number | null;
+  SourceStationStepID?: number | null;
   SourceCheckItemID?: number | null;
   StationID?: number | null;
   Severity: 'CRITICAL' | 'MEDIUM' | 'LOW';
   Description: string;
   PictureURL?: string;
-  Status: 'OPEN' | 'IN_PROGRESS' | 'DONE' | 'APPROVED';
+  Status:
+    | 'OPEN'
+    | 'IN_PROGRESS'
+    | 'DONE'
+    | 'APPROVED'
+    | 'CONDITIONAL_APPROVED';
   IssueReporterID: number;
   IssueDate?: string;
   CreatedAt?: string;
@@ -130,7 +138,8 @@ export interface Issue {
 export interface Station {
   ID: number;
   Name: string;
-  PhaseNumber: number | null;
+  SequenceNo: number;
+  IsActive: boolean;
 }
 
 export const api = {
@@ -146,9 +155,9 @@ export const api = {
     return request<{ items: Vehicle[] }>(`/vehicles/search?${q}`);
   },
 
-  listVehicles(params: { phase?: number; page?: number } = {}) {
+  listVehicles(params: { station?: number; page?: number } = {}) {
     const q = new URLSearchParams();
-    if (params.phase) q.set('phase', String(params.phase));
+    if (params.station) q.set('station', String(params.station));
     if (params.page) q.set('page', String(params.page));
     const qs = q.toString();
     return request<{ Items: Vehicle[]; Total: number; Page: number; Size: number }>(
@@ -160,18 +169,21 @@ export const api = {
     return request<Vehicle>(`/vehicles/${encodeURIComponent(vin)}`);
   },
 
-  getCheckpoints(vin: string) {
+  getStationSteps(vin: string) {
     return request<{
-      Items: CheckpointItem[];
-      OpenIssuesByPhase: Record<string, number>;
-    }>(`/vehicles/${encodeURIComponent(vin)}/checkpoints`);
+      Items: StationStepItem[];
+      OpenIssuesByStation: Record<string, number>;
+    }>(`/vehicles/${encodeURIComponent(vin)}/station-steps`);
   },
 
-  recordCheckpoint(vin: string, checkpointId: number, status: 'OK' | 'NOT_OK') {
-    return request(`/vehicles/${encodeURIComponent(vin)}/checkpoints/${checkpointId}`, {
-      method: 'POST',
-      body: JSON.stringify({ status }),
-    });
+  recordStationStep(vin: string, stationStepId: number, status: 'OK' | 'NOT_OK') {
+    return request(
+      `/vehicles/${encodeURIComponent(vin)}/station-steps/${stationStepId}`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ status }),
+      },
+    );
   },
 
   getChecklist(vin: string, type: 'eol' | 'shipment') {
@@ -204,7 +216,7 @@ export const api = {
   createIssue(body: {
     vin: string;
     source_type: string;
-    source_checkpoint_id?: number;
+    source_station_step_id?: number;
     source_check_item_id?: number;
     station_id?: number;
     severity: string;

@@ -11,7 +11,7 @@ export default function SearchScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   function openVehicle(v: Vehicle) {
-    navigation.navigate('VehiclePhase', { vin: v.VIN });
+    navigation.navigate('VehicleStation', { vin: v.VIN });
   }
 
   return (

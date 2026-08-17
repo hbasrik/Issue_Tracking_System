@@ -17,7 +17,7 @@ import {
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
   api,
-  type CheckpointItem,
+  type StationStepItem,
   type Vehicle,
 } from '../api/client';
 import { ProgressRing } from '../components/ProgressRing';
@@ -40,36 +40,42 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-function checkpointColor(status: CheckpointItem['Status']): string {
+interface StationGroup {
+  id: number;
+  name: string;
+  steps: StationStepItem[];
+}
+
+function stepColor(status: StationStepItem['Status']): string {
   if (status === 'OK') return statusColors.ok;
   if (status === 'NOT_OK') return statusColors.notOk;
   return statusColors.pending;
 }
 
-export default function VehiclePhaseScreen() {
-  const route = useRoute<RouteProp<RootStackParamList, 'VehiclePhase'>>();
+export default function VehicleStationScreen() {
+  const route = useRoute<RouteProp<RootStackParamList, 'VehicleStation'>>();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { tokens } = useTheme();
   const vin = route.params.vin;
 
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
-  const [checkpoints, setCheckpoints] = useState<CheckpointItem[]>([]);
-  const [openByPhase, setOpenByPhase] = useState<Record<string, number>>({});
-  const [expandedPhase, setExpandedPhase] = useState<number | null>(null);
+  const [steps, setSteps] = useState<StationStepItem[]>([]);
+  const [openByStation, setOpenByStation] = useState<Record<string, number>>({});
+  const [expandedStation, setExpandedStation] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<number | null>(null);
 
   const load = useCallback(async () => {
     setError(null);
     try {
-      const [v, cp] = await Promise.all([
+      const [v, res] = await Promise.all([
         api.getVehicle(vin),
-        api.getCheckpoints(vin),
+        api.getStationSteps(vin),
       ]);
       setVehicle(v);
-      setCheckpoints(cp.Items ?? []);
-      setOpenByPhase(cp.OpenIssuesByPhase ?? {});
-      setExpandedPhase((prev) => prev ?? v.CurrentPhase);
+      setSteps(res.Items ?? []);
+      setOpenByStation(res.OpenIssuesByStation ?? {});
+      setExpandedStation((prev) => prev ?? v.CurrentStationID);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load vehicle');
     }
@@ -81,36 +87,47 @@ export default function VehiclePhaseScreen() {
     }, [load]),
   );
 
-  const byPhase = useMemo(() => {
-    const map = new Map<number, CheckpointItem[]>();
-    for (let p = 1; p <= 8; p++) map.set(p, []);
-    for (const c of checkpoints) {
-      const list = map.get(c.PhaseNumber) ?? [];
-      list.push(c);
-      map.set(c.PhaseNumber, list);
+  // Karar 1: the station catalogue is extensible, so the screen renders the
+  // stations the backend returned rather than a fixed 1..8 range.
+  const stations = useMemo<StationGroup[]>(() => {
+    const groups: StationGroup[] = [];
+    const byId = new Map<number, StationGroup>();
+    for (const step of steps) {
+      let group = byId.get(step.StationID);
+      if (!group) {
+        group = { id: step.StationID, name: step.StationName, steps: [] };
+        byId.set(step.StationID, group);
+        groups.push(group);
+      }
+      group.steps.push(step);
     }
-    for (const list of map.values()) {
-      list.sort((a, b) => a.SequenceNo - b.SequenceNo);
+    for (const group of groups) {
+      group.steps.sort((a, b) => a.SequenceNo - b.SequenceNo);
     }
-    return map;
-  }, [checkpoints]);
+    return groups;
+  }, [steps]);
 
-  async function setStatus(cp: CheckpointItem, status: 'OK' | 'NOT_OK') {
-    setBusyId(cp.ID);
+  const currentStationName = useMemo(() => {
+    const current = stations.find((s) => s.id === vehicle?.CurrentStationID);
+    return current?.name ?? '—';
+  }, [stations, vehicle]);
+
+  async function setStatus(step: StationStepItem, status: 'OK' | 'NOT_OK') {
+    setBusyId(step.ID);
     setError(null);
     try {
-      await api.recordCheckpoint(vin, cp.ID, status);
+      await api.recordStationStep(vin, step.ID, status);
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update checkpoint');
+      setError(err instanceof Error ? err.message : 'Failed to update station step');
     } finally {
       setBusyId(null);
     }
   }
 
-  function togglePhase(p: number) {
+  function toggleStation(stationId: number) {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setExpandedPhase((cur) => (cur === p ? null : p));
+    setExpandedStation((cur) => (cur === stationId ? null : stationId));
   }
 
   if (!vehicle && !error) return <Loading />;
@@ -118,13 +135,16 @@ export default function VehiclePhaseScreen() {
   return (
     <Screen padded={false}>
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
-        <Title>Faz İlerleme</Title>
-        <Subtitle>{vin}</Subtitle>
+        <Title>İstasyon İlerleme</Title>
+        <Subtitle>
+          {vehicle?.VehicleNumber ? `No ${vehicle.VehicleNumber} · ` : ''}
+          {vin}
+        </Subtitle>
 
         <View style={{ alignItems: 'center', marginVertical: 20 }}>
           <ProgressRing percent={vehicle?.TotalProgressPercentage ?? 0} />
           <Text style={{ color: tokens.textSecondary, marginTop: 8, fontSize: 13 }}>
-            Model #{vehicle?.VehicleModelID} · Phase {vehicle?.CurrentPhase}/8
+            Model #{vehicle?.VehicleModelID} · {currentStationName}
           </Text>
         </View>
 
@@ -143,16 +163,19 @@ export default function VehiclePhaseScreen() {
 
         {error ? <ErrorText>{error}</ErrorText> : null}
 
-        {[1, 2, 3, 4, 5, 6, 7, 8].map((phase) => {
-          const items = byPhase.get(phase) ?? [];
-          const openCount = openByPhase[String(phase)] ?? 0;
-          const active = phase === vehicle?.CurrentPhase;
-          const done = items.length > 0 && items.every((i) => i.Status === 'OK');
-          const expanded = expandedPhase === phase;
+        {stations.map((station) => {
+          const openCount = openByStation[String(station.id)] ?? 0;
+          const active = station.id === vehicle?.CurrentStationID;
+          const done =
+            station.steps.length > 0 && station.steps.every((s) => s.Status === 'OK');
+          const expanded = expandedStation === station.id;
 
           return (
-            <Card key={phase}>
-              <Pressable onPress={() => togglePhase(phase)} style={{ minHeight: 44 }}>
+            <Card key={station.id}>
+              <Pressable
+                onPress={() => toggleStation(station.id)}
+                style={{ minHeight: 44 }}
+              >
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                   <View
                     style={{
@@ -165,7 +188,7 @@ export default function VehiclePhaseScreen() {
                     }}
                   />
                   <Text style={{ color: tokens.textPrimary, fontWeight: '600', flex: 1 }}>
-                    Phase {phase}
+                    {station.name}
                   </Text>
                   {/* Soft-warning: open issue badge — informational only, never blocks */}
                   {openCount > 0 ? (
@@ -175,9 +198,9 @@ export default function VehiclePhaseScreen() {
               </Pressable>
 
               {expanded
-                ? items.map((cp) => (
+                ? station.steps.map((step) => (
                     <View
-                      key={cp.ID}
+                      key={step.ID}
                       style={{
                         marginTop: 12,
                         paddingTop: 12,
@@ -187,27 +210,27 @@ export default function VehiclePhaseScreen() {
                     >
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                         <Text style={{ color: tokens.textPrimary, flex: 1, fontSize: 15 }}>
-                          {cp.Name}
+                          {step.Name}
                         </Text>
-                        <Badge label={cp.Status} color={checkpointColor(cp.Status)} />
+                        <Badge label={step.Status} color={stepColor(step.Status)} />
                       </View>
                       <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
                         <View style={{ flex: 1 }}>
                           <PrimaryButton
                             label="OK"
-                            onPress={() => setStatus(cp, 'OK')}
-                            disabled={busyId === cp.ID}
+                            onPress={() => setStatus(step, 'OK')}
+                            disabled={busyId === step.ID}
                           />
                         </View>
                         <View style={{ flex: 1 }}>
                           <OutlineButton
                             label="NOT OK"
                             danger
-                            onPress={() => setStatus(cp, 'NOT_OK')}
+                            onPress={() => setStatus(step, 'NOT_OK')}
                           />
                         </View>
                       </View>
-                      {cp.Status === 'NOT_OK' ? (
+                      {step.Status === 'NOT_OK' ? (
                         <View style={{ marginTop: 10 }}>
                           <OutlineButton
                             label="Report Issue"
@@ -215,10 +238,10 @@ export default function VehiclePhaseScreen() {
                             onPress={() =>
                               navigation.navigate('IssueReport', {
                                 vin,
-                                checkpointId: cp.ID,
-                                phase: cp.PhaseNumber,
-                                stationId: cp.StationID ?? undefined,
-                                checkpointName: cp.Name,
+                                stationStepId: step.ID,
+                                stationId: step.StationID,
+                                stationName: step.StationName,
+                                stationStepName: step.Name,
                               })
                             }
                           />

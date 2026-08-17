@@ -101,7 +101,10 @@ export function VinSearchBox({
                     {item.VIN}
                   </Text>
                 </View>
-                <Badge label={`Phase ${item.CurrentPhase}`} color={tokens.accent} />
+                <Badge
+                  label={`${Math.round(item.TotalProgressPercentage)}%`}
+                  color={tokens.accent}
+                />
               </View>
             </Card>
           </Pressable>

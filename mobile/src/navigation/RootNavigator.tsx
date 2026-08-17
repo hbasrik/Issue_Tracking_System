@@ -14,7 +14,7 @@ import MyStationScreen from '../screens/MyStationScreen';
 import DurumScreen from '../screens/DurumScreen';
 import MyIssuesScreen from '../screens/MyIssuesScreen';
 import ProfileScreen from '../screens/ProfileScreen';
-import VehiclePhaseScreen from '../screens/VehiclePhaseScreen';
+import VehicleStationScreen from '../screens/VehicleStationScreen';
 import IssueReportScreen from '../screens/IssueReportScreen';
 import EOLChecklistScreen from '../screens/EOLChecklistScreen';
 import ShipmentChecklistScreen from '../screens/ShipmentChecklistScreen';
@@ -132,9 +132,9 @@ export function RootNavigator() {
               options={{ headerShown: false }}
             />
             <Stack.Screen
-              name="VehiclePhase"
-              component={VehiclePhaseScreen}
-              options={{ title: 'Phase Progress' }}
+              name="VehicleStation"
+              component={VehicleStationScreen}
+              options={{ title: 'Station Progress' }}
             />
             <Stack.Screen
               name="IssueReport"

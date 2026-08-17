@@ -14,7 +14,7 @@ export default function HomeScreen() {
   const { tokens, toggle, mode } = useTheme();
 
   function openVehicle(v: Vehicle) {
-    navigation.navigate('VehiclePhase', { vin: v.VIN });
+    navigation.navigate('VehicleStation', { vin: v.VIN });
   }
 
   return (

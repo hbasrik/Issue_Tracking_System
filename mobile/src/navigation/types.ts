@@ -2,13 +2,13 @@ export type RootStackParamList = {
   Login: undefined;
   Unauthorized: undefined;
   MainTabs: undefined;
-  VehiclePhase: { vin: string };
+  VehicleStation: { vin: string };
   IssueReport: {
     vin: string;
-    checkpointId: number;
-    phase: number;
+    stationStepId: number;
     stationId?: number;
-    checkpointName: string;
+    stationName: string;
+    stationStepName: string;
   };
   EOLChecklist: { vin: string };
   ShipmentChecklist: { vin: string };
