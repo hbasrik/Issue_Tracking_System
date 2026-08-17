@@ -103,6 +103,11 @@ export interface StationStepItem {
   RelatedIssueID?: number | null;
 }
 
+export type ChecklistType = 'eol' | 'shipment' | 'test';
+
+/** Which EoL stage an item belongs to (Karar 2). Null for shipment and test. */
+export type EOLItemPhase = 'BRANCH' | 'DEPOT';
+
 export interface ChecklistItem {
   ItemID: number;
   ItemNo: number;
@@ -111,6 +116,24 @@ export interface ChecklistItem {
   ReworkDesc?: string;
   ConditionalDesc?: string;
   RejectedDesc?: string;
+  EolPhase?: EOLItemPhase | null;
+}
+
+export type EOLStage = 'BRANCH' | 'DEPOT' | 'DOCUMENT' | 'COMPLETED';
+
+export interface EOLStageRecord {
+  at: string | null;
+  by_user_id: number | null;
+  by_name?: string;
+}
+
+export interface EOLWorkflowView {
+  vin: string;
+  current_stage: EOLStage;
+  branch_ship: EOLStageRecord;
+  depot_release: EOLStageRecord;
+  document_approve: EOLStageRecord;
+  branch_open_issue_count_at_shipment: number | null;
 }
 
 export interface Issue {
@@ -186,15 +209,24 @@ export const api = {
     );
   },
 
-  getChecklist(vin: string, type: 'eol' | 'shipment') {
+  getChecklist(vin: string, type: ChecklistType) {
     return request<{ items: ChecklistItem[] }>(
       `/vehicles/${encodeURIComponent(vin)}/checklist/${type}`,
     );
   },
 
+  /**
+   * Current EoL stage plus each stage's timestamp and actor. Read-only for
+   * operators: the stage actions themselves are Manager/Admin-only and live on
+   * the web dashboard (Karar 2).
+   */
+  getEOLWorkflow(vin: string) {
+    return request<EOLWorkflowView>(`/vehicles/${encodeURIComponent(vin)}/eol`);
+  },
+
   recordChecklist(
     vin: string,
-    type: 'eol' | 'shipment',
+    type: ChecklistType,
     itemId: number,
     body: {
       status: string;

@@ -12,7 +12,13 @@ import {
   useRoute,
   type RouteProp,
 } from '@react-navigation/native';
-import { ApiError, api, type ChecklistItem } from '../api/client';
+import {
+  ApiError,
+  api,
+  type ChecklistItem,
+  type EOLStage,
+  type EOLWorkflowView,
+} from '../api/client';
 import {
   Card,
   ErrorText,
@@ -33,6 +39,13 @@ const STATUSES = [
   { value: 'CONDITIONAL_OK', label: 'COND.', color: statusColors.conditionalOk },
 ] as const;
 
+const STAGE_LABELS: Record<EOLStage, string> = {
+  BRANCH: 'Şube (Branch)',
+  DEPOT: 'Depo (Depot)',
+  DOCUMENT: 'Evrak (Document)',
+  COMPLETED: 'Tamamlandı',
+};
+
 function isPassing(s: ChecklistItem['Status']): boolean {
   return s === 'OK' || s === 'CONDITIONAL_OK';
 }
@@ -41,23 +54,37 @@ function needsDesc(s: ChecklistItem['Status']): boolean {
   return s === 'NOT_OK' || s === 'REWORK' || s === 'CONDITIONAL_OK';
 }
 
-/** EoL checklist — §3.4 hard-block sticky footer. */
+/**
+ * EoL checklist — the operator's slice of the three-stage workflow (Karar 2).
+ *
+ * Only the items belonging to the vehicle's current stage are shown: BRANCH
+ * items while it sits at the branch, DEPOT items once it has been shipped.
+ * Advancing the stage itself (Ship to Depot / Release from Depot / document
+ * approval) is Manager/Admin work on the web dashboard, so this screen offers
+ * no action beyond recording item results.
+ */
 export default function EOLChecklistScreen() {
   const route = useRoute<RouteProp<RootStackParamList, 'EOLChecklist'>>();
   const { tokens } = useTheme();
   const vin = route.params.vin;
 
+  const [workflow, setWorkflow] = useState<EOLWorkflowView | null>(null);
   const [items, setItems] = useState<ChecklistItem[]>([]);
   const [drafts, setDrafts] = useState<Record<number, { status: string; desc: string }>>({});
   const [error, setError] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [loaded, setLoaded] = useState(false);
 
   const load = useCallback(async () => {
     setError(null);
     try {
-      const res = await api.getChecklist(vin, 'eol');
+      const [view, res] = await Promise.all([
+        api.getEOLWorkflow(vin),
+        api.getChecklist(vin, 'eol'),
+      ]);
       const list = res.items ?? [];
+      setWorkflow(view);
       setItems(list);
       const next: Record<number, { status: string; desc: string }> = {};
       for (const it of list) {
@@ -69,6 +96,8 @@ export default function EOLChecklistScreen() {
       setDrafts(next);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load EoL checklist');
+    } finally {
+      setLoaded(true);
     }
   }, [vin]);
 
@@ -78,17 +107,31 @@ export default function EOLChecklistScreen() {
     }, [load]),
   );
 
+  const stage = workflow?.current_stage ?? 'BRANCH';
+  const operatorStage = stage === 'BRANCH' || stage === 'DEPOT';
+
+  // Items carry the stage they belong to. An untagged item is shown in every
+  // operator stage rather than dropped, so a mis-seeded template can never
+  // hide work from the shop floor.
+  const stageItems = useMemo(
+    () =>
+      operatorStage
+        ? items.filter((it) => !it.EolPhase || it.EolPhase === stage)
+        : [],
+    [items, stage, operatorStage],
+  );
+
   const blocking = useMemo(
     () =>
-      items.filter((it) => {
+      stageItems.filter((it) => {
         const d = drafts[it.ItemID];
         const status = (d?.status || it.Status) as ChecklistItem['Status'];
         return !status || status === 'PENDING' || !isPassing(status);
       }),
-    [items, drafts],
+    [stageItems, drafts],
   );
 
-  const evaluated = items.filter((it) => {
+  const evaluated = stageItems.filter((it) => {
     const s = drafts[it.ItemID]?.status || it.Status;
     return s && s !== 'PENDING';
   }).length;
@@ -124,49 +167,38 @@ export default function EOLChecklistScreen() {
     }
   }
 
-  async function requestExit() {
-    if (blocking.length) {
-      setSheetOpen(true);
-      return;
-    }
-    // All passing — attempt gate exit on last item (or any item) with request_gate_exit
-    const first = items[0];
-    if (!first) return;
-    setBusy(true);
-    setError(null);
-    try {
-      const d = drafts[first.ItemID];
-      await api.recordChecklist(vin, 'eol', first.ItemID, {
-        status: d?.status || first.Status,
-        request_gate_exit: true,
-        rework_desc: first.ReworkDesc,
-        conditional_desc: first.ConditionalDesc,
-        rejected_desc: first.RejectedDesc,
-      });
-    } catch (err) {
-      if (err instanceof ApiError && err.status === 409) {
-        setSheetOpen(true);
-        setError(err.message);
-      } else {
-        setError(err instanceof Error ? err.message : 'Gate exit failed');
-      }
-    } finally {
-      setBusy(false);
-    }
-  }
+  if (!loaded) return <Loading />;
 
-  if (!items.length && !error) return <Loading />;
+  if (!operatorStage) {
+    return (
+      <Screen>
+        <Title>EoL Kontrolü</Title>
+        <Subtitle>{STAGE_LABELS[stage]}</Subtitle>
+        <Card>
+          <Text style={{ color: tokens.textPrimary, fontSize: 15 }}>
+            {stage === 'COMPLETED'
+              ? 'EoL süreci tamamlandı.'
+              : 'Evrak onayı bekleniyor.'}
+          </Text>
+          <Text style={{ color: tokens.textSecondary, marginTop: 8, fontSize: 13 }}>
+            Bu aşamada operatör için madde yok — onay web panelinden yapılır.
+          </Text>
+        </Card>
+        {error ? <ErrorText>{error}</ErrorText> : null}
+      </Screen>
+    );
+  }
 
   return (
     <Screen padded={false}>
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 120 }}>
         <Title>EoL Kontrolü</Title>
         <Subtitle>
-          {evaluated}/{items.length} değerlendirildi
+          {STAGE_LABELS[stage]} · {evaluated}/{stageItems.length} değerlendirildi
         </Subtitle>
         {error ? <ErrorText>{error}</ErrorText> : null}
 
-        {items.map((item) => {
+        {stageItems.map((item) => {
           const d = drafts[item.ItemID] ?? { status: '', desc: '' };
           return (
             <Card key={item.ItemID}>
@@ -254,18 +286,17 @@ export default function EOLChecklistScreen() {
             style={{
               color: blocking.length ? statusColors.notOk : statusColors.ok,
               fontWeight: '600',
-              marginBottom: 8,
               fontSize: 13,
             }}
           >
-            {blocking.length ? `${blocking.length} madde engelliyor` : 'Çıkışa Hazır'}
+            {blocking.length
+              ? `${blocking.length} madde eksik`
+              : 'Bu aşamanın tüm maddeleri tamam'}
           </Text>
         </Pressable>
-        <PrimaryButton
-          label="EoL'den Çıkar"
-          onPress={requestExit}
-          disabled={busy}
-        />
+        <Text style={{ color: tokens.textSecondary, marginTop: 6, fontSize: 12 }}>
+          Aşama geçişi (sevk / depo çıkışı) web panelinden yapılır.
+        </Text>
       </View>
 
       <Modal visible={sheetOpen} animationType="slide" transparent>
@@ -283,7 +314,7 @@ export default function EOLChecklistScreen() {
             }}
           >
             <Text style={{ color: tokens.textPrimary, fontSize: 18, fontWeight: '600' }}>
-              Engelleyen maddeler
+              Eksik maddeler
             </Text>
             <ScrollView style={{ marginTop: 12 }}>
               {blocking.map((b) => (
