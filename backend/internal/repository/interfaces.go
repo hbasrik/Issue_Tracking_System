@@ -91,6 +91,8 @@ type IssueRepository interface {
 	// UpdateStatus transitions an issue to a new status, recording the acting
 	// user against the appropriate lifecycle timestamp column.
 	UpdateStatus(ctx context.Context, id int64, status domain.IssueStatus, actorID int) error
+	// ListIssueTypes returns the issue_types catalogue (Hata / Tamir Gerekiyor).
+	ListIssueTypes(ctx context.Context) ([]domain.IssueType, error)
 }
 
 // StationRepository reads the station catalogue.

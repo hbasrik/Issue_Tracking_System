@@ -364,6 +364,13 @@ func (f *fakeIssueRepo) UpdateStatus(_ context.Context, id int64, status domain.
 	return nil
 }
 
+func (f *fakeIssueRepo) ListIssueTypes(_ context.Context) ([]domain.IssueType, error) {
+	return []domain.IssueType{
+		{ID: 1, Name: "Hata"},
+		{ID: 2, Name: "Tamir Gerekiyor"},
+	}, nil
+}
+
 // fakeAuditRepo is an in-memory AuditRepository that records appended entries so
 // tests can assert what was written (e.g. that performed_by is populated).
 type fakeAuditRepo struct {

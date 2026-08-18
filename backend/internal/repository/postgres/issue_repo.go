@@ -206,3 +206,22 @@ func (r *IssueRepo) UpdateStatus(ctx context.Context, id int64, status domain.Is
 	}
 	return nil
 }
+
+// ListIssueTypes returns the issue_types catalogue ordered by id.
+func (r *IssueRepo) ListIssueTypes(ctx context.Context) ([]domain.IssueType, error) {
+	rows, err := r.pool.Query(ctx, `SELECT id, name FROM issue_types ORDER BY id`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var out []domain.IssueType
+	for rows.Next() {
+		var t domain.IssueType
+		if err := rows.Scan(&t.ID, &t.Name); err != nil {
+			return nil, err
+		}
+		out = append(out, t)
+	}
+	return out, rows.Err()
+}
