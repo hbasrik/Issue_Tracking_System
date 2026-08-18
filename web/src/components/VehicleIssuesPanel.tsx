@@ -49,3 +49,4 @@ export function VehicleIssuesPanel({ vin }: { vin: string }) {
       </div>
     </div>
   );
+}
