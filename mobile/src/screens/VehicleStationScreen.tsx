@@ -27,7 +27,6 @@ import {
   ErrorText,
   Loading,
   OutlineButton,
-  PrimaryButton,
   Screen,
   Subtitle,
   Title,
@@ -50,6 +49,54 @@ function stepColor(status: StationStepItem['Status']): string {
   if (status === 'OK') return statusColors.ok;
   if (status === 'NOT_OK') return statusColors.notOk;
   return statusColors.pending;
+}
+
+function vinTail(vin: string): string {
+  return vin.slice(-5);
+}
+
+/** Outline by default; fills only when this choice matches the step status. */
+function StatusChoiceButton({
+  label,
+  selected,
+  color,
+  onPress,
+  disabled,
+}: {
+  label: string;
+  selected: boolean;
+  color: string;
+  onPress: () => void;
+  disabled?: boolean;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={disabled}
+      accessibilityState={{ selected, disabled: !!disabled }}
+      style={({ pressed }) => ({
+        flex: 1,
+        minHeight: 44,
+        borderRadius: 10,
+        borderWidth: selected ? 0 : 1.5,
+        borderColor: color,
+        backgroundColor: selected ? color : 'transparent',
+        alignItems: 'center',
+        justifyContent: 'center',
+        opacity: disabled ? 0.5 : pressed ? 0.85 : 1,
+      })}
+    >
+      <Text
+        style={{
+          color: selected ? '#FFFFFF' : color,
+          fontWeight: '700',
+          fontSize: 14,
+        }}
+      >
+        {label}
+      </Text>
+    </Pressable>
+  );
 }
 
 export default function VehicleStationScreen() {
@@ -144,23 +191,20 @@ export default function VehicleStationScreen() {
         <View style={{ alignItems: 'center', marginVertical: 20 }}>
           <ProgressRing percent={vehicle?.TotalProgressPercentage ?? 0} />
           <Text style={{ color: tokens.textSecondary, marginTop: 8, fontSize: 13 }}>
-            Model #{vehicle?.VehicleModelID} · {currentStationName}
+            …{vinTail(vin)}
+            {currentStationName !== '—' ? ` · ${currentStationName}` : ''}
           </Text>
         </View>
 
-        <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
-          <PrimaryButton
+        <View style={{ gap: 8, marginBottom: 16 }}>
+          <OutlineButton
             label="EoL Checklist"
             onPress={() => navigation.navigate('EOLChecklist', { vin })}
           />
-        </View>
-        <View style={{ marginBottom: 12 }}>
           <OutlineButton
             label="Test Checklist"
             onPress={() => navigation.navigate('TestChecklist', { vin })}
           />
-        </View>
-        <View style={{ marginBottom: 16 }}>
           <OutlineButton
             label="Shipment Checklist"
             onPress={() => navigation.navigate('ShipmentChecklist', { vin })}
@@ -221,20 +265,20 @@ export default function VehicleStationScreen() {
                         <Badge label={step.Status} color={stepColor(step.Status)} />
                       </View>
                       <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
-                        <View style={{ flex: 1 }}>
-                          <PrimaryButton
-                            label="OK"
-                            onPress={() => setStatus(step, 'OK')}
-                            disabled={busyId === step.ID}
-                          />
-                        </View>
-                        <View style={{ flex: 1 }}>
-                          <OutlineButton
-                            label="NOT OK"
-                            danger
-                            onPress={() => setStatus(step, 'NOT_OK')}
-                          />
-                        </View>
+                        <StatusChoiceButton
+                          label="OK"
+                          selected={step.Status === 'OK'}
+                          color={statusColors.ok}
+                          onPress={() => void setStatus(step, 'OK')}
+                          disabled={busyId === step.ID}
+                        />
+                        <StatusChoiceButton
+                          label="NOT OK"
+                          selected={step.Status === 'NOT_OK'}
+                          color={statusColors.notOk}
+                          onPress={() => void setStatus(step, 'NOT_OK')}
+                          disabled={busyId === step.ID}
+                        />
                       </View>
                       {step.Status === 'NOT_OK' ? (
                         <View style={{ marginTop: 10 }}>
