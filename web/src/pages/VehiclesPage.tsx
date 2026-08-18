@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { api, type Vehicle } from '../lib/api';
 import { StatusBadge } from '../components/StatusBadge';
 import { VinSearchBox } from '../components/VinSearchBox';
-import { VehicleNumberSearchBox } from '../components/VehicleNumberSearchBox';
 import { VehicleIdentity } from '../components/VehicleIdentity';
 import {
   DataCard,
@@ -80,9 +79,6 @@ export default function VehiclesPage() {
             showResults={false}
             className="mt-1"
           />
-        </div>
-        <div className="w-full sm:w-64">
-          <VehicleNumberSearchBox />
         </div>
         <div className="w-full sm:w-auto">
           <label className="text-[13px] text-[var(--text-secondary)]">

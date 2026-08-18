@@ -107,7 +107,6 @@ export const api = {
 
   listVehicles(params: {
     vin?: string;
-    vehicle_number?: string;
     status?: string;
     model?: string;
     station?: string;
@@ -115,7 +114,6 @@ export const api = {
   }) {
     const q = new URLSearchParams();
     if (params.vin) q.set('vin', params.vin);
-    if (params.vehicle_number) q.set('vehicle_number', params.vehicle_number);
     if (params.status) q.set('status', params.status);
     if (params.model) q.set('model', params.model);
     if (params.station) q.set('station', params.station);
@@ -131,11 +129,6 @@ export const api = {
 
   getVehicle(vin: string) {
     return request<Vehicle>(`/vehicles/${encodeURIComponent(vin)}`);
-  },
-
-  resolveVehicle(vehicleNumber: string) {
-    const q = new URLSearchParams({ vehicle_number: vehicleNumber });
-    return request<Vehicle>(`/vehicles/resolve?${q}`);
   },
 
   searchVehicles(vinSuffix: string) {
@@ -385,11 +378,16 @@ export interface Issue {
   IssueDate: string;
   IssueReporterID: number;
   ReporterName?: string;
+  CreatedAt?: string;
+  UpdatedAt?: string;
+  /** Earliest ISSUE media attachment storage_path, when present. */
+  ReportPhotoPath?: string;
 }
 
 export type MediaEntityType =
   | 'VEHICLE'
   | 'ISSUE'
+  | 'ISSUE_RESOLUTION'
   | 'CHECKLIST_ITEM_PROGRESS'
   | 'STATION_STEP_PROGRESS';
 
@@ -403,6 +401,20 @@ export interface MediaAttachment {
   file_size: number;
   uploaded_by: number | null;
   uploaded_at: string;
+}
+
+/** Absolute URL for a media_attachments.storage_path served from /uploads/. */
+export function mediaFileUrl(storagePath: string): string {
+  const origin = API_BASE_URL.replace(/\/api\/v1\/?$/, '');
+  const path = storagePath.replace(/^\/+/, '');
+  return `${origin}/uploads/${path}`;
+}
+
+export function formatIssueCreatedAt(iso?: string): string {
+  if (!iso || iso.startsWith('0001')) return '—';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleString();
 }
 
 export interface AnalysisQuery {
