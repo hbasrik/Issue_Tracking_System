@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"strings"
 
 	"github.com/karea/backend/internal/domain"
 	"github.com/karea/backend/internal/repository"
@@ -36,26 +37,57 @@ type CreateIssueInput struct {
 
 // Create validates and inserts a new issue. Severity is mandatory
 // (Decision Log #7) and new issues always start in the OPEN state.
+//
+// MANUAL sources are standalone operator reports: vin, station_id,
+// issue_type_id, severity, and description are all required, and both
+// source_station_step_id and source_check_item_id must be unset.
 func (m *IssueManager) Create(ctx context.Context, in CreateIssueInput) (*domain.Issue, error) {
-	if in.Severity == "" {
-		return nil, domain.ErrSeverityRequired
-	}
-	if !in.Severity.Valid() || !in.SourceType.Valid() {
+	if !in.SourceType.Valid() {
 		return nil, domain.ErrInvalidEnumValue
 	}
-	if in.Description == "" {
-		return nil, domain.ErrDescriptionRequired
+	if in.SourceType == domain.IssueSourceManual {
+		if strings.TrimSpace(in.VIN) == "" {
+			return nil, domain.ErrVINRequired
+		}
+		if in.StationID == nil {
+			return nil, domain.ErrStationRequired
+		}
+		if in.IssueTypeID == nil {
+			return nil, domain.ErrIssueTypeRequired
+		}
+		if in.Severity == "" {
+			return nil, domain.ErrSeverityRequired
+		}
+		if !in.Severity.Valid() {
+			return nil, domain.ErrInvalidEnumValue
+		}
+		if strings.TrimSpace(in.Description) == "" {
+			return nil, domain.ErrIssueDescriptionRequired
+		}
+		if in.SourceStationStepID != nil || in.SourceCheckItemID != nil {
+			return nil, domain.ErrInvalidManualSource
+		}
+	} else {
+		if in.Severity == "" {
+			return nil, domain.ErrSeverityRequired
+		}
+		if !in.Severity.Valid() {
+			return nil, domain.ErrInvalidEnumValue
+		}
+		if strings.TrimSpace(in.Description) == "" {
+			return nil, domain.ErrIssueDescriptionRequired
+		}
 	}
 
 	issue := &domain.Issue{
-		VIN:                 in.VIN,
+		VIN:                 strings.TrimSpace(in.VIN),
 		SourceType:          in.SourceType,
 		SourceStationStepID: in.SourceStationStepID,
 		SourceCheckItemID:   in.SourceCheckItemID,
 		StationID:           in.StationID,
 		IssueTypeID:         in.IssueTypeID,
 		Severity:            in.Severity,
-		Description:         in.Description,
+		Description:         strings.TrimSpace(in.Description),
 		PictureURL:          in.PictureURL,
 		Status:              domain.IssueStatusOpen,
 		IssueReporterID:     in.ReporterID,
@@ -67,6 +99,11 @@ func (m *IssueManager) Create(ctx context.Context, in CreateIssueInput) (*domain
 	}
 	issue.ID = id
 	return issue, nil
+}
+
+// ListIssueTypes returns the issue_types catalogue for the Hata Bildir picker.
+func (m *IssueManager) ListIssueTypes(ctx context.Context) ([]domain.IssueType, error) {
+	return m.issues.ListIssueTypes(ctx)
 }
 
 // ListForUser returns issues where the user is a reporter at any lifecycle stage.
