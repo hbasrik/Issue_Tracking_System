@@ -28,7 +28,27 @@ var (
 	// deliberately generic so callers cannot distinguish "unknown email" from
 	// "wrong password".
 	ErrInvalidCredentials = errors.New("invalid credentials")
+	// ErrDepotChecklistLocked indicates a Depot-phase EoL item was updated
+	// while any Branch-phase item for the same VIN is not yet OK or
+	// CONDITIONAL_OK. The message matches the database trigger so API and
+	// SQL bypasses surface the same text.
+	ErrDepotChecklistLocked = errors.New("cannot update depot-phase EoL items until every branch-phase item is OK or CONDITIONAL_OK")
 )
+
+// DatabaseRejectedError wraps a PostgreSQL RAISE EXCEPTION (SQLSTATE P0001)
+// so hard-block gates enforced only in the database still reach the client
+// as 409 with the trigger's own message.
+type DatabaseRejectedError struct {
+	Message string
+}
+
+// Error implements the error interface.
+func (e *DatabaseRejectedError) Error() string {
+	if e == nil || e.Message == "" {
+		return "database rejected the change"
+	}
+	return e.Message
+}
 
 // GateBlockedError is returned when a hard-block quality gate (EoL or
 // Shipment) is not fully passing and a gate exit / status transition is
