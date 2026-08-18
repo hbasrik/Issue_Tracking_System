@@ -23,15 +23,19 @@ export function DataCard({
   children,
   onClick,
   selected,
+  className: extraClass = '',
 }: {
   children: ReactNode;
   onClick?: () => void;
   selected?: boolean;
+  className?: string;
 }) {
   const interactive = Boolean(onClick);
   const className = `rounded-xl border bg-[var(--bg-surface-1)] p-4 space-y-2.5 ${
-    interactive ? 'cursor-pointer active:bg-[var(--bg-surface-2)]' : ''
-  } ${selected ? 'ring-1 ring-[var(--accent)]' : ''}`;
+    interactive
+      ? 'cursor-pointer transition-colors hover:bg-[var(--bg-surface-2)] active:bg-[var(--bg-surface-2)]'
+      : ''
+  } ${selected ? 'ring-1 ring-[var(--accent)]' : ''} ${extraClass}`;
 
   if (interactive) {
     return (

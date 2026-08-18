@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { api, type Vehicle } from '../lib/api';
 import { StatusBadge } from '../components/StatusBadge';
 import { VinSearchBox } from '../components/VinSearchBox';
@@ -22,6 +22,7 @@ const STATUSES = [
 
 /** Vehicle list — §4.3 filterable table; stacked cards below tablet. */
 export default function VehiclesPage() {
+  const navigate = useNavigate();
   const [vin, setVin] = useState('');
   const [status, setStatus] = useState('');
   const [page, setPage] = useState(1);
@@ -122,8 +123,12 @@ export default function VehiclesPage() {
             <p className="text-[var(--text-secondary)]">Loading…</p>
           )}
           {items.map((v) => (
-            <Link key={v.VIN} to={`/vehicles/${v.VIN}`} className="block">
-              <DataCard>
+            <Link
+              key={v.VIN}
+              to={`/vehicles/${v.VIN}`}
+              className="block rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
+            >
+              <DataCard className="cursor-pointer transition-colors hover:bg-[var(--bg-surface-2)]">
                 <VehicleIdentity
                   vin={v.VIN}
                   vehicleNumber={v.VehicleNumber}
@@ -176,17 +181,30 @@ export default function VehiclesPage() {
               {items.map((v) => (
                 <tr
                   key={v.VIN}
-                  className="border-t"
+                  role="link"
+                  tabIndex={0}
+                  className="cursor-pointer border-t transition-colors hover:bg-[var(--bg-surface-2)]"
                   style={{ borderColor: 'var(--border)' }}
+                  onClick={(e) => {
+                    if (e.metaKey || e.ctrlKey) {
+                      window.open(`/vehicles/${v.VIN}`, '_blank');
+                      return;
+                    }
+                    navigate(`/vehicles/${v.VIN}`);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      navigate(`/vehicles/${v.VIN}`);
+                    }
+                  }}
                 >
                   <td className="px-4 py-3">
-                    <Link to={`/vehicles/${v.VIN}`} className="hover:underline">
-                      <VehicleIdentity
-                        vin={v.VIN}
-                        vehicleNumber={v.VehicleNumber}
-                        compact
-                      />
-                    </Link>
+                    <VehicleIdentity
+                      vin={v.VIN}
+                      vehicleNumber={v.VehicleNumber}
+                      compact
+                    />
                   </td>
                   <td className="px-4 py-3">#{v.VehicleModelID}</td>
                   <td className="px-4 py-3">
