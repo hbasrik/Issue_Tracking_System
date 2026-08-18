@@ -1,9 +1,20 @@
 /**
- * Color tokens from docs/07_KAREA_UIUX_Tasarim_Rehberi.md Section 1.1 + Section 5.
- * Dark mode is the default for the field operator app.
+ * Color tokens — Design system v3 (shared with web).
+ * Surfaces follow docs/07; brand accent is Satsuma.
  */
 
 export type ThemeMode = 'dark' | 'light';
+
+/** Brand & neutral palette (theme-invariant). */
+export const brandColors = {
+  /** Primary / Satsuma — buttons, active nav, focus */
+  primary: '#FF3B1E',
+  secondary: '#327CB2',
+  neutralWarm: '#C0A89B',
+  neutralOlive: '#8E9E7C',
+  neutralGray: '#B5B2B2',
+  critical: '#C62222',
+} as const;
 
 export const darkTokens = {
   bgPage: '#0B0F14',
@@ -12,7 +23,7 @@ export const darkTokens = {
   border: '#26313C',
   textPrimary: '#F5F7FA',
   textSecondary: '#8B98A5',
-  accent: '#2F8FFF',
+  accent: brandColors.primary,
 } as const;
 
 export const lightTokens = {
@@ -22,20 +33,21 @@ export const lightTokens = {
   border: '#E2E8F0',
   textPrimary: '#101418',
   textSecondary: '#5B6672',
-  accent: '#1D6FE0',
+  accent: brandColors.primary,
 } as const;
 
 export const statusColors = {
   ok: '#22C55E',
-  notOk: '#EF4444',
+  notOk: brandColors.critical,
   rework: '#8B5CF6',
   conditionalOk: '#F59E0B',
-  info: '#38BDF8',
-  pending: '#8B98A5',
-  severityCritical: '#791F1F',
-  severityMedium: '#F59E0B',
-  severityLow: '#38BDF8',
-  issueOpen: '#EF4444',
+  info: brandColors.secondary,
+  pending: brandColors.neutralGray,
+  severityCritical: brandColors.critical,
+  severityMedium: '#EAB308',
+  severityLow: brandColors.secondary,
+  severityEmpty: brandColors.neutralGray,
+  issueOpen: brandColors.critical,
   issueInProgress: '#F59E0B',
   issueResolved: '#22C55E',
 } as const;

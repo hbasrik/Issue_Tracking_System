@@ -1,9 +1,31 @@
 /**
- * Color tokens from docs/07_KAREA_UIUX_Tasarim_Rehberi.md Section 1.1 + Section 5.
- * Dark mode is the default.
+ * Color tokens — Design system v3 (shared with mobile).
+ * Surfaces follow docs/07; brand accent is Satsuma.
  */
 
 export type ThemeMode = 'dark' | 'light';
+
+/**
+ * Layout breakpoints (aligned with Tailwind `screens`).
+ * - mobile: &lt;640px
+ * - tablet: 640–1023px
+ * - desktop: ≥1024px
+ */
+export const breakpoints = {
+  tablet: 640,
+  desktop: 1024,
+} as const;
+
+/** Brand & neutral palette (theme-invariant). */
+export const brandColors = {
+  /** Primary / Satsuma — buttons, active nav, focus */
+  primary: '#FF3B1E',
+  secondary: '#327CB2',
+  neutralWarm: '#C0A89B',
+  neutralOlive: '#8E9E7C',
+  neutralGray: '#B5B2B2',
+  critical: '#C62222',
+} as const;
 
 export const darkTokens = {
   'bg-page': '#0B0F14',
@@ -12,7 +34,7 @@ export const darkTokens = {
   border: '#26313C',
   'text-primary': '#F5F7FA',
   'text-secondary': '#8B98A5',
-  accent: '#2F8FFF',
+  accent: brandColors.primary,
 } as const;
 
 export const lightTokens = {
@@ -22,29 +44,31 @@ export const lightTokens = {
   border: '#E2E8F0',
   'text-primary': '#101418',
   'text-secondary': '#5B6672',
-  accent: '#1D6FE0',
+  accent: brandColors.primary,
 } as const;
 
-/** Semantic status colors (fixed across themes, Section 1.1 + Section 5). */
+/** Semantic status colors (fixed across themes). */
 export const statusColors = {
   ok: '#22C55E',
-  notOk: '#EF4444',
+  notOk: brandColors.critical,
   rework: '#8B5CF6',
   conditionalOk: '#F59E0B',
-  info: '#38BDF8',
-  pending: '#8B98A5',
-  /** Issue severity — Section 5 */
-  severityCritical: '#791F1F',
-  severityMedium: '#F59E0B',
-  severityLow: '#38BDF8',
-  /** Vehicle status — Section 5 */
-  vehicleInProduction: '#2F8FFF',
-  vehicleInWarehouse: '#8B98A5',
+  info: brandColors.secondary,
+  pending: brandColors.neutralGray,
+  /** Issue severity — Wi-Fi bars use these fills */
+  severityCritical: brandColors.critical,
+  severityMedium: '#EAB308',
+  severityLow: brandColors.secondary,
+  /** Unfilled severity bars */
+  severityEmpty: brandColors.neutralGray,
+  /** Vehicle status */
+  vehicleInProduction: brandColors.secondary,
+  vehicleInWarehouse: brandColors.neutralGray,
   vehicleWithCustomer: '#F59E0B',
   vehicleShipped: '#22C55E',
-  vehicleOnHold: '#EF4444',
-  /** Issue status — Section 5 (OPEN/IN_PROGRESS/RESOLVED; DONE+APPROVED map to resolved) */
-  issueOpen: '#EF4444',
+  vehicleOnHold: brandColors.critical,
+  /** Issue status */
+  issueOpen: brandColors.critical,
   issueInProgress: '#F59E0B',
   issueResolved: '#22C55E',
 } as const;
@@ -61,7 +85,9 @@ export function applyThemeVars(mode: ThemeMode): void {
   for (const [key, value] of Object.entries(tokens)) {
     root.style.setProperty(`--${key}`, value);
   }
-  // Status colors are theme-invariant.
+  for (const [key, value] of Object.entries(brandColors)) {
+    root.style.setProperty(`--brand-${kebab(key)}`, value);
+  }
   for (const [key, value] of Object.entries(statusColors)) {
     root.style.setProperty(`--status-${kebab(key)}`, value);
   }

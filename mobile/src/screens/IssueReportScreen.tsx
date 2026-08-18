@@ -23,15 +23,20 @@ import {
   Subtitle,
   Title,
 } from '../components/ui';
+import {
+  SeverityIndicator,
+  severityFillColor,
+  type SeverityLevel,
+} from '../components/SeverityIndicator';
 import { useTheme } from '../theme/ThemeProvider';
 import { statusColors } from '../theme/tokens';
 import type { RootStackParamList } from '../navigation/types';
 
-const SEVERITIES = [
-  { value: 'CRITICAL', label: 'Critical', color: statusColors.severityCritical },
-  { value: 'MEDIUM', label: 'Medium', color: statusColors.severityMedium },
-  { value: 'LOW', label: 'Low', color: statusColors.severityLow },
-] as const;
+const SEVERITIES: { value: SeverityLevel; label: string }[] = [
+  { value: 'CRITICAL', label: 'Critical' },
+  { value: 'MEDIUM', label: 'Medium' },
+  { value: 'LOW', label: 'Low' },
+];
 
 /** Hata girme formu — §3.3. Soft-warning: after save, return to station screen (no block). */
 export default function IssueReportScreen() {
@@ -172,6 +177,7 @@ export default function IssueReportScreen() {
         <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
           {SEVERITIES.map((s) => {
             const selected = severity === s.value;
+            const color = severityFillColor(s.value);
             return (
               <Pressable
                 key={s.value}
@@ -181,13 +187,21 @@ export default function IssueReportScreen() {
                   minHeight: 44,
                   borderRadius: 10,
                   borderWidth: 1.5,
-                  borderColor: selected ? s.color : tokens.border,
-                  backgroundColor: selected ? s.color + '33' : tokens.bgSurface1,
+                  borderColor: selected ? color : tokens.border,
+                  backgroundColor: selected ? color + '33' : tokens.bgSurface1,
                   alignItems: 'center',
                   justifyContent: 'center',
+                  gap: 4,
                 }}
               >
-                <Text style={{ color: selected ? s.color : tokens.textSecondary, fontWeight: '600', fontSize: 12 }}>
+                <SeverityIndicator severity={s.value} />
+                <Text
+                  style={{
+                    color: selected ? color : tokens.textSecondary,
+                    fontWeight: '600',
+                    fontSize: 11,
+                  }}
+                >
                   {s.label}
                 </Text>
               </Pressable>

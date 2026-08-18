@@ -12,6 +12,7 @@ import {
   Subtitle,
   Title,
 } from '../components/ui';
+import { SeverityIndicator } from '../components/SeverityIndicator';
 import { useTheme } from '../theme/ThemeProvider';
 import { statusColors } from '../theme/tokens';
 import type { RootStackParamList } from '../navigation/types';
@@ -73,9 +74,18 @@ export default function IssueDetailScreen() {
         <>
           <Subtitle>{issue.VIN}</Subtitle>
           <Card>
-            <View style={{ flexDirection: 'row', gap: 8 }}>
-              <Badge label={issue.Status} color={statusColors.issueOpen} />
-              <Badge label={issue.Severity} color={statusColors.severityMedium} />
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Badge
+                label={issue.Status}
+                color={
+                  issue.Status === 'OPEN'
+                    ? statusColors.issueOpen
+                    : issue.Status === 'IN_PROGRESS'
+                      ? statusColors.issueInProgress
+                      : statusColors.issueResolved
+                }
+              />
+              <SeverityIndicator severity={issue.Severity} size="md" />
             </View>
             <Text style={{ color: tokens.textPrimary, marginTop: 12, fontSize: 15 }}>
               {issue.Description}
@@ -84,7 +94,13 @@ export default function IssueDetailScreen() {
           {next ? (
             <View style={{ marginTop: 20 }}>
               <PrimaryButton
-                label={busy ? 'Updating…' : `Mark ${next}`}
+                label={
+                  busy
+                    ? 'Updating…'
+                    : next === 'IN_PROGRESS'
+                      ? 'Mark In Progress'
+                      : 'Mark Done'
+                }
                 onPress={advance}
                 disabled={busy}
               />

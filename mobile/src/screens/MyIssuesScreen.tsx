@@ -12,17 +12,12 @@ import {
   Subtitle,
   Title,
 } from '../components/ui';
+import { SeverityIndicator } from '../components/SeverityIndicator';
 import { useTheme } from '../theme/ThemeProvider';
 import { statusColors } from '../theme/tokens';
 import type { RootStackParamList } from '../navigation/types';
 
 const FILTERS = ['', 'OPEN', 'IN_PROGRESS', 'DONE'] as const;
-
-function severityColor(s: string): string {
-  if (s === 'CRITICAL') return statusColors.severityCritical;
-  if (s === 'MEDIUM') return statusColors.severityMedium;
-  return statusColors.severityLow;
-}
 
 function statusColor(s: string): string {
   if (s === 'OPEN') return statusColors.issueOpen;
@@ -96,9 +91,9 @@ export default function MyIssuesScreen() {
           renderItem={({ item }) => (
             <Pressable onPress={() => navigation.navigate('IssueDetail', { id: item.ID })}>
               <Card>
-                <View style={{ flexDirection: 'row', gap: 8, marginBottom: 8 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                   <Badge label={item.Status} color={statusColor(item.Status)} />
-                  <Badge label={item.Severity} color={severityColor(item.Severity)} />
+                  <SeverityIndicator severity={item.Severity} />
                 </View>
                 <Text style={{ color: tokens.textPrimary, fontWeight: '600' }}>
                   …{item.VIN.slice(-5)}

@@ -22,6 +22,7 @@ import {
   Subtitle,
   Title,
 } from '../components/ui';
+import { SeverityIndicator } from '../components/SeverityIndicator';
 import { useTheme } from '../theme/ThemeProvider';
 import { statusColors } from '../theme/tokens';
 import type { RootStackParamList } from '../navigation/types';
@@ -149,10 +150,10 @@ export default function DurumScreen() {
               <Text style={{ color: tokens.textSecondary, marginTop: 4, fontSize: 12 }}>
                 {item.VIN}
               </Text>
-              <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
-                <Badge label={`C ${item.CriticalCount}`} color={statusColors.severityCritical} />
-                <Badge label={`M ${item.MediumCount}`} color={statusColors.severityMedium} />
-                <Badge label={`L ${item.LowCount}`} color={statusColors.severityLow} />
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 10 }}>
+                <SeverityIndicator severity="CRITICAL" count={item.CriticalCount} />
+                <SeverityIndicator severity="MEDIUM" count={item.MediumCount} />
+                <SeverityIndicator severity="LOW" count={item.LowCount} />
               </View>
             </Card>
           </Pressable>
