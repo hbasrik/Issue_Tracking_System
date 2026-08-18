@@ -349,11 +349,11 @@ CREATE TABLE checklist_item_progress (
 
     UNIQUE (vin, check_item_id),
 
-    -- Mandatory-description rule (v1 PRD FR-3.3, carried into v2):
-    -- enforced at the database layer so it cannot be bypassed even by a
-    -- direct API call.
+    -- Mandatory-description rule (v1 PRD FR-3.3): EOL only. Test and
+    -- Shipment items are plain Yes/No and do not require a note.
     CONSTRAINT chk_description_required_by_status CHECK (
-        check_status IN ('PENDING', 'OK')
+        checklist_type <> 'EOL'
+        OR check_status IN ('PENDING', 'OK')
         OR (check_status = 'NOT_OK' AND rejected_desc IS NOT NULL)
         OR (check_status = 'REWORK' AND rework_desc IS NOT NULL)
         OR (check_status = 'CONDITIONAL_OK' AND conditional_desc IS NOT NULL)
@@ -764,6 +764,54 @@ $$ LANGUAGE plpgsql;
 CREATE TRIGGER trg_enforce_document_approval
     AFTER UPDATE OF document_approved_at ON vehicle_eol_workflow
     FOR EACH ROW EXECUTE FUNCTION fn_enforce_document_approval();
+
+-- --- Depot sequencing: Branch items must pass before Depot is editable --
+-- Independent of Ship-to-Depot (open-issue warning) and Depot-Release
+-- (open-issue hard block). PENDING inserts are allowed so vehicle init
+-- can materialize Depot rows while Branch is still PENDING.
+CREATE OR REPLACE FUNCTION fn_enforce_eol_depot_after_branch()
+RETURNS TRIGGER AS $$
+DECLARE
+    v_phase eol_item_phase_enum;
+    v_branch_incomplete BOOLEAN;
+BEGIN
+    IF NEW.checklist_type <> 'EOL' THEN
+        RETURN NEW;
+    END IF;
+
+    IF TG_OP = 'INSERT' AND NEW.check_status = 'PENDING' THEN
+        RETURN NEW;
+    END IF;
+
+    SELECT eol_phase INTO v_phase
+    FROM checklist_template_items
+    WHERE id = NEW.check_item_id;
+
+    IF v_phase IS DISTINCT FROM 'DEPOT' THEN
+        RETURN NEW;
+    END IF;
+
+    SELECT EXISTS (
+        SELECT 1
+        FROM checklist_item_progress p
+        JOIN checklist_template_items cti ON cti.id = p.check_item_id
+        WHERE p.vin = NEW.vin
+          AND p.checklist_type = 'EOL'
+          AND cti.eol_phase = 'BRANCH'
+          AND p.check_status NOT IN ('OK', 'CONDITIONAL_OK')
+    ) INTO v_branch_incomplete;
+
+    IF v_branch_incomplete THEN
+        RAISE EXCEPTION 'cannot update depot-phase EoL items until every branch-phase item is OK or CONDITIONAL_OK';
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_enforce_eol_depot_after_branch
+    BEFORE INSERT OR UPDATE OF check_status ON checklist_item_progress
+    FOR EACH ROW EXECUTE FUNCTION fn_enforce_eol_depot_after_branch();
 
 -- --- Auto status transition: IN_WAREHOUSE -> WITH_CUSTOMER --------------
 -- Hard-block rule (v1 Decision Log #4/#5, PRD FR-4.3, unchanged): ALL

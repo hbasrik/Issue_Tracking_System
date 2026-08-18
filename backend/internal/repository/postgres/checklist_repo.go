@@ -112,7 +112,9 @@ func (r *ChecklistProgressRepo) ListItemsWithProgress(ctx context.Context, vin s
 
 // SaveResult updates a pre-materialized checklist progress row. The mandatory
 // description columns are also enforced by the chk_description_required_by_status
-// database constraint (defense in depth).
+// database constraint (EoL only). Depot sequencing is enforced by
+// trg_enforce_eol_depot_after_branch; RAISE EXCEPTION is mapped so the API
+// returns the trigger message instead of a generic 500.
 func (r *ChecklistProgressRepo) SaveResult(ctx context.Context, result domain.ChecklistProgress) error {
 	tag, err := r.pool.Exec(ctx,
 		`UPDATE checklist_item_progress
@@ -126,7 +128,7 @@ func (r *ChecklistProgressRepo) SaveResult(ctx context.Context, result domain.Ch
 		result.VIN, result.CheckItemID, string(result.CheckStatus), result.CheckerID,
 		result.ReworkDesc, result.ConditionalDesc, result.RejectedDesc, string(result.ChecklistType))
 	if err != nil {
-		return err
+		return mapRaiseException(err)
 	}
 	if tag.RowsAffected() == 0 {
 		return domain.ErrNotFound

@@ -37,6 +37,7 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 func writeError(w http.ResponseWriter, err error) {
 	var gate *domain.GateBlockedError
 	var depot *domain.DepotReleaseBlockedError
+	var rejected *domain.DatabaseRejectedError
 	switch {
 	case errors.As(err, &gate):
 		writeJSON(w, http.StatusConflict, errorResponse{
@@ -48,6 +49,11 @@ func writeError(w http.ResponseWriter, err error) {
 			Error:          depot.Error(),
 			BlockingIssues: depot.BlockingIssues,
 		})
+	case errors.As(err, &rejected):
+		writeJSON(w, http.StatusConflict, errorResponse{Error: rejected.Error()})
+	case errors.Is(err, domain.ErrDepotChecklistLocked),
+		errors.Is(err, domain.ErrInvalidStatusTransition):
+		writeJSON(w, http.StatusConflict, errorResponse{Error: err.Error()})
 	case errors.Is(err, domain.ErrNotFound):
 		writeJSON(w, http.StatusNotFound, errorResponse{Error: err.Error()})
 	case errors.Is(err, domain.ErrInvalidCredentials),
@@ -57,8 +63,6 @@ func writeError(w http.ResponseWriter, err error) {
 	case errors.Is(err, domain.ErrForbidden),
 		errors.Is(err, auth.ErrForbidden):
 		writeJSON(w, http.StatusForbidden, errorResponse{Error: err.Error()})
-	case errors.Is(err, domain.ErrInvalidStatusTransition):
-		writeJSON(w, http.StatusConflict, errorResponse{Error: err.Error()})
 	case errors.Is(err, domain.ErrDescriptionRequired),
 		errors.Is(err, domain.ErrSeverityRequired),
 		errors.Is(err, domain.ErrInvalidEnumValue):

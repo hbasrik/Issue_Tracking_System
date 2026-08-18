@@ -22,11 +22,12 @@ type checklistRequest struct {
 // handleRecordChecklist records a checklist item result. Both Operator and
 // Manager/Admin hold checklist_item.update (seeded role_permissions); the
 // URL type segment is eol|shipment|test. The mandatory-description rule
-// (FR-3.3) is validated identically for all three before persistence
-// (returning 400). Hard-block semantics apply to the two gated types: a
-// requested gate exit with any non-passing item returns 409 with the blocking
-// item IDs. The Test checklist has no gate, so a gate exit requested against
-// it is rejected rather than silently ignored.
+// (FR-3.3) applies to EoL items only (400). Test and Shipment are Yes/No
+// with no note. Depot-phase EoL updates return 409 until every Branch-phase
+// item is OK/CONDITIONAL_OK. Hard-block semantics apply to the two gated
+// types: a requested gate exit with any non-passing item returns 409 with
+// the blocking item IDs. The Test checklist has no gate, so a gate exit
+// requested against it is rejected rather than silently ignored.
 func (s *server) handleRecordChecklist(w http.ResponseWriter, r *http.Request) {
 	vin := chi.URLParam(r, "vin")
 

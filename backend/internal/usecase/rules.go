@@ -57,10 +57,13 @@ func EvaluateChecklistGate(items []domain.ChecklistProgress) (open bool, blockin
 }
 
 // ValidateChecklistDescription enforces the mandatory-description rule
-// (FR-3.3): NOT_OK requires a rejected description, REWORK a rework
-// description, and CONDITIONAL_OK a conditional description. OK and PENDING
-// require none.
-func ValidateChecklistDescription(status domain.CheckStatus, reworkDesc, conditionalDesc, rejectedDesc string) error {
+// (FR-3.3) for EoL items only: NOT_OK requires a rejected description,
+// REWORK a rework description, and CONDITIONAL_OK a conditional description.
+// Test and Shipment items are plain Yes/No and never require a note.
+func ValidateChecklistDescription(checklistType domain.ChecklistType, status domain.CheckStatus, reworkDesc, conditionalDesc, rejectedDesc string) error {
+	if checklistType != domain.ChecklistTypeEOL {
+		return nil
+	}
 	switch status {
 	case domain.CheckStatusNotOK:
 		if rejectedDesc == "" {
@@ -73,6 +76,29 @@ func ValidateChecklistDescription(status domain.CheckStatus, reworkDesc, conditi
 	case domain.CheckStatusConditionalOK:
 		if conditionalDesc == "" {
 			return domain.ErrDescriptionRequired
+		}
+	}
+	return nil
+}
+
+// EnforceEOLDepotSequencing rejects a Depot-phase EoL update while any
+// Branch-phase item for the same vehicle is not yet OK or CONDITIONAL_OK.
+// Unknown / non-Depot items are ignored so callers can fail open to the
+// database trigger when the view list is empty.
+func EnforceEOLDepotSequencing(items []domain.ChecklistItemView, itemID int) error {
+	var target *domain.ChecklistItemView
+	for i := range items {
+		if items[i].ItemID == itemID {
+			target = &items[i]
+			break
+		}
+	}
+	if target == nil || target.EolPhase == nil || *target.EolPhase != domain.EOLItemPhaseDepot {
+		return nil
+	}
+	for _, it := range items {
+		if it.EolPhase != nil && *it.EolPhase == domain.EOLItemPhaseBranch && !it.Status.IsPassing() {
+			return domain.ErrDepotChecklistLocked
 		}
 	}
 	return nil

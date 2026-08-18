@@ -122,3 +122,88 @@ func TestRecordChecklistResult_MissingDescriptionRejected(t *testing.T) {
 		t.Fatalf("expected ErrDescriptionRequired, got %v", err)
 	}
 }
+
+// TestRecordChecklistResult_ShipmentItemDoesNotRequireDescription proves
+// Shipment items no longer inherit FR-3.3: NOT_OK with no note is accepted.
+func TestRecordChecklistResult_ShipmentItemDoesNotRequireDescription(t *testing.T) {
+	const vin = "1HGCM82633A004352"
+
+	vehicles := newFakeVehicleRepo()
+	vehicles.vehicles[vin] = &domain.Vehicle{VIN: vin, CurrentGlobalStatus: domain.VehicleStatusInWarehouse}
+	checklist := newFakeChecklistRepo()
+	checklist.rows[vin] = []domain.ChecklistProgress{
+		{VIN: vin, ChecklistType: domain.ChecklistTypeShipment, CheckItemID: 1, CheckStatus: domain.CheckStatusPending},
+	}
+
+	rec := usecase.NewChecklistResultRecorder(vehicles, checklist)
+	_, err := rec.Record(context.Background(), usecase.RecordChecklistInput{
+		VIN:           vin,
+		ChecklistType: domain.ChecklistTypeShipment,
+		ItemID:        1,
+		Status:        domain.CheckStatusNotOK,
+		CheckerID:     7,
+	})
+	if err != nil {
+		t.Fatalf("shipment NOT_OK without description should succeed, got %v", err)
+	}
+}
+
+func TestRecordChecklistResult_DepotLockedUntilBranchPassing(t *testing.T) {
+	const vin = "1HGCM82633A004352"
+	branch := domain.EOLItemPhaseBranch
+	depot := domain.EOLItemPhaseDepot
+
+	vehicles := newFakeVehicleRepo()
+	vehicles.vehicles[vin] = &domain.Vehicle{VIN: vin, CurrentGlobalStatus: domain.VehicleStatusInProduction}
+	checklist := newFakeChecklistRepo()
+	checklist.rows[vin] = []domain.ChecklistProgress{
+		{VIN: vin, ChecklistType: domain.ChecklistTypeEOL, CheckItemID: 1, CheckStatus: domain.CheckStatusPending},
+		{VIN: vin, ChecklistType: domain.ChecklistTypeEOL, CheckItemID: 10, CheckStatus: domain.CheckStatusPending},
+	}
+	checklist.views[vin] = []domain.ChecklistItemView{
+		{ItemID: 1, Status: domain.CheckStatusPending, EolPhase: &branch},
+		{ItemID: 10, Status: domain.CheckStatusPending, EolPhase: &depot},
+	}
+
+	rec := usecase.NewChecklistResultRecorder(vehicles, checklist)
+	_, err := rec.Record(context.Background(), usecase.RecordChecklistInput{
+		VIN:           vin,
+		ChecklistType: domain.ChecklistTypeEOL,
+		ItemID:        10,
+		Status:        domain.CheckStatusOK,
+		CheckerID:     7,
+	})
+	if !errors.Is(err, domain.ErrDepotChecklistLocked) {
+		t.Fatalf("expected ErrDepotChecklistLocked, got %v", err)
+	}
+}
+
+func TestRecordChecklistResult_DepotUnlocksWhenBranchPassing(t *testing.T) {
+	const vin = "1HGCM82633A004352"
+	branch := domain.EOLItemPhaseBranch
+	depot := domain.EOLItemPhaseDepot
+
+	vehicles := newFakeVehicleRepo()
+	vehicles.vehicles[vin] = &domain.Vehicle{VIN: vin, CurrentGlobalStatus: domain.VehicleStatusInProduction}
+	checklist := newFakeChecklistRepo()
+	checklist.rows[vin] = []domain.ChecklistProgress{
+		{VIN: vin, ChecklistType: domain.ChecklistTypeEOL, CheckItemID: 1, CheckStatus: domain.CheckStatusOK},
+		{VIN: vin, ChecklistType: domain.ChecklistTypeEOL, CheckItemID: 10, CheckStatus: domain.CheckStatusPending},
+	}
+	checklist.views[vin] = []domain.ChecklistItemView{
+		{ItemID: 1, Status: domain.CheckStatusOK, EolPhase: &branch},
+		{ItemID: 10, Status: domain.CheckStatusPending, EolPhase: &depot},
+	}
+
+	rec := usecase.NewChecklistResultRecorder(vehicles, checklist)
+	_, err := rec.Record(context.Background(), usecase.RecordChecklistInput{
+		VIN:           vin,
+		ChecklistType: domain.ChecklistTypeEOL,
+		ItemID:        10,
+		Status:        domain.CheckStatusOK,
+		CheckerID:     7,
+	})
+	if err != nil {
+		t.Fatalf("depot item should be writable once branch is passing, got %v", err)
+	}
+}

@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"errors"
 
 	"github.com/karea/backend/internal/domain"
 	"github.com/karea/backend/internal/repository"
@@ -42,25 +43,34 @@ type RecordChecklistInput struct {
 
 // RecordChecklistOutput reports the resulting gate state.
 type RecordChecklistOutput struct {
-	GateOpen       bool
-	ProposedStatus domain.VehicleStatus
+	GateOpen       bool                 `json:"gate_open"`
+	ProposedStatus domain.VehicleStatus `json:"proposed_status"`
 }
 
 // Record validates and persists a checklist item result, then evaluates the
 // hard-block gate.
 //
 // Hard-block semantics (FR-3.5/FR-4.3): recording an individual item is always
-// allowed (including the mandatory-description rule of FR-3.3), but a requested
-// gate exit is rejected with a *domain.GateBlockedError unless every item of
-// the checklist is OK or CONDITIONAL_OK. The status transition is enforced
-// here in the application layer, independent of the database trigger, so a
-// direct API call can never bypass the gate.
+// allowed (EoL still requires a description for non-OK statuses; Test and
+// Shipment do not), but a requested gate exit is rejected with a
+// *domain.GateBlockedError unless every item of the checklist is OK or
+// CONDITIONAL_OK. Depot-phase EoL items are additionally refused until every
+// Branch-phase item is passing — application layer plus the database trigger.
 func (r *ChecklistResultRecorder) Record(ctx context.Context, in RecordChecklistInput) (*RecordChecklistOutput, error) {
 	if !in.ChecklistType.Valid() || !in.Status.Valid() {
 		return nil, domain.ErrInvalidEnumValue
 	}
-	if err := ValidateChecklistDescription(in.Status, in.ReworkDesc, in.ConditionalDesc, in.RejectedDesc); err != nil {
+	if err := ValidateChecklistDescription(in.ChecklistType, in.Status, in.ReworkDesc, in.ConditionalDesc, in.RejectedDesc); err != nil {
 		return nil, err
+	}
+	if in.ChecklistType == domain.ChecklistTypeEOL && in.Status != domain.CheckStatusPending {
+		views, err := r.ListForVehicle(ctx, in.VIN, in.ChecklistType)
+		if err != nil && !errors.Is(err, domain.ErrNotFound) {
+			return nil, err
+		}
+		if err := EnforceEOLDepotSequencing(views, in.ItemID); err != nil {
+			return nil, err
+		}
 	}
 
 	result := domain.ChecklistProgress{

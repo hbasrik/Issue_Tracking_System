@@ -46,3 +46,43 @@ func TestWriteErrorDepotReleaseBlocked(t *testing.T) {
 		t.Errorf("first blocking issue = %+v", body.BlockingIssues[0])
 	}
 }
+
+func TestWriteErrorDepotChecklistLocked(t *testing.T) {
+	rec := httptest.NewRecorder()
+	writeError(rec, domain.ErrDepotChecklistLocked)
+
+	if rec.Code != http.StatusConflict {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusConflict)
+	}
+
+	var body struct {
+		Error string `json:"error"`
+	}
+	if err := json.NewDecoder(rec.Body).Decode(&body); err != nil {
+		t.Fatalf("decode body: %v", err)
+	}
+	if body.Error != domain.ErrDepotChecklistLocked.Error() {
+		t.Errorf("error = %q, want %q", body.Error, domain.ErrDepotChecklistLocked.Error())
+	}
+}
+
+func TestWriteErrorDatabaseRejected(t *testing.T) {
+	rec := httptest.NewRecorder()
+	writeError(rec, &domain.DatabaseRejectedError{
+		Message: "cannot update depot-phase EoL items until every branch-phase item is OK or CONDITIONAL_OK",
+	})
+
+	if rec.Code != http.StatusConflict {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusConflict)
+	}
+
+	var body struct {
+		Error string `json:"error"`
+	}
+	if err := json.NewDecoder(rec.Body).Decode(&body); err != nil {
+		t.Fatalf("decode body: %v", err)
+	}
+	if body.Error != "cannot update depot-phase EoL items until every branch-phase item is OK or CONDITIONAL_OK" {
+		t.Errorf("error = %q", body.Error)
+	}
+}

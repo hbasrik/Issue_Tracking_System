@@ -91,10 +91,9 @@ func TestRecordChecklistResult_TestGateExitRejected(t *testing.T) {
 	}
 }
 
-// TestRecordChecklistResult_TestItemRequiresDescription proves the Test
-// checklist inherits the same mandatory-description rule (FR-3.3) as the other
-// two types: a NOT_OK tick without a rejection reason is refused.
-func TestRecordChecklistResult_TestItemRequiresDescription(t *testing.T) {
+// TestRecordChecklistResult_TestItemDoesNotRequireDescription proves Test
+// items are plain Yes/No: a NOT_OK tick with no rejection reason is accepted.
+func TestRecordChecklistResult_TestItemDoesNotRequireDescription(t *testing.T) {
 	rec, _ := newTestChecklistFixture(t)
 
 	_, err := rec.Record(context.Background(), usecase.RecordChecklistInput{
@@ -104,7 +103,7 @@ func TestRecordChecklistResult_TestItemRequiresDescription(t *testing.T) {
 		Status:        domain.CheckStatusNotOK,
 		CheckerID:     3,
 	})
-	if !errors.Is(err, domain.ErrDescriptionRequired) {
-		t.Fatalf("expected ErrDescriptionRequired, got %v", err)
+	if err != nil {
+		t.Fatalf("test NOT_OK without description should succeed, got %v", err)
 	}
 }
