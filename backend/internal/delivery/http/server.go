@@ -42,6 +42,9 @@ type Deps struct {
 	CORSAllowedOrigins []string
 	// AppEnv is APP_ENV. The EoL reset route 404s unless this is "development".
 	AppEnv string
+	// UploadDir is the local media root (Karar 8). Served read-only at /uploads/
+	// so clients can display attachment images from storage_path.
+	UploadDir string
 }
 
 type server struct {
@@ -76,6 +79,10 @@ func NewRouter(deps Deps) http.Handler {
 	r.Get("/health", func(w http.ResponseWriter, _ *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 	})
+
+	if deps.UploadDir != "" {
+		r.Handle("/uploads/*", http.StripPrefix("/uploads/", http.FileServer(http.Dir(deps.UploadDir))))
+	}
 
 	r.Route("/api/v1", func(r chi.Router) {
 		// Public: authentication.

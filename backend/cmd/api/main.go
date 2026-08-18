@@ -61,6 +61,7 @@ func main() {
 		Media:              usecase.NewMediaUploader(mediaRepo, mediaStore),
 		CORSAllowedOrigins: cfg.CORSAllowedOrigins,
 		AppEnv:             cfg.AppEnv,
+		UploadDir:          cfg.UploadDir,
 	})
 
 	addr := ":" + cfg.Port
