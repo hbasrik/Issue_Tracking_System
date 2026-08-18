@@ -24,8 +24,14 @@ function vinTail(vin: string): string {
  */
 export function VinSearchBox({
   onSelect,
+  onQueryChange,
+  onResults,
 }: {
   onSelect: (v: Vehicle) => void;
+  /** Fires on every keystroke so a parent list can filter live. */
+  onQueryChange?: (query: string) => void;
+  /** Typeahead matches — used to filter by vehicle_number as well as VIN. */
+  onResults?: (vehicles: Vehicle[]) => void;
 }) {
   const { tokens } = useTheme();
   const [query, setQuery] = useState('');
@@ -33,20 +39,26 @@ export function VinSearchBox({
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const onResultsRef = useRef(onResults);
+  onResultsRef.current = onResults;
 
   const search = useCallback(async (suffix: string) => {
     if (suffix.trim().length < 2) {
       setResults([]);
+      onResultsRef.current?.([]);
       return;
     }
     setLoading(true);
     setError(null);
     try {
       const res = await api.searchVehicles(suffix.trim());
-      setResults(res.items ?? []);
+      const items = res.items ?? [];
+      setResults(items);
+      onResultsRef.current?.(items);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Search failed');
       setResults([]);
+      onResultsRef.current?.([]);
     } finally {
       setLoading(false);
     }
@@ -66,7 +78,10 @@ export function VinSearchBox({
     <View>
       <TextInput
         value={query}
-        onChangeText={setQuery}
+        onChangeText={(text) => {
+          setQuery(text);
+          onQueryChange?.(text);
+        }}
         placeholder="Son 5 haneyi girin (örn. 00057)"
         placeholderTextColor={tokens.textSecondary}
         autoCapitalize="characters"

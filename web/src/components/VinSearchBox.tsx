@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api, type Vehicle } from '../lib/api';
 import { StatusBadge } from './StatusBadge';
@@ -7,8 +7,12 @@ interface VinSearchBoxProps {
   /** Controlled value (optional). */
   value?: string;
   onChange?: (suffix: string) => void;
+  /** Typeahead matches — used by Issues to live-filter by vehicle_number. */
+  onResults?: (vehicles: Vehicle[]) => void;
   /** When true, show typeahead results under the input. */
   showResults?: boolean;
+  /** Destination for a suggestion click. Defaults to vehicle overview. */
+  resultTo?: (vehicle: Vehicle) => string;
   placeholder?: string;
   className?: string;
 }
@@ -20,7 +24,9 @@ interface VinSearchBoxProps {
 export function VinSearchBox({
   value: controlled,
   onChange,
+  onResults,
   showResults = true,
+  resultTo = (v) => `/vehicles/${v.VIN}`,
   placeholder = 'Son 5 haneyi girin (örn. 00057)',
   className = '',
 }: VinSearchBoxProps) {
@@ -28,19 +34,28 @@ export function VinSearchBox({
   const suffix = controlled ?? internal;
   const [results, setResults] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(false);
+  const onResultsRef = useRef(onResults);
+  onResultsRef.current = onResults;
 
   useEffect(() => {
-    if (!showResults || suffix.trim().length < 2) {
+    if (suffix.trim().length < 2) {
       setResults([]);
+      onResultsRef.current?.([]);
+      return;
+    }
+    if (!showResults && !onResultsRef.current) {
       return;
     }
     const t = window.setTimeout(async () => {
       setLoading(true);
       try {
         const res = await api.searchVehicles(suffix.trim());
-        setResults(res.items ?? []);
+        const items = res.items ?? [];
+        setResults(items);
+        onResultsRef.current?.(items);
       } catch {
         setResults([]);
+        onResultsRef.current?.([]);
       } finally {
         setLoading(false);
       }
@@ -91,7 +106,7 @@ export function VinSearchBox({
             return (
               <Link
                 key={vin}
-                to={`/vehicles/${vin}`}
+                to={resultTo(v)}
                 className="flex items-center justify-between px-3 py-2 hover:bg-[var(--bg-surface-1)]"
                 onClick={() => setSuffix(tail)}
               >
