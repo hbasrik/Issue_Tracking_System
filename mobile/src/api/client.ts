@@ -166,6 +166,8 @@ export interface Issue {
   IssueDate?: string;
   CreatedAt?: string;
   UpdatedAt?: string;
+  SolutionDescription?: string;
+  ReporterName?: string;
 }
 
 export interface Station {
@@ -183,6 +185,7 @@ export interface IssueType {
 export type MediaEntityType =
   | 'VEHICLE'
   | 'ISSUE'
+  | 'ISSUE_RESOLUTION'
   | 'CHECKLIST_ITEM_PROGRESS'
   | 'STATION_STEP_PROGRESS';
 
@@ -325,10 +328,14 @@ export const api = {
     return request<Issue>(`/issues/${id}`);
   },
 
-  updateIssueStatus(id: number, status: string) {
+  updateIssueStatus(id: number, status: string, solutionDescription?: string) {
+    const body: { status: string; solution_description?: string } = { status };
+    if (solutionDescription != null) {
+      body.solution_description = solutionDescription;
+    }
     return request<{ id: number; status: string }>(`/issues/${id}/status`, {
       method: 'PATCH',
-      body: JSON.stringify({ status }),
+      body: JSON.stringify(body),
     });
   },
 
@@ -389,3 +396,10 @@ export interface StationDefectRate {
 }
 
 export { API_BASE_URL };
+
+/** Absolute URL for a media_attachments.storage_path served from /uploads/. */
+export function mediaFileUrl(storagePath: string): string {
+  const origin = API_BASE_URL.replace(/\/api\/v1\/?$/, '');
+  const path = storagePath.replace(/^\/+/, '');
+  return `${origin}/uploads/${path}`;
+}
