@@ -108,10 +108,8 @@ func NewRouter(deps Deps) http.Handler {
 			r.Group(func(r chi.Router) {
 				r.Use(permissions.RequirePermission(domain.PermissionVehicleView))
 				r.Get("/vehicles", s.handleVehicleList)
+				// Static /search wins over {vin} in chi's trie.
 				r.Get("/vehicles/search", s.handleVehicleSearch)
-				// Static segments win over {vin} in chi's trie, so /resolve
-				// and /search are reachable despite the wildcard sibling.
-				r.Get("/vehicles/resolve", s.handleVehicleResolve)
 				r.Get("/vehicles/{vin}", s.handleVehicleGet)
 				r.Get("/vehicles/{vin}/station-steps", s.handleVehicleStationSteps)
 				r.Get("/vehicles/{vin}/checklist/{type}", s.handleVehicleChecklistGet)

@@ -117,15 +117,6 @@ func (f *fakeVehicleRepo) Count(_ context.Context, _ domain.VehicleListFilter) (
 	return len(f.vehicles), nil
 }
 
-func (f *fakeVehicleRepo) GetByVehicleNumber(_ context.Context, vehicleNumber string) (*domain.Vehicle, error) {
-	for _, v := range f.vehicles {
-		if v.VehicleNumber == vehicleNumber {
-			return v, nil
-		}
-	}
-	return nil, domain.ErrNotFound
-}
-
 func (f *fakeVehicleRepo) SearchByVINSuffix(_ context.Context, suffix string, limit int) ([]domain.Vehicle, error) {
 	var out []domain.Vehicle
 	for _, v := range f.vehicles {
@@ -300,6 +291,12 @@ func (f *fakeIssueRepo) ListForUser(_ context.Context, userID int, status *domai
 		}
 		out = append(out, *issue)
 	}
+	sort.Slice(out, func(i, j int) bool {
+		if !out[i].CreatedAt.Equal(out[j].CreatedAt) {
+			return out[i].CreatedAt.After(out[j].CreatedAt)
+		}
+		return out[i].ID > out[j].ID
+	})
 	return out, nil
 }
 
@@ -311,6 +308,12 @@ func (f *fakeIssueRepo) ListAll(_ context.Context, status *domain.IssueStatus) (
 		}
 		out = append(out, *issue)
 	}
+	sort.Slice(out, func(i, j int) bool {
+		if !out[i].CreatedAt.Equal(out[j].CreatedAt) {
+			return out[i].CreatedAt.After(out[j].CreatedAt)
+		}
+		return out[i].ID > out[j].ID
+	})
 	return out, nil
 }
 
@@ -325,6 +328,12 @@ func (f *fakeIssueRepo) ListByVIN(_ context.Context, vin string, status *domain.
 		}
 		out = append(out, *issue)
 	}
+	sort.Slice(out, func(i, j int) bool {
+		if !out[i].CreatedAt.Equal(out[j].CreatedAt) {
+			return out[i].CreatedAt.After(out[j].CreatedAt)
+		}
+		return out[i].ID > out[j].ID
+	})
 	return out, nil
 }
 

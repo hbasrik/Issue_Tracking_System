@@ -53,18 +53,6 @@ func (r *VehicleRepo) GetByVIN(ctx context.Context, vin string) (*domain.Vehicle
 	return v, err
 }
 
-// GetByVehicleNumber returns the vehicle with the exact short factory number.
-// vehicle_number carries a UNIQUE constraint, so this matches at most one row.
-func (r *VehicleRepo) GetByVehicleNumber(ctx context.Context, vehicleNumber string) (*domain.Vehicle, error) {
-	row := executor(ctx, r.pool).QueryRow(ctx,
-		`SELECT `+vehicleColumns+` FROM vehicles WHERE vehicle_number = $1`, vehicleNumber)
-	v, err := scanVehicle(row)
-	if errors.Is(err, pgx.ErrNoRows) {
-		return nil, domain.ErrNotFound
-	}
-	return v, err
-}
-
 // vehicleFilterClause builds a shared WHERE fragment for List and Count.
 func vehicleFilterClause(f domain.VehicleListFilter) (string, []any) {
 	var conds []string

@@ -1,7 +1,6 @@
 package http
 
 import (
-	"errors"
 	"net/http"
 	"strconv"
 	"strings"
@@ -66,31 +65,6 @@ func (s *server) handleVehicleList(w http.ResponseWriter, r *http.Request) {
 func (s *server) handleVehicleGet(w http.ResponseWriter, r *http.Request) {
 	vin := chi.URLParam(r, "vin")
 	vehicle, err := s.deps.Vehicles.GetByVIN(r.Context(), vin)
-	if err != nil {
-		writeError(w, err)
-		return
-	}
-	writeJSON(w, http.StatusOK, vehicle)
-}
-
-// handleVehicleResolve returns a single vehicle by its short factory number
-// (Karar 5), in the same shape as the by-VIN read. It exists because the
-// number printed on the vehicle is what operators have to hand, and it is
-// available to both roles for the same reason the VIN search is.
-func (s *server) handleVehicleResolve(w http.ResponseWriter, r *http.Request) {
-	vehicleNumber := strings.TrimSpace(r.URL.Query().Get("vehicle_number"))
-	if vehicleNumber == "" {
-		badRequest(w, "vehicle_number is required")
-		return
-	}
-
-	vehicle, err := s.deps.Vehicles.GetByVehicleNumber(r.Context(), vehicleNumber)
-	if errors.Is(err, domain.ErrNotFound) {
-		writeJSON(w, http.StatusNotFound, errorResponse{
-			Error: "no vehicle found with vehicle_number " + vehicleNumber,
-		})
-		return
-	}
 	if err != nil {
 		writeError(w, err)
 		return

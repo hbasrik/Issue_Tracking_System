@@ -17,9 +17,6 @@ type VehicleRepository interface {
 	// Count returns the total number of vehicles matching the filter, ignoring
 	// pagination (used to compute page counts).
 	Count(ctx context.Context, f domain.VehicleListFilter) (int, error)
-	// GetByVehicleNumber returns the vehicle carrying the given short factory
-	// number (Karar 5), or domain.ErrNotFound.
-	GetByVehicleNumber(ctx context.Context, vehicleNumber string) (*domain.Vehicle, error)
 	// SearchByVINSuffix returns vehicles whose VIN contains the given suffix
 	// (partial trigram search), capped at limit rows.
 	SearchByVINSuffix(ctx context.Context, suffix string, limit int) ([]domain.Vehicle, error)
