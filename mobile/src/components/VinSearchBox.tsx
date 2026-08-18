@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  FlatList,
   Pressable,
   StyleSheet,
   Text,
@@ -15,7 +14,14 @@ function vinTail(vin: string): string {
   return vin.slice(-5);
 }
 
-/** Shared VIN suffix search + typeahead — design guide §3.1. */
+/**
+ * Shared VIN suffix search + typeahead — design guide §3.1.
+ *
+ * Results render as a plain View/map (not FlatList). The API caps typeahead
+ * at a handful of rows, and this box is always embedded in a parent
+ * ScrollView/FlatList (Home, Vehicles, My Issues, Manual Issue modal) —
+ * a nested VirtualizedList would warn and break scrolling.
+ */
 export function VinSearchBox({
   onSelect,
 }: {
@@ -85,12 +91,9 @@ export function VinSearchBox({
           </Text>
         </View>
       ) : null}
-      <FlatList
-        data={results}
-        keyExtractor={(item) => item.VIN}
-        keyboardShouldPersistTaps="handled"
-        renderItem={({ item }) => (
-          <Pressable onPress={() => onSelect(item)}>
+      <View>
+        {results.map((item) => (
+          <Pressable key={item.VIN} onPress={() => onSelect(item)}>
             <Card>
               <View style={styles.row}>
                 <View style={{ flex: 1 }}>
@@ -109,8 +112,8 @@ export function VinSearchBox({
               </View>
             </Card>
           </Pressable>
-        )}
-      />
+        ))}
+      </View>
     </View>
   );
 }
