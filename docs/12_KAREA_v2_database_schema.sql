@@ -422,7 +422,7 @@ CREATE TABLE audit_logs (
 
 CREATE TABLE media_attachments (
     id             BIGSERIAL PRIMARY KEY,
-    entity_type    VARCHAR(50) NOT NULL,   -- 'VEHICLE' | 'ISSUE' | 'CHECKLIST_ITEM_PROGRESS' | 'STATION_STEP_PROGRESS'
+    entity_type    VARCHAR(50) NOT NULL,   -- 'VEHICLE' | 'ISSUE' | 'ISSUE_RESOLUTION' | 'CHECKLIST_ITEM_PROGRESS' | 'STATION_STEP_PROGRESS'
     entity_id      TEXT NOT NULL,
     file_name      VARCHAR(255) NOT NULL,
     storage_path   TEXT NOT NULL,
