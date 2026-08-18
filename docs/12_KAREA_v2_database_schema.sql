@@ -82,7 +82,8 @@ CREATE TYPE issue_source_enum AS ENUM (
     'STATION_STEP',  -- renamed from PHASE_CHECKPOINT (Karar 1)
     'EOL_ITEM',
     'SHIPMENT_ITEM',
-    'TEST_ITEM'       -- Karar 4
+    'TEST_ITEM',      -- Karar 4
+    'MANUAL'          -- standalone operator Hata Bildir (no checklist/step source)
 );
 
 CREATE TYPE audit_event_enum AS ENUM (
@@ -162,8 +163,8 @@ CREATE TABLE station_steps (
     UNIQUE (station_id, sequence_no)
 );
 
--- Issue category catalogue (e.g. Electrical, Paint, Trim) used for
--- "hata turu" filtering in the Analysis tab.
+-- Issue category catalogue for Hata Bildir / Analysis ("hata turu").
+-- Current catalogue: Hata, Tamir Gerekiyor (see migration 0006).
 CREATE TABLE issue_types (
     id            SERIAL PRIMARY KEY,
     name          VARCHAR(100) NOT NULL UNIQUE
@@ -273,6 +274,8 @@ CREATE TABLE issue_list (
         (source_type = 'STATION_STEP' AND source_station_step_id IS NOT NULL AND source_check_item_id IS NULL)
         OR
         (source_type IN ('EOL_ITEM', 'SHIPMENT_ITEM', 'TEST_ITEM') AND source_check_item_id IS NOT NULL AND source_station_step_id IS NULL)
+        OR
+        (source_type = 'MANUAL' AND source_station_step_id IS NULL AND source_check_item_id IS NULL)
     ),
 
     -- Karar 6: DONE can branch to either APPROVED or CONDITIONAL_APPROVED,
