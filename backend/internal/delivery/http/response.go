@@ -64,7 +64,12 @@ func writeError(w http.ResponseWriter, err error) {
 		errors.Is(err, auth.ErrForbidden):
 		writeJSON(w, http.StatusForbidden, errorResponse{Error: err.Error()})
 	case errors.Is(err, domain.ErrDescriptionRequired),
+		errors.Is(err, domain.ErrIssueDescriptionRequired),
 		errors.Is(err, domain.ErrSeverityRequired),
+		errors.Is(err, domain.ErrVINRequired),
+		errors.Is(err, domain.ErrStationRequired),
+		errors.Is(err, domain.ErrIssueTypeRequired),
+		errors.Is(err, domain.ErrInvalidManualSource),
 		errors.Is(err, domain.ErrInvalidEnumValue):
 		writeJSON(w, http.StatusBadRequest, errorResponse{Error: err.Error()})
 	default:

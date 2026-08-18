@@ -111,6 +111,7 @@ func NewRouter(deps Deps) http.Handler {
 				r.Get("/vehicles/{vin}/eol", s.handleEOLWorkflowGet)
 				r.Get("/issues", s.handleIssueList)
 				r.Get("/issues/{id}", s.handleIssueGet)
+				r.Get("/issue-types", s.handleIssueTypeList)
 				r.Get("/stations", s.handleStationList)
 				// Operator read visibility into current problem status
 				// (Decision Log #9). These are gated on vehicle.view, not

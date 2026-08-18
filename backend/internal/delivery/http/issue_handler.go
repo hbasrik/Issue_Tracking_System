@@ -52,6 +52,19 @@ func (s *server) handleCreateIssue(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, issue)
 }
 
+// handleIssueTypeList returns the issue_types catalogue (Hata / Tamir Gerekiyor).
+func (s *server) handleIssueTypeList(w http.ResponseWriter, r *http.Request) {
+	items, err := s.deps.Issues.ListIssueTypes(r.Context())
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	if items == nil {
+		items = []domain.IssueType{}
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"items": items})
+}
+
 // handleIssueList returns issues for the issues queue / vehicle detail.
 //
 // Scope:
