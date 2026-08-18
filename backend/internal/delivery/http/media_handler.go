@@ -76,7 +76,7 @@ func (s *server) handleMediaList(w http.ResponseWriter, r *http.Request) {
 func parseMediaEntity(w http.ResponseWriter, rawType, rawID string) (domain.MediaEntityType, string, bool) {
 	entityType := domain.MediaEntityType(strings.ToUpper(strings.TrimSpace(rawType)))
 	if !entityType.Valid() {
-		badRequest(w, "entity_type must be one of: VEHICLE, ISSUE, CHECKLIST_ITEM_PROGRESS, STATION_STEP_PROGRESS")
+		badRequest(w, "entity_type must be one of: VEHICLE, ISSUE, ISSUE_RESOLUTION, CHECKLIST_ITEM_PROGRESS, STATION_STEP_PROGRESS")
 		return "", "", false
 	}
 

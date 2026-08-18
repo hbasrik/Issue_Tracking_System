@@ -131,7 +131,8 @@ func (s *server) handleIssueGet(w http.ResponseWriter, r *http.Request) {
 }
 
 type issueStatusRequest struct {
-	Status string `json:"status"`
+	Status               string `json:"status"`
+	SolutionDescription  string `json:"solution_description"`
 }
 
 // handleIssueStatus advances an issue through the OPEN -> IN_PROGRESS -> DONE
@@ -140,7 +141,7 @@ type issueStatusRequest struct {
 // depends on the target status, so it is enforced in the usecase rather than
 // in routing. Illegal transitions — including any attempt to move an issue
 // that already carries a quality decision — return 409; a missing permission
-// returns 403.
+// returns 403. IN_PROGRESS -> DONE requires a non-empty solution_description.
 func (s *server) handleIssueStatus(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {
@@ -165,7 +166,7 @@ func (s *server) handleIssueStatus(w http.ResponseWriter, r *http.Request) {
 		writeError(w, err)
 		return
 	}
-	if err := s.deps.Issues.TransitionStatus(ctx, id, target, claims.UserID, permissions); err != nil {
+	if err := s.deps.Issues.TransitionStatus(ctx, id, target, claims.UserID, permissions, req.SolutionDescription); err != nil {
 		writeError(w, err)
 		return
 	}

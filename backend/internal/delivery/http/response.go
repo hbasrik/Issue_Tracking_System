@@ -65,6 +65,7 @@ func writeError(w http.ResponseWriter, err error) {
 		writeJSON(w, http.StatusForbidden, errorResponse{Error: err.Error()})
 	case errors.Is(err, domain.ErrDescriptionRequired),
 		errors.Is(err, domain.ErrIssueDescriptionRequired),
+		errors.Is(err, domain.ErrSolutionDescriptionRequired),
 		errors.Is(err, domain.ErrSeverityRequired),
 		errors.Is(err, domain.ErrVINRequired),
 		errors.Is(err, domain.ErrStationRequired),
