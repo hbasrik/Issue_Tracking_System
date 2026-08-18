@@ -14,9 +14,20 @@ var (
 	// ErrDescriptionRequired indicates a checklist status change is missing a
 	// mandatory description (FR-3.3).
 	ErrDescriptionRequired = errors.New("description is required for this status")
+	// ErrIssueDescriptionRequired indicates an issue create omitted description.
+	ErrIssueDescriptionRequired = errors.New("description is required")
 	// ErrSeverityRequired indicates an issue was created without a severity
 	// (Decision Log #7).
 	ErrSeverityRequired = errors.New("issue severity is required")
+	// ErrVINRequired indicates a MANUAL (or other) issue create omitted vin.
+	ErrVINRequired = errors.New("vin is required")
+	// ErrStationRequired indicates a MANUAL issue create omitted station_id.
+	ErrStationRequired = errors.New("station_id is required")
+	// ErrIssueTypeRequired indicates a MANUAL issue create omitted issue_type_id.
+	ErrIssueTypeRequired = errors.New("issue_type_id is required")
+	// ErrInvalidManualSource indicates MANUAL was sent with a station-step or
+	// checklist source id (both must be null).
+	ErrInvalidManualSource = errors.New("manual issues must not set source_station_step_id or source_check_item_id")
 	// ErrInvalidEnumValue indicates an enum field carried an unknown value.
 	ErrInvalidEnumValue = errors.New("invalid enum value")
 	// ErrInvalidStatusTransition indicates a requested status change is not

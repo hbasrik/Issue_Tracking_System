@@ -60,12 +60,16 @@ const (
 	IssueSourceEOLItem      IssueSource = "EOL_ITEM"
 	IssueSourceShipmentItem IssueSource = "SHIPMENT_ITEM"
 	IssueSourceTestItem     IssueSource = "TEST_ITEM"
+	// IssueSourceManual is a standalone operator report (Hata Bildir) with no
+	// linked station step or checklist item.
+	IssueSourceManual IssueSource = "MANUAL"
 )
 
 // Valid reports whether the issue source is a known enum value.
 func (s IssueSource) Valid() bool {
 	switch s {
-	case IssueSourceStationStep, IssueSourceEOLItem, IssueSourceShipmentItem, IssueSourceTestItem:
+	case IssueSourceStationStep, IssueSourceEOLItem, IssueSourceShipmentItem,
+		IssueSourceTestItem, IssueSourceManual:
 		return true
 	default:
 		return false
@@ -118,4 +122,10 @@ type Issue struct {
 	// ReporterName is populated on list queries via join to users; not a
 	// persisted column on issue_list.
 	ReporterName string
+}
+
+// IssueType is a row from the issue_types catalogue (Hata / Tamir Gerekiyor).
+type IssueType struct {
+	ID   int
+	Name string
 }
