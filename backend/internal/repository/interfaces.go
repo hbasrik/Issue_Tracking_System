@@ -89,8 +89,9 @@ type IssueRepository interface {
 	// against.
 	ListOpenByVIN(ctx context.Context, vin string) ([]domain.Issue, error)
 	// UpdateStatus transitions an issue to a new status, recording the acting
-	// user against the appropriate lifecycle timestamp column.
-	UpdateStatus(ctx context.Context, id int64, status domain.IssueStatus, actorID int) error
+	// user against the appropriate lifecycle timestamp column. When status is
+	// DONE, solutionDescription is persisted on solution_description.
+	UpdateStatus(ctx context.Context, id int64, status domain.IssueStatus, actorID int, solutionDescription string) error
 	// ListIssueTypes returns the issue_types catalogue (Hata / Tamir Gerekiyor).
 	ListIssueTypes(ctx context.Context) ([]domain.IssueType, error)
 }

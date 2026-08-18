@@ -173,31 +173,37 @@ func collectIssues(rows pgx.Rows) ([]domain.Issue, error) {
 // with a query whose placeholder count matches the arguments passed; any
 // unsupported target returns an error immediately without building a query
 // (this avoids the previous parameter-count mismatch bug).
-func (r *IssueRepo) UpdateStatus(ctx context.Context, id int64, status domain.IssueStatus, actorID int) error {
+func (r *IssueRepo) UpdateStatus(ctx context.Context, id int64, status domain.IssueStatus, actorID int, solutionDescription string) error {
 	var query string
+	var args []any
 	switch status {
 	case domain.IssueStatusInProgress:
 		query = `UPDATE issue_list
 		         SET status = $2, process_reporter_id = $3, process_date = now()
 		         WHERE id = $1`
+		args = []any{id, string(status), actorID}
 	case domain.IssueStatusDone:
 		query = `UPDATE issue_list
-		         SET status = $2, finish_reporter_id = $3, finish_date = now()
+		         SET status = $2, finish_reporter_id = $3, finish_date = now(),
+		             solution_description = $4
 		         WHERE id = $1`
+		args = []any{id, string(status), actorID, solutionDescription}
 	case domain.IssueStatusApproved:
 		query = `UPDATE issue_list
 		         SET status = $2, approve_reporter_id = $3, approve_date = now()
 		         WHERE id = $1`
+		args = []any{id, string(status), actorID}
 	case domain.IssueStatusConditionalApproved:
 		query = `UPDATE issue_list
 		         SET status = $2, conditional_approve_reporter_id = $3,
 		             conditional_approve_date = now()
 		         WHERE id = $1`
+		args = []any{id, string(status), actorID}
 	default:
 		return domain.ErrInvalidStatusTransition
 	}
 
-	tag, err := executor(ctx, r.pool).Exec(ctx, query, id, string(status), actorID)
+	tag, err := executor(ctx, r.pool).Exec(ctx, query, args...)
 	if err != nil {
 		return err
 	}

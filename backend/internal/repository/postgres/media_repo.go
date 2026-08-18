@@ -31,6 +31,7 @@ const mediaColumns = `id, entity_type, entity_id, file_name, storage_path,
 var entityExistsQueries = map[domain.MediaEntityType]string{
 	domain.MediaEntityVehicle:               `SELECT EXISTS (SELECT 1 FROM vehicles WHERE vin = $1)`,
 	domain.MediaEntityIssue:                 `SELECT EXISTS (SELECT 1 FROM issue_list WHERE id = $1::bigint)`,
+	domain.MediaEntityIssueResolution:       `SELECT EXISTS (SELECT 1 FROM issue_list WHERE id = $1::bigint)`,
 	domain.MediaEntityChecklistItemProgress: `SELECT EXISTS (SELECT 1 FROM checklist_item_progress WHERE id = $1::bigint)`,
 	domain.MediaEntityStationStepProgress:   `SELECT EXISTS (SELECT 1 FROM vehicle_station_step_progress WHERE id = $1::bigint)`,
 }
