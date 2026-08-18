@@ -72,31 +72,45 @@ WHERE vehicle_number IN (
     '10042', '10043', '10044', '10045', '10046', '10047', '10048', '10049',
     '10050', '10051', '10052', '10053', '10054', '10055', '10056', '10057',
     '10058', '10059'
+)
+OR vin IN (
+    '1KTSKRC2XSB010042', '1KTSKRV2XSB010043', '1KTSKRC2XSB010044', '1KTSKRV2XSB010045',
+    '1KTSKRC2XSB010046', '1KTSKRV2XSB010047', '1KTSKRC2XSB010048', '1KTSKRV2XSB010049',
+    '1KTSKRC2XSB010050', '1KTSKRV2XSB010051', '1KTSKRC2XSB010052', '1KTSKRV2XSB010053',
+    '1KTSKRC2XSB010054', '1KTSKRV2XSB010055', '1KTSKRC2XSB010056', '1KTSKRV2XSB010057',
+    '1KTSKRC2XSB010058', '1KTSKRV2XSB010059',
+    'N7V1K1SA9SK000001', 'N7V1K1SA9TK000002', 'N7V1K1SA0TK000003', 'N7V1K1SA2TK000004',
+    'N7V1K1SA4TK000005', 'N7V1K1SA6TK000006', 'N7V1K1SA8TK000007', 'N7V1K1SAXTK000008',
+    'N7V1K1SA1TK000009', 'N7V1K1SA8TK000010', 'N7V1K1SAXTK000011', 'N7V1K1SA1TK000012',
+    'N7V1K1SA3TK000013', 'N7V1K1SA5TK000014', 'N7V1K1SA7TK000015', 'N7V1K1SA9TK000016',
+    'N7V1K1SAXTK000017', 'N7V1K1SA2TK000018'
 );
 
 -- ---------------------------------------------------------------------
 -- Plain vehicle inserts. Templates + progress rows are trigger-created.
--- VIN is 17 chars, vehicle_number is the short factory number (Karar 5).
+-- VIN is 17 chars (N7V1K1SA… pattern); vehicle_number is the short factory
+-- number (Karar 5). 000016–000018 continue the same prefix after the
+-- 15-VIN example set.
 -- ---------------------------------------------------------------------
 INSERT INTO vehicles (vin, vehicle_number, vehicle_model_id, created_at) VALUES
-    ('1KTSKRC2XSB010042', '10042', (SELECT id FROM vehicle_models WHERE code = 'KRC'), now() - interval '14 days'),
-    ('1KTSKRV2XSB010043', '10043', (SELECT id FROM vehicle_models WHERE code = 'KRV'), now() - interval '13 days'),
-    ('1KTSKRC2XSB010044', '10044', (SELECT id FROM vehicle_models WHERE code = 'KRC'), now() - interval '12 days'),
-    ('1KTSKRV2XSB010045', '10045', (SELECT id FROM vehicle_models WHERE code = 'KRV'), now() - interval '11 days'),
-    ('1KTSKRC2XSB010046', '10046', (SELECT id FROM vehicle_models WHERE code = 'KRC'), now() - interval '10 days'),
-    ('1KTSKRV2XSB010047', '10047', (SELECT id FROM vehicle_models WHERE code = 'KRV'), now() - interval '9 days'),
-    ('1KTSKRC2XSB010048', '10048', (SELECT id FROM vehicle_models WHERE code = 'KRC'), now() - interval '8 days'),
-    ('1KTSKRV2XSB010049', '10049', (SELECT id FROM vehicle_models WHERE code = 'KRV'), now() - interval '7 days'),
-    ('1KTSKRC2XSB010050', '10050', (SELECT id FROM vehicle_models WHERE code = 'KRC'), now() - interval '6 days'),
-    ('1KTSKRV2XSB010051', '10051', (SELECT id FROM vehicle_models WHERE code = 'KRV'), now() - interval '5 days'),
-    ('1KTSKRC2XSB010052', '10052', (SELECT id FROM vehicle_models WHERE code = 'KRC'), now() - interval '5 days'),
-    ('1KTSKRV2XSB010053', '10053', (SELECT id FROM vehicle_models WHERE code = 'KRV'), now() - interval '4 days'),
-    ('1KTSKRC2XSB010054', '10054', (SELECT id FROM vehicle_models WHERE code = 'KRC'), now() - interval '4 days'),
-    ('1KTSKRV2XSB010055', '10055', (SELECT id FROM vehicle_models WHERE code = 'KRV'), now() - interval '3 days'),
-    ('1KTSKRC2XSB010056', '10056', (SELECT id FROM vehicle_models WHERE code = 'KRC'), now() - interval '3 days'),
-    ('1KTSKRV2XSB010057', '10057', (SELECT id FROM vehicle_models WHERE code = 'KRV'), now() - interval '2 days'),
-    ('1KTSKRC2XSB010058', '10058', (SELECT id FROM vehicle_models WHERE code = 'KRC'), now() - interval '2 days'),
-    ('1KTSKRV2XSB010059', '10059', (SELECT id FROM vehicle_models WHERE code = 'KRV'), now() - interval '1 day');
+    ('N7V1K1SA9SK000001', '10042', (SELECT id FROM vehicle_models WHERE code = 'KRC'), now() - interval '14 days'),
+    ('N7V1K1SA9TK000002', '10043', (SELECT id FROM vehicle_models WHERE code = 'KRV'), now() - interval '13 days'),
+    ('N7V1K1SA0TK000003', '10044', (SELECT id FROM vehicle_models WHERE code = 'KRC'), now() - interval '12 days'),
+    ('N7V1K1SA2TK000004', '10045', (SELECT id FROM vehicle_models WHERE code = 'KRV'), now() - interval '11 days'),
+    ('N7V1K1SA4TK000005', '10046', (SELECT id FROM vehicle_models WHERE code = 'KRC'), now() - interval '10 days'),
+    ('N7V1K1SA6TK000006', '10047', (SELECT id FROM vehicle_models WHERE code = 'KRV'), now() - interval '9 days'),
+    ('N7V1K1SA8TK000007', '10048', (SELECT id FROM vehicle_models WHERE code = 'KRC'), now() - interval '8 days'),
+    ('N7V1K1SAXTK000008', '10049', (SELECT id FROM vehicle_models WHERE code = 'KRV'), now() - interval '7 days'),
+    ('N7V1K1SA1TK000009', '10050', (SELECT id FROM vehicle_models WHERE code = 'KRC'), now() - interval '6 days'),
+    ('N7V1K1SA8TK000010', '10051', (SELECT id FROM vehicle_models WHERE code = 'KRV'), now() - interval '5 days'),
+    ('N7V1K1SAXTK000011', '10052', (SELECT id FROM vehicle_models WHERE code = 'KRC'), now() - interval '5 days'),
+    ('N7V1K1SA1TK000012', '10053', (SELECT id FROM vehicle_models WHERE code = 'KRV'), now() - interval '4 days'),
+    ('N7V1K1SA3TK000013', '10054', (SELECT id FROM vehicle_models WHERE code = 'KRC'), now() - interval '4 days'),
+    ('N7V1K1SA5TK000014', '10055', (SELECT id FROM vehicle_models WHERE code = 'KRV'), now() - interval '3 days'),
+    ('N7V1K1SA7TK000015', '10056', (SELECT id FROM vehicle_models WHERE code = 'KRC'), now() - interval '3 days'),
+    ('N7V1K1SA9TK000016', '10057', (SELECT id FROM vehicle_models WHERE code = 'KRV'), now() - interval '2 days'),
+    ('N7V1K1SAXTK000017', '10058', (SELECT id FROM vehicle_models WHERE code = 'KRC'), now() - interval '2 days'),
+    ('N7V1K1SA2TK000018', '10059', (SELECT id FROM vehicle_models WHERE code = 'KRV'), now() - interval '1 day');
 
 -- Session-local helpers so this seed does not leave functions behind.
 CREATE OR REPLACE FUNCTION pg_temp.mark_stations_ok(p_vin varchar, p_max_station_seq int, p_user int, p_at timestamptz)
@@ -267,16 +281,16 @@ DECLARE
     mgr int;
     v_vin varchar;
     shipped varchar[] := ARRAY[
-        '1KTSKRV2XSB010057', '1KTSKRC2XSB010058', '1KTSKRV2XSB010059'
+        'N7V1K1SA9TK000016', 'N7V1K1SAXTK000017', 'N7V1K1SA2TK000018'
     ];
     document_vins varchar[] := ARRAY[
-        '1KTSKRC2XSB010054', '1KTSKRV2XSB010055', '1KTSKRC2XSB010056'
+        'N7V1K1SA3TK000013', 'N7V1K1SA5TK000014', 'N7V1K1SA7TK000015'
     ];
     depot_ready varchar[] := ARRAY[
-        '1KTSKRV2XSB010051', '1KTSKRC2XSB010052'
+        'N7V1K1SA8TK000010', 'N7V1K1SAXTK000011'
     ];
     branch_complete varchar[] := ARRAY[
-        '1KTSKRC2XSB010048', '1KTSKRV2XSB010049', '1KTSKRC2XSB010050'
+        'N7V1K1SA8TK000007', 'N7V1K1SAXTK000008', 'N7V1K1SA1TK000009'
     ];
 BEGIN
     SELECT id INTO STRICT op1 FROM users WHERE email = 'operator.one@karea.local';
@@ -292,53 +306,53 @@ BEGIN
     FROM station_steps ss
     JOIN stations s ON s.id = ss.station_id
     WHERE vssp.station_step_id = ss.id
-      AND vssp.vin = '1KTSKRV2XSB010043'
+      AND vssp.vin = 'N7V1K1SA9TK000002'
       AND s.sequence_no = 1
       AND ss.sequence_no <= 2;
 
-    PERFORM pg_temp.mark_stations_ok('1KTSKRC2XSB010044', 1, op2, now() - interval '11 days');
+    PERFORM pg_temp.mark_stations_ok('N7V1K1SA0TK000003', 1, op2, now() - interval '11 days');
 
     -- ============================================================
     -- Bucket 2: mid-production. Mixed station steps + OPEN/IN_PROGRESS
     -- station-step issues (soft-warning badge on the vehicle).
     -- ============================================================
     -- 10045: stations 1–3 OK, station 4 step 3 NOT_OK + OPEN CRITICAL.
-    PERFORM pg_temp.mark_stations_ok('1KTSKRV2XSB010045', 3, op1, now() - interval '8 days');
+    PERFORM pg_temp.mark_stations_ok('N7V1K1SA2TK000004', 3, op1, now() - interval '8 days');
     UPDATE vehicle_station_step_progress vssp
     SET status = 'OK', checked_by = op1, checked_at = now() - interval '7 days'
     FROM station_steps ss
     JOIN stations s ON s.id = ss.station_id
     WHERE vssp.station_step_id = ss.id
-      AND vssp.vin = '1KTSKRV2XSB010045'
+      AND vssp.vin = 'N7V1K1SA2TK000004'
       AND s.sequence_no = 4 AND ss.sequence_no <= 2;
-    PERFORM pg_temp.fail_station_step('1KTSKRV2XSB010045', 4, 3, op1, now() - interval '7 days');
+    PERFORM pg_temp.fail_station_step('N7V1K1SA2TK000004', 4, 3, op1, now() - interval '7 days');
     PERFORM pg_temp.add_station_issue(
-        '1KTSKRV2XSB010045', 4, 3, 'Hata', 'CRITICAL',
+        'N7V1K1SA2TK000004', 4, 3, 'Hata', 'CRITICAL',
         'High voltage connector lock did not engage on the left-hand pack cable.',
         'OPEN', op1, now() - interval '7 days'
     );
 
     -- 10046: stations 1–4 OK, station 5 step 2 NOT_OK + OPEN MEDIUM.
-    PERFORM pg_temp.mark_stations_ok('1KTSKRC2XSB010046', 4, op2, now() - interval '7 days');
+    PERFORM pg_temp.mark_stations_ok('N7V1K1SA4TK000005', 4, op2, now() - interval '7 days');
     UPDATE vehicle_station_step_progress vssp
     SET status = 'OK', checked_by = op2, checked_at = now() - interval '6 days'
     FROM station_steps ss
     JOIN stations s ON s.id = ss.station_id
     WHERE vssp.station_step_id = ss.id
-      AND vssp.vin = '1KTSKRC2XSB010046'
+      AND vssp.vin = 'N7V1K1SA4TK000005'
       AND s.sequence_no = 5 AND ss.sequence_no = 1;
-    PERFORM pg_temp.fail_station_step('1KTSKRC2XSB010046', 5, 2, op2, now() - interval '6 days');
+    PERFORM pg_temp.fail_station_step('N7V1K1SA4TK000005', 5, 2, op2, now() - interval '6 days');
     PERFORM pg_temp.add_station_issue(
-        '1KTSKRC2XSB010046', 5, 2, 'Tamir Gerekiyor', 'MEDIUM',
+        'N7V1K1SA4TK000005', 5, 2, 'Tamir Gerekiyor', 'MEDIUM',
         'Passenger seat mounting bolt below torque spec.',
         'OPEN', op2, now() - interval '6 days'
     );
 
     -- 10047: stations 1–5 OK, station 6 step 1 NOT_OK + IN_PROGRESS LOW.
-    PERFORM pg_temp.mark_stations_ok('1KTSKRV2XSB010047', 5, op1, now() - interval '6 days');
-    PERFORM pg_temp.fail_station_step('1KTSKRV2XSB010047', 6, 1, op1, now() - interval '5 days');
+    PERFORM pg_temp.mark_stations_ok('N7V1K1SA6TK000006', 5, op1, now() - interval '6 days');
+    PERFORM pg_temp.fail_station_step('N7V1K1SA6TK000006', 6, 1, op1, now() - interval '5 days');
     PERFORM pg_temp.add_station_issue(
-        '1KTSKRV2XSB010047', 6, 1, 'Hata', 'LOW',
+        'N7V1K1SA6TK000006', 6, 1, 'Hata', 'LOW',
         'Windshield adhesive bead incomplete at the upper-right corner.',
         'IN_PROGRESS', op1, now() - interval '5 days',
         p_process_by => op2, p_process_at => now() - interval '4 days'
@@ -352,35 +366,35 @@ BEGIN
     END LOOP;
 
     -- 10048: BRANCH EoL mixed — branch-ship soft-warning vehicle.
-    PERFORM pg_temp.tick_checklist_range('1KTSKRC2XSB010048', 'EOL', 1, 5, op1, now() - interval '3 days');
+    PERFORM pg_temp.tick_checklist_range('N7V1K1SA8TK000007', 'EOL', 1, 5, op1, now() - interval '3 days');
     PERFORM pg_temp.tick_checklist_item(
-        '1KTSKRC2XSB010048', 'EOL', 6, 'NOT_OK', op2, now() - interval '3 days',
+        'N7V1K1SA8TK000007', 'EOL', 6, 'NOT_OK', op2, now() - interval '3 days',
         'Horn inoperative; washer pump dry.'
     );
     PERFORM pg_temp.add_checklist_issue(
-        '1KTSKRC2XSB010048', 'EOL_ITEM', 6, 'Hata', 'CRITICAL',
+        'N7V1K1SA8TK000007', 'EOL_ITEM', 6, 'Hata', 'CRITICAL',
         'Horn and washer circuit failed during branch EoL.',
         'OPEN', op2, now() - interval '3 days'
     );
     PERFORM pg_temp.tick_checklist_item(
-        '1KTSKRC2XSB010048', 'EOL', 7, 'REWORK', op1, now() - interval '2 days',
+        'N7V1K1SA8TK000007', 'EOL', 7, 'REWORK', op1, now() - interval '2 days',
         'Seat-belt pretensioner connector reseated; awaiting retest.'
     );
     PERFORM pg_temp.add_checklist_issue(
-        '1KTSKRC2XSB010048', 'EOL_ITEM', 7, 'Hata', 'MEDIUM',
+        'N7V1K1SA8TK000007', 'EOL_ITEM', 7, 'Hata', 'MEDIUM',
         'Driver seat-belt pretensioner connector not fully latched.',
         'IN_PROGRESS', op1, now() - interval '2 days',
         p_process_by => op1, p_process_at => now() - interval '36 hours'
     );
 
     -- 10049: one NOT_OK EoL item whose repair is DONE (quality pending).
-    PERFORM pg_temp.tick_checklist_range('1KTSKRV2XSB010049', 'EOL', 1, 8, op2, now() - interval '3 days');
+    PERFORM pg_temp.tick_checklist_range('N7V1K1SAXTK000008', 'EOL', 1, 8, op2, now() - interval '3 days');
     PERFORM pg_temp.tick_checklist_item(
-        '1KTSKRV2XSB010049', 'EOL', 9, 'NOT_OK', op2, now() - interval '2 days',
+        'N7V1K1SAXTK000008', 'EOL', 9, 'NOT_OK', op2, now() - interval '2 days',
         'Active U0100 lost-communication DTC on scan.'
     );
     PERFORM pg_temp.add_checklist_issue(
-        '1KTSKRV2XSB010049', 'EOL_ITEM', 9, 'Hata', 'CRITICAL',
+        'N7V1K1SAXTK000008', 'EOL_ITEM', 9, 'Hata', 'CRITICAL',
         'Lost communication with vehicle control module on EoL scan.',
         'DONE', op2, now() - interval '2 days',
         p_process_by => op1, p_process_at => now() - interval '30 hours',
@@ -388,23 +402,23 @@ BEGIN
         p_solution => 'Gateway harness repaired; DTC cleared. Awaiting quality sign-off.'
     );
     PERFORM pg_temp.tick_checklist_item(
-        '1KTSKRV2XSB010049', 'SHIPMENT', 11, 'NOT_OK', op1, now() - interval '2 days',
+        'N7V1K1SAXTK000008', 'SHIPMENT', 11, 'NOT_OK', op1, now() - interval '2 days',
         'Left rear door paint inclusion.'
     );
     PERFORM pg_temp.add_checklist_issue(
-        '1KTSKRV2XSB010049', 'SHIPMENT_ITEM', 11, 'Tamir Gerekiyor', 'LOW',
+        'N7V1K1SAXTK000008', 'SHIPMENT_ITEM', 11, 'Tamir Gerekiyor', 'LOW',
         'Paint inclusion on left body side, customer-visible.',
         'OPEN', op1, now() - interval '2 days'
     );
 
     -- 10050: BRANCH EoL items all OK; TEST item OPEN so warning still fires.
-    PERFORM pg_temp.tick_checklist_range('1KTSKRC2XSB010050', 'EOL', 1, 9, op1, now() - interval '2 days');
+    PERFORM pg_temp.tick_checklist_range('N7V1K1SA1TK000009', 'EOL', 1, 9, op1, now() - interval '2 days');
     PERFORM pg_temp.tick_checklist_item(
-        '1KTSKRC2XSB010050', 'TEST', 2, 'NOT_OK', op2, now() - interval '2 days',
+        'N7V1K1SA1TK000009', 'TEST', 2, 'NOT_OK', op2, now() - interval '2 days',
         'Service brake stopping distance above limit on first run.'
     );
     PERFORM pg_temp.add_checklist_issue(
-        '1KTSKRC2XSB010050', 'TEST_ITEM', 2, 'Tamir Gerekiyor', 'MEDIUM',
+        'N7V1K1SA1TK000009', 'TEST_ITEM', 2, 'Tamir Gerekiyor', 'MEDIUM',
         'Dynamic service brake performance outside spec.',
         'OPEN', op2, now() - interval '2 days'
     );
@@ -418,12 +432,12 @@ BEGIN
         PERFORM pg_temp.mark_all_stations_ok(v_vin, op1, now() - interval '4 days');
         PERFORM pg_temp.tick_checklist_range(v_vin, 'EOL', 1, 9, op1, now() - interval '3 days');
     END LOOP;
-    PERFORM pg_temp.mark_all_stations_ok('1KTSKRV2XSB010053', op2, now() - interval '4 days');
-    PERFORM pg_temp.tick_checklist_range('1KTSKRV2XSB010053', 'EOL', 1, 9, op2, now() - interval '3 days');
+    PERFORM pg_temp.mark_all_stations_ok('N7V1K1SA1TK000012', op2, now() - interval '4 days');
+    PERFORM pg_temp.tick_checklist_range('N7V1K1SA1TK000012', 'EOL', 1, 9, op2, now() - interval '3 days');
 
     -- Closed historical issues on 10051 (do not block depot-release).
     PERFORM pg_temp.add_station_issue(
-        '1KTSKRV2XSB010051', 2, 7, 'Tamir Gerekiyor', 'MEDIUM',
+        'N7V1K1SA8TK000010', 2, 7, 'Tamir Gerekiyor', 'MEDIUM',
         'Clear-coat dust nib on roof — repaired and re-ticked OK.',
         'APPROVED', op1, now() - interval '4 days',
         p_process_by => op1, p_process_at => now() - interval '3 days 12 hours',
@@ -432,11 +446,11 @@ BEGIN
         p_solution => 'Spot repaired, recleared, and signed off by quality.'
     );
     PERFORM pg_temp.tick_checklist_item(
-        '1KTSKRV2XSB010051', 'EOL', 14, 'CONDITIONAL_OK', op1, now() - interval '2 days',
+        'N7V1K1SA8TK000010', 'EOL', 14, 'CONDITIONAL_OK', op1, now() - interval '2 days',
         'Tool kit missing wheel chock; accepted for depot with note.'
     );
     PERFORM pg_temp.add_checklist_issue(
-        '1KTSKRV2XSB010051', 'EOL_ITEM', 14, 'Hata', 'LOW',
+        'N7V1K1SA8TK000010', 'EOL_ITEM', 14, 'Hata', 'LOW',
         'Accessory pack missing one wheel chock.',
         'CONDITIONAL_APPROVED', op1, now() - interval '2 days',
         p_process_by => op2, p_process_at => now() - interval '40 hours',
@@ -445,10 +459,10 @@ BEGIN
         p_solution => 'Ship with note; chock to be added at dealer PDI.'
     );
     PERFORM pg_temp.tick_checklist_item(
-        '1KTSKRV2XSB010051', 'TEST', 13, 'OK', op2, now() - interval '2 days', NULL
+        'N7V1K1SA8TK000010', 'TEST', 13, 'OK', op2, now() - interval '2 days', NULL
     );
     PERFORM pg_temp.add_checklist_issue(
-        '1KTSKRV2XSB010051', 'TEST_ITEM', 13, 'Hata', 'CRITICAL',
+        'N7V1K1SA8TK000010', 'TEST_ITEM', 13, 'Hata', 'CRITICAL',
         'Isolation resistance initially below 100 MΩ; retested after drying.',
         'APPROVED', op2, now() - interval '2 days 6 hours',
         p_process_by => op1, p_process_at => now() - interval '2 days',
@@ -457,10 +471,10 @@ BEGIN
         p_solution => 'Connector dried, retest passed. Full quality approval.'
     );
     PERFORM pg_temp.tick_checklist_item(
-        '1KTSKRV2XSB010051', 'SHIPMENT', 39, 'OK', op1, now() - interval '2 days', NULL
+        'N7V1K1SA8TK000010', 'SHIPMENT', 39, 'OK', op1, now() - interval '2 days', NULL
     );
     PERFORM pg_temp.add_checklist_issue(
-        '1KTSKRV2XSB010051', 'SHIPMENT_ITEM', 39, 'Tamir Gerekiyor', 'MEDIUM',
+        'N7V1K1SA8TK000010', 'SHIPMENT_ITEM', 39, 'Tamir Gerekiyor', 'MEDIUM',
         'Left-front tyre 4 psi low at customer checklist.',
         'APPROVED', op1, now() - interval '2 days',
         p_process_by => op1, p_process_at => now() - interval '40 hours',
@@ -468,25 +482,25 @@ BEGIN
         p_approve_by => mgr, p_approve_at => now() - interval '32 hours',
         p_solution => 'Inflated to spec and rechecked.'
     );
-    PERFORM pg_temp.tick_checklist_range('1KTSKRV2XSB010051', 'EOL', 10, 13, op2, now() - interval '20 hours');
-    PERFORM pg_temp.tick_checklist_range('1KTSKRC2XSB010052', 'EOL', 10, 16, op1, now() - interval '20 hours');
+    PERFORM pg_temp.tick_checklist_range('N7V1K1SA8TK000010', 'EOL', 10, 13, op2, now() - interval '20 hours');
+    PERFORM pg_temp.tick_checklist_range('N7V1K1SAXTK000011', 'EOL', 10, 16, op1, now() - interval '20 hours');
 
     -- 10053: the hard-block vehicle — leave OPEN + IN_PROGRESS.
     PERFORM pg_temp.tick_checklist_item(
-        '1KTSKRV2XSB010053', 'EOL', 12, 'NOT_OK', op2, now() - interval '20 hours',
+        'N7V1K1SA1TK000012', 'EOL', 12, 'NOT_OK', op2, now() - interval '20 hours',
         'Visible coolant weep at water-pump housing.'
     );
     PERFORM pg_temp.add_checklist_issue(
-        '1KTSKRV2XSB010053', 'EOL_ITEM', 12, 'Tamir Gerekiyor', 'CRITICAL',
+        'N7V1K1SA1TK000012', 'EOL_ITEM', 12, 'Tamir Gerekiyor', 'CRITICAL',
         'Coolant leak found during depot fluid inspection.',
         'OPEN', op2, now() - interval '20 hours'
     );
     PERFORM pg_temp.tick_checklist_item(
-        '1KTSKRV2XSB010053', 'TEST', 11, 'NOT_OK', op1, now() - interval '18 hours',
+        'N7V1K1SA1TK000012', 'TEST', 11, 'NOT_OK', op1, now() - interval '18 hours',
         'Active P0A0F DTC on OBD scan at depot.'
     );
     PERFORM pg_temp.add_checklist_issue(
-        '1KTSKRV2XSB010053', 'TEST_ITEM', 11, 'Hata', 'MEDIUM',
+        'N7V1K1SA1TK000012', 'TEST_ITEM', 11, 'Hata', 'MEDIUM',
         'OBD scan shows active drive-motor DTC at depot.',
         'IN_PROGRESS', op1, now() - interval '18 hours',
         p_process_by => op2, p_process_at => now() - interval '12 hours'
@@ -501,7 +515,7 @@ BEGIN
     UPDATE vehicle_eol_workflow
     SET branch_shipped_at = now() - interval '22 hours',
         branch_shipped_by = mgr
-    WHERE vin = '1KTSKRV2XSB010053';
+    WHERE vin = 'N7V1K1SA1TK000012';
 
     -- ============================================================
     -- Bucket 5: depot released → DOCUMENT. No open issues.
@@ -514,11 +528,11 @@ BEGIN
 
     -- Closed shipment issue on 10054 so Analysis has another CONDITIONAL_APPROVED.
     PERFORM pg_temp.tick_checklist_item(
-        '1KTSKRC2XSB010054', 'SHIPMENT', 32, 'CONDITIONAL_OK', op2, now() - interval '2 days',
+        'N7V1K1SA3TK000013', 'SHIPMENT', 32, 'CONDITIONAL_OK', op2, now() - interval '2 days',
         'Infotainment speaker rattle at 40% volume; accepted with note.'
     );
     PERFORM pg_temp.add_checklist_issue(
-        '1KTSKRC2XSB010054', 'SHIPMENT_ITEM', 32, 'Hata', 'LOW',
+        'N7V1K1SA3TK000013', 'SHIPMENT_ITEM', 32, 'Hata', 'LOW',
         'Infotainment speaker rattle on customer checklist.',
         'CONDITIONAL_APPROVED', op2, now() - interval '2 days',
         p_process_by => op1, p_process_at => now() - interval '36 hours',
@@ -539,7 +553,7 @@ BEGIN
     END LOOP;
 
     -- 10056: complete the customer checklist so IN_WAREHOUSE → WITH_CUSTOMER.
-    PERFORM pg_temp.tick_all_checklist('1KTSKRC2XSB010056', 'SHIPMENT', op1, now() - interval '10 hours');
+    PERFORM pg_temp.tick_all_checklist('N7V1K1SA7TK000015', 'SHIPMENT', op1, now() - interval '10 hours');
 
     -- ============================================================
     -- Bucket 6: document approved → COMPLETED / SHIPPED.
@@ -570,11 +584,11 @@ BEGIN
     -- Already covered. Add a DONE issue on 10047 (still IN_PRODUCTION) for
     -- the Analysis "pending quality" view — TEST_ITEM DONE LOW.
     PERFORM pg_temp.tick_checklist_item(
-        '1KTSKRV2XSB010047', 'TEST', 8, 'NOT_OK', op2, now() - interval '4 days',
+        'N7V1K1SA6TK000006', 'TEST', 8, 'NOT_OK', op2, now() - interval '4 days',
         'Low-beam cutoff 0.4° high on left lamp.'
     );
     PERFORM pg_temp.add_checklist_issue(
-        '1KTSKRV2XSB010047', 'TEST_ITEM', 8, 'Hata', 'LOW',
+        'N7V1K1SA6TK000006', 'TEST_ITEM', 8, 'Hata', 'LOW',
         'Left headlamp aim out of spec during test.',
         'DONE', op2, now() - interval '4 days',
         p_process_by => op1, p_process_at => now() - interval '3 days',
