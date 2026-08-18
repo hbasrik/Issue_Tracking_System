@@ -23,15 +23,15 @@ func NewIssueRepo(pool *pgxpool.Pool) *IssueRepo {
 
 var _ repository.IssueRepository = (*IssueRepo)(nil)
 
-const issueColumns = `id, vin, source_type, source_station_step_id, source_check_item_id, station_id,
-	        issue_type_id, severity, description, COALESCE(picture_url, ''), status,
-	        issue_reporter_id, issue_date, process_reporter_id, process_date,
-	        finish_reporter_id, finish_date, approve_reporter_id, approve_date,
-	        conditional_approve_reporter_id, conditional_approve_date,
-	        COALESCE(issue_picture_done_url, ''), COALESCE(solution_description, ''),
-	        created_at, updated_at`
+const issueColumns = `i.id, i.vin, i.source_type, i.source_station_step_id, i.source_check_item_id, i.station_id,
+	        i.issue_type_id, i.severity, i.description, COALESCE(i.picture_url, ''), i.status,
+	        i.issue_reporter_id, i.issue_date, i.process_reporter_id, i.process_date,
+	        i.finish_reporter_id, i.finish_date, i.approve_reporter_id, i.approve_date,
+	        i.conditional_approve_reporter_id, i.conditional_approve_date,
+	        COALESCE(i.issue_picture_done_url, ''), COALESCE(i.solution_description, ''),
+	        i.created_at, i.updated_at, COALESCE(u.full_name, '')`
 
-// scanIssue reads one issue row in issueColumns order.
+// scanIssue reads one issue row in issueColumns order (aliased as i.*, plus reporter name).
 func scanIssue(row pgx.Row) (*domain.Issue, error) {
 	var i domain.Issue
 	var source, severity, status string
@@ -42,6 +42,7 @@ func scanIssue(row pgx.Row) (*domain.Issue, error) {
 		&i.FinishReporterID, &i.FinishDate, &i.ApproveReporterID, &i.ApproveDate,
 		&i.ConditionalApproveReporterID, &i.ConditionalApproveDate,
 		&i.IssuePictureDoneURL, &i.SolutionDescription, &i.CreatedAt, &i.UpdatedAt,
+		&i.ReporterName,
 	); err != nil {
 		return nil, err
 	}
@@ -69,7 +70,11 @@ func (r *IssueRepo) Create(ctx context.Context, issue *domain.Issue) (int64, err
 
 // GetByID returns the issue with the given ID.
 func (r *IssueRepo) GetByID(ctx context.Context, id int64) (*domain.Issue, error) {
-	row := executor(ctx, r.pool).QueryRow(ctx, `SELECT `+issueColumns+` FROM issue_list WHERE id = $1`, id)
+	row := executor(ctx, r.pool).QueryRow(ctx,
+		`SELECT `+issueColumns+`
+		 FROM issue_list i
+		 LEFT JOIN users u ON u.id = i.issue_reporter_id
+		 WHERE i.id = $1`, id)
 	i, err := scanIssue(row)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, domain.ErrNotFound
@@ -85,10 +90,48 @@ func (r *IssueRepo) ListForUser(ctx context.Context, userID int, status *domain.
 	}
 	rows, err := r.pool.Query(ctx,
 		`SELECT `+issueColumns+`
-		 FROM issue_list
-		 WHERE (issue_reporter_id = $1 OR process_reporter_id = $1 OR finish_reporter_id = $1)
-		   AND ($2::issue_status_enum IS NULL OR status = $2::issue_status_enum)
-		 ORDER BY updated_at DESC`, userID, statusArg)
+		 FROM issue_list i
+		 LEFT JOIN users u ON u.id = i.issue_reporter_id
+		 WHERE (i.issue_reporter_id = $1 OR i.process_reporter_id = $1 OR i.finish_reporter_id = $1)
+		   AND ($2::issue_status_enum IS NULL OR i.status = $2::issue_status_enum)
+		 ORDER BY i.updated_at DESC`, userID, statusArg)
+	if err != nil {
+		return nil, err
+	}
+	return collectIssues(rows)
+}
+
+// ListAll returns every issue, optionally filtered by status.
+func (r *IssueRepo) ListAll(ctx context.Context, status *domain.IssueStatus) ([]domain.Issue, error) {
+	var statusArg any
+	if status != nil {
+		statusArg = string(*status)
+	}
+	rows, err := r.pool.Query(ctx,
+		`SELECT `+issueColumns+`
+		 FROM issue_list i
+		 LEFT JOIN users u ON u.id = i.issue_reporter_id
+		 WHERE ($1::issue_status_enum IS NULL OR i.status = $1::issue_status_enum)
+		 ORDER BY i.updated_at DESC`, statusArg)
+	if err != nil {
+		return nil, err
+	}
+	return collectIssues(rows)
+}
+
+// ListByVIN returns every issue for a vehicle, optionally filtered by status.
+func (r *IssueRepo) ListByVIN(ctx context.Context, vin string, status *domain.IssueStatus) ([]domain.Issue, error) {
+	var statusArg any
+	if status != nil {
+		statusArg = string(*status)
+	}
+	rows, err := r.pool.Query(ctx,
+		`SELECT `+issueColumns+`
+		 FROM issue_list i
+		 LEFT JOIN users u ON u.id = i.issue_reporter_id
+		 WHERE i.vin = $1
+		   AND ($2::issue_status_enum IS NULL OR i.status = $2::issue_status_enum)
+		 ORDER BY i.updated_at DESC`, vin, statusArg)
 	if err != nil {
 		return nil, err
 	}
@@ -101,9 +144,10 @@ func (r *IssueRepo) ListForUser(ctx context.Context, userID int, status *domain.
 func (r *IssueRepo) ListOpenByVIN(ctx context.Context, vin string) ([]domain.Issue, error) {
 	rows, err := executor(ctx, r.pool).Query(ctx,
 		`SELECT `+issueColumns+`
-		 FROM issue_list
-		 WHERE vin = $1 AND status IN ('OPEN', 'IN_PROGRESS', 'DONE')
-		 ORDER BY severity, id`, vin)
+		 FROM issue_list i
+		 LEFT JOIN users u ON u.id = i.issue_reporter_id
+		 WHERE i.vin = $1 AND i.status IN ('OPEN', 'IN_PROGRESS', 'DONE')
+		 ORDER BY i.severity, i.id`, vin)
 	if err != nil {
 		return nil, err
 	}

@@ -115,4 +115,7 @@ type Issue struct {
 	SolutionDescription          string
 	CreatedAt                    time.Time
 	UpdatedAt                    time.Time
+	// ReporterName is populated on list queries via join to users; not a
+	// persisted column on issue_list.
+	ReporterName string
 }

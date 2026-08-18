@@ -77,6 +77,25 @@ func (m *IssueManager) ListForUser(ctx context.Context, userID int, status *doma
 	return m.issues.ListForUser(ctx, userID, status)
 }
 
+// ListAll returns every issue for the Manager/Admin global queue.
+func (m *IssueManager) ListAll(ctx context.Context, status *domain.IssueStatus) ([]domain.Issue, error) {
+	if status != nil && !status.Valid() {
+		return nil, domain.ErrInvalidEnumValue
+	}
+	return m.issues.ListAll(ctx, status)
+}
+
+// ListByVIN returns every issue for a vehicle (Vehicle Detail Issues tab).
+func (m *IssueManager) ListByVIN(ctx context.Context, vin string, status *domain.IssueStatus) ([]domain.Issue, error) {
+	if vin == "" {
+		return nil, domain.ErrNotFound
+	}
+	if status != nil && !status.Valid() {
+		return nil, domain.ErrInvalidEnumValue
+	}
+	return m.issues.ListByVIN(ctx, vin, status)
+}
+
 // GetByID returns a single issue by id (any authenticated caller).
 func (m *IssueManager) GetByID(ctx context.Context, id int64) (*domain.Issue, error) {
 	return m.issues.GetByID(ctx, id)

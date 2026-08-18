@@ -190,11 +190,15 @@ func (f *fakeStationStepRepo) SaveResult(_ context.Context, vin string, stationS
 
 // fakeChecklistRepo is an in-memory ChecklistProgressRepository keyed by vin.
 type fakeChecklistRepo struct {
-	rows map[string][]domain.ChecklistProgress
+	rows  map[string][]domain.ChecklistProgress
+	views map[string][]domain.ChecklistItemView
 }
 
 func newFakeChecklistRepo() *fakeChecklistRepo {
-	return &fakeChecklistRepo{rows: map[string][]domain.ChecklistProgress{}}
+	return &fakeChecklistRepo{
+		rows:  map[string][]domain.ChecklistProgress{},
+		views: map[string][]domain.ChecklistItemView{},
+	}
 }
 
 func (f *fakeChecklistRepo) ListByVINAndType(_ context.Context, vin string, t domain.ChecklistType) ([]domain.ChecklistProgress, error) {
@@ -211,8 +215,8 @@ func (f *fakeChecklistRepo) ResolveDefaultTemplateID(_ context.Context, _ domain
 	return 1, nil
 }
 
-func (f *fakeChecklistRepo) ListItemsWithProgress(_ context.Context, _ string, _ domain.ChecklistType, _ int) ([]domain.ChecklistItemView, error) {
-	return nil, nil
+func (f *fakeChecklistRepo) ListItemsWithProgress(_ context.Context, vin string, _ domain.ChecklistType, _ int) ([]domain.ChecklistItemView, error) {
+	return f.views[vin], nil
 }
 
 func (f *fakeChecklistRepo) SaveResult(_ context.Context, result domain.ChecklistProgress) error {
@@ -289,6 +293,31 @@ func (f *fakeIssueRepo) ListForUser(_ context.Context, userID int, status *domai
 		if issue.IssueReporterID != userID &&
 			(issue.ProcessReporterID == nil || *issue.ProcessReporterID != userID) &&
 			(issue.FinishReporterID == nil || *issue.FinishReporterID != userID) {
+			continue
+		}
+		if status != nil && issue.Status != *status {
+			continue
+		}
+		out = append(out, *issue)
+	}
+	return out, nil
+}
+
+func (f *fakeIssueRepo) ListAll(_ context.Context, status *domain.IssueStatus) ([]domain.Issue, error) {
+	var out []domain.Issue
+	for _, issue := range f.issues {
+		if status != nil && issue.Status != *status {
+			continue
+		}
+		out = append(out, *issue)
+	}
+	return out, nil
+}
+
+func (f *fakeIssueRepo) ListByVIN(_ context.Context, vin string, status *domain.IssueStatus) ([]domain.Issue, error) {
+	var out []domain.Issue
+	for _, issue := range f.issues {
+		if issue.VIN != vin {
 			continue
 		}
 		if status != nil && issue.Status != *status {

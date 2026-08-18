@@ -3,6 +3,7 @@ package http
 import (
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 
@@ -51,20 +52,45 @@ func (s *server) handleCreateIssue(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, issue)
 }
 
-// handleIssueList returns issues where the authenticated user is a reporter.
+// handleIssueList returns issues for the issues queue / vehicle detail.
+//
+// Scope:
+//   - ?vin=… → every issue for that vehicle (any authenticated vehicle.view user)
+//   - no vin + analysis.view → global queue (Manager/Admin dashboard)
+//   - no vin without analysis.view → reporter-scoped list (operator "My Issues")
 func (s *server) handleIssueList(w http.ResponseWriter, r *http.Request) {
 	var status *domain.IssueStatus
 	if raw := r.URL.Query().Get("status"); raw != "" {
-		s := domain.IssueStatus(raw)
-		if !s.Valid() {
+		st := domain.IssueStatus(raw)
+		if !st.Valid() {
 			badRequest(w, "invalid status filter")
 			return
 		}
-		status = &s
+		status = &st
 	}
 
+	vin := strings.TrimSpace(r.URL.Query().Get("vin"))
 	claims, _ := ClaimsFromContext(r.Context())
-	items, err := s.deps.Issues.ListForUser(r.Context(), claims.UserID, status)
+
+	var (
+		items []domain.Issue
+		err   error
+	)
+	switch {
+	case vin != "":
+		items, err = s.deps.Issues.ListByVIN(r.Context(), vin, status)
+	default:
+		ctx, permissions, perr := s.permissions.Resolve(r.Context())
+		if perr != nil {
+			writeError(w, perr)
+			return
+		}
+		if permissions.Has(domain.PermissionAnalysisView) {
+			items, err = s.deps.Issues.ListAll(ctx, status)
+		} else {
+			items, err = s.deps.Issues.ListForUser(ctx, claims.UserID, status)
+		}
+	}
 	if err != nil {
 		writeError(w, err)
 		return
