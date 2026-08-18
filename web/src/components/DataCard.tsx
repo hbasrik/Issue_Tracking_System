@@ -35,14 +35,21 @@ export function DataCard({
 
   if (interactive) {
     return (
-      <button
-        type="button"
+      <div
+        role="button"
+        tabIndex={0}
         onClick={onClick}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onClick?.();
+          }
+        }}
         className={`${className} w-full text-left`}
         style={{ borderColor: 'var(--border)' }}
       >
         {children}
-      </button>
+      </div>
     );
   }
 
