@@ -14,7 +14,9 @@ Then open in iOS Simulator, Android emulator, or Expo Go.
 
 ## API base URL
 
-Set `EXPO_PUBLIC_API_BASE_URL` in `.env` (loaded automatically by Expo SDK 49+).
+Set `EXPO_PUBLIC_API_BASE_URL` in the repository-root `.env` (loaded via
+`mobile/babel.config.js`, same pattern as Vite `envDir`). Expo would
+otherwise only look in `mobile/.env` and silently fall back.
 
 | Environment | Typical value |
 |---|---|

@@ -9,6 +9,10 @@ const API_BASE_URL =
     '',
   );
 
+if (__DEV__) {
+  console.info('[karea] API_BASE_URL', API_BASE_URL);
+}
+
 export type UserRole = 'OPERATOR' | 'MANAGER_ADMIN';
 
 export interface User {
