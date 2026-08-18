@@ -29,5 +29,6 @@ module.exports = function (api) {
   api.cache.using(() => process.env.EXPO_PUBLIC_API_BASE_URL || '');
   return {
     presets: ['babel-preset-expo'],
+    plugins: ['react-native-reanimated/plugin'],
   };
 };
