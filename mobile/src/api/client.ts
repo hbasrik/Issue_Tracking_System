@@ -223,10 +223,12 @@ export const api = {
     return request<{ items: Vehicle[] }>(`/vehicles/search?${q}`);
   },
 
-  listVehicles(params: { station?: number; page?: number } = {}) {
+  listVehicles(params: { station?: number; page?: number; status?: string; vin?: string } = {}) {
     const q = new URLSearchParams();
     if (params.station) q.set('station', String(params.station));
     if (params.page) q.set('page', String(params.page));
+    if (params.status) q.set('status', params.status);
+    if (params.vin) q.set('vin', params.vin);
     const qs = q.toString();
     return request<{ Items: Vehicle[]; Total: number; Page: number; Size: number }>(
       `/vehicles${qs ? `?${qs}` : ''}`,
