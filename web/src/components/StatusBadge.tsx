@@ -5,8 +5,7 @@ type BadgeKind =
   | 'eol'
   | 'shipment'
   | 'vehicle'
-  | 'issue'
-  | 'severity';
+  | 'issue';
 
 interface StatusBadgeProps {
   kind: BadgeKind;
@@ -17,6 +16,7 @@ interface StatusBadgeProps {
 /**
  * Status badges per docs/07 Section 5 — exact color mapping.
  * Pill chip: 12px text, bg = status color at 15% opacity.
+ * Severity uses SeverityIndicator (Wi-Fi bars), not this component.
  */
 export function StatusBadge({ kind, value, className = '' }: StatusBadgeProps) {
   const { color, label } = resolve(kind, value);
@@ -87,24 +87,11 @@ function resolve(
       if (v === 'IN_PROGRESS') {
         return { color: statusColors.issueInProgress, label: 'IN_PROGRESS' };
       }
-      // DONE / APPROVED / RESOLVED → resolved (green) per Section 5 spirit
       if (v === 'DONE' || v === 'APPROVED' || v === 'RESOLVED') {
         return { color: statusColors.issueResolved, label: v };
       }
       if (v === 'CONDITIONAL_APPROVED') {
         return { color: statusColors.conditionalOk, label: 'ŞARTLI ONAY' };
-      }
-      return { color: statusColors.pending, label: v };
-
-    case 'severity':
-      if (v === 'CRITICAL') {
-        return { color: statusColors.severityCritical, label: 'CRITICAL' };
-      }
-      if (v === 'MEDIUM') {
-        return { color: statusColors.severityMedium, label: 'MEDIUM' };
-      }
-      if (v === 'LOW') {
-        return { color: statusColors.severityLow, label: 'LOW' };
       }
       return { color: statusColors.pending, label: v };
 

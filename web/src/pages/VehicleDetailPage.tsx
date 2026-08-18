@@ -6,6 +6,7 @@ import { VehicleIdentity } from '../components/VehicleIdentity';
 import { ChecklistPanel } from '../components/ChecklistPanel';
 import { EolWorkflowTab } from '../components/EolWorkflowTab';
 import { MediaGallery } from '../components/MediaGallery';
+import { VehicleIssuesPanel } from '../components/VehicleIssuesPanel';
 
 type Tab = 'overview' | 'eol' | 'shipment' | 'test' | 'issues' | 'audit';
 
@@ -112,11 +113,11 @@ export default function VehicleDetailPage() {
       <Link to="/vehicles" className="text-[13px] text-[var(--accent)]">
         ← Vehicles
       </Link>
-      <div className="mt-4 flex flex-wrap items-start gap-6">
+      <div className="mt-4 flex flex-wrap items-start gap-4 sm:gap-6">
         <ProgressRing percentage={pct} />
-        <div>
+        <div className="min-w-0 flex-1">
           <VehicleIdentity vin={vehicle.VIN} vehicleNumber={vehicle.VehicleNumber} />
-          <div className="mt-2 flex items-center gap-2">
+          <div className="mt-2 flex flex-wrap items-center gap-2">
             <StatusBadge kind="vehicle" value={vehicle.CurrentGlobalStatus} />
             <span className="text-[13px] text-[var(--text-secondary)]">
               {currentStation
@@ -130,7 +131,7 @@ export default function VehicleDetailPage() {
       </div>
 
       <div
-        className="mt-6 flex gap-1 border-b"
+        className="-mx-3 mt-6 flex gap-1 overflow-x-auto border-b px-3 sm:mx-0 sm:px-0"
         style={{ borderColor: 'var(--border)' }}
         role="tablist"
       >
@@ -141,7 +142,7 @@ export default function VehicleDetailPage() {
             role="tab"
             aria-selected={tab === t.id}
             onClick={() => setTab(t.id)}
-            className={`px-4 py-2.5 text-[15px] ${
+            className={`min-h-touch shrink-0 whitespace-nowrap px-3 text-[15px] sm:px-4 ${
               tab === t.id
                 ? 'border-b-2 border-[var(--accent)] font-medium text-[var(--accent)]'
                 : 'text-[var(--text-secondary)]'
@@ -163,11 +164,11 @@ export default function VehicleDetailPage() {
               <p className="mt-1 text-[13px] text-[var(--text-secondary)]">
                 Hard-block transitions return 409 with blocking item IDs (§4.3).
               </p>
-              <div className="mt-4 flex flex-wrap items-end gap-3">
+              <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
                 <select
                   value={statusDraft}
                   onChange={(e) => setStatusDraft(e.target.value)}
-                  className="rounded-lg border bg-[var(--bg-page)] px-3 py-2 text-[15px]"
+                  className="min-h-touch w-full rounded-lg border bg-[var(--bg-page)] px-3 text-[15px] sm:w-auto"
                   style={{ borderColor: 'var(--border)' }}
                 >
                   {STATUS_OPTIONS.map((s) => (
@@ -180,7 +181,7 @@ export default function VehicleDetailPage() {
                   type="button"
                   disabled={busy}
                   onClick={saveStatus}
-                  className="rounded-lg bg-[var(--accent)] px-4 py-2 text-[15px] text-white disabled:opacity-60"
+                  className="min-h-touch rounded-lg bg-[var(--accent)] px-4 text-[15px] text-white disabled:opacity-60"
                 >
                   Kaydet
                 </button>
@@ -241,7 +242,7 @@ export default function VehicleDetailPage() {
             vin={vehicle.VIN}
             type="shipment"
             title="Shipment checklist"
-            hint="Hard-block gate: incomplete items block WITH_CUSTOMER / SHIPPED."
+            hint="Yes/No checkbox — saves immediately. Incomplete items block WITH_CUSTOMER / SHIPPED."
           />
         )}
         {tab === 'test' && (
@@ -249,15 +250,10 @@ export default function VehicleDetailPage() {
             vin={vehicle.VIN}
             type="test"
             title="Test checklist"
-            hint="Informational quality tracking — no vehicle-status gate."
+            hint="Yes/No checkbox — saves immediately. Informational quality tracking, no vehicle-status gate."
           />
         )}
-        {tab === 'issues' && (
-          <PlaceholderPanel
-            title="Vehicle issues"
-            body="Open and historical issues for this VIN. Use the Issues page for the global queue; quality approval (DONE → APPROVED or Şartlı Onay) is Manager-only."
-          />
-        )}
+        {tab === 'issues' && <VehicleIssuesPanel vin={vehicle.VIN} />}
         {tab === 'audit' && (
           <PlaceholderPanel
             title="Audit log"

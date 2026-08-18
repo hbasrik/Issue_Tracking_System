@@ -7,7 +7,12 @@ import {
   type StationMTTR,
   type VehicleSeverityBreakdown,
 } from '../lib/api';
-import { StatusBadge } from '../components/StatusBadge';
+import { SeverityIndicator } from '../components/SeverityIndicator';
+import {
+  DataCard,
+  DataCardField,
+  MobileCardStack,
+} from '../components/DataCard';
 
 /** Home / Overview — §4.2: KPI strip + attention-needed table. */
 export default function HomePage() {
@@ -55,7 +60,7 @@ export default function HomePage() {
 
   return (
     <section>
-      <h1 className="text-2xl font-semibold">Home / Overview</h1>
+      <h1 className="text-xl font-semibold sm:text-2xl">Home / Overview</h1>
       <p className="mt-1 text-[13px] text-[var(--text-secondary)]">
         KPI summary and vehicles needing attention
       </p>
@@ -66,7 +71,7 @@ export default function HomePage() {
         </p>
       )}
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard title="Daily Pending Issues" value={String(latestPending)} />
         <KpiCard title="Completed Today" value="—" hint="from completed-issues view" />
         <KpiCard
@@ -77,59 +82,102 @@ export default function HomePage() {
       </div>
 
       <div
-        className="mt-8 rounded-xl border bg-[var(--bg-surface-1)] p-5"
+        className="mt-8 rounded-xl border bg-[var(--bg-surface-1)] p-4 sm:p-5"
         style={{ borderColor: 'var(--border)' }}
       >
         <h2 className="text-lg font-semibold">Dikkat Gerektiren Araçlar</h2>
         <p className="mt-1 text-[13px] text-[var(--text-secondary)]">
           Vehicles with open critical issues
         </p>
-        <table className="mt-4 w-full text-left text-[15px]">
-          <thead>
-            <tr className="text-[13px] text-[var(--text-secondary)]">
-              <th className="pb-2 font-medium">VIN</th>
-              <th className="pb-2 font-medium">Total open</th>
-              <th className="pb-2 font-medium">Critical</th>
-              <th className="pb-2 font-medium">Medium</th>
-              <th className="pb-2 font-medium">Low</th>
-            </tr>
-          </thead>
-          <tbody>
-            {criticalVehicles.length === 0 && (
-              <tr>
-                <td colSpan={5} className="py-4 text-[var(--text-secondary)]">
+
+        <div className="mt-4">
+          <MobileCardStack
+            empty={
+              criticalVehicles.length === 0 ? (
+                <p className="text-[15px] text-[var(--text-secondary)]">
                   No critical open issues
-                </td>
-              </tr>
-            )}
+                </p>
+              ) : null
+            }
+          >
             {criticalVehicles.map((row) => (
-              <tr
-                key={row.VIN}
-                className="border-t"
-                style={{ borderColor: 'var(--border)' }}
-              >
-                <td className="py-2.5">
-                  <Link
-                    to={`/vehicles/${row.VIN}`}
-                    className="font-medium text-[var(--accent)] hover:underline"
-                  >
+              <Link key={row.VIN} to={`/vehicles/${row.VIN}`} className="block">
+                <DataCard>
+                  <p className="font-medium text-[var(--accent)]">
                     …{row.VIN.slice(-5)}
-                  </Link>
-                  <span className="ml-2 text-[13px] text-[var(--text-secondary)]">
+                  </p>
+                  <p className="break-all text-[12px] text-[var(--text-secondary)]">
                     {row.VIN}
-                  </span>
-                </td>
-                <td className="py-2.5">{row.TotalOpenIssues}</td>
-                <td className="py-2.5">
-                  <StatusBadge kind="severity" value="CRITICAL" />{' '}
-                  {row.CriticalCount}
-                </td>
-                <td className="py-2.5">{row.MediumCount}</td>
-                <td className="py-2.5">{row.LowCount}</td>
-              </tr>
+                  </p>
+                  <DataCardField label="Total open">
+                    {row.TotalOpenIssues}
+                  </DataCardField>
+                  <DataCardField label="Critical">
+                    <SeverityIndicator severity="CRITICAL" count={row.CriticalCount} />
+                  </DataCardField>
+                  <DataCardField label="Medium">
+                    <SeverityIndicator severity="MEDIUM" count={row.MediumCount} />
+                  </DataCardField>
+                  <DataCardField label="Low">
+                    <SeverityIndicator severity="LOW" count={row.LowCount} />
+                  </DataCardField>
+                </DataCard>
+              </Link>
             ))}
-          </tbody>
-        </table>
+          </MobileCardStack>
+
+          <div className="hidden sm:block">
+            <table className="w-full text-left text-[15px]">
+              <thead>
+                <tr className="text-[13px] text-[var(--text-secondary)]">
+                  <th className="pb-2 font-medium">VIN</th>
+                  <th className="pb-2 font-medium">Total open</th>
+                  <th className="pb-2 font-medium">Critical</th>
+                  <th className="pb-2 font-medium">Medium</th>
+                  <th className="pb-2 font-medium">Low</th>
+                </tr>
+              </thead>
+              <tbody>
+                {criticalVehicles.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="py-4 text-[var(--text-secondary)]">
+                      No critical open issues
+                    </td>
+                  </tr>
+                )}
+                {criticalVehicles.map((row) => (
+                  <tr
+                    key={row.VIN}
+                    className="border-t"
+                    style={{ borderColor: 'var(--border)' }}
+                  >
+                    <td className="py-2.5">
+                      <Link
+                        to={`/vehicles/${row.VIN}`}
+                        className="font-medium text-[var(--accent)] hover:underline"
+                      >
+                        …{row.VIN.slice(-5)}
+                      </Link>
+                      <span className="ml-2 break-all text-[13px] text-[var(--text-secondary)]">
+                        {row.VIN}
+                      </span>
+                    </td>
+                    <td className="py-2.5">{row.TotalOpenIssues}</td>
+                    <td className="py-2.5">
+                      <SeverityIndicator severity="CRITICAL" count={row.CriticalCount} />
+                    </td>
+                    <td className="py-2.5">
+                      <SeverityIndicator severity="MEDIUM" count={row.MediumCount} />
+                    </td>
+                    <td className="py-2.5">
+                      <SeverityIndicator severity="LOW" count={row.LowCount} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </section>
   );
@@ -161,6 +209,5 @@ function KpiCard({
 }
 
 function nsToHours(ns: number): number {
-  // Go time.Duration marshals as nanoseconds when numeric
   return ns / 1e9 / 3600;
 }

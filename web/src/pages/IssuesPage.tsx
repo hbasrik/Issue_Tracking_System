@@ -2,9 +2,17 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api, type Issue, type Vehicle } from '../lib/api';
 import { StatusBadge } from '../components/StatusBadge';
+import { SeverityIndicator } from '../components/SeverityIndicator';
+import { IssueActions } from '../components/VehicleIssuesPanel';
 import { useAuth } from '../auth/AuthProvider';
 import { MediaGallery } from '../components/MediaGallery';
 import { VehicleIdentity } from '../components/VehicleIdentity';
+import {
+  DataCard,
+  DataCardField,
+  DesktopTableShell,
+  MobileCardStack,
+} from '../components/DataCard';
 
 /** Issues list + detail — quality approval and Şartlı Onay are Manager-only. */
 export default function IssuesPage() {
@@ -52,7 +60,7 @@ export default function IssuesPage() {
     };
   }, [selected]);
 
-  async function transition(status: 'APPROVED' | 'CONDITIONAL_APPROVED') {
+  async function transition(status: string) {
     if (!selected) return;
     setBusy(true);
     setError(null);
@@ -68,9 +76,9 @@ export default function IssuesPage() {
 
   return (
     <section>
-      <h1 className="text-2xl font-semibold">Issues</h1>
+      <h1 className="text-xl font-semibold sm:text-2xl">Issues</h1>
       <p className="mt-1 text-[13px] text-[var(--text-secondary)]">
-        Issue list and detail — quality approval (DONE → APPROVED or Şartlı Onay)
+        Global issue queue — quality approval (DONE → APPROVED or Şartlı Onay)
         is Manager-only
       </p>
 
@@ -78,7 +86,7 @@ export default function IssuesPage() {
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="rounded-lg border bg-[var(--bg-surface-1)] px-3 py-2 text-[15px]"
+          className="min-h-touch w-full rounded-lg border bg-[var(--bg-surface-1)] px-3 py-2 text-[15px] sm:w-auto"
           style={{ borderColor: 'var(--border)' }}
         >
           <option value="">All statuses</option>
@@ -97,61 +105,99 @@ export default function IssuesPage() {
       )}
 
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
-        <div
-          className="overflow-hidden rounded-xl border bg-[var(--bg-surface-1)]"
-          style={{ borderColor: 'var(--border)' }}
-        >
-          <table className="w-full text-left text-[15px]">
-            <thead>
-              <tr
-                className="border-b text-[13px] text-[var(--text-secondary)]"
-                style={{ borderColor: 'var(--border)' }}
+        <div>
+          <MobileCardStack
+            empty={
+              items.length === 0 ? (
+                <p className="text-[15px] text-[var(--text-secondary)]">No issues</p>
+              ) : null
+            }
+          >
+            {items.map((r) => (
+              <DataCard
+                key={r.ID}
+                selected={selectedId === r.ID}
+                onClick={() => setSelectedId(r.ID)}
               >
-                <th className="px-4 py-3">ID</th>
-                <th className="px-4 py-3">VIN</th>
-                <th className="px-4 py-3">Severity</th>
-                <th className="px-4 py-3">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.length === 0 && (
-                <tr>
-                  <td colSpan={4} className="px-4 py-6 text-[var(--text-secondary)]">
-                    No issues
-                  </td>
-                </tr>
-              )}
-              {items.map((r) => (
+                <DataCardField label="ID">#{r.ID}</DataCardField>
+                <DataCardField label="VIN">
+                  <Link
+                    to={`/vehicles/${r.VIN}`}
+                    className="text-[var(--accent)] hover:underline"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    …{r.VIN.slice(-5)}
+                  </Link>
+                </DataCardField>
+                <DataCardField label="Severity">
+                  <SeverityIndicator severity={r.Severity} />
+                </DataCardField>
+                <DataCardField label="Status">
+                  <StatusBadge kind="issue" value={r.Status} />
+                </DataCardField>
+              </DataCard>
+            ))}
+          </MobileCardStack>
+
+          <DesktopTableShell>
+            <table className="w-full text-left text-[15px]">
+              <thead>
                 <tr
-                  key={r.ID}
-                  className="cursor-pointer border-t hover:bg-[var(--bg-surface-2)]"
+                  className="border-b text-[13px] text-[var(--text-secondary)]"
                   style={{ borderColor: 'var(--border)' }}
-                  onClick={() => setSelectedId(r.ID)}
                 >
-                  <td className="px-4 py-3">#{r.ID}</td>
-                  <td className="px-4 py-3">
-                    <Link
-                      to={`/vehicles/${r.VIN}`}
-                      className="text-[var(--accent)] hover:underline"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      …{r.VIN.slice(-5)}
-                    </Link>
-                  </td>
-                  <td className="px-4 py-3">
-                    <StatusBadge kind="severity" value={r.Severity} />
-                  </td>
-                  <td className="px-4 py-3">
-                    <StatusBadge kind="issue" value={r.Status} />
-                  </td>
+                  <th className="px-4 py-3">ID</th>
+                  <th className="px-4 py-3">VIN</th>
+                  <th className="px-4 py-3">Severity</th>
+                  <th className="px-4 py-3">Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {items.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="px-4 py-6 text-[var(--text-secondary)]">
+                      No issues
+                    </td>
+                  </tr>
+                )}
+                {items.map((r) => (
+                  <tr
+                    key={r.ID}
+                    className="cursor-pointer border-t hover:bg-[var(--bg-surface-2)]"
+                    style={{
+                      borderColor: 'var(--border)',
+                      backgroundColor:
+                        selectedId === r.ID
+                          ? 'var(--bg-surface-2)'
+                          : undefined,
+                    }}
+                    onClick={() => setSelectedId(r.ID)}
+                  >
+                    <td className="px-4 py-3">#{r.ID}</td>
+                    <td className="px-4 py-3">
+                      <Link
+                        to={`/vehicles/${r.VIN}`}
+                        className="text-[var(--accent)] hover:underline"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        …{r.VIN.slice(-5)}
+                      </Link>
+                    </td>
+                    <td className="px-4 py-3">
+                      <SeverityIndicator severity={r.Severity} />
+                    </td>
+                    <td className="px-4 py-3">
+                      <StatusBadge kind="issue" value={r.Status} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </DesktopTableShell>
         </div>
 
         <div
-          className="rounded-xl border bg-[var(--bg-surface-1)] p-5"
+          className="rounded-xl border bg-[var(--bg-surface-1)] p-4 sm:p-5"
           style={{ borderColor: 'var(--border)' }}
         >
           <h2 className="text-lg font-semibold">Issue detail</h2>
@@ -171,32 +217,21 @@ export default function IssuesPage() {
                 <span className="text-[var(--text-secondary)]">Station:</span>{' '}
                 {selected.StationID ?? '—'}
               </p>
-              <p>{selected.Description}</p>
-              <div className="flex gap-2">
-                <StatusBadge kind="severity" value={selected.Severity} />
+              <p className="break-words">{selected.Description}</p>
+              <p className="text-[13px] text-[var(--text-secondary)]">
+                Reporter:{' '}
+                {selected.ReporterName || `user #${selected.IssueReporterID}`}
+              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <SeverityIndicator severity={selected.Severity} />
                 <StatusBadge kind="issue" value={selected.Status} />
               </div>
-              {selected.Status === 'DONE' && isManager && (
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    disabled={busy}
-                    onClick={() => void transition('APPROVED')}
-                    className="rounded-lg bg-[var(--accent)] px-4 py-2 text-white disabled:opacity-60"
-                  >
-                    Approve (quality sign-off)
-                  </button>
-                  <button
-                    type="button"
-                    disabled={busy}
-                    onClick={() => void transition('CONDITIONAL_APPROVED')}
-                    className="rounded-lg border px-4 py-2 disabled:opacity-60"
-                    style={{ borderColor: 'var(--border)' }}
-                  >
-                    Şartlı Onay
-                  </button>
-                </div>
-              )}
+              <IssueActions
+                status={selected.Status}
+                isManager={isManager}
+                busy={busy}
+                onTransition={(status) => void transition(status)}
+              />
               <div className="pt-4">
                 <MediaGallery entityType="ISSUE" entityId={String(selected.ID)} />
               </div>

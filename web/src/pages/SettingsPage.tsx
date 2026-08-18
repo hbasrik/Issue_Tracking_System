@@ -25,7 +25,7 @@ export default function SettingsPage() {
             <button
               type="button"
               onClick={() => setMode('dark')}
-              className={`rounded-lg px-4 py-2 text-[15px] ${
+              className={`min-h-touch rounded-lg px-4 text-[15px] ${
                 mode === 'dark'
                   ? 'bg-[var(--accent)] text-white'
                   : 'border text-[var(--text-primary)]'
@@ -37,7 +37,7 @@ export default function SettingsPage() {
             <button
               type="button"
               onClick={() => setMode('light')}
-              className={`rounded-lg px-4 py-2 text-[15px] ${
+              className={`min-h-touch rounded-lg px-4 text-[15px] ${
                 mode === 'light'
                   ? 'bg-[var(--accent)] text-white'
                   : 'border text-[var(--text-primary)]'
@@ -49,7 +49,7 @@ export default function SettingsPage() {
             <button
               type="button"
               onClick={toggle}
-              className="rounded-lg border px-4 py-2 text-[15px]"
+              className="min-h-touch rounded-lg border px-4 text-[15px]"
               style={{ borderColor: 'var(--border)' }}
             >
               Toggle

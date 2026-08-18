@@ -3,11 +3,14 @@ import {
   api,
   ApiError,
   type BlockingIssue,
+  type ChecklistItem,
   type EOLStage,
   type EOLWorkflowView,
 } from '../lib/api';
 import { useAuth } from '../auth/AuthProvider';
 import { ChecklistPanel } from './ChecklistPanel';
+import { SeverityIndicator } from './SeverityIndicator';
+import { StatusBadge } from './StatusBadge';
 
 const STAGES: { id: Exclude<EOLStage, 'COMPLETED'>; label: string }[] = [
   { id: 'BRANCH', label: 'Branch' },
@@ -29,6 +32,7 @@ interface EolWorkflowTabProps {
 export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
   const { isManager } = useAuth();
   const [workflow, setWorkflow] = useState<EOLWorkflowView | null>(null);
+  const [eolItems, setEolItems] = useState<ChecklistItem[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [warning, setWarning] = useState<string | null>(null);
   const [blocking, setBlocking] = useState<BlockingIssue[] | null>(null);
@@ -60,8 +64,12 @@ export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
   const load = useCallback(async () => {
     setError(null);
     try {
-      const view = await api.getEOLWorkflow(vin);
+      const [view, checklist] = await Promise.all([
+        api.getEOLWorkflow(vin),
+        api.getVehicleChecklist(vin, 'eol'),
+      ]);
       setWorkflow(view);
+      setEolItems(checklist.items ?? []);
       if (
         view.branch_open_issue_count_at_shipment &&
         view.branch_open_issue_count_at_shipment > 0 &&
@@ -151,6 +159,9 @@ export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
   }
 
   const currentIndex = STAGE_ORDER.indexOf(workflow.current_stage);
+  const depotLocked = eolItems.some(
+    (item) => item.EolPhase === 'BRANCH' && !['OK', 'CONDITIONAL_OK'].includes(item.Status),
+  );
 
   return (
     <div className="space-y-5">
@@ -170,7 +181,7 @@ export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
       )}
 
       <div
-        className="rounded-xl border bg-[var(--bg-surface-1)] p-5"
+        className="rounded-xl border bg-[var(--bg-surface-1)] p-4 sm:p-5"
         style={{ borderColor: 'var(--border)' }}
       >
         <h2 className="text-lg font-semibold">EoL workflow</h2>
@@ -184,21 +195,21 @@ export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
               type="button"
               disabled={busy}
               onClick={() => void resetWorkflow()}
-              className="mt-2 rounded-lg border px-3 py-1.5 text-[13px] disabled:opacity-60"
+              className="mt-2 min-h-touch rounded-lg border px-3 text-[13px] disabled:opacity-60"
               style={{ borderColor: 'var(--border)' }}
             >
               Reset EoL Workflow
             </button>
           </div>
         )}
-        <ol className="mt-4 flex items-center gap-2">
+        <ol className="mt-4 flex flex-wrap items-center gap-2">
           {STAGES.map((stage, i) => {
             const done = i < currentIndex;
             const active = stage.id === workflow.current_stage;
             return (
-              <li key={stage.id} className="flex flex-1 items-center gap-2">
+              <li key={stage.id} className="flex min-w-0 flex-1 basis-[30%] items-center gap-2">
                 <div
-                  className="flex h-9 min-w-9 items-center justify-center rounded-full px-3 text-[13px] font-medium"
+                  className="flex min-h-touch min-w-9 items-center justify-center rounded-full px-2 text-[12px] font-medium sm:px-3 sm:text-[13px]"
                   style={{
                     backgroundColor: done || active ? 'var(--accent)' : 'transparent',
                     color: done || active ? '#fff' : 'var(--text-secondary)',
@@ -212,7 +223,7 @@ export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
                 </div>
                 {i < STAGES.length - 1 && (
                   <span
-                    className="h-px flex-1"
+                    className="hidden h-px flex-1 sm:block"
                     style={{ backgroundColor: 'var(--border)' }}
                   />
                 )}
@@ -235,6 +246,8 @@ export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
           type="eol"
           eolPhase="BRANCH"
           title="Branch checklist"
+          items={eolItems}
+          onReload={load}
         />
       </StageCard>
 
@@ -251,6 +264,10 @@ export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
           type="eol"
           eolPhase="DEPOT"
           title="Depot checklist"
+          items={eolItems}
+          onReload={load}
+          locked={depotLocked}
+          lockHint="Complete the Branch checklist first"
         />
       </StageCard>
 
@@ -289,10 +306,11 @@ export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
             <ul className="mt-3 space-y-2 text-[15px]">
               {blocking.length === 0 && <li>No issue details returned</li>}
               {blocking.map((issue) => (
-                <li key={issue.id} className="flex justify-between gap-3">
+                <li key={issue.id} className="flex items-center justify-between gap-3">
                   <span>Issue #{issue.id}</span>
-                  <span className="text-[13px] text-[var(--text-secondary)]">
-                    {issue.status} · {issue.severity}
+                  <span className="flex items-center gap-2 text-[13px] text-[var(--text-secondary)]">
+                    <SeverityIndicator severity={issue.severity} />
+                    <StatusBadge kind="issue" value={issue.status} />
                   </span>
                 </li>
               ))}
@@ -341,7 +359,7 @@ function StageCard({
             type="button"
             disabled={busy}
             onClick={onAction}
-            className="rounded-lg bg-[var(--accent)] px-4 py-2 text-[15px] text-white disabled:opacity-60"
+            className="min-h-touch rounded-lg bg-[var(--accent)] px-4 text-[15px] text-white disabled:opacity-60"
           >
             {actionLabel}
           </button>

@@ -15,6 +15,11 @@ interface ChecklistPanelProps {
   eolPhase?: 'BRANCH' | 'DEPOT';
   title: string;
   hint?: string;
+  /** When provided, the parent owns the list (shared Branch/Depot fetch). */
+  items?: ChecklistItem[];
+  onReload?: () => Promise<void>;
+  locked?: boolean;
+  lockHint?: string;
 }
 
 const PASSING = new Set(['OK', 'CONDITIONAL_OK']);
@@ -56,24 +61,36 @@ export function ChecklistPanel({
   eolPhase,
   title,
   hint,
+  items: itemsProp,
+  onReload,
+  locked = false,
+  lockHint,
 }: ChecklistPanelProps) {
-  const [items, setItems] = useState<ChecklistItem[]>([]);
+  const [loaded, setLoaded] = useState<ChecklistItem[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const controlled = itemsProp !== undefined;
+  const items = controlled ? itemsProp : loaded;
 
   const load = useCallback(async () => {
+    if (onReload) {
+      setError(null);
+      await onReload();
+      return;
+    }
     setError(null);
     try {
       const res = await api.getVehicleChecklist(vin, type);
-      setItems(res.items ?? []);
+      setLoaded(res.items ?? []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'failed to load checklist');
-      setItems([]);
+      setLoaded([]);
     }
-  }, [vin, type]);
+  }, [vin, type, onReload]);
 
   useEffect(() => {
+    if (controlled) return;
     void load();
-  }, [load]);
+  }, [load, controlled]);
 
   const visible = useMemo(() => {
     if (!eolPhase) return items;
@@ -85,8 +102,11 @@ export function ChecklistPanel({
 
   return (
     <div
-      className="rounded-xl border bg-[var(--bg-surface-1)] p-5"
-      style={{ borderColor: 'var(--border)' }}
+      className="rounded-xl border bg-[var(--bg-surface-1)] p-4 sm:p-5"
+      style={{
+        borderColor: 'var(--border)',
+        opacity: locked ? 0.55 : 1,
+      }}
     >
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-lg font-semibold">{title}</h2>
@@ -97,15 +117,32 @@ export function ChecklistPanel({
       {hint && (
         <p className="mt-1 text-[13px] text-[var(--text-secondary)]">{hint}</p>
       )}
+      {locked && (
+        <p className="mt-2 text-[13px]" style={{ color: 'var(--status-conditional-ok)' }} role="status">
+          {lockHint ?? 'Complete the Branch checklist first'}
+        </p>
+      )}
       {error && (
         <p className="mt-3 text-[13px]" style={{ color: 'var(--status-not-ok)' }}>
           {error}
         </p>
       )}
-      <ul className="mt-4 divide-y" style={{ borderColor: 'var(--border)' }}>
+      <ul
+        className="mt-4 divide-y"
+        style={{
+          borderColor: 'var(--border)',
+          pointerEvents: locked ? 'none' : undefined,
+        }}
+      >
         {visible.map((item) =>
           editor === 'eol' ? (
-            <EolItemRow key={item.ItemID} vin={vin} item={item} onSaved={load} />
+            <EolItemRow
+              key={item.ItemID}
+              vin={vin}
+              item={item}
+              onSaved={load}
+              disabled={locked}
+            />
           ) : (
             <YesNoItemRow
               key={item.ItemID}
@@ -130,10 +167,12 @@ function EolItemRow({
   vin,
   item,
   onSaved,
+  disabled = false,
 }: {
   vin: string;
   item: ChecklistItem;
   onSaved: () => Promise<void>;
+  disabled?: boolean;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const savedStatus = (EOL_STATUSES as readonly string[]).includes(item.Status)
@@ -186,8 +225,8 @@ function EolItemRow({
 
   return (
     <li className="py-3 text-[15px]">
-      <div className="flex items-start justify-between gap-3">
-        <span>
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <span className="min-w-0 flex-1 break-words">
           <span className="mr-2 text-[13px] text-[var(--text-secondary)]">
             {item.ItemNo}.
           </span>
@@ -195,7 +234,7 @@ function EolItemRow({
         </span>
         <StatusBadge kind="eol" value={item.Status} />
       </div>
-      <div className="mt-2 flex flex-wrap gap-1.5">
+      <div className="mt-2 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
         {EOL_STATUSES.map((value) => {
           const selected = status === value;
           const color = STATUS_COLOR[value];
@@ -203,15 +242,16 @@ function EolItemRow({
             <button
               key={value}
               type="button"
+              disabled={disabled || busy}
               onClick={() => setStatus(value)}
-              className="rounded-lg border px-2.5 py-1 text-[12px] font-medium"
+              className="min-h-touch rounded-lg border px-2.5 text-[12px] font-medium disabled:opacity-50 sm:px-3 sm:text-[13px]"
               style={{
                 borderColor: selected ? color : 'var(--border)',
                 color: selected ? color : 'var(--text-secondary)',
                 backgroundColor: selected ? `${color}22` : 'transparent',
               }}
             >
-              {value === 'CONDITIONAL_OK' ? 'CONDITIONAL_OK' : value}
+              {value === 'CONDITIONAL_OK' ? 'CONDITIONAL' : value}
             </button>
           );
         })}
@@ -221,26 +261,28 @@ function EolItemRow({
           value={desc}
           onChange={(e) => setDesc(e.target.value)}
           required
+          disabled={disabled}
           placeholder="Description required for this status"
-          className="mt-2 w-full rounded-lg border bg-[var(--bg-page)] px-3 py-2 text-[13px] outline-none"
+          className="mt-2 w-full max-w-full rounded-lg border bg-[var(--bg-page)] px-3 py-2 text-[13px] outline-none"
           style={{ borderColor: 'var(--status-not-ok)', minHeight: 64 }}
         />
       )}
-      <div className="mt-2 flex flex-wrap items-center gap-2">
-        <label className="text-[13px] text-[var(--text-secondary)]">
+      <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+        <label className="flex min-h-touch flex-wrap items-center gap-2 text-[13px] text-[var(--text-secondary)]">
           Photo
           <input
             ref={fileRef}
             type="file"
             accept="image/*"
-            className="ml-2 text-[13px]"
+            disabled={disabled}
+            className="max-w-full text-[13px]"
           />
         </label>
         <button
           type="button"
-          disabled={busy}
+          disabled={busy || disabled}
           onClick={() => void save()}
-          className="rounded-lg bg-[var(--accent)] px-3 py-1.5 text-[13px] text-white disabled:opacity-60"
+          className="min-h-touch rounded-lg bg-[var(--accent)] px-4 text-[13px] text-white disabled:opacity-60"
         >
           {busy ? 'Saving…' : 'Save'}
         </button>
@@ -266,27 +308,25 @@ function YesNoItemRow({
   onSaved: () => Promise<void>;
 }) {
   const [yes, setYes] = useState(PASSING.has(item.Status));
-  const [note, setNote] = useState(existingDescription(item));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     setYes(PASSING.has(item.Status));
-    setNote(existingDescription(item));
   }, [item]);
 
-  async function save() {
-    if (!yes && !note.trim()) {
-      setError('description is required for this status');
-      return;
-    }
+  async function toggle(nextYes: boolean) {
+    const previous = yes;
+    setYes(nextYes);
     setBusy(true);
     setError(null);
     try {
-      const status = yes ? 'OK' : 'NOT_OK';
-      await api.recordChecklist(vin, type, item.ItemID, bodyForStatus(status, note));
+      await api.recordChecklist(vin, type, item.ItemID, {
+        status: nextYes ? 'OK' : 'NOT_OK',
+      });
       await onSaved();
     } catch (err) {
+      setYes(previous);
       const message =
         err instanceof ApiError
           ? err.message
@@ -301,15 +341,16 @@ function YesNoItemRow({
 
   return (
     <li className="py-3 text-[15px]">
-      <div className="flex items-start justify-between gap-3">
-        <label className="flex flex-1 items-start gap-3">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <label className="flex min-h-touch flex-1 items-center gap-3">
           <input
             type="checkbox"
             checked={yes}
-            onChange={(e) => setYes(e.target.checked)}
-            className="mt-1 h-4 w-4"
+            disabled={busy}
+            onChange={(e) => void toggle(e.target.checked)}
+            className="h-5 w-5 shrink-0"
           />
-          <span>
+          <span className="min-w-0 break-words">
             <span className="mr-2 text-[13px] text-[var(--text-secondary)]">
               {item.ItemNo}.
             </span>
@@ -320,26 +361,6 @@ function YesNoItemRow({
           </span>
         </label>
         <StatusBadge kind="shipment" value={item.Status} />
-      </div>
-      {!yes && (
-        <textarea
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-          required
-          placeholder="Note required when No"
-          className="mt-2 w-full rounded-lg border bg-[var(--bg-page)] px-3 py-2 text-[13px] outline-none"
-          style={{ borderColor: 'var(--status-not-ok)', minHeight: 52 }}
-        />
-      )}
-      <div className="mt-2">
-        <button
-          type="button"
-          disabled={busy}
-          onClick={() => void save()}
-          className="rounded-lg bg-[var(--accent)] px-3 py-1.5 text-[13px] text-white disabled:opacity-60"
-        >
-          {busy ? 'Saving…' : 'Save'}
-        </button>
       </div>
       {error && (
         <p className="mt-2 text-[13px]" style={{ color: 'var(--status-not-ok)' }} role="alert">

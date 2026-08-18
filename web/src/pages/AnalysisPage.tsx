@@ -22,6 +22,7 @@ import {
   type VehicleSeverityBreakdown,
 } from '../lib/api';
 import { VinSearchBox } from '../components/VinSearchBox';
+import { SeverityIndicator } from '../components/SeverityIndicator';
 import { statusColors } from '../theme/tokens';
 
 const VEHICLE_STATUSES = [
@@ -205,7 +206,7 @@ export default function AnalysisPage() {
     <section>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold">Analysis</h1>
+          <h1 className="text-xl font-semibold sm:text-2xl">Analysis</h1>
           <p className="mt-1 text-[13px] text-[var(--text-secondary)]">
             Filters, charts, and vehicle severity breakdown
           </p>
@@ -214,7 +215,7 @@ export default function AnalysisPage() {
           type="button"
           onClick={exportPdf}
           disabled={exporting}
-          className="rounded-lg bg-[var(--accent)] px-4 py-2 text-[15px] font-medium text-white disabled:opacity-60"
+          className="min-h-touch w-full rounded-lg bg-[var(--accent)] px-4 text-[15px] font-medium text-white disabled:opacity-60 sm:w-auto"
         >
           {exporting ? 'Exporting…' : 'Export / Print'}
         </button>
@@ -222,7 +223,7 @@ export default function AnalysisPage() {
 
       {/* Filter bar — §4.4 */}
       <div
-        className="mt-6 flex flex-wrap items-end gap-3 rounded-xl border bg-[var(--bg-surface-1)] p-4"
+        className="mt-6 grid grid-cols-1 gap-3 rounded-xl border bg-[var(--bg-surface-1)] p-4 sm:flex sm:flex-wrap sm:items-end"
         style={{ borderColor: 'var(--border)' }}
       >
         <Field label="From">
@@ -230,7 +231,7 @@ export default function AnalysisPage() {
             type="date"
             value={draftFrom}
             onChange={(e) => setDraftFrom(e.target.value)}
-            className="rounded-lg border bg-[var(--bg-page)] px-3 py-2 text-[15px]"
+            className="min-h-touch w-full rounded-lg border bg-[var(--bg-page)] px-3 text-[15px] sm:w-auto"
             style={{ borderColor: 'var(--border)' }}
           />
         </Field>
@@ -239,7 +240,7 @@ export default function AnalysisPage() {
             type="date"
             value={draftTo}
             onChange={(e) => setDraftTo(e.target.value)}
-            className="rounded-lg border bg-[var(--bg-page)] px-3 py-2 text-[15px]"
+            className="min-h-touch w-full rounded-lg border bg-[var(--bg-page)] px-3 text-[15px] sm:w-auto"
             style={{ borderColor: 'var(--border)' }}
           />
         </Field>
@@ -247,7 +248,7 @@ export default function AnalysisPage() {
           <select
             value={draftStation}
             onChange={(e) => setDraftStation(e.target.value)}
-            className="rounded-lg border bg-[var(--bg-page)] px-3 py-2 text-[15px]"
+            className="min-h-touch w-full rounded-lg border bg-[var(--bg-page)] px-3 text-[15px] sm:w-auto"
             style={{ borderColor: 'var(--border)' }}
           >
             <option value="">All</option>
@@ -262,7 +263,7 @@ export default function AnalysisPage() {
           <select
             value={draftStatus}
             onChange={(e) => setDraftStatus(e.target.value)}
-            className="rounded-lg border bg-[var(--bg-page)] px-3 py-2 text-[15px]"
+            className="min-h-touch w-full rounded-lg border bg-[var(--bg-page)] px-3 text-[15px] sm:w-auto"
             style={{ borderColor: 'var(--border)' }}
           >
             {VEHICLE_STATUSES.map((s) => (
@@ -278,7 +279,7 @@ export default function AnalysisPage() {
             value={draftIssueType}
             onChange={(e) => setDraftIssueType(e.target.value)}
             placeholder="e.g. Electrical"
-            className="w-40 rounded-lg border bg-[var(--bg-page)] px-3 py-2 text-[15px]"
+            className="min-h-touch w-full rounded-lg border bg-[var(--bg-page)] px-3 text-[15px] sm:w-40"
             style={{ borderColor: 'var(--border)' }}
           />
         </Field>
@@ -287,13 +288,13 @@ export default function AnalysisPage() {
             value={draftVin}
             onChange={setDraftVin}
             showResults={false}
-            className="w-48"
+            className="w-full sm:w-48"
           />
         </Field>
         <button
           type="button"
           onClick={applyFilters}
-          className="rounded-lg bg-[var(--accent)] px-4 py-2 text-[15px] text-white"
+          className="min-h-touch w-full rounded-lg bg-[var(--accent)] px-4 text-[15px] text-white sm:w-auto"
         >
           Uygula
         </button>
@@ -310,56 +311,85 @@ export default function AnalysisPage() {
           Active filters: {filterSummary}
         </p>
 
-        <div className="grid gap-4 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           <ChartCard title="Biten / Devam Eden İşler">
-            <ResponsiveContainer width="100%" height={260}>
-              <PieChart>
-                <Pie
-                  data={pieData}
-                  dataKey="value"
-                  nameKey="name"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={90}
-                  label
-                >
-                  {pieData.map((entry) => (
-                    <Cell key={entry.name} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
+            <div className="h-[220px] w-full min-w-0 sm:h-[260px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={pieData}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius="70%"
+                    label={false}
+                  >
+                    {pieData.map((entry) => (
+                      <Cell key={entry.name} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend wrapperStyle={{ fontSize: 12 }} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
           </ChartCard>
 
           <ChartCard title="İstasyon Bazlı MTTR (hours)">
-            <ResponsiveContainer width="100%" height={260}>
-              <BarChart data={mttrBars}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                <XAxis dataKey="station" tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} />
-                <YAxis tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} />
-                <Tooltip />
-                <Bar dataKey="hours" fill={statusColors.info} name="MTTR (h)" />
-              </BarChart>
-            </ResponsiveContainer>
+            <div className="h-[220px] w-full min-w-0 sm:h-[260px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={mttrBars}
+                  margin={{ top: 8, right: 8, left: 0, bottom: 8 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                  <XAxis
+                    dataKey="station"
+                    tick={{ fill: 'var(--text-secondary)', fontSize: 10 }}
+                    interval="preserveStartEnd"
+                  />
+                  <YAxis
+                    width={36}
+                    tick={{ fill: 'var(--text-secondary)', fontSize: 10 }}
+                  />
+                  <Tooltip />
+                  <Bar dataKey="hours" fill={statusColors.info} name="MTTR (h)" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </ChartCard>
         </div>
 
         <ChartCard title="Defect Rate per Station (Pareto)">
-          <ResponsiveContainer width="100%" height={240}>
-            <BarChart data={defectBars}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-              <XAxis dataKey="station" tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} />
-              <YAxis tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} />
-              <Tooltip />
-              <Bar dataKey="issues" fill={statusColors.notOk} name="Issues" />
-            </BarChart>
-          </ResponsiveContainer>
+          <div className="h-[220px] w-full min-w-0 sm:h-[240px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={defectBars}
+                margin={{ top: 8, right: 8, left: 0, bottom: 48 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                <XAxis
+                  dataKey="station"
+                  tick={{ fill: 'var(--text-secondary)', fontSize: 10 }}
+                  angle={-35}
+                  textAnchor="end"
+                  height={60}
+                  interval={0}
+                />
+                <YAxis
+                  width={36}
+                  tick={{ fill: 'var(--text-secondary)', fontSize: 10 }}
+                />
+                <Tooltip />
+                <Bar dataKey="issues" fill={statusColors.notOk} name="Issues" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </ChartCard>
 
         <div
-          className="rounded-xl border bg-[var(--bg-surface-1)] p-5"
+          className="rounded-xl border bg-[var(--bg-surface-1)] p-4 sm:p-5"
           style={{ borderColor: 'var(--border)' }}
         >
           <h2 className="text-lg font-semibold">
@@ -369,14 +399,24 @@ export default function AnalysisPage() {
             VIN × severity (Decision Log #7) — sorted by total open issues
           </p>
 
-          <div className="mt-4 h-56">
+          <div className="mt-4 h-48 w-full min-w-0 sm:h-56">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={stackedSeverity}>
+              <BarChart
+                data={stackedSeverity}
+                margin={{ top: 8, right: 8, left: 0, bottom: 8 }}
+              >
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                <XAxis dataKey="vin" tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} />
-                <YAxis tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} />
+                <XAxis
+                  dataKey="vin"
+                  tick={{ fill: 'var(--text-secondary)', fontSize: 10 }}
+                  interval="preserveStartEnd"
+                />
+                <YAxis
+                  width={28}
+                  tick={{ fill: 'var(--text-secondary)', fontSize: 10 }}
+                />
                 <Tooltip />
-                <Legend />
+                <Legend wrapperStyle={{ fontSize: 12 }} />
                 <Bar dataKey="critical" stackId="a" fill={statusColors.severityCritical} name="Critical" />
                 <Bar dataKey="medium" stackId="a" fill={statusColors.severityMedium} name="Medium" />
                 <Bar dataKey="low" stackId="a" fill={statusColors.severityLow} name="Low" />
@@ -384,7 +424,48 @@ export default function AnalysisPage() {
             </ResponsiveContainer>
           </div>
 
-          <table className="mt-4 w-full text-left text-[15px]">
+          <div className="mt-4 space-y-3 sm:hidden">
+            {severity.length === 0 && (
+              <p className="text-[var(--text-secondary)]">
+                No open-issue rows for current filters
+              </p>
+            )}
+            {severity.map((row) => (
+              <div
+                key={row.VIN}
+                className="space-y-2 rounded-lg border p-3"
+                style={{ borderColor: 'var(--border)' }}
+              >
+                <Link
+                  to={`/vehicles/${row.VIN}`}
+                  className="font-medium text-[var(--accent)] hover:underline"
+                >
+                  …{row.VIN.slice(-5)}
+                </Link>
+                <p className="break-all text-[12px] text-[var(--text-secondary)]">
+                  {row.VIN}
+                </p>
+                <div className="flex items-center justify-between text-[15px]">
+                  <span className="text-[13px] text-[var(--text-secondary)]">Total</span>
+                  <span>{row.TotalOpenIssues}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[13px] text-[var(--text-secondary)]">Critical</span>
+                  <SeverityIndicator severity="CRITICAL" count={row.CriticalCount} />
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[13px] text-[var(--text-secondary)]">Medium</span>
+                  <SeverityIndicator severity="MEDIUM" count={row.MediumCount} />
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[13px] text-[var(--text-secondary)]">Low</span>
+                  <SeverityIndicator severity="LOW" count={row.LowCount} />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <table className="mt-4 hidden w-full text-left text-[15px] sm:table">
             <thead>
               <tr className="text-[13px] text-[var(--text-secondary)]">
                 <th className="pb-2 font-medium">VIN</th>
@@ -415,7 +496,7 @@ export default function AnalysisPage() {
                     >
                       …{row.VIN.slice(-5)}
                     </Link>
-                    <span className="ml-2 text-[13px] text-[var(--text-secondary)]">
+                    <span className="ml-2 break-all text-[13px] text-[var(--text-secondary)]">
                       {row.VIN}
                     </span>
                     <div className="text-[12px] text-[var(--text-secondary)]">
@@ -424,9 +505,15 @@ export default function AnalysisPage() {
                     </div>
                   </td>
                   <td className="py-2.5">{row.TotalOpenIssues}</td>
-                  <td className="py-2.5">{row.CriticalCount}</td>
-                  <td className="py-2.5">{row.MediumCount}</td>
-                  <td className="py-2.5">{row.LowCount}</td>
+                  <td className="py-2.5">
+                    <SeverityIndicator severity="CRITICAL" count={row.CriticalCount} />
+                  </td>
+                  <td className="py-2.5">
+                    <SeverityIndicator severity="MEDIUM" count={row.MediumCount} />
+                  </td>
+                  <td className="py-2.5">
+                    <SeverityIndicator severity="LOW" count={row.LowCount} />
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -461,10 +548,10 @@ function ChartCard({
 }) {
   return (
     <div
-      className="rounded-xl border bg-[var(--bg-surface-1)] p-5"
+      className="min-w-0 overflow-hidden rounded-xl border bg-[var(--bg-surface-1)] p-4 sm:p-5"
       style={{ borderColor: 'var(--border)' }}
     >
-      <h2 className="mb-3 text-lg font-semibold">{title}</h2>
+      <h2 className="mb-3 text-base font-semibold sm:text-lg">{title}</h2>
       {children}
     </div>
   );
