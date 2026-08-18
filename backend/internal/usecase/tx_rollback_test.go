@@ -57,7 +57,7 @@ func TestIssueStatusChangeRollsBackOnAuditFailure(t *testing.T) {
 	uow := &snapshotFakeUoW{issues: issues, audit: audit}
 	mgr := usecase.NewIssueManager(issues, audit, uow)
 
-	err = mgr.TransitionStatus(context.Background(), id, domain.IssueStatusInProgress, actorID, operatorPermissions())
+	err = mgr.TransitionStatus(context.Background(), id, domain.IssueStatusInProgress, actorID, operatorPermissions(), "")
 	if !errors.Is(err, errAuditInsertFailed) {
 		t.Fatalf("expected audit insert error, got %v", err)
 	}

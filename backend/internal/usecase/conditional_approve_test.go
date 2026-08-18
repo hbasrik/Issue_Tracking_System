@@ -35,7 +35,7 @@ func TestTransitionStatus_ManagerCanConditionallyApprove(t *testing.T) {
 	mgr, issues, id := seedDoneIssue(t)
 
 	err := mgr.TransitionStatus(context.Background(), id,
-		domain.IssueStatusConditionalApproved, actorID, managerPermissions())
+		domain.IssueStatusConditionalApproved, actorID, managerPermissions(), "")
 	if err != nil {
 		t.Fatalf("manager DONE->CONDITIONAL_APPROVED must succeed, got %v", err)
 	}
@@ -67,7 +67,7 @@ func TestTransitionStatus_OperatorCannotConditionallyApprove(t *testing.T) {
 	mgr, issues, id := seedDoneIssue(t)
 
 	err := mgr.TransitionStatus(context.Background(), id,
-		domain.IssueStatusConditionalApproved, 2, operatorPermissions())
+		domain.IssueStatusConditionalApproved, 2, operatorPermissions(), "")
 	if !errors.Is(err, domain.ErrForbidden) {
 		t.Fatalf("expected ErrForbidden, got %v", err)
 	}
@@ -91,7 +91,7 @@ func TestTransitionStatus_ConditionalApprovedIsTerminal(t *testing.T) {
 	ctx := context.Background()
 	mgr, issues, id := seedDoneIssue(t)
 	if err := mgr.TransitionStatus(ctx, id,
-		domain.IssueStatusConditionalApproved, 4, managerPermissions()); err != nil {
+		domain.IssueStatusConditionalApproved, 4, managerPermissions(), ""); err != nil {
 		t.Fatalf("seed conditional approval: %v", err)
 	}
 
@@ -104,7 +104,7 @@ func TestTransitionStatus_ConditionalApprovedIsTerminal(t *testing.T) {
 	}
 	for _, target := range targets {
 		t.Run(string(target), func(t *testing.T) {
-			err := mgr.TransitionStatus(ctx, id, target, 4, managerPermissions())
+			err := mgr.TransitionStatus(ctx, id, target, 4, managerPermissions(), "")
 			if !errors.Is(err, domain.ErrInvalidStatusTransition) {
 				t.Errorf("expected ErrInvalidStatusTransition, got %v", err)
 			}

@@ -60,7 +60,7 @@ func TestIssueStatusChangeRecordsPerformedBy(t *testing.T) {
 	audit := newFakeAuditRepo()
 	mgr := usecase.NewIssueManager(issues, audit, &passthroughFakeUoW{})
 
-	err = mgr.TransitionStatus(context.Background(), id, domain.IssueStatusInProgress, actorID, operatorPermissions())
+	err = mgr.TransitionStatus(context.Background(), id, domain.IssueStatusInProgress, actorID, operatorPermissions(), "")
 	if err != nil {
 		t.Fatalf("TransitionStatus returned error: %v", err)
 	}

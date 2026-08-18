@@ -342,7 +342,7 @@ func (f *fakeIssueRepo) ListOpenByVIN(_ context.Context, vin string) ([]domain.I
 // UpdateStatus mirrors the real repository: each target status stamps its own
 // lifecycle reporter/date pair, so tests can assert that a conditional
 // sign-off writes the conditional columns rather than the approval ones.
-func (f *fakeIssueRepo) UpdateStatus(_ context.Context, id int64, status domain.IssueStatus, actorID int) error {
+func (f *fakeIssueRepo) UpdateStatus(_ context.Context, id int64, status domain.IssueStatus, actorID int, solutionDescription string) error {
 	issue, ok := f.issues[id]
 	if !ok {
 		return domain.ErrNotFound
@@ -353,6 +353,7 @@ func (f *fakeIssueRepo) UpdateStatus(_ context.Context, id int64, status domain.
 		issue.ProcessReporterID, issue.ProcessDate = &actorID, &now
 	case domain.IssueStatusDone:
 		issue.FinishReporterID, issue.FinishDate = &actorID, &now
+		issue.SolutionDescription = solutionDescription
 	case domain.IssueStatusApproved:
 		issue.ApproveReporterID, issue.ApproveDate = &actorID, &now
 	case domain.IssueStatusConditionalApproved:

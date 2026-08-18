@@ -142,7 +142,10 @@ func (m *IssueManager) GetByID(ctx context.Context, id int64) (*domain.Issue, er
 // state machine and permission-based authorization. It records an
 // ISSUE_STATUS_CHANGE audit entry attributed to actorID so every state change
 // is traceable to the user who performed it (FR-1.2).
-func (m *IssueManager) TransitionStatus(ctx context.Context, id int64, target domain.IssueStatus, actorID int, actorPermissions domain.PermissionSet) error {
+//
+// When target is DONE, solutionDescription is required (non-empty after trim)
+// and persisted on issue_list.solution_description. Other transitions ignore it.
+func (m *IssueManager) TransitionStatus(ctx context.Context, id int64, target domain.IssueStatus, actorID int, actorPermissions domain.PermissionSet, solutionDescription string) error {
 	issue, err := m.issues.GetByID(ctx, id)
 	if err != nil {
 		return err
@@ -150,10 +153,14 @@ func (m *IssueManager) TransitionStatus(ctx context.Context, id int64, target do
 	if err := AuthorizeIssueTransition(issue.Status, target, actorPermissions); err != nil {
 		return err
 	}
+	solution := strings.TrimSpace(solutionDescription)
+	if target == domain.IssueStatusDone && solution == "" {
+		return domain.ErrSolutionDescriptionRequired
+	}
 
 	performedBy := actorID
 	return m.uow.WithinTx(ctx, func(txCtx context.Context) error {
-		if err := m.issues.UpdateStatus(txCtx, id, target, actorID); err != nil {
+		if err := m.issues.UpdateStatus(txCtx, id, target, actorID, solution); err != nil {
 			return err
 		}
 		return m.audit.Append(txCtx, domain.AuditLog{
