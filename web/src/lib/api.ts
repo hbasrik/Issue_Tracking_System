@@ -215,9 +215,12 @@ export const api = {
     );
   },
 
-  listIssues(status?: string) {
-    const q = status ? `?status=${encodeURIComponent(status)}` : '';
-    return request<{ items: Issue[] }>(`/issues${q}`);
+  listIssues(status?: string, vin?: string) {
+    const params = new URLSearchParams();
+    if (status) params.set('status', status);
+    if (vin) params.set('vin', vin);
+    const q = params.toString();
+    return request<{ items: Issue[] }>(`/issues${q ? `?${q}` : ''}`);
   },
 
   getIssue(id: number) {
@@ -380,6 +383,8 @@ export interface Issue {
   Description: string;
   Status: string;
   IssueDate: string;
+  IssueReporterID: number;
+  ReporterName?: string;
 }
 
 export type MediaEntityType =
