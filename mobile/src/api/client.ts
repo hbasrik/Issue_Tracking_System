@@ -175,6 +175,11 @@ export interface Station {
   IsActive: boolean;
 }
 
+export interface IssueType {
+  ID: number;
+  Name: string;
+}
+
 export type MediaEntityType =
   | 'VEHICLE'
   | 'ISSUE'
@@ -296,6 +301,7 @@ export const api = {
     source_station_step_id?: number;
     source_check_item_id?: number;
     station_id?: number;
+    issue_type_id?: number;
     severity: string;
     description: string;
     picture_url?: string;
@@ -304,6 +310,10 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(body),
     });
+  },
+
+  listIssueTypes() {
+    return request<{ items: IssueType[] }>('/issue-types');
   },
 
   listIssues(status?: string) {
