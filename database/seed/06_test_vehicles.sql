@@ -62,11 +62,8 @@ SET name = EXCLUDED.name,
     is_active = EXCLUDED.is_active;
 
 INSERT INTO issue_types (name) VALUES
-    ('Paint'),
-    ('Electrical'),
-    ('Trim'),
-    ('Mechanical'),
-    ('High Voltage')
+    ('Hata'),
+    ('Tamir Gerekiyor')
 ON CONFLICT (name) DO NOTHING;
 
 -- Wipe a previous run of this fixture (progress, issues, workflow CASCADE).
@@ -316,7 +313,7 @@ BEGIN
       AND s.sequence_no = 4 AND ss.sequence_no <= 2;
     PERFORM pg_temp.fail_station_step('1KTSKRV2XSB010045', 4, 3, op1, now() - interval '7 days');
     PERFORM pg_temp.add_station_issue(
-        '1KTSKRV2XSB010045', 4, 3, 'High Voltage', 'CRITICAL',
+        '1KTSKRV2XSB010045', 4, 3, 'Hata', 'CRITICAL',
         'High voltage connector lock did not engage on the left-hand pack cable.',
         'OPEN', op1, now() - interval '7 days'
     );
@@ -332,7 +329,7 @@ BEGIN
       AND s.sequence_no = 5 AND ss.sequence_no = 1;
     PERFORM pg_temp.fail_station_step('1KTSKRC2XSB010046', 5, 2, op2, now() - interval '6 days');
     PERFORM pg_temp.add_station_issue(
-        '1KTSKRC2XSB010046', 5, 2, 'Mechanical', 'MEDIUM',
+        '1KTSKRC2XSB010046', 5, 2, 'Tamir Gerekiyor', 'MEDIUM',
         'Passenger seat mounting bolt below torque spec.',
         'OPEN', op2, now() - interval '6 days'
     );
@@ -341,7 +338,7 @@ BEGIN
     PERFORM pg_temp.mark_stations_ok('1KTSKRV2XSB010047', 5, op1, now() - interval '6 days');
     PERFORM pg_temp.fail_station_step('1KTSKRV2XSB010047', 6, 1, op1, now() - interval '5 days');
     PERFORM pg_temp.add_station_issue(
-        '1KTSKRV2XSB010047', 6, 1, 'Trim', 'LOW',
+        '1KTSKRV2XSB010047', 6, 1, 'Hata', 'LOW',
         'Windshield adhesive bead incomplete at the upper-right corner.',
         'IN_PROGRESS', op1, now() - interval '5 days',
         p_process_by => op2, p_process_at => now() - interval '4 days'
@@ -361,7 +358,7 @@ BEGIN
         'Horn inoperative; washer pump dry.'
     );
     PERFORM pg_temp.add_checklist_issue(
-        '1KTSKRC2XSB010048', 'EOL_ITEM', 6, 'Electrical', 'CRITICAL',
+        '1KTSKRC2XSB010048', 'EOL_ITEM', 6, 'Hata', 'CRITICAL',
         'Horn and washer circuit failed during branch EoL.',
         'OPEN', op2, now() - interval '3 days'
     );
@@ -370,7 +367,7 @@ BEGIN
         'Seat-belt pretensioner connector reseated; awaiting retest.'
     );
     PERFORM pg_temp.add_checklist_issue(
-        '1KTSKRC2XSB010048', 'EOL_ITEM', 7, 'Trim', 'MEDIUM',
+        '1KTSKRC2XSB010048', 'EOL_ITEM', 7, 'Hata', 'MEDIUM',
         'Driver seat-belt pretensioner connector not fully latched.',
         'IN_PROGRESS', op1, now() - interval '2 days',
         p_process_by => op1, p_process_at => now() - interval '36 hours'
@@ -383,7 +380,7 @@ BEGIN
         'Active U0100 lost-communication DTC on scan.'
     );
     PERFORM pg_temp.add_checklist_issue(
-        '1KTSKRV2XSB010049', 'EOL_ITEM', 9, 'Electrical', 'CRITICAL',
+        '1KTSKRV2XSB010049', 'EOL_ITEM', 9, 'Hata', 'CRITICAL',
         'Lost communication with vehicle control module on EoL scan.',
         'DONE', op2, now() - interval '2 days',
         p_process_by => op1, p_process_at => now() - interval '30 hours',
@@ -395,7 +392,7 @@ BEGIN
         'Left rear door paint inclusion.'
     );
     PERFORM pg_temp.add_checklist_issue(
-        '1KTSKRV2XSB010049', 'SHIPMENT_ITEM', 11, 'Paint', 'LOW',
+        '1KTSKRV2XSB010049', 'SHIPMENT_ITEM', 11, 'Tamir Gerekiyor', 'LOW',
         'Paint inclusion on left body side, customer-visible.',
         'OPEN', op1, now() - interval '2 days'
     );
@@ -407,7 +404,7 @@ BEGIN
         'Service brake stopping distance above limit on first run.'
     );
     PERFORM pg_temp.add_checklist_issue(
-        '1KTSKRC2XSB010050', 'TEST_ITEM', 2, 'Mechanical', 'MEDIUM',
+        '1KTSKRC2XSB010050', 'TEST_ITEM', 2, 'Tamir Gerekiyor', 'MEDIUM',
         'Dynamic service brake performance outside spec.',
         'OPEN', op2, now() - interval '2 days'
     );
@@ -426,7 +423,7 @@ BEGIN
 
     -- Closed historical issues on 10051 (do not block depot-release).
     PERFORM pg_temp.add_station_issue(
-        '1KTSKRV2XSB010051', 2, 7, 'Paint', 'MEDIUM',
+        '1KTSKRV2XSB010051', 2, 7, 'Tamir Gerekiyor', 'MEDIUM',
         'Clear-coat dust nib on roof — repaired and re-ticked OK.',
         'APPROVED', op1, now() - interval '4 days',
         p_process_by => op1, p_process_at => now() - interval '3 days 12 hours',
@@ -439,7 +436,7 @@ BEGIN
         'Tool kit missing wheel chock; accepted for depot with note.'
     );
     PERFORM pg_temp.add_checklist_issue(
-        '1KTSKRV2XSB010051', 'EOL_ITEM', 14, 'Trim', 'LOW',
+        '1KTSKRV2XSB010051', 'EOL_ITEM', 14, 'Hata', 'LOW',
         'Accessory pack missing one wheel chock.',
         'CONDITIONAL_APPROVED', op1, now() - interval '2 days',
         p_process_by => op2, p_process_at => now() - interval '40 hours',
@@ -451,7 +448,7 @@ BEGIN
         '1KTSKRV2XSB010051', 'TEST', 13, 'OK', op2, now() - interval '2 days', NULL
     );
     PERFORM pg_temp.add_checklist_issue(
-        '1KTSKRV2XSB010051', 'TEST_ITEM', 13, 'High Voltage', 'CRITICAL',
+        '1KTSKRV2XSB010051', 'TEST_ITEM', 13, 'Hata', 'CRITICAL',
         'Isolation resistance initially below 100 MΩ; retested after drying.',
         'APPROVED', op2, now() - interval '2 days 6 hours',
         p_process_by => op1, p_process_at => now() - interval '2 days',
@@ -463,7 +460,7 @@ BEGIN
         '1KTSKRV2XSB010051', 'SHIPMENT', 39, 'OK', op1, now() - interval '2 days', NULL
     );
     PERFORM pg_temp.add_checklist_issue(
-        '1KTSKRV2XSB010051', 'SHIPMENT_ITEM', 39, 'Mechanical', 'MEDIUM',
+        '1KTSKRV2XSB010051', 'SHIPMENT_ITEM', 39, 'Tamir Gerekiyor', 'MEDIUM',
         'Left-front tyre 4 psi low at customer checklist.',
         'APPROVED', op1, now() - interval '2 days',
         p_process_by => op1, p_process_at => now() - interval '40 hours',
@@ -480,7 +477,7 @@ BEGIN
         'Visible coolant weep at water-pump housing.'
     );
     PERFORM pg_temp.add_checklist_issue(
-        '1KTSKRV2XSB010053', 'EOL_ITEM', 12, 'Mechanical', 'CRITICAL',
+        '1KTSKRV2XSB010053', 'EOL_ITEM', 12, 'Tamir Gerekiyor', 'CRITICAL',
         'Coolant leak found during depot fluid inspection.',
         'OPEN', op2, now() - interval '20 hours'
     );
@@ -489,7 +486,7 @@ BEGIN
         'Active P0A0F DTC on OBD scan at depot.'
     );
     PERFORM pg_temp.add_checklist_issue(
-        '1KTSKRV2XSB010053', 'TEST_ITEM', 11, 'Electrical', 'MEDIUM',
+        '1KTSKRV2XSB010053', 'TEST_ITEM', 11, 'Hata', 'MEDIUM',
         'OBD scan shows active drive-motor DTC at depot.',
         'IN_PROGRESS', op1, now() - interval '18 hours',
         p_process_by => op2, p_process_at => now() - interval '12 hours'
@@ -521,7 +518,7 @@ BEGIN
         'Infotainment speaker rattle at 40% volume; accepted with note.'
     );
     PERFORM pg_temp.add_checklist_issue(
-        '1KTSKRC2XSB010054', 'SHIPMENT_ITEM', 32, 'Electrical', 'LOW',
+        '1KTSKRC2XSB010054', 'SHIPMENT_ITEM', 32, 'Hata', 'LOW',
         'Infotainment speaker rattle on customer checklist.',
         'CONDITIONAL_APPROVED', op2, now() - interval '2 days',
         p_process_by => op1, p_process_at => now() - interval '36 hours',
@@ -577,7 +574,7 @@ BEGIN
         'Low-beam cutoff 0.4° high on left lamp.'
     );
     PERFORM pg_temp.add_checklist_issue(
-        '1KTSKRV2XSB010047', 'TEST_ITEM', 8, 'Electrical', 'LOW',
+        '1KTSKRV2XSB010047', 'TEST_ITEM', 8, 'Hata', 'LOW',
         'Left headlamp aim out of spec during test.',
         'DONE', op2, now() - interval '4 days',
         p_process_by => op1, p_process_at => now() - interval '3 days',
