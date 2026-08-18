@@ -16,6 +16,9 @@ var (
 	ErrDescriptionRequired = errors.New("description is required for this status")
 	// ErrIssueDescriptionRequired indicates an issue create omitted description.
 	ErrIssueDescriptionRequired = errors.New("description is required")
+	// ErrSolutionDescriptionRequired indicates IN_PROGRESS->DONE omitted the
+	// resolution note operators must record when finishing a repair.
+	ErrSolutionDescriptionRequired = errors.New("solution_description is required when marking an issue done")
 	// ErrSeverityRequired indicates an issue was created without a severity
 	// (Decision Log #7).
 	ErrSeverityRequired = errors.New("issue severity is required")

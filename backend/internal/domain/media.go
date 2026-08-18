@@ -14,6 +14,7 @@ type MediaEntityType string
 const (
 	MediaEntityVehicle               MediaEntityType = "VEHICLE"
 	MediaEntityIssue                 MediaEntityType = "ISSUE"
+	MediaEntityIssueResolution       MediaEntityType = "ISSUE_RESOLUTION"
 	MediaEntityChecklistItemProgress MediaEntityType = "CHECKLIST_ITEM_PROGRESS"
 	MediaEntityStationStepProgress   MediaEntityType = "STATION_STEP_PROGRESS"
 )
@@ -21,7 +22,7 @@ const (
 // Valid reports whether the entity type is one this application recognises.
 func (t MediaEntityType) Valid() bool {
 	switch t {
-	case MediaEntityVehicle, MediaEntityIssue,
+	case MediaEntityVehicle, MediaEntityIssue, MediaEntityIssueResolution,
 		MediaEntityChecklistItemProgress, MediaEntityStationStepProgress:
 		return true
 	default:
