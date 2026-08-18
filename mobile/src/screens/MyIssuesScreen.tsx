@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   FlatList,
-  Image,
   Pressable,
   Text,
   View,
@@ -15,11 +14,10 @@ import {
 } from '@react-navigation/native';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { api, mediaFileUrl, type Issue, type Vehicle } from '../api/client';
+import { api, type Issue, type Vehicle } from '../api/client';
 import { VehicleSearchPanel } from '../components/VehicleSearchPanel';
+import { IssueCard } from '../components/IssueCard';
 import {
-  Badge,
-  Card,
   ErrorText,
   Loading,
   OutlineButton,
@@ -33,12 +31,12 @@ import {
   type SeverityLevel,
 } from '../components/SeverityIndicator';
 import { useTheme } from '../theme/ThemeProvider';
-import { statusColors } from '../theme/tokens';
 import {
   HOME_ISSUE_STAT_LABELS,
   matchesHomeIssueStat,
   type HomeIssueStatKey,
 } from '../lib/homeIssueStats';
+import { issueMatchesVinQuery } from '../lib/issueVinFilter';
 import type { MainDrawerParamList, RootStackParamList } from '../navigation/types';
 
 type IssueStatus = Issue['Status'];
@@ -58,23 +56,6 @@ const STATUSES: { value: IssueStatus; label: string }[] = [
   { value: 'APPROVED', label: 'Kalite Onay' },
 ];
 
-function statusColor(s: string): string {
-  if (s === 'OPEN') return statusColors.issueOpen;
-  if (s === 'IN_PROGRESS') return statusColors.issueInProgress;
-  return statusColors.issueResolved;
-}
-
-function statusLabel(s: IssueStatus): string {
-  return STATUSES.find((x) => x.value === s)?.label ?? s;
-}
-
-function formatCreatedAt(iso?: string): string {
-  if (!iso || iso.startsWith('0001')) return '—';
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleString();
-}
-
 function issueCreatedMs(issue: Issue): number {
   return Date.parse(issue.CreatedAt || issue.IssueDate || '') || 0;
 }
@@ -87,6 +68,8 @@ export default function MyIssuesScreen() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
+  const [vinQuery, setVinQuery] = useState('');
+  const [matchedVehicles, setMatchedVehicles] = useState<Vehicle[]>([]);
   const [severities, setSeverities] = useState<Set<SeverityLevel>>(new Set());
   const [statuses, setStatuses] = useState<Set<IssueStatus>>(new Set());
   const [homeStat, setHomeStat] = useState<HomeIssueStatKey | undefined>(
@@ -129,6 +112,8 @@ export default function MyIssuesScreen() {
       setStatuses(new Set());
       setSeverities(new Set());
       setVehicle(null);
+      setVinQuery('');
+      setMatchedVehicles([]);
     }
   }, [route.params?.homeStat]);
 
@@ -163,11 +148,12 @@ export default function MyIssuesScreen() {
         return matchesHomeIssueStat(issue, homeStat, homeStatNow);
       }
       if (vehicle && issue.VIN !== vehicle.VIN) return false;
+      if (!issueMatchesVinQuery(issue, vinQuery, matchedVehicles)) return false;
       if (severities.size > 0 && !severities.has(issue.Severity)) return false;
       if (statuses.size > 0 && !statuses.has(issue.Status)) return false;
       return true;
     });
-  }, [items, vehicle, severities, statuses, homeStat, homeStatNow]);
+  }, [items, vehicle, vinQuery, matchedVehicles, severities, statuses, homeStat, homeStatNow]);
 
   return (
     <Screen padded={false}>
@@ -212,6 +198,13 @@ export default function MyIssuesScreen() {
                 if (homeStat) clearHomeStat();
                 setVehicle(v);
               }}
+              onQueryChange={(q) => {
+                if (homeStat) clearHomeStat();
+                setVinQuery(q);
+                if (q.trim().length < 2) setMatchedVehicles([]);
+                setVehicle(null);
+              }}
+              onResults={setMatchedVehicles}
             />
             {vehicle && !homeStat ? (
               <View
@@ -330,74 +323,10 @@ export default function MyIssuesScreen() {
           loading ? null : <Subtitle>No issues match filters</Subtitle>
         }
         renderItem={({ item }) => (
-          <Pressable onPress={() => navigation.navigate('IssueDetail', { id: item.ID })}>
-            <Card>
-              <View style={{ flexDirection: 'row', gap: 12 }}>
-                {item.ReportPhotoPath ? (
-                  <Image
-                    source={{ uri: mediaFileUrl(item.ReportPhotoPath) }}
-                    style={{
-                      width: 64,
-                      height: 64,
-                      borderRadius: 8,
-                      backgroundColor: tokens.bgSurface2,
-                    }}
-                    resizeMode="cover"
-                  />
-                ) : (
-                  <View
-                    style={{
-                      width: 64,
-                      height: 64,
-                      borderRadius: 8,
-                      backgroundColor: tokens.bgSurface2,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <Text style={{ color: tokens.textSecondary, fontSize: 11 }}>—</Text>
-                  </View>
-                )}
-                <View style={{ flex: 1, minWidth: 0 }}>
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 8,
-                      marginBottom: 6,
-                      flexWrap: 'wrap',
-                    }}
-                  >
-                    <Text
-                      style={{
-                        color: tokens.textSecondary,
-                        fontSize: 12,
-                        fontWeight: '600',
-                      }}
-                    >
-                      #{item.ID}
-                    </Text>
-                    <Badge label={statusLabel(item.Status)} color={statusColor(item.Status)} />
-                    <SeverityIndicator severity={item.Severity} />
-                  </View>
-                  <Text style={{ color: tokens.textPrimary, fontWeight: '600' }}>
-                    …{item.VIN.slice(-5)}
-                  </Text>
-                  <Text
-                    style={{ color: tokens.textSecondary, marginTop: 2, fontSize: 12 }}
-                  >
-                    {formatCreatedAt(item.CreatedAt || item.IssueDate)}
-                  </Text>
-                  <Text
-                    style={{ color: tokens.textSecondary, marginTop: 4, fontSize: 13 }}
-                    numberOfLines={2}
-                  >
-                    {item.Description}
-                  </Text>
-                </View>
-              </View>
-            </Card>
-          </Pressable>
+          <IssueCard
+            issue={item}
+            onPress={() => navigation.navigate('IssueDetail', { id: item.ID })}
+          />
         )}
       />
     </Screen>

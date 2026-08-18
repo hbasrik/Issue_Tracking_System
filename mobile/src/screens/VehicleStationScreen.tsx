@@ -17,10 +17,12 @@ import {
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
   api,
+  type Issue,
   type StationStepItem,
   type Vehicle,
 } from '../api/client';
 import { ProgressRing } from '../components/ProgressRing';
+import { IssueCard } from '../components/IssueCard';
 import {
   Badge,
   Card,
@@ -107,6 +109,7 @@ export default function VehicleStationScreen() {
 
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
   const [steps, setSteps] = useState<StationStepItem[]>([]);
+  const [issues, setIssues] = useState<Issue[]>([]);
   const [openByStation, setOpenByStation] = useState<Record<string, number>>({});
   const [expandedStation, setExpandedStation] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -115,13 +118,15 @@ export default function VehicleStationScreen() {
   const load = useCallback(async () => {
     setError(null);
     try {
-      const [v, res] = await Promise.all([
+      const [v, res, issueRes] = await Promise.all([
         api.getVehicle(vin),
         api.getStationSteps(vin),
+        api.listIssues(undefined, vin).catch(() => ({ items: [] as Issue[] })),
       ]);
       setVehicle(v);
       setSteps(res.Items ?? []);
       setOpenByStation(res.OpenIssuesByStation ?? {});
+      setIssues(issueRes.items ?? []);
       setExpandedStation((prev) => prev ?? v.CurrentStationID);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load vehicle');
@@ -212,6 +217,32 @@ export default function VehicleStationScreen() {
         </View>
 
         {error ? <ErrorText>{error}</ErrorText> : null}
+
+        <View style={{ marginBottom: 16 }}>
+          <Text
+            style={{
+              color: tokens.textPrimary,
+              fontSize: 17,
+              fontWeight: '600',
+              marginBottom: 4,
+            }}
+          >
+            Hatalar
+          </Text>
+          <Subtitle>Bu araca ait tüm hatalar — karta dokunarak detayı açın</Subtitle>
+          {issues.length === 0 ? (
+            <Subtitle>Bu araç için hata yok</Subtitle>
+          ) : (
+            issues.map((issue) => (
+              <IssueCard
+                key={issue.ID}
+                issue={issue}
+                hideVin
+                onPress={() => navigation.navigate('IssueDetail', { id: issue.ID })}
+              />
+            ))
+          )}
+        </View>
 
         {stations.map((station) => {
           const openCount = openByStation[String(station.id)] ?? 0;
