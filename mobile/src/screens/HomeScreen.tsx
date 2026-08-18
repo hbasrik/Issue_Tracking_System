@@ -6,9 +6,14 @@ import {
   Text,
   View,
 } from 'react-native';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import {
+  CompositeNavigationProp,
+  useFocusEffect,
+  useNavigation,
+} from '@react-navigation/native';
+import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { api, type Issue, type Vehicle } from '../api/client';
+import { api, type Vehicle } from '../api/client';
 import { useAuth } from '../auth/AuthProvider';
 import { DurumOverview } from '../components/DurumOverview';
 import { VehicleSearchPanel } from '../components/VehicleSearchPanel';
@@ -21,39 +26,44 @@ import {
 } from '../components/ui';
 import { useTheme } from '../theme/ThemeProvider';
 import { statusColors } from '../theme/tokens';
-import type { RootStackParamList } from '../navigation/types';
+import {
+  countHomeIssueStat,
+  HOME_ISSUE_STAT_LABELS,
+  type HomeIssueStatKey,
+} from '../lib/homeIssueStats';
+import type { MainDrawerParamList, RootStackParamList } from '../navigation/types';
 
-function isSameLocalDay(iso: string | undefined, now: Date): boolean {
-  if (!iso) return false;
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return false;
-  return (
-    d.getFullYear() === now.getFullYear() &&
-    d.getMonth() === now.getMonth() &&
-    d.getDate() === now.getDate()
-  );
-}
+type HomeNavigation = CompositeNavigationProp<
+  DrawerNavigationProp<MainDrawerParamList, 'Home'>,
+  NativeStackNavigationProp<RootStackParamList>
+>;
 
-function isClosedStatus(status: Issue['Status']): boolean {
-  return (
-    status === 'DONE' ||
-    status === 'APPROVED' ||
-    status === 'CONDITIONAL_APPROVED'
-  );
-}
+const STAT_CARDS: {
+  key: HomeIssueStatKey;
+  color: string;
+}[] = [
+  { key: 'open', color: statusColors.issueOpen },
+  { key: 'in_progress', color: statusColors.issueInProgress },
+  { key: 'closed_today', color: statusColors.issueResolved },
+  { key: 'approved_today', color: statusColors.issueResolved },
+  { key: 'conditional_approved_today', color: statusColors.issueInProgress },
+];
 
 /**
  * Home: Hata Bildir, vehicle search (former Ara), issue day stats (from
  * existing listIssues), and Durum overview (relocated, same Analysis queries).
  */
 export default function HomeScreen() {
-  const navigation =
-    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const navigation = useNavigation<HomeNavigation>();
   const { user } = useAuth();
   const { tokens, toggle, mode } = useTheme();
-  const [openToday, setOpenToday] = useState(0);
-  const [closedToday, setClosedToday] = useState(0);
-  const [inProgress, setInProgress] = useState(0);
+  const [counts, setCounts] = useState<Record<HomeIssueStatKey, number>>({
+    open: 0,
+    in_progress: 0,
+    closed_today: 0,
+    approved_today: 0,
+    conditional_approved_today: 0,
+  });
   const [refreshing, setRefreshing] = useState(false);
   const [statsKey, setStatsKey] = useState(0);
 
@@ -62,24 +72,17 @@ export default function HomeScreen() {
       const res = await api.listIssues();
       const items = res.items ?? [];
       const now = new Date();
-      let open = 0;
-      let closed = 0;
-      let progress = 0;
-      for (const issue of items) {
-        if (issue.Status === 'OPEN') {
-          open += 1;
-        } else if (issue.Status === 'IN_PROGRESS') {
-          progress += 1;
-        } else if (
-          isClosedStatus(issue.Status) &&
-          isSameLocalDay(issue.UpdatedAt, now)
-        ) {
-          closed += 1;
-        }
-      }
-      setOpenToday(open);
-      setClosedToday(closed);
-      setInProgress(progress);
+      setCounts({
+        open: countHomeIssueStat(items, 'open', now),
+        in_progress: countHomeIssueStat(items, 'in_progress', now),
+        closed_today: countHomeIssueStat(items, 'closed_today', now),
+        approved_today: countHomeIssueStat(items, 'approved_today', now),
+        conditional_approved_today: countHomeIssueStat(
+          items,
+          'conditional_approved_today',
+          now,
+        ),
+      });
     } catch {
       // Stats are informational; DurumOverview surfaces its own errors.
     }
@@ -102,19 +105,9 @@ export default function HomeScreen() {
     navigation.navigate('VehicleStation', { vin: v.VIN });
   }
 
-  const statCards: { label: string; value: number; color: string }[] = [
-    { label: 'Açık (bugün)', value: openToday, color: statusColors.issueOpen },
-    {
-      label: 'Kapanan (bugün)',
-      value: closedToday,
-      color: statusColors.issueResolved,
-    },
-    {
-      label: 'Devam eden',
-      value: inProgress,
-      color: statusColors.issueInProgress,
-    },
-  ];
+  function openStat(key: HomeIssueStatKey) {
+    navigation.navigate('MyIssues', { homeStat: key });
+  }
 
   return (
     <Screen padded={false}>
@@ -173,16 +166,23 @@ export default function HomeScreen() {
         <View
           style={{
             flexDirection: 'row',
+            flexWrap: 'wrap',
             gap: 8,
             marginTop: 20,
           }}
         >
-          {statCards.map((s) => (
-            <View key={s.label} style={{ flex: 1 }}>
+          {STAT_CARDS.map((s) => (
+            <Pressable
+              key={s.key}
+              onPress={() => openStat(s.key)}
+              style={{ width: '31%', flexGrow: 1, minWidth: 100 }}
+              accessibilityRole="button"
+              accessibilityLabel={`${HOME_ISSUE_STAT_LABELS[s.key]}: ${counts[s.key]}`}
+            >
               <Card>
                 <View style={{ alignItems: 'center', paddingVertical: 4 }}>
                   <Text style={{ color: s.color, fontSize: 22, fontWeight: '700' }}>
-                    {s.value}
+                    {counts[s.key]}
                   </Text>
                   <Text
                     style={{
@@ -192,11 +192,11 @@ export default function HomeScreen() {
                       marginTop: 4,
                     }}
                   >
-                    {s.label}
+                    {HOME_ISSUE_STAT_LABELS[s.key]}
                   </Text>
                 </View>
               </Card>
-            </View>
+            </Pressable>
           ))}
         </View>
 
