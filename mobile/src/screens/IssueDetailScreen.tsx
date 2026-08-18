@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import {
   Image,
+  Modal,
   Pressable,
   ScrollView,
   Text,
@@ -65,6 +66,7 @@ export default function IssueDetailScreen() {
   const [solutionText, setSolutionText] = useState('');
   const [resolutionPhoto, setResolutionPhoto] = useState<LocalFile | null>(null);
   const [resolutionUploaded, setResolutionUploaded] = useState(false);
+  const [viewerUri, setViewerUri] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setError(null);
@@ -260,23 +262,32 @@ export default function IssueDetailScreen() {
               {reportPhotos.length === 0 ? (
                 <Subtitle>Rapor fotoğrafı yok</Subtitle>
               ) : (
-                reportPhotos.map((p) => (
-                  <View key={p.id} style={{ marginTop: 12 }}>
-                    <Image
-                      source={{ uri: mediaFileUrl(p.storage_path) }}
-                      style={{
-                        width: '100%',
-                        height: 200,
-                        borderRadius: 10,
-                        backgroundColor: tokens.bgSurface2,
-                      }}
-                      resizeMode="cover"
-                    />
-                    <Text style={{ color: tokens.textSecondary, marginTop: 4, fontSize: 12 }}>
-                      {p.file_name}
-                    </Text>
-                  </View>
-                ))
+                reportPhotos.map((p) => {
+                  const uri = mediaFileUrl(p.storage_path);
+                  return (
+                    <Pressable
+                      key={p.id}
+                      onPress={() => setViewerUri(uri)}
+                      style={{ marginTop: 12 }}
+                      accessibilityRole="imagebutton"
+                      accessibilityLabel={`Enlarge ${p.file_name}`}
+                    >
+                      <Image
+                        source={{ uri }}
+                        style={{
+                          width: '100%',
+                          height: 200,
+                          borderRadius: 10,
+                          backgroundColor: tokens.bgSurface2,
+                        }}
+                        resizeMode="cover"
+                      />
+                      <Text style={{ color: tokens.textSecondary, marginTop: 4, fontSize: 12 }}>
+                        {p.file_name}
+                      </Text>
+                    </Pressable>
+                  );
+                })
               )}
             </Card>
 
@@ -305,25 +316,34 @@ export default function IssueDetailScreen() {
                   {resolutionPhotos.length === 0 ? (
                     <Subtitle>Çözüm fotoğrafı yok</Subtitle>
                   ) : (
-                    resolutionPhotos.map((p) => (
-                      <View key={p.id} style={{ marginTop: 12 }}>
-                        <Image
-                          source={{ uri: mediaFileUrl(p.storage_path) }}
-                          style={{
-                            width: '100%',
-                            height: 200,
-                            borderRadius: 10,
-                            backgroundColor: tokens.bgSurface2,
-                          }}
-                          resizeMode="cover"
-                        />
-                        <Text
-                          style={{ color: tokens.textSecondary, marginTop: 4, fontSize: 12 }}
+                    resolutionPhotos.map((p) => {
+                      const uri = mediaFileUrl(p.storage_path);
+                      return (
+                        <Pressable
+                          key={p.id}
+                          onPress={() => setViewerUri(uri)}
+                          style={{ marginTop: 12 }}
+                          accessibilityRole="imagebutton"
+                          accessibilityLabel={`Enlarge ${p.file_name}`}
                         >
-                          {p.file_name}
-                        </Text>
-                      </View>
-                    ))
+                          <Image
+                            source={{ uri }}
+                            style={{
+                              width: '100%',
+                              height: 200,
+                              borderRadius: 10,
+                              backgroundColor: tokens.bgSurface2,
+                            }}
+                            resizeMode="cover"
+                          />
+                          <Text
+                            style={{ color: tokens.textSecondary, marginTop: 4, fontSize: 12 }}
+                          >
+                            {p.file_name}
+                          </Text>
+                        </Pressable>
+                      );
+                    })
                   )}
                 </Card>
               </>
@@ -488,6 +508,39 @@ export default function IssueDetailScreen() {
         ) : null}
         {error ? <ErrorText>{error}</ErrorText> : null}
       </ScrollView>
+
+      <Modal
+        visible={!!viewerUri}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setViewerUri(null)}
+      >
+        <Pressable
+          style={{
+            flex: 1,
+            backgroundColor: 'rgba(0,0,0,0.92)',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+          onPress={() => setViewerUri(null)}
+        >
+          <Pressable
+            onPress={() => setViewerUri(null)}
+            style={{ position: 'absolute', top: 48, right: 20, zIndex: 2, minHeight: 44 }}
+            accessibilityRole="button"
+            accessibilityLabel="Close photo"
+          >
+            <Text style={{ color: '#fff', fontSize: 16, fontWeight: '600' }}>Kapat</Text>
+          </Pressable>
+          {viewerUri ? (
+            <Image
+              source={{ uri: viewerUri }}
+              style={{ width: '100%', height: '80%' }}
+              resizeMode="contain"
+            />
+          ) : null}
+        </Pressable>
+      </Modal>
     </Screen>
   );
 }
