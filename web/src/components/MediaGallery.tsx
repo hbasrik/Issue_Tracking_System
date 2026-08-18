@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   api,
+  mediaFileUrl,
   type MediaAttachment,
   type MediaEntityType,
 } from '../lib/api';
@@ -16,6 +17,7 @@ export function MediaGallery({ entityType, entityId }: MediaGalleryProps) {
   const [items, setItems] = useState<MediaAttachment[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [lightbox, setLightbox] = useState<MediaAttachment | null>(null);
 
   const load = useCallback(async () => {
     setError(null);
@@ -31,6 +33,15 @@ export function MediaGallery({ entityType, entityId }: MediaGalleryProps) {
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    if (!lightbox) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setLightbox(null);
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [lightbox]);
 
   async function onFile(file: File | undefined) {
     if (!file) return;
@@ -63,6 +74,7 @@ export function MediaGallery({ entityType, entityId }: MediaGalleryProps) {
         <input
           ref={inputRef}
           type="file"
+          accept="image/*"
           className="hidden"
           onChange={(e) => void onFile(e.target.files?.[0])}
         />
@@ -79,39 +91,73 @@ export function MediaGallery({ entityType, entityId }: MediaGalleryProps) {
       )}
       {items.length > 0 && (
         <ul className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
-          {items.map((item) => (
-            <li
-              key={item.id}
-              className="overflow-hidden rounded-lg border bg-[var(--bg-page)] p-3"
-              style={{ borderColor: 'var(--border)' }}
-            >
-              <Thumbnail mime={item.mime_type} name={item.file_name} />
-              <p className="mt-2 truncate text-[13px]" title={item.file_name}>
-                {item.file_name}
-              </p>
-              <p className="text-[12px] text-[var(--text-secondary)]">
-                {formatSize(item.file_size)}
-              </p>
-            </li>
-          ))}
+          {items.map((item) => {
+            const isImage = item.mime_type?.startsWith('image/');
+            return (
+              <li key={item.id}>
+                <button
+                  type="button"
+                  disabled={!isImage}
+                  onClick={() => isImage && setLightbox(item)}
+                  className="w-full overflow-hidden rounded-lg border bg-[var(--bg-page)] text-left disabled:cursor-default"
+                  style={{ borderColor: 'var(--border)' }}
+                  aria-label={isImage ? `Enlarge ${item.file_name}` : item.file_name}
+                >
+                  {isImage ? (
+                    <img
+                      src={mediaFileUrl(item.storage_path)}
+                      alt={item.file_name}
+                      className="h-24 w-full object-cover"
+                    />
+                  ) : (
+                    <div
+                      className="flex h-24 items-center justify-center text-[12px] font-medium"
+                      style={{
+                        backgroundColor: 'var(--bg-surface-2)',
+                        color: 'var(--text-secondary)',
+                      }}
+                    >
+                      {extOf(item.file_name).toUpperCase() || 'FILE'}
+                    </div>
+                  )}
+                  <div className="p-2">
+                    <p className="truncate text-[13px]" title={item.file_name}>
+                      {item.file_name}
+                    </p>
+                    <p className="text-[12px] text-[var(--text-secondary)]">
+                      {formatSize(item.file_size)}
+                    </p>
+                  </div>
+                </button>
+              </li>
+            );
+          })}
         </ul>
       )}
-    </div>
-  );
-}
 
-function Thumbnail({ mime, name }: { mime: string; name: string }) {
-  const isImage = mime.startsWith('image/');
-  return (
-    <div
-      className="flex h-20 items-center justify-center rounded-md text-[12px] font-medium"
-      style={{
-        backgroundColor: 'var(--bg-surface-2)',
-        color: isImage ? 'var(--accent)' : 'var(--text-secondary)',
-      }}
-      aria-hidden
-    >
-      {isImage ? 'IMG' : extOf(name).toUpperCase() || 'FILE'}
+      {lightbox ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Photo viewer"
+          onClick={() => setLightbox(null)}
+        >
+          <button
+            type="button"
+            className="absolute right-4 top-4 rounded-lg bg-white/10 px-3 py-2 text-[13px] text-white"
+            onClick={() => setLightbox(null)}
+          >
+            Close
+          </button>
+          <img
+            src={mediaFileUrl(lightbox.storage_path)}
+            alt={lightbox.file_name}
+            className="max-h-[90vh] max-w-[95vw] rounded-lg object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      ) : null}
     </div>
   );
 }

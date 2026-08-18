@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { api, type Issue, type Vehicle } from '../lib/api';
+import {
+  api,
+  formatIssueCreatedAt,
+  mediaFileUrl,
+  type Issue,
+  type Vehicle,
+} from '../lib/api';
 import { StatusBadge } from '../components/StatusBadge';
 import { SeverityIndicator } from '../components/SeverityIndicator';
 import { IssueActions } from '../components/VehicleIssuesPanel';
@@ -13,6 +19,28 @@ import {
   DesktopTableShell,
   MobileCardStack,
 } from '../components/DataCard';
+
+function IssueThumb({ path }: { path?: string }) {
+  if (!path) {
+    return (
+      <div
+        className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md text-[11px] text-[var(--text-secondary)]"
+        style={{ backgroundColor: 'var(--bg-surface-2)' }}
+        aria-hidden
+      >
+        —
+      </div>
+    );
+  }
+  return (
+    <img
+      src={mediaFileUrl(path)}
+      alt=""
+      className="h-14 w-14 shrink-0 rounded-md object-cover"
+      style={{ backgroundColor: 'var(--bg-surface-2)' }}
+    />
+  );
+}
 
 /** Issues list + detail — quality approval and Şartlı Onay are Manager-only. */
 export default function IssuesPage() {
@@ -28,7 +56,14 @@ export default function IssuesPage() {
     setError(null);
     try {
       const res = await api.listIssues(statusFilter || undefined);
-      setItems(res.items ?? []);
+      // API returns created_at DESC; keep a client sort as a safety net.
+      const list = (res.items ?? []).slice().sort((a, b) => {
+        const ta = Date.parse(a.CreatedAt || a.IssueDate || '') || 0;
+        const tb = Date.parse(b.CreatedAt || b.IssueDate || '') || 0;
+        if (tb !== ta) return tb - ta;
+        return b.ID - a.ID;
+      });
+      setItems(list);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load issues');
       setItems([]);
@@ -119,22 +154,30 @@ export default function IssuesPage() {
                 selected={selectedId === r.ID}
                 onClick={() => setSelectedId(r.ID)}
               >
-                <DataCardField label="ID">#{r.ID}</DataCardField>
-                <DataCardField label="VIN">
-                  <Link
-                    to={`/vehicles/${r.VIN}`}
-                    className="text-[var(--accent)] hover:underline"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    …{r.VIN.slice(-5)}
-                  </Link>
-                </DataCardField>
-                <DataCardField label="Severity">
-                  <SeverityIndicator severity={r.Severity} />
-                </DataCardField>
-                <DataCardField label="Status">
-                  <StatusBadge kind="issue" value={r.Status} />
-                </DataCardField>
+                <div className="flex gap-3">
+                  <IssueThumb path={r.ReportPhotoPath} />
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <DataCardField label="ID">#{r.ID}</DataCardField>
+                    <DataCardField label="Created">
+                      {formatIssueCreatedAt(r.CreatedAt || r.IssueDate)}
+                    </DataCardField>
+                    <DataCardField label="VIN">
+                      <Link
+                        to={`/vehicles/${r.VIN}`}
+                        className="text-[var(--accent)] hover:underline"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        …{r.VIN.slice(-5)}
+                      </Link>
+                    </DataCardField>
+                    <DataCardField label="Severity">
+                      <SeverityIndicator severity={r.Severity} />
+                    </DataCardField>
+                    <DataCardField label="Status">
+                      <StatusBadge kind="issue" value={r.Status} />
+                    </DataCardField>
+                  </div>
+                </div>
               </DataCard>
             ))}
           </MobileCardStack>
@@ -146,7 +189,9 @@ export default function IssuesPage() {
                   className="border-b text-[13px] text-[var(--text-secondary)]"
                   style={{ borderColor: 'var(--border)' }}
                 >
+                  <th className="px-4 py-3">Photo</th>
                   <th className="px-4 py-3">ID</th>
+                  <th className="px-4 py-3">Created</th>
                   <th className="px-4 py-3">VIN</th>
                   <th className="px-4 py-3">Severity</th>
                   <th className="px-4 py-3">Status</th>
@@ -155,7 +200,7 @@ export default function IssuesPage() {
               <tbody>
                 {items.length === 0 && (
                   <tr>
-                    <td colSpan={4} className="px-4 py-6 text-[var(--text-secondary)]">
+                    <td colSpan={6} className="px-4 py-6 text-[var(--text-secondary)]">
                       No issues
                     </td>
                   </tr>
@@ -173,7 +218,13 @@ export default function IssuesPage() {
                     }}
                     onClick={() => setSelectedId(r.ID)}
                   >
+                    <td className="px-4 py-3">
+                      <IssueThumb path={r.ReportPhotoPath} />
+                    </td>
                     <td className="px-4 py-3">#{r.ID}</td>
+                    <td className="px-4 py-3 text-[13px] text-[var(--text-secondary)]">
+                      {formatIssueCreatedAt(r.CreatedAt || r.IssueDate)}
+                    </td>
                     <td className="px-4 py-3">
                       <Link
                         to={`/vehicles/${r.VIN}`}
@@ -213,6 +264,9 @@ export default function IssuesPage() {
                 vehicleNumber={vehicle?.VehicleNumber}
                 compact
               />
+              <p className="text-[13px] text-[var(--text-secondary)]">
+                Created {formatIssueCreatedAt(selected.CreatedAt || selected.IssueDate)}
+              </p>
               <p>
                 <span className="text-[var(--text-secondary)]">Station:</span>{' '}
                 {selected.StationID ?? '—'}
