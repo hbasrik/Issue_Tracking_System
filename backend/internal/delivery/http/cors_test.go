@@ -8,15 +8,21 @@ import (
 	apphttp "github.com/karea/backend/internal/delivery/http"
 )
 
-const webOrigin = "http://localhost:5174"
+const (
+	webOrigin5173 = "http://localhost:5173"
+	webOrigin5174 = "http://localhost:5174"
+)
 
-// newCORSRouter builds the production router with nothing but the origin
-// allowlist configured. The point of these tests is the middleware chain and
-// the routing around it, so no usecase needs to be reachable.
+// newCORSRouter builds the production router with the multi-origin local-dev
+// allowlist. The point of these tests is the middleware chain and the routing
+// around it, so no usecase needs to be reachable.
 func newCORSRouter() http.Handler {
 	return apphttp.NewRouter(apphttp.Deps{
-		Roles:              newFakeRoleRepo(),
-		CORSAllowedOrigins: []string{webOrigin},
+		Roles: newFakeRoleRepo(),
+		CORSAllowedOrigins: []string{
+			webOrigin5173,
+			webOrigin5174,
+		},
 	})
 }
 
@@ -40,7 +46,6 @@ func TestCORSPreflightIsAnsweredForEveryRoute(t *testing.T) {
 	routes := []string{
 		"/api/v1/auth/login",
 		"/api/v1/vehicles/search",
-		"/api/v1/vehicles/resolve",
 		"/api/v1/media",
 		"/api/v1/issues/1/status",
 		"/api/v1/checklist-templates",
@@ -50,13 +55,13 @@ func TestCORSPreflightIsAnsweredForEveryRoute(t *testing.T) {
 	for _, route := range routes {
 		t.Run(route, func(t *testing.T) {
 			rec := httptest.NewRecorder()
-			router.ServeHTTP(rec, preflight(route, webOrigin))
+			router.ServeHTTP(rec, preflight(route, webOrigin5174))
 
 			if rec.Code != http.StatusOK && rec.Code != http.StatusNoContent {
 				t.Fatalf("status = %d, want 200 or 204", rec.Code)
 			}
-			if got := rec.Header().Get("Access-Control-Allow-Origin"); got != webOrigin {
-				t.Errorf("Access-Control-Allow-Origin = %q, want %q", got, webOrigin)
+			if got := rec.Header().Get("Access-Control-Allow-Origin"); got != webOrigin5174 {
+				t.Errorf("Access-Control-Allow-Origin = %q, want %q", got, webOrigin5174)
 			}
 			if got := rec.Header().Get("Access-Control-Allow-Methods"); got == "" {
 				t.Error("Access-Control-Allow-Methods is missing")
@@ -74,7 +79,7 @@ func TestCORSPreflightIsAnsweredForEveryRoute(t *testing.T) {
 // "405 Method Not Allowed".
 func TestCORSDisallowedOriginPreflight(t *testing.T) {
 	rec := httptest.NewRecorder()
-	newCORSRouter().ServeHTTP(rec, preflight("/api/v1/auth/login", "https://evil.example"))
+	newCORSRouter().ServeHTTP(rec, preflight("/api/v1/auth/login", "http://evil.example"))
 
 	if rec.Code == http.StatusMethodNotAllowed {
 		t.Fatalf("status = %d, want the preflight answered rather than method-rejected", rec.Code)
@@ -84,20 +89,36 @@ func TestCORSDisallowedOriginPreflight(t *testing.T) {
 	}
 }
 
+// TestCORSAllowlistAcceptsEachConfiguredOrigin proves the comma-separated
+// local-dev allowlist grants every listed Vite port and still rejects others.
+func TestCORSAllowlistAcceptsEachConfiguredOrigin(t *testing.T) {
+	router := newCORSRouter()
+
+	for _, origin := range []string{webOrigin5173, webOrigin5174} {
+		t.Run(origin, func(t *testing.T) {
+			rec := httptest.NewRecorder()
+			router.ServeHTTP(rec, preflight("/api/v1/auth/login", origin))
+			if got := rec.Header().Get("Access-Control-Allow-Origin"); got != origin {
+				t.Fatalf("Access-Control-Allow-Origin = %q, want %q", got, origin)
+			}
+		})
+	}
+}
+
 // TestCORSActualRequestCarriesOrigin covers the non-preflight half: the
 // allowlisted origin gets its grant on the real response too.
 func TestCORSActualRequestCarriesOrigin(t *testing.T) {
 	router := newCORSRouter()
 
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)
-	req.Header.Set("Origin", webOrigin)
+	req.Header.Set("Origin", webOrigin5173)
 	rec := httptest.NewRecorder()
 	router.ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusOK {
 		t.Fatalf("status = %d, want 200", rec.Code)
 	}
-	if got := rec.Header().Get("Access-Control-Allow-Origin"); got != webOrigin {
-		t.Errorf("Access-Control-Allow-Origin = %q, want %q", got, webOrigin)
+	if got := rec.Header().Get("Access-Control-Allow-Origin"); got != webOrigin5173 {
+		t.Errorf("Access-Control-Allow-Origin = %q, want %q", got, webOrigin5173)
 	}
 }

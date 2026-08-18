@@ -31,7 +31,10 @@ func Load() Config {
 		Port:               envOrDefault("PORT", "8080"),
 		DatabaseURL:        os.Getenv("DATABASE_URL"),
 		JWTSecret:          os.Getenv("JWT_SECRET"),
-		CORSAllowedOrigins: parseCSVOrigins(envOrDefault("CORS_ALLOWED_ORIGIN", "http://localhost:5173")),
+		CORSAllowedOrigins: parseCSVOrigins(envOrDefault(
+			"CORS_ALLOWED_ORIGIN",
+			"http://localhost:5173,http://localhost:5174",
+		)),
 		UploadDir:          envOrDefault("UPLOAD_DIR", "uploads"),
 	}
 }
@@ -72,7 +75,10 @@ func envOrDefault(key, fallback string) string {
 	return fallback
 }
 
-// parseCSVOrigins splits a comma-separated origin list and trims whitespace.
+// parseCSVOrigins splits a comma-separated exact-origin allowlist and trims
+// whitespace. Empty segments are dropped. Callers must pass concrete origins
+// (e.g. http://localhost:5173,http://localhost:5174) — wildcards are not
+// supported and must not be introduced here.
 func parseCSVOrigins(raw string) []string {
 	parts := strings.Split(raw, ",")
 	out := make([]string, 0, len(parts))
