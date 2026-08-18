@@ -1,42 +1,41 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import {
   api,
   type DailyPendingIssue,
+  type Issue,
   type StationDefectRate,
   type StationMTTR,
-  type VehicleSeverityBreakdown,
 } from '../lib/api';
-import { SeverityIndicator } from '../components/SeverityIndicator';
-import {
-  DataCard,
-  DataCardField,
-  MobileCardStack,
-} from '../components/DataCard';
+import { IssueList } from '../components/IssueList';
 
-/** Home / Overview — §4.2: KPI strip + attention-needed table. */
+function isAttentionIssue(issue: Issue): boolean {
+  const open = issue.Status === 'OPEN' || issue.Status === 'IN_PROGRESS';
+  return open && issue.Severity === 'CRITICAL';
+}
+
+/** Home / Overview — §4.2: KPI strip + attention-needed issue cards. */
 export default function HomePage() {
   const [pending, setPending] = useState<DailyPendingIssue[]>([]);
   const [mttr, setMttr] = useState<StationMTTR[]>([]);
   const [defects, setDefects] = useState<StationDefectRate[]>([]);
-  const [severity, setSeverity] = useState<VehicleSeverityBreakdown[]>([]);
+  const [attention, setAttention] = useState<Issue[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const [p, m, d, s] = await Promise.all([
+        const [p, m, d, issues] = await Promise.all([
           api.dailyPendingIssues({}),
           api.mttr({}),
           api.defectRatePerStation({}),
-          api.vehicleSeverityBreakdown({}),
+          api.listIssues(),
         ]);
         if (cancelled) return;
         setPending(p.items ?? []);
         setMttr(m.items ?? []);
         setDefects(d.items ?? []);
-        setSeverity(s.items ?? []);
+        setAttention((issues.items ?? []).filter(isAttentionIssue));
       } catch (err) {
         if (!cancelled) {
           setError(err instanceof Error ? err.message : 'Failed to load KPIs');
@@ -56,13 +55,12 @@ export default function HomePage() {
         mttr.length
       : 0;
   const totalDefects = defects.reduce((sum, r) => sum + r.IssueCount, 0);
-  const criticalVehicles = severity.filter((v) => v.CriticalCount > 0);
 
   return (
     <section>
       <h1 className="text-xl font-semibold sm:text-2xl">Home / Overview</h1>
       <p className="mt-1 text-[13px] text-[var(--text-secondary)]">
-        KPI summary and vehicles needing attention
+        KPI summary and issues needing attention
       </p>
 
       {error && (
@@ -81,102 +79,21 @@ export default function HomePage() {
         <KpiCard title="Defect Rate" value={String(totalDefects)} hint="total issues across stations" />
       </div>
 
-      <div
-        className="mt-8 rounded-xl border bg-[var(--bg-surface-1)] p-4 sm:p-5"
-        style={{ borderColor: 'var(--border)' }}
-      >
-        <h2 className="text-lg font-semibold">Dikkat Gerektiren Araçlar</h2>
+      <div className="mt-8">
+        <h2 className="text-lg font-semibold">Dikkat Edilmesi Gerekenler</h2>
         <p className="mt-1 text-[13px] text-[var(--text-secondary)]">
-          Vehicles with open critical issues
+          Open critical issues — click a card to open its detail
         </p>
-
         <div className="mt-4">
-          <MobileCardStack
-            empty={
-              criticalVehicles.length === 0 ? (
-                <p className="text-[15px] text-[var(--text-secondary)]">
-                  No critical open issues
-                </p>
-              ) : null
-            }
-          >
-            {criticalVehicles.map((row) => (
-              <Link key={row.VIN} to={`/vehicles/${row.VIN}`} className="block">
-                <DataCard>
-                  <p className="font-medium text-[var(--accent)]">
-                    …{row.VIN.slice(-5)}
-                  </p>
-                  <p className="break-all text-[12px] text-[var(--text-secondary)]">
-                    {row.VIN}
-                  </p>
-                  <DataCardField label="Total open">
-                    {row.TotalOpenIssues}
-                  </DataCardField>
-                  <DataCardField label="Critical">
-                    <SeverityIndicator severity="CRITICAL" count={row.CriticalCount} />
-                  </DataCardField>
-                  <DataCardField label="Medium">
-                    <SeverityIndicator severity="MEDIUM" count={row.MediumCount} />
-                  </DataCardField>
-                  <DataCardField label="Low">
-                    <SeverityIndicator severity="LOW" count={row.LowCount} />
-                  </DataCardField>
-                </DataCard>
-              </Link>
-            ))}
-          </MobileCardStack>
-
-          <div className="hidden sm:block">
-            <table className="w-full text-left text-[15px]">
-              <thead>
-                <tr className="text-[13px] text-[var(--text-secondary)]">
-                  <th className="pb-2 font-medium">VIN</th>
-                  <th className="pb-2 font-medium">Total open</th>
-                  <th className="pb-2 font-medium">Critical</th>
-                  <th className="pb-2 font-medium">Medium</th>
-                  <th className="pb-2 font-medium">Low</th>
-                </tr>
-              </thead>
-              <tbody>
-                {criticalVehicles.length === 0 && (
-                  <tr>
-                    <td colSpan={5} className="py-4 text-[var(--text-secondary)]">
-                      No critical open issues
-                    </td>
-                  </tr>
-                )}
-                {criticalVehicles.map((row) => (
-                  <tr
-                    key={row.VIN}
-                    className="border-t"
-                    style={{ borderColor: 'var(--border)' }}
-                  >
-                    <td className="py-2.5">
-                      <Link
-                        to={`/vehicles/${row.VIN}`}
-                        className="font-medium text-[var(--accent)] hover:underline"
-                      >
-                        …{row.VIN.slice(-5)}
-                      </Link>
-                      <span className="ml-2 break-all text-[13px] text-[var(--text-secondary)]">
-                        {row.VIN}
-                      </span>
-                    </td>
-                    <td className="py-2.5">{row.TotalOpenIssues}</td>
-                    <td className="py-2.5">
-                      <SeverityIndicator severity="CRITICAL" count={row.CriticalCount} />
-                    </td>
-                    <td className="py-2.5">
-                      <SeverityIndicator severity="MEDIUM" count={row.MediumCount} />
-                    </td>
-                    <td className="py-2.5">
-                      <SeverityIndicator severity="LOW" count={row.LowCount} />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <IssueList
+            items={attention}
+            emptyLabel="No critical open issues"
+            onStatusChanged={() => {
+              void api.listIssues().then((res) => {
+                setAttention((res.items ?? []).filter(isAttentionIssue));
+              });
+            }}
+          />
         </div>
       </div>
     </section>

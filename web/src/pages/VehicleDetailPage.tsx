@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { api, ApiError, type Station, type Vehicle } from '../lib/api';
 import { StatusBadge } from '../components/StatusBadge';
 import { VehicleIdentity } from '../components/VehicleIdentity';
@@ -9,6 +9,17 @@ import { MediaGallery } from '../components/MediaGallery';
 import { VehicleIssuesPanel } from '../components/VehicleIssuesPanel';
 
 type Tab = 'overview' | 'eol' | 'shipment' | 'test' | 'issues' | 'audit';
+
+function isTab(value: string | null): value is Tab {
+  return (
+    value === 'overview' ||
+    value === 'eol' ||
+    value === 'shipment' ||
+    value === 'test' ||
+    value === 'issues' ||
+    value === 'audit'
+  );
+}
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'overview', label: 'Overview' },
@@ -30,7 +41,11 @@ const STATUS_OPTIONS = [
 /** Vehicle detail with Overview / EoL / Shipment / Test / Issues / Audit Log tabs. */
 export default function VehicleDetailPage() {
   const { vin = '' } = useParams();
-  const [tab, setTab] = useState<Tab>('overview');
+  const [searchParams] = useSearchParams();
+  const [tab, setTab] = useState<Tab>(() => {
+    const fromUrl = searchParams.get('tab');
+    return isTab(fromUrl) ? fromUrl : 'overview';
+  });
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
   const [stations, setStations] = useState<Station[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -43,6 +58,11 @@ export default function VehicleDetailPage() {
     setVehicle(v);
     setStatusDraft(v.CurrentGlobalStatus);
   }, [vin]);
+
+  useEffect(() => {
+    const fromUrl = searchParams.get('tab');
+    setTab(isTab(fromUrl) ? fromUrl : 'overview');
+  }, [vin, searchParams]);
 
   useEffect(() => {
     let cancelled = false;
