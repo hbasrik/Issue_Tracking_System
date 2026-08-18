@@ -1,7 +1,8 @@
 export type RootStackParamList = {
   Login: undefined;
   Unauthorized: undefined;
-  MainTabs: undefined;
+  /** Drawer shell: Home, Vehicles, My Issues, Profile. */
+  MainDrawer: undefined;
   VehicleStation: { vin: string };
   IssueReport: {
     vin: string;
@@ -10,17 +11,17 @@ export type RootStackParamList = {
     stationName: string;
     stationStepName: string;
   };
+  /** Standalone MANUAL Hata Bildir — no checklist/step source. */
+  ManualIssueReport: undefined;
   EOLChecklist: { vin: string };
   ShipmentChecklist: { vin: string };
   TestChecklist: { vin: string };
   IssueDetail: { id: number };
 };
 
-export type MainTabParamList = {
+export type MainDrawerParamList = {
   Home: undefined;
-  Search: undefined;
-  Durum: undefined;
-  MyStation: undefined;
+  Vehicles: undefined;
   MyIssues: undefined;
   Profile: undefined;
 };

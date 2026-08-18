@@ -1,90 +1,66 @@
-import { Text } from 'react-native';
 import { NavigationContainer, DarkTheme, DefaultTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createDrawerNavigator } from '@react-navigation/drawer';
 import { useAuth } from '../auth/AuthProvider';
 import { useTheme } from '../theme/ThemeProvider';
-import type { MainTabParamList, RootStackParamList } from './types';
+import type { MainDrawerParamList, RootStackParamList } from './types';
 
 import LoginScreen from '../screens/LoginScreen';
 import UnauthorizedScreen from '../screens/UnauthorizedScreen';
 import HomeScreen from '../screens/HomeScreen';
-import SearchScreen from '../screens/SearchScreen';
-import MyStationScreen from '../screens/MyStationScreen';
-import DurumScreen from '../screens/DurumScreen';
+import VehiclesScreen from '../screens/VehiclesScreen';
 import MyIssuesScreen from '../screens/MyIssuesScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import VehicleStationScreen from '../screens/VehicleStationScreen';
 import IssueReportScreen from '../screens/IssueReportScreen';
+import ManualIssueReportScreen from '../screens/ManualIssueReportScreen';
 import EOLChecklistScreen from '../screens/EOLChecklistScreen';
 import ShipmentChecklistScreen from '../screens/ShipmentChecklistScreen';
 import TestChecklistScreen from '../screens/TestChecklistScreen';
 import IssueDetailScreen from '../screens/IssueDetailScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
-const Tab = createBottomTabNavigator<MainTabParamList>();
+const Drawer = createDrawerNavigator<MainDrawerParamList>();
 
-function TabLabel({ label, color }: { label: string; color: string }) {
-  return <Text style={{ fontSize: 11, color, fontWeight: '600' }}>{label}</Text>;
-}
-
-function MainTabs() {
+function MainDrawer() {
   const { tokens } = useTheme();
   return (
-    <Tab.Navigator
+    <Drawer.Navigator
       screenOptions={{
-        headerShown: false,
-        tabBarStyle: {
+        headerStyle: { backgroundColor: tokens.bgSurface1 },
+        headerTintColor: tokens.textPrimary,
+        headerTitleStyle: { fontWeight: '600' },
+        drawerStyle: {
           backgroundColor: tokens.bgSurface1,
-          borderTopColor: tokens.border,
+          width: 280,
         },
-        tabBarActiveTintColor: tokens.accent,
-        tabBarInactiveTintColor: tokens.textSecondary,
+        drawerActiveTintColor: tokens.accent,
+        drawerInactiveTintColor: tokens.textSecondary,
+        drawerActiveBackgroundColor: tokens.bgSurface2,
+        drawerLabelStyle: { fontWeight: '600', fontSize: 15 },
       }}
     >
-      <Tab.Screen
+      <Drawer.Screen
         name="Home"
         component={HomeScreen}
-        options={{
-          tabBarLabel: ({ color }) => <TabLabel label="Home" color={color} />,
-        }}
+        options={{ title: 'Home', drawerLabel: 'Home' }}
       />
-      <Tab.Screen
-        name="Search"
-        component={SearchScreen}
-        options={{
-          tabBarLabel: ({ color }) => <TabLabel label="Ara" color={color} />,
-        }}
+      <Drawer.Screen
+        name="Vehicles"
+        component={VehiclesScreen}
+        options={{ title: 'Vehicles', drawerLabel: 'Vehicles' }}
       />
-      <Tab.Screen
-        name="Durum"
-        component={DurumScreen}
-        options={{
-          tabBarLabel: ({ color }) => <TabLabel label="Durum" color={color} />,
-        }}
-      />
-      <Tab.Screen
-        name="MyStation"
-        component={MyStationScreen}
-        options={{
-          tabBarLabel: ({ color }) => <TabLabel label="İstasyon" color={color} />,
-        }}
-      />
-      <Tab.Screen
+      <Drawer.Screen
         name="MyIssues"
         component={MyIssuesScreen}
-        options={{
-          tabBarLabel: ({ color }) => <TabLabel label="Issues" color={color} />,
-        }}
+        options={{ title: 'My Issues', drawerLabel: 'My Issues' }}
       />
-      <Tab.Screen
+      <Drawer.Screen
         name="Profile"
         component={ProfileScreen}
-        options={{
-          tabBarLabel: ({ color }) => <TabLabel label="Profil" color={color} />,
-        }}
+        options={{ title: 'Profile', drawerLabel: 'Profile' }}
       />
-    </Tab.Navigator>
+    </Drawer.Navigator>
   );
 }
 
@@ -128,8 +104,8 @@ export function RootNavigator() {
         ) : (
           <>
             <Stack.Screen
-              name="MainTabs"
-              component={MainTabs}
+              name="MainDrawer"
+              component={MainDrawer}
               options={{ headerShown: false }}
             />
             <Stack.Screen
@@ -141,6 +117,11 @@ export function RootNavigator() {
               name="IssueReport"
               component={IssueReportScreen}
               options={{ title: 'Report Issue' }}
+            />
+            <Stack.Screen
+              name="ManualIssueReport"
+              component={ManualIssueReportScreen}
+              options={{ title: 'Hata Bildir' }}
             />
             <Stack.Screen
               name="EOLChecklist"
