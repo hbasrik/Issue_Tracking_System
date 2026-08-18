@@ -29,7 +29,20 @@ const issueColumns = `i.id, i.vin, i.source_type, i.source_station_step_id, i.so
 	        i.finish_reporter_id, i.finish_date, i.approve_reporter_id, i.approve_date,
 	        i.conditional_approve_reporter_id, i.conditional_approve_date,
 	        COALESCE(i.issue_picture_done_url, ''), COALESCE(i.solution_description, ''),
-	        i.created_at, i.updated_at, COALESCE(u.full_name, '')`
+	        i.created_at, i.updated_at, COALESCE(u.full_name, ''),
+	        COALESCE(report_photo.storage_path, '')`
+
+// issueFrom joins the reporter name and the earliest report photo
+// (media_attachments entity_type=ISSUE) used as a list thumbnail.
+const issueFrom = `FROM issue_list i
+		 LEFT JOIN users u ON u.id = i.issue_reporter_id
+		 LEFT JOIN LATERAL (
+		     SELECT m.storage_path
+		     FROM media_attachments m
+		     WHERE m.entity_type = 'ISSUE' AND m.entity_id = i.id::text
+		     ORDER BY m.uploaded_at ASC, m.id ASC
+		     LIMIT 1
+		 ) report_photo ON true`
 
 // scanIssue reads one issue row in issueColumns order (aliased as i.*, plus reporter name).
 func scanIssue(row pgx.Row) (*domain.Issue, error) {
@@ -42,7 +55,7 @@ func scanIssue(row pgx.Row) (*domain.Issue, error) {
 		&i.FinishReporterID, &i.FinishDate, &i.ApproveReporterID, &i.ApproveDate,
 		&i.ConditionalApproveReporterID, &i.ConditionalApproveDate,
 		&i.IssuePictureDoneURL, &i.SolutionDescription, &i.CreatedAt, &i.UpdatedAt,
-		&i.ReporterName,
+		&i.ReporterName, &i.ReportPhotoPath,
 	); err != nil {
 		return nil, err
 	}
@@ -72,8 +85,7 @@ func (r *IssueRepo) Create(ctx context.Context, issue *domain.Issue) (int64, err
 func (r *IssueRepo) GetByID(ctx context.Context, id int64) (*domain.Issue, error) {
 	row := executor(ctx, r.pool).QueryRow(ctx,
 		`SELECT `+issueColumns+`
-		 FROM issue_list i
-		 LEFT JOIN users u ON u.id = i.issue_reporter_id
+		 `+issueFrom+`
 		 WHERE i.id = $1`, id)
 	i, err := scanIssue(row)
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -90,11 +102,10 @@ func (r *IssueRepo) ListForUser(ctx context.Context, userID int, status *domain.
 	}
 	rows, err := r.pool.Query(ctx,
 		`SELECT `+issueColumns+`
-		 FROM issue_list i
-		 LEFT JOIN users u ON u.id = i.issue_reporter_id
+		 `+issueFrom+`
 		 WHERE (i.issue_reporter_id = $1 OR i.process_reporter_id = $1 OR i.finish_reporter_id = $1)
 		   AND ($2::issue_status_enum IS NULL OR i.status = $2::issue_status_enum)
-		 ORDER BY i.updated_at DESC`, userID, statusArg)
+		 ORDER BY i.created_at DESC, i.id DESC`, userID, statusArg)
 	if err != nil {
 		return nil, err
 	}
@@ -109,10 +120,9 @@ func (r *IssueRepo) ListAll(ctx context.Context, status *domain.IssueStatus) ([]
 	}
 	rows, err := r.pool.Query(ctx,
 		`SELECT `+issueColumns+`
-		 FROM issue_list i
-		 LEFT JOIN users u ON u.id = i.issue_reporter_id
+		 `+issueFrom+`
 		 WHERE ($1::issue_status_enum IS NULL OR i.status = $1::issue_status_enum)
-		 ORDER BY i.updated_at DESC`, statusArg)
+		 ORDER BY i.created_at DESC, i.id DESC`, statusArg)
 	if err != nil {
 		return nil, err
 	}
@@ -127,11 +137,10 @@ func (r *IssueRepo) ListByVIN(ctx context.Context, vin string, status *domain.Is
 	}
 	rows, err := r.pool.Query(ctx,
 		`SELECT `+issueColumns+`
-		 FROM issue_list i
-		 LEFT JOIN users u ON u.id = i.issue_reporter_id
+		 `+issueFrom+`
 		 WHERE i.vin = $1
 		   AND ($2::issue_status_enum IS NULL OR i.status = $2::issue_status_enum)
-		 ORDER BY i.updated_at DESC`, vin, statusArg)
+		 ORDER BY i.created_at DESC, i.id DESC`, vin, statusArg)
 	if err != nil {
 		return nil, err
 	}
@@ -144,8 +153,7 @@ func (r *IssueRepo) ListByVIN(ctx context.Context, vin string, status *domain.Is
 func (r *IssueRepo) ListOpenByVIN(ctx context.Context, vin string) ([]domain.Issue, error) {
 	rows, err := executor(ctx, r.pool).Query(ctx,
 		`SELECT `+issueColumns+`
-		 FROM issue_list i
-		 LEFT JOIN users u ON u.id = i.issue_reporter_id
+		 `+issueFrom+`
 		 WHERE i.vin = $1 AND i.status IN ('OPEN', 'IN_PROGRESS', 'DONE')
 		 ORDER BY i.severity, i.id`, vin)
 	if err != nil {

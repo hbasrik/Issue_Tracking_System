@@ -122,6 +122,10 @@ type Issue struct {
 	// ReporterName is populated on list queries via join to users; not a
 	// persisted column on issue_list.
 	ReporterName string
+	// ReportPhotoPath is the storage_path of the earliest ISSUE media
+	// attachment (report photo), when present. Not a column on issue_list —
+	// filled by list/get queries via media_attachments.
+	ReportPhotoPath string
 }
 
 // IssueType is a row from the issue_types catalogue (Hata / Tamir Gerekiyor).
