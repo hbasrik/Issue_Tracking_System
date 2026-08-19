@@ -20,6 +20,23 @@ const STATUSES = [
   'ON_HOLD',
 ] as const;
 
+/** Largest factory number first; stable VIN tie-break. */
+function compareVehicleNumberDesc(a: Vehicle, b: Vehicle): number {
+  const na = Number.parseInt(a.VehicleNumber, 10);
+  const nb = Number.parseInt(b.VehicleNumber, 10);
+  const aNum = Number.isFinite(na);
+  const bNum = Number.isFinite(nb);
+  if (aNum && bNum && na !== nb) return nb - na;
+  if (aNum !== bNum) return aNum ? -1 : 1;
+  const byNumber = (b.VehicleNumber || '').localeCompare(
+    a.VehicleNumber || '',
+    undefined,
+    { numeric: true },
+  );
+  if (byNumber !== 0) return byNumber;
+  return b.VIN.localeCompare(a.VIN);
+}
+
 /** Vehicle list — §4.3 filterable table; stacked cards below tablet. */
 export default function VehiclesPage() {
   const navigate = useNavigate();
@@ -43,7 +60,7 @@ export default function VehiclesPage() {
           page,
         });
         if (cancelled) return;
-        setItems(res.Items ?? []);
+        setItems((res.Items ?? []).slice().sort(compareVehicleNumberDesc));
         setTotal(res.Total ?? 0);
       } catch (err) {
         if (!cancelled) {
