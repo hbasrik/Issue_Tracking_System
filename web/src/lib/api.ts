@@ -380,6 +380,10 @@ export interface Issue {
   ReporterName?: string;
   CreatedAt?: string;
   UpdatedAt?: string;
+  ProcessDate?: string | null;
+  FinishDate?: string | null;
+  ApproveDate?: string | null;
+  ConditionalApproveDate?: string | null;
   /** Earliest ISSUE media attachment storage_path, when present. */
   ReportPhotoPath?: string;
 }
