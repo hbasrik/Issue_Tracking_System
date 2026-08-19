@@ -46,6 +46,23 @@ function vehicleMatchesVinQuery(vehicle: Vehicle, query: string): boolean {
   );
 }
 
+/** Largest factory number first; stable VIN tie-break. */
+function compareVehicleNumberDesc(a: Vehicle, b: Vehicle): number {
+  const na = Number.parseInt(a.VehicleNumber, 10);
+  const nb = Number.parseInt(b.VehicleNumber, 10);
+  const aNum = Number.isFinite(na);
+  const bNum = Number.isFinite(nb);
+  if (aNum && bNum && na !== nb) return nb - na;
+  if (aNum !== bNum) return aNum ? -1 : 1;
+  const byNumber = (b.VehicleNumber || '').localeCompare(
+    a.VehicleNumber || '',
+    undefined,
+    { numeric: true },
+  );
+  if (byNumber !== 0) return byNumber;
+  return b.VIN.localeCompare(a.VIN);
+}
+
 /**
  * Full vehicle list (replaces İstasyon queue). Same listVehicles API the
  * station screen used, without a station filter — tap opens VehicleStation.
@@ -66,12 +83,7 @@ export default function VehiclesScreen() {
     try {
       const statusParam = statuses.size === 1 ? [...statuses][0] : undefined;
       const res = await api.listVehicles({ status: statusParam });
-      const items = (res.Items ?? []).slice().sort((a, b) => {
-        const ta = a.UpdatedAt ? Date.parse(a.UpdatedAt) : 0;
-        const tb = b.UpdatedAt ? Date.parse(b.UpdatedAt) : 0;
-        if (tb !== ta) return tb - ta;
-        return b.TotalProgressPercentage - a.TotalProgressPercentage;
-      });
+      const items = (res.Items ?? []).slice().sort(compareVehicleNumberDesc);
       setVehicles(items);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load vehicles');
@@ -101,13 +113,15 @@ export default function VehiclesScreen() {
   }
 
   const filtered = useMemo(() => {
-    return vehicles.filter((v) => {
-      if (statuses.size > 0 && !statuses.has(v.CurrentGlobalStatus as VehicleStatus)) {
-        return false;
-      }
-      if (!vehicleMatchesVinQuery(v, vinQuery)) return false;
-      return true;
-    });
+    return vehicles
+      .filter((v) => {
+        if (statuses.size > 0 && !statuses.has(v.CurrentGlobalStatus as VehicleStatus)) {
+          return false;
+        }
+        if (!vehicleMatchesVinQuery(v, vinQuery)) return false;
+        return true;
+      })
+      .sort(compareVehicleNumberDesc);
   }, [vehicles, statuses, vinQuery]);
 
   return (
