@@ -83,12 +83,13 @@ func vehicleFilterClause(f domain.VehicleListFilter) (string, []any) {
 	return " WHERE " + strings.Join(conds, " AND "), args
 }
 
-// List returns a filtered, paginated page of vehicles.
+// List returns a filtered, paginated page of vehicles ordered by factory
+// number descending (largest vehicle_number first).
 func (r *VehicleRepo) List(ctx context.Context, f domain.VehicleListFilter) ([]domain.Vehicle, error) {
 	where, args := vehicleFilterClause(f)
 	args = append(args, f.Limit, f.Offset)
 	query := `SELECT ` + vehicleColumns + ` FROM vehicles` + where +
-		fmt.Sprintf(" ORDER BY updated_at DESC, vin LIMIT $%d OFFSET $%d", len(args)-1, len(args))
+		fmt.Sprintf(" ORDER BY CASE WHEN vehicle_number ~ '^[0-9]+$' THEN vehicle_number::numeric END DESC NULLS LAST, vehicle_number DESC, vin DESC LIMIT $%d OFFSET $%d", len(args)-1, len(args))
 
 	rows, err := r.pool.Query(ctx, query, args...)
 	if err != nil {
