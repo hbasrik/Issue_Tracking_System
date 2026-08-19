@@ -1,21 +1,34 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { api, type Issue, type Vehicle } from '../lib/api';
 import { IssueList } from '../components/IssueList';
 import { VinSearchBox } from '../components/VinSearchBox';
 import { issueMatchesVinQuery } from '../lib/issueVinFilter';
+import {
+  HOME_ISSUE_STAT_LABELS,
+  isHomeIssueStatKey,
+  matchesHomeIssueStat,
+} from '../lib/homeIssueStats';
+import { brandColors } from '../theme/tokens';
 
 /** Issues list + detail — quality approval and Şartlı Onay are Manager-only. */
 export default function IssuesPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const homeStatParam = searchParams.get('homeStat');
+  const homeStat = isHomeIssueStatKey(homeStatParam) ? homeStatParam : null;
+
   const [statusFilter, setStatusFilter] = useState('');
   const [vinQuery, setVinQuery] = useState('');
   const [matchedVehicles, setMatchedVehicles] = useState<Vehicle[]>([]);
   const [items, setItems] = useState<Issue[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [homeStatNow] = useState(() => new Date());
 
   const load = useCallback(async () => {
     setError(null);
     try {
-      const res = await api.listIssues(statusFilter || undefined);
+      const status = homeStat ? undefined : statusFilter || undefined;
+      const res = await api.listIssues(status);
       const list = (res.items ?? []).slice().sort((a, b) => {
         const ta = Date.parse(a.CreatedAt || a.IssueDate || '') || 0;
         const tb = Date.parse(b.CreatedAt || b.IssueDate || '') || 0;
@@ -27,28 +40,74 @@ export default function IssuesPage() {
       setError(err instanceof Error ? err.message : 'Failed to load issues');
       setItems([]);
     }
-  }, [statusFilter]);
+  }, [statusFilter, homeStat]);
 
   useEffect(() => {
     void load();
   }, [load]);
 
   const visible = useMemo(
-    () => items.filter((issue) => issueMatchesVinQuery(issue, vinQuery, matchedVehicles)),
-    [items, vinQuery, matchedVehicles],
+    () =>
+      items.filter((issue) => {
+        if (homeStat && !matchesHomeIssueStat(issue, homeStat, homeStatNow)) {
+          return false;
+        }
+        return issueMatchesVinQuery(issue, vinQuery, matchedVehicles);
+      }),
+    [items, vinQuery, matchedVehicles, homeStat, homeStatNow],
   );
+
+  function clearHomeStat() {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete('homeStat');
+        return next;
+      },
+      { replace: true },
+    );
+  }
 
   return (
     <section>
       <h1 className="text-xl font-semibold sm:text-2xl">Issues</h1>
-      <p className="mt-1 text-[13px] text-[var(--text-secondary)]">
+      <p
+        className="mt-1 text-[13px]"
+        style={{ color: 'var(--brand-neutral-gray)' }}
+      >
         Global issue queue — quality approval (DONE → APPROVED or Şartlı Onay)
         is Manager-only
       </p>
 
+      {homeStat && (
+        <div
+          className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-[var(--bg-surface-1)] px-4 py-3"
+          style={{ borderColor: 'var(--border)' }}
+        >
+          <p className="text-[13px] text-[var(--text-primary)]">
+            Home filtre: {HOME_ISSUE_STAT_LABELS[homeStat]} · {visible.length}{' '}
+            kayıt
+          </p>
+          <button
+            type="button"
+            onClick={clearHomeStat}
+            className="min-h-touch rounded-lg border px-3 py-1.5 text-[13px]"
+            style={{
+              borderColor: 'var(--border)',
+              color: brandColors.secondary,
+            }}
+          >
+            Temizle
+          </button>
+        </div>
+      )}
+
       <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
         <div className="w-full sm:max-w-sm">
-          <label className="text-[13px] text-[var(--text-secondary)]">
+          <label
+            className="text-[13px]"
+            style={{ color: 'var(--brand-neutral-gray)' }}
+          >
             VIN / araç no
           </label>
           <VinSearchBox
@@ -63,13 +122,17 @@ export default function IssuesPage() {
           />
         </div>
         <div className="w-full sm:w-auto">
-          <label className="text-[13px] text-[var(--text-secondary)]">
+          <label
+            className="text-[13px]"
+            style={{ color: 'var(--brand-neutral-gray)' }}
+          >
             Status
           </label>
           <select
-            value={statusFilter}
+            value={homeStat ? '' : statusFilter}
+            disabled={Boolean(homeStat)}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="mt-1 min-h-touch w-full rounded-lg border bg-[var(--bg-surface-1)] px-3 py-2 text-[15px] sm:w-auto"
+            className="mt-1 min-h-touch w-full rounded-lg border bg-[var(--bg-surface-1)] px-3 py-2 text-[15px] sm:w-auto disabled:opacity-60"
             style={{ borderColor: 'var(--border)' }}
           >
             <option value="">All statuses</option>
