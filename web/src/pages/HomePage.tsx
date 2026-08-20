@@ -135,7 +135,7 @@ export default function HomePage() {
           previous={metrics.inProgressPrev}
           upIsBad
           icon={<Timer size={20} />}
-          accent={statusColors.info}
+          accent={statusColors.issueInProgress}
           to="/issues?homeStat=in_progress"
         />
         <StatCard
@@ -211,7 +211,7 @@ export default function HomePage() {
         <ChartCard
           className="lg:col-span-2"
           title="Çözüm Oranı"
-          subtitle="APPROVED + Şartlı Onay / tüm hatalar"
+          subtitle="Kalite Onay + Şartlı Onay / tüm hatalar"
         >
           <ResolutionGauge
             rate={metrics.resolutionRate}
@@ -307,7 +307,7 @@ export default function HomePage() {
 
         <ChartCard
           title="Ortalama Çözüm Süresi"
-          subtitle="Bildirimden APPROVED / Şartlı Onay’a"
+          subtitle="Bildirimden Kalite Onay / Şartlı Onay’a"
         >
           <p className="text-3xl font-semibold tabular-nums text-[var(--text-primary)]">
             {metrics.mttrHours == null ? '—' : formatMttr(metrics.mttrHours)}

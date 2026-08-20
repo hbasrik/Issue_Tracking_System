@@ -36,7 +36,7 @@ export const lightTokens = {
   accent: brandColors.primary,
 } as const;
 
-export const statusColors = {
+const statusColorBase = {
   ok: '#22C55E',
   notOk: brandColors.critical,
   rework: '#8B5CF6',
@@ -48,10 +48,18 @@ export const statusColors = {
   severityLow: brandColors.secondary,
   severityEmpty: brandColors.neutralGray,
   issueOpen: brandColors.critical,
+  /** İşlemde — existing amber (not blue, not Satsuma). */
   issueInProgress: '#F59E0B',
+  /** Tamamlandı — brand secondary blue, distinct from İşlemde amber. */
+  issueDone: brandColors.secondary,
+  /** Kalite Onay — full green (same swatch as `ok`). */
   issueResolved: '#22C55E',
-  /** Şartlı Onay — vehicle olive opened toward white (no new palette hex). */
-  issueConditionalApproved: mixTowardWhite(brandColors.neutralOlive, 40),
+};
+
+export const statusColors = {
+  ...statusColorBase,
+  /** Şartlı Onay — Kalite Onay green opened toward white. */
+  issueConditionalApproved: mixTowardWhite(statusColorBase.ok, 42),
 };
 
 /**
