@@ -220,6 +220,10 @@ export const api = {
     return request<Issue>(`/issues/${id}`);
   },
 
+  getIssueHistory(id: number) {
+    return request<{ items: IssueStatusHistoryEntry[] }>(`/issues/${id}/history`);
+  },
+
   updateIssueStatus(id: number, status: string) {
     return request<{ id: number; status: string }>(`/issues/${id}/status`, {
       method: 'PATCH',
@@ -386,6 +390,14 @@ export interface Issue {
   ConditionalApproveDate?: string | null;
   /** Earliest ISSUE media attachment storage_path, when present. */
   ReportPhotoPath?: string;
+}
+
+export interface IssueStatusHistoryEntry {
+  ID: number;
+  FromStatus: string;
+  ToStatus: string;
+  ActorName: string;
+  EventAt: string;
 }
 
 export type MediaEntityType =

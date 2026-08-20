@@ -172,6 +172,14 @@ export interface Issue {
   ReportPhotoPath?: string;
 }
 
+export interface IssueStatusHistoryEntry {
+  ID: number;
+  FromStatus: string;
+  ToStatus: string;
+  ActorName: string;
+  EventAt: string;
+}
+
 export interface Station {
   ID: number;
   Name: string;
@@ -323,6 +331,10 @@ export const api = {
 
   getIssue(id: number) {
     return request<Issue>(`/issues/${id}`);
+  },
+
+  getIssueHistory(id: number) {
+    return request<{ items: IssueStatusHistoryEntry[] }>(`/issues/${id}/history`);
   },
 
   updateIssueStatus(id: number, status: string, solutionDescription?: string) {
