@@ -31,3 +31,33 @@ func (r *AuditRepo) Append(ctx context.Context, entry domain.AuditLog) error {
 		entry.StationID, entry.PerformedBy, entry.Metadata)
 	return err
 }
+
+// ListIssueStatusHistory returns ISSUE_STATUS_CHANGE rows for one issue,
+// oldest first. Statuses live on old_value/new_value; issue_id is in metadata.
+func (r *AuditRepo) ListIssueStatusHistory(ctx context.Context, issueID int64) ([]domain.IssueStatusHistoryEntry, error) {
+	rows, err := r.pool.Query(ctx,
+		`SELECT a.id,
+		        COALESCE(NULLIF(a.old_value, ''), a.metadata->>'from_status', ''),
+		        COALESCE(NULLIF(a.new_value, ''), a.metadata->>'to_status', ''),
+		        COALESCE(u.full_name, ''),
+		        a.event_at
+		 FROM audit_logs a
+		 LEFT JOIN users u ON u.id = a.performed_by
+		 WHERE a.event_type = 'ISSUE_STATUS_CHANGE'
+		   AND (a.metadata->>'issue_id')::bigint = $1
+		 ORDER BY a.event_at ASC, a.id ASC`, issueID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var out []domain.IssueStatusHistoryEntry
+	for rows.Next() {
+		var e domain.IssueStatusHistoryEntry
+		if err := rows.Scan(&e.ID, &e.FromStatus, &e.ToStatus, &e.ActorName, &e.EventAt); err != nil {
+			return nil, err
+		}
+		out = append(out, e)
+	}
+	return out, rows.Err()
+}

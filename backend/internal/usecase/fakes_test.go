@@ -414,6 +414,46 @@ func (f *fakeAuditRepo) Append(_ context.Context, entry domain.AuditLog) error {
 	return nil
 }
 
+func (f *fakeAuditRepo) ListIssueStatusHistory(_ context.Context, issueID int64) ([]domain.IssueStatusHistoryEntry, error) {
+	var out []domain.IssueStatusHistoryEntry
+	for _, e := range f.entries {
+		if e.EventType != domain.AuditEventIssueStatusChange {
+			continue
+		}
+		id, _ := metadataIssueID(e.Metadata)
+		if id != issueID {
+			continue
+		}
+		out = append(out, domain.IssueStatusHistoryEntry{
+			ID:         e.ID,
+			FromStatus: e.OldValue,
+			ToStatus:   e.NewValue,
+			EventAt:    e.EventAt,
+		})
+	}
+	return out, nil
+}
+
+func metadataIssueID(meta map[string]any) (int64, bool) {
+	if meta == nil {
+		return 0, false
+	}
+	raw, ok := meta["issue_id"]
+	if !ok {
+		return 0, false
+	}
+	switch v := raw.(type) {
+	case int64:
+		return v, true
+	case int:
+		return int64(v), true
+	case float64:
+		return int64(v), true
+	default:
+		return 0, false
+	}
+}
+
 var errAuditInsertFailed = errors.New("audit insert failed")
 
 // fakeEOLWorkflowRepo is an in-memory EOLWorkflowRepository. Each Mark* method

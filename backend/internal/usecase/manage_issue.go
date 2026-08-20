@@ -138,6 +138,23 @@ func (m *IssueManager) GetByID(ctx context.Context, id int64) (*domain.Issue, er
 	return m.issues.GetByID(ctx, id)
 }
 
+// ListStatusHistory returns chronological ISSUE_STATUS_CHANGE events for the
+// issue (Karar 7). Missing issues 404 so callers do not see an empty trail
+// for a bogus id.
+func (m *IssueManager) ListStatusHistory(ctx context.Context, id int64) ([]domain.IssueStatusHistoryEntry, error) {
+	if _, err := m.issues.GetByID(ctx, id); err != nil {
+		return nil, err
+	}
+	items, err := m.audit.ListIssueStatusHistory(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if items == nil {
+		return []domain.IssueStatusHistoryEntry{}, nil
+	}
+	return items, nil
+}
+
 // TransitionStatus moves an issue to a new status, enforcing both the valid
 // state machine and permission-based authorization. It records an
 // ISSUE_STATUS_CHANGE audit entry attributed to actorID so every state change

@@ -161,6 +161,9 @@ type nopAudit struct{}
 
 func newNopAudit() *nopAudit { return &nopAudit{} }
 func (nopAudit) Append(context.Context, domain.AuditLog) error { return nil }
+func (nopAudit) ListIssueStatusHistory(context.Context, int64) ([]domain.IssueStatusHistoryEntry, error) {
+	return nil, nil
+}
 
 type nopUOW struct{}
 

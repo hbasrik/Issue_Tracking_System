@@ -29,3 +29,13 @@ type AuditLog struct {
 	EventAt     time.Time
 	Metadata    map[string]any
 }
+
+// IssueStatusHistoryEntry is one ISSUE_STATUS_CHANGE row for an issue,
+// resolved with the acting user's name (Karar 7 — no separate history table).
+type IssueStatusHistoryEntry struct {
+	ID         int64
+	FromStatus string
+	ToStatus   string
+	ActorName  string
+	EventAt    time.Time
+}

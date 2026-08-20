@@ -162,4 +162,7 @@ type RoleRepository interface {
 // AuditRepository appends rows to the append-only audit log.
 type AuditRepository interface {
 	Append(ctx context.Context, entry domain.AuditLog) error
+	// ListIssueStatusHistory returns ISSUE_STATUS_CHANGE events for one issue,
+	// oldest first, with the acting user's display name.
+	ListIssueStatusHistory(ctx context.Context, issueID int64) ([]domain.IssueStatusHistoryEntry, error)
 }
