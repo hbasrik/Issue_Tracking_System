@@ -7,6 +7,7 @@ import {
   type StationDefectRate,
   type VehicleSeverityBreakdown,
 } from '../api/client';
+import { useAuth } from '../auth/AuthProvider';
 import { Badge, Card, ErrorText, Loading, Subtitle } from './ui';
 import { SeverityIndicator } from './SeverityIndicator';
 import { useTheme } from '../theme/ThemeProvider';
@@ -19,6 +20,7 @@ import type { RootStackParamList } from '../navigation/types';
  */
 export function DurumOverview() {
   const { tokens } = useTheme();
+  const { token } = useAuth();
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [vehicles, setVehicles] = useState<VehicleSeverityBreakdown[]>([]);
@@ -27,6 +29,7 @@ export function DurumOverview() {
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
+    if (!token) return;
     setLoading(true);
     setError(null);
     try {
@@ -43,12 +46,13 @@ export function DurumOverview() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [token]);
 
   useFocusEffect(
     useCallback(() => {
+      if (!token) return;
       void load();
-    }, [load]),
+    }, [load, token]),
   );
 
   if (loading && !vehicles.length && !stations.length) {

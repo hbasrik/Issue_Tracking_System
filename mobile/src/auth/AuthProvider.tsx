@@ -39,6 +39,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async (email: string, password: string) => {
     const res = await api.login(email, password);
+    // Bind the getter before React re-renders Home, otherwise the first
+    // listIssues call races the useEffect below and goes out without a Bearer
+    // token (cards stay at 0 until pull-to-refresh).
+    setTokenGetter(() => res.token);
     setToken(res.token);
     setUser(res.user);
   }, []);
