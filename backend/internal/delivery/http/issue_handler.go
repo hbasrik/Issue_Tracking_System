@@ -130,6 +130,21 @@ func (s *server) handleIssueGet(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, issue)
 }
 
+// handleIssueHistory lists ISSUE_STATUS_CHANGE audit rows for one issue.
+func (s *server) handleIssueHistory(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	if err != nil {
+		badRequest(w, "id must be an integer")
+		return
+	}
+	items, err := s.deps.Issues.ListStatusHistory(r.Context(), id)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"items": items})
+}
+
 type issueStatusRequest struct {
 	Status               string `json:"status"`
 	SolutionDescription  string `json:"solution_description"`
