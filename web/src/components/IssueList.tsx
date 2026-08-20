@@ -15,6 +15,7 @@ import { MediaGallery } from './MediaGallery';
 import { VehicleIdentity } from './VehicleIdentity';
 import { DataCard, DataCardField } from './DataCard';
 import { useIsDesktop } from '../lib/useMediaQuery';
+import { IssueStatusHistory } from './IssueStatusHistory';
 
 function IssueThumb({ path }: { path?: string }) {
   if (!path) {
@@ -165,6 +166,9 @@ export function IssueDetailPanel({
             busy={busy}
             onTransition={(status) => void transition(status)}
           />
+          <div className="pt-2">
+            <IssueStatusHistory issueId={issue.ID} />
+          </div>
           <div className="pt-4">
             <MediaGallery entityType="ISSUE" entityId={String(issue.ID)} />
           </div>

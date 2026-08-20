@@ -15,6 +15,7 @@ import {
   api,
   mediaFileUrl,
   type Issue,
+  type IssueStatusHistoryEntry,
   type LocalFile,
   type MediaAttachment,
 } from '../api/client';
@@ -43,7 +44,9 @@ function nextOperatorStatus(status: Issue['Status']): Issue['Status'] | null {
 function statusColor(status: Issue['Status']): string {
   if (status === 'OPEN') return statusColors.issueOpen;
   if (status === 'IN_PROGRESS') return statusColors.issueInProgress;
-  return statusColors.issueResolved;
+  if (status === 'CONDITIONAL_APPROVED') return statusColors.issueConditionalApproved;
+  if (status === 'DONE' || status === 'APPROVED') return statusColors.issueResolved;
+  return statusColors.pending;
 }
 
 function formatDate(iso?: string): string {
@@ -57,6 +60,7 @@ export default function IssueDetailScreen() {
   const route = useRoute<RouteProp<RootStackParamList, 'IssueDetail'>>();
   const { tokens } = useTheme();
   const [issue, setIssue] = useState<Issue | null>(null);
+  const [history, setHistory] = useState<IssueStatusHistoryEntry[]>([]);
   const [reportPhotos, setReportPhotos] = useState<MediaAttachment[]>([]);
   const [resolutionPhotos, setResolutionPhotos] = useState<MediaAttachment[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -72,12 +76,14 @@ export default function IssueDetailScreen() {
     setError(null);
     try {
       const id = route.params.id;
-      const [i, report, resolution] = await Promise.all([
+      const [i, hist, report, resolution] = await Promise.all([
         api.getIssue(id),
+        api.getIssueHistory(id).catch(() => ({ items: [] as IssueStatusHistoryEntry[] })),
         api.listMedia('ISSUE', String(id)),
         api.listMedia('ISSUE_RESOLUTION', String(id)),
       ]);
       setIssue(i);
+      setHistory(hist.items ?? []);
       setReportPhotos(report.items ?? []);
       setResolutionPhotos(resolution.items ?? []);
       if ((resolution.items ?? []).length > 0) {
@@ -243,6 +249,31 @@ export default function IssueDetailScreen() {
               >
                 {issue.VIN}
               </Text>
+            </Card>
+
+            <Text
+              style={{
+                color: tokens.textPrimary,
+                fontWeight: '700',
+                fontSize: 16,
+                marginTop: 20,
+              }}
+            >
+              Durum Geçmişi
+            </Text>
+            <Card>
+              {history.length === 0 ? (
+                <Subtitle>Henüz durum değişikliği yok</Subtitle>
+              ) : (
+                history.map((row) => (
+                  <View key={row.ID} style={{ marginTop: 8 }}>
+                    <Text style={{ color: tokens.textPrimary, fontWeight: '600', fontSize: 14 }}>
+                      {row.FromStatus || '—'} → {row.ToStatus || '—'}:{' '}
+                      {row.ActorName || '—'}, {formatDate(row.EventAt)}
+                    </Text>
+                  </View>
+                ))
+              )}
             </Card>
 
             <Text
