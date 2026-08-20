@@ -144,7 +144,7 @@ export default function HomePage() {
           previous={metrics.conditionalPrevDay}
           upIsBad={false}
           icon={<ShieldAlert size={20} />}
-          accent={brandColors.neutralOlive}
+          accent={statusColors.issueConditionalApproved}
           to="/issues?homeStat=conditional_approved_today"
         />
       </div>

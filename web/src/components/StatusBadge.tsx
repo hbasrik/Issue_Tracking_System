@@ -91,7 +91,7 @@ function resolve(
         return { color: statusColors.issueResolved, label: v };
       }
       if (v === 'CONDITIONAL_APPROVED') {
-        return { color: statusColors.conditionalOk, label: 'ŞARTLI ONAY' };
+        return { color: statusColors.issueConditionalApproved, label: 'ŞARTLI ONAY' };
       }
       return { color: statusColors.pending, label: v };
 
@@ -100,10 +100,17 @@ function resolve(
   }
 }
 
-function hexAlpha(hex: string, alpha: number): string {
-  const h = hex.replace('#', '');
-  const r = parseInt(h.slice(0, 2), 16);
-  const g = parseInt(h.slice(2, 4), 16);
-  const b = parseInt(h.slice(4, 6), 16);
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+function hexAlpha(color: string, alpha: number): string {
+  if (color.startsWith('#')) {
+    const h = color.replace('#', '');
+    const r = parseInt(h.slice(0, 2), 16);
+    const g = parseInt(h.slice(2, 4), 16);
+    const b = parseInt(h.slice(4, 6), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  }
+  const rgb = color.match(/^rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)$/);
+  if (rgb) {
+    return `rgba(${rgb[1]}, ${rgb[2]}, ${rgb[3]}, ${alpha})`;
+  }
+  return `color-mix(in srgb, ${color} ${Math.round(alpha * 100)}%, transparent)`;
 }

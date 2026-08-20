@@ -110,10 +110,25 @@ export function Badge({
   color: string;
 }) {
   return (
-    <View style={[styles.badge, { backgroundColor: color + '26' }]}>
+    <View style={[styles.badge, { backgroundColor: wash(color, 0.15) }]}>
       <Text style={[styles.badgeText, { color }]}>{label}</Text>
     </View>
   );
+}
+
+function wash(color: string, alpha: number): string {
+  if (color.startsWith('#') && color.length >= 7) {
+    const h = color.replace('#', '');
+    const r = Number.parseInt(h.slice(0, 2), 16);
+    const g = Number.parseInt(h.slice(2, 4), 16);
+    const b = Number.parseInt(h.slice(4, 6), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  }
+  const rgb = color.match(/^rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)$/);
+  if (rgb) {
+    return `rgba(${rgb[1]}, ${rgb[2]}, ${rgb[3]}, ${alpha})`;
+  }
+  return color;
 }
 
 export function Loading() {

@@ -46,7 +46,7 @@ const STAT_CARDS: {
   { key: 'in_progress', color: statusColors.issueInProgress },
   { key: 'closed_today', color: statusColors.issueResolved },
   { key: 'approved_today', color: statusColors.issueResolved },
-  { key: 'conditional_approved_today', color: statusColors.issueInProgress },
+  { key: 'conditional_approved_today', color: statusColors.issueConditionalApproved },
 ];
 
 /**

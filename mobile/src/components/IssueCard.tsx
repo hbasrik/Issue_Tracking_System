@@ -8,7 +8,9 @@ import { statusColors } from '../theme/tokens';
 function statusColor(s: string): string {
   if (s === 'OPEN') return statusColors.issueOpen;
   if (s === 'IN_PROGRESS') return statusColors.issueInProgress;
-  return statusColors.issueResolved;
+  if (s === 'CONDITIONAL_APPROVED') return statusColors.issueConditionalApproved;
+  if (s === 'DONE' || s === 'APPROVED') return statusColors.issueResolved;
+  return statusColors.pending;
 }
 
 function statusLabel(s: Issue['Status']): string {
