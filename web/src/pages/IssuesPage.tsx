@@ -121,7 +121,7 @@ export default function IssuesPage() {
         className="mt-1 text-[13px]"
         style={{ color: 'var(--brand-neutral-gray)' }}
       >
-        Global issue queue — quality approval (DONE → APPROVED or Şartlı Onay)
+        Global issue queue — quality approval (Tamamlandı → Kalite Onay or Şartlı Onay)
         is Manager-only
       </p>
 

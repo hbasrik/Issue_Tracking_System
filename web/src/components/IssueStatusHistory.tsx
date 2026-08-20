@@ -1,28 +1,12 @@
 import { useEffect, useState } from 'react';
 import { api, type IssueStatusHistoryEntry } from '../lib/api';
+import { issueStatusLabel } from '../lib/issueStatus';
 
 function formatEventAt(iso: string): string {
   if (!iso || iso.startsWith('0001')) return '—';
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
   return d.toLocaleString('tr-TR');
-}
-
-function statusLabel(status: string): string {
-  switch (status) {
-    case 'OPEN':
-      return 'OPEN';
-    case 'IN_PROGRESS':
-      return 'IN_PROGRESS';
-    case 'DONE':
-      return 'DONE';
-    case 'APPROVED':
-      return 'APPROVED';
-    case 'CONDITIONAL_APPROVED':
-      return 'CONDITIONAL_APPROVED';
-    default:
-      return status || '—';
-  }
 }
 
 /** Chronological ISSUE_STATUS_CHANGE trail from GET /issues/:id/history. */
@@ -74,7 +58,7 @@ export function IssueStatusHistory({ issueId }: { issueId: number }) {
               style={{ borderColor: 'var(--border)' }}
             >
               <p className="font-medium text-[var(--text-primary)]">
-                {statusLabel(row.FromStatus)} → {statusLabel(row.ToStatus)}:{' '}
+                {issueStatusLabel(row.FromStatus)} → {issueStatusLabel(row.ToStatus)}:{' '}
                 {row.ActorName || '—'}, {formatEventAt(row.EventAt)}
               </p>
             </li>

@@ -32,21 +32,13 @@ import {
 } from '../components/ui';
 import { SeverityIndicator } from '../components/SeverityIndicator';
 import { useTheme } from '../theme/ThemeProvider';
-import { statusColors } from '../theme/tokens';
+import { issueStatusColor, issueStatusLabel } from '../lib/issueStatus';
 import type { RootStackParamList } from '../navigation/types';
 
 function nextOperatorStatus(status: Issue['Status']): Issue['Status'] | null {
   if (status === 'OPEN') return 'IN_PROGRESS';
   if (status === 'IN_PROGRESS') return 'DONE';
   return null;
-}
-
-function statusColor(status: Issue['Status']): string {
-  if (status === 'OPEN') return statusColors.issueOpen;
-  if (status === 'IN_PROGRESS') return statusColors.issueInProgress;
-  if (status === 'CONDITIONAL_APPROVED') return statusColors.issueConditionalApproved;
-  if (status === 'DONE' || status === 'APPROVED') return statusColors.issueResolved;
-  return statusColors.pending;
 }
 
 function formatDate(iso?: string): string {
@@ -221,7 +213,7 @@ export default function IssueDetailScreen() {
           <>
             <Card>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <Badge label={issue.Status} color={statusColor(issue.Status)} />
+                <Badge label={issueStatusLabel(issue.Status)} color={issueStatusColor(issue.Status)} />
                 <SeverityIndicator severity={issue.Severity} size="md" />
               </View>
               <Text style={{ color: tokens.textSecondary, marginTop: 12, fontSize: 12 }}>
@@ -268,7 +260,7 @@ export default function IssueDetailScreen() {
                 history.map((row) => (
                   <View key={row.ID} style={{ marginTop: 8 }}>
                     <Text style={{ color: tokens.textPrimary, fontWeight: '600', fontSize: 14 }}>
-                      {row.FromStatus || '—'} → {row.ToStatus || '—'}:{' '}
+                      {issueStatusLabel(row.FromStatus || '')} → {issueStatusLabel(row.ToStatus || '')}:{' '}
                       {row.ActorName || '—'}, {formatDate(row.EventAt)}
                     </Text>
                   </View>
@@ -383,7 +375,7 @@ export default function IssueDetailScreen() {
             {next === 'IN_PROGRESS' ? (
               <View style={{ marginTop: 20 }}>
                 <PrimaryButton
-                  label={busy ? 'Updating…' : 'Mark In Progress'}
+                  label={busy ? 'Güncelleniyor…' : 'İşlemde'}
                   onPress={() => void advanceToInProgress()}
                   disabled={busy}
                 />
@@ -393,7 +385,7 @@ export default function IssueDetailScreen() {
             {canMarkDone && !showDoneForm ? (
               <View style={{ marginTop: 20 }}>
                 <PrimaryButton
-                  label="Mark Done"
+                  label="Tamamlandı"
                   onPress={() => {
                     setShowDoneForm(true);
                     setError(null);
@@ -416,7 +408,7 @@ export default function IssueDetailScreen() {
                   Tamamlama kanıtı *
                 </Text>
                 <Subtitle>
-                  Önce çözüm fotoğrafını yükleyin, sonra durumu DONE yapın
+                  Önce çözüm fotoğrafını yükleyin, sonra durumu Tamamlandı yapın
                 </Subtitle>
 
                 <Text
@@ -498,8 +490,8 @@ export default function IssueDetailScreen() {
                       busy
                         ? 'Kaydediliyor…'
                         : resolutionUploaded
-                          ? 'DONE olarak kaydet'
-                          : 'Fotoğrafı yükle ve DONE yap'
+                          ? 'Tamamlandı olarak kaydet'
+                          : 'Fotoğrafı yükle ve Tamamlandı yap'
                     }
                     onPress={() => void completeDone()}
                     disabled={
@@ -531,8 +523,8 @@ export default function IssueDetailScreen() {
             {!next && !canMarkDone ? (
               <Subtitle>
                 {issue.Status === 'DONE'
-                  ? 'Awaiting Manager/Admin approval (not available here)'
-                  : 'No further operator transitions'}
+                  ? 'Kalite Onay / Şartlı Onay bekleniyor (burada yapılamaz)'
+                  : 'Operatör için başka geçiş yok'}
               </Subtitle>
             ) : null}
           </>

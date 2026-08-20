@@ -13,10 +13,10 @@ export function IssueActions({
   const actions: { status: string; label: string; primary?: boolean }[] = [];
 
   if (status === 'OPEN') {
-    actions.push({ status: 'IN_PROGRESS', label: 'Mark In Progress', primary: true });
+    actions.push({ status: 'IN_PROGRESS', label: 'İşlemde', primary: true });
   }
   if (status === 'IN_PROGRESS') {
-    actions.push({ status: 'DONE', label: 'Mark Done', primary: true });
+    actions.push({ status: 'DONE', label: 'Tamamlandı', primary: true });
   }
   if (status === 'DONE' && isManager) {
     actions.push({ status: 'APPROVED', label: 'Kalite Onay', primary: true });
@@ -43,7 +43,7 @@ export function IssueActions({
           }
           style={a.primary ? undefined : { borderColor: 'var(--border)' }}
         >
-          {busy ? 'Updating…' : a.label}
+          {busy ? 'Güncelleniyor…' : a.label}
         </button>
       ))}
     </div>

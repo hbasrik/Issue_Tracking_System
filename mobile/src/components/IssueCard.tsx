@@ -3,24 +3,7 @@ import { mediaFileUrl, type Issue } from '../api/client';
 import { Card, Badge } from './ui';
 import { SeverityIndicator } from './SeverityIndicator';
 import { useTheme } from '../theme/ThemeProvider';
-import { statusColors } from '../theme/tokens';
-
-function statusColor(s: string): string {
-  if (s === 'OPEN') return statusColors.issueOpen;
-  if (s === 'IN_PROGRESS') return statusColors.issueInProgress;
-  if (s === 'CONDITIONAL_APPROVED') return statusColors.issueConditionalApproved;
-  if (s === 'DONE' || s === 'APPROVED') return statusColors.issueResolved;
-  return statusColors.pending;
-}
-
-function statusLabel(s: Issue['Status']): string {
-  if (s === 'OPEN') return 'Açık';
-  if (s === 'IN_PROGRESS') return 'İşlemde';
-  if (s === 'DONE') return 'Tamamlandı';
-  if (s === 'CONDITIONAL_APPROVED') return 'Şartlı Onay';
-  if (s === 'APPROVED') return 'Kalite Onay';
-  return s;
-}
+import { issueStatusColor, issueStatusLabel } from '../lib/issueStatus';
 
 function formatCreatedAt(iso?: string): string {
   if (!iso || iso.startsWith('0001')) return '—';
@@ -88,7 +71,7 @@ export function IssueCard({
               >
                 #{issue.ID}
               </Text>
-              <Badge label={statusLabel(issue.Status)} color={statusColor(issue.Status)} />
+              <Badge label={issueStatusLabel(issue.Status)} color={issueStatusColor(issue.Status)} />
               <SeverityIndicator severity={issue.Severity} />
             </View>
             {!hideVin ? (

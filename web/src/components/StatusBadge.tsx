@@ -1,4 +1,5 @@
 import { statusColors } from '../theme/tokens';
+import { issueStatusColor, issueStatusLabel } from '../lib/issueStatus';
 
 type BadgeKind =
   | 'stationStep'
@@ -83,17 +84,7 @@ function resolve(
       return { color: statusColors.pending, label: v };
 
     case 'issue':
-      if (v === 'OPEN') return { color: statusColors.issueOpen, label: 'OPEN' };
-      if (v === 'IN_PROGRESS') {
-        return { color: statusColors.issueInProgress, label: 'IN_PROGRESS' };
-      }
-      if (v === 'DONE' || v === 'APPROVED' || v === 'RESOLVED') {
-        return { color: statusColors.issueResolved, label: v };
-      }
-      if (v === 'CONDITIONAL_APPROVED') {
-        return { color: statusColors.issueConditionalApproved, label: 'ŞARTLI ONAY' };
-      }
-      return { color: statusColors.pending, label: v };
+      return { color: issueStatusColor(v), label: issueStatusLabel(v) };
 
     default:
       return { color: statusColors.pending, label: value };
