@@ -49,6 +49,8 @@ export type HomeDashboardMetrics = {
   closedPrevDay: number;
   inProgressNow: number;
   inProgressPrev: number;
+  approvedToday: number;
+  approvedPrevDay: number;
   conditionalToday: number;
   conditionalPrevDay: number;
   weekly: DayCount[];
@@ -157,6 +159,14 @@ export function countClosedOnDay(issues: Issue[], day: Date): number {
     if (!isQualityClosedStatus(i.Status)) return false;
     const closed = qualityClosedAt(i);
     return closed != null && fallsOnLocalDay(closed, day);
+  }).length;
+}
+
+export function countApprovedOnDay(issues: Issue[], day: Date): number {
+  return issues.filter((i) => {
+    if (i.Status !== 'APPROVED') return false;
+    const at = parseInstant(i.ApproveDate) ?? parseInstant(i.UpdatedAt);
+    return at != null && fallsOnLocalDay(at, day);
   }).length;
 }
 
@@ -392,6 +402,8 @@ export function buildHomeDashboard(
     closedPrevDay: countClosedOnDay(issues, yesterday),
     inProgressNow: countInProgressNow(issues),
     inProgressPrev: issues.filter((i) => isInProgressAt(i, ago24h)).length,
+    approvedToday: countApprovedOnDay(issues, today),
+    approvedPrevDay: countApprovedOnDay(issues, yesterday),
     conditionalToday: countConditionalOnDay(issues, today),
     conditionalPrevDay: countConditionalOnDay(issues, yesterday),
     weekly: reportedPerDay(issues, now),

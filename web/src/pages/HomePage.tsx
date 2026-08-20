@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import {
   AlertCircle,
+  BadgeCheck,
   CheckCircle2,
   ShieldAlert,
   Timer,
@@ -110,7 +111,7 @@ export default function HomePage() {
         </p>
       )}
 
-      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatCard
           title="Toplam Açık Hata"
           value={metrics.openNow}
@@ -126,7 +127,7 @@ export default function HomePage() {
           previous={metrics.closedPrevDay}
           upIsBad={false}
           icon={<CheckCircle2 size={20} />}
-          accent={muteColor(statusColors.issueResolved, 18)}
+          accent={statusColors.issueDone}
           to="/issues?homeStat=closed_today"
         />
         <StatCard
@@ -138,6 +139,8 @@ export default function HomePage() {
           accent={statusColors.issueInProgress}
           to="/issues?homeStat=in_progress"
         />
+      </div>
+      <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
         <StatCard
           title="Şartlı Onay (Bugün)"
           value={metrics.conditionalToday}
@@ -146,6 +149,15 @@ export default function HomePage() {
           icon={<ShieldAlert size={20} />}
           accent={statusColors.issueConditionalApproved}
           to="/issues?homeStat=conditional_approved_today"
+        />
+        <StatCard
+          title="Kalite Onay (Bugün)"
+          value={metrics.approvedToday}
+          previous={metrics.approvedPrevDay}
+          upIsBad={false}
+          icon={<BadgeCheck size={20} />}
+          accent={statusColors.issueResolved}
+          to="/issues?homeStat=approved_today"
         />
       </div>
 

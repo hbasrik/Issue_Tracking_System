@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import {
+  ActivityIndicator,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -44,7 +45,7 @@ const STAT_CARDS: {
 }[] = [
   { key: 'open', color: statusColors.issueOpen },
   { key: 'in_progress', color: statusColors.issueInProgress },
-  { key: 'closed_today', color: statusColors.issueResolved },
+  { key: 'closed_today', color: statusColors.issueDone },
   { key: 'approved_today', color: statusColors.issueResolved },
   { key: 'conditional_approved_today', color: statusColors.issueConditionalApproved },
 ];
@@ -55,7 +56,7 @@ const STAT_CARDS: {
  */
 export default function HomeScreen() {
   const navigation = useNavigation<HomeNavigation>();
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const { tokens, toggle, mode } = useTheme();
   const [counts, setCounts] = useState<Record<HomeIssueStatKey, number>>({
     open: 0,
@@ -64,15 +65,17 @@ export default function HomeScreen() {
     approved_today: 0,
     conditional_approved_today: 0,
   });
+  const [statsLoading, setStatsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [statsKey, setStatsKey] = useState(0);
 
   const loadStats = useCallback(async () => {
+    if (!token) return;
     try {
       const res = await api.listIssues();
       const items = res.items ?? [];
       const now = new Date();
-      setCounts({
+      const next = {
         open: countHomeIssueStat(items, 'open', now),
         in_progress: countHomeIssueStat(items, 'in_progress', now),
         closed_today: countHomeIssueStat(items, 'closed_today', now),
@@ -82,16 +85,24 @@ export default function HomeScreen() {
           'conditional_approved_today',
           now,
         ),
-      });
-    } catch {
-      // Stats are informational; DurumOverview surfaces its own errors.
+      };
+      setCounts(next);
+      setStatsLoading(false);
+      if (__DEV__) {
+        console.info('[karea] home stats loaded', next);
+      }
+    } catch (err) {
+      if (__DEV__) {
+        console.warn('[karea] home stats failed', err);
+      }
     }
-  }, []);
+  }, [token]);
 
   useFocusEffect(
     useCallback(() => {
+      if (!token) return;
       void loadStats();
-    }, [loadStats]),
+    }, [loadStats, token]),
   );
 
   async function onRefresh() {
@@ -181,9 +192,13 @@ export default function HomeScreen() {
             >
               <Card>
                 <View style={{ alignItems: 'center', paddingVertical: 4 }}>
-                  <Text style={{ color: s.color, fontSize: 22, fontWeight: '700' }}>
-                    {counts[s.key]}
-                  </Text>
+                  {statsLoading ? (
+                    <ActivityIndicator color={s.color} />
+                  ) : (
+                    <Text style={{ color: s.color, fontSize: 22, fontWeight: '700' }}>
+                      {counts[s.key]}
+                    </Text>
+                  )}
                   <Text
                     style={{
                       color: tokens.textSecondary,

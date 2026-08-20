@@ -17,12 +17,14 @@ export type HomeIssueStatKey =
   | 'open'
   | 'in_progress'
   | 'closed_today'
+  | 'approved_today'
   | 'conditional_approved_today';
 
 export const HOME_ISSUE_STAT_LABELS: Record<HomeIssueStatKey, string> = {
   open: 'Toplam Açık Hata',
   in_progress: 'İşlemde',
   closed_today: 'Bugün Kapanan',
+  approved_today: 'Kalite Onay (Bugün)',
   conditional_approved_today: 'Şartlı Onay (Bugün)',
 };
 
@@ -31,6 +33,7 @@ export function isHomeIssueStatKey(value: string | null): value is HomeIssueStat
     value === 'open' ||
     value === 'in_progress' ||
     value === 'closed_today' ||
+    value === 'approved_today' ||
     value === 'conditional_approved_today'
   );
 }
@@ -61,6 +64,14 @@ export function matchesHomeIssueStat(
       return (
         isQualityClosedStatus(issue.Status) &&
         isSameLocalDay(qualityClosedAt(issue), now)
+      );
+    case 'approved_today':
+      return (
+        issue.Status === 'APPROVED' &&
+        isSameLocalDay(
+          parseInstant(issue.ApproveDate) ?? parseInstant(issue.UpdatedAt),
+          now,
+        )
       );
     case 'conditional_approved_today':
       return (
