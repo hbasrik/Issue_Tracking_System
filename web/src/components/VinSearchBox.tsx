@@ -15,6 +15,7 @@ interface VinSearchBoxProps {
   resultTo?: (vehicle: Vehicle) => string;
   placeholder?: string;
   className?: string;
+  ariaLabel?: string;
 }
 
 /**
@@ -29,6 +30,7 @@ export function VinSearchBox({
   resultTo = (v) => `/vehicles/${v.VIN}`,
   placeholder = 'Son 5 haneyi girin (örn. 00057)',
   className = '',
+  ariaLabel = 'VIN suffix search',
 }: VinSearchBoxProps) {
   const [internal, setInternal] = useState('');
   const suffix = controlled ?? internal;
@@ -77,7 +79,7 @@ export function VinSearchBox({
         placeholder={placeholder}
         className="w-full rounded-lg border bg-[var(--bg-surface-1)] px-3 py-2 text-[15px] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] outline-none focus:border-[var(--accent)]"
         style={{ borderColor: 'var(--border)' }}
-        aria-label="VIN suffix search"
+        aria-label={ariaLabel}
       />
       {showResults && suffix.trim().length >= 2 && (
         <div

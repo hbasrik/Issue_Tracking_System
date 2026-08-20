@@ -24,3 +24,16 @@ export function issueMatchesVinQuery(
     return vin.includes(q) || num.includes(q);
   });
 }
+
+/** VIN / vehicle number OR reporter name (case-insensitive). */
+export function issueMatchesListQuery(
+  issue: { VIN: string; ReporterName?: string },
+  query: string,
+  matchedVehicles: VinMatchVehicle[],
+): boolean {
+  const q = query.trim();
+  if (!q) return true;
+  if (issueMatchesVinQuery(issue, q, matchedVehicles)) return true;
+  const name = (issue.ReporterName ?? '').toLocaleLowerCase('tr-TR');
+  return name.includes(q.toLocaleLowerCase('tr-TR'));
+}

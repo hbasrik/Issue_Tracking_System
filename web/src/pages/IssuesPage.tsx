@@ -3,13 +3,30 @@ import { useSearchParams } from 'react-router-dom';
 import { api, type Issue, type Vehicle } from '../lib/api';
 import { IssueList } from '../components/IssueList';
 import { VinSearchBox } from '../components/VinSearchBox';
-import { issueMatchesVinQuery } from '../lib/issueVinFilter';
+import { issueMatchesListQuery } from '../lib/issueVinFilter';
 import {
   HOME_ISSUE_STAT_LABELS,
   isHomeIssueStatKey,
   matchesHomeIssueStat,
 } from '../lib/homeIssueStats';
 import { brandColors } from '../theme/tokens';
+import {
+  SeverityIndicator,
+  severityFillColor,
+  type SeverityLevel,
+} from '../components/SeverityIndicator';
+
+type IssueStatus = Issue['Status'];
+
+const SEVERITIES: SeverityLevel[] = ['CRITICAL', 'MEDIUM', 'LOW'];
+
+const STATUSES: { value: IssueStatus; label: string }[] = [
+  { value: 'OPEN', label: 'Açık' },
+  { value: 'IN_PROGRESS', label: 'İşlemde' },
+  { value: 'DONE', label: 'Tamamlandı' },
+  { value: 'CONDITIONAL_APPROVED', label: 'Şartlı Onay' },
+  { value: 'APPROVED', label: 'Kalite Onay' },
+];
 
 /** Issues list + detail — quality approval and Şartlı Onay are Manager-only. */
 export default function IssuesPage() {
@@ -17,9 +34,10 @@ export default function IssuesPage() {
   const homeStatParam = searchParams.get('homeStat');
   const homeStat = isHomeIssueStatKey(homeStatParam) ? homeStatParam : null;
 
-  const [statusFilter, setStatusFilter] = useState('');
   const [vinQuery, setVinQuery] = useState('');
   const [matchedVehicles, setMatchedVehicles] = useState<Vehicle[]>([]);
+  const [severities, setSeverities] = useState<Set<SeverityLevel>>(new Set());
+  const [statuses, setStatuses] = useState<Set<string>>(new Set());
   const [items, setItems] = useState<Issue[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [homeStatNow] = useState(() => new Date());
@@ -27,8 +45,7 @@ export default function IssuesPage() {
   const load = useCallback(async () => {
     setError(null);
     try {
-      const status = homeStat ? undefined : statusFilter || undefined;
-      const res = await api.listIssues(status);
+      const res = await api.listIssues();
       const list = (res.items ?? []).slice().sort((a, b) => {
         const ta = Date.parse(a.CreatedAt || a.IssueDate || '') || 0;
         const tb = Date.parse(b.CreatedAt || b.IssueDate || '') || 0;
@@ -40,22 +57,11 @@ export default function IssuesPage() {
       setError(err instanceof Error ? err.message : 'Failed to load issues');
       setItems([]);
     }
-  }, [statusFilter, homeStat]);
+  }, []);
 
   useEffect(() => {
     void load();
   }, [load]);
-
-  const visible = useMemo(
-    () =>
-      items.filter((issue) => {
-        if (homeStat && !matchesHomeIssueStat(issue, homeStat, homeStatNow)) {
-          return false;
-        }
-        return issueMatchesVinQuery(issue, vinQuery, matchedVehicles);
-      }),
-    [items, vinQuery, matchedVehicles, homeStat, homeStatNow],
-  );
 
   function clearHomeStat() {
     setSearchParams(
@@ -67,6 +73,46 @@ export default function IssuesPage() {
       { replace: true },
     );
   }
+
+  function toggleSeverity(s: SeverityLevel) {
+    if (homeStat) clearHomeStat();
+    setSeverities((prev) => {
+      const next = new Set(prev);
+      if (next.has(s)) next.delete(s);
+      else next.add(s);
+      return next;
+    });
+  }
+
+  function toggleStatus(s: string) {
+    if (homeStat) clearHomeStat();
+    setStatuses((prev) => {
+      const next = new Set(prev);
+      if (next.has(s)) next.delete(s);
+      else next.add(s);
+      return next;
+    });
+  }
+
+  const visible = useMemo(
+    () =>
+      items.filter((issue) => {
+        if (homeStat) {
+          return matchesHomeIssueStat(issue, homeStat, homeStatNow);
+        }
+        if (!issueMatchesListQuery(issue, vinQuery, matchedVehicles)) {
+          return false;
+        }
+        if (severities.size > 0 && !severities.has(issue.Severity as SeverityLevel)) {
+          return false;
+        }
+        if (statuses.size > 0 && !statuses.has(issue.Status)) {
+          return false;
+        }
+        return true;
+      }),
+    [items, vinQuery, matchedVehicles, homeStat, homeStatNow, severities, statuses],
+  );
 
   return (
     <section>
@@ -102,46 +148,98 @@ export default function IssuesPage() {
         </div>
       )}
 
-      <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
+      <div className="mt-6 space-y-4">
         <div className="w-full sm:max-w-sm">
           <label
             className="text-[13px]"
             style={{ color: 'var(--brand-neutral-gray)' }}
           >
-            VIN / araç no
+            VIN / araç no / bildiren
           </label>
           <VinSearchBox
             value={vinQuery}
             onChange={(q) => {
+              if (homeStat) clearHomeStat();
               setVinQuery(q);
               if (q.trim().length < 2) setMatchedVehicles([]);
             }}
             onResults={setMatchedVehicles}
-            resultTo={(v) => `/vehicles/${v.VIN}?tab=issues`}
+            showResults={false}
+            placeholder="VIN, araç no veya bildiren adı"
+            ariaLabel="VIN, araç no veya bildiren adı"
             className="mt-1"
           />
         </div>
-        <div className="w-full sm:w-auto">
-          <label
-            className="text-[13px]"
+
+        <div>
+          <p
+            className="mb-2 text-[13px] font-semibold"
             style={{ color: 'var(--brand-neutral-gray)' }}
           >
-            Status
-          </label>
-          <select
-            value={homeStat ? '' : statusFilter}
-            disabled={Boolean(homeStat)}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="mt-1 min-h-touch w-full rounded-lg border bg-[var(--bg-surface-1)] px-3 py-2 text-[15px] sm:w-auto disabled:opacity-60"
-            style={{ borderColor: 'var(--border)' }}
+            Severity
+          </p>
+          <div className="flex gap-2">
+            {SEVERITIES.map((s) => {
+              const selected = !homeStat && severities.has(s);
+              const color = severityFillColor(s);
+              return (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => toggleSeverity(s)}
+                  className="flex min-h-touch flex-1 flex-col items-center justify-center gap-1 rounded-[10px] border px-2 py-1.5"
+                  style={{
+                    borderColor: selected ? color : 'var(--border)',
+                    borderWidth: selected ? 1.5 : 1,
+                    backgroundColor: selected
+                      ? `color-mix(in srgb, ${color} 20%, transparent)`
+                      : 'var(--bg-surface-1)',
+                  }}
+                >
+                  <SeverityIndicator severity={s} />
+                  <span
+                    className="text-[10px] font-semibold"
+                    style={{ color: selected ? color : 'var(--brand-neutral-gray)' }}
+                  >
+                    {s}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div>
+          <p
+            className="mb-2 text-[13px] font-semibold"
+            style={{ color: 'var(--brand-neutral-gray)' }}
           >
-            <option value="">All statuses</option>
-            <option value="OPEN">OPEN</option>
-            <option value="IN_PROGRESS">IN_PROGRESS</option>
-            <option value="DONE">DONE</option>
-            <option value="APPROVED">APPROVED</option>
-            <option value="CONDITIONAL_APPROVED">CONDITIONAL_APPROVED</option>
-          </select>
+            Durum
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {STATUSES.map((s) => {
+              const selected = !homeStat && statuses.has(s.value);
+              return (
+                <button
+                  key={s.value}
+                  type="button"
+                  onClick={() => toggleStatus(s.value)}
+                  className="min-h-[36px] rounded-full border px-3 text-[12px] font-semibold"
+                  style={{
+                    borderColor: selected ? 'var(--accent)' : 'var(--border)',
+                    backgroundColor: selected
+                      ? 'var(--bg-surface-2)'
+                      : 'var(--bg-surface-1)',
+                    color: selected
+                      ? 'var(--accent)'
+                      : 'var(--brand-neutral-gray)',
+                  }}
+                >
+                  {s.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 
