@@ -2,12 +2,17 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
+  useLayoutEffect,
   useMemo,
   useState,
   type ReactNode,
 } from 'react';
-import { applyThemeVars, type ThemeMode } from './tokens';
+import {
+  applyThemeVars,
+  parseThemeMode,
+  THEME_STORAGE_KEY,
+  type ThemeMode,
+} from './tokens';
 
 interface ThemeContextValue {
   mode: ThemeMode;
@@ -17,21 +22,50 @@ interface ThemeContextValue {
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
-/** Theme provider — dark default; toggle kept in React state (no localStorage). */
-export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [mode, setMode] = useState<ThemeMode>('dark');
+function readStoredMode(): ThemeMode {
+  try {
+    return parseThemeMode(localStorage.getItem(THEME_STORAGE_KEY)) ?? 'light';
+  } catch {
+    return 'light';
+  }
+}
 
-  useEffect(() => {
+function persistMode(mode: ThemeMode): void {
+  try {
+    localStorage.setItem(THEME_STORAGE_KEY, mode);
+  } catch {
+    /* quota / private mode */
+  }
+}
+
+/** Theme provider — light default; explicit choice persisted in localStorage. */
+export function ThemeProvider({ children }: { children: ReactNode }) {
+  const [mode, setModeState] = useState<ThemeMode>(() => {
+    const initial = readStoredMode();
+    applyThemeVars(initial);
+    return initial;
+  });
+
+  useLayoutEffect(() => {
     applyThemeVars(mode);
   }, [mode]);
 
+  const setMode = useCallback((next: ThemeMode) => {
+    persistMode(next);
+    setModeState(next);
+  }, []);
+
   const toggle = useCallback(() => {
-    setMode((m) => (m === 'dark' ? 'light' : 'dark'));
+    setModeState((m) => {
+      const next: ThemeMode = m === 'dark' ? 'light' : 'dark';
+      persistMode(next);
+      return next;
+    });
   }, []);
 
   const value = useMemo(
     () => ({ mode, toggle, setMode }),
-    [mode, toggle],
+    [mode, toggle, setMode],
   );
 
   return (

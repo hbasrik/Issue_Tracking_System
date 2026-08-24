@@ -5,6 +5,21 @@
 
 export type ThemeMode = 'dark' | 'light';
 
+/** localStorage / AsyncStorage key — only written after an explicit user choice. */
+export const THEME_STORAGE_KEY = 'karea-theme-mode';
+
+export function parseThemeMode(raw: string | null | undefined): ThemeMode | null {
+  if (raw === 'dark' || raw === 'light') return raw;
+  return null;
+}
+
+/** Active mode for status colors that differ on light vs dark (Şartlı Onay). */
+let currentMode: ThemeMode = 'light';
+
+export function bindThemeMode(mode: ThemeMode): void {
+  currentMode = mode;
+}
+
 /**
  * Layout breakpoints (aligned with Tailwind `screens`).
  * - mobile: &lt;640px
@@ -27,29 +42,9 @@ export const brandColors = {
   critical: '#C62222',
 } as const;
 
-export const darkTokens = {
-  'bg-page': '#0B0F14',
-  'bg-surface-1': '#131920',
-  'bg-surface-2': '#1B232C',
-  border: '#26313C',
-  'text-primary': '#F5F7FA',
-  'text-secondary': '#8B98A5',
-  accent: brandColors.primary,
-} as const;
-
-export const lightTokens = {
-  'bg-page': '#F7F9FB',
-  'bg-surface-1': '#FFFFFF',
-  'bg-surface-2': '#F1F5F9',
-  border: '#E2E8F0',
-  'text-primary': '#101418',
-  'text-secondary': '#5B6672',
-  accent: brandColors.primary,
-} as const;
-
 /**
- * Lighten an existing token toward white. Declared before statusColors so
- * bundlers cannot hit a TDZ ReferenceError at module init.
+ * Lighten an existing token toward white. Function declarations are hoisted
+ * so surface tokens and statusColors can call them at module init.
  */
 export function mixTowardWhite(hex: string, whitePct: number): string {
   const h = hex.replace('#', '');
@@ -60,7 +55,40 @@ export function mixTowardWhite(hex: string, whitePct: number): string {
   return `rgb(${Math.round(r + (255 - r) * t)}, ${Math.round(g + (255 - g) * t)}, ${Math.round(b + (255 - b) * t)})`;
 }
 
-/** Semantic status colors (fixed across themes). */
+/** Darken an existing token toward black — light-theme contrast without a new hex. */
+export function mixTowardBlack(hex: string, blackPct: number): string {
+  const h = hex.replace('#', '');
+  const r = Number.parseInt(h.slice(0, 2), 16);
+  const g = Number.parseInt(h.slice(2, 4), 16);
+  const b = Number.parseInt(h.slice(4, 6), 16);
+  const t = Math.min(100, Math.max(0, blackPct)) / 100;
+  return `rgb(${Math.round(r * (1 - t))}, ${Math.round(g * (1 - t))}, ${Math.round(b * (1 - t))})`;
+}
+
+export const darkTokens = {
+  'bg-page': '#0B0F14',
+  'bg-surface-1': '#131920',
+  'bg-surface-2': '#1B232C',
+  border: '#26313C',
+  'text-primary': '#F5F7FA',
+  'text-secondary': '#8B98A5',
+  accent: brandColors.primary,
+} as const;
+
+const lightInk = '#101418';
+
+export const lightTokens = {
+  'bg-page': '#F7F9FB',
+  'bg-surface-1': '#FFFFFF',
+  'bg-surface-2': '#F1F5F9',
+  /** Derived from text-primary — stronger than a near-white slate so cards read. */
+  border: mixTowardWhite(lightInk, 72),
+  'text-primary': lightInk,
+  'text-secondary': '#5B6672',
+  accent: brandColors.primary,
+};
+
+/** Semantic status colors. Şartlı Onay / empty bars follow the bound theme. */
 const statusColorBase = {
   ok: '#22C55E',
   notOk: brandColors.critical,
@@ -72,8 +100,6 @@ const statusColorBase = {
   severityCritical: brandColors.critical,
   severityMedium: '#EAB308',
   severityLow: brandColors.secondary,
-  /** Unfilled severity bars */
-  severityEmpty: brandColors.neutralGray,
   /** Vehicle status */
   vehicleInProduction: brandColors.secondary,
   vehicleInWarehouse: brandColors.neutralGray,
@@ -92,8 +118,18 @@ const statusColorBase = {
 
 export const statusColors = {
   ...statusColorBase,
-  /** Şartlı Onay — Kalite Onay green opened toward white. */
-  issueConditionalApproved: mixTowardWhite(statusColorBase.ok, 42),
+  /** Unfilled severity bars — mid gray on dark, ink-derived on light. */
+  get severityEmpty() {
+    return currentMode === 'light'
+      ? mixTowardWhite(lightInk, 58)
+      : brandColors.neutralGray;
+  },
+  /** Şartlı Onay — opened toward white on dark, toward black on light. */
+  get issueConditionalApproved() {
+    return currentMode === 'light'
+      ? mixTowardBlack(statusColorBase.ok, 22)
+      : mixTowardWhite(statusColorBase.ok, 42);
+  },
 };
 
 export function tokensFor(mode: ThemeMode) {
@@ -102,6 +138,7 @@ export function tokensFor(mode: ThemeMode) {
 
 /** Apply CSS custom properties to :root for the active theme. */
 export function applyThemeVars(mode: ThemeMode): void {
+  bindThemeMode(mode);
   const tokens = tokensFor(mode);
   const root = document.documentElement;
   root.dataset.theme = mode;

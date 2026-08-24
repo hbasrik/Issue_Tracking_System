@@ -2,23 +2,35 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Light is the default (matches lightTokens). Dark overrides when data-theme=dark
+   is set before paint from localStorage, then JS applyThemeVars keeps them in sync. */
 :root {
+  --bg-page: #f7f9fb;
+  --bg-surface-1: #ffffff;
+  --bg-surface-2: #f1f5f9;
+  --border: rgb(188, 190, 192);
+  --text-primary: #101418;
+  --text-secondary: #5b6672;
+  --accent: #ff3b1e;
+  --status-ok: #22c55e;
+  --status-not-ok: #c62222;
+  --status-rework: #8b5cf6;
+  --status-conditional-ok: #f59e0b;
+  --status-info: #327cb2;
+  --status-pending: #b5b2b2;
+  --status-severity-critical: #c62222;
+  --status-severity-medium: #eab308;
+  --status-severity-low: #327cb2;
+}
+
+:root[data-theme='dark'] {
   --bg-page: #0b0f14;
   --bg-surface-1: #131920;
   --bg-surface-2: #1b232c;
   --border: #26313c;
   --text-primary: #f5f7fa;
   --text-secondary: #8b98a5;
-  --accent: #2f8fff;
-  --status-ok: #22c55e;
-  --status-not-ok: #ef4444;
-  --status-rework: #8b5cf6;
-  --status-conditional-ok: #f59e0b;
-  --status-info: #38bdf8;
-  --status-pending: #8b98a5;
-  --status-severity-critical: #791f1f;
-  --status-severity-medium: #f59e0b;
-  --status-severity-low: #38bdf8;
+  --accent: #ff3b1e;
 }
 
 body {

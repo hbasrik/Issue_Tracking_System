@@ -18,8 +18,8 @@ export default function SettingsPage() {
         <div>
           <h2 className="text-[15px] font-medium">Theme</h2>
           <p className="mt-1 text-[13px] text-[var(--text-secondary)]">
-            Dark mode is the default (design guide §1.1). Preference is kept in
-            memory for this session.
+            Light is the default. Choosing Dark or Light here is saved for
+            later visits.
           </p>
           <div className="mt-3 flex gap-2">
             <button

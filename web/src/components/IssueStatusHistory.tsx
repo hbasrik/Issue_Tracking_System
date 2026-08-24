@@ -44,7 +44,7 @@ export function IssueStatusHistory({ issueId }: { issueId: number }) {
       {!error && items.length === 0 && (
         <p
           className="mt-2 text-[13px]"
-          style={{ color: 'var(--brand-neutral-gray)' }}
+          style={{ color: 'var(--text-secondary)' }}
         >
           Henüz durum değişikliği yok
         </p>

@@ -51,7 +51,7 @@ const CHART_TOOLTIP = {
   fontSize: 12,
 };
 
-const mutedCaption = { color: 'var(--brand-neutral-gray)' } as const;
+const mutedCaption = { color: 'var(--text-secondary)' } as const;
 
 /** Home dashboard — live issue metrics from the current database. */
 export default function HomePage() {
@@ -292,13 +292,13 @@ export default function HomePage() {
                   <XAxis
                     type="number"
                     allowDecimals={false}
-                    tick={{ fill: 'var(--brand-neutral-gray)', fontSize: 10 }}
+                    tick={{ fill: 'var(--text-secondary)', fontSize: 10 }}
                   />
                   <YAxis
                     type="category"
                     dataKey="station"
                     width={88}
-                    tick={{ fill: 'var(--brand-neutral-gray)', fontSize: 10 }}
+                    tick={{ fill: 'var(--text-secondary)', fontSize: 10 }}
                   />
                   <Tooltip
                     contentStyle={CHART_TOOLTIP}
@@ -346,13 +346,13 @@ export default function HomePage() {
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                 <XAxis
                   dataKey="label"
-                  tick={{ fill: 'var(--brand-neutral-gray)', fontSize: 11 }}
+                  tick={{ fill: 'var(--text-secondary)', fontSize: 11 }}
                   interval={0}
                 />
                 <YAxis
                   allowDecimals={false}
                   width={32}
-                  tick={{ fill: 'var(--brand-neutral-gray)', fontSize: 10 }}
+                  tick={{ fill: 'var(--text-secondary)', fontSize: 10 }}
                 />
                 <Tooltip
                   contentStyle={CHART_TOOLTIP}
@@ -402,14 +402,14 @@ export default function HomePage() {
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                   <XAxis
                     dataKey="label"
-                    tick={{ fill: 'var(--brand-neutral-gray)', fontSize: 10 }}
+                    tick={{ fill: 'var(--text-secondary)', fontSize: 10 }}
                     minTickGap={36}
                     interval="preserveStartEnd"
                   />
                   <YAxis
                     allowDecimals={false}
                     width={32}
-                    tick={{ fill: 'var(--brand-neutral-gray)', fontSize: 10 }}
+                    tick={{ fill: 'var(--text-secondary)', fontSize: 10 }}
                   />
                   <Tooltip
                     contentStyle={CHART_TOOLTIP}

@@ -117,7 +117,7 @@ export default function IssuesPage() {
       <h1 className="text-xl font-semibold sm:text-2xl">Issues</h1>
       <p
         className="mt-1 text-[13px]"
-        style={{ color: 'var(--brand-neutral-gray)' }}
+        style={{ color: 'var(--text-secondary)' }}
       >
         Global issue queue — quality approval (Tamamlandı → Kalite Onay or Şartlı Onay)
         is Manager-only
@@ -150,7 +150,7 @@ export default function IssuesPage() {
         <div className="w-full sm:max-w-sm">
           <label
             className="text-[13px]"
-            style={{ color: 'var(--brand-neutral-gray)' }}
+            style={{ color: 'var(--text-secondary)' }}
           >
             VIN / bildiren
           </label>
@@ -171,7 +171,7 @@ export default function IssuesPage() {
         <div>
           <p
             className="mb-2 text-[13px] font-semibold"
-            style={{ color: 'var(--brand-neutral-gray)' }}
+            style={{ color: 'var(--text-secondary)' }}
           >
             Severity
           </p>
@@ -196,7 +196,7 @@ export default function IssuesPage() {
                   <SeverityIndicator severity={s} />
                   <span
                     className="text-[10px] font-semibold"
-                    style={{ color: selected ? color : 'var(--brand-neutral-gray)' }}
+                    style={{ color: selected ? color : 'var(--text-secondary)' }}
                   >
                     {s}
                   </span>
@@ -209,7 +209,7 @@ export default function IssuesPage() {
         <div>
           <p
             className="mb-2 text-[13px] font-semibold"
-            style={{ color: 'var(--brand-neutral-gray)' }}
+            style={{ color: 'var(--text-secondary)' }}
           >
             Durum
           </p>
@@ -229,7 +229,7 @@ export default function IssuesPage() {
                       : 'var(--bg-surface-1)',
                     color: selected
                       ? 'var(--accent)'
-                      : 'var(--brand-neutral-gray)',
+                      : 'var(--text-secondary)',
                   }}
                 >
                   {s.label}
