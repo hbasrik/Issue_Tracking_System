@@ -47,6 +47,19 @@ export const lightTokens = {
   accent: brandColors.primary,
 } as const;
 
+/**
+ * Lighten an existing token toward white. Declared before statusColors so
+ * bundlers cannot hit a TDZ ReferenceError at module init.
+ */
+export function mixTowardWhite(hex: string, whitePct: number): string {
+  const h = hex.replace('#', '');
+  const r = Number.parseInt(h.slice(0, 2), 16);
+  const g = Number.parseInt(h.slice(2, 4), 16);
+  const b = Number.parseInt(h.slice(4, 6), 16);
+  const t = Math.min(100, Math.max(0, whitePct)) / 100;
+  return `rgb(${Math.round(r + (255 - r) * t)}, ${Math.round(g + (255 - g) * t)}, ${Math.round(b + (255 - b) * t)})`;
+}
+
 /** Semantic status colors (fixed across themes). */
 const statusColorBase = {
   ok: '#22C55E',
@@ -82,19 +95,6 @@ export const statusColors = {
   /** Şartlı Onay — Kalite Onay green opened toward white. */
   issueConditionalApproved: mixTowardWhite(statusColorBase.ok, 42),
 };
-
-/**
- * Lighten an existing token toward white. Used when a softer variant is
- * needed and the palette has no dedicated swatch — never a new hardcoded hex.
- */
-export function mixTowardWhite(hex: string, whitePct: number): string {
-  const h = hex.replace('#', '');
-  const r = Number.parseInt(h.slice(0, 2), 16);
-  const g = Number.parseInt(h.slice(2, 4), 16);
-  const b = Number.parseInt(h.slice(4, 6), 16);
-  const t = Math.min(100, Math.max(0, whitePct)) / 100;
-  return `rgb(${Math.round(r + (255 - r) * t)}, ${Math.round(g + (255 - g) * t)}, ${Math.round(b + (255 - b) * t)})`;
-}
 
 export function tokensFor(mode: ThemeMode) {
   return mode === 'dark' ? darkTokens : lightTokens;
