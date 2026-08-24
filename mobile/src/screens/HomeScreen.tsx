@@ -39,16 +39,28 @@ type HomeNavigation = CompositeNavigationProp<
   NativeStackNavigationProp<RootStackParamList>
 >;
 
-const STAT_CARDS: {
-  key: HomeIssueStatKey;
-  color: string;
-}[] = [
-  { key: 'open', color: statusColors.issueOpen },
-  { key: 'in_progress', color: statusColors.issueInProgress },
-  { key: 'closed_today', color: statusColors.issueDone },
-  { key: 'approved_today', color: statusColors.issueResolved },
-  { key: 'conditional_approved_today', color: statusColors.issueConditionalApproved },
+const STAT_KEYS: { key: HomeIssueStatKey }[] = [
+  { key: 'open' },
+  { key: 'in_progress' },
+  { key: 'closed_today' },
+  { key: 'approved_today' },
+  { key: 'conditional_approved_today' },
 ];
+
+function statCardColor(key: HomeIssueStatKey): string {
+  switch (key) {
+    case 'open':
+      return statusColors.issueOpen;
+    case 'in_progress':
+      return statusColors.issueInProgress;
+    case 'closed_today':
+      return statusColors.issueDone;
+    case 'approved_today':
+      return statusColors.issueResolved;
+    case 'conditional_approved_today':
+      return statusColors.issueConditionalApproved;
+  }
+}
 
 /**
  * Home: Hata Bildir, vehicle search (former Ara), issue day stats (from
@@ -57,7 +69,7 @@ const STAT_CARDS: {
 export default function HomeScreen() {
   const navigation = useNavigation<HomeNavigation>();
   const { user, token } = useAuth();
-  const { tokens, toggle, mode } = useTheme();
+  const { tokens } = useTheme();
   const [counts, setCounts] = useState<Record<HomeIssueStatKey, number>>({
     open: 0,
     in_progress: 0,
@@ -132,22 +144,9 @@ export default function HomeScreen() {
           />
         }
       >
-        <View
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}
-        >
-          <View>
-            <Title>Karea</Title>
-            <Subtitle>{user?.FullName ?? 'Operator'}</Subtitle>
-          </View>
-          <Pressable onPress={toggle} style={{ minHeight: 44, justifyContent: 'center' }}>
-            <Text style={{ color: tokens.accent, fontSize: 13, fontWeight: '600' }}>
-              {mode === 'dark' ? 'Light' : 'Dark'}
-            </Text>
-          </Pressable>
+        <View>
+          <Title>Karea</Title>
+          <Subtitle>{user?.FullName ?? 'Operator'}</Subtitle>
         </View>
 
         <View style={{ marginTop: 20 }}>
@@ -182,37 +181,40 @@ export default function HomeScreen() {
             marginTop: 20,
           }}
         >
-          {STAT_CARDS.map((s) => (
-            <Pressable
-              key={s.key}
-              onPress={() => openStat(s.key)}
-              style={{ width: '31%', flexGrow: 1, minWidth: 100 }}
-              accessibilityRole="button"
-              accessibilityLabel={`${HOME_ISSUE_STAT_LABELS[s.key]}: ${counts[s.key]}`}
-            >
-              <Card>
-                <View style={{ alignItems: 'center', paddingVertical: 4 }}>
-                  {statsLoading ? (
-                    <ActivityIndicator color={s.color} />
-                  ) : (
-                    <Text style={{ color: s.color, fontSize: 22, fontWeight: '700' }}>
-                      {counts[s.key]}
+          {STAT_KEYS.map((s) => {
+            const color = statCardColor(s.key);
+            return (
+              <Pressable
+                key={s.key}
+                onPress={() => openStat(s.key)}
+                style={{ width: '31%', flexGrow: 1, minWidth: 100 }}
+                accessibilityRole="button"
+                accessibilityLabel={`${HOME_ISSUE_STAT_LABELS[s.key]}: ${counts[s.key]}`}
+              >
+                <Card>
+                  <View style={{ alignItems: 'center', paddingVertical: 4 }}>
+                    {statsLoading ? (
+                      <ActivityIndicator color={color} />
+                    ) : (
+                      <Text style={{ color, fontSize: 22, fontWeight: '700' }}>
+                        {counts[s.key]}
+                      </Text>
+                    )}
+                    <Text
+                      style={{
+                        color: tokens.textSecondary,
+                        fontSize: 11,
+                        textAlign: 'center',
+                        marginTop: 4,
+                      }}
+                    >
+                      {HOME_ISSUE_STAT_LABELS[s.key]}
                     </Text>
-                  )}
-                  <Text
-                    style={{
-                      color: tokens.textSecondary,
-                      fontSize: 11,
-                      textAlign: 'center',
-                      marginTop: 4,
-                    }}
-                  >
-                    {HOME_ISSUE_STAT_LABELS[s.key]}
-                  </Text>
-                </View>
-              </Card>
-            </Pressable>
-          ))}
+                  </View>
+                </Card>
+              </Pressable>
+            );
+          })}
         </View>
 
         <View style={{ marginTop: 8 }} key={statsKey}>
