@@ -30,7 +30,7 @@ export function VinSearchBox({
   onSelect: (v: Vehicle) => void;
   /** Fires on every keystroke so a parent list can filter live. */
   onQueryChange?: (query: string) => void;
-  /** Typeahead matches — used to filter by vehicle_number as well as VIN. */
+  /** Typeahead matches — used by parents that pin a selected vehicle. */
   onResults?: (vehicles: Vehicle[]) => void;
 }) {
   const { tokens } = useTheme();

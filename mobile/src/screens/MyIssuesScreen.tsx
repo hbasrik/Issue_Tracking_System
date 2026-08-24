@@ -3,6 +3,7 @@ import {
   FlatList,
   Pressable,
   Text,
+  TextInput,
   View,
 } from 'react-native';
 import {
@@ -36,7 +37,7 @@ import {
   matchesHomeIssueStat,
   type HomeIssueStatKey,
 } from '../lib/homeIssueStats';
-import { issueMatchesVinQuery } from '../lib/issueVinFilter';
+import { issueMatchesListQuery } from '../lib/issueVinFilter';
 import type { MainDrawerParamList, RootStackParamList } from '../navigation/types';
 
 type IssueStatus = Issue['Status'];
@@ -68,8 +69,7 @@ export default function MyIssuesScreen() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
-  const [vinQuery, setVinQuery] = useState('');
-  const [matchedVehicles, setMatchedVehicles] = useState<Vehicle[]>([]);
+  const [listQuery, setListQuery] = useState('');
   const [severities, setSeverities] = useState<Set<SeverityLevel>>(new Set());
   const [statuses, setStatuses] = useState<Set<IssueStatus>>(new Set());
   const [homeStat, setHomeStat] = useState<HomeIssueStatKey | undefined>(
@@ -112,8 +112,7 @@ export default function MyIssuesScreen() {
       setStatuses(new Set());
       setSeverities(new Set());
       setVehicle(null);
-      setVinQuery('');
-      setMatchedVehicles([]);
+      setListQuery('');
     }
   }, [route.params?.homeStat]);
 
@@ -148,12 +147,12 @@ export default function MyIssuesScreen() {
         return matchesHomeIssueStat(issue, homeStat, homeStatNow);
       }
       if (vehicle && issue.VIN !== vehicle.VIN) return false;
-      if (!issueMatchesVinQuery(issue, vinQuery, matchedVehicles)) return false;
+      if (!issueMatchesListQuery(issue, listQuery)) return false;
       if (severities.size > 0 && !severities.has(issue.Severity)) return false;
       if (statuses.size > 0 && !statuses.has(issue.Status)) return false;
       return true;
     });
-  }, [items, vehicle, vinQuery, matchedVehicles, severities, statuses, homeStat, homeStatNow]);
+  }, [items, vehicle, listQuery, severities, statuses, homeStat, homeStatNow]);
 
   return (
     <Screen padded={false}>
@@ -191,6 +190,40 @@ export default function MyIssuesScreen() {
                 marginTop: 16,
               }}
             >
+              VIN / bildiren
+            </Text>
+            <TextInput
+              value={listQuery}
+              onChangeText={(q) => {
+                if (homeStat) clearHomeStat();
+                setListQuery(q);
+              }}
+              placeholder="VIN veya bildiren adı"
+              placeholderTextColor={tokens.textSecondary}
+              autoCorrect={false}
+              autoCapitalize="none"
+              style={{
+                marginTop: 8,
+                borderWidth: 1,
+                borderRadius: 10,
+                paddingHorizontal: 14,
+                paddingVertical: 12,
+                fontSize: 15,
+                minHeight: 44,
+                backgroundColor: tokens.bgSurface1,
+                borderColor: tokens.border,
+                color: tokens.textPrimary,
+              }}
+            />
+
+            <Text
+              style={{
+                color: tokens.textSecondary,
+                fontWeight: '600',
+                fontSize: 13,
+                marginTop: 16,
+              }}
+            >
               Araç
             </Text>
             <VehicleSearchPanel
@@ -198,13 +231,10 @@ export default function MyIssuesScreen() {
                 if (homeStat) clearHomeStat();
                 setVehicle(v);
               }}
-              onQueryChange={(q) => {
+              onQueryChange={() => {
                 if (homeStat) clearHomeStat();
-                setVinQuery(q);
-                if (q.trim().length < 2) setMatchedVehicles([]);
                 setVehicle(null);
               }}
-              onResults={setMatchedVehicles}
             />
             {vehicle && !homeStat ? (
               <View
