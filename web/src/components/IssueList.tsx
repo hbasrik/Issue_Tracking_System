@@ -72,6 +72,9 @@ function IssueCardSummary({
         <DataCardField label="Status">
           <StatusBadge kind="issue" value={issue.Status} />
         </DataCardField>
+        <DataCardField label="Bildiren">
+          {issue.ReporterName || `user #${issue.IssueReporterID}`}
+        </DataCardField>
       </div>
     </div>
   );
@@ -246,13 +249,14 @@ export function IssueList({
                 {!hideVin && <th className="px-4 py-3">VIN</th>}
                 <th className="px-4 py-3">Severity</th>
                 <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">Bildiren</th>
               </tr>
             </thead>
             <tbody>
               {items.length === 0 && (
                 <tr>
                   <td
-                    colSpan={hideVin ? 5 : 6}
+                    colSpan={hideVin ? 6 : 7}
                     className="px-4 py-6 text-[var(--text-secondary)]"
                   >
                     {emptyLabel}
@@ -293,6 +297,9 @@ export function IssueList({
                   </td>
                   <td className="px-4 py-3">
                     <StatusBadge kind="issue" value={r.Status} />
+                  </td>
+                  <td className="px-4 py-3 text-[13px] text-[var(--text-secondary)]">
+                    {r.ReporterName || `user #${r.IssueReporterID}`}
                   </td>
                 </tr>
               ))}
