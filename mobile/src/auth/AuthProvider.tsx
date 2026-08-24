@@ -2,8 +2,9 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
+  useLayoutEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
@@ -32,16 +33,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [activeStationId, setActiveStationId] = useState<number | null>(null);
+  const tokenRef = useRef<string | null>(null);
+  tokenRef.current = token;
 
-  useEffect(() => {
-    setTokenGetter(() => token);
+  // Layout (not paint-deferred useEffect) so Home's useFocusEffect never
+  // races an empty getter. This runs on mount with token=null — it does
+  // not await and does not restore a stored session.
+  useLayoutEffect(() => {
+    setTokenGetter(() => tokenRef.current);
   }, [token]);
 
   const login = useCallback(async (email: string, password: string) => {
     const res = await api.login(email, password);
-    // Bind the getter before React re-renders Home, otherwise the first
-    // listIssues call races the useEffect below and goes out without a Bearer
-    // token (cards stay at 0 until pull-to-refresh).
+    // Bind before React re-renders Home; useLayoutEffect also refreshes the
+    // getter, but this covers the same tick as setState.
     setTokenGetter(() => res.token);
     setToken(res.token);
     setUser(res.user);

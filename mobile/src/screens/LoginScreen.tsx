@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
 import { ApiError } from '../api/client';
 import { useAuth } from '../auth/AuthProvider';
@@ -12,6 +12,10 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('changeme123');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (__DEV__) console.info('[karea] LoginScreen mounted');
+  }, []);
 
   async function onSubmit() {
     setError(null);

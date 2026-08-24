@@ -51,6 +51,8 @@ export function setTokenGetter(fn: TokenGetter): void {
   getToken = fn;
 }
 
+const REQUEST_TIMEOUT_MS = 15_000;
+
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const headers = new Headers(options.headers);
   // A multipart body has to keep the boundary fetch generates for it, so only
@@ -67,25 +69,50 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     headers.set('Authorization', `Bearer ${token}`);
   }
 
-  const res = await fetch(`${API_BASE_URL}${path}`, {
-    ...options,
-    headers,
-  });
-
-  if (!res.ok) {
-    let body: ApiErrorBody = { error: res.statusText };
-    try {
-      body = (await res.json()) as ApiErrorBody;
-    } catch {
-      /* ignore */
+  const timeout = new AbortController();
+  const timer = setTimeout(() => timeout.abort(), REQUEST_TIMEOUT_MS);
+  if (options.signal) {
+    if (options.signal.aborted) timeout.abort();
+    else {
+      options.signal.addEventListener('abort', () => timeout.abort(), {
+        once: true,
+      });
     }
-    throw new ApiError(res.status, body);
   }
 
-  if (res.status === 204) {
-    return undefined as T;
+  if (__DEV__) {
+    console.info('[karea] api', options.method ?? 'GET', path);
   }
-  return (await res.json()) as T;
+
+  try {
+    const res = await fetch(`${API_BASE_URL}${path}`, {
+      ...options,
+      headers,
+      signal: timeout.signal,
+    });
+
+    if (!res.ok) {
+      let body: ApiErrorBody = { error: res.statusText };
+      try {
+        body = (await res.json()) as ApiErrorBody;
+      } catch {
+        /* ignore */
+      }
+      throw new ApiError(res.status, body);
+    }
+
+    if (res.status === 204) {
+      return undefined as T;
+    }
+    return (await res.json()) as T;
+  } catch (err) {
+    if (err instanceof Error && err.name === 'AbortError') {
+      throw new ApiError(0, { error: `request timed out: ${path}` });
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 export interface Vehicle {
