@@ -114,6 +114,7 @@ func NewRouter(deps Deps) http.Handler {
 				r.Get("/vehicles/{vin}/station-steps", s.handleVehicleStationSteps)
 				r.Get("/vehicles/{vin}/checklist/{type}", s.handleVehicleChecklistGet)
 				r.Get("/vehicles/{vin}/eol", s.handleEOLWorkflowGet)
+				r.Get("/vehicles/{vin}/media", s.handleVehicleMediaList)
 				r.Get("/issues", s.handleIssueList)
 				r.Get("/issues/{id}", s.handleIssueGet)
 				r.Get("/issues/{id}/history", s.handleIssueHistory)

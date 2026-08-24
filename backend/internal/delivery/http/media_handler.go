@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/go-chi/chi/v5"
+
 	"github.com/karea/backend/internal/domain"
 	"github.com/karea/backend/internal/usecase"
 )
@@ -13,11 +15,12 @@ import (
 const maxUploadMemory = 10 << 20 // 10 MiB
 
 // handleMediaUpload accepts a multipart upload (entity_type, entity_id, file)
-// and attaches it to the named entity (Karar 8).
+// and attaches it to the named entity (Karar 8). The parent entity's VIN is
+// resolved in the same existence check and written on the row (Karar 11).
 //
 // A file pointed at an entity that does not exist is rejected with 404 rather
-// than stored: media_attachments is polymorphic and therefore carries no
-// foreign key, so this endpoint is where that integrity is enforced.
+// than stored: media_attachments.entity_id is still polymorphic (no FK), so
+// this endpoint is where that integrity is enforced.
 func (s *server) handleMediaUpload(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseMultipartForm(maxUploadMemory); err != nil {
 		badRequest(w, "request must be multipart/form-data")
@@ -63,6 +66,19 @@ func (s *server) handleMediaList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	attachments, err := s.deps.Media.ListForEntity(r.Context(), entityType, entityID)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"items": attachments})
+}
+
+// handleVehicleMediaList returns every attachment for one VIN (Karar 11), used
+// by Vehicle Detail "all photos". An unknown VIN is 404; a known vehicle with
+// no photos yields items: [].
+func (s *server) handleVehicleMediaList(w http.ResponseWriter, r *http.Request) {
+	vin := chi.URLParam(r, "vin")
+	attachments, err := s.deps.Media.ListByVIN(r.Context(), vin)
 	if err != nil {
 		writeError(w, err)
 		return

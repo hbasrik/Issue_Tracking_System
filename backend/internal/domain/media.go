@@ -56,6 +56,7 @@ type MediaAttachment struct {
 	ID          int64           `json:"id"`
 	EntityType  MediaEntityType `json:"entity_type"`
 	EntityID    string          `json:"entity_id"`
+	VIN         string          `json:"vin"`
 	FileName    string          `json:"file_name"`
 	StoragePath string          `json:"storage_path"`
 	MimeType    string          `json:"mime_type"`

@@ -22,10 +22,10 @@ import (
 const seededVIN = "1HGCM82633A004352"
 
 // httpFakeMediaRepo is an in-memory media_attachments table whose existing set
-// decides which entity ids the application considers real.
+// decides which entity ids the application considers real (value is the VIN).
 type httpFakeMediaRepo struct {
 	rows     []domain.MediaAttachment
-	existing map[string]bool
+	existing map[string]string
 	nextID   int64
 }
 
@@ -33,7 +33,7 @@ var _ repository.MediaRepository = (*httpFakeMediaRepo)(nil)
 
 func newHTTPFakeMediaRepo() *httpFakeMediaRepo {
 	return &httpFakeMediaRepo{
-		existing: map[string]bool{string(domain.MediaEntityVehicle) + "|" + seededVIN: true},
+		existing: map[string]string{string(domain.MediaEntityVehicle) + "|" + seededVIN: seededVIN},
 		nextID:   1,
 	}
 }
@@ -59,8 +59,22 @@ func (f *httpFakeMediaRepo) ListForEntity(_ context.Context, entityType domain.M
 	return out, nil
 }
 
-func (f *httpFakeMediaRepo) EntityExists(_ context.Context, entityType domain.MediaEntityType, entityID string) (bool, error) {
-	return f.existing[string(entityType)+"|"+entityID], nil
+func (f *httpFakeMediaRepo) ListByVIN(_ context.Context, vin string) ([]domain.MediaAttachment, error) {
+	var out []domain.MediaAttachment
+	for _, row := range f.rows {
+		if row.VIN == vin {
+			out = append(out, row)
+		}
+	}
+	return out, nil
+}
+
+func (f *httpFakeMediaRepo) VINForEntity(_ context.Context, entityType domain.MediaEntityType, entityID string) (string, error) {
+	vin, ok := f.existing[string(entityType)+"|"+entityID]
+	if !ok {
+		return "", domain.ErrNotFound
+	}
+	return vin, nil
 }
 
 type httpFakeMediaStore struct{ saved int }
@@ -247,6 +261,9 @@ func TestMediaUpload_ExistingEntityStoredAndListed(t *testing.T) {
 	if created.UploadedBy == nil || *created.UploadedBy != operatorUserID {
 		t.Errorf("uploaded by = %v, want %d", created.UploadedBy, operatorUserID)
 	}
+	if created.VIN != seededVIN {
+		t.Errorf("vin = %q, want %q", created.VIN, seededVIN)
+	}
 
 	listReq := httptest.NewRequest(http.MethodGet,
 		"/api/v1/media?entity_type=vehicle&entity_id="+seededVIN, nil)
@@ -293,5 +310,89 @@ func TestMediaEndpoints_UnpermissionedRoleForbidden(t *testing.T) {
 
 	if rec.Code != http.StatusForbidden {
 		t.Fatalf("status = %d, want %d", rec.Code, http.StatusForbidden)
+	}
+}
+
+// TestVehicleMediaList_EmptyVINReturnsEmptyArray is the Vehicle Detail all-
+// photos shape: a known VIN with no attachments yields items: [].
+func TestVehicleMediaList_EmptyVINReturnsEmptyArray(t *testing.T) {
+	router, issuer := newMediaRouter(newHTTPFakeMediaRepo(), &httpFakeMediaStore{})
+
+	token, err := issuer.Issue(operatorUserID, domain.RoleCodeOperator)
+	if err != nil {
+		t.Fatalf("issue token: %v", err)
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/vehicles/"+seededVIN+"/media", nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d (body: %s)", rec.Code, http.StatusOK, rec.Body.String())
+	}
+	if !strings.Contains(rec.Body.String(), `"items":[]`) {
+		t.Errorf("body = %s, want items serialized as []", rec.Body.String())
+	}
+}
+
+func TestVehicleMediaList_UnknownVINReturns404(t *testing.T) {
+	router, issuer := newMediaRouter(newHTTPFakeMediaRepo(), &httpFakeMediaStore{})
+
+	token, err := issuer.Issue(operatorUserID, domain.RoleCodeOperator)
+	if err != nil {
+		t.Fatalf("issue token: %v", err)
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/vehicles/NOSUCHVIN00000000/media", nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("status = %d, want %d (body: %s)", rec.Code, http.StatusNotFound, rec.Body.String())
+	}
+}
+
+func TestVehicleMediaList_IncludesUploadedPhoto(t *testing.T) {
+	media := newHTTPFakeMediaRepo()
+	router, issuer := newMediaRouter(media, &httpFakeMediaStore{})
+
+	token, err := issuer.Issue(operatorUserID, domain.RoleCodeOperator)
+	if err != nil {
+		t.Fatalf("issue token: %v", err)
+	}
+
+	body, contentType := multipartUpload(t, "VEHICLE", seededVIN, "damage.jpg", "some bytes")
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/media", body)
+	req.Header.Set("Content-Type", contentType)
+	req.Header.Set("Authorization", "Bearer "+token)
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("upload status = %d, want %d (body: %s)", rec.Code, http.StatusCreated, rec.Body.String())
+	}
+
+	listReq := httptest.NewRequest(http.MethodGet, "/api/v1/vehicles/"+seededVIN+"/media", nil)
+	listReq.Header.Set("Authorization", "Bearer "+token)
+	listRec := httptest.NewRecorder()
+	router.ServeHTTP(listRec, listReq)
+	if listRec.Code != http.StatusOK {
+		t.Fatalf("list status = %d, want %d", listRec.Code, http.StatusOK)
+	}
+
+	var payload struct {
+		Items []domain.MediaAttachment `json:"items"`
+	}
+	if err := json.Unmarshal(listRec.Body.Bytes(), &payload); err != nil {
+		t.Fatalf("decode list body: %v", err)
+	}
+	if len(payload.Items) != 1 {
+		t.Fatalf("items = %d, want 1", len(payload.Items))
+	}
+	if payload.Items[0].VIN != seededVIN {
+		t.Errorf("vin = %q, want %q", payload.Items[0].VIN, seededVIN)
 	}
 }

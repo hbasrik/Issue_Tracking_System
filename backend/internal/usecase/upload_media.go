@@ -41,10 +41,10 @@ type UploadMediaInput struct {
 // Upload validates the target entity, stores the file and records the
 // attachment.
 //
-// media_attachments is polymorphic, so the database cannot reject a row that
-// points at a vehicle or issue which does not exist. The existence check below
-// is that missing foreign key, and it deliberately runs before the file is
-// written so a rejected upload leaves nothing behind on disk.
+// media_attachments is polymorphic on entity_id, so the database cannot reject
+// a row that points at a vehicle or issue which does not exist. VINForEntity
+// below is that missing check (and supplies the denormalized vin, Karar 11).
+// It runs before the file is written so a rejected upload leaves nothing on disk.
 func (u *MediaUploader) Upload(ctx context.Context, in UploadMediaInput) (*domain.MediaAttachment, error) {
 	if err := in.EntityType.ValidateEntityID(in.EntityID); err != nil {
 		return nil, err
@@ -53,12 +53,9 @@ func (u *MediaUploader) Upload(ctx context.Context, in UploadMediaInput) (*domai
 		return nil, domain.ErrInvalidEnumValue
 	}
 
-	exists, err := u.media.EntityExists(ctx, in.EntityType, in.EntityID)
+	vin, err := u.media.VINForEntity(ctx, in.EntityType, in.EntityID)
 	if err != nil {
 		return nil, err
-	}
-	if !exists {
-		return nil, domain.ErrNotFound
 	}
 
 	// Keep only the base name: the client's path is not ours to reproduce.
@@ -73,6 +70,7 @@ func (u *MediaUploader) Upload(ctx context.Context, in UploadMediaInput) (*domai
 	attachment := &domain.MediaAttachment{
 		EntityType:  in.EntityType,
 		EntityID:    in.EntityID,
+		VIN:         vin,
 		FileName:    fileName,
 		StoragePath: storagePath,
 		MimeType:    in.MimeType,
@@ -98,6 +96,27 @@ func (u *MediaUploader) ListForEntity(ctx context.Context, entityType domain.Med
 	}
 
 	attachments, err := u.media.ListForEntity(ctx, entityType, entityID)
+	if err != nil {
+		return nil, err
+	}
+	if attachments == nil {
+		return []domain.MediaAttachment{}, nil
+	}
+	return attachments, nil
+}
+
+// ListByVIN returns every attachment for one vehicle (Karar 11). A VIN that
+// does not exist is ErrNotFound; a known vehicle with no photos is an empty
+// slice so Vehicle Detail can render an empty gallery.
+func (u *MediaUploader) ListByVIN(ctx context.Context, vin string) ([]domain.MediaAttachment, error) {
+	if err := domain.MediaEntityVehicle.ValidateEntityID(vin); err != nil {
+		return nil, err
+	}
+	if _, err := u.media.VINForEntity(ctx, domain.MediaEntityVehicle, vin); err != nil {
+		return nil, err
+	}
+
+	attachments, err := u.media.ListByVIN(ctx, vin)
 	if err != nil {
 		return nil, err
 	}

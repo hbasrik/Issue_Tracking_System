@@ -599,22 +599,31 @@ func managerPermissions() domain.PermissionSet {
 	})
 }
 
-// fakeMediaRepo is an in-memory media_attachments table. existing holds the
-// entity keys the fake considers real, standing in for the rows a polymorphic
-// entity_id could point at.
+const defaultFakeMediaVIN = "N7V1K1SA0FAKE00001"
+
+// fakeMediaRepo is an in-memory media_attachments table. existing maps
+// entity keys to the VIN VINForEntity should return for that row.
 type fakeMediaRepo struct {
 	rows     []domain.MediaAttachment
-	existing map[string]bool
+	existing map[string]string
 	nextID   int64
 }
 
 func newFakeMediaRepo() *fakeMediaRepo {
-	return &fakeMediaRepo{existing: map[string]bool{}, nextID: 1}
+	return &fakeMediaRepo{existing: map[string]string{}, nextID: 1}
 }
 
 // seedEntity marks one entity as existing, so an upload against it is allowed.
 func (f *fakeMediaRepo) seedEntity(entityType domain.MediaEntityType, entityID string) {
-	f.existing[string(entityType)+"|"+entityID] = true
+	vin := entityID
+	if entityType != domain.MediaEntityVehicle {
+		vin = defaultFakeMediaVIN
+	}
+	f.seedEntityVIN(entityType, entityID, vin)
+}
+
+func (f *fakeMediaRepo) seedEntityVIN(entityType domain.MediaEntityType, entityID, vin string) {
+	f.existing[string(entityType)+"|"+entityID] = vin
 }
 
 func (f *fakeMediaRepo) Create(_ context.Context, attachment *domain.MediaAttachment) (int64, error) {
@@ -638,8 +647,22 @@ func (f *fakeMediaRepo) ListForEntity(_ context.Context, entityType domain.Media
 	return out, nil
 }
 
-func (f *fakeMediaRepo) EntityExists(_ context.Context, entityType domain.MediaEntityType, entityID string) (bool, error) {
-	return f.existing[string(entityType)+"|"+entityID], nil
+func (f *fakeMediaRepo) ListByVIN(_ context.Context, vin string) ([]domain.MediaAttachment, error) {
+	var out []domain.MediaAttachment
+	for _, row := range f.rows {
+		if row.VIN == vin {
+			out = append(out, row)
+		}
+	}
+	return out, nil
+}
+
+func (f *fakeMediaRepo) VINForEntity(_ context.Context, entityType domain.MediaEntityType, entityID string) (string, error) {
+	vin, ok := f.existing[string(entityType)+"|"+entityID]
+	if !ok {
+		return "", domain.ErrNotFound
+	}
+	return vin, nil
 }
 
 // fakeMediaStore records what was written instead of touching the filesystem,

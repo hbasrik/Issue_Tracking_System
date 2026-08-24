@@ -118,6 +118,9 @@ func TestUploadMedia_ExistingEntityAccepted(t *testing.T) {
 	if attachment.UploadedBy == nil || *attachment.UploadedBy != 7 {
 		t.Errorf("uploaded by = %v, want 7", attachment.UploadedBy)
 	}
+	if attachment.VIN != vin {
+		t.Errorf("vin = %q, want %q", attachment.VIN, vin)
+	}
 	if len(store.saved) != 1 {
 		t.Errorf("stored files = %v, want exactly one", store.saved)
 	}
@@ -179,5 +182,77 @@ func TestListMedia_ReturnsOnlyMatchingEntity(t *testing.T) {
 	}
 	if attachments[0].EntityType != domain.MediaEntityIssue {
 		t.Errorf("entity type = %q, want ISSUE", attachments[0].EntityType)
+	}
+}
+
+// TestUploadMedia_WritesVINFromEntityContext pins Karar 11: the VIN is taken
+// from the parent entity in the same lookup that proves it exists, not from a
+// second query and not from the client.
+func TestUploadMedia_WritesVINFromEntityContext(t *testing.T) {
+	const vin = "N7V1K1SA9SK000001"
+
+	media := newFakeMediaRepo()
+	media.seedEntityVIN(domain.MediaEntityIssue, "41", vin)
+	uploader := usecase.NewMediaUploader(media, &fakeMediaStore{})
+
+	attachment, err := uploader.Upload(context.Background(), usecase.UploadMediaInput{
+		EntityType: domain.MediaEntityIssue,
+		EntityID:   "41",
+		FileName:   "photo.jpg",
+		Content:    strings.NewReader("bytes"),
+		UploadedBy: 7,
+	})
+	if err != nil {
+		t.Fatalf("upload: %v", err)
+	}
+	if attachment.VIN != vin {
+		t.Fatalf("vin = %q, want %q", attachment.VIN, vin)
+	}
+	if media.rows[0].VIN != vin {
+		t.Fatalf("stored vin = %q, want %q", media.rows[0].VIN, vin)
+	}
+}
+
+// TestListMediaByVIN_ReturnsEveryEntityType is the Vehicle Detail "all photos"
+// query: issue, checklist and vehicle attachments for one VIN come back together.
+func TestListMediaByVIN_ReturnsEveryEntityType(t *testing.T) {
+	const vin = "N7V1K1SA9SK000001"
+
+	media := newFakeMediaRepo()
+	media.seedEntity(domain.MediaEntityVehicle, vin)
+	media.seedEntityVIN(domain.MediaEntityIssue, "41", vin)
+	media.seedEntityVIN(domain.MediaEntityIssue, "99", "N7V1K1SA9SK000002")
+	uploader := usecase.NewMediaUploader(media, &fakeMediaStore{})
+
+	ctx := context.Background()
+	for _, in := range []usecase.UploadMediaInput{
+		{EntityType: domain.MediaEntityVehicle, EntityID: vin, FileName: "v.jpg", Content: strings.NewReader("a"), UploadedBy: 7},
+		{EntityType: domain.MediaEntityIssue, EntityID: "41", FileName: "i.jpg", Content: strings.NewReader("b"), UploadedBy: 7},
+		{EntityType: domain.MediaEntityIssue, EntityID: "99", FileName: "other.jpg", Content: strings.NewReader("c"), UploadedBy: 7},
+	} {
+		if _, err := uploader.Upload(ctx, in); err != nil {
+			t.Fatalf("upload %s/%s: %v", in.EntityType, in.EntityID, err)
+		}
+	}
+
+	attachments, err := uploader.ListByVIN(ctx, vin)
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	if len(attachments) != 2 {
+		t.Fatalf("attachments = %d, want 2", len(attachments))
+	}
+	for _, a := range attachments {
+		if a.VIN != vin {
+			t.Errorf("vin = %q, want %q", a.VIN, vin)
+		}
+	}
+}
+
+func TestListMediaByVIN_UnknownVehicleNotFound(t *testing.T) {
+	uploader := usecase.NewMediaUploader(newFakeMediaRepo(), &fakeMediaStore{})
+	_, err := uploader.ListByVIN(context.Background(), "NOSUCHVIN00000000")
+	if !errors.Is(err, domain.ErrNotFound) {
+		t.Fatalf("err = %v, want domain.ErrNotFound", err)
 	}
 }

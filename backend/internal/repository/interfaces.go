@@ -149,10 +149,14 @@ type MediaRepository interface {
 	// ListForEntity returns every attachment hanging off one entity, newest
 	// first. An entity with no attachments yields an empty slice, not an error.
 	ListForEntity(ctx context.Context, entityType domain.MediaEntityType, entityID string) ([]domain.MediaAttachment, error)
-	// EntityExists reports whether the referenced row is really there.
-	// media_attachments carries no foreign key — it cannot, being polymorphic
-	// — so this is the application's stand-in for referential integrity.
-	EntityExists(ctx context.Context, entityType domain.MediaEntityType, entityID string) (bool, error)
+	// ListByVIN returns every attachment for one vehicle, newest first
+	// (Karar 11). A VIN with no attachments yields an empty slice, not an error.
+	ListByVIN(ctx context.Context, vin string) ([]domain.MediaAttachment, error)
+	// VINForEntity returns the vehicle VIN for the attachable entity, or
+	// domain.ErrNotFound if that row does not exist. The polymorphic
+	// entity_id still has no FK; this lookup is that missing check and also
+	// supplies the denormalized vin written on insert (Karar 11).
+	VINForEntity(ctx context.Context, entityType domain.MediaEntityType, entityID string) (string, error)
 }
 
 // RoleRepository reads the table-driven RBAC catalogue (Karar 3).
