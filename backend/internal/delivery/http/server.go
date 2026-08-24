@@ -81,7 +81,7 @@ func NewRouter(deps Deps) http.Handler {
 	})
 
 	if deps.UploadDir != "" {
-		r.Handle("/uploads/*", http.StripPrefix("/uploads/", http.FileServer(http.Dir(deps.UploadDir))))
+		r.Get("/uploads/*", s.handleUploadGet)
 	}
 
 	r.Route("/api/v1", func(r chi.Router) {
