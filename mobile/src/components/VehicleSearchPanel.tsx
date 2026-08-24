@@ -4,7 +4,7 @@ import { VinSearchBox } from './VinSearchBox';
 import { Subtitle } from './ui';
 
 /**
- * VIN-suffix search (former Ara tab). Shared by Home, Vehicles, and My Issues.
+ * VIN-suffix search (former Ara tab). Shared by Home, Vehicles, and Hatalar.
  * Typing always notifies the parent (live list filter); tapping a suggestion
  * is an optional extra action (navigate, or pin a VIN).
  */

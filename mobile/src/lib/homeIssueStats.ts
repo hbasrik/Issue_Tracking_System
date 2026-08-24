@@ -1,7 +1,7 @@
 import type { Issue } from '../api/client';
 
 /**
- * Home day-stat cards and My Issues deep-links share this matcher so the
+ * Home day-stat cards and Hatalar deep-links share this matcher so the
  * count on a card and the list after tapping it stay in lockstep.
  */
 export type HomeIssueStatKey =

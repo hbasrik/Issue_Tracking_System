@@ -162,8 +162,8 @@ export default function MyIssuesScreen() {
         contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
         ListHeaderComponent={
           <View style={{ marginBottom: 12 }}>
-            <Title>My Issues</Title>
-            <Subtitle>Reported or in progress by you</Subtitle>
+            <Title>Hatalar</Title>
+            <Subtitle>Tüm hatalar — VIN veya bildiren adıyla süz</Subtitle>
 
             {homeStat ? (
               <View

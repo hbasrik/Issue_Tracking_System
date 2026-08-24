@@ -19,7 +19,7 @@ function vinTail(vin: string): string {
  *
  * Results render as a plain View/map (not FlatList). The API caps typeahead
  * at a handful of rows, and this box is always embedded in a parent
- * ScrollView/FlatList (Home, Vehicles, My Issues, Manual Issue modal) —
+ * ScrollView/FlatList (Home, Vehicles, Hatalar, Manual Issue modal) —
  * a nested VirtualizedList would warn and break scrolling.
  */
 export function VinSearchBox({

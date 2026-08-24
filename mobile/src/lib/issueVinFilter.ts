@@ -28,7 +28,7 @@ export function issueMatchesVinQuery(
 /**
  * VIN substring OR the opening reporter (issue_reporter_id / ReporterName).
  * Does not match status labels or later lifecycle actors.
- * Scope is the already-fetched list (analysis.view → all; else ListForUser).
+ * Scope is the already-fetched full list; reporter-name is a search, not a gate.
  */
 export function issueMatchesListQuery(
   issue: { VIN: string; ReporterName?: string },

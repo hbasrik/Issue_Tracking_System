@@ -53,7 +53,7 @@ function MainDrawer() {
       <Drawer.Screen
         name="MyIssues"
         component={MyIssuesScreen}
-        options={{ title: 'My Issues', drawerLabel: 'My Issues' }}
+        options={{ title: 'Hatalar', drawerLabel: 'Hatalar' }}
       />
       <Drawer.Screen
         name="Profile"
