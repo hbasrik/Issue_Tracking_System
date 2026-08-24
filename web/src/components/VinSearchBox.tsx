@@ -7,7 +7,7 @@ interface VinSearchBoxProps {
   /** Controlled value (optional). */
   value?: string;
   onChange?: (suffix: string) => void;
-  /** Typeahead matches — used by Issues to live-filter by vehicle_number. */
+  /** Typeahead matches — used by parents that pin a selected vehicle. */
   onResults?: (vehicles: Vehicle[]) => void;
   /** When true, show typeahead results under the input. */
   showResults?: boolean;

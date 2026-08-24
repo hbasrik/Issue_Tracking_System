@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { api, type Issue, type Vehicle } from '../lib/api';
+import { api, type Issue } from '../lib/api';
 import { IssueList } from '../components/IssueList';
-import { VinSearchBox } from '../components/VinSearchBox';
 import { issueMatchesListQuery } from '../lib/issueVinFilter';
 import {
   HOME_ISSUE_STAT_LABELS,
@@ -34,8 +33,7 @@ export default function IssuesPage() {
   const homeStatParam = searchParams.get('homeStat');
   const homeStat = isHomeIssueStatKey(homeStatParam) ? homeStatParam : null;
 
-  const [vinQuery, setVinQuery] = useState('');
-  const [matchedVehicles, setMatchedVehicles] = useState<Vehicle[]>([]);
+  const [listQuery, setListQuery] = useState('');
   const [severities, setSeverities] = useState<Set<SeverityLevel>>(new Set());
   const [statuses, setStatuses] = useState<Set<string>>(new Set());
   const [items, setItems] = useState<Issue[]>([]);
@@ -100,7 +98,7 @@ export default function IssuesPage() {
         if (homeStat) {
           return matchesHomeIssueStat(issue, homeStat, homeStatNow);
         }
-        if (!issueMatchesListQuery(issue, vinQuery, matchedVehicles)) {
+        if (!issueMatchesListQuery(issue, listQuery)) {
           return false;
         }
         if (severities.size > 0 && !severities.has(issue.Severity as SeverityLevel)) {
@@ -111,7 +109,7 @@ export default function IssuesPage() {
         }
         return true;
       }),
-    [items, vinQuery, matchedVehicles, homeStat, homeStatNow, severities, statuses],
+    [items, listQuery, homeStat, homeStatNow, severities, statuses],
   );
 
   return (
@@ -154,20 +152,19 @@ export default function IssuesPage() {
             className="text-[13px]"
             style={{ color: 'var(--brand-neutral-gray)' }}
           >
-            VIN / araç no / bildiren
+            VIN / bildiren
           </label>
-          <VinSearchBox
-            value={vinQuery}
-            onChange={(q) => {
+          <input
+            type="search"
+            value={listQuery}
+            onChange={(e) => {
               if (homeStat) clearHomeStat();
-              setVinQuery(q);
-              if (q.trim().length < 2) setMatchedVehicles([]);
+              setListQuery(e.target.value);
             }}
-            onResults={setMatchedVehicles}
-            showResults={false}
-            placeholder="VIN, araç no veya bildiren adı"
-            ariaLabel="VIN, araç no veya bildiren adı"
-            className="mt-1"
+            placeholder="VIN veya bildiren adı"
+            aria-label="VIN veya bildiren adı"
+            className="mt-1 w-full rounded-lg border bg-[var(--bg-surface-1)] px-3 py-2 text-[15px] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] outline-none focus:border-[var(--accent)]"
+            style={{ borderColor: 'var(--border)' }}
           />
         </div>
 
