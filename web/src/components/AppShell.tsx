@@ -1,7 +1,6 @@
 import { useEffect, useId, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
-import { useTheme } from '../theme/ThemeProvider';
 import { VinSearchBox } from './VinSearchBox';
 
 const NAV: { to: string; label: string; end?: boolean }[] = [
@@ -20,7 +19,6 @@ const NAV: { to: string; label: string; end?: boolean }[] = [
  */
 export function AppShell() {
   const { user, logout } = useAuth();
-  const { mode, toggle } = useTheme();
   const location = useLocation();
   const [navOpen, setNavOpen] = useState(false);
   const drawerId = useId();
@@ -111,15 +109,6 @@ export function AppShell() {
           </div>
 
           <div className="ml-auto flex flex-wrap items-center justify-end gap-2 sm:gap-3">
-            <button
-              type="button"
-              onClick={toggle}
-              className="min-h-touch rounded-lg border px-3 text-[13px] text-[var(--text-secondary)]"
-              style={{ borderColor: 'var(--border)' }}
-              aria-label="Toggle dark/light mode"
-            >
-              {mode === 'dark' ? 'Light' : 'Dark'}
-            </button>
             {user && (
               <div className="flex flex-wrap items-center gap-2">
                 <span className="hidden text-[13px] text-[var(--text-secondary)] sm:inline">
