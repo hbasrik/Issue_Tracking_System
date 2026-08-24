@@ -20,20 +20,7 @@ const STATUSES = [
   'ON_HOLD',
 ] as const;
 
-/** Largest factory number first; stable VIN tie-break. */
-function compareVehicleNumberDesc(a: Vehicle, b: Vehicle): number {
-  const na = Number.parseInt(a.VehicleNumber, 10);
-  const nb = Number.parseInt(b.VehicleNumber, 10);
-  const aNum = Number.isFinite(na);
-  const bNum = Number.isFinite(nb);
-  if (aNum && bNum && na !== nb) return nb - na;
-  if (aNum !== bNum) return aNum ? -1 : 1;
-  const byNumber = (b.VehicleNumber || '').localeCompare(
-    a.VehicleNumber || '',
-    undefined,
-    { numeric: true },
-  );
-  if (byNumber !== 0) return byNumber;
+function compareVinDesc(a: Vehicle, b: Vehicle): number {
   return b.VIN.localeCompare(a.VIN);
 }
 
@@ -60,7 +47,7 @@ export default function VehiclesPage() {
           page,
         });
         if (cancelled) return;
-        setItems((res.Items ?? []).slice().sort(compareVehicleNumberDesc));
+        setItems((res.Items ?? []).slice().sort(compareVinDesc));
         setTotal(res.Total ?? 0);
       } catch (err) {
         if (!cancelled) {
@@ -146,12 +133,10 @@ export default function VehiclesPage() {
               className="block rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
             >
               <DataCard className="cursor-pointer transition-colors hover:bg-[var(--bg-surface-2)]">
-                <VehicleIdentity
-                  vin={v.VIN}
-                  vehicleNumber={v.VehicleNumber}
-                  compact
-                />
-                <DataCardField label="Model">#{v.VehicleModelID}</DataCardField>
+                <VehicleIdentity vin={v.VIN} compact />
+                <DataCardField label="Model">
+                  {v.VehicleModelID != null ? `#${v.VehicleModelID}` : '—'}
+                </DataCardField>
                 <DataCardField label="Status">
                   <StatusBadge kind="vehicle" value={v.CurrentGlobalStatus} />
                 </DataCardField>
@@ -217,13 +202,11 @@ export default function VehiclesPage() {
                   }}
                 >
                   <td className="px-4 py-3">
-                    <VehicleIdentity
-                      vin={v.VIN}
-                      vehicleNumber={v.VehicleNumber}
-                      compact
-                    />
+                    <VehicleIdentity vin={v.VIN} compact />
                   </td>
-                  <td className="px-4 py-3">#{v.VehicleModelID}</td>
+                  <td className="px-4 py-3">
+                    {v.VehicleModelID != null ? `#${v.VehicleModelID}` : '—'}
+                  </td>
                   <td className="px-4 py-3">
                     <StatusBadge kind="vehicle" value={v.CurrentGlobalStatus} />
                   </td>

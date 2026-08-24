@@ -15,7 +15,7 @@ export function foldTurkish(value: string): string {
     .replace(/ç/g, 'c');
 }
 
-/** True when the issue VIN contains the typed fragment (no vehicle_number). */
+/** True when the issue VIN contains the typed fragment. */
 export function issueMatchesVinQuery(
   issue: { VIN: string },
   query: string,
@@ -27,7 +27,7 @@ export function issueMatchesVinQuery(
 
 /**
  * VIN substring OR the opening reporter (issue_reporter_id / ReporterName).
- * Does not match vehicle_number, status labels, or later lifecycle actors.
+ * Does not match status labels or later lifecycle actors.
  */
 export function issueMatchesListQuery(
   issue: { VIN: string; ReporterName?: string },

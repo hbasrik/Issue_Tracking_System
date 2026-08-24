@@ -281,8 +281,7 @@ export const api = {
 
 export interface Vehicle {
   VIN: string;
-  VehicleNumber: string;
-  VehicleModelID: number;
+  VehicleModelID: number | null;
   CurrentGlobalStatus: string;
   CurrentStationID: number | null;
   TotalProgressPercentage: number;

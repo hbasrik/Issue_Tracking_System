@@ -136,7 +136,7 @@ export default function VehicleDetailPage() {
       <div className="mt-4 flex flex-wrap items-start gap-4 sm:gap-6">
         <ProgressRing percentage={pct} />
         <div className="min-w-0 flex-1">
-          <VehicleIdentity vin={vehicle.VIN} vehicleNumber={vehicle.VehicleNumber} />
+          <VehicleIdentity vin={vehicle.VIN} />
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <StatusBadge kind="vehicle" value={vehicle.CurrentGlobalStatus} />
             <span className="text-[13px] text-[var(--text-secondary)]">
@@ -144,7 +144,9 @@ export default function VehicleDetailPage() {
                 ? `${currentStation.Name} · seq ${currentStation.SequenceNo}`
                 : 'No current station'}
               {' · '}
-              Model #{vehicle.VehicleModelID}
+              {vehicle.VehicleModelID != null
+                ? `Model #${vehicle.VehicleModelID}`
+                : 'No model'}
             </span>
           </div>
         </div>

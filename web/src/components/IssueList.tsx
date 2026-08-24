@@ -5,7 +5,6 @@ import {
   formatIssueCreatedAt,
   mediaFileUrl,
   type Issue,
-  type Vehicle,
 } from '../lib/api';
 import { StatusBadge } from './StatusBadge';
 import { SeverityIndicator } from './SeverityIndicator';
@@ -88,28 +87,8 @@ export function IssueDetailPanel({
   onStatusChanged?: () => void;
 }) {
   const { isManager } = useAuth();
-  const [vehicle, setVehicle] = useState<Vehicle | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!issue) {
-      setVehicle(null);
-      return;
-    }
-    let cancelled = false;
-    api
-      .getVehicle(issue.VIN)
-      .then((v) => {
-        if (!cancelled) setVehicle(v);
-      })
-      .catch(() => {
-        if (!cancelled) setVehicle(null);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [issue]);
 
   async function transition(status: string) {
     if (!issue) return;
@@ -143,11 +122,7 @@ export function IssueDetailPanel({
       )}
       {issue && (
         <div className="mt-4 space-y-3 text-[15px]">
-          <VehicleIdentity
-            vin={issue.VIN}
-            vehicleNumber={vehicle?.VehicleNumber}
-            compact
-          />
+          <VehicleIdentity vin={issue.VIN} compact />
           <p className="text-[13px] text-[var(--text-secondary)]">
             Created {formatIssueCreatedAt(issue.CreatedAt || issue.IssueDate)}
           </p>
