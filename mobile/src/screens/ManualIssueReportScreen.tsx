@@ -330,7 +330,6 @@ export default function ManualIssueReportScreen() {
               <Badge label={`…${vehicle.VIN.slice(-5)}`} color={tokens.accent} />
               <Text style={{ color: tokens.textSecondary, fontSize: 13 }}>
                 {vehicle.VIN}
-                {vehicle.VehicleNumber ? ` · No. ${vehicle.VehicleNumber}` : ''}
               </Text>
             </View>
           ) : (

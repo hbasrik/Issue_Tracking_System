@@ -117,9 +117,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 
 export interface Vehicle {
   VIN: string;
-  /** Short factory number printed on the vehicle (Karar 5). */
-  VehicleNumber: string;
-  VehicleModelID: number;
+  VehicleModelID: number | null;
   CurrentGlobalStatus: string;
   CurrentStationID: number | null;
   TotalProgressPercentage: number;

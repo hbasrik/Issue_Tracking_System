@@ -247,8 +247,7 @@ export default function MyIssuesScreen() {
                 }}
               >
                 <Text style={{ color: tokens.textPrimary, flex: 1, fontSize: 13 }}>
-                  Filtre: {vehicle.VehicleNumber ? `#${vehicle.VehicleNumber} · ` : ''}
-                  {vehicle.VIN}
+                  Filtre: {vehicle.VIN}
                 </Text>
                 <OutlineButton label="Temizle" onPress={() => setVehicle(null)} />
               </View>

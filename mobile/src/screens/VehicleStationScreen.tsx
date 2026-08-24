@@ -189,7 +189,6 @@ export default function VehicleStationScreen() {
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
         <Title>İstasyon İlerleme</Title>
         <Subtitle>
-          {vehicle?.VehicleNumber ? `No ${vehicle.VehicleNumber} · ` : ''}
           {vin}
         </Subtitle>
 

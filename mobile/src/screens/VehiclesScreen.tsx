@@ -40,26 +40,10 @@ const STATUSES: { value: VehicleStatus; label: string }[] = [
 function vehicleMatchesVinQuery(vehicle: Vehicle, query: string): boolean {
   const q = query.trim().toUpperCase();
   if (!q) return true;
-  return (
-    vehicle.VIN.toUpperCase().includes(q) ||
-    (vehicle.VehicleNumber ?? '').toUpperCase().includes(q)
-  );
+  return vehicle.VIN.toUpperCase().includes(q);
 }
 
-/** Largest factory number first; stable VIN tie-break. */
-function compareVehicleNumberDesc(a: Vehicle, b: Vehicle): number {
-  const na = Number.parseInt(a.VehicleNumber, 10);
-  const nb = Number.parseInt(b.VehicleNumber, 10);
-  const aNum = Number.isFinite(na);
-  const bNum = Number.isFinite(nb);
-  if (aNum && bNum && na !== nb) return nb - na;
-  if (aNum !== bNum) return aNum ? -1 : 1;
-  const byNumber = (b.VehicleNumber || '').localeCompare(
-    a.VehicleNumber || '',
-    undefined,
-    { numeric: true },
-  );
-  if (byNumber !== 0) return byNumber;
+function compareVinDesc(a: Vehicle, b: Vehicle): number {
   return b.VIN.localeCompare(a.VIN);
 }
 
@@ -83,7 +67,7 @@ export default function VehiclesScreen() {
     try {
       const statusParam = statuses.size === 1 ? [...statuses][0] : undefined;
       const res = await api.listVehicles({ status: statusParam });
-      const items = (res.Items ?? []).slice().sort(compareVehicleNumberDesc);
+      const items = (res.Items ?? []).slice().sort(compareVinDesc);
       setVehicles(items);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load vehicles');
@@ -121,7 +105,7 @@ export default function VehiclesScreen() {
         if (!vehicleMatchesVinQuery(v, vinQuery)) return false;
         return true;
       })
-      .sort(compareVehicleNumberDesc);
+      .sort(compareVinDesc);
   }, [vehicles, statuses, vinQuery]);
 
   return (
@@ -225,7 +209,6 @@ export default function VehiclesScreen() {
                 />
               </View>
               <Text style={{ color: tokens.textSecondary, marginTop: 4, fontSize: 13 }}>
-                {item.VehicleNumber ? `#${item.VehicleNumber} · ` : ''}
                 {item.VIN}
               </Text>
               <Text style={{ color: tokens.textSecondary, marginTop: 2, fontSize: 12 }}>

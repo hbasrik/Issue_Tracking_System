@@ -116,7 +116,6 @@ export function VinSearchBox({
                     {vinTail(item.VIN)}
                   </Text>
                   <Text style={{ color: tokens.textSecondary, fontSize: 13 }}>
-                    {item.VehicleNumber ? `No ${item.VehicleNumber} · ` : ''}
                     {item.VIN}
                   </Text>
                 </View>
