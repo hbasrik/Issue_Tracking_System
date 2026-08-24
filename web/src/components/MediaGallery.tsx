@@ -9,10 +9,12 @@ import {
 interface MediaGalleryProps {
   entityType: MediaEntityType;
   entityId: string;
+  /** When set, the gallery lists every photo for this VIN (Karar 11). */
+  listByVin?: string;
 }
 
 /** Thumbnail grid + upload for media_attachments (Karar 8). */
-export function MediaGallery({ entityType, entityId }: MediaGalleryProps) {
+export function MediaGallery({ entityType, entityId, listByVin }: MediaGalleryProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [items, setItems] = useState<MediaAttachment[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -22,13 +24,15 @@ export function MediaGallery({ entityType, entityId }: MediaGalleryProps) {
   const load = useCallback(async () => {
     setError(null);
     try {
-      const res = await api.listMedia(entityType, entityId);
+      const res = listByVin
+        ? await api.listVehicleMedia(listByVin)
+        : await api.listMedia(entityType, entityId);
       setItems(res.items ?? []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'failed to load attachments');
       setItems([]);
     }
-  }, [entityType, entityId]);
+  }, [entityType, entityId, listByVin]);
 
   useEffect(() => {
     void load();
@@ -61,7 +65,7 @@ export function MediaGallery({ entityType, entityId }: MediaGalleryProps) {
   return (
     <div>
       <div className="flex items-center justify-between gap-3">
-        <h3 className="text-[15px] font-medium">Attachments</h3>
+        <h3 className="text-[15px] font-medium">{listByVin ? 'All photos' : 'Attachments'}</h3>
         <button
           type="button"
           disabled={busy || !entityId}

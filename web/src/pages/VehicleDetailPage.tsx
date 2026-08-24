@@ -251,7 +251,7 @@ export default function VehicleDetailPage() {
               className="rounded-xl border bg-[var(--bg-surface-1)] p-5"
               style={{ borderColor: 'var(--border)' }}
             >
-              <MediaGallery entityType="VEHICLE" entityId={vehicle.VIN} />
+              <MediaGallery entityType="VEHICLE" entityId={vehicle.VIN} listByVin={vehicle.VIN} />
             </div>
           </div>
         )}

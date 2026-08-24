@@ -228,6 +228,7 @@ export interface MediaAttachment {
   id: number;
   entity_type: MediaEntityType;
   entity_id: string;
+  vin: string;
   file_name: string;
   storage_path: string;
   mime_type: string;

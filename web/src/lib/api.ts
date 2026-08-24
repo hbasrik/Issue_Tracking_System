@@ -239,6 +239,12 @@ export const api = {
     return request<{ items: MediaAttachment[] }>(`/media?${q}`);
   },
 
+  listVehicleMedia(vin: string) {
+    return request<{ items: MediaAttachment[] }>(
+      `/vehicles/${encodeURIComponent(vin)}/media`,
+    );
+  },
+
   uploadMedia(entityType: MediaEntityType, entityId: string, file: File) {
     const body = new FormData();
     body.set('entity_type', entityType);
@@ -410,6 +416,7 @@ export interface MediaAttachment {
   id: number;
   entity_type: MediaEntityType;
   entity_id: string;
+  vin: string;
   file_name: string;
   storage_path: string;
   mime_type: string;
