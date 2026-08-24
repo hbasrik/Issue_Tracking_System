@@ -69,6 +69,8 @@
 
 **Karar:** Kabul edildi — `media_attachments` (id, entity_type, entity_id, file_name, storage_path, mime_type, file_size, uploaded_by, uploaded_at) eklenir. `issue_list.picture_url`, `issue_list.issue_picture_done_url`, `eol...check_image` gibi alanlar zamanla bu tabloya taşınır (polymorphic ilişki, DB seviyesinde FK zorlanamaz ama uygulama seviyesinde entity_type+entity_id ile doğrulanır).
 
+**Karar 8 üzerine güncelleme (Karar 11, 2026-08-24):** polymorphic `entity_id` aynı kaldı; araç kimliği artık ayrıca gerçek bir `vin` kolonu (FK) olarak tutulur — bkz. Karar 11.
+
 ## Karar 9 — Araç 360 (Tam Görünüm) Analiz Görünümü (NEW — 2026-08-14)
 
 **Gerekçe:** Mevcut Analysis view'ları (severity breakdown, defect rate per station, MTTR) parçalı — belirli bir aracın station ilerlemesi + EoL aşaması + Test sonuçları + Shipment checklist durumu + issue geçmişini tek bir yerde gösteren bir görünüm yoktu. Kullanıcı ilgili aracın bütün verisine Analiz tarafından bakabilmeyi istedi.
@@ -85,6 +87,12 @@
 3. `vehicle_model_id` NOT NULL kısıtı kaldırılır (nullable) — bulk import sırasında model bilgisi her zaman bilinmeyebilir, sonradan doldurulabilir.
 
 **Etki:** Yeni migration (`vehicle_number` kolonu + index + `GET /api/v1/vehicles/resolve?vehicle_number=` endpoint'i kaldırılır), bulk VIN import endpoint'i eklenir, Vehicles listesi filtre mantığı güncellenir, hata girme ekranı arama VIN tabanlı hale getirilir.
+
+## Karar 11 — media_attachments.vin Kolonu (NEW — 2026-08-24)
+
+**Gerekçe:** `media_attachments` polymorphic (`entity_type` + `entity_id`) olduğu için bir aracın tüm fotoğraflarını listelemek issue / checklist / station-step satırlarına ayrı ayrı join gerektiriyordu. Vehicle Detail "bu araca ait tüm fotoğraflar" görünümü için VIN her satırda hazır olmalı.
+
+**Karar:** `media_attachments`'a `vin VARCHAR(17) NOT NULL REFERENCES vehicles(vin) ON DELETE CASCADE` eklenir (`idx_media_attachments_vin`). Kolon önce nullable eklenir, mevcut satırlar `entity_type`/`entity_id` üzerinden parent tabloya join edilerek doldurulur, sonra NOT NULL yapılır. Yeni yüklemeler insert sırasında parent entity'nin zaten bilinen VIN'ini yazar; ekstra sorgu yok. Okuma yolu: `GET /api/v1/vehicles/:vin/media`.
 
 ## Değişmeyen / Yeniden Kullanılacaklar
 

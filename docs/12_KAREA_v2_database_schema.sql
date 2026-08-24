@@ -420,13 +420,15 @@ CREATE TABLE audit_logs (
 -- Polymorphic attachment table. entity_id is TEXT to support both the
 -- VARCHAR vin (VEHICLE) and numeric ids (ISSUE, CHECKLIST_ITEM_PROGRESS)
 -- without three separate FK columns. Referential integrity for the
--- polymorphic link is enforced at the application layer.
+-- polymorphic link is enforced at the application layer. Karar 11 adds a
+-- real vin FK so a vehicle's full photo set can be listed directly.
 -- =====================================================================
 
 CREATE TABLE media_attachments (
     id             BIGSERIAL PRIMARY KEY,
-    entity_type    VARCHAR(50) NOT NULL,   -- 'VEHICLE' | 'ISSUE' | 'CHECKLIST_ITEM_PROGRESS' | 'STATION_STEP_PROGRESS'
+    entity_type    VARCHAR(50) NOT NULL,   -- 'VEHICLE' | 'ISSUE' | 'ISSUE_RESOLUTION' | 'CHECKLIST_ITEM_PROGRESS' | 'STATION_STEP_PROGRESS'
     entity_id      TEXT NOT NULL,
+    vin            VARCHAR(17) NOT NULL REFERENCES vehicles(vin) ON DELETE CASCADE,  -- Karar 11
     file_name      VARCHAR(255) NOT NULL,
     storage_path   TEXT NOT NULL,
     mime_type      VARCHAR(100),
@@ -434,6 +436,9 @@ CREATE TABLE media_attachments (
     uploaded_by    INT REFERENCES users(id),
     uploaded_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+COMMENT ON COLUMN media_attachments.vin IS
+    'Karar 11: denormalized vehicle key so a vehicle''s full photo set can be listed without resolving entity_id.';
 
 -- =====================================================================
 -- SECTION 8: INDEXING STRATEGY
@@ -499,6 +504,7 @@ CREATE INDEX idx_eol_workflow_stage ON vehicle_eol_workflow (current_stage);
 
 -- --- media_attachments ------------------------------------------------------
 CREATE INDEX idx_media_attachments_entity ON media_attachments (entity_type, entity_id);
+CREATE INDEX idx_media_attachments_vin ON media_attachments (vin);
 
 -- --- role_permissions lookups ---------------------------------------------
 CREATE INDEX idx_role_permissions_permission ON role_permissions (permission_id);
