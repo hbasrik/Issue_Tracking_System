@@ -79,7 +79,7 @@ type IssueRepository interface {
 	// reporter. When status is non-nil, results are filtered to that status.
 	ListForUser(ctx context.Context, userID int, status *domain.IssueStatus) ([]domain.Issue, error)
 	// ListAll returns every issue, optionally filtered by status. Used by the
-	// Manager/Admin global Issues queue (analysis.view).
+	// web Issues queue and mobile Hatalar list (vehicle.view, not analysis.view).
 	ListAll(ctx context.Context, status *domain.IssueStatus) ([]domain.Issue, error)
 	// ListByVIN returns every issue for a vehicle (all statuses), optionally
 	// filtered by status. Powers the Vehicle Detail Issues tab.

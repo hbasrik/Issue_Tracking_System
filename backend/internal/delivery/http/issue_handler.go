@@ -67,10 +67,10 @@ func (s *server) handleIssueTypeList(w http.ResponseWriter, r *http.Request) {
 
 // handleIssueList returns issues for the issues queue / vehicle detail.
 //
-// Scope:
-//   - ?vin=… → every issue for that vehicle (any authenticated vehicle.view user)
-//   - no vin + analysis.view → global queue (Manager/Admin dashboard)
-//   - no vin without analysis.view → reporter-scoped list (operator "My Issues")
+// Scope (gated on vehicle.view, not analysis.view — operators need the full
+// queue to pick up someone else's OPEN issue):
+//   - ?vin=… → every issue for that vehicle
+//   - no vin → every issue (web Issues + mobile Hatalar)
 func (s *server) handleIssueList(w http.ResponseWriter, r *http.Request) {
 	var status *domain.IssueStatus
 	if raw := r.URL.Query().Get("status"); raw != "" {
@@ -83,7 +83,6 @@ func (s *server) handleIssueList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	vin := strings.TrimSpace(r.URL.Query().Get("vin"))
-	claims, _ := ClaimsFromContext(r.Context())
 
 	var (
 		items []domain.Issue
@@ -93,16 +92,7 @@ func (s *server) handleIssueList(w http.ResponseWriter, r *http.Request) {
 	case vin != "":
 		items, err = s.deps.Issues.ListByVIN(r.Context(), vin, status)
 	default:
-		ctx, permissions, perr := s.permissions.Resolve(r.Context())
-		if perr != nil {
-			writeError(w, perr)
-			return
-		}
-		if permissions.Has(domain.PermissionAnalysisView) {
-			items, err = s.deps.Issues.ListAll(ctx, status)
-		} else {
-			items, err = s.deps.Issues.ListForUser(ctx, claims.UserID, status)
-		}
+		items, err = s.deps.Issues.ListAll(r.Context(), status)
 	}
 	if err != nil {
 		writeError(w, err)

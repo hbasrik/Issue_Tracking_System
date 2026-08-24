@@ -114,7 +114,7 @@ func (m *IssueManager) ListForUser(ctx context.Context, userID int, status *doma
 	return m.issues.ListForUser(ctx, userID, status)
 }
 
-// ListAll returns every issue for the Manager/Admin global queue.
+// ListAll returns every issue for the web Issues queue and mobile Hatalar list.
 func (m *IssueManager) ListAll(ctx context.Context, status *domain.IssueStatus) ([]domain.Issue, error) {
 	if status != nil && !status.Valid() {
 		return nil, domain.ErrInvalidEnumValue
