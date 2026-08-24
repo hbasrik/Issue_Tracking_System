@@ -10,7 +10,7 @@
 -- SECTION 0: EXTENSIONS
 -- =====================================================================
 
-CREATE EXTENSION IF NOT EXISTS pg_trgm;      -- trigram search for partial VIN / vehicle_number lookup
+CREATE EXTENSION IF NOT EXISTS pg_trgm;      -- trigram search for partial VIN lookup
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";  -- reserved for future UUID-based entities
 
 -- =====================================================================
@@ -21,6 +21,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";  -- reserved for future UUID-based e
 -- see roles / permissions / role_permissions below.
 
 CREATE TYPE vehicle_status_enum AS ENUM (
+    'PLANNED',        -- Karar 10: VIN kayitli ama henuz hatta girmedi (bulk-imported future vehicle)
     'IN_PRODUCTION',  -- Hatta
     'IN_WAREHOUSE',   -- Depoda
     'WITH_CUSTOMER',  -- Musteride
@@ -83,7 +84,9 @@ CREATE TYPE issue_source_enum AS ENUM (
     'EOL_ITEM',
     'SHIPMENT_ITEM',
     'TEST_ITEM',      -- Karar 4
-    'MANUAL'          -- standalone operator Hata Bildir (no checklist/step source)
+    'MANUAL'          -- NEW 2026-08-17: standalone issue entry, not tied to
+                       -- a specific station step or checklist item — the
+                       -- operator picks a station + VIN directly
 );
 
 CREATE TYPE audit_event_enum AS ENUM (
@@ -163,8 +166,8 @@ CREATE TABLE station_steps (
     UNIQUE (station_id, sequence_no)
 );
 
--- Issue category catalogue for Hata Bildir / Analysis ("hata turu").
--- Current catalogue: Hata, Tamir Gerekiyor (see migration 0006).
+-- Issue category catalogue (e.g. Electrical, Paint, Trim) used for
+-- "hata turu" filtering in the Analysis tab.
 CREATE TABLE issue_types (
     id            SERIAL PRIMARY KEY,
     name          VARCHAR(100) NOT NULL UNIQUE
@@ -203,8 +206,7 @@ COMMENT ON COLUMN checklist_template_items.eol_phase IS
 
 CREATE TABLE vehicles (
     vin                         VARCHAR(17) PRIMARY KEY,
-    vehicle_number              VARCHAR(30) UNIQUE,  -- Karar 5: short number, resolves to this VIN
-    vehicle_model_id            INT NOT NULL REFERENCES vehicle_models(id),
+    vehicle_model_id            INT REFERENCES vehicle_models(id),  -- nullable: PLANNED vehicles may not have a model yet (Karar 10)
     current_global_status       vehicle_status_enum NOT NULL DEFAULT 'IN_PRODUCTION',
     current_station_id          INT REFERENCES stations(id),  -- Karar 1: replaces current_phase; set by trigger on first station
     total_progress_percentage   NUMERIC(5,2) NOT NULL DEFAULT 0.00
@@ -217,15 +219,12 @@ CREATE TABLE vehicles (
 );
 
 COMMENT ON COLUMN vehicles.current_global_status IS
-    'Auto-transitioned by triggers. IN_PRODUCTION -> IN_WAREHOUSE when EOL branch phase ships '
+    'Auto-transitioned by triggers. PLANNED -> IN_PRODUCTION on first station-step progress row '
+    '(Karar 10). IN_PRODUCTION -> IN_WAREHOUSE when EOL branch phase ships '
     '(soft-warning on open issues). IN_WAREHOUSE -> WITH_CUSTOMER when the shipment/customer '
     'checklist is fully OK/CONDITIONAL_OK (independent track from the EOL branch/depot/document '
     'workflow). Final -> SHIPPED when the EOL document phase is approved. '
     'Manual override is allowed for MANAGER_ADMIN via the web dashboard, subject to the same gates.';
-
-COMMENT ON COLUMN vehicles.vehicle_number IS
-    'Karar 5: short factory number used for lookup instead of a separate Full_VIN_List master table. '
-    'Operator enters this; the system resolves and displays the VIN read-only.';
 
 -- =====================================================================
 -- SECTION 4: issue_list (Issue & Repair Lifecycle Table)
@@ -352,8 +351,12 @@ CREATE TABLE checklist_item_progress (
 
     UNIQUE (vin, check_item_id),
 
-    -- Mandatory-description rule (v1 PRD FR-3.3): EOL only. Test and
-    -- Shipment items are plain Yes/No and do not require a note.
+    -- Mandatory-description rule (v1 PRD FR-3.3, carried into v2).
+    -- Updated 2026-08-17: this only applies to EOL items — Test and
+    -- Shipment/Customer checklist items are plain Yes/No checkboxes with
+    -- no description requirement, per explicit product decision. Still
+    -- enforced at the database layer so it cannot be bypassed by a direct
+    -- API call for EOL items.
     CONSTRAINT chk_description_required_by_status CHECK (
         checklist_type <> 'EOL'
         OR check_status IN ('PENDING', 'OK')
@@ -422,7 +425,7 @@ CREATE TABLE audit_logs (
 
 CREATE TABLE media_attachments (
     id             BIGSERIAL PRIMARY KEY,
-    entity_type    VARCHAR(50) NOT NULL,   -- 'VEHICLE' | 'ISSUE' | 'ISSUE_RESOLUTION' | 'CHECKLIST_ITEM_PROGRESS' | 'STATION_STEP_PROGRESS'
+    entity_type    VARCHAR(50) NOT NULL,   -- 'VEHICLE' | 'ISSUE' | 'CHECKLIST_ITEM_PROGRESS' | 'STATION_STEP_PROGRESS'
     entity_id      TEXT NOT NULL,
     file_name      VARCHAR(255) NOT NULL,
     storage_path   TEXT NOT NULL,
@@ -436,12 +439,13 @@ CREATE TABLE media_attachments (
 -- SECTION 8: INDEXING STRATEGY
 -- =====================================================================
 
--- --- VIN / vehicle_number lookup ---------------------------------------
+-- --- VIN lookup ----------------------------------------------------------
 -- vehicles.vin already has a unique btree index (PK) for exact match.
 -- Partial "LIKE '%00057%'" search needs a trigram GIN index to stay in
 -- the millisecond range at million-row scale.
+-- Karar 10 (2026-08-19): vehicle_number column removed entirely, VIN
+-- (full or last-5 partial via this trigram index) is the sole identifier.
 CREATE INDEX idx_vehicles_vin_trgm ON vehicles USING gin (vin gin_trgm_ops);
-CREATE INDEX idx_vehicles_vehicle_number ON vehicles (vehicle_number);  -- Karar 5
 
 -- Common vehicle-list filters
 CREATE INDEX idx_vehicles_status ON vehicles (current_global_status);
@@ -581,7 +585,9 @@ BEGIN
     NEW.eol_template_id := v_eol_template_id;
     NEW.shipment_template_id := v_shipment_template_id;
     NEW.test_template_id := v_test_template_id;
-    NEW.current_station_id := v_first_station_id;
+    IF NEW.current_global_status::text IS DISTINCT FROM 'PLANNED' THEN
+        NEW.current_station_id := v_first_station_id;
+    END IF;
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -598,6 +604,10 @@ CREATE TRIGGER trg_assign_checklist_templates
 CREATE OR REPLACE FUNCTION fn_initialize_vehicle_progress()
 RETURNS TRIGGER AS $$
 BEGIN
+    IF NEW.current_global_status::text = 'PLANNED' THEN
+        RETURN NEW;
+    END IF;
+
     INSERT INTO vehicle_station_step_progress (vin, station_id, station_step_id, status)
     SELECT NEW.vin, ss.station_id, ss.id, 'PENDING'
     FROM station_steps ss
@@ -663,7 +673,11 @@ BEGIN
 
     UPDATE vehicles
     SET total_progress_percentage = v_new_percentage,
-        current_station_id = (SELECT id FROM stations WHERE sequence_no = v_new_station_id)
+        current_station_id = (SELECT id FROM stations WHERE sequence_no = v_new_station_id),
+        current_global_status = CASE
+            WHEN current_global_status::text = 'PLANNED' THEN 'IN_PRODUCTION'::vehicle_status_enum
+            ELSE current_global_status
+        END
     WHERE vin = NEW.vin;
 
     RETURN NEW;
@@ -707,6 +721,49 @@ CREATE TRIGGER trg_enforce_branch_shipment
     BEFORE UPDATE OF branch_shipped_at ON vehicle_eol_workflow
     FOR EACH ROW EXECUTE FUNCTION fn_enforce_branch_shipment();
 
+-- --- Depot item sequencing (NEW — 2026-08-17) ----------------------------
+-- Depot-phase EOL items cannot be marked at all until every Branch-phase
+-- EOL item for the same vehicle is OK or CONDITIONAL_OK. This is a
+-- checklist-sequencing rule, independent of the Ship-to-Depot soft-warning
+-- transition above (which only concerns open issues, not item completion).
+CREATE OR REPLACE FUNCTION fn_enforce_depot_item_sequence()
+RETURNS TRIGGER AS $$
+DECLARE
+    v_item_phase eol_item_phase_enum;
+    v_branch_incomplete BOOLEAN;
+BEGIN
+    IF NEW.checklist_type <> 'EOL' THEN
+        RETURN NEW;
+    END IF;
+
+    SELECT eol_phase INTO v_item_phase
+    FROM checklist_template_items WHERE id = NEW.check_item_id;
+
+    IF v_item_phase <> 'DEPOT' THEN
+        RETURN NEW;
+    END IF;
+
+    SELECT EXISTS (
+        SELECT 1
+        FROM checklist_item_progress cip
+        JOIN checklist_template_items cti ON cti.id = cip.check_item_id
+        WHERE cip.vin = NEW.vin AND cip.checklist_type = 'EOL'
+          AND cti.eol_phase = 'BRANCH'
+          AND cip.check_status NOT IN ('OK', 'CONDITIONAL_OK')
+    ) INTO v_branch_incomplete;
+
+    IF v_branch_incomplete THEN
+        RAISE EXCEPTION 'Cannot update depot item for vehicle % — branch checklist is not fully OK/CONDITIONAL_OK yet', NEW.vin;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_enforce_depot_item_sequence
+    BEFORE INSERT OR UPDATE OF check_status ON checklist_item_progress
+    FOR EACH ROW EXECUTE FUNCTION fn_enforce_depot_item_sequence();
+
 -- --- Karar 2, stage 2: Depot release (hard-block gate) ------------------
 -- Fires when depot_released_at transitions from NULL to a value. Rejects
 -- the change outright — at the database layer, not just the UI — if any
@@ -741,18 +798,21 @@ CREATE TRIGGER trg_enforce_depot_release
     FOR EACH ROW EXECUTE FUNCTION fn_enforce_depot_release();
 
 -- --- Karar 2, stage 3: Document approval (final EOL sign-off) -----------
--- AFTER UPDATE so fn_enforce_manual_status_change can see the new
--- document_approved_at when it gates the SHIPPED transition. A BEFORE
--- trigger would UPDATE vehicles while the workflow row still had a NULL
--- timestamp, and every document-approve would raise.
+-- Fixed 2026-08-17 (see migration 0003 in the real codebase): this must be
+-- an AFTER UPDATE trigger, not BEFORE. A BEFORE UPDATE trigger fires before
+-- this row's own document_approved_at write is visible to other queries in
+-- the same transaction — the nested fn_enforce_manual_status_change check
+-- on vehicles (which SELECTs vehicle_eol_workflow.document_approved_at)
+-- would still see NULL and reject the status change with a false-positive
+-- "document phase is not approved" error. AFTER UPDATE avoids this, at the
+-- cost of no longer being able to set NEW.current_stage directly (AFTER
+-- triggers can't mutate the row via NEW) — so current_stage is now set via
+-- an explicit UPDATE instead.
 CREATE OR REPLACE FUNCTION fn_enforce_document_approval()
 RETURNS TRIGGER AS $$
 BEGIN
     IF NEW.document_approved_at IS NOT NULL AND OLD.document_approved_at IS NULL THEN
-        UPDATE vehicle_eol_workflow
-        SET current_stage = 'COMPLETED'
-        WHERE vin = NEW.vin
-          AND current_stage IS DISTINCT FROM 'COMPLETED';
+        UPDATE vehicle_eol_workflow SET current_stage = 'COMPLETED' WHERE vin = NEW.vin;
 
         UPDATE vehicles SET current_global_status = 'SHIPPED' WHERE vin = NEW.vin;
 
@@ -767,54 +827,6 @@ $$ LANGUAGE plpgsql;
 CREATE TRIGGER trg_enforce_document_approval
     AFTER UPDATE OF document_approved_at ON vehicle_eol_workflow
     FOR EACH ROW EXECUTE FUNCTION fn_enforce_document_approval();
-
--- --- Depot sequencing: Branch items must pass before Depot is editable --
--- Independent of Ship-to-Depot (open-issue warning) and Depot-Release
--- (open-issue hard block). PENDING inserts are allowed so vehicle init
--- can materialize Depot rows while Branch is still PENDING.
-CREATE OR REPLACE FUNCTION fn_enforce_eol_depot_after_branch()
-RETURNS TRIGGER AS $$
-DECLARE
-    v_phase eol_item_phase_enum;
-    v_branch_incomplete BOOLEAN;
-BEGIN
-    IF NEW.checklist_type <> 'EOL' THEN
-        RETURN NEW;
-    END IF;
-
-    IF TG_OP = 'INSERT' AND NEW.check_status = 'PENDING' THEN
-        RETURN NEW;
-    END IF;
-
-    SELECT eol_phase INTO v_phase
-    FROM checklist_template_items
-    WHERE id = NEW.check_item_id;
-
-    IF v_phase IS DISTINCT FROM 'DEPOT' THEN
-        RETURN NEW;
-    END IF;
-
-    SELECT EXISTS (
-        SELECT 1
-        FROM checklist_item_progress p
-        JOIN checklist_template_items cti ON cti.id = p.check_item_id
-        WHERE p.vin = NEW.vin
-          AND p.checklist_type = 'EOL'
-          AND cti.eol_phase = 'BRANCH'
-          AND p.check_status NOT IN ('OK', 'CONDITIONAL_OK')
-    ) INTO v_branch_incomplete;
-
-    IF v_branch_incomplete THEN
-        RAISE EXCEPTION 'cannot update depot-phase EoL items until every branch-phase item is OK or CONDITIONAL_OK';
-    END IF;
-
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER trg_enforce_eol_depot_after_branch
-    BEFORE INSERT OR UPDATE OF check_status ON checklist_item_progress
-    FOR EACH ROW EXECUTE FUNCTION fn_enforce_eol_depot_after_branch();
 
 -- --- Auto status transition: IN_WAREHOUSE -> WITH_CUSTOMER --------------
 -- Hard-block rule (v1 Decision Log #4/#5, PRD FR-4.3, unchanged): ALL
@@ -1003,6 +1015,56 @@ CREATE OR REPLACE VIEW vw_eol_workflow_funnel AS
 SELECT current_stage, count(*) AS vehicle_count
 FROM vehicle_eol_workflow
 GROUP BY current_stage;
+
+-- Araç 360 (Tam Görünüm) — Karar 9. One row per vehicle, combining
+-- station progress, EOL workflow stage, Test/Shipment checklist
+-- completion counters, and open-issue severity breakdown. Feeds the
+-- Vehicle Detail "Overview" tab and the Analysis-tab VIN detail panel so
+-- a single query answers "what is the full current state of vehicle X".
+CREATE OR REPLACE VIEW vw_vehicle_full_overview AS
+SELECT
+    v.vin,
+    v.vehicle_model_id,
+    v.current_global_status,
+    s.name AS current_station_name,
+    v.total_progress_percentage,
+    ew.current_stage AS eol_stage,
+    ew.branch_shipped_at,
+    ew.depot_released_at,
+    ew.document_approved_at,
+    test_stats.total AS test_item_total,
+    test_stats.ok_count AS test_item_ok_count,
+    ship_stats.total AS shipment_item_total,
+    ship_stats.ok_count AS shipment_item_ok_count,
+    eol_stats.total AS eol_item_total,
+    eol_stats.ok_count AS eol_item_ok_count,
+    COALESCE(issue_stats.total_open, 0) AS open_issue_count,
+    COALESCE(issue_stats.critical_count, 0) AS open_critical_count,
+    COALESCE(issue_stats.medium_count, 0) AS open_medium_count,
+    COALESCE(issue_stats.low_count, 0) AS open_low_count
+FROM vehicles v
+LEFT JOIN stations s ON s.id = v.current_station_id
+LEFT JOIN vehicle_eol_workflow ew ON ew.vin = v.vin
+LEFT JOIN (
+    SELECT vin, count(*) AS total, count(*) FILTER (WHERE check_status IN ('OK', 'CONDITIONAL_OK')) AS ok_count
+    FROM checklist_item_progress WHERE checklist_type = 'TEST' GROUP BY vin
+) test_stats ON test_stats.vin = v.vin
+LEFT JOIN (
+    SELECT vin, count(*) AS total, count(*) FILTER (WHERE check_status IN ('OK', 'CONDITIONAL_OK')) AS ok_count
+    FROM checklist_item_progress WHERE checklist_type = 'SHIPMENT' GROUP BY vin
+) ship_stats ON ship_stats.vin = v.vin
+LEFT JOIN (
+    SELECT vin, count(*) AS total, count(*) FILTER (WHERE check_status IN ('OK', 'CONDITIONAL_OK')) AS ok_count
+    FROM checklist_item_progress WHERE checklist_type = 'EOL' GROUP BY vin
+) eol_stats ON eol_stats.vin = v.vin
+LEFT JOIN (
+    SELECT vin,
+           count(*) AS total_open,
+           count(*) FILTER (WHERE severity = 'CRITICAL') AS critical_count,
+           count(*) FILTER (WHERE severity = 'MEDIUM') AS medium_count,
+           count(*) FILTER (WHERE severity = 'LOW') AS low_count
+    FROM issue_list WHERE status IN ('OPEN', 'IN_PROGRESS', 'DONE') GROUP BY vin
+) issue_stats ON issue_stats.vin = v.vin;
 
 -- =====================================================================
 -- SECTION 11: MINIMAL SEED DATA (reference rows only — no vehicle data)

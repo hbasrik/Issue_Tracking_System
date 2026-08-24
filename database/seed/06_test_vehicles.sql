@@ -23,7 +23,7 @@
 -- document-approve / issue approve) are attributed to
 -- manager@karea.local; operators tick items and open/progress issues.
 --
--- Fixture map (vehicle_number → purpose)
+-- Fixture map (VIN tail → purpose)
 --   10042–10044  just started, IN_PRODUCTION, EoL BRANCH, ~0% checklists
 --   10045–10047  mid-production, NOT_OK station step + OPEN issue (badge)
 --   10048–10050  stations complete, EoL still BRANCH (branch-ship warning)
@@ -68,12 +68,7 @@ ON CONFLICT (name) DO NOTHING;
 
 -- Wipe a previous run of this fixture (progress, issues, workflow CASCADE).
 DELETE FROM vehicles
-WHERE vehicle_number IN (
-    '10042', '10043', '10044', '10045', '10046', '10047', '10048', '10049',
-    '10050', '10051', '10052', '10053', '10054', '10055', '10056', '10057',
-    '10058', '10059'
-)
-OR vin IN (
+WHERE vin IN (
     '1KTSKRC2XSB010042', '1KTSKRV2XSB010043', '1KTSKRC2XSB010044', '1KTSKRV2XSB010045',
     '1KTSKRC2XSB010046', '1KTSKRV2XSB010047', '1KTSKRC2XSB010048', '1KTSKRV2XSB010049',
     '1KTSKRC2XSB010050', '1KTSKRV2XSB010051', '1KTSKRC2XSB010052', '1KTSKRV2XSB010053',
@@ -88,29 +83,27 @@ OR vin IN (
 
 -- ---------------------------------------------------------------------
 -- Plain vehicle inserts. Templates + progress rows are trigger-created.
--- VIN is 17 chars (N7V1K1SA… pattern); vehicle_number is the short factory
--- number (Karar 5). 000016–000018 continue the same prefix after the
--- 15-VIN example set.
+-- VIN is 17 chars (N7V1K1SA… pattern). Karar 10: VIN is the sole identifier.
 -- ---------------------------------------------------------------------
-INSERT INTO vehicles (vin, vehicle_number, vehicle_model_id, created_at) VALUES
-    ('N7V1K1SA9SK000001', '10042', (SELECT id FROM vehicle_models WHERE code = 'KRC'), now() - interval '14 days'),
-    ('N7V1K1SA9TK000002', '10043', (SELECT id FROM vehicle_models WHERE code = 'KRV'), now() - interval '13 days'),
-    ('N7V1K1SA0TK000003', '10044', (SELECT id FROM vehicle_models WHERE code = 'KRC'), now() - interval '12 days'),
-    ('N7V1K1SA2TK000004', '10045', (SELECT id FROM vehicle_models WHERE code = 'KRV'), now() - interval '11 days'),
-    ('N7V1K1SA4TK000005', '10046', (SELECT id FROM vehicle_models WHERE code = 'KRC'), now() - interval '10 days'),
-    ('N7V1K1SA6TK000006', '10047', (SELECT id FROM vehicle_models WHERE code = 'KRV'), now() - interval '9 days'),
-    ('N7V1K1SA8TK000007', '10048', (SELECT id FROM vehicle_models WHERE code = 'KRC'), now() - interval '8 days'),
-    ('N7V1K1SAXTK000008', '10049', (SELECT id FROM vehicle_models WHERE code = 'KRV'), now() - interval '7 days'),
-    ('N7V1K1SA1TK000009', '10050', (SELECT id FROM vehicle_models WHERE code = 'KRC'), now() - interval '6 days'),
-    ('N7V1K1SA8TK000010', '10051', (SELECT id FROM vehicle_models WHERE code = 'KRV'), now() - interval '5 days'),
-    ('N7V1K1SAXTK000011', '10052', (SELECT id FROM vehicle_models WHERE code = 'KRC'), now() - interval '5 days'),
-    ('N7V1K1SA1TK000012', '10053', (SELECT id FROM vehicle_models WHERE code = 'KRV'), now() - interval '4 days'),
-    ('N7V1K1SA3TK000013', '10054', (SELECT id FROM vehicle_models WHERE code = 'KRC'), now() - interval '4 days'),
-    ('N7V1K1SA5TK000014', '10055', (SELECT id FROM vehicle_models WHERE code = 'KRV'), now() - interval '3 days'),
-    ('N7V1K1SA7TK000015', '10056', (SELECT id FROM vehicle_models WHERE code = 'KRC'), now() - interval '3 days'),
-    ('N7V1K1SA9TK000016', '10057', (SELECT id FROM vehicle_models WHERE code = 'KRV'), now() - interval '2 days'),
-    ('N7V1K1SAXTK000017', '10058', (SELECT id FROM vehicle_models WHERE code = 'KRC'), now() - interval '2 days'),
-    ('N7V1K1SA2TK000018', '10059', (SELECT id FROM vehicle_models WHERE code = 'KRV'), now() - interval '1 day');
+INSERT INTO vehicles (vin, vehicle_model_id, created_at) VALUES
+    ('N7V1K1SA9SK000001', (SELECT id FROM vehicle_models WHERE code = 'KRC'), now() - interval '14 days'),
+    ('N7V1K1SA9TK000002', (SELECT id FROM vehicle_models WHERE code = 'KRV'), now() - interval '13 days'),
+    ('N7V1K1SA0TK000003', (SELECT id FROM vehicle_models WHERE code = 'KRC'), now() - interval '12 days'),
+    ('N7V1K1SA2TK000004', (SELECT id FROM vehicle_models WHERE code = 'KRV'), now() - interval '11 days'),
+    ('N7V1K1SA4TK000005', (SELECT id FROM vehicle_models WHERE code = 'KRC'), now() - interval '10 days'),
+    ('N7V1K1SA6TK000006', (SELECT id FROM vehicle_models WHERE code = 'KRV'), now() - interval '9 days'),
+    ('N7V1K1SA8TK000007', (SELECT id FROM vehicle_models WHERE code = 'KRC'), now() - interval '8 days'),
+    ('N7V1K1SAXTK000008', (SELECT id FROM vehicle_models WHERE code = 'KRV'), now() - interval '7 days'),
+    ('N7V1K1SA1TK000009', (SELECT id FROM vehicle_models WHERE code = 'KRC'), now() - interval '6 days'),
+    ('N7V1K1SA8TK000010', (SELECT id FROM vehicle_models WHERE code = 'KRV'), now() - interval '5 days'),
+    ('N7V1K1SAXTK000011', (SELECT id FROM vehicle_models WHERE code = 'KRC'), now() - interval '5 days'),
+    ('N7V1K1SA1TK000012', (SELECT id FROM vehicle_models WHERE code = 'KRV'), now() - interval '4 days'),
+    ('N7V1K1SA3TK000013', (SELECT id FROM vehicle_models WHERE code = 'KRC'), now() - interval '4 days'),
+    ('N7V1K1SA5TK000014', (SELECT id FROM vehicle_models WHERE code = 'KRV'), now() - interval '3 days'),
+    ('N7V1K1SA7TK000015', (SELECT id FROM vehicle_models WHERE code = 'KRC'), now() - interval '3 days'),
+    ('N7V1K1SA9TK000016', (SELECT id FROM vehicle_models WHERE code = 'KRV'), now() - interval '2 days'),
+    ('N7V1K1SAXTK000017', (SELECT id FROM vehicle_models WHERE code = 'KRC'), now() - interval '2 days'),
+    ('N7V1K1SA2TK000018', (SELECT id FROM vehicle_models WHERE code = 'KRV'), now() - interval '1 day');
 
 -- Session-local helpers so this seed does not leave functions behind.
 CREATE OR REPLACE FUNCTION pg_temp.mark_stations_ok(p_vin varchar, p_max_station_seq int, p_user int, p_at timestamptz)

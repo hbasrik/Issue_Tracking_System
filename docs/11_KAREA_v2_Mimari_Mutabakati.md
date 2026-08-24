@@ -1,4 +1,3 @@
-
 # KAREA — v2 Mimari Mutabakat Dokümanı
 
 **Durum:** Onay bekliyor bekliyor değil — sorularınıza cevap alamadan ("ok lets go") ilerlememi istediniz, bu yüzden aşağıdaki her karar **önerilen/varsayılan yönde alınmıştır**. Yanlış bulduğunuz herhangi bir kararı söylerseniz sadece o kararı ve ona bağlı DDL/prompt kısmını değiştiririm, baştan yazmaya gerek kalmaz.
@@ -42,11 +41,15 @@
 
 **Karar:** Gerçekten yeni, bağımsız üçüncü bir modül olarak okunmuştur. Mevcut multi-template mimarimiz (`checklist_templates`/`checklist_template_items`) zaten tam da bunun için tasarlanmıştı — `checklist_type_enum`'a üçüncü değer olarak `TEST` eklenir, sıfırdan tablo kurmaya gerek yoktur.
 
+**Ertelenen alt-karar (2026-08-14):** Test checklist'inin bir maddesi NOT_OK/PENDING kaldığında (issue açılmamış olsa bile) herhangi bir geçişi (Depot Release, Shipment vb.) bloklayıp bloklamayacağı henüz karara bağlanmadı — "diğerleri (Shipment, Depot Release) zaten bloklama yapıyorsa şimdilik yeterli, Test'e sonra bakarız" dendi. Mevcut Prompt 10 tasarımı Test'i **sadece görünürlük/raporlama amaçlı, hiçbir geçişi bloklamayan** bir modül olarak uyguluyor. Test'ten kaynaklanan bir issue açılırsa (NOT_OK madde raporlanırsa) o issue genel açık-issue kurallarına tabi olur ve Depot Release'i zaten bloklar — yani tam bloksuz değil, sadece "madde işaretlenmeden issue açılmadan da bloklasın mı" sorusu açık kaldı.
+
 ## Karar 5 — VIN / Vehicle Number
 
 **Çelişki:** Spec, `vehicles`'tan ayrı bir `Full_VIN_List` master tablosu öneriyor (id, vin_number, vehicle_number, active).
 
 **Karar (mimari sadeleştirme):** Ayrı bir tablo kurmak, spec'in kendi "master veriyi tekrarlama" prensibiyle çelişir — `vehicles` zaten araç master verisidir. Bunun yerine `vehicles` tablosuna `vehicle_number` (kısa numara, unique, indeksli) kolonu eklenir. Operatör kısa numarayı girer, sistem VIN'i bulup salt-okunur gösterir — davranış aynı, gereksiz tablo tekrarı olmadan. VIN son-5-hane arama (mevcut trigram) ile bu ikisi birlikte, birbirini dışlamadan çalışır.
+
+**Karar 5 üzerine güncelleme (Karar 10, 2026-08-19):** `vehicle_number` kolonu tamamen kaldırılmıştır — bkz. Karar 10.
 
 ## Karar 6 — Issue Statüsü: 5. Aşama (Şartlı Onay)
 
@@ -65,6 +68,23 @@
 **Çelişki:** Spec, `picture_url` gibi düz metin kolonları yerine genel bir `Media/Attachment` tablosu öneriyor.
 
 **Karar:** Kabul edildi — `media_attachments` (id, entity_type, entity_id, file_name, storage_path, mime_type, file_size, uploaded_by, uploaded_at) eklenir. `issue_list.picture_url`, `issue_list.issue_picture_done_url`, `eol...check_image` gibi alanlar zamanla bu tabloya taşınır (polymorphic ilişki, DB seviyesinde FK zorlanamaz ama uygulama seviyesinde entity_type+entity_id ile doğrulanır).
+
+## Karar 9 — Araç 360 (Tam Görünüm) Analiz Görünümü (NEW — 2026-08-14)
+
+**Gerekçe:** Mevcut Analysis view'ları (severity breakdown, defect rate per station, MTTR) parçalı — belirli bir aracın station ilerlemesi + EoL aşaması + Test sonuçları + Shipment checklist durumu + issue geçmişini tek bir yerde gösteren bir görünüm yoktu. Kullanıcı ilgili aracın bütün verisine Analiz tarafından bakabilmeyi istedi.
+
+**Karar:** `vw_vehicle_full_overview` adında yeni bir view eklenir — araç başına tek satırda: mevcut station, ilerleme %, EoL aşaması (+ 3 zaman damgası), Test/Shipment checklist tamamlanma sayaçları, ve açık issue sayısı (severity kırılımlı). Web tarafında Vehicle Detail sayfasının "Overview" sekmesi ve Analiz tarafındaki VIN detay görünümü bunu kullanır.
+
+## Karar 10 — Üretime Girmemiş Araçlar (PLANNED) + vehicle_number'ın Kaldırılması (NEW — 2026-08-19)
+
+**Gerekçe:** Hata girme ekranında operatörün aracı kısa bir numarayla (VIN yerine) bulabilmesi isteniyordu, ama bu ihtiyaç aslında henüz üretime girmemiş (fabrikaya gelecek ~500 araçlık) bir aracın da hata-girişi için aranabilir olmasını gerektiriyordu. `vehicles` tablosu şu an sadece fiilen üretimde olan araçları (örn. 150 adet) tutuyor — 500'lük tam planı buraya baştan yüklemek Vehicles listesini anlamsız şekilde şişirirdi.
+
+**Karar (2 parça):**
+1. `vehicle_status_enum`'a `PLANNED` eklenir — VIN kayıtlı ama araç henüz hatta girmemiş. Bu 500'lük plan, `vehicles` tablosuna VIN'leriyle (bulk import ile) baştan yüklenir, `current_station_id = NULL`, `current_global_status = 'PLANNED'`. Vehicles listesi (web+mobil) varsayılan olarak `PLANNED` olanları gizler; hata girme ekranındaki arama ise PLANNED dahil tüm araçlara bakar. Bir aracın ilk istasyon-adımı işlendiğinde mevcut trigger genişletilip `PLANNED` → `IN_PRODUCTION` otomatik çevrilir.
+2. **`vehicle_number` kolonu tamamen kaldırılır** (Karar 5'in tersine çevrilmesi). Gerekçe: gerçek VIN'ler OEM tarafından rastgele atanır, ayrı bir kısa-numara sistemi ek karmaşıklık + tekrarlayan bug kaynağı oldu (Issues arama kutusunda hiç çalışmıyordu). VIN (tam ya da son-5-hane trigram araması) tek kimlik alanı olarak yeterli kabul edildi — kullanıcının açık kararı.
+3. `vehicle_model_id` NOT NULL kısıtı kaldırılır (nullable) — bulk import sırasında model bilgisi her zaman bilinmeyebilir, sonradan doldurulabilir.
+
+**Etki:** Yeni migration (`vehicle_number` kolonu + index + `GET /api/v1/vehicles/resolve?vehicle_number=` endpoint'i kaldırılır), bulk VIN import endpoint'i eklenir, Vehicles listesi filtre mantığı güncellenir, hata girme ekranı arama VIN tabanlı hale getirilir.
 
 ## Değişmeyen / Yeniden Kullanılacaklar
 
