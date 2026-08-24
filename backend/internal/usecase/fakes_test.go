@@ -144,6 +144,21 @@ func (f *fakeVehicleRepo) UpdateStatus(_ context.Context, vin string, status dom
 	return nil
 }
 
+func (f *fakeVehicleRepo) BulkInsertPlanned(_ context.Context, vins []string) ([]string, error) {
+	var created []string
+	for _, vin := range vins {
+		if _, exists := f.vehicles[vin]; exists {
+			continue
+		}
+		f.vehicles[vin] = &domain.Vehicle{
+			VIN:                 vin,
+			CurrentGlobalStatus: domain.VehicleStatusPlanned,
+		}
+		created = append(created, vin)
+	}
+	return created, nil
+}
+
 // fakeStationStepRepo is an in-memory StationStepProgressRepository keyed by
 // (vin, stationStepID).
 type fakeStationStepRepo struct {

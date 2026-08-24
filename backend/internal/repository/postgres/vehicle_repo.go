@@ -25,7 +25,7 @@ func NewVehicleRepo(pool *pgxpool.Pool) *VehicleRepo {
 
 var _ repository.VehicleRepository = (*VehicleRepo)(nil)
 
-const vehicleColumns = `vin, COALESCE(vehicle_number, ''), vehicle_model_id,
+const vehicleColumns = `vin, vehicle_model_id,
 	current_global_status, current_station_id, total_progress_percentage,
 	eol_template_id, shipment_template_id, test_template_id, created_at, updated_at`
 
@@ -33,7 +33,7 @@ func scanVehicle(row pgx.Row) (*domain.Vehicle, error) {
 	var v domain.Vehicle
 	var status string
 	if err := row.Scan(
-		&v.VIN, &v.VehicleNumber, &v.VehicleModelID, &status, &v.CurrentStationID,
+		&v.VIN, &v.VehicleModelID, &status, &v.CurrentStationID,
 		&v.TotalProgressPercentage, &v.EOLTemplateID, &v.ShipmentTemplateID,
 		&v.TestTemplateID, &v.CreatedAt, &v.UpdatedAt,
 	); err != nil {
@@ -54,16 +54,13 @@ func (r *VehicleRepo) GetByVIN(ctx context.Context, vin string) (*domain.Vehicle
 }
 
 // vehicleFilterClause builds a shared WHERE fragment for List and Count.
+// PLANNED VINs are always excluded from the Vehicles table (Karar 10).
 func vehicleFilterClause(f domain.VehicleListFilter) (string, []any) {
-	var conds []string
+	conds := []string{"current_global_status <> 'PLANNED'"}
 	var args []any
 	if f.VINContains != "" {
 		args = append(args, f.VINContains)
 		conds = append(conds, fmt.Sprintf("vin ILIKE '%%' || $%d || '%%'", len(args)))
-	}
-	if f.VehicleNumber != "" {
-		args = append(args, f.VehicleNumber)
-		conds = append(conds, fmt.Sprintf("vehicle_number = $%d", len(args)))
 	}
 	if f.Status != nil {
 		args = append(args, string(*f.Status))
@@ -77,19 +74,15 @@ func vehicleFilterClause(f domain.VehicleListFilter) (string, []any) {
 		args = append(args, *f.StationID)
 		conds = append(conds, fmt.Sprintf("current_station_id = $%d", len(args)))
 	}
-	if len(conds) == 0 {
-		return "", args
-	}
 	return " WHERE " + strings.Join(conds, " AND "), args
 }
 
-// List returns a filtered, paginated page of vehicles ordered by factory
-// number descending (largest vehicle_number first).
+// List returns a filtered, paginated page of non-PLANNED vehicles.
 func (r *VehicleRepo) List(ctx context.Context, f domain.VehicleListFilter) ([]domain.Vehicle, error) {
 	where, args := vehicleFilterClause(f)
 	args = append(args, f.Limit, f.Offset)
 	query := `SELECT ` + vehicleColumns + ` FROM vehicles` + where +
-		fmt.Sprintf(" ORDER BY CASE WHEN vehicle_number ~ '^[0-9]+$' THEN vehicle_number::numeric END DESC NULLS LAST, vehicle_number DESC, vin DESC LIMIT $%d OFFSET $%d", len(args)-1, len(args))
+		fmt.Sprintf(" ORDER BY vin DESC LIMIT $%d OFFSET $%d", len(args)-1, len(args))
 
 	rows, err := r.pool.Query(ctx, query, args...)
 	if err != nil {
@@ -117,7 +110,7 @@ func (r *VehicleRepo) Count(ctx context.Context, f domain.VehicleListFilter) (in
 }
 
 // SearchByVINSuffix returns vehicles whose VIN contains the given fragment,
-// relying on the trigram GIN index (idx_vehicles_vin_trgm).
+// including PLANNED (Karar 10 — issue-entry typeahead must see the full plan).
 func (r *VehicleRepo) SearchByVINSuffix(ctx context.Context, suffix string, limit int) ([]domain.Vehicle, error) {
 	rows, err := r.pool.Query(ctx,
 		`SELECT `+vehicleColumns+` FROM vehicles WHERE vin ILIKE '%' || $1 || '%' ORDER BY vin LIMIT $2`,
@@ -165,4 +158,31 @@ func (r *VehicleRepo) UpdateStatus(ctx context.Context, vin string, status domai
 		return domain.ErrNotFound
 	}
 	return nil
+}
+
+// BulkInsertPlanned inserts the given VINs as PLANNED. Conflicts are skipped.
+func (r *VehicleRepo) BulkInsertPlanned(ctx context.Context, vins []string) ([]string, error) {
+	if len(vins) == 0 {
+		return nil, nil
+	}
+	rows, err := executor(ctx, r.pool).Query(ctx,
+		`INSERT INTO vehicles (vin, current_global_status)
+		 SELECT v, 'PLANNED'::vehicle_status_enum
+		 FROM unnest($1::text[]) AS v
+		 ON CONFLICT (vin) DO NOTHING
+		 RETURNING vin`, vins)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var created []string
+	for rows.Next() {
+		var vin string
+		if err := rows.Scan(&vin); err != nil {
+			return nil, err
+		}
+		created = append(created, vin)
+	}
+	return created, rows.Err()
 }

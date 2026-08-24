@@ -25,6 +25,9 @@ type VehicleRepository interface {
 	UpdateProgress(ctx context.Context, vin string, percentage float64, currentStationID *int) error
 	// UpdateStatus persists a new global status for a vehicle.
 	UpdateStatus(ctx context.Context, vin string, status domain.VehicleStatus) error
+	// BulkInsertPlanned inserts VINs as PLANNED (model and station unset).
+	// Existing VINs are skipped. Returns the VINs that were actually inserted.
+	BulkInsertPlanned(ctx context.Context, vins []string) ([]string, error)
 }
 
 // StationStepProgressRepository persists and queries per-vehicle station step

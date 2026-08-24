@@ -138,3 +138,77 @@ func (s *VehicleService) ChangeStatus(ctx context.Context, vin string, target do
 	vehicle.CurrentGlobalStatus = target
 	return vehicle, nil
 }
+
+const maxBulkImportVINs = 500
+
+// VehicleBulkImportResult is the outcome of a PLANNED VIN bulk insert.
+type VehicleBulkImportResult struct {
+	Created []string
+	Skipped []string
+	Invalid []string
+}
+
+func normalizeVIN(raw string) (string, bool) {
+	vin := strings.ToUpper(strings.TrimSpace(raw))
+	if len(vin) != 17 {
+		return "", false
+	}
+	for _, c := range vin {
+		if (c < 'A' || c > 'Z') && (c < '0' || c > '9') {
+			return "", false
+		}
+	}
+	return vin, true
+}
+
+// BulkImportPlanned inserts VINs as PLANNED (Karar 10). Duplicates in the
+// payload are collapsed; VINs that already exist are skipped; malformed
+// values are listed in Invalid and are not inserted.
+func (s *VehicleService) BulkImportPlanned(ctx context.Context, raw []string) (*VehicleBulkImportResult, error) {
+	if len(raw) > maxBulkImportVINs {
+		raw = raw[:maxBulkImportVINs]
+	}
+	out := &VehicleBulkImportResult{
+		Created: []string{},
+		Skipped: []string{},
+		Invalid: []string{},
+	}
+	seen := make(map[string]struct{}, len(raw))
+	var candidates []string
+	for _, item := range raw {
+		vin, ok := normalizeVIN(item)
+		if !ok {
+			if strings.TrimSpace(item) != "" {
+				out.Invalid = append(out.Invalid, strings.TrimSpace(item))
+			}
+			continue
+		}
+		if _, dup := seen[vin]; dup {
+			continue
+		}
+		seen[vin] = struct{}{}
+		candidates = append(candidates, vin)
+	}
+	if len(candidates) == 0 {
+		return out, nil
+	}
+
+	created, err := s.vehicles.BulkInsertPlanned(ctx, candidates)
+	if err != nil {
+		return nil, err
+	}
+	createdSet := make(map[string]struct{}, len(created))
+	for _, vin := range created {
+		createdSet[vin] = struct{}{}
+	}
+	out.Created = created
+	if out.Created == nil {
+		out.Created = []string{}
+	}
+	for _, vin := range candidates {
+		if _, ok := createdSet[vin]; !ok {
+			out.Skipped = append(out.Skipped, vin)
+		}
+	}
+	return out, nil
+}

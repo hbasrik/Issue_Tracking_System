@@ -3,7 +3,6 @@ package http
 import (
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/go-chi/chi/v5"
 
@@ -14,8 +13,7 @@ import (
 func (s *server) handleVehicleList(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 	filter := domain.VehicleListFilter{
-		VINContains:   q.Get("vin"),
-		VehicleNumber: strings.TrimSpace(q.Get("vehicle_number")),
+		VINContains: q.Get("vin"),
 	}
 
 	if raw := q.Get("status"); raw != "" {
@@ -146,4 +144,23 @@ func (s *server) handleVehicleStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, vehicle)
+}
+
+type vehicleBulkImportRequest struct {
+	VINs []string `json:"vins"`
+}
+
+// handleVehicleBulkImport inserts VINs as PLANNED (Manager/Admin, Karar 10).
+func (s *server) handleVehicleBulkImport(w http.ResponseWriter, r *http.Request) {
+	var req vehicleBulkImportRequest
+	if err := decodeJSON(r, &req); err != nil {
+		badRequest(w, "invalid request body")
+		return
+	}
+	result, err := s.deps.Vehicles.BulkImportPlanned(r.Context(), req.VINs)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, result)
 }
