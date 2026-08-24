@@ -159,6 +159,9 @@ export default function MyIssuesScreen() {
       <FlatList
         data={filtered}
         keyExtractor={(i) => String(i.ID)}
+        initialNumToRender={8}
+        maxToRenderPerBatch={8}
+        windowSize={5}
         contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
         ListHeaderComponent={
           <View style={{ marginBottom: 12 }}>

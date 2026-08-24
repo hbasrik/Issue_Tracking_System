@@ -1,5 +1,5 @@
 import { Image, Pressable, Text, View } from 'react-native';
-import { mediaFileUrl, type Issue } from '../api/client';
+import { mediaThumbUrl, type Issue } from '../api/client';
 import { Card, Badge } from './ui';
 import { SeverityIndicator } from './SeverityIndicator';
 import { useTheme } from '../theme/ThemeProvider';
@@ -29,7 +29,7 @@ export function IssueCard({
         <View style={{ flexDirection: 'row', gap: 12 }}>
           {issue.ReportPhotoPath ? (
             <Image
-              source={{ uri: mediaFileUrl(issue.ReportPhotoPath) }}
+              source={{ uri: mediaThumbUrl(issue.ReportPhotoPath) }}
               style={{
                 width: 64,
                 height: 64,

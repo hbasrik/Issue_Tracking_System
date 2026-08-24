@@ -438,3 +438,8 @@ export function mediaFileUrl(storagePath: string): string {
   const path = storagePath.replace(/^\/+/, '');
   return `${origin}/uploads/${path}`;
 }
+
+/** List-card URL: long-edge 192 JPEG instead of the 1MB+ original. */
+export function mediaThumbUrl(storagePath: string): string {
+  return `${mediaFileUrl(storagePath)}?thumb=1`;
+}
