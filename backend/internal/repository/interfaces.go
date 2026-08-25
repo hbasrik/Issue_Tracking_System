@@ -102,13 +102,15 @@ type StationRepository interface {
 	List(ctx context.Context) ([]domain.Station, error)
 }
 
-// AnalysisRepository reads the Analysis-tab SQL views.
+// AnalysisRepository reads the Analysis-tab metrics. Every method honors
+// AnalysisFilter (inclusive from/to calendar days).
 type AnalysisRepository interface {
 	DailyPendingIssues(ctx context.Context, f domain.AnalysisFilter) ([]domain.DailyPendingIssue, error)
 	CompletedIssuesDaily(ctx context.Context, f domain.AnalysisFilter) ([]domain.CompletedIssuesDaily, error)
 	DefectRatePerStation(ctx context.Context, f domain.AnalysisFilter) ([]domain.StationDefectRate, error)
 	MTTRPerStation(ctx context.Context, f domain.AnalysisFilter) ([]domain.StationMTTR, error)
 	VehicleSeverityBreakdown(ctx context.Context, f domain.AnalysisFilter) ([]domain.VehicleSeverityBreakdown, error)
+	Dashboard(ctx context.Context, f domain.AnalysisFilter) (*domain.AnalysisDashboard, error)
 }
 
 // UserRepository persists and queries users (used by auth).

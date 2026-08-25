@@ -115,6 +115,21 @@ func (s *server) handleVehicleChecklistGet(w http.ResponseWriter, r *http.Reques
 	writeJSON(w, http.StatusOK, map[string]any{"items": items})
 }
 
+// handleShipmentReadiness returns the soft pre-shipment warning list.
+func (s *server) handleShipmentReadiness(w http.ResponseWriter, r *http.Request) {
+	if s.deps.ShipmentReadiness == nil {
+		writeError(w, domain.ErrNotFound)
+		return
+	}
+	vin := chi.URLParam(r, "vin")
+	ready, err := s.deps.ShipmentReadiness.ForVIN(r.Context(), vin)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, ready)
+}
+
 type vehicleStatusRequest struct {
 	Status string `json:"status"`
 }

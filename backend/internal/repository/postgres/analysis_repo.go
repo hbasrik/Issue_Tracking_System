@@ -12,10 +12,8 @@ import (
 	"github.com/karea/backend/internal/repository"
 )
 
-// AnalysisRepo reads the Analysis-tab SQL views defined in the initial
-// migration. Filters that the underlying view does not expose as a column are
-// ignored (the views are the reporting contract); richer per-row filtering
-// belongs to dedicated queries in a later iteration.
+// AnalysisRepo reads Analysis-tab metrics from the live tables so every
+// series can honor the same from/to (inclusive calendar day) filter.
 type AnalysisRepo struct {
 	pool *pgxpool.Pool
 }
@@ -27,26 +25,92 @@ func NewAnalysisRepo(pool *pgxpool.Pool) *AnalysisRepo {
 
 var _ repository.AnalysisRepository = (*AnalysisRepo)(nil)
 
-// dayRangeClause builds a "WHERE day BETWEEN ..." fragment for the day-keyed
-// views, returning the SQL and its positional args.
-func dayRangeClause(column string, f domain.AnalysisFilter) (string, []any) {
-	var conds []string
-	var args []any
-	if f.From != nil {
-		args = append(args, *f.From)
-		conds = append(conds, fmt.Sprintf("%s >= $%d", column, len(args)))
-	}
-	if f.To != nil {
-		args = append(args, *f.To)
-		conds = append(conds, fmt.Sprintf("%s <= $%d", column, len(args)))
-	}
-	if len(conds) == 0 {
-		return "", args
-	}
-	return " WHERE " + strings.Join(conds, " AND "), args
+const istanbul = "Europe/Istanbul"
+
+const issueJoin = `
+FROM issue_list i
+JOIN vehicles v ON v.vin = i.vin
+LEFT JOIN issue_types it ON it.id = i.issue_type_id`
+
+// issueWhere binds $1 from, $2 until (exclusive), $3 vin suffix, $4 station,
+// $5 vehicle status, $6 issue type name. tsColumn is the timestamptz compared
+// to the date window (issue_date, finish_date, …).
+func issueWhere(tsColumn string) string {
+	return fmt.Sprintf(`
+WHERE ($1::timestamptz IS NULL OR %s >= $1)
+  AND ($2::timestamptz IS NULL OR %s < $2)
+  AND ($3 = '' OR i.vin ILIKE '%%' || $3 || '%%')
+  AND ($4::int IS NULL OR i.station_id = $4)
+  AND ($5 = '' OR v.current_global_status::text = $5)
+  AND ($6 = '' OR it.name ILIKE '%%' || $6 || '%%')`, tsColumn, tsColumn)
 }
 
-// DailyPendingIssues returns rows of vw_daily_pending_issues.
+type boundArgs struct {
+	from    any
+	until   any
+	suffix  string
+	station any
+	status  string
+	itype   string
+}
+
+func bounds(f domain.AnalysisFilter) boundArgs {
+	b := boundArgs{suffix: strings.TrimSpace(f.VINSuffix), itype: strings.TrimSpace(f.IssueType)}
+	if f.From != nil {
+		t := startOfUTCDay(*f.From)
+		b.from = t
+	}
+	if f.To != nil {
+		t := startOfUTCDay(*f.To).Add(24 * time.Hour)
+		b.until = t
+	}
+	if f.StationID != nil {
+		b.station = *f.StationID
+	}
+	if f.VehicleStatus != nil {
+		b.status = string(*f.VehicleStatus)
+	}
+	return b
+}
+
+func (b boundArgs) slice() []any {
+	return []any{b.from, b.until, b.suffix, b.station, b.status, b.itype}
+}
+
+func startOfUTCDay(t time.Time) time.Time {
+	y, m, d := t.UTC().Date()
+	return time.Date(y, m, d, 0, 0, 0, 0, time.UTC)
+}
+
+func istanbulDayStart(now time.Time) time.Time {
+	loc, err := time.LoadLocation(istanbul)
+	if err != nil {
+		loc = time.UTC
+	}
+	n := now.In(loc)
+	return time.Date(n.Year(), n.Month(), n.Day(), 0, 0, 0, 0, loc)
+}
+
+func intersectWindow(f domain.AnalysisFilter, winFrom, winUntil time.Time) (from, until time.Time, empty bool) {
+	from, until = winFrom, winUntil
+	if f.From != nil {
+		if startOfUTCDay(*f.From).After(from) {
+			from = startOfUTCDay(*f.From)
+		}
+	}
+	if f.To != nil {
+		end := startOfUTCDay(*f.To).Add(24 * time.Hour)
+		if end.Before(until) {
+			until = end
+		}
+	}
+	if !from.Before(until) {
+		return from, until, true
+	}
+	return from, until, false
+}
+
+// DailyPendingIssues returns rows of vw_daily_pending_issues, sliced by day.
 func (r *AnalysisRepo) DailyPendingIssues(ctx context.Context, f domain.AnalysisFilter) ([]domain.DailyPendingIssue, error) {
 	where, args := dayRangeClause("day", f)
 	rows, err := r.pool.Query(ctx, `SELECT day, pending_count FROM vw_daily_pending_issues`+where+` ORDER BY day`, args...)
@@ -66,15 +130,35 @@ func (r *AnalysisRepo) DailyPendingIssues(ctx context.Context, f domain.Analysis
 	return out, rows.Err()
 }
 
-// CompletedIssuesDaily returns rows of vw_completed_issues_daily.
+func dayRangeClause(column string, f domain.AnalysisFilter) (string, []any) {
+	var conds []string
+	var args []any
+	if f.From != nil {
+		args = append(args, startOfUTCDay(*f.From))
+		conds = append(conds, fmt.Sprintf("%s >= $%d::date", column, len(args)))
+	}
+	if f.To != nil {
+		args = append(args, startOfUTCDay(*f.To))
+		conds = append(conds, fmt.Sprintf("%s <= $%d::date", column, len(args)))
+	}
+	if len(conds) == 0 {
+		return "", args
+	}
+	return " WHERE " + strings.Join(conds, " AND "), args
+}
+
+// CompletedIssuesDaily returns finish_date buckets inside the filter window.
 func (r *AnalysisRepo) CompletedIssuesDaily(ctx context.Context, f domain.AnalysisFilter) ([]domain.CompletedIssuesDaily, error) {
-	where, args := dayRangeClause("day", f)
-	rows, err := r.pool.Query(ctx, `SELECT day, completed_count FROM vw_completed_issues_daily`+where+` ORDER BY day`, args...)
+	b := bounds(f)
+	rows, err := r.pool.Query(ctx,
+		`SELECT date_trunc('day', i.finish_date AT TIME ZONE 'UTC')::date AS day, count(*)
+		 `+issueJoin+issueWhere("i.finish_date")+`
+		   AND i.finish_date IS NOT NULL
+		 GROUP BY 1 ORDER BY 1`, b.slice()...)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-
 	var out []domain.CompletedIssuesDaily
 	for rows.Next() {
 		var d domain.CompletedIssuesDaily
@@ -86,16 +170,20 @@ func (r *AnalysisRepo) CompletedIssuesDaily(ctx context.Context, f domain.Analys
 	return out, rows.Err()
 }
 
-// DefectRatePerStation returns rows of vw_defect_rate_per_station.
-func (r *AnalysisRepo) DefectRatePerStation(ctx context.Context, _ domain.AnalysisFilter) ([]domain.StationDefectRate, error) {
+// DefectRatePerStation counts issues created in the filter window per station.
+func (r *AnalysisRepo) DefectRatePerStation(ctx context.Context, f domain.AnalysisFilter) ([]domain.StationDefectRate, error) {
+	b := bounds(f)
 	rows, err := r.pool.Query(ctx,
-		`SELECT station_id, station_name, vehicles_with_issue, issue_count
-		 FROM vw_defect_rate_per_station ORDER BY issue_count DESC`)
+		`SELECT s.id, s.name, count(DISTINCT i.vin), count(i.id)
+		 `+issueJoin+`
+		 JOIN stations s ON s.id = i.station_id
+		 `+issueWhere("i.issue_date")+`
+		 GROUP BY s.id, s.name
+		 ORDER BY count(i.id) DESC, s.sequence_no`, b.slice()...)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-
 	var out []domain.StationDefectRate
 	for rows.Next() {
 		var s domain.StationDefectRate
@@ -107,48 +195,57 @@ func (r *AnalysisRepo) DefectRatePerStation(ctx context.Context, _ domain.Analys
 	return out, rows.Err()
 }
 
-// MTTRPerStation returns rows of vw_issue_mttr. The interval is converted to
-// seconds via EXTRACT(EPOCH ...) and mapped to a time.Duration.
-func (r *AnalysisRepo) MTTRPerStation(ctx context.Context, _ domain.AnalysisFilter) ([]domain.StationMTTR, error) {
+// MTTRPerStation averages finish_date - process_date for issues completed
+// (DONE stamped) in the window. OPEN→IN_PROGRESS is process_date; that is the
+// clock the Analysis tab uses, not issue_date (notification).
+func (r *AnalysisRepo) MTTRPerStation(ctx context.Context, f domain.AnalysisFilter) ([]domain.StationMTTR, error) {
+	b := bounds(f)
 	rows, err := r.pool.Query(ctx,
-		`SELECT station_id, EXTRACT(EPOCH FROM mean_time_to_resolve)
-		 FROM vw_issue_mttr WHERE station_id IS NOT NULL`)
+		`SELECT s.id, s.name, EXTRACT(EPOCH FROM avg(i.finish_date - i.process_date))
+		 FROM stations s
+		 JOIN issue_list i ON i.station_id = s.id
+		 JOIN vehicles v ON v.vin = i.vin
+		 LEFT JOIN issue_types it ON it.id = i.issue_type_id
+		 `+issueWhere("i.finish_date")+`
+		   AND i.process_date IS NOT NULL AND i.finish_date IS NOT NULL
+		 GROUP BY s.id, s.name
+		 ORDER BY s.sequence_no`, b.slice()...)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-
 	var out []domain.StationMTTR
 	for rows.Next() {
 		var s domain.StationMTTR
 		var seconds float64
-		if err := rows.Scan(&s.StationID, &seconds); err != nil {
+		if err := rows.Scan(&s.StationID, &s.StationName, &seconds); err != nil {
 			return nil, err
 		}
 		s.MeanTimeToResolve = time.Duration(seconds * float64(time.Second))
+		s.Hours = seconds / 3600
 		out = append(out, s)
 	}
 	return out, rows.Err()
 }
 
-// VehicleSeverityBreakdown returns rows of
-// vw_vehicle_open_issue_severity_breakdown.
+// VehicleSeverityBreakdown returns open (OPEN/IN_PROGRESS/DONE) issues in the
+// window, grouped by VIN.
 func (r *AnalysisRepo) VehicleSeverityBreakdown(ctx context.Context, f domain.AnalysisFilter) ([]domain.VehicleSeverityBreakdown, error) {
-	query := `SELECT vin, total_open_issues, critical_count, medium_count, low_count
-	          FROM vw_vehicle_open_issue_severity_breakdown`
-	var args []any
-	if f.VINSuffix != "" {
-		args = append(args, f.VINSuffix)
-		query += fmt.Sprintf(" WHERE vin ILIKE '%%' || $%d || '%%'", len(args))
-	}
-	query += " ORDER BY total_open_issues DESC"
-
-	rows, err := r.pool.Query(ctx, query, args...)
+	b := bounds(f)
+	rows, err := r.pool.Query(ctx,
+		`SELECT i.vin,
+		        count(*)::bigint,
+		        count(*) FILTER (WHERE i.severity = 'CRITICAL')::bigint,
+		        count(*) FILTER (WHERE i.severity = 'MEDIUM')::bigint,
+		        count(*) FILTER (WHERE i.severity = 'LOW')::bigint
+		 `+issueJoin+issueWhere("i.issue_date")+`
+		   AND i.status IN ('OPEN', 'IN_PROGRESS', 'DONE')
+		 GROUP BY i.vin
+		 ORDER BY count(*) DESC`, b.slice()...)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-
 	var out []domain.VehicleSeverityBreakdown
 	for rows.Next() {
 		var v domain.VehicleSeverityBreakdown
@@ -158,4 +255,268 @@ func (r *AnalysisRepo) VehicleSeverityBreakdown(ctx context.Context, f domain.An
 		out = append(out, v)
 	}
 	return out, rows.Err()
+}
+
+// Dashboard gathers every Analysis-tab series under one filter.
+func (r *AnalysisRepo) Dashboard(ctx context.Context, f domain.AnalysisFilter) (*domain.AnalysisDashboard, error) {
+	dash := &domain.AnalysisDashboard{
+		IssueStatus:    []domain.IssueStatusCount{},
+		DefectRate:     []domain.StationDefectRate{},
+		MTTR:           []domain.StationMTTR{},
+		Severity:       []domain.VehicleSeverityBreakdown{},
+		EOLFunnel:      []domain.EOLStageCount{},
+		TopIssueTypes:  []domain.IssueTypeCount{},
+		CompletedDaily: []domain.CompletedIssuesDaily{},
+	}
+
+	kpis, err := r.kpis(ctx, f)
+	if err != nil {
+		return nil, err
+	}
+	dash.KPIs = kpis
+
+	if err := r.scanWorkAndStatus(ctx, f, dash); err != nil {
+		return nil, err
+	}
+	defects, err := r.DefectRatePerStation(ctx, f)
+	if err != nil {
+		return nil, err
+	}
+	dash.DefectRate = defects
+	mttr, err := r.MTTRPerStation(ctx, f)
+	if err != nil {
+		return nil, err
+	}
+	dash.MTTR = mttr
+	sev, err := r.VehicleSeverityBreakdown(ctx, f)
+	if err != nil {
+		return nil, err
+	}
+	dash.Severity = sev
+	if err := r.scanEOLFunnel(ctx, f, dash); err != nil {
+		return nil, err
+	}
+	if err := r.scanTopTypes(ctx, f, dash); err != nil {
+		return nil, err
+	}
+	daily, err := r.CompletedIssuesDaily(ctx, f)
+	if err != nil {
+		return nil, err
+	}
+	dash.CompletedDaily = daily
+	return dash, nil
+}
+
+func (r *AnalysisRepo) scanWorkAndStatus(ctx context.Context, f domain.AnalysisFilter, dash *domain.AnalysisDashboard) error {
+	b := bounds(f)
+	rows, err := r.pool.Query(ctx,
+		`SELECT i.status::text, count(*)
+		 `+issueJoin+issueWhere("i.issue_date")+`
+		 GROUP BY i.status`, b.slice()...)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	counts := map[domain.IssueStatus]int64{}
+	for rows.Next() {
+		var status string
+		var n int64
+		if err := rows.Scan(&status, &n); err != nil {
+			return err
+		}
+		counts[domain.IssueStatus(status)] = n
+	}
+	if err := rows.Err(); err != nil {
+		return err
+	}
+	order := []domain.IssueStatus{
+		domain.IssueStatusOpen, domain.IssueStatusInProgress, domain.IssueStatusDone,
+		domain.IssueStatusApproved, domain.IssueStatusConditionalApproved,
+	}
+	for _, st := range order {
+		n := counts[st]
+		dash.IssueStatus = append(dash.IssueStatus, domain.IssueStatusCount{Status: st, Count: n})
+		switch st {
+		case domain.IssueStatusOpen, domain.IssueStatusInProgress:
+			dash.WorkSplit.Ongoing += n
+			dash.KPIs.OpenIssuesInRange += n
+		case domain.IssueStatusDone:
+			dash.WorkSplit.Completed += n
+			dash.KPIs.OpenIssuesInRange += n // still awaiting quality
+		case domain.IssueStatusApproved, domain.IssueStatusConditionalApproved:
+			dash.WorkSplit.Completed += n
+		}
+	}
+	return nil
+}
+
+func (r *AnalysisRepo) scanEOLFunnel(ctx context.Context, f domain.AnalysisFilter, dash *domain.AnalysisDashboard) error {
+	b := bounds(f)
+	rows, err := r.pool.Query(ctx,
+		`SELECT w.current_stage::text, count(*)
+		 FROM vehicle_eol_workflow w
+		 JOIN vehicles v ON v.vin = w.vin
+		 WHERE ($1::timestamptz IS NULL OR v.created_at >= $1)
+		   AND ($2::timestamptz IS NULL OR v.created_at < $2)
+		   AND ($3 = '' OR w.vin ILIKE '%' || $3 || '%')
+		   AND ($4 = '' OR v.current_global_status::text = $4)
+		 GROUP BY w.current_stage
+		 ORDER BY w.current_stage`, b.from, b.until, b.suffix, b.status)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var row domain.EOLStageCount
+		if err := rows.Scan(&row.Stage, &row.Count); err != nil {
+			return err
+		}
+		dash.EOLFunnel = append(dash.EOLFunnel, row)
+	}
+	return rows.Err()
+}
+
+func (r *AnalysisRepo) scanTopTypes(ctx context.Context, f domain.AnalysisFilter, dash *domain.AnalysisDashboard) error {
+	b := bounds(f)
+	rows, err := r.pool.Query(ctx,
+		`SELECT COALESCE(it.name, '(untyped)'), count(*)
+		 `+issueJoin+issueWhere("i.issue_date")+`
+		 GROUP BY 1
+		 ORDER BY count(*) DESC, 1
+		 LIMIT 8`, b.slice()...)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var row domain.IssueTypeCount
+		if err := rows.Scan(&row.Name, &row.Count); err != nil {
+			return err
+		}
+		dash.TopIssueTypes = append(dash.TopIssueTypes, row)
+	}
+	return rows.Err()
+}
+
+func (r *AnalysisRepo) kpis(ctx context.Context, f domain.AnalysisFilter) (domain.AnalysisKPIs, error) {
+	var k domain.AnalysisKPIs
+	today := istanbulDayStart(time.Now())
+	todayEnd := today.Add(24 * time.Hour)
+	weekStart := today.AddDate(0, 0, -6)
+
+	shipped, err := r.countShipped(ctx, f, nil, nil)
+	if err != nil {
+		return k, err
+	}
+	k.ShippedInRange = shipped
+
+	if from, until, empty := intersectWindow(f, today, todayEnd); !empty {
+		k.ShippedToday, err = r.countShipped(ctx, f, &from, &until)
+		if err != nil {
+			return k, err
+		}
+	}
+	if from, until, empty := intersectWindow(f, weekStart, todayEnd); !empty {
+		k.ShippedWeek, err = r.countShipped(ctx, f, &from, &until)
+		if err != nil {
+			return k, err
+		}
+	}
+
+	k.DepotReleasedInRange, err = r.countDepotReleased(ctx, f)
+	if err != nil {
+		return k, err
+	}
+
+	hours, err := r.avgResolutionHours(ctx, f)
+	if err != nil {
+		return k, err
+	}
+	k.AvgResolutionHours = hours
+
+	ftr, err := r.firstTimeRight(ctx, f)
+	if err != nil {
+		return k, err
+	}
+	k.FirstTimeRightPercent = ftr
+	return k, nil
+}
+
+func (r *AnalysisRepo) countShipped(ctx context.Context, f domain.AnalysisFilter, from, until *time.Time) (int64, error) {
+	b := bounds(f)
+	if from != nil {
+		b.from = *from
+	}
+	if until != nil {
+		b.until = *until
+	}
+	var n int64
+	err := r.pool.QueryRow(ctx,
+		`SELECT count(DISTINCT s.vin)
+		 FROM (
+		     SELECT vin, document_approved_at AS at
+		     FROM vehicle_eol_workflow
+		     WHERE document_approved_at IS NOT NULL
+		     UNION ALL
+		     SELECT vin, event_at
+		     FROM audit_logs
+		     WHERE event_type = 'STATUS_CHANGE' AND new_value = 'SHIPPED'
+		 ) s
+		 JOIN vehicles v ON v.vin = s.vin
+		 WHERE ($1::timestamptz IS NULL OR s.at >= $1)
+		   AND ($2::timestamptz IS NULL OR s.at < $2)
+		   AND ($3 = '' OR s.vin ILIKE '%' || $3 || '%')
+		   AND ($4 = '' OR v.current_global_status::text = $4)`,
+		b.from, b.until, b.suffix, b.status,
+	).Scan(&n)
+	return n, err
+}
+
+func (r *AnalysisRepo) countDepotReleased(ctx context.Context, f domain.AnalysisFilter) (int64, error) {
+	b := bounds(f)
+	var n int64
+	err := r.pool.QueryRow(ctx,
+		`SELECT count(*)
+		 FROM vehicle_eol_workflow w
+		 JOIN vehicles v ON v.vin = w.vin
+		 WHERE w.depot_released_at IS NOT NULL
+		   AND ($1::timestamptz IS NULL OR w.depot_released_at >= $1)
+		   AND ($2::timestamptz IS NULL OR w.depot_released_at < $2)
+		   AND ($3 = '' OR w.vin ILIKE '%' || $3 || '%')
+		   AND ($4 = '' OR v.current_global_status::text = $4)`,
+		b.from, b.until, b.suffix, b.status,
+	).Scan(&n)
+	return n, err
+}
+
+func (r *AnalysisRepo) avgResolutionHours(ctx context.Context, f domain.AnalysisFilter) (*float64, error) {
+	b := bounds(f)
+	var hours *float64
+	err := r.pool.QueryRow(ctx,
+		`SELECT EXTRACT(EPOCH FROM avg(i.finish_date - i.process_date)) / 3600
+		 `+issueJoin+issueWhere("i.finish_date")+`
+		   AND i.process_date IS NOT NULL AND i.finish_date IS NOT NULL`,
+		b.slice()...,
+	).Scan(&hours)
+	return hours, err
+}
+
+func (r *AnalysisRepo) firstTimeRight(ctx context.Context, f domain.AnalysisFilter) (*float64, error) {
+	b := bounds(f)
+	var pct *float64
+	err := r.pool.QueryRow(ctx,
+		`SELECT CASE WHEN count(*) = 0 THEN NULL
+		        ELSE round(100.0 * count(*) FILTER (WHERE p.status = 'OK') / count(*), 1)
+		        END
+		 FROM vehicle_station_step_progress p
+		 JOIN vehicles v ON v.vin = p.vin
+		 WHERE p.status <> 'PENDING'
+		   AND ($1::timestamptz IS NULL OR p.checked_at >= $1)
+		   AND ($2::timestamptz IS NULL OR p.checked_at < $2)
+		   AND ($3 = '' OR p.vin ILIKE '%' || $3 || '%')
+		   AND ($4::int IS NULL OR p.station_id = $4)
+		   AND ($5 = '' OR v.current_global_status::text = $5)`,
+		b.from, b.until, b.suffix, b.station, b.status,
+	).Scan(&pct)
+	return pct, err
 }

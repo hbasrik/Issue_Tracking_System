@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/karea/backend/internal/domain"
@@ -98,6 +99,9 @@ func (s *VehicleService) ChangeStatus(ctx context.Context, vin string, target do
 		return nil, err
 	}
 	previousStatus := vehicle.CurrentGlobalStatus
+	if previousStatus == domain.VehicleStatusPlanned || target == domain.VehicleStatusPlanned {
+		return nil, fmt.Errorf("%w: PLANNED status changes only when the first station step is processed", domain.ErrInvalidStatusTransition)
+	}
 
 	shipmentGateOpen := true
 	if target == domain.VehicleStatusWithCustomer || target == domain.VehicleStatusShipped {

@@ -38,6 +38,7 @@ type Deps struct {
 	EOLDepotRelease    *usecase.EOLDepotReleaser
 	EOLDocumentApprove *usecase.EOLDocumentApprover
 	EOLReset           *usecase.EOLWorkflowResetter
+	ShipmentReadiness  *usecase.ShipmentReadinessReader
 	Media              *usecase.MediaUploader
 	CORSAllowedOrigins []string
 	// AppEnv is APP_ENV. The EoL reset route 404s unless this is "development".
@@ -115,6 +116,7 @@ func NewRouter(deps Deps) http.Handler {
 				r.Get("/vehicles/{vin}/checklist/{type}", s.handleVehicleChecklistGet)
 				r.Get("/vehicles/{vin}/eol", s.handleEOLWorkflowGet)
 				r.Get("/vehicles/{vin}/media", s.handleVehicleMediaList)
+				r.Get("/vehicles/{vin}/shipment-readiness", s.handleShipmentReadiness)
 				r.Get("/issues", s.handleIssueList)
 				r.Get("/issues/{id}", s.handleIssueGet)
 				r.Get("/issues/{id}/history", s.handleIssueHistory)
@@ -145,6 +147,7 @@ func NewRouter(deps Deps) http.Handler {
 			// Filtered Analysis tool.
 			r.Group(func(r chi.Router) {
 				r.Use(permissions.RequirePermission(domain.PermissionAnalysisView))
+				r.Get("/analysis/dashboard", s.handleAnalysisDashboard)
 				r.Get("/analysis/daily-pending-issues", s.handleDailyPendingIssues)
 				r.Get("/analysis/mttr", s.handleMTTR)
 			})

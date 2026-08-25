@@ -43,3 +43,8 @@ func (a *AnalysisMetricsReader) MTTRPerStation(ctx context.Context, f domain.Ana
 func (a *AnalysisMetricsReader) VehicleSeverityBreakdown(ctx context.Context, f domain.AnalysisFilter) ([]domain.VehicleSeverityBreakdown, error) {
 	return a.analysis.VehicleSeverityBreakdown(ctx, f)
 }
+
+// Dashboard returns every Analysis-tab series under one filter.
+func (a *AnalysisMetricsReader) Dashboard(ctx context.Context, f domain.AnalysisFilter) (*domain.AnalysisDashboard, error) {
+	return a.analysis.Dashboard(ctx, f)
+}

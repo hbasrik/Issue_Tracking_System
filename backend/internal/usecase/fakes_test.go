@@ -221,7 +221,10 @@ func (f *fakeChecklistRepo) ResolveDefaultTemplateID(_ context.Context, _ domain
 	return 1, nil
 }
 
-func (f *fakeChecklistRepo) ListItemsWithProgress(_ context.Context, vin string, _ domain.ChecklistType, _ int) ([]domain.ChecklistItemView, error) {
+func (f *fakeChecklistRepo) ListItemsWithProgress(_ context.Context, vin string, t domain.ChecklistType, _ int) ([]domain.ChecklistItemView, error) {
+	if items, ok := f.views[vin+"|"+string(t)]; ok {
+		return items, nil
+	}
 	return f.views[vin], nil
 }
 

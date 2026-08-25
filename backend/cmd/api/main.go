@@ -43,13 +43,14 @@ func main() {
 	issuer := auth.NewIssuer(cfg.JWTSecret, 24*time.Hour)
 	mediaStore := storage.NewLocalDisk(cfg.UploadDir)
 
+	checklists := usecase.NewChecklistResultRecorder(vehicleRepo, checklistRepo)
 	router := deliveryhttp.NewRouter(deliveryhttp.Deps{
 		Issuer:             issuer,
 		Auth:               usecase.NewAuthenticator(userRepo),
 		Roles:              roleRepo,
 		Vehicles:           usecase.NewVehicleService(vehicleRepo, checklistRepo, auditRepo, uow),
 		StationSteps:       usecase.NewStationStepResultRecorder(vehicleRepo, stationStepRepo),
-		Checklists:         usecase.NewChecklistResultRecorder(vehicleRepo, checklistRepo),
+		Checklists:         checklists,
 		Issues:             usecase.NewIssueManager(issueRepo, auditRepo, uow),
 		Stations:           usecase.NewStationService(stationRepo),
 		Analysis:           usecase.NewAnalysisMetricsReader(analysisRepo),
@@ -58,6 +59,7 @@ func main() {
 		EOLDepotRelease:    usecase.NewEOLDepotReleaser(vehicleRepo, issueRepo, eolRepo, uow),
 		EOLDocumentApprove: usecase.NewEOLDocumentApprover(vehicleRepo, eolRepo, uow),
 		EOLReset:           usecase.NewEOLWorkflowResetter(vehicleRepo, eolRepo, auditRepo, uow),
+		ShipmentReadiness:  usecase.NewShipmentReadinessReader(vehicleRepo, checklists, issueRepo),
 		Media:              usecase.NewMediaUploader(mediaRepo, mediaStore),
 		CORSAllowedOrigins: cfg.CORSAllowedOrigins,
 		AppEnv:             cfg.AppEnv,
