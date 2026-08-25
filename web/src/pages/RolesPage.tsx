@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
-import { Perm } from '../auth/permissions';
 import { api, ApiError, type PermissionRow, type RoleGrant } from '../lib/api';
+import { groupPermissions } from '../lib/permissionLabels';
 
 /** Role × permission matrix. Saving writes role_permissions immediately. */
 export default function RolesPage() {
@@ -47,6 +47,12 @@ export default function RolesPage() {
     });
   }
 
+  function isDirty(role: RoleGrant): boolean {
+    const granted = [...(drafts[role.id] ?? [])].sort();
+    const saved = [...role.permissions].sort();
+    return JSON.stringify(granted) !== JSON.stringify(saved);
+  }
+
   async function save(role: RoleGrant) {
     setBusyId(role.id);
     setError(null);
@@ -77,12 +83,15 @@ export default function RolesPage() {
     }
   }
 
+  const groups = groupPermissions(permissions);
+  const roleColWidth = '8.5rem';
+
   return (
     <section>
       <h1 className="text-xl font-semibold sm:text-2xl">Roles & Permissions</h1>
       <p className="mt-1 text-[13px] text-[var(--text-secondary)]">
-        Grant or revoke permissions without a code change. Removing{' '}
-        {Perm.AdminManageUsers} from the last granting role is rejected.
+        Grant or revoke permissions without a code change. Removing Kullanıcı
+        ve rol yönetimi from the last granting role is rejected.
       </p>
       {error && (
         <p className="mt-3 text-[13px]" style={{ color: 'var(--status-not-ok)' }}>
@@ -125,63 +134,114 @@ export default function RolesPage() {
         </button>
       </form>
 
-      <div className="mt-6 overflow-x-auto rounded-xl border bg-[var(--bg-surface-1)]" style={{ borderColor: 'var(--border)' }}>
-        <table className="min-w-max text-left text-[13px]">
+      <div
+        className="mt-6 overflow-auto rounded-xl border bg-[var(--bg-surface-1)]"
+        style={{ borderColor: 'var(--border)' }}
+      >
+        <table className="w-full min-w-max border-collapse text-left text-[13px]">
           <thead>
             <tr className="border-b text-[var(--text-secondary)]" style={{ borderColor: 'var(--border)' }}>
-              <th className="sticky left-0 z-10 bg-[var(--bg-surface-1)] px-4 py-3">Role</th>
-              {permissions.map((p) => (
+              <th
+                className="sticky left-0 top-0 z-30 bg-[var(--bg-surface-1)] px-4 py-3 font-medium text-[var(--text-primary)]"
+                style={{ minWidth: '16rem', width: '16rem' }}
+              >
+                İzin
+              </th>
+              {roles.map((role) => (
                 <th
-                  key={p.code}
-                  className="max-w-[8rem] px-2 py-3 font-normal"
-                  title={p.description || p.code}
+                  key={role.id}
+                  className="sticky top-0 z-20 bg-[var(--bg-surface-1)] px-2 py-3 text-center font-medium text-[var(--text-primary)]"
+                  style={{ minWidth: roleColWidth, width: roleColWidth }}
                 >
-                  <span className="block origin-bottom-left whitespace-nowrap">
-                    {p.code}
-                  </span>
+                  <div className="leading-snug">{role.name}</div>
+                  <div className="mt-0.5 truncate text-[11px] font-normal text-[var(--text-secondary)]">
+                    {role.code}
+                  </div>
+                  <button
+                    type="button"
+                    disabled={busyId === role.id || !isDirty(role)}
+                    onClick={() => void save(role)}
+                    className="mt-2 min-h-touch w-full rounded-lg bg-[var(--accent)] px-2 text-[12px] font-medium text-white disabled:opacity-40"
+                  >
+                    {busyId === role.id ? 'Saving…' : 'Save'}
+                  </button>
                 </th>
               ))}
-              <th className="px-4 py-3"> </th>
             </tr>
           </thead>
           <tbody>
-            {roles.map((role) => {
-              const granted = drafts[role.id] ?? new Set<string>();
-              const dirty =
-                JSON.stringify([...(granted)].sort()) !==
-                JSON.stringify([...(role.permissions)].sort());
-              return (
-                <tr key={role.id} className="border-t" style={{ borderColor: 'var(--border)' }}>
-                  <td className="sticky left-0 bg-[var(--bg-surface-1)] px-4 py-3 font-medium">
-                    <div>{role.name}</div>
-                    <div className="text-[12px] text-[var(--text-secondary)]">{role.code}</div>
-                  </td>
-                  {permissions.map((p) => (
-                    <td key={p.code} className="px-2 py-3 text-center">
-                      <input
-                        type="checkbox"
-                        checked={granted.has(p.code)}
-                        onChange={() => toggle(role.id, p.code)}
-                        aria-label={`${role.code} ${p.code}`}
-                      />
-                    </td>
-                  ))}
-                  <td className="px-4 py-3">
-                    <button
-                      type="button"
-                      disabled={busyId === role.id || !dirty}
-                      onClick={() => void save(role)}
-                      className="min-h-touch rounded-lg bg-[var(--accent)] px-3 text-[13px] text-white disabled:opacity-40"
-                    >
-                      {busyId === role.id ? 'Saving…' : 'Save'}
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
+            {groups.map((group) => (
+              <PermissionGroupRows
+                key={group.id}
+                group={group}
+                roles={roles}
+                drafts={drafts}
+                roleColWidth={roleColWidth}
+                onToggle={toggle}
+              />
+            ))}
           </tbody>
         </table>
       </div>
     </section>
+  );
+}
+
+function PermissionGroupRows({
+  group,
+  roles,
+  drafts,
+  roleColWidth,
+  onToggle,
+}: {
+  group: ReturnType<typeof groupPermissions>[number];
+  roles: RoleGrant[];
+  drafts: Record<number, Set<string>>;
+  roleColWidth: string;
+  onToggle: (roleId: number, perm: string) => void;
+}) {
+  return (
+    <>
+      <tr className="border-t" style={{ borderColor: 'var(--border)' }}>
+        <td
+          colSpan={1 + roles.length}
+          className="bg-[var(--bg-surface-2)] px-4 py-2 text-[12px] font-semibold tracking-wide text-[var(--text-secondary)]"
+        >
+          {group.label}
+        </td>
+      </tr>
+      {group.items.map((item) => (
+        <tr key={item.code} className="border-t" style={{ borderColor: 'var(--border)' }}>
+          <td
+            className="sticky left-0 z-10 bg-[var(--bg-surface-1)] px-4 py-2.5 align-middle"
+            style={{ minWidth: '16rem', width: '16rem' }}
+            title={item.code}
+          >
+            <div className="leading-snug text-[var(--text-primary)]">{item.label}</div>
+            <div className="mt-0.5 truncate font-mono text-[11px] text-[var(--text-secondary)]">
+              {item.code}
+            </div>
+          </td>
+          {roles.map((role) => {
+            const granted = drafts[role.id] ?? new Set<string>();
+            return (
+              <td
+                key={role.id}
+                className="px-2 py-2.5 text-center align-middle"
+                style={{ minWidth: roleColWidth, width: roleColWidth }}
+              >
+                <input
+                  type="checkbox"
+                  className="mx-auto block h-4 w-4"
+                  checked={granted.has(item.code)}
+                  onChange={() => onToggle(role.id, item.code)}
+                  aria-label={`${role.name}: ${item.label}`}
+                />
+              </td>
+            );
+          })}
+        </tr>
+      ))}
+    </>
   );
 }
