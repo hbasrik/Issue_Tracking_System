@@ -38,6 +38,7 @@ func writeError(w http.ResponseWriter, err error) {
 	var gate *domain.GateBlockedError
 	var depot *domain.DepotReleaseBlockedError
 	var rejected *domain.DatabaseRejectedError
+	var itemInUse *domain.TemplateItemInUseError
 	switch {
 	case errors.As(err, &gate):
 		writeJSON(w, http.StatusConflict, errorResponse{
@@ -51,6 +52,8 @@ func writeError(w http.ResponseWriter, err error) {
 		})
 	case errors.As(err, &rejected):
 		writeJSON(w, http.StatusConflict, errorResponse{Error: rejected.Error()})
+	case errors.As(err, &itemInUse):
+		writeJSON(w, http.StatusConflict, errorResponse{Error: itemInUse.Error()})
 	case errors.Is(err, domain.ErrDepotChecklistLocked),
 		errors.Is(err, domain.ErrInvalidStatusTransition),
 		errors.Is(err, domain.ErrLastActiveManager):
@@ -76,7 +79,12 @@ func writeError(w http.ResponseWriter, err error) {
 		errors.Is(err, domain.ErrIssueTypeRequired),
 		errors.Is(err, domain.ErrInvalidManualSource),
 		errors.Is(err, domain.ErrInvalidEnumValue),
-		errors.Is(err, domain.ErrUnsupportedImageFormat):
+		errors.Is(err, domain.ErrUnsupportedImageFormat),
+		errors.Is(err, domain.ErrTemplateItemTextRequired),
+		errors.Is(err, domain.ErrTemplateItemTextTooLong),
+		errors.Is(err, domain.ErrEOLPhaseRequired),
+		errors.Is(err, domain.ErrEOLPhaseNotAllowed),
+		errors.Is(err, domain.ErrTemplateItemReorderInvalid):
 		writeJSON(w, http.StatusBadRequest, errorResponse{Error: err.Error()})
 	default:
 		log.Printf("http: unhandled error: %v", err)
