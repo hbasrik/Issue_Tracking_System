@@ -283,7 +283,35 @@ export const api = {
       `/analysis/mttr?${toQuery(params)}`,
     );
   },
+
+  analysisDashboard(params: AnalysisQuery) {
+    return request<AnalysisDashboard>(`/analysis/dashboard?${toQuery(params)}`);
+  },
+
+  shipmentReadiness(vin: string) {
+    return request<ShipmentReadiness>(
+      `/vehicles/${encodeURIComponent(vin)}/shipment-readiness`,
+    );
+  },
 };
+
+export interface ShipmentReadiness {
+  vin: string;
+  status: string;
+  ready: boolean;
+  warnings: ShipmentWarning[];
+}
+
+export interface ShipmentWarning {
+  code: string;
+  message: string;
+  checklist_type?: string;
+  item_id?: number;
+  item_status?: string;
+  issue_id?: number;
+  issue_status?: string;
+  remaining_count?: number;
+}
 
 export interface Vehicle {
   VIN: string;
@@ -470,7 +498,29 @@ export interface StationDefectRate {
 
 export interface StationMTTR {
   StationID: number;
+  StationName?: string;
   MeanTimeToResolve: number; // nanoseconds from Go time.Duration JSON
+  Hours?: number;
+}
+
+export interface AnalysisDashboard {
+  KPIs: {
+    ShippedToday: number;
+    ShippedWeek: number;
+    ShippedInRange: number;
+    DepotReleasedInRange: number;
+    AvgResolutionHours: number | null;
+    FirstTimeRightPercent: number | null;
+    OpenIssuesInRange: number;
+  };
+  WorkSplit: { Completed: number; Ongoing: number };
+  IssueStatus: { Status: string; Count: number }[];
+  DefectRate: StationDefectRate[];
+  MTTR: StationMTTR[];
+  Severity: VehicleSeverityBreakdown[];
+  EOLFunnel: { Stage: string; Count: number }[];
+  TopIssueTypes: { Name: string; Count: number }[];
+  CompletedDaily: { Day: string; CompletedCount: number }[];
 }
 
 function toQuery(params: AnalysisQuery): string {
@@ -478,6 +528,9 @@ function toQuery(params: AnalysisQuery): string {
   if (params.from) q.set('from', params.from);
   if (params.to) q.set('to', params.to);
   if (params.vin_suffix) q.set('vin_suffix', params.vin_suffix);
+  if (params.station) q.set('station', params.station);
+  if (params.status) q.set('status', params.status);
+  if (params.issue_type) q.set('issue_type', params.issue_type);
   return q.toString();
 }
 

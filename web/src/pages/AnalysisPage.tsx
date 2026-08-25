@@ -17,16 +17,20 @@ import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import {
   api,
+  type AnalysisDashboard,
+  type Station,
   type StationDefectRate,
   type StationMTTR,
   type VehicleSeverityBreakdown,
 } from '../lib/api';
 import { VinSearchBox } from '../components/VinSearchBox';
 import { SeverityIndicator } from '../components/SeverityIndicator';
+import { issueStatusColor, issueStatusLabel } from '../lib/issueStatus';
 import { statusColors } from '../theme/tokens';
 
 const VEHICLE_STATUSES = [
   '',
+  'PLANNED',
   'IN_PRODUCTION',
   'IN_WAREHOUSE',
   'WITH_CUSTOMER',
@@ -64,23 +68,26 @@ export default function AnalysisPage() {
     [searchParams],
   );
 
+  const [dash, setDash] = useState<AnalysisDashboard | null>(null);
   const [severity, setSeverity] = useState<VehicleSeverityBreakdown[]>([]);
   const [mttr, setMttr] = useState<StationMTTR[]>([]);
   const [defects, setDefects] = useState<StationDefectRate[]>([]);
+  const [stations, setStations] = useState<Station[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
 
   const load = useCallback(async () => {
     setError(null);
     try {
-      const [s, m, d] = await Promise.all([
-        api.vehicleSeverityBreakdown(applied),
-        api.mttr(applied),
-        api.defectRatePerStation(applied),
+      const [d, stationRes] = await Promise.all([
+        api.analysisDashboard(applied),
+        api.listStations().catch(() => ({ items: [] as Station[] })),
       ]);
-      setSeverity(s.items ?? []);
-      setMttr(m.items ?? []);
-      setDefects(d.items ?? []);
+      setDash(d);
+      setSeverity(d.Severity ?? []);
+      setMttr(d.MTTR ?? []);
+      setDefects(d.DefectRate ?? []);
+      setStations(stationRes.items ?? []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load analysis');
     }
@@ -102,31 +109,31 @@ export default function AnalysisPage() {
   }
 
   const pieData = useMemo(() => {
-    // Approximate completion split from severity rows + defect context.
-    // Prefer vehicles with zero open issues as "completed-leaning" when no
-    // dedicated completion endpoint is exposed yet.
-    const withOpen = severity.filter((v) => v.TotalOpenIssues > 0).length;
-    const withoutOpen = Math.max(0, severity.length - withOpen);
-    // If no severity rows, fall back to a neutral placeholder from defects.
-    if (severity.length === 0) {
-      return [
-        { name: 'Completed', value: 0, color: statusColors.ok },
-        { name: 'In progress', value: Math.max(1, defects.length), color: statusColors.info },
-      ];
-    }
+    const completed = dash?.WorkSplit.Completed ?? 0;
+    const ongoing = dash?.WorkSplit.Ongoing ?? 0;
     return [
-      { name: 'Completed (no open issues)', value: withoutOpen, color: statusColors.ok },
-      { name: 'In progress (open issues)', value: withOpen, color: statusColors.info },
+      { name: 'Biten', value: completed, color: statusColors.ok },
+      { name: 'Devam eden', value: ongoing, color: statusColors.issueInProgress },
     ];
-  }, [severity, defects]);
+  }, [dash]);
+
+  const statusPie = useMemo(
+    () =>
+      (dash?.IssueStatus ?? []).map((row) => ({
+        name: issueStatusLabel(row.Status),
+        value: row.Count,
+        color: issueStatusColor(row.Status),
+      })),
+    [dash],
+  );
 
   const mttrBars = useMemo(
     () =>
       mttr.map((r) => ({
-        station: `Station ${r.StationID}`,
-        hours: Number((r.MeanTimeToResolve / 1e9 / 3600).toFixed(2)),
+        station: r.StationName || stations.find((s) => s.ID === r.StationID)?.Name || `Station ${r.StationID}`,
+        hours: r.Hours ?? Number((r.MeanTimeToResolve / 1e9 / 3600).toFixed(2)),
       })),
-    [mttr],
+    [mttr, stations],
   );
 
   const defectBars = useMemo(
@@ -252,11 +259,14 @@ export default function AnalysisPage() {
             style={{ borderColor: 'var(--border)' }}
           >
             <option value="">All</option>
-            {Array.from({ length: 8 }, (_, i) => i + 1).map((p) => (
-              <option key={p} value={String(p)}>
-                Station {p}
-              </option>
-            ))}
+            {stations
+              .slice()
+              .sort((a, b) => a.SequenceNo - b.SequenceNo)
+              .map((s) => (
+                <option key={s.ID} value={String(s.ID)}>
+                  {s.Name}
+                </option>
+              ))}
           </select>
         </Field>
         <Field label="Vehicle status">
@@ -311,6 +321,57 @@ export default function AnalysisPage() {
           Active filters: {filterSummary}
         </p>
 
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <KpiCard
+            label="Bugün sevk"
+            value={dash?.KPIs.ShippedToday ?? 0}
+            hint="SHIPPED geçişi · takvim bugünü ∩ filtre"
+          />
+          <KpiCard
+            label="Haftalık sevk"
+            value={dash?.KPIs.ShippedWeek ?? 0}
+            hint="Son 7 gün ∩ filtre"
+          />
+          <KpiCard
+            label="Depo serbest"
+            value={dash?.KPIs.DepotReleasedInRange ?? 0}
+            hint="EOL depot release"
+          />
+          <KpiCard
+            label="Ort. çözüm (saat)"
+            value={
+              dash?.KPIs.AvgResolutionHours == null
+                ? '—'
+                : dash.KPIs.AvgResolutionHours.toFixed(2)
+            }
+            hint="IN_PROGRESS → DONE"
+          />
+          <KpiCard
+            label="Açık hatalar"
+            value={dash?.KPIs.OpenIssuesInRange ?? 0}
+            hint="OPEN / IN_PROGRESS / DONE"
+          />
+          <KpiCard
+            label="İlk seferde doğru"
+            value={
+              dash?.KPIs.FirstTimeRightPercent == null
+                ? '—'
+                : `${dash.KPIs.FirstTimeRightPercent}%`
+            }
+            hint="İşlenen station step OK oranı"
+          />
+          <KpiCard
+            label="Aralıkta sevk"
+            value={dash?.KPIs.ShippedInRange ?? 0}
+            hint="Filtre penceresindeki SHIPPED"
+          />
+          <KpiCard
+            label="Biten işler"
+            value={dash?.WorkSplit.Completed ?? 0}
+            hint="DONE + kalite onayları"
+          />
+        </div>
+
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           <ChartCard title="Biten / Devam Eden İşler">
             <div className="h-[220px] w-full min-w-0 sm:h-[260px]">
@@ -336,6 +397,32 @@ export default function AnalysisPage() {
             </div>
           </ChartCard>
 
+          <ChartCard title="Hata durum dağılımı">
+            <div className="h-[220px] w-full min-w-0 sm:h-[260px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={statusPie}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius="70%"
+                    label={false}
+                  >
+                    {statusPie.map((entry) => (
+                      <Cell key={entry.name} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend wrapperStyle={{ fontSize: 12 }} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </ChartCard>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           <ChartCard title="İstasyon Bazlı MTTR (hours)">
             <div className="h-[220px] w-full min-w-0 sm:h-[260px]">
               <ResponsiveContainer width="100%" height="100%">
@@ -355,6 +442,26 @@ export default function AnalysisPage() {
                   />
                   <Tooltip />
                   <Bar dataKey="hours" fill={statusColors.info} name="MTTR (h)" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </ChartCard>
+
+          <ChartCard title="EOL aşamalarında bekleyen">
+            <div className="h-[220px] w-full min-w-0 sm:h-[260px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={(dash?.EOLFunnel ?? []).map((r) => ({
+                    stage: r.Stage,
+                    count: r.Count,
+                  }))}
+                  margin={{ top: 8, right: 8, left: 0, bottom: 8 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                  <XAxis dataKey="stage" tick={{ fill: 'var(--text-secondary)', fontSize: 10 }} />
+                  <YAxis width={36} tick={{ fill: 'var(--text-secondary)', fontSize: 10 }} />
+                  <Tooltip />
+                  <Bar dataKey="count" fill={statusColors.vehicleWithCustomer} name="Araç" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -383,6 +490,33 @@ export default function AnalysisPage() {
                 />
                 <Tooltip />
                 <Bar dataKey="issues" fill={statusColors.notOk} name="Issues" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </ChartCard>
+
+        <ChartCard title="En sık hata tipleri">
+          <div className="h-[220px] w-full min-w-0 sm:h-[240px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={(dash?.TopIssueTypes ?? []).map((r) => ({
+                  name: r.Name,
+                  count: r.Count,
+                }))}
+                margin={{ top: 8, right: 8, left: 0, bottom: 48 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                <XAxis
+                  dataKey="name"
+                  tick={{ fill: 'var(--text-secondary)', fontSize: 10 }}
+                  angle={-25}
+                  textAnchor="end"
+                  height={60}
+                  interval={0}
+                />
+                <YAxis width={36} tick={{ fill: 'var(--text-secondary)', fontSize: 10 }} />
+                <Tooltip />
+                <Bar dataKey="count" fill={statusColors.issueOpen} name="Hata" />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -536,6 +670,27 @@ function Field({
       {label}
       <div className="mt-1">{children}</div>
     </label>
+  );
+}
+
+function KpiCard({
+  label,
+  value,
+  hint,
+}: {
+  label: string;
+  value: number | string;
+  hint: string;
+}) {
+  return (
+    <div
+      className="rounded-xl border bg-[var(--bg-surface-1)] p-4"
+      style={{ borderColor: 'var(--border)' }}
+    >
+      <p className="text-[13px] text-[var(--text-secondary)]">{label}</p>
+      <p className="mt-1 text-2xl font-semibold">{value}</p>
+      <p className="mt-1 text-[12px] text-[var(--text-secondary)]">{hint}</p>
+    </div>
   );
 }
 

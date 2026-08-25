@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
-import { api, ApiError, type Station, type Vehicle } from '../lib/api';
 import { StatusBadge } from '../components/StatusBadge';
 import { VehicleIdentity } from '../components/VehicleIdentity';
 import { ChecklistPanel } from '../components/ChecklistPanel';
 import { EolWorkflowTab } from '../components/EolWorkflowTab';
 import { MediaGallery } from '../components/MediaGallery';
 import { VehicleIssuesPanel } from '../components/VehicleIssuesPanel';
+import { ShipmentReadinessBanner } from '../components/ShipmentReadinessBanner';
+import { api, ApiError, type ShipmentReadiness, type Station, type Vehicle } from '../lib/api';
 
 type Tab = 'overview' | 'eol' | 'shipment' | 'test' | 'issues' | 'audit';
 
@@ -23,9 +24,9 @@ function isTab(value: string | null): value is Tab {
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'overview', label: 'Overview' },
-  { id: 'eol', label: 'EoL' },
   { id: 'shipment', label: 'Shipment' },
   { id: 'test', label: 'Test' },
+  { id: 'eol', label: 'EoL' },
   { id: 'issues', label: 'Issues' },
   { id: 'audit', label: 'Audit Log' },
 ];
@@ -52,11 +53,14 @@ export default function VehicleDetailPage() {
   const [statusDraft, setStatusDraft] = useState('');
   const [blockingModal, setBlockingModal] = useState<number[] | null>(null);
   const [busy, setBusy] = useState(false);
+  const [readiness, setReadiness] = useState<ShipmentReadiness | null>(null);
 
   const loadVehicle = useCallback(async () => {
     const v = await api.getVehicle(vin);
     setVehicle(v);
     setStatusDraft(v.CurrentGlobalStatus);
+    const ready = await api.shipmentReadiness(vin).catch(() => null);
+    setReadiness(ready);
   }, [vin]);
 
   useEffect(() => {
@@ -69,14 +73,16 @@ export default function VehicleDetailPage() {
     (async () => {
       setError(null);
       try {
-        const [v, stationRes] = await Promise.all([
+        const [v, stationRes, ready] = await Promise.all([
           api.getVehicle(vin),
           api.listStations().catch(() => ({ items: [] as Station[] })),
+          api.shipmentReadiness(vin).catch(() => null),
         ]);
         if (cancelled) return;
         setVehicle(v);
         setStatusDraft(v.CurrentGlobalStatus);
         setStations(stationRes.items ?? []);
+        setReadiness(ready);
       } catch (err) {
         if (!cancelled) {
           setError(err instanceof Error ? err.message : 'Failed to load vehicle');
@@ -152,6 +158,12 @@ export default function VehicleDetailPage() {
         </div>
       </div>
 
+      {vehicle.CurrentGlobalStatus !== 'SHIPPED' && (
+        <div className="mt-5">
+          <ShipmentReadinessBanner readiness={readiness} />
+        </div>
+      )}
+
       <div
         className="-mx-3 mt-6 flex gap-1 overflow-x-auto border-b px-3 sm:mx-0 sm:px-0"
         style={{ borderColor: 'var(--border)' }}
@@ -190,9 +202,13 @@ export default function VehicleDetailPage() {
                 <select
                   value={statusDraft}
                   onChange={(e) => setStatusDraft(e.target.value)}
-                  className="min-h-touch w-full rounded-lg border bg-[var(--bg-page)] px-3 text-[15px] sm:w-auto"
+                  disabled={vehicle.CurrentGlobalStatus === 'PLANNED'}
+                  className="min-h-touch w-full rounded-lg border bg-[var(--bg-page)] px-3 text-[15px] sm:w-auto disabled:opacity-60"
                   style={{ borderColor: 'var(--border)' }}
                 >
+                  {vehicle.CurrentGlobalStatus === 'PLANNED' && (
+                    <option value="PLANNED">PLANNED</option>
+                  )}
                   {STATUS_OPTIONS.map((s) => (
                     <option key={s} value={s}>
                       {s}
@@ -201,13 +217,19 @@ export default function VehicleDetailPage() {
                 </select>
                 <button
                   type="button"
-                  disabled={busy}
+                  disabled={busy || vehicle.CurrentGlobalStatus === 'PLANNED'}
                   onClick={saveStatus}
                   className="min-h-touch rounded-lg bg-[var(--accent)] px-4 text-[15px] text-white disabled:opacity-60"
                 >
                   Kaydet
                 </button>
               </div>
+              {vehicle.CurrentGlobalStatus === 'PLANNED' && (
+                <p className="mt-2 text-[13px] text-[var(--text-secondary)]">
+                  PLANNED duruma elle geçilemez; hatta ilk istasyon adımı işlenince
+                  otomatik IN_PRODUCTION olur.
+                </p>
+              )}
               {error && (
                 <p className="mt-3 text-[13px]" style={{ color: 'var(--status-not-ok)' }}>
                   {error}
@@ -256,9 +278,6 @@ export default function VehicleDetailPage() {
           </div>
         )}
 
-        {tab === 'eol' && (
-          <EolWorkflowTab vin={vehicle.VIN} onVehicleChanged={() => void loadVehicle()} />
-        )}
         {tab === 'shipment' && (
           <ChecklistPanel
             vin={vehicle.VIN}
@@ -274,6 +293,9 @@ export default function VehicleDetailPage() {
             title="Test checklist"
             hint="Yes/No checkbox — saves immediately. Informational quality tracking, no vehicle-status gate."
           />
+        )}
+        {tab === 'eol' && (
+          <EolWorkflowTab vin={vehicle.VIN} onVehicleChanged={() => void loadVehicle()} />
         )}
         {tab === 'issues' && <VehicleIssuesPanel vin={vehicle.VIN} />}
         {tab === 'audit' && (

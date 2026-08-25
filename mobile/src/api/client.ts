@@ -128,6 +128,13 @@ export interface Vehicle {
   UpdatedAt?: string;
 }
 
+export interface ShipmentReadiness {
+  vin: string;
+  status: string;
+  ready: boolean;
+  warnings: { code: string; message: string }[];
+}
+
 export interface StationStepItem {
   ID: number;
   StationID: number;
@@ -271,6 +278,12 @@ export const api = {
 
   getVehicle(vin: string) {
     return request<Vehicle>(`/vehicles/${encodeURIComponent(vin)}`);
+  },
+
+  shipmentReadiness(vin: string) {
+    return request<ShipmentReadiness>(
+      `/vehicles/${encodeURIComponent(vin)}/shipment-readiness`,
+    );
   },
 
   getStationSteps(vin: string) {

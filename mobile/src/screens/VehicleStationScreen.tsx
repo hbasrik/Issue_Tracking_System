@@ -18,6 +18,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
   api,
   type Issue,
+  type ShipmentReadiness,
   type StationStepItem,
   type Vehicle,
 } from '../api/client';
@@ -110,6 +111,7 @@ export default function VehicleStationScreen() {
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
   const [steps, setSteps] = useState<StationStepItem[]>([]);
   const [issues, setIssues] = useState<Issue[]>([]);
+  const [readiness, setReadiness] = useState<ShipmentReadiness | null>(null);
   const [openByStation, setOpenByStation] = useState<Record<string, number>>({});
   const [expandedStation, setExpandedStation] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -118,15 +120,17 @@ export default function VehicleStationScreen() {
   const load = useCallback(async () => {
     setError(null);
     try {
-      const [v, res, issueRes] = await Promise.all([
+      const [v, res, issueRes, ready] = await Promise.all([
         api.getVehicle(vin),
         api.getStationSteps(vin),
         api.listIssues(undefined, vin).catch(() => ({ items: [] as Issue[] })),
+        api.shipmentReadiness(vin).catch(() => null),
       ]);
       setVehicle(v);
       setSteps(res.Items ?? []);
       setOpenByStation(res.OpenIssuesByStation ?? {});
       setIssues(issueRes.items ?? []);
+      setReadiness(ready);
       setExpandedStation((prev) => prev ?? v.CurrentStationID);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load vehicle');
@@ -201,17 +205,32 @@ export default function VehicleStationScreen() {
         </View>
 
         <View style={{ gap: 8, marginBottom: 16 }}>
+          {readiness && !readiness.ready && readiness.warnings.length > 0 ? (
+            <Card>
+              <Text style={{ color: statusColors.conditionalOk, fontWeight: '600', fontSize: 15 }}>
+                Sevk öncesi uyarı
+              </Text>
+              {readiness.warnings.map((w, i) => (
+                <Text
+                  key={`${w.code}-${i}`}
+                  style={{ color: tokens.textPrimary, fontSize: 13, marginTop: 6 }}
+                >
+                  • {w.message}
+                </Text>
+              ))}
+            </Card>
+          ) : null}
           <OutlineButton
-            label="EoL Checklist"
-            onPress={() => navigation.navigate('EOLChecklist', { vin })}
+            label="Shipment Checklist"
+            onPress={() => navigation.navigate('ShipmentChecklist', { vin })}
           />
           <OutlineButton
             label="Test Checklist"
             onPress={() => navigation.navigate('TestChecklist', { vin })}
           />
           <OutlineButton
-            label="Shipment Checklist"
-            onPress={() => navigation.navigate('ShipmentChecklist', { vin })}
+            label="EoL Checklist"
+            onPress={() => navigation.navigate('EOLChecklist', { vin })}
           />
         </View>
 
