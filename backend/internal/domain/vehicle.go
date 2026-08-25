@@ -25,17 +25,43 @@ func (s VehicleStatus) Valid() bool {
 	}
 }
 
+// VehicleAnalysisStat is a dashboard-card drill-down key for GET /vehicles.
+type VehicleAnalysisStat string
+
+const (
+	VehicleAnalysisStatOnLine        VehicleAnalysisStat = "on_line"
+	VehicleAnalysisStatShippedToday  VehicleAnalysisStat = "shipped_today"
+	VehicleAnalysisStatShippedWeek   VehicleAnalysisStat = "shipped_week"
+	VehicleAnalysisStatDepotReleased VehicleAnalysisStat = "depot_released"
+)
+
+// Valid reports whether the drill-down key is known (empty is valid: no drill-down).
+func (s VehicleAnalysisStat) Valid() bool {
+	switch s {
+	case "", VehicleAnalysisStatOnLine, VehicleAnalysisStatShippedToday,
+		VehicleAnalysisStatShippedWeek, VehicleAnalysisStatDepotReleased:
+		return true
+	default:
+		return false
+	}
+}
+
 // VehicleListFilter carries the filters for the web vehicle-list table
 // (VIN fragment, status, model) plus pagination. Non-empty/non-nil fields are
 // combined with AND semantics. List/Count always hide PLANNED vehicles
 // (Karar 10); VIN typeahead is a separate query and includes them.
+// AnalysisStat, when set, is the Analysis KPI card drill-down (shipped in
+// window, depot-released in window, or live IN_PRODUCTION snapshot).
 type VehicleListFilter struct {
-	VINContains string
-	Status      *VehicleStatus
-	ModelID     *int
-	StationID   *int
-	Limit       int
-	Offset      int
+	VINContains  string
+	Status       *VehicleStatus
+	ModelID      *int
+	StationID    *int
+	AnalysisStat VehicleAnalysisStat
+	WindowFrom   *time.Time
+	WindowUntil  *time.Time
+	Limit        int
+	Offset       int
 }
 
 // Vehicle mirrors the vehicles table (master vehicle identity). Karar 1

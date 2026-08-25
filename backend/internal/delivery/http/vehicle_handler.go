@@ -3,10 +3,12 @@ package http
 import (
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 
 	"github.com/karea/backend/internal/domain"
+	"github.com/karea/backend/internal/usecase"
 )
 
 // handleVehicleList serves the filterable/paginated vehicle table (both roles).
@@ -51,12 +53,74 @@ func (s *server) handleVehicleList(w http.ResponseWriter, r *http.Request) {
 		page = p
 	}
 
+	emptyWindow, ok := applyVehicleAnalysisStat(w, r, &filter)
+	if !ok {
+		return
+	}
+	if emptyWindow {
+		writeJSON(w, http.StatusOK, &usecase.VehicleListResult{
+			Items: []domain.Vehicle{},
+			Total: 0,
+			Page:  page,
+			Size:  20,
+		})
+		return
+	}
+
 	result, err := s.deps.Vehicles.List(r.Context(), filter, page)
 	if err != nil {
 		writeError(w, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, result)
+}
+
+// applyVehicleAnalysisStat copies Analysis KPI card drill-down params onto
+// the list filter. emptyWindow is true when the date intersection has no
+// duration (return an empty page). ok is false when the request was already
+// written as an error.
+func applyVehicleAnalysisStat(w http.ResponseWriter, r *http.Request, filter *domain.VehicleListFilter) (emptyWindow bool, ok bool) {
+	raw := r.URL.Query().Get("analysis_stat")
+	if raw == "" {
+		return false, true
+	}
+	stat := domain.VehicleAnalysisStat(raw)
+	if !stat.Valid() || stat == "" {
+		badRequest(w, "invalid analysis_stat")
+		return false, false
+	}
+	filter.AnalysisStat = stat
+	if stat == domain.VehicleAnalysisStatOnLine {
+		return false, true
+	}
+
+	af, err := parseAnalysisFilter(r)
+	if err != nil {
+		badRequest(w, "invalid analysis filter")
+		return false, false
+	}
+
+	today := domain.IstanbulDayStart(time.Now())
+	todayEnd := today.Add(24 * time.Hour)
+	switch stat {
+	case domain.VehicleAnalysisStatShippedToday:
+		from, until, empty := domain.IntersectWindow(af.From, af.To, today, todayEnd)
+		if empty {
+			return true, true
+		}
+		filter.WindowFrom, filter.WindowUntil = &from, &until
+	case domain.VehicleAnalysisStatShippedWeek:
+		weekStart := today.AddDate(0, 0, -6)
+		from, until, empty := domain.IntersectWindow(af.From, af.To, weekStart, todayEnd)
+		if empty {
+			return true, true
+		}
+		filter.WindowFrom, filter.WindowUntil = &from, &until
+	case domain.VehicleAnalysisStatDepotReleased:
+		from, until := domain.InclusiveDateBounds(af.From, af.To)
+		filter.WindowFrom, filter.WindowUntil = from, until
+	}
+	return false, true
 }
 
 // handleVehicleGet returns a single vehicle by VIN (both roles).

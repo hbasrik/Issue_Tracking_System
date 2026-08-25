@@ -56,8 +56,15 @@ func (r *VehicleRepo) GetByVIN(ctx context.Context, vin string) (*domain.Vehicle
 // vehicleFilterClause builds a shared WHERE fragment for List and Count.
 // PLANNED VINs are always excluded from the Vehicles table (Karar 10).
 func vehicleFilterClause(f domain.VehicleListFilter) (string, []any) {
-	conds := []string{"current_global_status <> 'PLANNED'"}
+	var conds []string
 	var args []any
+
+	if f.AnalysisStat == domain.VehicleAnalysisStatOnLine {
+		conds = append(conds, "current_global_status = 'IN_PRODUCTION'")
+	} else {
+		conds = append(conds, "current_global_status <> 'PLANNED'")
+	}
+
 	if f.VINContains != "" {
 		args = append(args, f.VINContains)
 		conds = append(conds, fmt.Sprintf("vin ILIKE '%%' || $%d || '%%'", len(args)))
@@ -74,6 +81,37 @@ func vehicleFilterClause(f domain.VehicleListFilter) (string, []any) {
 		args = append(args, *f.StationID)
 		conds = append(conds, fmt.Sprintf("current_station_id = $%d", len(args)))
 	}
+
+	switch f.AnalysisStat {
+	case domain.VehicleAnalysisStatShippedToday, domain.VehicleAnalysisStatShippedWeek:
+		args = append(args, f.WindowFrom, f.WindowUntil)
+		fromN, untilN := len(args)-1, len(args)
+		conds = append(conds, fmt.Sprintf(`EXISTS (
+			SELECT 1 FROM (
+				SELECT vin, document_approved_at AS at
+				FROM vehicle_eol_workflow
+				WHERE document_approved_at IS NOT NULL
+				UNION ALL
+				SELECT vin, event_at
+				FROM audit_logs
+				WHERE event_type = 'STATUS_CHANGE' AND new_value = 'SHIPPED'
+			) s
+			WHERE s.vin = vehicles.vin
+			  AND ($%d::timestamptz IS NULL OR s.at >= $%d)
+			  AND ($%d::timestamptz IS NULL OR s.at < $%d)
+		)`, fromN, fromN, untilN, untilN))
+	case domain.VehicleAnalysisStatDepotReleased:
+		args = append(args, f.WindowFrom, f.WindowUntil)
+		fromN, untilN := len(args)-1, len(args)
+		conds = append(conds, fmt.Sprintf(`EXISTS (
+			SELECT 1 FROM vehicle_eol_workflow w
+			WHERE w.vin = vehicles.vin
+			  AND w.depot_released_at IS NOT NULL
+			  AND ($%d::timestamptz IS NULL OR w.depot_released_at >= $%d)
+			  AND ($%d::timestamptz IS NULL OR w.depot_released_at < $%d)
+		)`, fromN, fromN, untilN, untilN))
+	}
+
 	return " WHERE " + strings.Join(conds, " AND "), args
 }
 
