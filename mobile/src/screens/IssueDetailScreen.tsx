@@ -35,6 +35,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { useAuth } from '../auth/AuthProvider';
 import { Perm } from '../auth/permissions';
 import { issueStatusColor, issueStatusLabel } from '../lib/issueStatus';
+import { prepareUploadImage } from '../lib/prepareUploadImage';
 import type { RootStackParamList } from '../navigation/types';
 
 function nextOperatorStatus(status: Issue['Status']): Issue['Status'] | null {
@@ -104,16 +105,18 @@ export default function IssueDetailScreen() {
       }
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images'],
-        quality: 0.6,
+        quality: 1,
       });
       const asset = result.canceled ? null : result.assets[0];
       if (asset) {
-        setResolutionPhoto({
-          uri: asset.uri,
-          name: asset.fileName || `resolution-${Date.now()}.jpg`,
-          type: asset.mimeType || 'image/jpeg',
-        });
-        setResolutionUploaded(false);
+        try {
+          setResolutionPhoto(await prepareUploadImage(asset));
+          setResolutionUploaded(false);
+        } catch (err) {
+          setError(
+            err instanceof Error ? err.message : 'Fotoğraf dönüştürülemedi',
+          );
+        }
       }
       return;
     }
@@ -124,16 +127,18 @@ export default function IssueDetailScreen() {
     }
     const result = await ImagePicker.launchCameraAsync({
       mediaTypes: ['images'],
-      quality: 0.6,
+      quality: 1,
     });
     const asset = result.canceled ? null : result.assets[0];
     if (asset) {
-      setResolutionPhoto({
-        uri: asset.uri,
-        name: asset.fileName || `resolution-${Date.now()}.jpg`,
-        type: asset.mimeType || 'image/jpeg',
-      });
-      setResolutionUploaded(false);
+      try {
+        setResolutionPhoto(await prepareUploadImage(asset));
+        setResolutionUploaded(false);
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : 'Fotoğraf dönüştürülemedi',
+        );
+      }
     }
   }
 

@@ -19,6 +19,7 @@ import {
   type Vehicle,
 } from '../api/client';
 import { VinSearchBox } from '../components/VinSearchBox';
+import { prepareUploadImage } from '../lib/prepareUploadImage';
 import {
   Badge,
   Card,
@@ -122,15 +123,17 @@ export default function ManualIssueReportScreen() {
     }
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
-      quality: 0.6,
+      quality: 1,
     });
     const asset = result.canceled ? null : result.assets[0];
     if (asset) {
-      setPhoto({
-        uri: asset.uri,
-        name: asset.fileName || `issue-${Date.now()}.jpg`,
-        type: asset.mimeType || 'image/jpeg',
-      });
+      try {
+        setPhoto(await prepareUploadImage(asset));
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : 'Fotoğraf dönüştürülemedi',
+        );
+      }
     }
   }
 
@@ -142,15 +145,17 @@ export default function ManualIssueReportScreen() {
     }
     const result = await ImagePicker.launchCameraAsync({
       mediaTypes: ['images'],
-      quality: 0.6,
+      quality: 1,
     });
     const asset = result.canceled ? null : result.assets[0];
     if (asset) {
-      setPhoto({
-        uri: asset.uri,
-        name: asset.fileName || `issue-${Date.now()}.jpg`,
-        type: asset.mimeType || 'image/jpeg',
-      });
+      try {
+        setPhoto(await prepareUploadImage(asset));
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : 'Fotoğraf dönüştürülemedi',
+        );
+      }
     }
   }
 

@@ -31,6 +31,7 @@ import {
 import { useTheme } from '../theme/ThemeProvider';
 import { statusColors } from '../theme/tokens';
 import type { RootStackParamList } from '../navigation/types';
+import { prepareUploadImage } from '../lib/prepareUploadImage';
 
 const SEVERITIES: { value: SeverityLevel; label: string }[] = [
   { value: 'CRITICAL', label: 'Critical' },
@@ -63,15 +64,17 @@ export default function IssueReportScreen() {
     }
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
-      quality: 0.6,
+      quality: 1,
     });
     const asset = result.canceled ? null : result.assets[0];
     if (asset) {
-      setPhoto({
-        uri: asset.uri,
-        name: asset.fileName || `issue-${Date.now()}.jpg`,
-        type: asset.mimeType || 'image/jpeg',
-      });
+      try {
+        setPhoto(await prepareUploadImage(asset));
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : 'Fotoğraf dönüştürülemedi',
+        );
+      }
     }
   }
 
