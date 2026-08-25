@@ -8,7 +8,7 @@ const BACKLOG_DAYS = 90;
 const WEEK_DAYS = 7;
 const TOP_VEHICLES = 8;
 
-export type DeltaPolarity = 'good' | 'bad' | 'neutral';
+export type DeltaPolarity = 'up' | 'down' | 'neutral';
 
 export type DayCount = {
   day: string;
@@ -285,16 +285,11 @@ export function formatPercentDelta(current: number, previous: number): string {
   return `${sign}${text}%`;
 }
 
-export function deltaPolarity(
-  current: number,
-  previous: number,
-  upIsBad: boolean,
-): DeltaPolarity {
+/** Sign of the period-over-period change — not “good/bad for this metric”. */
+export function deltaPolarity(current: number, previous: number): DeltaPolarity {
   const diff = current - previous;
   if (diff === 0) return 'neutral';
-  const up = diff > 0;
-  if (upIsBad) return up ? 'bad' : 'good';
-  return up ? 'good' : 'bad';
+  return diff > 0 ? 'up' : 'down';
 }
 
 /** Mix a token toward brand gray — no new hex. */
@@ -303,8 +298,8 @@ export function muteColor(color: string, grayMix = 36): string {
 }
 
 export function deltaColor(polarity: DeltaPolarity): string {
-  if (polarity === 'good') return muteColor(statusColors.ok, 18);
-  if (polarity === 'bad') return muteColor(statusColors.notOk, 42);
+  if (polarity === 'up') return statusColors.ok;
+  if (polarity === 'down') return statusColors.notOk;
   return statusColors.pending;
 }
 
