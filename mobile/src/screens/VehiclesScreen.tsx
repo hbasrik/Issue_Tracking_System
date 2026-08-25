@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import {
   FlatList,
+  Keyboard,
   Pressable,
   RefreshControl,
   Text,
@@ -10,6 +11,7 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { api, type Vehicle } from '../api/client';
 import { VehicleSearchPanel } from '../components/VehicleSearchPanel';
+import { listKeyboardDismissProps } from '../components/keyboard';
 import {
   Badge,
   Card,
@@ -113,6 +115,7 @@ export default function VehiclesScreen() {
       <FlatList
         data={filtered}
         keyExtractor={(v) => v.VIN}
+        {...listKeyboardDismissProps}
         contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
         refreshControl={
           <RefreshControl
@@ -122,7 +125,7 @@ export default function VehiclesScreen() {
           />
         }
         ListHeaderComponent={
-          <View style={{ marginBottom: 12 }}>
+          <Pressable onPress={Keyboard.dismiss} accessible={false} style={{ marginBottom: 12 }}>
             <Title>Vehicles</Title>
             <Subtitle>Tüm araçlar — istasyon kuyruğundan bağımsız</Subtitle>
             <View style={{ marginTop: 12 }}>
@@ -189,13 +192,18 @@ export default function VehiclesScreen() {
             >
               Araç listesi
             </Text>
-          </View>
+          </Pressable>
         }
         ListEmptyComponent={
           loading ? null : <Subtitle>No vehicles found</Subtitle>
         }
         renderItem={({ item }) => (
-          <Pressable onPress={() => openVehicle(item)}>
+          <Pressable
+            onPress={() => {
+              Keyboard.dismiss();
+              openVehicle(item);
+            }}
+          >
             <Card>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                 <Text
