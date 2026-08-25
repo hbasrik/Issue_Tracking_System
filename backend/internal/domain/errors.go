@@ -47,6 +47,17 @@ var (
 	// ErrInvalidCredentials so a deactivated login is not mistaken for a
 	// password error.
 	ErrAccountInactive = errors.New("account or role is inactive")
+	// ErrCannotChangeOwnRole indicates a user tried to reassign their own
+	// role. Self-lockout is enforced in the usecase so the Users UI cannot
+	// be bypassed with a raw PATCH.
+	ErrCannotChangeOwnRole = errors.New("you cannot change your own role")
+	// ErrCannotDeactivateSelf indicates a user tried to set their own
+	// is_active flag to false.
+	ErrCannotDeactivateSelf = errors.New("you cannot deactivate your own account")
+	// ErrLastActiveManager indicates a role or is_active change would leave
+	// the system with zero active MANAGER_ADMIN users, which would lock
+	// everyone out of Users & Roles.
+	ErrLastActiveManager = errors.New("cannot demote or deactivate the last active manager")
 	// ErrDepotChecklistLocked indicates a Depot-phase EoL item was updated
 	// while any Branch-phase item for the same VIN is not yet OK or
 	// CONDITIONAL_OK. The message matches the database trigger so API and

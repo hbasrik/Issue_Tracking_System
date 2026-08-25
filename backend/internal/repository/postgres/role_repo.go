@@ -2,7 +2,9 @@ package postgres
 
 import (
 	"context"
+	"errors"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/karea/backend/internal/domain"
@@ -47,4 +49,19 @@ func (r *RoleRepo) GetPermissionsForUser(ctx context.Context, userID int) ([]dom
 		out = append(out, p)
 	}
 	return out, rows.Err()
+}
+
+// GetByCode returns the role catalogue row for the given code.
+func (r *RoleRepo) GetByCode(ctx context.Context, code string) (*domain.Role, error) {
+	var role domain.Role
+	err := r.pool.QueryRow(ctx,
+		`SELECT id, code, name, is_active FROM roles WHERE code = $1`, code).
+		Scan(&role.ID, &role.Code, &role.Name, &role.IsActive)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, domain.ErrNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &role, nil
 }

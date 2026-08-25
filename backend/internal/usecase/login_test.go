@@ -31,6 +31,18 @@ func (f *fakeUserRepo) GetByID(context.Context, int) (*domain.User, error) {
 	return nil, domain.ErrNotFound
 }
 
+func (f *fakeUserRepo) List(context.Context) ([]domain.User, error) {
+	return nil, nil
+}
+
+func (f *fakeUserRepo) UpdateRoleAndActive(context.Context, int, int, bool) error {
+	return nil
+}
+
+func (f *fakeUserRepo) CountActiveManagers(context.Context) (int, error) {
+	return 0, nil
+}
+
 func mustHash(t *testing.T, password string) string {
 	t.Helper()
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)

@@ -52,7 +52,8 @@ func writeError(w http.ResponseWriter, err error) {
 	case errors.As(err, &rejected):
 		writeJSON(w, http.StatusConflict, errorResponse{Error: rejected.Error()})
 	case errors.Is(err, domain.ErrDepotChecklistLocked),
-		errors.Is(err, domain.ErrInvalidStatusTransition):
+		errors.Is(err, domain.ErrInvalidStatusTransition),
+		errors.Is(err, domain.ErrLastActiveManager):
 		writeJSON(w, http.StatusConflict, errorResponse{Error: err.Error()})
 	case errors.Is(err, domain.ErrNotFound):
 		writeJSON(w, http.StatusNotFound, errorResponse{Error: err.Error()})
@@ -61,6 +62,8 @@ func writeError(w http.ResponseWriter, err error) {
 		errors.Is(err, auth.ErrExpiredToken):
 		writeJSON(w, http.StatusUnauthorized, errorResponse{Error: err.Error()})
 	case errors.Is(err, domain.ErrAccountInactive),
+		errors.Is(err, domain.ErrCannotChangeOwnRole),
+		errors.Is(err, domain.ErrCannotDeactivateSelf),
 		errors.Is(err, domain.ErrForbidden),
 		errors.Is(err, auth.ErrForbidden):
 		writeJSON(w, http.StatusForbidden, errorResponse{Error: err.Error()})

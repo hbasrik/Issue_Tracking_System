@@ -3,6 +3,8 @@ package http
 import (
 	"net/http"
 	"time"
+
+	"github.com/karea/backend/internal/domain"
 )
 
 type loginRequest struct {
@@ -56,13 +58,17 @@ func (s *server) handleLogin(w http.ResponseWriter, r *http.Request) {
 
 	writeJSON(w, http.StatusOK, loginResponse{
 		Token: token,
-		User: loginUser{
-			ID:        user.ID,
-			FullName:  user.FullName,
-			Email:     user.Email,
-			Role:      user.Role.Code,
-			IsActive:  user.IsActive,
-			CreatedAt: user.CreatedAt,
-		},
+		User:  publicUser(user),
 	})
+}
+
+func publicUser(user *domain.User) loginUser {
+	return loginUser{
+		ID:        user.ID,
+		FullName:  user.FullName,
+		Email:     user.Email,
+		Role:      user.Role.Code,
+		IsActive:  user.IsActive,
+		CreatedAt: user.CreatedAt,
+	}
 }

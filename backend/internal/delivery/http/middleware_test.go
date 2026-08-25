@@ -74,6 +74,17 @@ func (f *fakeRoleRepo) GetPermissionsForUser(_ context.Context, userID int) ([]d
 	return f.byUser[userID], nil
 }
 
+func (f *fakeRoleRepo) GetByCode(_ context.Context, code string) (*domain.Role, error) {
+	switch code {
+	case domain.RoleCodeOperator:
+		return &domain.Role{ID: 1, Code: code, Name: "Operator", IsActive: true}, nil
+	case domain.RoleCodeManagerAdmin:
+		return &domain.Role{ID: 2, Code: code, Name: "Manager/Admin", IsActive: true}, nil
+	default:
+		return nil, domain.ErrNotFound
+	}
+}
+
 func okHandler(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusOK) }
 
 // newPermissionRouter mirrors the permission gates in NewRouter so the test

@@ -27,6 +27,7 @@ type Deps struct {
 	Issuer             *auth.Issuer
 	Auth               *usecase.Authenticator
 	Roles              repository.RoleRepository
+	Users              *usecase.UserAdmin
 	Vehicles           *usecase.VehicleService
 	StationSteps       *usecase.StationStepResultRecorder
 	Checklists         *usecase.ChecklistResultRecorder
@@ -160,6 +161,8 @@ func NewRouter(deps Deps) http.Handler {
 				r.Patch("/vehicles/{vin}/status", s.handleVehicleStatus)
 				r.Get("/checklist-templates", s.handleChecklistTemplateList)
 				r.Get("/checklist-templates/{id}/items", s.handleChecklistTemplateItems)
+				r.Get("/users", s.handleUserList)
+				r.Patch("/users/{id}", s.handleUserUpdate)
 			})
 
 			// Shop-floor writes.

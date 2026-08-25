@@ -113,10 +113,22 @@ type AnalysisRepository interface {
 	Dashboard(ctx context.Context, f domain.AnalysisFilter) (*domain.AnalysisDashboard, error)
 }
 
-// UserRepository persists and queries users (used by auth).
+// UserRepository persists and queries users (used by auth and the Users &
+// Roles admin screen).
 type UserRepository interface {
 	GetByEmail(ctx context.Context, email string) (*domain.User, error)
 	GetByID(ctx context.Context, id int) (*domain.User, error)
+	// List returns every user, oldest id first. Password hashes are present
+	// on the domain objects and must not be serialized to clients.
+	List(ctx context.Context) ([]domain.User, error)
+	// UpdateRoleAndActive assigns a role (by roles.id) and the is_active
+	// flag. Self-lockout and last-manager rules are enforced in the usecase
+	// before this write.
+	UpdateRoleAndActive(ctx context.Context, id, roleID int, isActive bool) error
+	// CountActiveManagers returns how many users are currently an active
+	// MANAGER_ADMIN with an active role row. The last-manager invariant
+	// is a product rule on that role code until the catalogue is data-driven.
+	CountActiveManagers(ctx context.Context) (int, error)
 }
 
 // EOLWorkflowRepository persists and queries the three-stage EOL workflow
@@ -166,6 +178,9 @@ type RoleRepository interface {
 	// GetPermissionsForUser returns every permission granted to the user
 	// through their role, resolved in a single query.
 	GetPermissionsForUser(ctx context.Context, userID int) ([]domain.Permission, error)
+	// GetByCode returns the role catalogue row for the given code, or
+	// domain.ErrNotFound.
+	GetByCode(ctx context.Context, code string) (*domain.Role, error)
 }
 
 // AuditRepository appends rows to the append-only audit log.

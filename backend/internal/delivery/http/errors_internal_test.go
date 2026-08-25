@@ -85,6 +85,44 @@ func TestWriteErrorAccountInactive(t *testing.T) {
 	}
 }
 
+func TestWriteErrorCannotChangeOwnRole(t *testing.T) {
+	rec := httptest.NewRecorder()
+	writeError(rec, domain.ErrCannotChangeOwnRole)
+
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusForbidden)
+	}
+
+	var body struct {
+		Error string `json:"error"`
+	}
+	if err := json.NewDecoder(rec.Body).Decode(&body); err != nil {
+		t.Fatalf("decode body: %v", err)
+	}
+	if body.Error != domain.ErrCannotChangeOwnRole.Error() {
+		t.Errorf("error = %q, want %q", body.Error, domain.ErrCannotChangeOwnRole.Error())
+	}
+}
+
+func TestWriteErrorLastActiveManager(t *testing.T) {
+	rec := httptest.NewRecorder()
+	writeError(rec, domain.ErrLastActiveManager)
+
+	if rec.Code != http.StatusConflict {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusConflict)
+	}
+
+	var body struct {
+		Error string `json:"error"`
+	}
+	if err := json.NewDecoder(rec.Body).Decode(&body); err != nil {
+		t.Fatalf("decode body: %v", err)
+	}
+	if body.Error != domain.ErrLastActiveManager.Error() {
+		t.Errorf("error = %q, want %q", body.Error, domain.ErrLastActiveManager.Error())
+	}
+}
+
 func TestWriteErrorDatabaseRejected(t *testing.T) {
 	rec := httptest.NewRecorder()
 	writeError(rec, &domain.DatabaseRejectedError{
