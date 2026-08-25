@@ -200,6 +200,45 @@ export const api = {
     );
   },
 
+  createChecklistTemplateItem(
+    templateId: number,
+    body: { ItemText: string; EolPhase?: 'BRANCH' | 'DEPOT' | null },
+  ) {
+    return request<ChecklistTemplateItem>(
+      `/checklist-templates/${templateId}/items`,
+      { method: 'POST', body: JSON.stringify(body) },
+    );
+  },
+
+  updateChecklistTemplateItem(
+    templateId: number,
+    itemId: number,
+    body: {
+      ItemText?: string;
+      EolPhase?: 'BRANCH' | 'DEPOT';
+      IsActive?: boolean;
+    },
+  ) {
+    return request<ChecklistTemplateItem>(
+      `/checklist-templates/${templateId}/items/${itemId}`,
+      { method: 'PATCH', body: JSON.stringify(body) },
+    );
+  },
+
+  deleteChecklistTemplateItem(templateId: number, itemId: number) {
+    return request<void>(
+      `/checklist-templates/${templateId}/items/${itemId}`,
+      { method: 'DELETE' },
+    );
+  },
+
+  reorderChecklistTemplateItems(templateId: number, itemIds: number[]) {
+    return request<{ items: ChecklistTemplateItem[] }>(
+      `/checklist-templates/${templateId}/items/reorder`,
+      { method: 'POST', body: JSON.stringify({ ItemIDs: itemIds }) },
+    );
+  },
+
   getVehicleChecklist(vin: string, type: ChecklistType) {
     return request<{ items: ChecklistItem[] }>(
       `/vehicles/${encodeURIComponent(vin)}/checklist/${type}`,
