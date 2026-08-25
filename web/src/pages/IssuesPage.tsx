@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { api, type Issue } from '../lib/api';
+import { api, mediaFileUrl, type Issue, type MediaAttachment } from '../lib/api';
 import { IssueList } from '../components/IssueList';
 import { issueMatchesListQuery } from '../lib/issueVinFilter';
 import {
@@ -19,6 +19,12 @@ import {
   severityFillColor,
   type SeverityLevel,
 } from '../components/SeverityIndicator';
+import {
+  buildIssuesCsv,
+  buildIssuesZip,
+  downloadBlob,
+  type IssueExportPhoto,
+} from '../lib/issueExport';
 
 type IssueStatus = Issue['Status'];
 
@@ -50,6 +56,7 @@ export default function IssuesPage() {
   const [items, setItems] = useState<Issue[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [homeStatNow] = useState(() => new Date());
+  const [exporting, setExporting] = useState<'csv' | 'zip' | null>(null);
 
   const load = useCallback(async () => {
     setError(null);
@@ -134,16 +141,116 @@ export default function IssuesPage() {
     [items, listQuery, homeStat, homeStatNow, analysisStat, analysisFrom, analysisTo, severities, statuses],
   );
 
+  async function attachmentsFor(issues: Issue[]) {
+    const byId = new Map<
+      number,
+      { report: MediaAttachment[]; resolution: MediaAttachment[] }
+    >();
+    await Promise.all(
+      issues.map(async (issue) => {
+        const [report, resolution] = await Promise.all([
+          api.listMedia('ISSUE', String(issue.ID)),
+          api.listMedia('ISSUE_RESOLUTION', String(issue.ID)),
+        ]);
+        byId.set(issue.ID, {
+          report: report.items ?? [],
+          resolution: resolution.items ?? [],
+        });
+      }),
+    );
+    return byId;
+  }
+
+  function photoUrls(
+    pack: { report: MediaAttachment[]; resolution: MediaAttachment[] },
+  ): string[] {
+    return [...pack.report, ...pack.resolution].map((item) =>
+      mediaFileUrl(item.storage_path),
+    );
+  }
+
+  async function exportCsv() {
+    setExporting('csv');
+    setError(null);
+    try {
+      const attachments = await attachmentsFor(visible);
+      const urls = new Map<number, string[]>();
+      for (const issue of visible) {
+        urls.set(issue.ID, photoUrls(attachments.get(issue.ID) ?? { report: [], resolution: [] }));
+      }
+      const csv = buildIssuesCsv(visible, urls);
+      downloadBlob(
+        new Blob([csv], { type: 'text/csv;charset=utf-8' }),
+        `issues-${exportStamp()}.csv`,
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'CSV dışa aktarma başarısız');
+    } finally {
+      setExporting(null);
+    }
+  }
+
+  async function exportZip() {
+    setExporting('zip');
+    setError(null);
+    try {
+      const attachments = await attachmentsFor(visible);
+      const urls = new Map<number, string[]>();
+      const photos: IssueExportPhoto[] = [];
+      for (const issue of visible) {
+        const pack = attachments.get(issue.ID) ?? { report: [], resolution: [] };
+        urls.set(issue.ID, photoUrls(pack));
+        photos.push(
+          ...(await fetchExportPhotos(issue.ID, 'rapor', pack.report)),
+          ...(await fetchExportPhotos(issue.ID, 'cozum', pack.resolution)),
+        );
+      }
+      const csv = buildIssuesCsv(visible, urls);
+      const zip = buildIssuesZip(csv, photos);
+      downloadBlob(
+        new Blob([zip as BlobPart], { type: 'application/zip' }),
+        `issues-${exportStamp()}.zip`,
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'ZIP dışa aktarma başarısız');
+    } finally {
+      setExporting(null);
+    }
+  }
+
   return (
     <section>
-      <h1 className="text-xl font-semibold sm:text-2xl">Issues</h1>
-      <p
-        className="mt-1 text-[13px]"
-        style={{ color: 'var(--text-secondary)' }}
-      >
-        Global issue queue — quality approval (Tamamlandı → Kalite Onay or Şartlı Onay)
-        is Manager-only
-      </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-semibold sm:text-2xl">Issues</h1>
+          <p
+            className="mt-1 text-[13px]"
+            style={{ color: 'var(--text-secondary)' }}
+          >
+            Global issue queue — quality approval (Tamamlandı → Kalite Onay or Şartlı Onay)
+            is Manager-only
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            disabled={exporting !== null || visible.length === 0}
+            onClick={() => void exportCsv()}
+            className="min-h-touch rounded-lg border px-3 py-1.5 text-[13px] disabled:opacity-40"
+            style={{ borderColor: 'var(--border)' }}
+          >
+            {exporting === 'csv' ? 'CSV…' : `CSV (${visible.length})`}
+          </button>
+          <button
+            type="button"
+            disabled={exporting !== null || visible.length === 0}
+            onClick={() => void exportZip()}
+            className="min-h-touch rounded-lg bg-[var(--accent)] px-3 py-1.5 text-[13px] text-white disabled:opacity-40"
+          >
+            {exporting === 'zip' ? 'ZIP…' : `ZIP (${visible.length})`}
+          </button>
+        </div>
+      </div>
 
       {(homeStat || analysisStat) && (
         <div
@@ -278,4 +385,36 @@ export default function IssuesPage() {
       </div>
     </section>
   );
+}
+
+function exportStamp(): string {
+  const d = new Date();
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}`;
+}
+
+async function fetchExportPhotos(
+  issueId: number,
+  kind: 'rapor' | 'cozum',
+  items: MediaAttachment[],
+): Promise<IssueExportPhoto[]> {
+  const out: IssueExportPhoto[] = [];
+  let index = 0;
+  for (const item of items) {
+    index += 1;
+    const url = import.meta.env.DEV
+      ? `/uploads/${item.storage_path.replace(/^\/+/, '')}`
+      : mediaFileUrl(item.storage_path);
+    const res = await fetch(url);
+    if (!res.ok) continue;
+    out.push({
+      issueId,
+      kind,
+      index,
+      fileName: item.file_name,
+      bytes: new Uint8Array(await res.arrayBuffer()),
+      url,
+    });
+  }
+  return out;
 }
