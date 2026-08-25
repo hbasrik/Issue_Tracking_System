@@ -111,6 +111,9 @@ export const api = {
     model?: string;
     station?: string;
     page?: number;
+    analysis_stat?: string;
+    from?: string;
+    to?: string;
   }) {
     const q = new URLSearchParams();
     if (params.vin) q.set('vin', params.vin);
@@ -118,6 +121,9 @@ export const api = {
     if (params.model) q.set('model', params.model);
     if (params.station) q.set('station', params.station);
     if (params.page) q.set('page', String(params.page));
+    if (params.analysis_stat) q.set('analysis_stat', params.analysis_stat);
+    if (params.from) q.set('from', params.from);
+    if (params.to) q.set('to', params.to);
     const qs = q.toString();
     return request<{
       Items: Vehicle[];
@@ -512,6 +518,7 @@ export interface AnalysisDashboard {
     AvgResolutionHours: number | null;
     FirstTimeRightPercent: number | null;
     OpenIssuesInRange: number;
+    OnLineCount: number;
   };
   WorkSplit: { Completed: number; Ongoing: number };
   IssueStatus: { Status: string; Count: number }[];

@@ -24,8 +24,9 @@ import {
   type VehicleSeverityBreakdown,
 } from '../lib/api';
 import { VinSearchBox } from '../components/VinSearchBox';
-import { SeverityIndicator } from '../components/SeverityIndicator';
+import { SeverityIndicator, severityFillColor } from '../components/SeverityIndicator';
 import { issueStatusColor, issueStatusLabel } from '../lib/issueStatus';
+import { muteColor, rankTopVehicles } from '../lib/homeDashboard';
 import { statusColors } from '../theme/tokens';
 
 const VEHICLE_STATUSES = [
@@ -159,6 +160,26 @@ export default function AnalysisPage() {
       })),
     [severity],
   );
+
+  const topVehicles = useMemo(() => rankTopVehicles(severity, 5), [severity]);
+
+  function vehicleStatLink(stat: string, includeDates: boolean) {
+    const q = new URLSearchParams();
+    q.set('analysisStat', stat);
+    if (includeDates) {
+      if (applied.from) q.set('from', applied.from);
+      if (applied.to) q.set('to', applied.to);
+    }
+    return `/vehicles?${q.toString()}`;
+  }
+
+  function issueStatLink(stat: string) {
+    const q = new URLSearchParams();
+    q.set('analysisStat', stat);
+    if (applied.from) q.set('from', applied.from);
+    if (applied.to) q.set('to', applied.to);
+    return `/issues?${q.toString()}`;
+  }
 
   async function exportPdf() {
     if (!exportRef.current) return;
@@ -323,58 +344,65 @@ export default function AnalysisPage() {
 
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <KpiCard
-            label="Bugün sevk"
+            title="Bugün sevk"
             value={dash?.KPIs.ShippedToday ?? 0}
-            hint="SHIPPED geçişi · takvim bugünü ∩ filtre"
+            accent={statusColors.vehicleShipped}
+            to={vehicleStatLink('shipped_today', true)}
           />
           <KpiCard
-            label="Haftalık sevk"
+            title="Haftalık sevk"
             value={dash?.KPIs.ShippedWeek ?? 0}
-            hint="Son 7 gün ∩ filtre"
+            accent={statusColors.ok}
+            to={vehicleStatLink('shipped_week', true)}
           />
           <KpiCard
-            label="Depo serbest"
+            title="Depo serbest"
             value={dash?.KPIs.DepotReleasedInRange ?? 0}
-            hint="EOL depot release"
+            accent={statusColors.info}
+            to={vehicleStatLink('depot_released', true)}
           />
           <KpiCard
-            label="Ort. çözüm (saat)"
+            title="Hattaki araçlar"
+            value={dash?.KPIs.OnLineCount ?? 0}
+            accent={statusColors.vehicleInProduction}
+            snapshot
+            to={vehicleStatLink('on_line', false)}
+          />
+          <KpiCard
+            title="Açık hatalar"
+            value={dash?.KPIs.OpenIssuesInRange ?? 0}
+            accent={statusColors.issueOpen}
+            to={issueStatLink('open_active')}
+          />
+          <KpiCard
+            title="Biten işler"
+            value={dash?.WorkSplit.Completed ?? 0}
+            accent={statusColors.issueResolved}
+            to={issueStatLink('completed')}
+          />
+          <KpiCard
+            title="Ort. çözüm (saat)"
             value={
               dash?.KPIs.AvgResolutionHours == null
                 ? '—'
                 : dash.KPIs.AvgResolutionHours.toFixed(2)
             }
-            hint="IN_PROGRESS → DONE"
+            accent={statusColors.issueInProgress}
           />
           <KpiCard
-            label="Açık hatalar"
-            value={dash?.KPIs.OpenIssuesInRange ?? 0}
-            hint="OPEN / IN_PROGRESS / DONE"
-          />
-          <KpiCard
-            label="İlk seferde doğru"
+            title="İlk seferde doğru"
             value={
               dash?.KPIs.FirstTimeRightPercent == null
                 ? '—'
                 : `${dash.KPIs.FirstTimeRightPercent}%`
             }
-            hint="İşlenen station step OK oranı"
-          />
-          <KpiCard
-            label="Aralıkta sevk"
-            value={dash?.KPIs.ShippedInRange ?? 0}
-            hint="Filtre penceresindeki SHIPPED"
-          />
-          <KpiCard
-            label="Biten işler"
-            value={dash?.WorkSplit.Completed ?? 0}
-            hint="DONE + kalite onayları"
+            accent={statusColors.issueDone}
           />
         </div>
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           <ChartCard title="Biten / Devam Eden İşler">
-            <div className="h-[220px] w-full min-w-0 sm:h-[260px]">
+            <div className="analysis-pie h-[220px] w-full min-w-0 sm:h-[260px]">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
@@ -384,21 +412,32 @@ export default function AnalysisPage() {
                     cx="50%"
                     cy="50%"
                     outerRadius="70%"
-                    label={false}
+                    isAnimationActive={false}
+                    label={pieSliceLabel}
+                    labelLine={false}
+                    style={{ outline: 'none', cursor: 'default' }}
+                    rootTabIndex={-1}
                   >
                     {pieData.map((entry) => (
-                      <Cell key={entry.name} fill={entry.color} />
+                      <Cell
+                        key={entry.name}
+                        fill={entry.color}
+                        style={{ outline: 'none', cursor: 'default' }}
+                      />
                     ))}
                   </Pie>
                   <Tooltip />
-                  <Legend wrapperStyle={{ fontSize: 12 }} />
+                  <Legend
+                    wrapperStyle={{ fontSize: 12 }}
+                    formatter={pieLegendFormatter}
+                  />
                 </PieChart>
               </ResponsiveContainer>
             </div>
           </ChartCard>
 
           <ChartCard title="Hata durum dağılımı">
-            <div className="h-[220px] w-full min-w-0 sm:h-[260px]">
+            <div className="analysis-pie h-[220px] w-full min-w-0 sm:h-[260px]">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
@@ -408,14 +447,25 @@ export default function AnalysisPage() {
                     cx="50%"
                     cy="50%"
                     outerRadius="70%"
-                    label={false}
+                    isAnimationActive={false}
+                    label={pieSliceLabel}
+                    labelLine={false}
+                    style={{ outline: 'none', cursor: 'default' }}
+                    rootTabIndex={-1}
                   >
                     {statusPie.map((entry) => (
-                      <Cell key={entry.name} fill={entry.color} />
+                      <Cell
+                        key={entry.name}
+                        fill={entry.color}
+                        style={{ outline: 'none', cursor: 'default' }}
+                      />
                     ))}
                   </Pie>
                   <Tooltip />
-                  <Legend wrapperStyle={{ fontSize: 12 }} />
+                  <Legend
+                    wrapperStyle={{ fontSize: 12 }}
+                    formatter={pieLegendFormatter}
+                  />
                 </PieChart>
               </ResponsiveContainer>
             </div>
@@ -447,24 +497,57 @@ export default function AnalysisPage() {
             </div>
           </ChartCard>
 
-          <ChartCard title="EOL aşamalarında bekleyen">
-            <div className="h-[220px] w-full min-w-0 sm:h-[260px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={(dash?.EOLFunnel ?? []).map((r) => ({
-                    stage: r.Stage,
-                    count: r.Count,
-                  }))}
-                  margin={{ top: 8, right: 8, left: 0, bottom: 8 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                  <XAxis dataKey="stage" tick={{ fill: 'var(--text-secondary)', fontSize: 10 }} />
-                  <YAxis width={36} tick={{ fill: 'var(--text-secondary)', fontSize: 10 }} />
-                  <Tooltip />
-                  <Bar dataKey="count" fill={statusColors.vehicleWithCustomer} name="Araç" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+          <ChartCard title="En çok açık hatası olan ilk 5 araç">
+            {topVehicles.length === 0 ? (
+              <p className="py-8 text-[13px] text-[var(--text-secondary)]">
+                Açık hatalı araç yok
+              </p>
+            ) : (
+              <ol className="space-y-3">
+                {topVehicles.map((row) => {
+                  const raw = severityFillColor(row.worstSeverity);
+                  const color =
+                    row.worstSeverity === 'LOW' ? raw : muteColor(raw, 38);
+                  return (
+                    <li key={row.vin} className="flex items-center gap-3">
+                      <span
+                        className="w-5 shrink-0 text-right text-[13px] tabular-nums text-[var(--text-secondary)]"
+                      >
+                        {row.rank}
+                      </span>
+                      <Link
+                        to={`/vehicles/${encodeURIComponent(row.vin)}?tab=issues`}
+                        className="w-16 shrink-0 font-mono text-[13px] font-medium text-[var(--accent)] hover:underline"
+                        title={row.vin}
+                      >
+                        …{row.vinTail}
+                      </Link>
+                      <div
+                        className="h-2.5 min-w-0 flex-1 overflow-hidden rounded-full"
+                        style={{ backgroundColor: 'var(--bg-surface-2)' }}
+                      >
+                        <div
+                          className="h-full rounded-full"
+                          style={{
+                            width: `${Math.max(row.barPct, 4)}%`,
+                            backgroundColor: color,
+                          }}
+                        />
+                      </div>
+                      <span
+                        className="min-w-[2.25rem] rounded-full px-2 py-0.5 text-center text-[12px] font-semibold tabular-nums"
+                        style={{
+                          color,
+                          backgroundColor: `color-mix(in srgb, ${color} 16%, transparent)`,
+                        }}
+                      >
+                        {row.openCount}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ol>
+            )}
           </ChartCard>
         </div>
 
@@ -490,33 +573,6 @@ export default function AnalysisPage() {
                 />
                 <Tooltip />
                 <Bar dataKey="issues" fill={statusColors.notOk} name="Issues" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </ChartCard>
-
-        <ChartCard title="En sık hata tipleri">
-          <div className="h-[220px] w-full min-w-0 sm:h-[240px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={(dash?.TopIssueTypes ?? []).map((r) => ({
-                  name: r.Name,
-                  count: r.Count,
-                }))}
-                margin={{ top: 8, right: 8, left: 0, bottom: 48 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                <XAxis
-                  dataKey="name"
-                  tick={{ fill: 'var(--text-secondary)', fontSize: 10 }}
-                  angle={-25}
-                  textAnchor="end"
-                  height={60}
-                  interval={0}
-                />
-                <YAxis width={36} tick={{ fill: 'var(--text-secondary)', fontSize: 10 }} />
-                <Tooltip />
-                <Bar dataKey="count" fill={statusColors.issueOpen} name="Hata" />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -658,6 +714,22 @@ export default function AnalysisPage() {
   );
 }
 
+function pieSliceLabel({
+  name,
+  value,
+}: {
+  name?: string;
+  value?: number;
+}): string {
+  if (!value) return '';
+  return `${name} ${value}`;
+}
+
+function pieLegendFormatter(value: string, entry: { payload?: { value?: number } }) {
+  const n = entry.payload?.value ?? 0;
+  return `${value} (${n})`;
+}
+
 function Field({
   label,
   children,
@@ -674,22 +746,60 @@ function Field({
 }
 
 function KpiCard({
-  label,
+  title,
   value,
-  hint,
+  accent,
+  to,
+  snapshot,
 }: {
-  label: string;
+  title: string;
   value: number | string;
-  hint: string;
+  accent: string;
+  to?: string;
+  snapshot?: boolean;
 }) {
+  const body = (
+    <>
+      <div className="flex items-start justify-between gap-2">
+        <p className="text-[13px] font-medium text-[var(--text-primary)]">{title}</p>
+        {snapshot && (
+          <span
+            className="shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
+            style={{
+              color: accent,
+              backgroundColor: `color-mix(in srgb, ${accent} 16%, transparent)`,
+            }}
+          >
+            anlık
+          </span>
+        )}
+      </div>
+      <p
+        className="mt-2 text-2xl font-semibold tabular-nums"
+        style={{ color: accent }}
+      >
+        {value}
+      </p>
+    </>
+  );
+  const style = {
+    borderColor: `color-mix(in srgb, ${accent} 32%, var(--border))`,
+    backgroundColor: `color-mix(in srgb, ${accent} 9%, var(--bg-surface-1))`,
+  };
+  if (to) {
+    return (
+      <Link
+        to={to}
+        className="rounded-xl border p-4 transition-colors hover:bg-[var(--bg-surface-2)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]"
+        style={style}
+      >
+        {body}
+      </Link>
+    );
+  }
   return (
-    <div
-      className="rounded-xl border bg-[var(--bg-surface-1)] p-4"
-      style={{ borderColor: 'var(--border)' }}
-    >
-      <p className="text-[13px] text-[var(--text-secondary)]">{label}</p>
-      <p className="mt-1 text-2xl font-semibold">{value}</p>
-      <p className="mt-1 text-[12px] text-[var(--text-secondary)]">{hint}</p>
+    <div className="rounded-xl border p-4" style={style}>
+      {body}
     </div>
   );
 }

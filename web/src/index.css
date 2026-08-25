@@ -56,3 +56,22 @@ body {
 .min-w-touch {
   min-width: 44px;
 }
+
+/* Analysis pies are not interactive — hide the SVG focus ring Recharts adds. */
+.analysis-pie .recharts-wrapper,
+.analysis-pie .recharts-surface,
+.analysis-pie .recharts-pie,
+.analysis-pie .recharts-pie-sector,
+.analysis-pie .recharts-sector,
+.analysis-pie .recharts-layer {
+  outline: none !important;
+}
+.analysis-pie .recharts-pie-sector:focus,
+.analysis-pie .recharts-sector:focus,
+.analysis-pie .recharts-layer:focus {
+  outline: none;
+  stroke: none;
+}
+.analysis-pie .recharts-pie-sector {
+  cursor: default;
+}

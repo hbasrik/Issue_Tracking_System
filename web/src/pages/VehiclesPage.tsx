@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { api, type Vehicle } from '../lib/api';
 import { StatusBadge } from '../components/StatusBadge';
 import { VinSearchBox } from '../components/VinSearchBox';
@@ -10,6 +10,7 @@ import {
   DesktopTableShell,
   MobileCardStack,
 } from '../components/DataCard';
+import { brandColors } from '../theme/tokens';
 
 const STATUSES = [
   '',
@@ -20,6 +21,13 @@ const STATUSES = [
   'ON_HOLD',
 ] as const;
 
+const ANALYSIS_STAT_LABELS: Record<string, string> = {
+  on_line: 'Hattaki araçlar (IN_PRODUCTION, anlık)',
+  shipped_today: 'Bugün sevk',
+  shipped_week: 'Haftalık sevk',
+  depot_released: 'Depo serbest',
+};
+
 function compareVinDesc(a: Vehicle, b: Vehicle): number {
   return b.VIN.localeCompare(a.VIN);
 }
@@ -27,13 +35,38 @@ function compareVinDesc(a: Vehicle, b: Vehicle): number {
 /** Vehicle list — §4.3 filterable table; stacked cards below tablet. */
 export default function VehiclesPage() {
   const navigate = useNavigate();
-  const [vin, setVin] = useState('');
-  const [status, setStatus] = useState('');
-  const [page, setPage] = useState(1);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const vin = searchParams.get('vin') ?? '';
+  const status = searchParams.get('status') ?? '';
+  const analysisStat = searchParams.get('analysisStat') ?? '';
+  const from = searchParams.get('from') ?? '';
+  const to = searchParams.get('to') ?? '';
+  const page = Math.max(1, Number(searchParams.get('page') || '1') || 1);
+
   const [items, setItems] = useState<Vehicle[]>([]);
   const [total, setTotal] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  function patchParams(mutate: (next: URLSearchParams) => void) {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        mutate(next);
+        return next;
+      },
+      { replace: true },
+    );
+  }
+
+  function clearAnalysisStat() {
+    patchParams((next) => {
+      next.delete('analysisStat');
+      next.delete('from');
+      next.delete('to');
+      next.delete('page');
+    });
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -43,8 +76,11 @@ export default function VehiclesPage() {
       try {
         const res = await api.listVehicles({
           vin: vin || undefined,
-          status: status || undefined,
+          status: analysisStat ? undefined : status || undefined,
           page,
+          analysis_stat: analysisStat || undefined,
+          from: analysisStat && analysisStat !== 'on_line' ? from || undefined : undefined,
+          to: analysisStat && analysisStat !== 'on_line' ? to || undefined : undefined,
         });
         if (cancelled) return;
         setItems((res.Items ?? []).slice().sort(compareVinDesc));
@@ -61,7 +97,9 @@ export default function VehiclesPage() {
     return () => {
       cancelled = true;
     };
-  }, [vin, status, page]);
+  }, [vin, status, page, analysisStat, from, to]);
+
+  const analysisLabel = ANALYSIS_STAT_LABELS[analysisStat];
 
   return (
     <section>
@@ -70,6 +108,32 @@ export default function VehiclesPage() {
         Filterable vehicle table
       </p>
 
+      {analysisLabel && (
+        <div
+          className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-[var(--bg-surface-1)] px-4 py-3"
+          style={{ borderColor: 'var(--border)' }}
+        >
+          <p className="text-[13px] text-[var(--text-primary)]">
+            Analiz filtre: {analysisLabel}
+            {analysisStat !== 'on_line' && (from || to)
+              ? ` · ${from || '…'} → ${to || '…'}`
+              : ''}
+            {' · '}
+            {total} kayıt
+          </p>
+          <button
+            type="button"
+            onClick={clearAnalysisStat}
+            className="min-h-touch rounded-lg border px-3 py-1.5 text-[13px]"
+            style={{
+              borderColor: 'var(--border)',
+              color: brandColors.secondary,
+            }}
+          >
+            Temizle
+          </button>
+        </div>
+      )}
       <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
         <div className="w-full sm:w-64">
           <label className="text-[13px] text-[var(--text-secondary)]">
@@ -78,8 +142,11 @@ export default function VehiclesPage() {
           <VinSearchBox
             value={vin}
             onChange={(s) => {
-              setVin(s);
-              setPage(1);
+              patchParams((next) => {
+                if (s) next.set('vin', s);
+                else next.delete('vin');
+                next.delete('page');
+              });
             }}
             showResults={false}
             className="mt-1"
@@ -92,8 +159,15 @@ export default function VehiclesPage() {
           <select
             value={status}
             onChange={(e) => {
-              setStatus(e.target.value);
-              setPage(1);
+              const nextStatus = e.target.value;
+              patchParams((next) => {
+                next.delete('analysisStat');
+                next.delete('from');
+                next.delete('to');
+                if (nextStatus) next.set('status', nextStatus);
+                else next.delete('status');
+                next.delete('page');
+              });
             }}
             className="mt-1 block min-h-touch w-full rounded-lg border bg-[var(--bg-surface-1)] px-3 py-2 text-[15px] sm:w-auto"
             style={{ borderColor: 'var(--border)' }}
@@ -228,7 +302,11 @@ export default function VehiclesPage() {
         <button
           type="button"
           disabled={page <= 1}
-          onClick={() => setPage((p) => p - 1)}
+          onClick={() =>
+            patchParams((next) => {
+              next.set('page', String(page - 1));
+            })
+          }
           className="min-h-touch rounded border px-3 disabled:opacity-40"
           style={{ borderColor: 'var(--border)' }}
         >
@@ -237,7 +315,11 @@ export default function VehiclesPage() {
         <button
           type="button"
           disabled={items.length === 0}
-          onClick={() => setPage((p) => p + 1)}
+          onClick={() =>
+            patchParams((next) => {
+              next.set('page', String(page + 1));
+            })
+          }
           className="min-h-touch rounded border px-3 disabled:opacity-40"
           style={{ borderColor: 'var(--border)' }}
         >

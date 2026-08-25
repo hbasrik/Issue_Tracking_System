@@ -8,6 +8,11 @@ import {
   isHomeIssueStatKey,
   matchesHomeIssueStat,
 } from '../lib/homeIssueStats';
+import {
+  ANALYSIS_ISSUE_STAT_LABELS,
+  isAnalysisIssueStatKey,
+  matchesAnalysisIssueStat,
+} from '../lib/analysisIssueStats';
 import { brandColors } from '../theme/tokens';
 import {
   SeverityIndicator,
@@ -32,6 +37,12 @@ export default function IssuesPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const homeStatParam = searchParams.get('homeStat');
   const homeStat = isHomeIssueStatKey(homeStatParam) ? homeStatParam : null;
+  const analysisStatParam = searchParams.get('analysisStat');
+  const analysisStat = isAnalysisIssueStatKey(analysisStatParam)
+    ? analysisStatParam
+    : null;
+  const analysisFrom = searchParams.get('from') ?? undefined;
+  const analysisTo = searchParams.get('to') ?? undefined;
 
   const [listQuery, setListQuery] = useState('');
   const [severities, setSeverities] = useState<Set<SeverityLevel>>(new Set());
@@ -66,6 +77,9 @@ export default function IssuesPage() {
       (prev) => {
         const next = new URLSearchParams(prev);
         next.delete('homeStat');
+        next.delete('analysisStat');
+        next.delete('from');
+        next.delete('to');
         return next;
       },
       { replace: true },
@@ -73,7 +87,7 @@ export default function IssuesPage() {
   }
 
   function toggleSeverity(s: SeverityLevel) {
-    if (homeStat) clearHomeStat();
+    if (homeStat || analysisStat) clearHomeStat();
     setSeverities((prev) => {
       const next = new Set(prev);
       if (next.has(s)) next.delete(s);
@@ -83,7 +97,7 @@ export default function IssuesPage() {
   }
 
   function toggleStatus(s: string) {
-    if (homeStat) clearHomeStat();
+    if (homeStat || analysisStat) clearHomeStat();
     setStatuses((prev) => {
       const next = new Set(prev);
       if (next.has(s)) next.delete(s);
@@ -98,6 +112,14 @@ export default function IssuesPage() {
         if (homeStat) {
           return matchesHomeIssueStat(issue, homeStat, homeStatNow);
         }
+        if (analysisStat) {
+          return matchesAnalysisIssueStat(
+            issue,
+            analysisStat,
+            analysisFrom,
+            analysisTo,
+          );
+        }
         if (!issueMatchesListQuery(issue, listQuery)) {
           return false;
         }
@@ -109,7 +131,7 @@ export default function IssuesPage() {
         }
         return true;
       }),
-    [items, listQuery, homeStat, homeStatNow, severities, statuses],
+    [items, listQuery, homeStat, homeStatNow, analysisStat, analysisFrom, analysisTo, severities, statuses],
   );
 
   return (
@@ -123,14 +145,19 @@ export default function IssuesPage() {
         is Manager-only
       </p>
 
-      {homeStat && (
+      {(homeStat || analysisStat) && (
         <div
           className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-[var(--bg-surface-1)] px-4 py-3"
           style={{ borderColor: 'var(--border)' }}
         >
           <p className="text-[13px] text-[var(--text-primary)]">
-            Home filtre: {HOME_ISSUE_STAT_LABELS[homeStat]} · {visible.length}{' '}
-            kayıt
+            {homeStat
+              ? `Home filtre: ${HOME_ISSUE_STAT_LABELS[homeStat]} · ${visible.length} kayıt`
+              : `Analiz filtre: ${ANALYSIS_ISSUE_STAT_LABELS[analysisStat!]}${
+                  analysisFrom || analysisTo
+                    ? ` · ${analysisFrom || '…'} → ${analysisTo || '…'}`
+                    : ''
+                } · ${visible.length} kayıt`}
           </p>
           <button
             type="button"
@@ -158,7 +185,7 @@ export default function IssuesPage() {
             type="search"
             value={listQuery}
             onChange={(e) => {
-              if (homeStat) clearHomeStat();
+              if (homeStat || analysisStat) clearHomeStat();
               setListQuery(e.target.value);
             }}
             placeholder="VIN veya bildiren adı"
@@ -177,7 +204,7 @@ export default function IssuesPage() {
           </p>
           <div className="flex gap-2">
             {SEVERITIES.map((s) => {
-              const selected = !homeStat && severities.has(s);
+              const selected = !homeStat && !analysisStat && severities.has(s);
               const color = severityFillColor(s);
               return (
                 <button
@@ -215,7 +242,7 @@ export default function IssuesPage() {
           </p>
           <div className="flex flex-wrap gap-2">
             {STATUSES.map((s) => {
-              const selected = !homeStat && statuses.has(s.value);
+              const selected = !homeStat && !analysisStat && statuses.has(s.value);
               return (
                 <button
                   key={s.value}
