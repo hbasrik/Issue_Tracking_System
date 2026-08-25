@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import {
   Pressable,
-  ScrollView,
   Text,
   TextInput,
   View,
@@ -31,6 +30,10 @@ import {
 import { useTheme } from '../theme/ThemeProvider';
 import { statusColors } from '../theme/tokens';
 import type { RootStackParamList } from '../navigation/types';
+import {
+  DismissKeyboardScrollView,
+  iosDoneAccessoryProps,
+} from '../components/keyboard';
 import { prepareUploadImage } from '../lib/prepareUploadImage';
 
 const SEVERITIES: { value: SeverityLevel; label: string }[] = [
@@ -135,7 +138,7 @@ export default function IssueReportScreen() {
 
   return (
     <Screen padded={false}>
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
+      <DismissKeyboardScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
         <Title>Issue Bildir</Title>
         <Subtitle>Station step failure report</Subtitle>
 
@@ -160,6 +163,7 @@ export default function IssueReportScreen() {
           onChangeText={setDescription}
           multiline
           numberOfLines={4}
+          {...iosDoneAccessoryProps}
           style={{
             marginTop: 6,
             minHeight: 100,
@@ -246,7 +250,7 @@ export default function IssueReportScreen() {
             />
           </View>
         ) : null}
-      </ScrollView>
+      </DismissKeyboardScrollView>
     </Screen>
   );
 }
