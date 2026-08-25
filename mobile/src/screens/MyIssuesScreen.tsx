@@ -18,6 +18,7 @@ import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { api, type Issue, type IssueType } from '../api/client';
 import { IssueCard } from '../components/IssueCard';
+import { listKeyboardDismissProps } from '../components/keyboard';
 import {
   ErrorText,
   Loading,
@@ -179,13 +180,13 @@ export default function MyIssuesScreen() {
       <FlatList
         data={filtered}
         keyExtractor={(i) => String(i.ID)}
-        keyboardShouldPersistTaps="handled"
+        {...listKeyboardDismissProps}
         initialNumToRender={8}
         maxToRenderPerBatch={8}
         windowSize={5}
         contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
         ListHeaderComponent={
-          <View style={{ marginBottom: 12 }}>
+          <Pressable onPress={Keyboard.dismiss} accessible={false} style={{ marginBottom: 12 }}>
             <Title>Issues</Title>
             <Subtitle>Tüm issue’lar — VIN veya bildiren adıyla süz</Subtitle>
 
@@ -383,7 +384,7 @@ export default function MyIssuesScreen() {
 
             {error ? <ErrorText>{error}</ErrorText> : null}
             {loading ? <Loading /> : null}
-          </View>
+          </Pressable>
         }
         ListEmptyComponent={
           loading ? null : <Subtitle>Filtreye uyan issue yok</Subtitle>
@@ -391,7 +392,10 @@ export default function MyIssuesScreen() {
         renderItem={({ item }) => (
           <IssueCard
             issue={item}
-            onPress={() => navigation.navigate('IssueDetail', { id: item.ID })}
+            onPress={() => {
+              Keyboard.dismiss();
+              navigation.navigate('IssueDetail', { id: item.ID });
+            }}
           />
         )}
       />
