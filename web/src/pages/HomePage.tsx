@@ -116,7 +116,6 @@ export default function HomePage() {
           title="Toplam Açık Hata"
           value={metrics.openNow}
           previous={metrics.openPrev}
-          upIsBad
           icon={<AlertCircle size={20} />}
           accent={muteColor(statusColors.issueOpen, 40)}
           to="/issues?homeStat=open"
@@ -125,7 +124,6 @@ export default function HomePage() {
           title="Bugün Kapanan"
           value={metrics.closedToday}
           previous={metrics.closedPrevDay}
-          upIsBad={false}
           icon={<CheckCircle2 size={20} />}
           accent={statusColors.issueDone}
           to="/issues?homeStat=closed_today"
@@ -134,7 +132,6 @@ export default function HomePage() {
           title="İşlemde"
           value={metrics.inProgressNow}
           previous={metrics.inProgressPrev}
-          upIsBad
           icon={<Timer size={20} />}
           accent={statusColors.issueInProgress}
           to="/issues?homeStat=in_progress"
@@ -145,7 +142,6 @@ export default function HomePage() {
           title="Şartlı Onay (Bugün)"
           value={metrics.conditionalToday}
           previous={metrics.conditionalPrevDay}
-          upIsBad={false}
           icon={<ShieldAlert size={20} />}
           accent={statusColors.issueConditionalApproved}
           to="/issues?homeStat=conditional_approved_today"
@@ -154,7 +150,6 @@ export default function HomePage() {
           title="Kalite Onay (Bugün)"
           value={metrics.approvedToday}
           previous={metrics.approvedPrevDay}
-          upIsBad={false}
           icon={<BadgeCheck size={20} />}
           accent={statusColors.issueResolved}
           to="/issues?homeStat=approved_today"
@@ -437,7 +432,6 @@ function StatCard({
   title,
   value,
   previous,
-  upIsBad,
   icon,
   accent,
   to,
@@ -445,15 +439,13 @@ function StatCard({
   title: string;
   value: number;
   previous: number;
-  upIsBad: boolean;
   icon: ReactNode;
   accent: string;
   to: `/issues?homeStat=${HomeIssueStatKey}`;
 }) {
-  const polarity = deltaPolarity(value, previous, upIsBad);
+  const polarity = deltaPolarity(value, previous);
   const color = deltaColor(polarity);
   const delta = formatPercentDelta(value, previous);
-  const up = value > previous;
 
   return (
     <Link
@@ -471,7 +463,7 @@ function StatCard({
         >
           {icon}
         </div>
-        <DeltaBadge polarity={polarity} color={color} up={up} label={delta} />
+        <DeltaBadge polarity={polarity} color={color} label={delta} />
       </div>
       <p className="mt-4 text-[13px]" style={mutedCaption}>
         {title}
@@ -489,23 +481,18 @@ function StatCard({
 function DeltaBadge({
   polarity,
   color,
-  up,
   label,
 }: {
   polarity: DeltaPolarity;
   color: string;
-  up: boolean;
   label: string;
 }) {
   const Icon =
-    polarity === 'neutral' ? null : up ? TrendingUp : TrendingDown;
+    polarity === 'up' ? TrendingUp : polarity === 'down' ? TrendingDown : null;
   return (
     <span
-      className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[12px] font-semibold tabular-nums"
-      style={{
-        color,
-        backgroundColor: `color-mix(in srgb, ${color} 14%, transparent)`,
-      }}
+      className="inline-flex items-center gap-0.5 text-[12px] font-semibold tabular-nums"
+      style={{ color }}
     >
       {Icon && <Icon size={12} strokeWidth={2.5} />}
       {label}
