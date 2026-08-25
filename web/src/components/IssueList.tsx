@@ -9,7 +9,6 @@ import {
 import { StatusBadge } from './StatusBadge';
 import { SeverityIndicator } from './SeverityIndicator';
 import { IssueActions } from './IssueActions';
-import { useAuth } from '../auth/AuthProvider';
 import { MediaGallery } from './MediaGallery';
 import { VehicleIdentity } from './VehicleIdentity';
 import { DataCard, DataCardField } from './DataCard';
@@ -86,7 +85,6 @@ export function IssueDetailPanel({
   issue: Issue | null;
   onStatusChanged?: () => void;
 }) {
-  const { isManager } = useAuth();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -140,7 +138,6 @@ export function IssueDetailPanel({
           </div>
           <IssueActions
             status={issue.Status}
-            isManager={isManager}
             busy={busy}
             onTransition={(status) => void transition(status)}
           />

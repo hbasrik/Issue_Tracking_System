@@ -8,6 +8,8 @@ import { MediaGallery } from '../components/MediaGallery';
 import { VehicleIssuesPanel } from '../components/VehicleIssuesPanel';
 import { ShipmentReadinessBanner } from '../components/ShipmentReadinessBanner';
 import { api, ApiError, type ShipmentReadiness, type Station, type Vehicle } from '../lib/api';
+import { useAuth } from '../auth/AuthProvider';
+import { Perm } from '../auth/permissions';
 
 type Tab = 'overview' | 'eol' | 'shipment' | 'test' | 'issues' | 'audit';
 
@@ -22,12 +24,12 @@ function isTab(value: string | null): value is Tab {
   );
 }
 
-const TABS: { id: Tab; label: string }[] = [
+const TABS: { id: Tab; label: string; perm?: string }[] = [
   { id: 'overview', label: 'Overview' },
-  { id: 'shipment', label: 'Shipment' },
-  { id: 'test', label: 'Test' },
-  { id: 'eol', label: 'EoL' },
-  { id: 'issues', label: 'Issues' },
+  { id: 'shipment', label: 'Shipment', perm: Perm.ChecklistShipmentView },
+  { id: 'test', label: 'Test', perm: Perm.ChecklistTestView },
+  { id: 'eol', label: 'EoL', perm: Perm.ChecklistEOLView },
+  { id: 'issues', label: 'Issues', perm: Perm.IssueView },
   { id: 'audit', label: 'Audit Log' },
 ];
 
@@ -42,6 +44,7 @@ const STATUS_OPTIONS = [
 /** Vehicle detail with Overview / EoL / Shipment / Test / Issues / Audit Log tabs. */
 export default function VehicleDetailPage() {
   const { vin = '' } = useParams();
+  const { has } = useAuth();
   const [searchParams] = useSearchParams();
   const [tab, setTab] = useState<Tab>(() => {
     const fromUrl = searchParams.get('tab');
@@ -59,9 +62,11 @@ export default function VehicleDetailPage() {
     const v = await api.getVehicle(vin);
     setVehicle(v);
     setStatusDraft(v.CurrentGlobalStatus);
-    const ready = await api.shipmentReadiness(vin).catch(() => null);
+    const ready = has(Perm.ChecklistShipmentView)
+      ? await api.shipmentReadiness(vin).catch(() => null)
+      : null;
     setReadiness(ready);
-  }, [vin]);
+  }, [vin, has]);
 
   useEffect(() => {
     const fromUrl = searchParams.get('tab');
@@ -76,7 +81,9 @@ export default function VehicleDetailPage() {
         const [v, stationRes, ready] = await Promise.all([
           api.getVehicle(vin),
           api.listStations().catch(() => ({ items: [] as Station[] })),
-          api.shipmentReadiness(vin).catch(() => null),
+          has(Perm.ChecklistShipmentView)
+            ? api.shipmentReadiness(vin).catch(() => null)
+            : Promise.resolve(null),
         ]);
         if (cancelled) return;
         setVehicle(v);
@@ -92,7 +99,7 @@ export default function VehicleDetailPage() {
     return () => {
       cancelled = true;
     };
-  }, [vin]);
+  }, [vin, has]);
 
   async function saveStatus() {
     if (!vehicle) return;
@@ -113,6 +120,9 @@ export default function VehicleDetailPage() {
       setBusy(false);
     }
   }
+
+  const visibleTabs = TABS.filter((t) => !t.perm || has(t.perm));
+  const activeTab = visibleTabs.some((t) => t.id === tab) ? tab : 'overview';
 
   if (error && !vehicle) {
     return (
@@ -158,26 +168,26 @@ export default function VehicleDetailPage() {
         </div>
       </div>
 
-      {vehicle.CurrentGlobalStatus !== 'SHIPPED' && (
+      {vehicle.CurrentGlobalStatus !== 'SHIPPED' && has(Perm.ChecklistShipmentView) ? (
         <div className="mt-5">
           <ShipmentReadinessBanner readiness={readiness} />
         </div>
-      )}
+      ) : null}
 
       <div
         className="-mx-3 mt-6 flex gap-1 overflow-x-auto border-b px-3 sm:mx-0 sm:px-0"
         style={{ borderColor: 'var(--border)' }}
         role="tablist"
       >
-        {TABS.map((t) => (
+        {visibleTabs.map((t) => (
           <button
             key={t.id}
             type="button"
             role="tab"
-            aria-selected={tab === t.id}
+            aria-selected={activeTab === t.id}
             onClick={() => setTab(t.id)}
             className={`min-h-touch shrink-0 whitespace-nowrap px-3 text-[15px] sm:px-4 ${
-              tab === t.id
+              activeTab === t.id
                 ? 'border-b-2 border-[var(--accent)] font-medium text-[var(--accent)]'
                 : 'text-[var(--text-secondary)]'
             }`}
@@ -188,7 +198,7 @@ export default function VehicleDetailPage() {
       </div>
 
       <div className="mt-6">
-        {tab === 'overview' && (
+        {activeTab === 'overview' && (
           <div className="space-y-5">
             <div
               className="rounded-xl border bg-[var(--bg-surface-1)] p-5"
@@ -202,7 +212,10 @@ export default function VehicleDetailPage() {
                 <select
                   value={statusDraft}
                   onChange={(e) => setStatusDraft(e.target.value)}
-                  disabled={vehicle.CurrentGlobalStatus === 'PLANNED'}
+                  disabled={
+                    !has(Perm.AdminManageMasters) ||
+                    vehicle.CurrentGlobalStatus === 'PLANNED'
+                  }
                   className="min-h-touch w-full rounded-lg border bg-[var(--bg-page)] px-3 text-[15px] sm:w-auto disabled:opacity-60"
                   style={{ borderColor: 'var(--border)' }}
                 >
@@ -217,7 +230,11 @@ export default function VehicleDetailPage() {
                 </select>
                 <button
                   type="button"
-                  disabled={busy || vehicle.CurrentGlobalStatus === 'PLANNED'}
+                  disabled={
+                    busy ||
+                    !has(Perm.AdminManageMasters) ||
+                    vehicle.CurrentGlobalStatus === 'PLANNED'
+                  }
                   onClick={saveStatus}
                   className="min-h-touch rounded-lg bg-[var(--accent)] px-4 text-[15px] text-white disabled:opacity-60"
                 >
@@ -278,7 +295,7 @@ export default function VehicleDetailPage() {
           </div>
         )}
 
-        {tab === 'shipment' && (
+        {activeTab === 'shipment' && has(Perm.ChecklistShipmentView) && (
           <ChecklistPanel
             vin={vehicle.VIN}
             type="shipment"
@@ -286,7 +303,7 @@ export default function VehicleDetailPage() {
             hint="Yes/No checkbox — saves immediately. Incomplete items block WITH_CUSTOMER / SHIPPED."
           />
         )}
-        {tab === 'test' && (
+        {activeTab === 'test' && has(Perm.ChecklistTestView) && (
           <ChecklistPanel
             vin={vehicle.VIN}
             type="test"
@@ -294,11 +311,11 @@ export default function VehicleDetailPage() {
             hint="Yes/No checkbox — saves immediately. Informational quality tracking, no vehicle-status gate."
           />
         )}
-        {tab === 'eol' && (
+        {activeTab === 'eol' && has(Perm.ChecklistEOLView) && (
           <EolWorkflowTab vin={vehicle.VIN} onVehicleChanged={() => void loadVehicle()} />
         )}
-        {tab === 'issues' && <VehicleIssuesPanel vin={vehicle.VIN} />}
-        {tab === 'audit' && (
+        {activeTab === 'issues' && has(Perm.IssueView) && <VehicleIssuesPanel vin={vehicle.VIN} />}
+        {activeTab === 'audit' && (
           <PlaceholderPanel
             title="Audit log"
             body="Status and checklist change history for this vehicle (audit_logs)."

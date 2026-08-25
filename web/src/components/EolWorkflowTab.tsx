@@ -8,6 +8,7 @@ import {
   type EOLWorkflowView,
 } from '../lib/api';
 import { useAuth } from '../auth/AuthProvider';
+import { Perm } from '../auth/permissions';
 import { ChecklistPanel } from './ChecklistPanel';
 import { SeverityIndicator } from './SeverityIndicator';
 import { StatusBadge } from './StatusBadge';
@@ -30,7 +31,7 @@ interface EolWorkflowTabProps {
  * checklist, and permission-gated actions (Karar 2).
  */
 export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
-  const { isManager } = useAuth();
+  const { has } = useAuth();
   const [workflow, setWorkflow] = useState<EOLWorkflowView | null>(null);
   const [eolItems, setEolItems] = useState<ChecklistItem[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -237,7 +238,7 @@ export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
         title="Branch"
         record={formatRecord(workflow.branch_ship)}
         actionLabel="Ship to Depot"
-        actionEnabled={isManager && workflow.current_stage === 'BRANCH'}
+        actionEnabled={has(Perm.EOLBranchShip) && workflow.current_stage === 'BRANCH'}
         busy={busy}
         onAction={shipToDepot}
       >
@@ -255,7 +256,7 @@ export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
         title="Depot"
         record={formatRecord(workflow.depot_release)}
         actionLabel="Release from Depot"
-        actionEnabled={isManager && workflow.current_stage === 'DEPOT'}
+        actionEnabled={has(Perm.EOLDepotRelease) && workflow.current_stage === 'DEPOT'}
         busy={busy}
         onAction={releaseFromDepot}
       >
@@ -275,7 +276,7 @@ export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
         title="Document"
         record={formatRecord(workflow.document_approve)}
         actionLabel="Approve Document"
-        actionEnabled={isManager && workflow.current_stage === 'DOCUMENT'}
+        actionEnabled={has(Perm.EOLDocumentApprove) && workflow.current_stage === 'DOCUMENT'}
         busy={busy}
         onAction={approveDocument}
       >

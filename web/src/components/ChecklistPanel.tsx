@@ -7,6 +7,8 @@ import {
 } from '../lib/api';
 import { StatusBadge } from './StatusBadge';
 import { statusColors } from '../theme/tokens';
+import { useAuth } from '../auth/AuthProvider';
+import { Perm } from '../auth/permissions';
 
 interface ChecklistPanelProps {
   vin: string;
@@ -32,6 +34,17 @@ const STATUS_COLOR: Record<EolStatus, string> = {
   REWORK: statusColors.rework,
   CONDITIONAL_OK: statusColors.conditionalOk,
 };
+
+function checklistEditPerm(type: ChecklistType): string {
+  switch (type) {
+    case 'test':
+      return Perm.ChecklistTestEdit;
+    case 'shipment':
+      return Perm.ChecklistShipmentEdit;
+    default:
+      return Perm.ChecklistEOLEdit;
+  }
+}
 
 function needsDescription(status: string): boolean {
   return status === 'NOT_OK' || status === 'REWORK' || status === 'CONDITIONAL_OK';
@@ -66,6 +79,8 @@ export function ChecklistPanel({
   locked = false,
   lockHint,
 }: ChecklistPanelProps) {
+  const { has } = useAuth();
+  const canEdit = has(checklistEditPerm(type));
   const [loaded, setLoaded] = useState<ChecklistItem[]>([]);
   const [error, setError] = useState<string | null>(null);
   const controlled = itemsProp !== undefined;
@@ -99,13 +114,14 @@ export function ChecklistPanel({
 
   const done = visible.filter((item) => PASSING.has(item.Status)).length;
   const editor = type === 'eol' ? 'eol' : 'yesno';
+  const readOnly = locked || !canEdit;
 
   return (
     <div
       className="rounded-xl border bg-[var(--bg-surface-1)] p-4 sm:p-5"
       style={{
         borderColor: 'var(--border)',
-        opacity: locked ? 0.55 : 1,
+        opacity: readOnly ? 0.55 : 1,
       }}
     >
       <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -117,9 +133,11 @@ export function ChecklistPanel({
       {hint && (
         <p className="mt-1 text-[13px] text-[var(--text-secondary)]">{hint}</p>
       )}
-      {locked && (
+      {(locked || !canEdit) && (
         <p className="mt-2 text-[13px]" style={{ color: 'var(--status-conditional-ok)' }} role="status">
-          {lockHint ?? 'Complete the Branch checklist first'}
+          {locked
+            ? (lockHint ?? 'Complete the Branch checklist first')
+            : 'View only — checklist.edit is not granted'}
         </p>
       )}
       {error && (
@@ -131,7 +149,7 @@ export function ChecklistPanel({
         className="mt-4 divide-y"
         style={{
           borderColor: 'var(--border)',
-          pointerEvents: locked ? 'none' : undefined,
+          pointerEvents: readOnly ? 'none' : undefined,
         }}
       >
         {visible.map((item) =>
@@ -141,7 +159,7 @@ export function ChecklistPanel({
               vin={vin}
               item={item}
               onSaved={load}
-              disabled={locked}
+              disabled={readOnly}
             />
           ) : (
             <YesNoItemRow
@@ -150,6 +168,7 @@ export function ChecklistPanel({
               type={type}
               item={item}
               onSaved={load}
+              disabled={readOnly}
             />
           ),
         )}
@@ -301,11 +320,13 @@ function YesNoItemRow({
   type,
   item,
   onSaved,
+  disabled = false,
 }: {
   vin: string;
   type: ChecklistType;
   item: ChecklistItem;
   onSaved: () => Promise<void>;
+  disabled?: boolean;
 }) {
   const [yes, setYes] = useState(PASSING.has(item.Status));
   const [busy, setBusy] = useState(false);
@@ -346,7 +367,7 @@ function YesNoItemRow({
           <input
             type="checkbox"
             checked={yes}
-            disabled={busy}
+            disabled={busy || disabled}
             onChange={(e) => void toggle(e.target.checked)}
             className="h-5 w-5 shrink-0"
           />

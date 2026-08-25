@@ -1,0 +1,25 @@
+export const Perm = {
+  MobileAccess: 'mobile.access',
+  WebAccess: 'web.access',
+  VehicleView: 'vehicle.view',
+  StationStepEdit: 'station.step.edit',
+  ChecklistTestView: 'checklist.test.view',
+  ChecklistTestEdit: 'checklist.test.edit',
+  ChecklistShipmentView: 'checklist.shipment.view',
+  ChecklistShipmentEdit: 'checklist.shipment.edit',
+  ChecklistEOLView: 'checklist.eol.view',
+  ChecklistEOLEdit: 'checklist.eol.edit',
+  EOLBranchShip: 'eol.branch_ship',
+  EOLDepotRelease: 'eol.depot_release',
+  EOLDocumentApprove: 'eol.document_approve',
+  IssueView: 'issue.view',
+  IssueCreate: 'issue.create',
+  IssueTransitionProgress: 'issue.transition.progress',
+  IssueTransitionApprove: 'issue.transition.approve',
+  IssueTransitionConditionalApprove: 'issue.transition.conditional_approve',
+  AnalysisView: 'analysis.view',
+  AdminManageUsers: 'admin.manage_users',
+  AdminManageMasters: 'admin.manage_masters',
+} as const;
+
+export type PermissionCode = (typeof Perm)[keyof typeof Perm];

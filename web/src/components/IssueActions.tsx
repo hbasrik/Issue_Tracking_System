@@ -1,25 +1,29 @@
-/** Status transition buttons valid for current status + role. */
+import { useAuth } from '../auth/AuthProvider';
+import { Perm } from '../auth/permissions';
+
+/** Status transition buttons gated on issue.transition.* permissions. */
 export function IssueActions({
   status,
-  isManager,
   busy,
   onTransition,
 }: {
   status: string;
-  isManager: boolean;
   busy: boolean;
   onTransition: (status: string) => void;
 }) {
+  const { has } = useAuth();
   const actions: { status: string; label: string; primary?: boolean }[] = [];
 
-  if (status === 'OPEN') {
+  if (status === 'OPEN' && has(Perm.IssueTransitionProgress)) {
     actions.push({ status: 'IN_PROGRESS', label: 'İşlemde', primary: true });
   }
-  if (status === 'IN_PROGRESS') {
+  if (status === 'IN_PROGRESS' && has(Perm.IssueTransitionProgress)) {
     actions.push({ status: 'DONE', label: 'Tamamlandı', primary: true });
   }
-  if (status === 'DONE' && isManager) {
+  if (status === 'DONE' && has(Perm.IssueTransitionApprove)) {
     actions.push({ status: 'APPROVED', label: 'Kalite Onay', primary: true });
+  }
+  if (status === 'DONE' && has(Perm.IssueTransitionConditionalApprove)) {
     actions.push({ status: 'CONDITIONAL_APPROVED', label: 'Şartlı Onay' });
   }
 

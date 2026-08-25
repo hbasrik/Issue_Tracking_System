@@ -32,7 +32,7 @@ const STATUSES: { value: IssueStatus; label: string }[] = [
   { value: 'APPROVED', label: 'Kalite Onay' },
 ];
 
-/** Issues list + detail — quality approval and Şartlı Onay are Manager-only. */
+/** Issues list + detail — quality sign-off is gated on issue.transition.* permissions. */
 export default function IssuesPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const homeStatParam = searchParams.get('homeStat');

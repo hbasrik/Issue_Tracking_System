@@ -7,18 +7,14 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import {
-  api,
-  setTokenGetter,
-  type User,
-  type UserRole,
-} from '../lib/api';
+import { api, setTokenGetter, type User } from '../lib/api';
 
 interface AuthContextValue {
   user: User | null;
   token: string | null;
+  permissions: string[];
   isAuthenticated: boolean;
-  isManager: boolean;
+  has: (code: string) => boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
 }
@@ -29,6 +25,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
+  const [permissions, setPermissions] = useState<string[]>([]);
 
   useEffect(() => {
     setTokenGetter(() => token);
@@ -38,23 +35,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const res = await api.login(email, password);
     setToken(res.token);
     setUser(res.user);
+    setPermissions(res.permissions ?? []);
   }, []);
 
   const logout = useCallback(() => {
     setToken(null);
     setUser(null);
+    setPermissions([]);
   }, []);
+
+  const has = useCallback(
+    (code: string) => permissions.includes(code),
+    [permissions],
+  );
 
   const value = useMemo(
     () => ({
       user,
       token,
+      permissions,
       isAuthenticated: !!token && !!user,
-      isManager: user?.Role === ('MANAGER_ADMIN' as UserRole),
+      has,
       login,
       logout,
     }),
-    [user, token, login, logout],
+    [user, token, permissions, has, login, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -10,7 +10,7 @@ export default function NotAuthorizedPage() {
         Not authorized
       </h1>
       <p className="mt-2 max-w-md text-[15px] text-[var(--text-secondary)]">
-        The web dashboard is restricted to Manager/Admin users.
+        The web dashboard requires the web.access permission.
         {user && (
           <>
             {' '}

@@ -1,19 +1,20 @@
 import { useState, type FormEvent } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
+import { Perm } from '../auth/permissions';
 import { ApiError } from '../lib/api';
 
 export default function LoginPage() {
-  const { login, isAuthenticated, isManager } = useAuth();
+  const { login, isAuthenticated, has } = useAuth();
   const [email, setEmail] = useState('manager@karea.local');
   const [password, setPassword] = useState('changeme123');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  if (isAuthenticated && isManager) {
+  if (isAuthenticated && has(Perm.WebAccess)) {
     return <Navigate to="/" replace />;
   }
-  if (isAuthenticated && !isManager) {
+  if (isAuthenticated && !has(Perm.WebAccess)) {
     return <Navigate to="/not-authorized" replace />;
   }
 
@@ -41,7 +42,7 @@ export default function LoginPage() {
           Karea
         </h1>
         <p className="mt-1 text-[13px] text-[var(--text-secondary)]">
-          Manager / Admin sign in
+          Web sign in
         </p>
         <label className="mt-6 block text-[13px] text-[var(--text-secondary)]">
           Email
