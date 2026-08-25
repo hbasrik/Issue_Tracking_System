@@ -44,7 +44,7 @@ const SEVERITIES: { value: SeverityLevel; label: string }[] = [
 ];
 
 /**
- * Standalone Hata Bildir — MANUAL source, not tied to a station step or
+ * Standalone Issue Bildir — MANUAL source, not tied to a station step or
  * checklist item. Every field (including photo) is required before submit.
  */
 export default function ManualIssueReportScreen() {
@@ -156,7 +156,7 @@ export default function ManualIssueReportScreen() {
 
   async function uploadPhoto(issueId: number): Promise<boolean> {
     if (!photo) {
-      setError(`Hata #${issueId} kaydedildi, fotoğraf eksik`);
+      setError(`Issue #${issueId} kaydedildi, fotoğraf eksik`);
       return false;
     }
     try {
@@ -164,7 +164,7 @@ export default function ManualIssueReportScreen() {
       return true;
     } catch (err) {
       setError(
-        `Hata #${issueId} kaydedildi, fotoğraf yüklenemedi: ${
+        `Issue #${issueId} kaydedildi, fotoğraf yüklenemedi: ${
           err instanceof Error ? err.message : 'upload failed'
         }`,
       );
@@ -211,7 +211,7 @@ export default function ManualIssueReportScreen() {
   return (
     <Screen padded={false}>
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 48 }}>
-        <Title>Hata Bildir</Title>
+        <Title>Issue Bildir</Title>
         <Subtitle>Bağımsız bildirim — istasyon adımı veya checklist’e bağlı değil</Subtitle>
 
         <Text style={labelStyle(tokens)}>Tür *</Text>
@@ -390,7 +390,7 @@ export default function ManualIssueReportScreen() {
                 ? 'Kaydediliyor…'
                 : createdIssueId != null
                   ? 'Fotoğrafı Tekrar Yükle'
-                  : 'Hatayı Kaydet'
+                  : 'Issue’ı Kaydet'
             }
             onPress={() => void submit()}
             disabled={

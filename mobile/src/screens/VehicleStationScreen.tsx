@@ -245,11 +245,11 @@ export default function VehicleStationScreen() {
               marginBottom: 4,
             }}
           >
-            Hatalar
+            Issues
           </Text>
-          <Subtitle>Bu araca ait tüm hatalar — karta dokunarak detayı açın</Subtitle>
+          <Subtitle>Bu araca ait tüm issue’lar — karta dokunarak detayı açın</Subtitle>
           {issues.length === 0 ? (
-            <Subtitle>Bu araç için hata yok</Subtitle>
+            <Subtitle>Bu araç için issue yok</Subtitle>
           ) : (
             issues.map((issue) => (
               <IssueCard

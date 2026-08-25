@@ -53,7 +53,7 @@ function MainDrawer() {
       <Drawer.Screen
         name="MyIssues"
         component={MyIssuesScreen}
-        options={{ title: 'Hatalar', drawerLabel: 'Hatalar' }}
+        options={{ title: 'Issues', drawerLabel: 'Issues' }}
       />
       <Drawer.Screen
         name="Profile"
@@ -121,7 +121,7 @@ export function RootNavigator() {
             <Stack.Screen
               name="ManualIssueReport"
               component={ManualIssueReportScreen}
-              options={{ title: 'Hata Bildir' }}
+              options={{ title: 'Issue Bildir' }}
             />
             <Stack.Screen
               name="EOLChecklist"

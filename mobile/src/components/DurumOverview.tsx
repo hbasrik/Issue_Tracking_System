@@ -71,7 +71,7 @@ export function DurumOverview() {
       >
         Durum özeti
       </Text>
-      <Subtitle>Açık hatalar — anlık görünüm</Subtitle>
+      <Subtitle>Açık issue’lar — anlık görünüm</Subtitle>
       {error ? <ErrorText>{error}</ErrorText> : null}
 
       <Text
@@ -112,7 +112,7 @@ export function DurumOverview() {
           marginBottom: 4,
         }}
       >
-        Araçlar (açık hatalar)
+        Araçlar (açık issue’lar)
       </Text>
       {vehicles.length === 0 ? (
         <Subtitle>No vehicles with open issues</Subtitle>

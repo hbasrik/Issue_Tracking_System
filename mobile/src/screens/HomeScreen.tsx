@@ -63,7 +63,7 @@ function statCardColor(key: HomeIssueStatKey): string {
 }
 
 /**
- * Home: Hata Bildir, vehicle search (former Ara), issue day stats (from
+ * Home: Issue Bildir, vehicle search (former Ara), issue day stats (from
  * existing listIssues), and Durum overview (relocated, same Analysis queries).
  */
 export default function HomeScreen() {
@@ -151,11 +151,11 @@ export default function HomeScreen() {
 
         <View style={{ marginTop: 20 }}>
           <PrimaryButton
-            label="Hata Bildir"
+            label="Issue Bildir"
             onPress={() => navigation.navigate('ManualIssueReport')}
           />
           <Subtitle>
-            Bağımsız hata / tamir bildirimi — istasyon adımına bağlı değil
+            Bağımsız issue bildirimi — istasyon adımına bağlı değil
           </Subtitle>
         </View>
 

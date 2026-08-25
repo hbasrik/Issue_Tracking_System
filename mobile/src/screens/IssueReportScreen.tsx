@@ -38,7 +38,7 @@ const SEVERITIES: { value: SeverityLevel; label: string }[] = [
   { value: 'LOW', label: 'Low' },
 ];
 
-/** Hata girme formu — §3.3. Soft-warning: after save, return to station screen (no block). */
+/** Issue girme formu — §3.3. Soft-warning: after save, return to station screen (no block). */
 export default function IssueReportScreen() {
   const route = useRoute<RouteProp<RootStackParamList, 'IssueReport'>>();
   const navigation = useNavigation();
@@ -86,7 +86,7 @@ export default function IssueReportScreen() {
       return true;
     } catch (err) {
       setError(
-        `Hata #${issueId} kaydedildi, fotoğraf yüklenemedi: ${
+        `Issue #${issueId} kaydedildi, fotoğraf yüklenemedi: ${
           err instanceof Error ? err.message : 'upload failed'
         }`,
       );
@@ -133,7 +133,7 @@ export default function IssueReportScreen() {
   return (
     <Screen padded={false}>
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
-        <Title>Hata Bildir</Title>
+        <Title>Issue Bildir</Title>
         <Subtitle>Station step failure report</Subtitle>
 
         <Card>
@@ -229,7 +229,7 @@ export default function IssueReportScreen() {
                 ? 'Saving…'
                 : createdIssueId != null
                   ? 'Fotoğrafı Tekrar Yükle'
-                  : 'Hatayı Kaydet ve Devam Et'
+                  : 'Issue’ı Kaydet ve Devam Et'
             }
             onPress={submit}
             disabled={busy}

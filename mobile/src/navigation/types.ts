@@ -4,7 +4,7 @@ import type { HomeIssueStatKey } from '../lib/homeIssueStats';
 export type RootStackParamList = {
   Login: undefined;
   Unauthorized: undefined;
-  /** Drawer shell: Home, Vehicles, Hatalar, Profile. */
+  /** Drawer shell: Home, Vehicles, Issues, Profile. */
   MainDrawer: NavigatorScreenParams<MainDrawerParamList> | undefined;
   VehicleStation: { vin: string };
   IssueReport: {
@@ -14,7 +14,7 @@ export type RootStackParamList = {
     stationName: string;
     stationStepName: string;
   };
-  /** Standalone MANUAL Hata Bildir — no checklist/step source. */
+  /** Standalone MANUAL Issue Bildir — no checklist/step source. */
   ManualIssueReport: undefined;
   EOLChecklist: { vin: string };
   ShipmentChecklist: { vin: string };
