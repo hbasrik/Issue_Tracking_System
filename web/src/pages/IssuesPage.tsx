@@ -402,9 +402,7 @@ async function fetchExportPhotos(
   let index = 0;
   for (const item of items) {
     index += 1;
-    const url = import.meta.env.DEV
-      ? `/uploads/${item.storage_path.replace(/^\/+/, '')}`
-      : mediaFileUrl(item.storage_path);
+    const url = mediaFileUrl(item.storage_path);
     const res = await fetch(url);
     if (!res.ok) continue;
     out.push({
