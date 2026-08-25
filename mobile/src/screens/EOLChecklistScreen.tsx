@@ -1,6 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
 import {
-  Keyboard,
   Modal,
   Pressable,
   ScrollView,
@@ -29,6 +28,10 @@ import {
   Subtitle,
   Title,
 } from '../components/ui';
+import {
+  DismissKeyboardScrollView,
+  iosDoneAccessoryProps,
+} from '../components/keyboard';
 import { useTheme } from '../theme/ThemeProvider';
 import { statusColors } from '../theme/tokens';
 import type { RootStackParamList } from '../navigation/types';
@@ -192,7 +195,7 @@ export default function EOLChecklistScreen() {
 
   return (
     <Screen padded={false}>
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 120 }}>
+      <DismissKeyboardScrollView contentContainerStyle={{ padding: 16, paddingBottom: 120 }}>
         <Title>EoL Kontrolü</Title>
         <Subtitle>
           {STAGE_LABELS[stage]} · {evaluated}/{stageItems.length} değerlendirildi
@@ -246,12 +249,9 @@ export default function EOLChecklistScreen() {
                   }
                   placeholder="Açıklama zorunlu *"
                   placeholderTextColor={tokens.textSecondary}
-                  multiline={false}
-                  numberOfLines={1}
-                  returnKeyType="done"
-                  blurOnSubmit
-                  submitBehavior="blurAndSubmit"
-                  onSubmitEditing={() => Keyboard.dismiss()}
+                  multiline
+                  numberOfLines={3}
+                  {...iosDoneAccessoryProps}
                   style={{
                     marginTop: 10,
                     borderWidth: 1,
@@ -260,7 +260,8 @@ export default function EOLChecklistScreen() {
                     padding: 10,
                     color: tokens.textPrimary,
                     fontSize: 15,
-                    minHeight: 44,
+                    minHeight: 80,
+                    textAlignVertical: 'top',
                   }}
                 />
               ) : null}
@@ -274,7 +275,7 @@ export default function EOLChecklistScreen() {
             </Card>
           );
         })}
-      </ScrollView>
+      </DismissKeyboardScrollView>
 
       <View
         style={{
