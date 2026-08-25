@@ -66,6 +66,25 @@ func TestWriteErrorDepotChecklistLocked(t *testing.T) {
 	}
 }
 
+func TestWriteErrorAccountInactive(t *testing.T) {
+	rec := httptest.NewRecorder()
+	writeError(rec, domain.ErrAccountInactive)
+
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusForbidden)
+	}
+
+	var body struct {
+		Error string `json:"error"`
+	}
+	if err := json.NewDecoder(rec.Body).Decode(&body); err != nil {
+		t.Fatalf("decode body: %v", err)
+	}
+	if body.Error != domain.ErrAccountInactive.Error() {
+		t.Errorf("error = %q, want %q", body.Error, domain.ErrAccountInactive.Error())
+	}
+}
+
 func TestWriteErrorDatabaseRejected(t *testing.T) {
 	rec := httptest.NewRecorder()
 	writeError(rec, &domain.DatabaseRejectedError{
