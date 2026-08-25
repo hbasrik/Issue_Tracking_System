@@ -117,7 +117,10 @@ export function VinSearchBox({
       ) : null}
       <View>
         {results.map((item) => (
-          <Pressable key={item.VIN} onPress={() => onSelect(item)}>
+          <Pressable key={item.VIN} onPress={() => {
+            Keyboard.dismiss();
+            onSelect(item);
+          }}>
             <Card>
               <View style={styles.row}>
                 <View style={{ flex: 1 }}>
