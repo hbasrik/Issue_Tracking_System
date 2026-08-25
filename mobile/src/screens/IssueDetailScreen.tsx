@@ -3,7 +3,6 @@ import {
   Image,
   Modal,
   Pressable,
-  ScrollView,
   Text,
   TextInput,
   View,
@@ -36,6 +35,10 @@ import { useAuth } from '../auth/AuthProvider';
 import { Perm } from '../auth/permissions';
 import { issueStatusColor, issueStatusLabel } from '../lib/issueStatus';
 import { prepareUploadImage } from '../lib/prepareUploadImage';
+import {
+  DismissKeyboardScrollView,
+  iosDoneAccessoryProps,
+} from '../components/keyboard';
 import type { RootStackParamList } from '../navigation/types';
 
 function nextOperatorStatus(status: Issue['Status']): Issue['Status'] | null {
@@ -232,7 +235,7 @@ export default function IssueDetailScreen() {
 
   return (
     <Screen padded={false}>
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 48 }}>
+      <DismissKeyboardScrollView contentContainerStyle={{ padding: 16, paddingBottom: 48 }}>
         <Title>Issue #{route.params.id}</Title>
         {issue ? (
           <>
@@ -496,6 +499,7 @@ export default function IssueDetailScreen() {
                   placeholder="Yapılan tamir / çözüm"
                   placeholderTextColor={tokens.textSecondary}
                   multiline
+                  {...iosDoneAccessoryProps}
                   style={{
                     marginTop: 8,
                     minHeight: 100,
@@ -577,7 +581,7 @@ export default function IssueDetailScreen() {
           </>
         ) : null}
         {error ? <ErrorText>{error}</ErrorText> : null}
-      </ScrollView>
+      </DismissKeyboardScrollView>
 
       <Modal
         visible={!!viewerUri}
