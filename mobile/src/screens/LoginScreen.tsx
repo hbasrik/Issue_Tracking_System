@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { StyleSheet, Text, TextInput, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Keyboard, StyleSheet, Text, TextInput, View } from 'react-native';
 import { ApiError } from '../api/client';
 import { useAuth } from '../auth/AuthProvider';
 import { useTheme } from '../theme/ThemeProvider';
@@ -12,6 +12,7 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('changeme123');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const passwordRef = useRef<TextInput>(null);
 
   useEffect(() => {
     if (__DEV__) console.info('[karea] LoginScreen mounted');
@@ -39,7 +40,14 @@ export default function LoginScreen() {
           value={email}
           onChangeText={setEmail}
           autoCapitalize="none"
+          autoCorrect={false}
           keyboardType="email-address"
+          multiline={false}
+          numberOfLines={1}
+          returnKeyType="next"
+          blurOnSubmit={false}
+          submitBehavior="submit"
+          onSubmitEditing={() => passwordRef.current?.focus()}
           style={[
             styles.input,
             {
@@ -51,9 +59,19 @@ export default function LoginScreen() {
         />
         <Text style={[styles.label, { color: tokens.textSecondary }]}>Password</Text>
         <TextInput
+          ref={passwordRef}
           value={password}
           onChangeText={setPassword}
           secureTextEntry
+          multiline={false}
+          numberOfLines={1}
+          returnKeyType="go"
+          blurOnSubmit
+          submitBehavior="blurAndSubmit"
+          onSubmitEditing={() => {
+            Keyboard.dismiss();
+            void onSubmit();
+          }}
           style={[
             styles.input,
             {

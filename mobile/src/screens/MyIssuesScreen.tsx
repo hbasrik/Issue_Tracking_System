@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   FlatList,
+  Keyboard,
   Pressable,
   Text,
   TextInput,
@@ -15,8 +16,7 @@ import {
 } from '@react-navigation/native';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { api, type Issue, type Vehicle } from '../api/client';
-import { VehicleSearchPanel } from '../components/VehicleSearchPanel';
+import { api, type Issue, type IssueType } from '../api/client';
 import { IssueCard } from '../components/IssueCard';
 import {
   ErrorText,
@@ -38,6 +38,7 @@ import {
   type HomeIssueStatKey,
 } from '../lib/homeIssueStats';
 import { issueMatchesListQuery } from '../lib/issueVinFilter';
+import { issueTypeChipLabel } from '../lib/issueTypeLabel';
 import type { MainDrawerParamList, RootStackParamList } from '../navigation/types';
 
 type IssueStatus = Issue['Status'];
@@ -66,12 +67,13 @@ export default function MyIssuesScreen() {
   const navigation = useNavigation<MyIssuesNavigation>();
   const route = useRoute<RouteProp<MainDrawerParamList, 'MyIssues'>>();
   const [items, setItems] = useState<Issue[]>([]);
+  const [issueTypes, setIssueTypes] = useState<IssueType[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [vehicle, setVehicle] = useState<Vehicle | null>(null);
   const [listQuery, setListQuery] = useState('');
   const [severities, setSeverities] = useState<Set<SeverityLevel>>(new Set());
   const [statuses, setStatuses] = useState<Set<IssueStatus>>(new Set());
+  const [typeIds, setTypeIds] = useState<Set<number>>(new Set());
   const [homeStat, setHomeStat] = useState<HomeIssueStatKey | undefined>(
     route.params?.homeStat,
   );
@@ -82,14 +84,18 @@ export default function MyIssuesScreen() {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.listIssues();
-      const list = (res.items ?? []).slice().sort((a, b) => {
+      const [issuesRes, typesRes] = await Promise.all([
+        api.listIssues(),
+        api.listIssueTypes().catch(() => ({ items: [] as IssueType[] })),
+      ]);
+      const list = (issuesRes.items ?? []).slice().sort((a, b) => {
         const ta = issueCreatedMs(a);
         const tb = issueCreatedMs(b);
         if (tb !== ta) return tb - ta;
         return b.ID - a.ID;
       });
       setItems(list);
+      setIssueTypes(typesRes.items ?? []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load issues');
     } finally {
@@ -111,7 +117,7 @@ export default function MyIssuesScreen() {
       setHomeStatNow(new Date());
       setStatuses(new Set());
       setSeverities(new Set());
-      setVehicle(null);
+      setTypeIds(new Set());
       setListQuery('');
     }
   }, [route.params?.homeStat]);
@@ -141,32 +147,47 @@ export default function MyIssuesScreen() {
     });
   }
 
+  function toggleType(id: number) {
+    if (homeStat) clearHomeStat();
+    setTypeIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
   const filtered = useMemo(() => {
     return items.filter((issue) => {
       if (homeStat) {
         return matchesHomeIssueStat(issue, homeStat, homeStatNow);
       }
-      if (vehicle && issue.VIN !== vehicle.VIN) return false;
       if (!issueMatchesListQuery(issue, listQuery)) return false;
+      if (typeIds.size > 0) {
+        if (issue.IssueTypeID == null || !typeIds.has(issue.IssueTypeID)) {
+          return false;
+        }
+      }
       if (severities.size > 0 && !severities.has(issue.Severity)) return false;
       if (statuses.size > 0 && !statuses.has(issue.Status)) return false;
       return true;
     });
-  }, [items, vehicle, listQuery, severities, statuses, homeStat, homeStatNow]);
+  }, [items, listQuery, typeIds, severities, statuses, homeStat, homeStatNow]);
 
   return (
     <Screen padded={false}>
       <FlatList
         data={filtered}
         keyExtractor={(i) => String(i.ID)}
+        keyboardShouldPersistTaps="handled"
         initialNumToRender={8}
         maxToRenderPerBatch={8}
         windowSize={5}
         contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
         ListHeaderComponent={
           <View style={{ marginBottom: 12 }}>
-            <Title>Hatalar</Title>
-            <Subtitle>Tüm hatalar — VIN veya bildiren adıyla süz</Subtitle>
+            <Title>Issues</Title>
+            <Subtitle>Tüm issue’lar — VIN veya bildiren adıyla süz</Subtitle>
 
             {homeStat ? (
               <View
@@ -205,6 +226,12 @@ export default function MyIssuesScreen() {
               placeholderTextColor={tokens.textSecondary}
               autoCorrect={false}
               autoCapitalize="none"
+              multiline={false}
+              numberOfLines={1}
+              returnKeyType="search"
+              blurOnSubmit
+              submitBehavior="blurAndSubmit"
+              onSubmitEditing={() => Keyboard.dismiss()}
               style={{
                 marginTop: 8,
                 borderWidth: 1,
@@ -225,36 +252,43 @@ export default function MyIssuesScreen() {
                 fontWeight: '600',
                 fontSize: 13,
                 marginTop: 16,
+                marginBottom: 8,
               }}
             >
-              Araç
+              Tür
             </Text>
-            <VehicleSearchPanel
-              onSelect={(v) => {
-                if (homeStat) clearHomeStat();
-                setVehicle(v);
-              }}
-              onQueryChange={() => {
-                if (homeStat) clearHomeStat();
-                setVehicle(null);
-              }}
-            />
-            {vehicle && !homeStat ? (
-              <View
-                style={{
-                  marginTop: 8,
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: 8,
-                }}
-              >
-                <Text style={{ color: tokens.textPrimary, flex: 1, fontSize: 13 }}>
-                  Filtre: {vehicle.VIN}
-                </Text>
-                <OutlineButton label="Temizle" onPress={() => setVehicle(null)} />
-              </View>
-            ) : null}
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+              {issueTypes.map((t) => {
+                const selected = !homeStat && typeIds.has(t.ID);
+                return (
+                  <Pressable
+                    key={t.ID}
+                    onPress={() => toggleType(t.ID)}
+                    style={{
+                      paddingHorizontal: 12,
+                      minHeight: 36,
+                      borderRadius: 999,
+                      borderWidth: 1,
+                      borderColor: selected ? tokens.accent : tokens.border,
+                      backgroundColor: selected
+                        ? tokens.bgSurface2
+                        : tokens.bgSurface1,
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: selected ? tokens.accent : tokens.textSecondary,
+                        fontSize: 12,
+                        fontWeight: '600',
+                      }}
+                    >
+                      {issueTypeChipLabel(t.Name)}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
 
             <Text
               style={{
@@ -352,7 +386,7 @@ export default function MyIssuesScreen() {
           </View>
         }
         ListEmptyComponent={
-          loading ? null : <Subtitle>No issues match filters</Subtitle>
+          loading ? null : <Subtitle>Filtreye uyan issue yok</Subtitle>
         }
         renderItem={({ item }) => (
           <IssueCard

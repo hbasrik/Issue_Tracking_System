@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  Keyboard,
   Pressable,
   StyleSheet,
   Text,
@@ -19,7 +20,7 @@ function vinTail(vin: string): string {
  *
  * Results render as a plain View/map (not FlatList). The API caps typeahead
  * at a handful of rows, and this box is always embedded in a parent
- * ScrollView/FlatList (Home, Vehicles, Hatalar, Manual Issue modal) —
+ * ScrollView/FlatList (Home, Vehicles, Manual Issue modal) —
  * a nested VirtualizedList would warn and break scrolling.
  */
 export function VinSearchBox({
@@ -86,6 +87,14 @@ export function VinSearchBox({
         placeholderTextColor={tokens.textSecondary}
         autoCapitalize="characters"
         autoCorrect={false}
+        multiline={false}
+        numberOfLines={1}
+        returnKeyType="search"
+        blurOnSubmit
+        submitBehavior="blurAndSubmit"
+        onSubmitEditing={() => {
+          Keyboard.dismiss();
+        }}
         style={[
           styles.input,
           {

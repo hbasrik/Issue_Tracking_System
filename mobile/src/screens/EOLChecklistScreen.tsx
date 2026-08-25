@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import {
+  Keyboard,
   Modal,
   Pressable,
   ScrollView,
@@ -245,6 +246,12 @@ export default function EOLChecklistScreen() {
                   }
                   placeholder="Açıklama zorunlu *"
                   placeholderTextColor={tokens.textSecondary}
+                  multiline={false}
+                  numberOfLines={1}
+                  returnKeyType="done"
+                  blurOnSubmit
+                  submitBehavior="blurAndSubmit"
+                  onSubmitEditing={() => Keyboard.dismiss()}
                   style={{
                     marginTop: 10,
                     borderWidth: 1,
