@@ -10,11 +10,9 @@ FROM (
     VALUES
         ('Local Manager', 'manager@karea.local', '$2y$10$dDgVqcYKPs379f/RYybsvufVx6q9QG88T48GJqcrxTBB3Z2huxdRe', 'MANAGER_ADMIN'),
         ('Assembly Operator', 'operator.one@karea.local', '$2y$10$dDgVqcYKPs379f/RYybsvufVx6q9QG88T48GJqcrxTBB3Z2huxdRe', 'OPERATOR'),
-        ('Quality Operator', 'operator.two@karea.local', '$2y$10$dDgVqcYKPs379f/RYybsvufVx6q9QG88T48GJqcrxTBB3Z2huxdRe', 'OPERATOR')
+        ('Quality Operator', 'operator.two@karea.local', '$2y$10$dDgVqcYKPs379f/RYybsvufVx6q9QG88T48GJqcrxTBB3Z2huxdRe', 'OPERATOR'),
+        ('Quality Inspector', 'quality@karea.local', '$2y$10$dDgVqcYKPs379f/RYybsvufVx6q9QG88T48GJqcrxTBB3Z2huxdRe', 'QUALITY'),
+        ('Assembly Fitter', 'assembly@karea.local', '$2y$10$dDgVqcYKPs379f/RYybsvufVx6q9QG88T48GJqcrxTBB3Z2huxdRe', 'ASSEMBLY')
 ) AS seed(full_name, email, password_hash, role_code)
 JOIN roles ON roles.code = seed.role_code
-ON CONFLICT (email) DO UPDATE
-SET full_name = EXCLUDED.full_name,
-    password_hash = EXCLUDED.password_hash,
-    role_id = EXCLUDED.role_id,
-    is_active = EXCLUDED.is_active;
+ON CONFLICT (email) DO NOTHING;
