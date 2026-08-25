@@ -2,6 +2,7 @@ package http
 
 import (
 	"net/http"
+	"sort"
 	"time"
 
 	"github.com/karea/backend/internal/domain"
@@ -13,8 +14,9 @@ type loginRequest struct {
 }
 
 type loginResponse struct {
-	Token string    `json:"token"`
-	User  loginUser `json:"user"`
+	Token       string    `json:"token"`
+	User        loginUser `json:"user"`
+	Permissions []string  `json:"permissions"`
 }
 
 // loginUser is the wire shape of the authenticated user. Role is flattened to
@@ -56,9 +58,20 @@ func (s *server) handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var codes []string
+	if s.deps.Roles != nil {
+		granted, err := s.deps.Roles.GetPermissionsForUser(r.Context(), user.ID)
+		if err != nil {
+			writeError(w, err)
+			return
+		}
+		codes = permissionCodes(granted)
+	}
+
 	writeJSON(w, http.StatusOK, loginResponse{
-		Token: token,
-		User:  publicUser(user),
+		Token:       token,
+		User:        publicUser(user),
+		Permissions: codes,
 	})
 }
 
@@ -71,4 +84,13 @@ func publicUser(user *domain.User) loginUser {
 		IsActive:  user.IsActive,
 		CreatedAt: user.CreatedAt,
 	}
+}
+
+func permissionCodes(granted []domain.Permission) []string {
+	codes := make([]string, 0, len(granted))
+	for _, p := range granted {
+		codes = append(codes, p.Code)
+	}
+	sort.Strings(codes)
+	return codes
 }

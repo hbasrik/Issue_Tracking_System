@@ -45,7 +45,11 @@ func (f *loginUserRepo) UpdateRoleAndActive(context.Context, int, int, bool) err
 	return nil
 }
 
-func (f *loginUserRepo) CountActiveManagers(context.Context) (int, error) {
+func (f *loginUserRepo) CountActiveUsersWithPermission(context.Context, string) (int, error) {
+	return 0, nil
+}
+
+func (f *loginUserRepo) CountActiveUsersWithPermissionExceptRole(context.Context, string, int) (int, error) {
 	return 0, nil
 }
 
@@ -140,8 +144,9 @@ func TestLogin_ActiveUser_IssuesToken(t *testing.T) {
 		t.Fatalf("status = %d body %s", rec.Code, rec.Body.String())
 	}
 	var body struct {
-		Token string `json:"token"`
-		User  struct {
+		Token       string   `json:"token"`
+		Permissions []string `json:"permissions"`
+		User        struct {
 			Role string `json:"Role"`
 		} `json:"user"`
 	}
@@ -153,6 +158,16 @@ func TestLogin_ActiveUser_IssuesToken(t *testing.T) {
 	}
 	if body.User.Role != domain.RoleCodeOperator {
 		t.Fatalf("role = %q", body.User.Role)
+	}
+	seen := map[string]bool{}
+	for _, code := range body.Permissions {
+		seen[code] = true
+	}
+	if !seen[domain.PermissionMobileAccess] || !seen[domain.PermissionIssueCreate] {
+		t.Fatalf("permissions = %v, want mobile.access and issue.create from DB", body.Permissions)
+	}
+	if seen[domain.PermissionWebAccess] {
+		t.Fatal("operator must not receive web.access")
 	}
 }
 
