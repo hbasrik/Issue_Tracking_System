@@ -126,6 +126,14 @@ type Issue struct {
 	// attachment (report photo), when present. Not a column on issue_list —
 	// filled by list/get queries via media_attachments.
 	ReportPhotoPath string
+	// IssueTypeName / StationName / *ReporterName are list/get joins, not
+	// columns on issue_list. Used by the Issues export.
+	IssueTypeName                    string
+	StationName                      string
+	ProcessReporterName              string
+	FinishReporterName               string
+	ApproveReporterName              string
+	ConditionalApproveReporterName   string
 }
 
 // IssueType is a row from the issue_types catalogue (Hata / Tamir Gerekiyor).

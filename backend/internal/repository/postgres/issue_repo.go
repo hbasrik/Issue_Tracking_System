@@ -30,12 +30,21 @@ const issueColumns = `i.id, i.vin, i.source_type, i.source_station_step_id, i.so
 	        i.conditional_approve_reporter_id, i.conditional_approve_date,
 	        COALESCE(i.issue_picture_done_url, ''), COALESCE(i.solution_description, ''),
 	        i.created_at, i.updated_at, COALESCE(u.full_name, ''),
-	        COALESCE(report_photo.storage_path, '')`
+	        COALESCE(report_photo.storage_path, ''),
+	        COALESCE(it.name, ''), COALESCE(st.name, ''),
+	        COALESCE(up.full_name, ''), COALESCE(uf.full_name, ''),
+	        COALESCE(ua.full_name, ''), COALESCE(uc.full_name, '')`
 
 // issueFrom joins the reporter name and the earliest report photo
 // (media_attachments entity_type=ISSUE) used as a list thumbnail.
 const issueFrom = `FROM issue_list i
 		 LEFT JOIN users u ON u.id = i.issue_reporter_id
+		 LEFT JOIN issue_types it ON it.id = i.issue_type_id
+		 LEFT JOIN stations st ON st.id = i.station_id
+		 LEFT JOIN users up ON up.id = i.process_reporter_id
+		 LEFT JOIN users uf ON uf.id = i.finish_reporter_id
+		 LEFT JOIN users ua ON ua.id = i.approve_reporter_id
+		 LEFT JOIN users uc ON uc.id = i.conditional_approve_reporter_id
 		 LEFT JOIN LATERAL (
 		     SELECT m.storage_path
 		     FROM media_attachments m
@@ -56,6 +65,9 @@ func scanIssue(row pgx.Row) (*domain.Issue, error) {
 		&i.ConditionalApproveReporterID, &i.ConditionalApproveDate,
 		&i.IssuePictureDoneURL, &i.SolutionDescription, &i.CreatedAt, &i.UpdatedAt,
 		&i.ReporterName, &i.ReportPhotoPath,
+		&i.IssueTypeName, &i.StationName,
+		&i.ProcessReporterName, &i.FinishReporterName,
+		&i.ApproveReporterName, &i.ConditionalApproveReporterName,
 	); err != nil {
 		return nil, err
 	}
