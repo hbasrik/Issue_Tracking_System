@@ -60,7 +60,8 @@ func writeError(w http.ResponseWriter, err error) {
 		errors.Is(err, auth.ErrInvalidToken),
 		errors.Is(err, auth.ErrExpiredToken):
 		writeJSON(w, http.StatusUnauthorized, errorResponse{Error: err.Error()})
-	case errors.Is(err, domain.ErrForbidden),
+	case errors.Is(err, domain.ErrAccountInactive),
+		errors.Is(err, domain.ErrForbidden),
 		errors.Is(err, auth.ErrForbidden):
 		writeJSON(w, http.StatusForbidden, errorResponse{Error: err.Error()})
 	case errors.Is(err, domain.ErrDescriptionRequired),

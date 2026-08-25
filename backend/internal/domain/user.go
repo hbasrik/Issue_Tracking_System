@@ -5,11 +5,14 @@ import "time"
 // Role mirrors a row in the roles table. RBAC is table-driven (Karar 3): the
 // v2 spec's eventual 8-role matrix is added as rows in roles/role_permissions,
 // not as new values in a hardcoded enum. Only OPERATOR and MANAGER_ADMIN are
-// seeded today.
+// seeded today. IsActive is checked at login so a deactivated role cannot
+// obtain a JWT; GetPermissionsForUser also grants nothing for inactive roles
+// as a safety net for tokens issued before the role was deactivated.
 type Role struct {
-	ID   int
-	Code string
-	Name string
+	ID       int
+	Code     string
+	Name     string
+	IsActive bool
 }
 
 // Permission mirrors a row in the permissions table. Endpoint authorization is

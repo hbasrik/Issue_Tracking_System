@@ -42,6 +42,11 @@ var (
 	// deliberately generic so callers cannot distinguish "unknown email" from
 	// "wrong password".
 	ErrInvalidCredentials = errors.New("invalid credentials")
+	// ErrAccountInactive indicates the credentials were valid but the user
+	// account or its assigned role is deactivated. It is distinct from
+	// ErrInvalidCredentials so a deactivated login is not mistaken for a
+	// password error.
+	ErrAccountInactive = errors.New("account or role is inactive")
 	// ErrDepotChecklistLocked indicates a Depot-phase EoL item was updated
 	// while any Branch-phase item for the same VIN is not yet OK or
 	// CONDITIONAL_OK. The message matches the database trigger so API and

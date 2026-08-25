@@ -26,14 +26,14 @@ var _ repository.UserRepository = (*UserRepo)(nil)
 // userSelect joins roles because the role is a foreign key row since migration
 // 0002 (Karar 3), not an enum column on users.
 const userSelect = `SELECT u.id, u.full_name, u.email, u.password_hash,
-	   r.id, r.code, r.name, u.is_active, u.created_at
+	   r.id, r.code, r.name, r.is_active, u.is_active, u.created_at
 	  FROM users u
 	  JOIN roles r ON r.id = u.role_id`
 
 func scanUser(row pgx.Row) (*domain.User, error) {
 	var u domain.User
 	if err := row.Scan(&u.ID, &u.FullName, &u.Email, &u.PasswordHash,
-		&u.Role.ID, &u.Role.Code, &u.Role.Name, &u.IsActive, &u.CreatedAt); err != nil {
+		&u.Role.ID, &u.Role.Code, &u.Role.Name, &u.Role.IsActive, &u.IsActive, &u.CreatedAt); err != nil {
 		return nil, err
 	}
 	return &u, nil

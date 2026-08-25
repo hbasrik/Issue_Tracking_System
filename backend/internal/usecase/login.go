@@ -23,8 +23,11 @@ func NewAuthenticator(users repository.UserRepository) *Authenticator {
 // Login verifies an email/password pair against the stored bcrypt hash and
 // returns the authenticated user. The plaintext password is never compared
 // directly; bcrypt.CompareHashAndPassword does a constant-time comparison
-// against users.password_hash. All failure modes collapse to
-// domain.ErrInvalidCredentials so the caller cannot enumerate valid emails.
+// against users.password_hash. Unknown emails and wrong passwords collapse to
+// domain.ErrInvalidCredentials so callers cannot enumerate valid emails. A
+// correct password on a deactivated user or role returns
+// domain.ErrAccountInactive instead, so the failure is not mistaken for a
+// credential error and no token is issued.
 func (a *Authenticator) Login(ctx context.Context, email, password string) (*domain.User, error) {
 	user, err := a.users.GetByEmail(ctx, email)
 	if err != nil {
@@ -33,11 +36,11 @@ func (a *Authenticator) Login(ctx context.Context, email, password string) (*dom
 		}
 		return nil, err
 	}
-	if !user.IsActive {
-		return nil, domain.ErrInvalidCredentials
-	}
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)); err != nil {
 		return nil, domain.ErrInvalidCredentials
+	}
+	if !user.IsActive || !user.Role.IsActive {
+		return nil, domain.ErrAccountInactive
 	}
 	return user, nil
 }
