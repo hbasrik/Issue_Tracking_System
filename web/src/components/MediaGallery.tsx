@@ -5,6 +5,7 @@ import {
   type MediaAttachment,
   type MediaEntityType,
 } from '../lib/api';
+import { isNonWebImage } from '../lib/mediaKind';
 
 interface MediaGalleryProps {
   entityType: MediaEntityType;
@@ -97,17 +98,28 @@ export function MediaGallery({ entityType, entityId, listByVin }: MediaGalleryPr
         <ul className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
           {items.map((item) => {
             const isImage = item.mime_type?.startsWith('image/');
+            const unreadable = isNonWebImage(
+              item.mime_type,
+              item.file_name,
+              item.storage_path,
+            );
             return (
               <li key={item.id}>
                 <button
                   type="button"
-                  disabled={!isImage}
-                  onClick={() => isImage && setLightbox(item)}
+                  disabled={!isImage || unreadable}
+                  onClick={() => isImage && !unreadable && setLightbox(item)}
                   className="w-full overflow-hidden rounded-lg border bg-[var(--bg-page)] text-left disabled:cursor-default"
                   style={{ borderColor: 'var(--border)' }}
-                  aria-label={isImage ? `Enlarge ${item.file_name}` : item.file_name}
+                  aria-label={
+                    unreadable
+                      ? `${item.file_name} (tarayıcıda açılamaz)`
+                      : isImage
+                        ? `Enlarge ${item.file_name}`
+                        : item.file_name
+                  }
                 >
-                  {isImage ? (
+                  {isImage && !unreadable ? (
                     <img
                       src={mediaFileUrl(item.storage_path)}
                       alt={item.file_name}
@@ -115,13 +127,18 @@ export function MediaGallery({ entityType, entityId, listByVin }: MediaGalleryPr
                     />
                   ) : (
                     <div
-                      className="flex h-24 items-center justify-center text-[12px] font-medium"
+                      className="flex h-24 flex-col items-center justify-center gap-1 px-2 text-center text-[12px] font-medium"
                       style={{
                         backgroundColor: 'var(--bg-surface-2)',
                         color: 'var(--text-secondary)',
                       }}
                     >
-                      {extOf(item.file_name).toUpperCase() || 'FILE'}
+                      <span>{unreadable ? 'HEIC' : extOf(item.file_name).toUpperCase() || 'FILE'}</span>
+                      {unreadable && (
+                        <span className="text-[11px] font-normal">
+                          Tarayıcıda açılamaz
+                        </span>
+                      )}
                     </div>
                   )}
                   <div className="p-2">

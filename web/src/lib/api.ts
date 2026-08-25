@@ -471,6 +471,14 @@ export interface Issue {
   FinishDate?: string | null;
   ApproveDate?: string | null;
   ConditionalApproveDate?: string | null;
+  IssueTypeID?: number | null;
+  IssueTypeName?: string;
+  StationName?: string;
+  SolutionDescription?: string;
+  ProcessReporterName?: string;
+  FinishReporterName?: string;
+  ApproveReporterName?: string;
+  ConditionalApproveReporterName?: string;
   /** Earliest ISSUE media attachment storage_path, when present. */
   ReportPhotoPath?: string;
 }
@@ -508,6 +516,11 @@ export function mediaFileUrl(storagePath: string): string {
   const origin = API_BASE_URL.replace(/\/api\/v1\/?$/, '');
   const path = storagePath.replace(/^\/+/, '');
   return `${origin}/uploads/${path}`;
+}
+
+/** List-card URL: long-edge 192 JPEG instead of the original. */
+export function mediaThumbUrl(storagePath: string): string {
+  return `${mediaFileUrl(storagePath)}?thumb=1`;
 }
 
 export function formatIssueCreatedAt(iso?: string): string {

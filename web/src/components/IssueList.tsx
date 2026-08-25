@@ -3,9 +3,10 @@ import { Link } from 'react-router-dom';
 import {
   api,
   formatIssueCreatedAt,
-  mediaFileUrl,
+  mediaThumbUrl,
   type Issue,
 } from '../lib/api';
+import { isNonWebImage } from '../lib/mediaKind';
 import { StatusBadge } from './StatusBadge';
 import { SeverityIndicator } from './SeverityIndicator';
 import { IssueActions } from './IssueActions';
@@ -27,9 +28,20 @@ function IssueThumb({ path }: { path?: string }) {
       </div>
     );
   }
+  if (isNonWebImage(null, null, path)) {
+    return (
+      <div
+        className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md text-center text-[10px] font-semibold leading-tight text-[var(--text-secondary)]"
+        style={{ backgroundColor: 'var(--bg-surface-2)' }}
+        title="HEIC — tarayıcıda açılamaz"
+      >
+        HEIC
+      </div>
+    );
+  }
   return (
     <img
-      src={mediaFileUrl(path)}
+      src={mediaThumbUrl(path)}
       alt=""
       className="h-14 w-14 shrink-0 rounded-md object-cover"
       style={{ backgroundColor: 'var(--bg-surface-2)' }}
