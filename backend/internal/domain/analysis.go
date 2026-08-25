@@ -79,6 +79,7 @@ type WorkSplit struct {
 
 // AnalysisKPIs is the Analysis-tab headline numbers. Today/week windows are
 // calendar days in Europe/Istanbul intersected with From/To when set.
+// OnLineCount is a snapshot (IN_PRODUCTION) and ignores the date window.
 type AnalysisKPIs struct {
 	ShippedToday          int64
 	ShippedWeek           int64
@@ -87,10 +88,65 @@ type AnalysisKPIs struct {
 	AvgResolutionHours    *float64
 	FirstTimeRightPercent *float64
 	OpenIssuesInRange     int64
+	OnLineCount           int64
 }
 
-// AnalysisDashboard is the Analysis page payload: every series honors the
-// same filter.
+const istanbulTZ = "Europe/Istanbul"
+
+// StartOfUTCDay truncates t to midnight UTC (calendar-day bound for filters).
+func StartOfUTCDay(t time.Time) time.Time {
+	y, m, d := t.UTC().Date()
+	return time.Date(y, m, d, 0, 0, 0, 0, time.UTC)
+}
+
+// IstanbulDayStart is local midnight in Europe/Istanbul for now.
+func IstanbulDayStart(now time.Time) time.Time {
+	loc, err := time.LoadLocation(istanbulTZ)
+	if err != nil {
+		loc = time.UTC
+	}
+	n := now.In(loc)
+	return time.Date(n.Year(), n.Month(), n.Day(), 0, 0, 0, 0, loc)
+}
+
+// IntersectWindow clips an Istanbul (or other) [winFrom, winUntil) half-open
+// range with optional inclusive calendar From/To. empty is true when the
+// intersection has no duration.
+func IntersectWindow(from, to *time.Time, winFrom, winUntil time.Time) (clippedFrom, clippedUntil time.Time, empty bool) {
+	clippedFrom, clippedUntil = winFrom, winUntil
+	if from != nil {
+		if StartOfUTCDay(*from).After(clippedFrom) {
+			clippedFrom = StartOfUTCDay(*from)
+		}
+	}
+	if to != nil {
+		end := StartOfUTCDay(*to).Add(24 * time.Hour)
+		if end.Before(clippedUntil) {
+			clippedUntil = end
+		}
+	}
+	if !clippedFrom.Before(clippedUntil) {
+		return clippedFrom, clippedUntil, true
+	}
+	return clippedFrom, clippedUntil, false
+}
+
+// InclusiveDateBounds maps optional inclusive calendar dates to [from, until)
+// timestamps. Nil inputs stay nil.
+func InclusiveDateBounds(from, to *time.Time) (fromTS, untilTS *time.Time) {
+	if from != nil {
+		t := StartOfUTCDay(*from)
+		fromTS = &t
+	}
+	if to != nil {
+		t := StartOfUTCDay(*to).Add(24 * time.Hour)
+		untilTS = &t
+	}
+	return fromTS, untilTS
+}
+
+// AnalysisDashboard is the Analysis page payload. Date-series honor the
+// shared filter; snapshot KPIs (OnLineCount) ignore From/To.
 type AnalysisDashboard struct {
 	KPIs           AnalysisKPIs
 	WorkSplit      WorkSplit

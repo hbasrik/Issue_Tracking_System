@@ -25,8 +25,6 @@ func NewAnalysisRepo(pool *pgxpool.Pool) *AnalysisRepo {
 
 var _ repository.AnalysisRepository = (*AnalysisRepo)(nil)
 
-const istanbul = "Europe/Istanbul"
-
 const issueJoin = `
 FROM issue_list i
 JOIN vehicles v ON v.vin = i.vin
@@ -56,13 +54,12 @@ type boundArgs struct {
 
 func bounds(f domain.AnalysisFilter) boundArgs {
 	b := boundArgs{suffix: strings.TrimSpace(f.VINSuffix), itype: strings.TrimSpace(f.IssueType)}
-	if f.From != nil {
-		t := startOfUTCDay(*f.From)
-		b.from = t
+	from, until := domain.InclusiveDateBounds(f.From, f.To)
+	if from != nil {
+		b.from = *from
 	}
-	if f.To != nil {
-		t := startOfUTCDay(*f.To).Add(24 * time.Hour)
-		b.until = t
+	if until != nil {
+		b.until = *until
 	}
 	if f.StationID != nil {
 		b.station = *f.StationID
@@ -77,37 +74,8 @@ func (b boundArgs) slice() []any {
 	return []any{b.from, b.until, b.suffix, b.station, b.status, b.itype}
 }
 
-func startOfUTCDay(t time.Time) time.Time {
-	y, m, d := t.UTC().Date()
-	return time.Date(y, m, d, 0, 0, 0, 0, time.UTC)
-}
-
-func istanbulDayStart(now time.Time) time.Time {
-	loc, err := time.LoadLocation(istanbul)
-	if err != nil {
-		loc = time.UTC
-	}
-	n := now.In(loc)
-	return time.Date(n.Year(), n.Month(), n.Day(), 0, 0, 0, 0, loc)
-}
-
 func intersectWindow(f domain.AnalysisFilter, winFrom, winUntil time.Time) (from, until time.Time, empty bool) {
-	from, until = winFrom, winUntil
-	if f.From != nil {
-		if startOfUTCDay(*f.From).After(from) {
-			from = startOfUTCDay(*f.From)
-		}
-	}
-	if f.To != nil {
-		end := startOfUTCDay(*f.To).Add(24 * time.Hour)
-		if end.Before(until) {
-			until = end
-		}
-	}
-	if !from.Before(until) {
-		return from, until, true
-	}
-	return from, until, false
+	return domain.IntersectWindow(f.From, f.To, winFrom, winUntil)
 }
 
 // DailyPendingIssues returns rows of vw_daily_pending_issues, sliced by day.
@@ -134,11 +102,11 @@ func dayRangeClause(column string, f domain.AnalysisFilter) (string, []any) {
 	var conds []string
 	var args []any
 	if f.From != nil {
-		args = append(args, startOfUTCDay(*f.From))
+		args = append(args, domain.StartOfUTCDay(*f.From))
 		conds = append(conds, fmt.Sprintf("%s >= $%d::date", column, len(args)))
 	}
 	if f.To != nil {
-		args = append(args, startOfUTCDay(*f.To))
+		args = append(args, domain.StartOfUTCDay(*f.To))
 		conds = append(conds, fmt.Sprintf("%s <= $%d::date", column, len(args)))
 	}
 	if len(conds) == 0 {
@@ -293,12 +261,6 @@ func (r *AnalysisRepo) Dashboard(ctx context.Context, f domain.AnalysisFilter) (
 		return nil, err
 	}
 	dash.Severity = sev
-	if err := r.scanEOLFunnel(ctx, f, dash); err != nil {
-		return nil, err
-	}
-	if err := r.scanTopTypes(ctx, f, dash); err != nil {
-		return nil, err
-	}
 	daily, err := r.CompletedIssuesDaily(ctx, f)
 	if err != nil {
 		return nil, err
@@ -340,67 +302,16 @@ func (r *AnalysisRepo) scanWorkAndStatus(ctx context.Context, f domain.AnalysisF
 		case domain.IssueStatusOpen, domain.IssueStatusInProgress:
 			dash.WorkSplit.Ongoing += n
 			dash.KPIs.OpenIssuesInRange += n
-		case domain.IssueStatusDone:
-			dash.WorkSplit.Completed += n
-			dash.KPIs.OpenIssuesInRange += n // still awaiting quality
-		case domain.IssueStatusApproved, domain.IssueStatusConditionalApproved:
+		case domain.IssueStatusDone, domain.IssueStatusApproved, domain.IssueStatusConditionalApproved:
 			dash.WorkSplit.Completed += n
 		}
 	}
 	return nil
 }
 
-func (r *AnalysisRepo) scanEOLFunnel(ctx context.Context, f domain.AnalysisFilter, dash *domain.AnalysisDashboard) error {
-	b := bounds(f)
-	rows, err := r.pool.Query(ctx,
-		`SELECT w.current_stage::text, count(*)
-		 FROM vehicle_eol_workflow w
-		 JOIN vehicles v ON v.vin = w.vin
-		 WHERE ($1::timestamptz IS NULL OR v.created_at >= $1)
-		   AND ($2::timestamptz IS NULL OR v.created_at < $2)
-		   AND ($3 = '' OR w.vin ILIKE '%' || $3 || '%')
-		   AND ($4 = '' OR v.current_global_status::text = $4)
-		 GROUP BY w.current_stage
-		 ORDER BY w.current_stage`, b.from, b.until, b.suffix, b.status)
-	if err != nil {
-		return err
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var row domain.EOLStageCount
-		if err := rows.Scan(&row.Stage, &row.Count); err != nil {
-			return err
-		}
-		dash.EOLFunnel = append(dash.EOLFunnel, row)
-	}
-	return rows.Err()
-}
-
-func (r *AnalysisRepo) scanTopTypes(ctx context.Context, f domain.AnalysisFilter, dash *domain.AnalysisDashboard) error {
-	b := bounds(f)
-	rows, err := r.pool.Query(ctx,
-		`SELECT COALESCE(it.name, '(untyped)'), count(*)
-		 `+issueJoin+issueWhere("i.issue_date")+`
-		 GROUP BY 1
-		 ORDER BY count(*) DESC, 1
-		 LIMIT 8`, b.slice()...)
-	if err != nil {
-		return err
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var row domain.IssueTypeCount
-		if err := rows.Scan(&row.Name, &row.Count); err != nil {
-			return err
-		}
-		dash.TopIssueTypes = append(dash.TopIssueTypes, row)
-	}
-	return rows.Err()
-}
-
 func (r *AnalysisRepo) kpis(ctx context.Context, f domain.AnalysisFilter) (domain.AnalysisKPIs, error) {
 	var k domain.AnalysisKPIs
-	today := istanbulDayStart(time.Now())
+	today := domain.IstanbulDayStart(time.Now())
 	todayEnd := today.Add(24 * time.Hour)
 	weekStart := today.AddDate(0, 0, -6)
 
@@ -439,6 +350,11 @@ func (r *AnalysisRepo) kpis(ctx context.Context, f domain.AnalysisFilter) (domai
 		return k, err
 	}
 	k.FirstTimeRightPercent = ftr
+
+	k.OnLineCount, err = r.countOnLine(ctx, f)
+	if err != nil {
+		return k, err
+	}
 	return k, nil
 }
 
@@ -519,4 +435,20 @@ func (r *AnalysisRepo) firstTimeRight(ctx context.Context, f domain.AnalysisFilt
 		b.from, b.until, b.suffix, b.station, b.status,
 	).Scan(&pct)
 	return pct, err
+}
+
+// countOnLine is a snapshot: IN_PRODUCTION vehicles right now. Date filters
+// are ignored; VIN suffix and station still apply.
+func (r *AnalysisRepo) countOnLine(ctx context.Context, f domain.AnalysisFilter) (int64, error) {
+	b := bounds(f)
+	var n int64
+	err := r.pool.QueryRow(ctx,
+		`SELECT count(*)
+		 FROM vehicles v
+		 WHERE v.current_global_status = 'IN_PRODUCTION'
+		   AND ($1 = '' OR v.vin ILIKE '%' || $1 || '%')
+		   AND ($2::int IS NULL OR v.current_station_id = $2)`,
+		b.suffix, b.station,
+	).Scan(&n)
+	return n, err
 }
