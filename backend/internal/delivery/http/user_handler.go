@@ -15,7 +15,7 @@ type updateUserRequest struct {
 }
 
 // handleUserList returns every user for the Users & Roles screen. Gated on
-// admin.manage_masters. Password hashes are never included (loginUser DTO).
+// admin.manage_users. Password hashes are never included (loginUser DTO).
 func (s *server) handleUserList(w http.ResponseWriter, r *http.Request) {
 	items, err := s.deps.Users.List(r.Context())
 	if err != nil {

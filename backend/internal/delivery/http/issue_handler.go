@@ -23,7 +23,7 @@ type createIssueRequest struct {
 	PictureURL          string `json:"picture_url"`
 }
 
-// handleCreateIssue creates a new issue (Operator only). Severity is mandatory
+// handleCreateIssue creates a new issue (issue.create). Severity is mandatory
 // (Decision Log #7); a missing severity is rejected with 400.
 func (s *server) handleCreateIssue(w http.ResponseWriter, r *http.Request) {
 	var req createIssueRequest
@@ -67,8 +67,8 @@ func (s *server) handleIssueTypeList(w http.ResponseWriter, r *http.Request) {
 
 // handleIssueList returns issues for the issues queue / vehicle detail.
 //
-// Scope (gated on vehicle.view, not analysis.view — operators need the full
-// queue to pick up someone else's OPEN issue):
+// Scope (gated on issue.view, not analysis.view — a shop-floor role needs
+// the full queue to pick up someone else's OPEN issue):
 //   - ?vin=… → every issue for that vehicle
 //   - no vin → every issue (web Issues + mobile Hatalar)
 func (s *server) handleIssueList(w http.ResponseWriter, r *http.Request) {
@@ -104,7 +104,7 @@ func (s *server) handleIssueList(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"items": items})
 }
 
-// handleIssueGet returns a single issue by id (any authenticated user).
+// handleIssueGet returns a single issue by id (issue.view).
 func (s *server) handleIssueGet(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {

@@ -6,7 +6,7 @@ import (
 	"github.com/karea/backend/internal/domain"
 )
 
-// handleStationList returns all stations (both roles).
+// handleStationList returns all stations (vehicle.view).
 func (s *server) handleStationList(w http.ResponseWriter, r *http.Request) {
 	stations, err := s.deps.Stations.List(r.Context())
 	if err != nil {
