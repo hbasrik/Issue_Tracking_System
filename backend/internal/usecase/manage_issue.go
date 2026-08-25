@@ -202,10 +202,10 @@ func (m *IssueManager) TransitionStatus(ctx context.Context, id int64, target do
 //
 // Authorization is enforced here in the usecase layer rather than in routing
 // because a single endpoint serves every transition, so the required
-// permission depends on the target status. The seeded matrix grants the repair
-// chain (issue.transition.in_progress, issue.transition.done) to OPERATOR and
-// both sign-off branches (issue.transition.approve,
-// issue.transition.conditional_approve) to MANAGER_ADMIN only.
+// permission depends on the target status. OPEN→IN_PROGRESS and
+// IN_PROGRESS→DONE share issue.transition.progress; quality sign-off uses
+// issue.transition.approve / issue.transition.conditional_approve. Which
+// roles hold those codes lives in role_permissions, not in this function.
 func AuthorizeIssueTransition(current, target domain.IssueStatus, permissions domain.PermissionSet) error {
 	if !target.Valid() {
 		return domain.ErrInvalidEnumValue
@@ -216,10 +216,9 @@ func AuthorizeIssueTransition(current, target domain.IssueStatus, permissions do
 
 	var required string
 	switch {
-	case current == domain.IssueStatusOpen && target == domain.IssueStatusInProgress:
-		required = domain.PermissionIssueTransitionInProgress
-	case current == domain.IssueStatusInProgress && target == domain.IssueStatusDone:
-		required = domain.PermissionIssueTransitionDone
+	case current == domain.IssueStatusOpen && target == domain.IssueStatusInProgress,
+		current == domain.IssueStatusInProgress && target == domain.IssueStatusDone:
+		required = domain.PermissionIssueTransitionProgress
 	case current == domain.IssueStatusDone && target == domain.IssueStatusApproved:
 		required = domain.PermissionIssueTransitionApprove
 	case current == domain.IssueStatusDone && target == domain.IssueStatusConditionalApproved:

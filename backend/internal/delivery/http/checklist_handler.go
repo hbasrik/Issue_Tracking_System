@@ -19,21 +19,24 @@ type checklistRequest struct {
 	RequestGateExit bool   `json:"request_gate_exit"`
 }
 
-// handleRecordChecklist records a checklist item result. Both Operator and
-// Manager/Admin hold checklist_item.update (seeded role_permissions); the
-// URL type segment is eol|shipment|test. The mandatory-description rule
-// (FR-3.3) applies to EoL items only (400). Test and Shipment are Yes/No
-// with no note. Depot-phase EoL updates return 409 until every Branch-phase
-// item is OK/CONDITIONAL_OK. Hard-block semantics apply to the two gated
-// types: a requested gate exit with any non-passing item returns 409 with
-// the blocking item IDs. The Test checklist has no gate, so a gate exit
-// requested against it is rejected rather than silently ignored.
+// handleRecordChecklist records a checklist item result. The URL type
+// segment (eol|shipment|test) selects which checklist.*.edit permission is
+// required. The mandatory-description rule (FR-3.3) applies to EoL items
+// only (400). Test and Shipment are Yes/No with no note. Depot-phase EoL
+// updates return 409 until every Branch-phase item is OK/CONDITIONAL_OK.
+// Hard-block semantics apply to the two gated types: a requested gate exit
+// with any non-passing item returns 409 with the blocking item IDs. The
+// Test checklist has no gate, so a gate exit requested against it is
+// rejected rather than silently ignored.
 func (s *server) handleRecordChecklist(w http.ResponseWriter, r *http.Request) {
 	vin := chi.URLParam(r, "vin")
 
 	checklistType, ok := parseChecklistType(chi.URLParam(r, "type"))
 	if !ok {
 		badRequest(w, "type must be one of: eol, shipment, test")
+		return
+	}
+	if !s.requireCode(w, r, domain.ChecklistEditPermission(checklistType)) {
 		return
 	}
 
@@ -74,8 +77,8 @@ func (s *server) handleRecordChecklist(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleChecklistTemplateList serves the /templates admin page: every
-// checklist template with a live count of its active items. Manager/Admin
-// only (admin.manage_masters). The v1 page hardcoded EOL=13 / SHIPMENT=43
+// checklist template with a live count of its active items
+// (admin.manage_masters). The v1 page hardcoded EOL=13 / SHIPMENT=43
 // and omitted TEST; this is the live replacement.
 func (s *server) handleChecklistTemplateList(w http.ResponseWriter, r *http.Request) {
 	if s.deps.Checklists == nil {

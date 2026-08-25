@@ -575,23 +575,55 @@ func (f *fakeEOLWorkflowRepo) ResetToBranch(_ context.Context, vin string) error
 // exercise the same permission sets the running system resolves.
 func operatorPermissions() domain.PermissionSet {
 	return domain.NewPermissionSet([]domain.Permission{
+		{Code: domain.PermissionMobileAccess},
 		{Code: domain.PermissionVehicleView},
-		{Code: domain.PermissionStationStepUpdate},
-		{Code: domain.PermissionChecklistItemUpdate},
+		{Code: domain.PermissionStationStepEdit},
+		{Code: domain.PermissionChecklistTestView},
+		{Code: domain.PermissionChecklistTestEdit},
+		{Code: domain.PermissionChecklistShipmentView},
+		{Code: domain.PermissionChecklistShipmentEdit},
+		{Code: domain.PermissionChecklistEOLView},
+		{Code: domain.PermissionChecklistEOLEdit},
+		{Code: domain.PermissionIssueView},
 		{Code: domain.PermissionIssueCreate},
-		{Code: domain.PermissionIssueTransitionInProgress},
-		{Code: domain.PermissionIssueTransitionDone},
+		{Code: domain.PermissionIssueTransitionProgress},
+	})
+}
+
+func qualityPermissions() domain.PermissionSet {
+	return domain.NewPermissionSet([]domain.Permission{
+		{Code: domain.PermissionMobileAccess},
+		{Code: domain.PermissionVehicleView},
+		{Code: domain.PermissionIssueView},
+		{Code: domain.PermissionIssueTransitionApprove},
+		{Code: domain.PermissionIssueTransitionConditionalApprove},
+		{Code: domain.PermissionChecklistTestView},
+		{Code: domain.PermissionChecklistTestEdit},
+	})
+}
+
+func assemblyPermissions() domain.PermissionSet {
+	return domain.NewPermissionSet([]domain.Permission{
+		{Code: domain.PermissionMobileAccess},
+		{Code: domain.PermissionVehicleView},
+		{Code: domain.PermissionIssueView},
+		{Code: domain.PermissionIssueCreate},
+		{Code: domain.PermissionIssueTransitionProgress},
+		{Code: domain.PermissionStationStepEdit},
+		{Code: domain.PermissionChecklistShipmentView},
+		{Code: domain.PermissionChecklistShipmentEdit},
 	})
 }
 
 func managerPermissions() domain.PermissionSet {
 	return domain.NewPermissionSet([]domain.Permission{
+		{Code: domain.PermissionMobileAccess},
+		{Code: domain.PermissionWebAccess},
 		{Code: domain.PermissionVehicleView},
-		{Code: domain.PermissionStationStepUpdate},
-		{Code: domain.PermissionChecklistItemUpdate},
+		{Code: domain.PermissionStationStepEdit},
+		{Code: domain.PermissionIssueView},
 		{Code: domain.PermissionIssueCreate},
-		{Code: domain.PermissionIssueTransitionInProgress},
-		{Code: domain.PermissionIssueTransitionDone},
+		{Code: domain.PermissionIssueTransitionProgress},
 		{Code: domain.PermissionIssueTransitionApprove},
 		{Code: domain.PermissionIssueTransitionConditionalApprove},
 		{Code: domain.PermissionEOLBranchShip},
@@ -599,6 +631,7 @@ func managerPermissions() domain.PermissionSet {
 		{Code: domain.PermissionEOLDocumentApprove},
 		{Code: domain.PermissionAnalysisView},
 		{Code: domain.PermissionAdminManageMasters},
+		{Code: domain.PermissionAdminManageUsers},
 	})
 }
 

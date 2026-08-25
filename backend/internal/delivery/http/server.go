@@ -106,7 +106,9 @@ func NewRouter(deps Deps) http.Handler {
 		r.Group(func(r chi.Router) {
 			r.Use(RequireAuth(deps.Issuer))
 
-			// Read access. Both seeded roles hold vehicle.view.
+			// Read access. vehicle.view covers the vehicle record and the
+			// shop-floor reads that hang off it. Type-specific checklist and
+			// issue reads add a second gate in the handler / a nested group.
 			r.Group(func(r chi.Router) {
 				r.Use(permissions.RequirePermission(domain.PermissionVehicleView))
 				r.Get("/vehicles", s.handleVehicleList)
@@ -118,26 +120,26 @@ func NewRouter(deps Deps) http.Handler {
 				r.Get("/vehicles/{vin}/eol", s.handleEOLWorkflowGet)
 				r.Get("/vehicles/{vin}/media", s.handleVehicleMediaList)
 				r.Get("/vehicles/{vin}/shipment-readiness", s.handleShipmentReadiness)
+				r.Get("/stations", s.handleStationList)
+				// Current-state analysis reads stay on vehicle.view so a
+				// shop-floor role with that grant keeps the visibility it had
+				// before the Analysis tool was split out (Decision Log #9).
+				r.Get("/analysis/vehicle-severity-breakdown", s.handleVehicleSeverityBreakdown)
+				r.Get("/analysis/defect-rate-per-station", s.handleDefectRatePerStation)
+
+				// Media attachments (Karar 8). Read and upload sit on
+				// vehicle.view: attaching evidence is part of the same
+				// shop-floor work as the reads above.
+				r.Get("/media", s.handleMediaList)
+				r.Post("/media", s.handleMediaUpload)
+			})
+
+			r.Group(func(r chi.Router) {
+				r.Use(permissions.RequirePermission(domain.PermissionIssueView))
 				r.Get("/issues", s.handleIssueList)
 				r.Get("/issues/{id}", s.handleIssueGet)
 				r.Get("/issues/{id}/history", s.handleIssueHistory)
 				r.Get("/issue-types", s.handleIssueTypeList)
-				r.Get("/stations", s.handleStationList)
-				// Operator read visibility into current problem status
-				// (Decision Log #9). These are gated on vehicle.view, not
-				// analysis.view, because analysis.view is the Manager/Admin-only
-				// filtered Analysis tool permission.
-				r.Get("/analysis/vehicle-severity-breakdown", s.handleVehicleSeverityBreakdown)
-				r.Get("/analysis/defect-rate-per-station", s.handleDefectRatePerStation)
-
-				// Media attachments (Karar 8). Both the read and the upload
-				// sit on vehicle.view because Section 11 seeds no media
-				// permission yet: attaching evidence is part of the same
-				// shop-floor work as the reads above, and a role with no
-				// grants is still denied. A dedicated media.upload code
-				// belongs in the next role-matrix migration.
-				r.Get("/media", s.handleMediaList)
-				r.Post("/media", s.handleMediaUpload)
 			})
 
 			// Issue lifecycle. One route serves every transition, so the
@@ -153,23 +155,27 @@ func NewRouter(deps Deps) http.Handler {
 				r.Get("/analysis/mttr", s.handleMTTR)
 			})
 
-			// Manual override of a vehicle's global status is an administrative
-			// action.
+			// Manual override of a vehicle's global status and template
+			// catalogue edits.
 			r.Group(func(r chi.Router) {
 				r.Use(permissions.RequirePermission(domain.PermissionAdminManageMasters))
 				r.Post("/vehicles/import", s.handleVehicleBulkImport)
 				r.Patch("/vehicles/{vin}/status", s.handleVehicleStatus)
 				r.Get("/checklist-templates", s.handleChecklistTemplateList)
 				r.Get("/checklist-templates/{id}/items", s.handleChecklistTemplateItems)
+			})
+
+			r.Group(func(r chi.Router) {
+				r.Use(permissions.RequirePermission(domain.PermissionAdminManageUsers))
 				r.Get("/users", s.handleUserList)
 				r.Patch("/users/{id}", s.handleUserUpdate)
 			})
 
-			// Shop-floor writes.
-			r.With(permissions.RequirePermission(domain.PermissionStationStepUpdate)).
+			// Shop-floor writes. Checklist type is in the URL, so the
+			// checklist.*.edit code is checked in the handler.
+			r.With(permissions.RequirePermission(domain.PermissionStationStepEdit)).
 				Post("/vehicles/{vin}/station-steps/{stationStepId}", s.handleRecordStationStep)
-			r.With(permissions.RequirePermission(domain.PermissionChecklistItemUpdate)).
-				Post("/vehicles/{vin}/checklist/{type}/{itemId}", s.handleRecordChecklist)
+			r.Post("/vehicles/{vin}/checklist/{type}/{itemId}", s.handleRecordChecklist)
 			r.With(permissions.RequirePermission(domain.PermissionIssueCreate)).
 				Post("/issues", s.handleCreateIssue)
 

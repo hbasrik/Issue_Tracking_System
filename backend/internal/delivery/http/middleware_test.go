@@ -19,6 +19,8 @@ const (
 	managerUserID  = 1
 	operatorUserID = 2
 	strangerUserID = 3
+	qualityUserID  = 4
+	assemblyUserID = 5
 )
 
 // fakeRoleRepo serves the role_permissions rows migration 0002 seeds for the
@@ -33,31 +35,66 @@ var _ repository.RoleRepository = (*fakeRoleRepo)(nil)
 
 func newFakeRoleRepo() *fakeRoleRepo {
 	operator := permissions(
+		domain.PermissionMobileAccess,
 		domain.PermissionVehicleView,
-		domain.PermissionStationStepUpdate,
-		domain.PermissionChecklistItemUpdate,
+		domain.PermissionStationStepEdit,
+		domain.PermissionChecklistTestView,
+		domain.PermissionChecklistTestEdit,
+		domain.PermissionChecklistShipmentView,
+		domain.PermissionChecklistShipmentEdit,
+		domain.PermissionChecklistEOLView,
+		domain.PermissionChecklistEOLEdit,
+		domain.PermissionIssueView,
 		domain.PermissionIssueCreate,
-		domain.PermissionIssueTransitionInProgress,
-		domain.PermissionIssueTransitionDone,
+		domain.PermissionIssueTransitionProgress,
 	)
 	manager := permissions(
+		domain.PermissionMobileAccess,
+		domain.PermissionWebAccess,
 		domain.PermissionVehicleView,
-		domain.PermissionStationStepUpdate,
-		domain.PermissionChecklistItemUpdate,
-		domain.PermissionIssueCreate,
-		domain.PermissionIssueTransitionInProgress,
-		domain.PermissionIssueTransitionDone,
-		domain.PermissionIssueTransitionApprove,
-		domain.PermissionIssueTransitionConditionalApprove,
+		domain.PermissionStationStepEdit,
+		domain.PermissionChecklistTestView,
+		domain.PermissionChecklistTestEdit,
+		domain.PermissionChecklistShipmentView,
+		domain.PermissionChecklistShipmentEdit,
+		domain.PermissionChecklistEOLView,
+		domain.PermissionChecklistEOLEdit,
 		domain.PermissionEOLBranchShip,
 		domain.PermissionEOLDepotRelease,
 		domain.PermissionEOLDocumentApprove,
+		domain.PermissionIssueView,
+		domain.PermissionIssueCreate,
+		domain.PermissionIssueTransitionProgress,
+		domain.PermissionIssueTransitionApprove,
+		domain.PermissionIssueTransitionConditionalApprove,
 		domain.PermissionAnalysisView,
+		domain.PermissionAdminManageUsers,
 		domain.PermissionAdminManageMasters,
+	)
+	quality := permissions(
+		domain.PermissionMobileAccess,
+		domain.PermissionVehicleView,
+		domain.PermissionIssueView,
+		domain.PermissionIssueTransitionApprove,
+		domain.PermissionIssueTransitionConditionalApprove,
+		domain.PermissionChecklistTestView,
+		domain.PermissionChecklistTestEdit,
+	)
+	assembly := permissions(
+		domain.PermissionMobileAccess,
+		domain.PermissionVehicleView,
+		domain.PermissionIssueView,
+		domain.PermissionIssueCreate,
+		domain.PermissionIssueTransitionProgress,
+		domain.PermissionStationStepEdit,
+		domain.PermissionChecklistShipmentView,
+		domain.PermissionChecklistShipmentEdit,
 	)
 	return &fakeRoleRepo{byUser: map[int][]domain.Permission{
 		managerUserID:  manager,
 		operatorUserID: operator,
+		qualityUserID:  quality,
+		assemblyUserID: assembly,
 	}}
 }
 
@@ -80,9 +117,60 @@ func (f *fakeRoleRepo) GetByCode(_ context.Context, code string) (*domain.Role, 
 		return &domain.Role{ID: 1, Code: code, Name: "Operator", IsActive: true}, nil
 	case domain.RoleCodeManagerAdmin:
 		return &domain.Role{ID: 2, Code: code, Name: "Manager/Admin", IsActive: true}, nil
+	case domain.RoleCodeQuality:
+		return &domain.Role{ID: 3, Code: code, Name: "Quality", IsActive: true}, nil
+	case domain.RoleCodeAssembly:
+		return &domain.Role{ID: 4, Code: code, Name: "Assembly", IsActive: true}, nil
 	default:
 		return nil, domain.ErrNotFound
 	}
+}
+
+func (f *fakeRoleRepo) GetByID(_ context.Context, id int) (*domain.Role, error) {
+	switch id {
+	case 1:
+		return &domain.Role{ID: 1, Code: domain.RoleCodeOperator, Name: "Operator", IsActive: true}, nil
+	case 2:
+		return &domain.Role{ID: 2, Code: domain.RoleCodeManagerAdmin, Name: "Manager/Admin", IsActive: true}, nil
+	default:
+		return nil, domain.ErrNotFound
+	}
+}
+
+func (f *fakeRoleRepo) ListRoles(context.Context) ([]domain.Role, error) {
+	return []domain.Role{
+		{ID: 1, Code: domain.RoleCodeOperator, Name: "Operator", IsActive: true},
+		{ID: 2, Code: domain.RoleCodeManagerAdmin, Name: "Manager/Admin", IsActive: true},
+	}, nil
+}
+
+func (f *fakeRoleRepo) ListPermissions(context.Context) ([]domain.Permission, error) {
+	return permissions(
+		domain.PermissionAdminManageUsers,
+		domain.PermissionVehicleView,
+	), nil
+}
+
+func (f *fakeRoleRepo) GetPermissionsForRole(_ context.Context, roleID int) ([]domain.Permission, error) {
+	if roleID == 2 {
+		return []domain.Permission{{Code: domain.PermissionAdminManageUsers}}, nil
+	}
+	return []domain.Permission{}, nil
+}
+
+func (f *fakeRoleRepo) ReplaceRolePermissions(context.Context, int, []int) error {
+	return nil
+}
+
+func (f *fakeRoleRepo) CreateRole(context.Context, string, string) (*domain.Role, error) {
+	return nil, domain.ErrNotFound
+}
+
+func (f *fakeRoleRepo) CountRolesWithPermissionExcept(_ context.Context, code string, roleID int) (int, error) {
+	if code == domain.PermissionAdminManageUsers && roleID != 2 {
+		return 1, nil
+	}
+	return 0, nil
 }
 
 func okHandler(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusOK) }
@@ -109,7 +197,7 @@ func newPermissionRouter(issuer *auth.Issuer, roles repository.RoleRepository) h
 		})
 		r.With(checker.RequirePermission(domain.PermissionAdminManageMasters)).
 			Get("/vehicles/status", okHandler)
-		r.With(checker.RequirePermission(domain.PermissionStationStepUpdate)).
+		r.With(checker.RequirePermission(domain.PermissionStationStepEdit)).
 			Get("/station-steps", okHandler)
 		r.With(checker.RequirePermission(domain.PermissionIssueCreate)).
 			Get("/issues", okHandler)
@@ -145,6 +233,14 @@ func TestRBACMiddleware(t *testing.T) {
 	operatorToken, err := issuer.Issue(operatorUserID, domain.RoleCodeOperator)
 	if err != nil {
 		t.Fatalf("issue operator token: %v", err)
+	}
+	qualityToken, err := issuer.Issue(qualityUserID, domain.RoleCodeQuality)
+	if err != nil {
+		t.Fatalf("issue quality token: %v", err)
+	}
+	assemblyToken, err := issuer.Issue(assemblyUserID, domain.RoleCodeAssembly)
+	if err != nil {
+		t.Fatalf("issue assembly token: %v", err)
 	}
 	// A valid token for a user whose role grants nothing: proves authorization
 	// is decided by the permission table, not by the token's role_code.
@@ -188,6 +284,8 @@ func TestRBACMiddleware(t *testing.T) {
 		{"manager reaches station-step route", "/station-steps", managerToken, http.StatusOK},
 		{"operator reaches issue-create route", "/issues", operatorToken, http.StatusOK},
 		{"manager reaches issue-create route", "/issues", managerToken, http.StatusOK},
+		{"quality blocked from issue-create", "/issues", qualityToken, http.StatusForbidden},
+		{"assembly reaches issue-create route", "/issues", assemblyToken, http.StatusOK},
 
 		// eol.* — each stage is separately gated, and the seed grants all
 		// three to Manager/Admin only.

@@ -11,7 +11,7 @@ import (
 	"github.com/karea/backend/internal/usecase"
 )
 
-// handleVehicleList serves the filterable/paginated vehicle table (both roles).
+// handleVehicleList serves the filterable/paginated vehicle table (vehicle.view).
 func (s *server) handleVehicleList(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 	filter := domain.VehicleListFilter{
@@ -123,7 +123,7 @@ func applyVehicleAnalysisStat(w http.ResponseWriter, r *http.Request, filter *do
 	return false, true
 }
 
-// handleVehicleGet returns a single vehicle by VIN (both roles).
+// handleVehicleGet returns a single vehicle by VIN (vehicle.view).
 func (s *server) handleVehicleGet(w http.ResponseWriter, r *http.Request) {
 	vin := chi.URLParam(r, "vin")
 	vehicle, err := s.deps.Vehicles.GetByVIN(r.Context(), vin)
@@ -135,7 +135,7 @@ func (s *server) handleVehicleGet(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleVehicleSearch performs partial VIN lookup via the trigram index
-// (both roles).
+// (vehicle.view).
 func (s *server) handleVehicleSearch(w http.ResponseWriter, r *http.Request) {
 	suffix := r.URL.Query().Get("vin_suffix")
 	vehicles, err := s.deps.Vehicles.SearchByVINSuffix(r.Context(), suffix, 0)
@@ -158,13 +158,18 @@ func (s *server) handleVehicleStationSteps(w http.ResponseWriter, r *http.Reques
 	writeJSON(w, http.StatusOK, result)
 }
 
-// handleVehicleChecklistGet returns checklist template items joined with
-// per-vehicle progress for eol or shipment.
+// handleVehicleChecklistGet returns checklist items for eol, shipment, or
+// test. vehicle.view gets the caller onto the vehicle; the matching
+// checklist.*.view code is required on top so Quality can open Test without
+// seeing Shipment/EoL.
 func (s *server) handleVehicleChecklistGet(w http.ResponseWriter, r *http.Request) {
 	vin := chi.URLParam(r, "vin")
 	checklistType, ok := parseChecklistType(chi.URLParam(r, "type"))
 	if !ok {
 		badRequest(w, "type must be one of: eol, shipment, test")
+		return
+	}
+	if !s.requireCode(w, r, domain.ChecklistViewPermission(checklistType)) {
 		return
 	}
 
@@ -181,6 +186,9 @@ func (s *server) handleVehicleChecklistGet(w http.ResponseWriter, r *http.Reques
 
 // handleShipmentReadiness returns the soft pre-shipment warning list.
 func (s *server) handleShipmentReadiness(w http.ResponseWriter, r *http.Request) {
+	if !s.requireCode(w, r, domain.PermissionChecklistShipmentView) {
+		return
+	}
 	if s.deps.ShipmentReadiness == nil {
 		writeError(w, domain.ErrNotFound)
 		return
@@ -198,10 +206,10 @@ type vehicleStatusRequest struct {
 	Status string `json:"status"`
 }
 
-// handleVehicleStatus performs a manual global status change (Manager/Admin
-// only). It delegates to the hard-block-aware usecase, so a move to
-// WITH_CUSTOMER/SHIPPED with an incomplete shipment checklist returns 409 with
-// the blocking item IDs.
+// handleVehicleStatus performs a manual global status change
+// (admin.manage_masters). It delegates to the hard-block-aware usecase, so a
+// move to WITH_CUSTOMER/SHIPPED with an incomplete shipment checklist returns
+// 409 with the blocking item IDs.
 func (s *server) handleVehicleStatus(w http.ResponseWriter, r *http.Request) {
 	vin := chi.URLParam(r, "vin")
 

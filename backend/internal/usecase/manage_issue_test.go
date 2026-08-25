@@ -8,10 +8,8 @@ import (
 	"github.com/karea/backend/internal/usecase"
 )
 
-// TestAuthorizeIssueTransition_OperatorCannotApprove proves the key RBAC rule:
-// an OPERATOR may not give quality sign-off, on either branch, because the
-// seeded matrix withholds issue.transition.approve and
-// issue.transition.conditional_approve from that role.
+// TestAuthorizeIssueTransition_OperatorCannotApprove proves a role without
+// the quality sign-off permissions cannot approve on either branch.
 func TestAuthorizeIssueTransition_OperatorCannotApprove(t *testing.T) {
 	for _, target := range []domain.IssueStatus{
 		domain.IssueStatusApproved,
@@ -41,6 +39,10 @@ func TestAuthorizeIssueTransition_AllowedPaths(t *testing.T) {
 		{"operator finishes", domain.IssueStatusInProgress, domain.IssueStatusDone, operatorPermissions()},
 		{"manager approves", domain.IssueStatusDone, domain.IssueStatusApproved, managerPermissions()},
 		{"manager conditionally approves", domain.IssueStatusDone, domain.IssueStatusConditionalApproved, managerPermissions()},
+		{"quality approves", domain.IssueStatusDone, domain.IssueStatusApproved, qualityPermissions()},
+		{"quality conditionally approves", domain.IssueStatusDone, domain.IssueStatusConditionalApproved, qualityPermissions()},
+		{"assembly opens", domain.IssueStatusOpen, domain.IssueStatusInProgress, assemblyPermissions()},
+		{"assembly finishes", domain.IssueStatusInProgress, domain.IssueStatusDone, assemblyPermissions()},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -103,5 +105,26 @@ func TestAuthorizeIssueTransition_NoPermissionsForbidden(t *testing.T) {
 				t.Errorf("expected ErrForbidden, got %v", err)
 			}
 		})
+	}
+}
+
+func TestAuthorizeIssueTransition_QualityCannotProgress(t *testing.T) {
+	err := usecase.AuthorizeIssueTransition(
+		domain.IssueStatusOpen, domain.IssueStatusInProgress, qualityPermissions())
+	if !errors.Is(err, domain.ErrForbidden) {
+		t.Fatalf("quality OPEN->IN_PROGRESS: %v", err)
+	}
+}
+
+func TestAuthorizeIssueTransition_AssemblyCannotApprove(t *testing.T) {
+	for _, target := range []domain.IssueStatus{
+		domain.IssueStatusApproved,
+		domain.IssueStatusConditionalApproved,
+	} {
+		err := usecase.AuthorizeIssueTransition(
+			domain.IssueStatusDone, target, assemblyPermissions())
+		if !errors.Is(err, domain.ErrForbidden) {
+			t.Fatalf("assembly DONE->%s: %v", target, err)
+		}
 	}
 }

@@ -234,3 +234,71 @@ func TestIssueStatus_OperatorCannotApprove(t *testing.T) {
 		}
 	}
 }
+
+func TestIssueCreate_QualityForbidden(t *testing.T) {
+	router, issuer := newIssueRouter(newHTTPFakeIssueRepo())
+	token, err := issuer.Issue(qualityUserID, domain.RoleCodeQuality)
+	if err != nil {
+		t.Fatal(err)
+	}
+	body, _ := json.Marshal(map[string]any{
+		"vin": "N7V1K1SA9SK000001", "source_type": "MANUAL", "severity": "LOW", "description": "x",
+	})
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/issues", bytes.NewReader(body))
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("status = %d body %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestIssueStatus_AssemblyCannotApprove(t *testing.T) {
+	done := domain.Issue{
+		ID:              12,
+		VIN:             "N7V1K1SA9SK000001",
+		Status:          domain.IssueStatusDone,
+		IssueReporterID: assemblyUserID,
+		Description:     "awaiting sign-off",
+	}
+	repo := newHTTPFakeIssueRepo(done)
+	router, issuer := newIssueRouter(repo)
+	token, err := issuer.Issue(assemblyUserID, domain.RoleCodeAssembly)
+	if err != nil {
+		t.Fatal(err)
+	}
+	body, _ := json.Marshal(map[string]string{"status": "APPROVED"})
+	req := httptest.NewRequest(http.MethodPatch, "/api/v1/issues/12/status", bytes.NewReader(body))
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("status = %d body %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestIssueStatus_QualityCanApprove(t *testing.T) {
+	done := domain.Issue{
+		ID:              12,
+		VIN:             "N7V1K1SA9SK000001",
+		Status:          domain.IssueStatusDone,
+		IssueReporterID: operatorUserID,
+		Description:     "awaiting sign-off",
+	}
+	router, issuer := newIssueRouter(newHTTPFakeIssueRepo(done))
+	token, err := issuer.Issue(qualityUserID, domain.RoleCodeQuality)
+	if err != nil {
+		t.Fatal(err)
+	}
+	body, _ := json.Marshal(map[string]string{"status": "APPROVED"})
+	req := httptest.NewRequest(http.MethodPatch, "/api/v1/issues/12/status", bytes.NewReader(body))
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d body %s", rec.Code, rec.Body.String())
+	}
+}

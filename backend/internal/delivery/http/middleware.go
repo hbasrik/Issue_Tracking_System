@@ -112,3 +112,23 @@ func bearerToken(header string) (string, bool) {
 	token := strings.TrimSpace(header[len(prefix):])
 	return token, token != ""
 }
+
+// requireCode resolves the caller's permission set (cached per request) and
+// 403s when the given code is missing. Handlers that branch on a URL
+// parameter (checklist type) use this instead of route-level middleware.
+func (s *server) requireCode(w http.ResponseWriter, r *http.Request, code string) bool {
+	if code == "" {
+		writeError(w, auth.ErrForbidden)
+		return false
+	}
+	_, permissions, err := s.permissions.Resolve(r.Context())
+	if err != nil {
+		writeError(w, err)
+		return false
+	}
+	if err := auth.Authorize(permissions, code); err != nil {
+		writeError(w, err)
+		return false
+	}
+	return true
+}

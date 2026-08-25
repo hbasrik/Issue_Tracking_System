@@ -54,6 +54,9 @@ func (s *server) handleEOLDocumentApprove(w http.ResponseWriter, r *http.Request
 // handleEOLWorkflowGet serves the Vehicle Detail EoL tab: the current stage
 // plus each stage's timestamp and actor.
 func (s *server) handleEOLWorkflowGet(w http.ResponseWriter, r *http.Request) {
+	if !s.requireCode(w, r, domain.PermissionChecklistEOLView) {
+		return
+	}
 	vin := chi.URLParam(r, "vin")
 
 	view, err := s.deps.EOLWorkflow.Get(r.Context(), vin)

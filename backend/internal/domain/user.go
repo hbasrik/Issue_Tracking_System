@@ -2,12 +2,11 @@ package domain
 
 import "time"
 
-// Role mirrors a row in the roles table. RBAC is table-driven (Karar 3): the
-// v2 spec's eventual 8-role matrix is added as rows in roles/role_permissions,
-// not as new values in a hardcoded enum. Only OPERATOR and MANAGER_ADMIN are
-// seeded today. IsActive is checked at login so a deactivated role cannot
-// obtain a JWT; GetPermissionsForUser also grants nothing for inactive roles
-// as a safety net for tokens issued before the role was deactivated.
+// Role mirrors a row in the roles table. RBAC is table-driven (Karar 3): new
+// roles are rows in roles/role_permissions, not values in a hardcoded enum.
+// IsActive is checked at login so a deactivated role cannot obtain a JWT;
+// GetPermissionsForUser also grants nothing for inactive roles as a safety
+// net for tokens issued before the role was deactivated.
 type Role struct {
 	ID       int
 	Code     string
@@ -19,35 +18,74 @@ type Role struct {
 // decided on permission codes, never role codes, so granting a new role access
 // to an endpoint is a role_permissions row rather than a code change.
 type Permission struct {
-	ID   int
-	Code string
+	ID          int
+	Code        string
+	Description string
 }
 
-// Role codes seeded by migration 0002. These are for coarse UI decisions (which
-// app shell to render) only — never for endpoint authorization.
+// Seeded role codes. Clients must not branch on these for authorization —
+// they are identifiers in the catalogue (login display, seed data).
 const (
 	RoleCodeOperator     = "OPERATOR"
 	RoleCodeManagerAdmin = "MANAGER_ADMIN"
+	RoleCodeQuality      = "QUALITY"
+	RoleCodeAssembly     = "ASSEMBLY"
 )
 
-// Permission codes seeded by migration 0002 (12_KAREA_v2_database_schema.sql
-// Section 11). Route wiring and usecases reference these constants so a typo is
-// a compile error rather than a silent 403.
+// Permission codes (Karar 3 phase 2 catalogue). Route wiring and usecases
+// reference these constants so a typo is a compile error rather than a silent
+// 403.
 const (
+	PermissionMobileAccess                      = "mobile.access"
+	PermissionWebAccess                         = "web.access"
 	PermissionVehicleView                       = "vehicle.view"
-	PermissionStationStepUpdate                 = "station_step.update"
-	PermissionChecklistItemUpdate               = "checklist_item.update"
-	PermissionIssueCreate                       = "issue.create"
-	PermissionIssueTransitionInProgress         = "issue.transition.in_progress"
-	PermissionIssueTransitionDone               = "issue.transition.done"
-	PermissionIssueTransitionApprove            = "issue.transition.approve"
-	PermissionIssueTransitionConditionalApprove = "issue.transition.conditional_approve"
+	PermissionStationStepEdit                   = "station.step.edit"
+	PermissionChecklistTestView                 = "checklist.test.view"
+	PermissionChecklistTestEdit                 = "checklist.test.edit"
+	PermissionChecklistShipmentView             = "checklist.shipment.view"
+	PermissionChecklistShipmentEdit             = "checklist.shipment.edit"
+	PermissionChecklistEOLView                  = "checklist.eol.view"
+	PermissionChecklistEOLEdit                  = "checklist.eol.edit"
 	PermissionEOLBranchShip                     = "eol.branch_ship"
 	PermissionEOLDepotRelease                   = "eol.depot_release"
 	PermissionEOLDocumentApprove                = "eol.document_approve"
+	PermissionIssueView                         = "issue.view"
+	PermissionIssueCreate                       = "issue.create"
+	PermissionIssueTransitionProgress           = "issue.transition.progress"
+	PermissionIssueTransitionApprove            = "issue.transition.approve"
+	PermissionIssueTransitionConditionalApprove = "issue.transition.conditional_approve"
 	PermissionAnalysisView                      = "analysis.view"
+	PermissionAdminManageUsers                  = "admin.manage_users"
 	PermissionAdminManageMasters                = "admin.manage_masters"
 )
+
+// ChecklistViewPermission is the read permission for one checklist type.
+func ChecklistViewPermission(t ChecklistType) string {
+	switch t {
+	case ChecklistTypeTest:
+		return PermissionChecklistTestView
+	case ChecklistTypeShipment:
+		return PermissionChecklistShipmentView
+	case ChecklistTypeEOL:
+		return PermissionChecklistEOLView
+	default:
+		return ""
+	}
+}
+
+// ChecklistEditPermission is the write permission for one checklist type.
+func ChecklistEditPermission(t ChecklistType) string {
+	switch t {
+	case ChecklistTypeTest:
+		return PermissionChecklistTestEdit
+	case ChecklistTypeShipment:
+		return PermissionChecklistShipmentEdit
+	case ChecklistTypeEOL:
+		return PermissionChecklistEOLEdit
+	default:
+		return ""
+	}
+}
 
 // PermissionSet is a lookup-friendly view of the permissions granted to one
 // user. It is resolved once per request and passed down to the layers that
@@ -67,6 +105,15 @@ func NewPermissionSet(permissions []Permission) PermissionSet {
 func (s PermissionSet) Has(code string) bool {
 	_, ok := s[code]
 	return ok
+}
+
+// Codes returns the granted permission codes in unspecified order.
+func (s PermissionSet) Codes() []string {
+	out := make([]string, 0, len(s))
+	for code := range s {
+		out = append(out, code)
+	}
+	return out
 }
 
 // User mirrors the users table.
