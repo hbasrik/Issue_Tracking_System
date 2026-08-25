@@ -1,6 +1,10 @@
 package domain
 
-import "time"
+import (
+	"strings"
+	"time"
+	"unicode/utf8"
+)
 
 // ChecklistType mirrors the checklist_type_enum type.
 type ChecklistType string
@@ -90,6 +94,41 @@ const (
 	EOLItemPhaseBranch EOLItemPhase = "BRANCH"
 	EOLItemPhaseDepot  EOLItemPhase = "DEPOT"
 )
+
+// MaxTemplateItemTextLen matches checklist_template_items.item_text VARCHAR(250).
+const MaxTemplateItemTextLen = 250
+
+// Valid reports whether the EoL item phase is BRANCH or DEPOT.
+func (p EOLItemPhase) Valid() bool {
+	switch p {
+	case EOLItemPhaseBranch, EOLItemPhaseDepot:
+		return true
+	default:
+		return false
+	}
+}
+
+// ValidateTemplateItemFields enforces catalogue rules: non-empty text, EOL
+// items must carry BRANCH/DEPOT, SHIPMENT/TEST items must not.
+func ValidateTemplateItemFields(templateType ChecklistType, itemText string, phase *EOLItemPhase) error {
+	text := strings.TrimSpace(itemText)
+	if text == "" {
+		return ErrTemplateItemTextRequired
+	}
+	if utf8.RuneCountInString(text) > MaxTemplateItemTextLen {
+		return ErrTemplateItemTextTooLong
+	}
+	if templateType == ChecklistTypeEOL {
+		if phase == nil || !phase.Valid() {
+			return ErrEOLPhaseRequired
+		}
+		return nil
+	}
+	if phase != nil {
+		return ErrEOLPhaseNotAllowed
+	}
+	return nil
+}
 
 // ChecklistTemplateItem mirrors the checklist_template_items table.
 type ChecklistTemplateItem struct {

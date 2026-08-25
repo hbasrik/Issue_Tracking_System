@@ -68,6 +68,18 @@ var (
 	// CONDITIONAL_OK. The message matches the database trigger so API and
 	// SQL bypasses surface the same text.
 	ErrDepotChecklistLocked = errors.New("cannot update depot-phase EoL items until every branch-phase item is OK or CONDITIONAL_OK")
+	// ErrTemplateItemTextRequired indicates a template item create/update
+	// omitted item_text.
+	ErrTemplateItemTextRequired = errors.New("item_text is required")
+	// ErrTemplateItemTextTooLong indicates item_text exceeds VARCHAR(250).
+	ErrTemplateItemTextTooLong = errors.New("item_text must be at most 250 characters")
+	// ErrEOLPhaseRequired indicates an EOL template item omitted BRANCH/DEPOT.
+	ErrEOLPhaseRequired = errors.New("eol_phase is required for EOL template items")
+	// ErrEOLPhaseNotAllowed indicates eol_phase was set on a SHIPMENT/TEST item.
+	ErrEOLPhaseNotAllowed = errors.New("eol_phase is only valid on EOL template items")
+	// ErrTemplateItemReorderInvalid indicates the reorder payload did not
+	// list every item on the template exactly once.
+	ErrTemplateItemReorderInvalid = errors.New("item_ids must list every item on the template exactly once")
 )
 
 // DatabaseRejectedError wraps a PostgreSQL RAISE EXCEPTION (SQLSTATE P0001)
@@ -132,4 +144,19 @@ func (e *DepotReleaseBlockedError) Error() string {
 		"depot release blocked for %s: %d open issue(s) remain (issue ids: %s)",
 		e.VIN, len(e.BlockingIssues), strings.Join(ids, ", "),
 	)
+}
+
+// TemplateItemInUseError is returned when DELETE is attempted on a catalogue
+// item that already has checklist_item_progress rows. Soft-deactivate instead.
+type TemplateItemInUseError struct {
+	VehicleCount int
+}
+
+// Error implements the error interface.
+func (e *TemplateItemInUseError) Error() string {
+	n := 0
+	if e != nil {
+		n = e.VehicleCount
+	}
+	return fmt.Sprintf("bu madde %d araçta kullanılmış, silinemez — pasife çekebilirsiniz", n)
 }
