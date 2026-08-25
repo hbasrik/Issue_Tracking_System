@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
+  Keyboard,
   Modal,
   Pressable,
   ScrollView,
@@ -19,6 +20,10 @@ import {
   type Vehicle,
 } from '../api/client';
 import { VinSearchBox } from '../components/VinSearchBox';
+import {
+  DismissKeyboardScrollView,
+  iosDoneAccessoryProps,
+} from '../components/keyboard';
 import { prepareUploadImage } from '../lib/prepareUploadImage';
 import {
   Badge,
@@ -215,7 +220,7 @@ export default function ManualIssueReportScreen() {
 
   return (
     <Screen padded={false}>
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 48 }}>
+      <DismissKeyboardScrollView contentContainerStyle={{ padding: 16, paddingBottom: 48 }}>
         <Title>Issue Bildir</Title>
         <Subtitle>Bağımsız bildirim — istasyon adımı veya checklist’e bağlı değil</Subtitle>
 
@@ -350,6 +355,7 @@ export default function ManualIssueReportScreen() {
           numberOfLines={4}
           placeholder="Sorunu açıklayın"
           placeholderTextColor={tokens.textSecondary}
+          {...iosDoneAccessoryProps}
           style={{
             marginTop: 6,
             minHeight: 100,
@@ -404,7 +410,7 @@ export default function ManualIssueReportScreen() {
             }
           />
         </View>
-      </ScrollView>
+      </DismissKeyboardScrollView>
 
       <Modal visible={stationPickerOpen} animationType="slide" transparent>
         <Pressable
@@ -470,16 +476,25 @@ export default function ManualIssueReportScreen() {
               <Text style={{ color: tokens.textPrimary, fontWeight: '600', fontSize: 17 }}>
                 VIN seç
               </Text>
-              <Pressable onPress={() => setVinPickerOpen(false)} style={{ minHeight: 44, justifyContent: 'center' }}>
+              <Pressable
+                onPress={() => {
+                  Keyboard.dismiss();
+                  setVinPickerOpen(false);
+                }}
+                style={{ minHeight: 44, justifyContent: 'center' }}
+              >
                 <Text style={{ color: tokens.accent, fontWeight: '600' }}>Kapat</Text>
               </Pressable>
             </View>
-            <VinSearchBox
-              onSelect={(v) => {
-                setVehicle(v);
-                setVinPickerOpen(false);
-              }}
-            />
+            <DismissKeyboardScrollView>
+              <VinSearchBox
+                onSelect={(v) => {
+                  Keyboard.dismiss();
+                  setVehicle(v);
+                  setVinPickerOpen(false);
+                }}
+              />
+            </DismissKeyboardScrollView>
           </View>
         </View>
       </Modal>
