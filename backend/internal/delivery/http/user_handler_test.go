@@ -72,10 +72,23 @@ func (r *httpAdminUserRepo) UpdateRoleAndActive(_ context.Context, id, roleID in
 	return nil
 }
 
-func (r *httpAdminUserRepo) CountActiveManagers(context.Context) (int, error) {
+func (r *httpAdminUserRepo) CountActiveUsersWithPermission(_ context.Context, code string) (int, error) {
 	n := 0
 	for _, user := range r.users {
-		if user.IsActive && user.Role.IsActive && user.Role.Code == domain.RoleCodeManagerAdmin {
+		if user.IsActive && user.Role.IsActive && user.Role.Code == domain.RoleCodeManagerAdmin &&
+			code == domain.PermissionAdminManageUsers {
+			n++
+		}
+	}
+	return n, nil
+}
+
+func (r *httpAdminUserRepo) CountActiveUsersWithPermissionExceptRole(_ context.Context, code string, roleID int) (int, error) {
+	n := 0
+	for _, user := range r.users {
+		if user.IsActive && user.Role.IsActive && user.Role.ID != roleID &&
+			user.Role.Code == domain.RoleCodeManagerAdmin &&
+			code == domain.PermissionAdminManageUsers {
 			n++
 		}
 	}

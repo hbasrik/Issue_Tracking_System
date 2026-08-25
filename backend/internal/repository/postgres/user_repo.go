@@ -95,14 +95,30 @@ func (r *UserRepo) UpdateRoleAndActive(ctx context.Context, id, roleID int, isAc
 	return nil
 }
 
-// CountActiveManagers counts users who can currently sign in as MANAGER_ADMIN.
-func (r *UserRepo) CountActiveManagers(ctx context.Context) (int, error) {
+// CountActiveUsersWithPermission counts active users whose role grants code.
+func (r *UserRepo) CountActiveUsersWithPermission(ctx context.Context, permissionCode string) (int, error) {
 	var n int
 	err := r.pool.QueryRow(ctx,
 		`SELECT COUNT(*)
 		   FROM users u
 		   JOIN roles r ON r.id = u.role_id
-		  WHERE u.is_active AND r.is_active AND r.code = $1`,
-		domain.RoleCodeManagerAdmin).Scan(&n)
+		   JOIN role_permissions rp ON rp.role_id = r.id
+		   JOIN permissions p ON p.id = rp.permission_id
+		  WHERE u.is_active AND r.is_active AND p.code = $1`,
+		permissionCode).Scan(&n)
+	return n, err
+}
+
+// CountActiveUsersWithPermissionExceptRole excludes one role from the count.
+func (r *UserRepo) CountActiveUsersWithPermissionExceptRole(ctx context.Context, permissionCode string, roleID int) (int, error) {
+	var n int
+	err := r.pool.QueryRow(ctx,
+		`SELECT COUNT(*)
+		   FROM users u
+		   JOIN roles r ON r.id = u.role_id
+		   JOIN role_permissions rp ON rp.role_id = r.id
+		   JOIN permissions p ON p.id = rp.permission_id
+		  WHERE u.is_active AND r.is_active AND p.code = $1 AND r.id <> $2`,
+		permissionCode, roleID).Scan(&n)
 	return n, err
 }

@@ -68,10 +68,26 @@ func (r *adminUserRepo) UpdateRoleAndActive(_ context.Context, id, roleID int, i
 	return nil
 }
 
-func (r *adminUserRepo) CountActiveManagers(context.Context) (int, error) {
+func (r *adminUserRepo) CountActiveUsersWithPermission(_ context.Context, code string) (int, error) {
+	if code != domain.PermissionAdminManageUsers {
+		return 0, nil
+	}
 	n := 0
 	for _, user := range r.users {
-		if user.IsActive && user.Role.IsActive && user.Role.Code == domain.RoleCodeManagerAdmin {
+		if user.IsActive && user.Role.IsActive && user.Role.ID == managerRole.ID {
+			n++
+		}
+	}
+	return n, nil
+}
+
+func (r *adminUserRepo) CountActiveUsersWithPermissionExceptRole(_ context.Context, code string, roleID int) (int, error) {
+	if code != domain.PermissionAdminManageUsers {
+		return 0, nil
+	}
+	n := 0
+	for _, user := range r.users {
+		if user.IsActive && user.Role.IsActive && user.Role.ID == managerRole.ID && user.Role.ID != roleID {
 			n++
 		}
 	}
@@ -95,6 +111,49 @@ func (adminRoleRepo) GetByCode(_ context.Context, code string) (*domain.Role, er
 	default:
 		return nil, domain.ErrNotFound
 	}
+}
+
+func (adminRoleRepo) GetByID(_ context.Context, id int) (*domain.Role, error) {
+	switch id {
+	case operatorRole.ID:
+		copied := operatorRole
+		return &copied, nil
+	case managerRole.ID:
+		copied := managerRole
+		return &copied, nil
+	default:
+		return nil, domain.ErrNotFound
+	}
+}
+
+func (adminRoleRepo) ListRoles(context.Context) ([]domain.Role, error) {
+	return []domain.Role{operatorRole, managerRole}, nil
+}
+
+func (adminRoleRepo) ListPermissions(context.Context) ([]domain.Permission, error) {
+	return []domain.Permission{{ID: 1, Code: domain.PermissionAdminManageUsers}}, nil
+}
+
+func (adminRoleRepo) GetPermissionsForRole(_ context.Context, roleID int) ([]domain.Permission, error) {
+	if roleID == managerRole.ID {
+		return []domain.Permission{{Code: domain.PermissionAdminManageUsers}}, nil
+	}
+	return []domain.Permission{}, nil
+}
+
+func (adminRoleRepo) ReplaceRolePermissions(context.Context, int, []int) error {
+	return nil
+}
+
+func (adminRoleRepo) CreateRole(context.Context, string, string) (*domain.Role, error) {
+	return nil, domain.ErrNotFound
+}
+
+func (adminRoleRepo) CountRolesWithPermissionExcept(_ context.Context, code string, roleID int) (int, error) {
+	if code == domain.PermissionAdminManageUsers && roleID != managerRole.ID {
+		return 1, nil
+	}
+	return 0, nil
 }
 
 func ptr[T any](v T) *T { return &v }
@@ -204,7 +263,7 @@ func TestUserAdmin_UnknownRole(t *testing.T) {
 	admin := newAdmin(user(1, managerRole, true), user(2, operatorRole, true))
 
 	_, err := admin.Update(context.Background(), 1, 2, usecase.UpdateUserInput{
-		Role: ptr("QUALITY"),
+		Role: ptr("NOPE"),
 	})
 	if !errors.Is(err, domain.ErrInvalidEnumValue) {
 		t.Fatalf("err = %v, want ErrInvalidEnumValue", err)

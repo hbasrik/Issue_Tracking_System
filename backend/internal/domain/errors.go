@@ -54,10 +54,11 @@ var (
 	// ErrCannotDeactivateSelf indicates a user tried to set their own
 	// is_active flag to false.
 	ErrCannotDeactivateSelf = errors.New("you cannot deactivate your own account")
-	// ErrLastActiveManager indicates a role or is_active change would leave
-	// the system with zero active MANAGER_ADMIN users, which would lock
-	// everyone out of Users & Roles.
-	ErrLastActiveManager = errors.New("cannot demote or deactivate the last active manager")
+	// ErrLastActiveManager indicates a role, is_active, or matrix change
+	// would leave the system with no active user (or no remaining role)
+	// holding admin.manage_users, which would lock everyone out of Users
+	// & Roles.
+	ErrLastActiveManager = errors.New("cannot remove the last user who can manage users")
 	// ErrDepotChecklistLocked indicates a Depot-phase EoL item was updated
 	// while any Branch-phase item for the same VIN is not yet OK or
 	// CONDITIONAL_OK. The message matches the database trigger so API and

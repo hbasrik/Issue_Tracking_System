@@ -39,7 +39,11 @@ func (f *fakeUserRepo) UpdateRoleAndActive(context.Context, int, int, bool) erro
 	return nil
 }
 
-func (f *fakeUserRepo) CountActiveManagers(context.Context) (int, error) {
+func (f *fakeUserRepo) CountActiveUsersWithPermission(context.Context, string) (int, error) {
+	return 0, nil
+}
+
+func (f *fakeUserRepo) CountActiveUsersWithPermissionExceptRole(context.Context, string, int) (int, error) {
 	return 0, nil
 }
 

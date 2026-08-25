@@ -122,13 +122,15 @@ type UserRepository interface {
 	// on the domain objects and must not be serialized to clients.
 	List(ctx context.Context) ([]domain.User, error)
 	// UpdateRoleAndActive assigns a role (by roles.id) and the is_active
-	// flag. Self-lockout and last-manager rules are enforced in the usecase
-	// before this write.
+	// flag. Self-lockout and last-admin.manage_users rules are enforced in
+	// the usecase before this write.
 	UpdateRoleAndActive(ctx context.Context, id, roleID int, isActive bool) error
-	// CountActiveManagers returns how many users are currently an active
-	// MANAGER_ADMIN with an active role row. The last-manager invariant
-	// is a product rule on that role code until the catalogue is data-driven.
-	CountActiveManagers(ctx context.Context) (int, error)
+	// CountActiveUsersWithPermission counts active users whose (active)
+	// role currently grants the given permission code.
+	CountActiveUsersWithPermission(ctx context.Context, permissionCode string) (int, error)
+	// CountActiveUsersWithPermissionExceptRole is the same count excluding
+	// one role, used when that role is about to lose the permission.
+	CountActiveUsersWithPermissionExceptRole(ctx context.Context, permissionCode string, roleID int) (int, error)
 }
 
 // EOLWorkflowRepository persists and queries the three-stage EOL workflow
@@ -181,6 +183,7 @@ type RoleRepository interface {
 	// GetByCode returns the role catalogue row for the given code, or
 	// domain.ErrNotFound.
 	GetByCode(ctx context.Context, code string) (*domain.Role, error)
+	GetPermissionsForRole(ctx context.Context, roleID int) ([]domain.Permission, error)
 }
 
 // AuditRepository appends rows to the append-only audit log.

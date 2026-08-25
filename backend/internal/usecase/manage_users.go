@@ -9,9 +9,8 @@ import (
 )
 
 // UserAdmin lists users and updates role / is_active under self-lockout and
-// last-manager invariants. Authorization to call these methods is a route
-// permission (admin.manage_masters); the rules below are extra safety so a
-// manager cannot lock the tenant out of Users & Roles.
+// last-admin.manage_users invariants. Authorization to call these methods is
+// admin.manage_users at the route; the rules below keep Users & Roles reachable.
 type UserAdmin struct {
 	users repository.UserRepository
 	roles repository.RoleRepository
@@ -37,12 +36,9 @@ func (a *UserAdmin) List(ctx context.Context) ([]domain.User, error) {
 // Update applies a role and/or is_active change.
 //
 // Order of checks:
-//  1. Last active MANAGER_ADMIN cannot be demoted or deactivated (409).
+//  1. The last active holder of admin.manage_users cannot be demoted or
+//     deactivated (409).
 //  2. A user cannot change their own role or deactivate themselves (403).
-//
-// Checking the last-manager invariant first means the only remaining manager
-// who tries to demote themselves gets the 409, not a generic self-lockout,
-// so the client can tell the tenant why the write was refused.
 func (a *UserAdmin) Update(ctx context.Context, actorID, targetID int, in UpdateUserInput) (*domain.User, error) {
 	target, err := a.users.GetByID(ctx, targetID)
 	if err != nil {
@@ -72,12 +68,16 @@ func (a *UserAdmin) Update(ctx context.Context, actorID, targetID int, in Update
 		return target, nil
 	}
 
-	wasActiveManager := target.IsActive && target.Role.IsActive &&
-		target.Role.Code == domain.RoleCodeManagerAdmin
-	willBeActiveManager := newActive && newRole.IsActive &&
-		newRole.Code == domain.RoleCodeManagerAdmin
-	if wasActiveManager && !willBeActiveManager {
-		n, err := a.users.CountActiveManagers(ctx)
+	wasHolder, err := isUserAdminHolder(ctx, a.roles, target.IsActive, target.Role)
+	if err != nil {
+		return nil, err
+	}
+	willHold, err := isUserAdminHolder(ctx, a.roles, newActive, newRole)
+	if err != nil {
+		return nil, err
+	}
+	if wasHolder && !willHold {
+		n, err := a.users.CountActiveUsersWithPermission(ctx, domain.PermissionAdminManageUsers)
 		if err != nil {
 			return nil, err
 		}
@@ -99,4 +99,24 @@ func (a *UserAdmin) Update(ctx context.Context, actorID, targetID int, in Update
 		return nil, err
 	}
 	return a.users.GetByID(ctx, targetID)
+}
+
+func isUserAdminHolder(ctx context.Context, roles repository.RoleRepository, active bool, role domain.Role) (bool, error) {
+	if !active || !role.IsActive {
+		return false, nil
+	}
+	return roleHasPermission(ctx, roles, role.ID, domain.PermissionAdminManageUsers)
+}
+
+func roleHasPermission(ctx context.Context, roles repository.RoleRepository, roleID int, code string) (bool, error) {
+	granted, err := roles.GetPermissionsForRole(ctx, roleID)
+	if err != nil {
+		return false, err
+	}
+	for _, p := range granted {
+		if p.Code == code {
+			return true, nil
+		}
+	}
+	return false, nil
 }
