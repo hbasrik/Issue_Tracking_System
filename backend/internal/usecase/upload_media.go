@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"bytes"
 	"context"
 	"io"
 	"path/filepath"
@@ -61,7 +62,12 @@ func (u *MediaUploader) Upload(ctx context.Context, in UploadMediaInput) (*domai
 	// Keep only the base name: the client's path is not ours to reproduce.
 	fileName := filepath.Base(in.FileName)
 
-	storagePath, size, err := u.store.Save(ctx, in.EntityType, in.EntityID, fileName, in.Content)
+	body, err := rejectNonWebImage(in.MimeType, fileName, in.Content)
+	if err != nil {
+		return nil, err
+	}
+
+	storagePath, size, err := u.store.Save(ctx, in.EntityType, in.EntityID, fileName, body)
 	if err != nil {
 		return nil, err
 	}
@@ -124,4 +130,22 @@ func (u *MediaUploader) ListByVIN(ctx context.Context, vin string) ([]domain.Med
 		return []domain.MediaAttachment{}, nil
 	}
 	return attachments, nil
+}
+
+const imageSniffLen = 16
+
+func rejectNonWebImage(mimeType, fileName string, content io.Reader) (io.Reader, error) {
+	head := make([]byte, imageSniffLen)
+	n, err := io.ReadFull(content, head)
+	if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
+		return nil, err
+	}
+	head = head[:n]
+	if domain.IsNonWebImage(mimeType, fileName, head) {
+		return nil, domain.ErrUnsupportedImageFormat
+	}
+	if n == 0 {
+		return content, nil
+	}
+	return io.MultiReader(bytes.NewReader(head), content), nil
 }

@@ -31,6 +31,10 @@ var (
 	// ErrInvalidManualSource indicates MANUAL was sent with a station-step or
 	// checklist source id (both must be null).
 	ErrInvalidManualSource = errors.New("manual issues must not set source_station_step_id or source_check_item_id")
+	// ErrUnsupportedImageFormat indicates the upload is HEIC/HEIF (or another
+	// container browsers will not render). Rejected rather than stored as a
+	// silently broken gallery image.
+	ErrUnsupportedImageFormat = errors.New("image format is not displayable in the browser; upload JPEG or PNG")
 	// ErrInvalidEnumValue indicates an enum field carried an unknown value.
 	ErrInvalidEnumValue = errors.New("invalid enum value")
 	// ErrInvalidStatusTransition indicates a requested status change is not

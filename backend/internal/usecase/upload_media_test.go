@@ -208,8 +208,40 @@ func TestUploadMedia_WritesVINFromEntityContext(t *testing.T) {
 	if attachment.VIN != vin {
 		t.Fatalf("vin = %q, want %q", attachment.VIN, vin)
 	}
-	if media.rows[0].VIN != vin {
+	if attachment.VIN != vin {
 		t.Fatalf("stored vin = %q, want %q", media.rows[0].VIN, vin)
+	}
+}
+
+func TestUploadMedia_RejectsHEIC(t *testing.T) {
+	const vin = "1HGCM82633A004352"
+	media := newFakeMediaRepo()
+	media.seedEntity(domain.MediaEntityVehicle, vin)
+	store := &fakeMediaStore{}
+	uploader := usecase.NewMediaUploader(media, store)
+
+	heic := []byte{
+		0x00, 0x00, 0x00, 0x18,
+		'f', 't', 'y', 'p',
+		'h', 'e', 'i', 'c',
+		0x00, 0x00, 0x00, 0x00,
+	}
+	_, err := uploader.Upload(context.Background(), usecase.UploadMediaInput{
+		EntityType: domain.MediaEntityVehicle,
+		EntityID:   vin,
+		FileName:   "IMG_001.HEIC",
+		MimeType:   "image/heic",
+		Content:    strings.NewReader(string(heic)),
+		UploadedBy: 7,
+	})
+	if !errors.Is(err, domain.ErrUnsupportedImageFormat) {
+		t.Fatalf("err = %v, want ErrUnsupportedImageFormat", err)
+	}
+	if len(store.saved) != 0 {
+		t.Errorf("stored files = %v, want none", store.saved)
+	}
+	if len(media.rows) != 0 {
+		t.Errorf("attachment rows = %d, want 0", len(media.rows))
 	}
 }
 

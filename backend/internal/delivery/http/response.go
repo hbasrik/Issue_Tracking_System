@@ -75,7 +75,8 @@ func writeError(w http.ResponseWriter, err error) {
 		errors.Is(err, domain.ErrStationRequired),
 		errors.Is(err, domain.ErrIssueTypeRequired),
 		errors.Is(err, domain.ErrInvalidManualSource),
-		errors.Is(err, domain.ErrInvalidEnumValue):
+		errors.Is(err, domain.ErrInvalidEnumValue),
+		errors.Is(err, domain.ErrUnsupportedImageFormat):
 		writeJSON(w, http.StatusBadRequest, errorResponse{Error: err.Error()})
 	default:
 		log.Printf("http: unhandled error: %v", err)

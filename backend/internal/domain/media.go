@@ -1,7 +1,9 @@
 package domain
 
 import (
+	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -63,4 +65,34 @@ type MediaAttachment struct {
 	FileSize    int64           `json:"file_size"`
 	UploadedBy  *int            `json:"uploaded_by"`
 	UploadedAt  time.Time       `json:"uploaded_at"`
+}
+
+// IsNonWebImage reports HEIC/HEIF (and lookalikes) that Chrome/Firefox will
+// not display. Callers must reject these rather than persist a broken <img>.
+func IsNonWebImage(mimeType, fileName string, head []byte) bool {
+	mime := strings.ToLower(strings.TrimSpace(mimeType))
+	if strings.Contains(mime, "heic") || strings.Contains(mime, "heif") {
+		return true
+	}
+	ext := strings.ToLower(filepath.Ext(fileName))
+	switch ext {
+	case ".heic", ".heif", ".hif":
+		return true
+	}
+	return isHEICMagic(head)
+}
+
+func isHEICMagic(head []byte) bool {
+	if len(head) < 12 {
+		return false
+	}
+	if string(head[4:8]) != "ftyp" {
+		return false
+	}
+	switch string(head[8:12]) {
+	case "heic", "heix", "heif", "hevc", "hevx", "heim", "heis", "hevm", "hevs":
+		return true
+	default:
+		return false
+	}
 }

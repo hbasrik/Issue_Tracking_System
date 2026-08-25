@@ -396,3 +396,32 @@ func TestVehicleMediaList_IncludesUploadedPhoto(t *testing.T) {
 		t.Errorf("vin = %q, want %q", payload.Items[0].VIN, seededVIN)
 	}
 }
+
+func TestMediaUpload_HEICReturns400(t *testing.T) {
+	media := newHTTPFakeMediaRepo()
+	store := &httpFakeMediaStore{}
+	router, issuer := newMediaRouter(media, store)
+
+	token, err := issuer.Issue(operatorUserID, domain.RoleCodeOperator)
+	if err != nil {
+		t.Fatalf("issue token: %v", err)
+	}
+
+	body, contentType := multipartUpload(t, "VEHICLE", seededVIN, "IMG_001.HEIC", "not-a-jpeg")
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/media", body)
+	req.Header.Set("Content-Type", contentType)
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d, want %d (body: %s)", rec.Code, http.StatusBadRequest, rec.Body.String())
+	}
+	if store.saved != 0 {
+		t.Errorf("stored files = %d, want 0", store.saved)
+	}
+	if len(media.rows) != 0 {
+		t.Errorf("attachment rows = %d, want 0", len(media.rows))
+	}
+}

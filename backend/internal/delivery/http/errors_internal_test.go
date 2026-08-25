@@ -143,3 +143,22 @@ func TestWriteErrorDatabaseRejected(t *testing.T) {
 		t.Errorf("error = %q", body.Error)
 	}
 }
+
+func TestWriteErrorUnsupportedImageFormat(t *testing.T) {
+	rec := httptest.NewRecorder()
+	writeError(rec, domain.ErrUnsupportedImageFormat)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusBadRequest)
+	}
+
+	var body struct {
+		Error string `json:"error"`
+	}
+	if err := json.NewDecoder(rec.Body).Decode(&body); err != nil {
+		t.Fatalf("decode body: %v", err)
+	}
+	if body.Error != domain.ErrUnsupportedImageFormat.Error() {
+		t.Errorf("error = %q, want %q", body.Error, domain.ErrUnsupportedImageFormat.Error())
+	}
+}
