@@ -183,7 +183,14 @@ type RoleRepository interface {
 	// GetByCode returns the role catalogue row for the given code, or
 	// domain.ErrNotFound.
 	GetByCode(ctx context.Context, code string) (*domain.Role, error)
+	GetByID(ctx context.Context, id int) (*domain.Role, error)
+	ListRoles(ctx context.Context) ([]domain.Role, error)
+	ListPermissions(ctx context.Context) ([]domain.Permission, error)
 	GetPermissionsForRole(ctx context.Context, roleID int) ([]domain.Permission, error)
+	// ReplaceRolePermissions overwrites the grant set for one role.
+	ReplaceRolePermissions(ctx context.Context, roleID int, permissionIDs []int) error
+	CreateRole(ctx context.Context, code, name string) (*domain.Role, error)
+	CountRolesWithPermissionExcept(ctx context.Context, permissionCode string, roleID int) (int, error)
 }
 
 // AuditRepository appends rows to the append-only audit log.

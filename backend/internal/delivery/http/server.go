@@ -28,6 +28,7 @@ type Deps struct {
 	Auth               *usecase.Authenticator
 	Roles              repository.RoleRepository
 	Users              *usecase.UserAdmin
+	RoleAdmin          *usecase.RoleAdmin
 	Vehicles           *usecase.VehicleService
 	StationSteps       *usecase.StationStepResultRecorder
 	Checklists         *usecase.ChecklistResultRecorder
@@ -169,6 +170,9 @@ func NewRouter(deps Deps) http.Handler {
 				r.Use(permissions.RequirePermission(domain.PermissionAdminManageUsers))
 				r.Get("/users", s.handleUserList)
 				r.Patch("/users/{id}", s.handleUserUpdate)
+				r.Get("/rbac", s.handleRBACMatrix)
+				r.Post("/roles", s.handleRoleCreate)
+				r.Put("/roles/{id}/permissions", s.handleRolePermissionsPut)
 			})
 
 			// Shop-floor writes. Checklist type is in the URL, so the

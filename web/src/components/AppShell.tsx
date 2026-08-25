@@ -11,6 +11,7 @@ const NAV: { to: string; label: string; end?: boolean; perm?: string }[] = [
   { to: '/analysis', label: 'Analysis', perm: Perm.AnalysisView },
   { to: '/templates', label: 'Templates', perm: Perm.AdminManageMasters },
   { to: '/users', label: 'Users', perm: Perm.AdminManageUsers },
+  { to: '/roles', label: 'Roles', perm: Perm.AdminManageUsers },
   { to: '/settings', label: 'Settings' },
 ];
 

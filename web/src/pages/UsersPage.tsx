@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useId, useState } from 'react';
 import { useAuth } from '../auth/AuthProvider';
+import { Perm } from '../auth/permissions';
 import { StatusBadge } from '../components/StatusBadge';
 import {
   DataCard,
@@ -7,19 +8,38 @@ import {
   DesktopTableShell,
   MobileCardStack,
 } from '../components/DataCard';
-import { api, ApiError, type User, type UserRole } from '../lib/api';
+import {
+  api,
+  ApiError,
+  type RoleGrant,
+  type User,
+  type UserRole,
+} from '../lib/api';
 
-function roleLabel(role: UserRole): string {
-  return role === 'MANAGER_ADMIN' ? 'Manager/Admin' : 'Operator';
+function roleLabel(role: string, roles: RoleGrant[]): string {
+  return roles.find((r) => r.code === role)?.name ?? role;
 }
 
-function userEditLocks(u: User, currentUserId: number | undefined, users: User[]) {
-  const isSelf = currentUserId === u.ID;
-  const activeManagers = users.filter(
-    (x) => x.IsActive && x.Role === 'MANAGER_ADMIN',
+function userAdminRoleCodes(roles: RoleGrant[]): Set<string> {
+  return new Set(
+    roles
+      .filter((r) => r.permissions.includes(Perm.AdminManageUsers))
+      .map((r) => r.code),
   );
-  const isLastActiveManager =
-    u.IsActive && u.Role === 'MANAGER_ADMIN' && activeManagers.length === 1;
+}
+
+function userEditLocks(
+  u: User,
+  currentUserId: number | undefined,
+  users: User[],
+  adminRoles: Set<string>,
+) {
+  const isSelf = currentUserId === u.ID;
+  const holders = users.filter(
+    (x) => x.IsActive && adminRoles.has(x.Role),
+  );
+  const isLastUserAdmin =
+    u.IsActive && adminRoles.has(u.Role) && holders.length === 1;
 
   const reasons: string[] = [];
   if (isSelf) {
@@ -27,16 +47,17 @@ function userEditLocks(u: User, currentUserId: number | undefined, users: User[]
       'You cannot change your own role or deactivate your own account.',
     );
   }
-  if (isLastActiveManager) {
-    reasons.push('At least one active Manager/Admin must remain.');
+  if (isLastUserAdmin) {
+    reasons.push(
+      'At least one active user with admin.manage_users must remain.',
+    );
   }
 
   return {
     isSelf,
-    isLastActiveManager,
+    isLastUserAdmin,
     roleSelectDisabled: isSelf,
-    operatorOptionDisabled: isLastActiveManager,
-    activeSelectDisabled: isSelf || isLastActiveManager,
+    activeSelectDisabled: isSelf || isLastUserAdmin,
     reasons,
   };
 }
@@ -44,6 +65,7 @@ function userEditLocks(u: User, currentUserId: number | undefined, users: User[]
 function UserAssignControls({
   user: u,
   users,
+  roles,
   currentUserId,
   busy,
   onRole,
@@ -51,13 +73,15 @@ function UserAssignControls({
 }: {
   user: User;
   users: User[];
+  roles: RoleGrant[];
   currentUserId: number | undefined;
   busy: boolean;
   onRole: (role: UserRole) => void;
   onActive: (isActive: boolean) => void;
 }) {
   const reasonId = useId();
-  const locks = userEditLocks(u, currentUserId, users);
+  const adminRoles = userAdminRoleCodes(roles);
+  const locks = userEditLocks(u, currentUserId, users, adminRoles);
   const selectClass =
     'min-h-touch rounded-lg border bg-[var(--bg-page)] px-2 text-[13px] disabled:cursor-not-allowed disabled:opacity-60';
 
@@ -67,16 +91,21 @@ function UserAssignControls({
         <select
           value={u.Role}
           disabled={busy || locks.roleSelectDisabled}
-          onChange={(e) => onRole(e.target.value as UserRole)}
+          onChange={(e) => onRole(e.target.value)}
           className={selectClass}
           style={{ borderColor: 'var(--border)' }}
           aria-label={`Role for ${u.FullName}`}
           aria-describedby={locks.reasons.length ? reasonId : undefined}
         >
-          <option value="OPERATOR" disabled={locks.operatorOptionDisabled}>
-            OPERATOR
-          </option>
-          <option value="MANAGER_ADMIN">MANAGER_ADMIN</option>
+          {roles.map((role) => (
+            <option
+              key={role.code}
+              value={role.code}
+              disabled={locks.isLastUserAdmin && !adminRoles.has(role.code)}
+            >
+              {role.code}
+            </option>
+          ))}
         </select>
         <select
           value={u.IsActive ? 'active' : 'inactive'}
@@ -100,16 +129,18 @@ function UserAssignControls({
   );
 }
 
-/** Users & Roles — §4.6. Exactly two roles. */
+/** Users & Roles — assign catalogue roles without locking out admin.manage_users. */
 export default function UsersPage() {
   const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
+  const [roles, setRoles] = useState<RoleGrant[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<number | null>(null);
 
   const load = useCallback(async () => {
-    const res = await api.listUsers();
-    setUsers(res.items ?? []);
+    const [userRes, rbac] = await Promise.all([api.listUsers(), api.getRBAC()]);
+    setUsers(userRes.items ?? []);
+    setRoles(rbac.roles ?? []);
   }, []);
 
   useEffect(() => {
@@ -147,7 +178,8 @@ export default function UsersPage() {
     <section>
       <h1 className="text-xl font-semibold sm:text-2xl">Users & Roles</h1>
       <p className="mt-1 text-[13px] text-[var(--text-secondary)]">
-        Operator (mobile) and Manager/Admin (web) — Decision Log #4
+        Assign any catalogue role. Permission grants are edited on the Roles
+        matrix. At least one active admin.manage_users holder must remain.
       </p>
       {error && (
         <p className="mt-3 text-[13px]" style={{ color: 'var(--status-not-ok)' }}>
@@ -172,7 +204,7 @@ export default function UsersPage() {
                       'color-mix(in srgb, var(--accent) 15%, transparent)',
                   }}
                 >
-                  {roleLabel(u.Role)}
+                  {roleLabel(u.Role, roles)}
                 </span>
               </DataCardField>
               <DataCardField label="Status">
@@ -185,6 +217,7 @@ export default function UsersPage() {
                 <UserAssignControls
                   user={u}
                   users={users}
+                  roles={roles}
                   currentUserId={currentUser?.ID}
                   busy={busyId === u.ID}
                   onRole={(role) => void patch(u.ID, { role })}
@@ -227,7 +260,7 @@ export default function UsersPage() {
                           'color-mix(in srgb, var(--accent) 15%, transparent)',
                       }}
                     >
-                      {roleLabel(u.Role)}
+                      {roleLabel(u.Role, roles)}
                     </span>
                   </td>
                   <td className="px-4 py-3">
@@ -240,6 +273,7 @@ export default function UsersPage() {
                     <UserAssignControls
                       user={u}
                       users={users}
+                      roles={roles}
                       currentUserId={currentUser?.ID}
                       busy={busyId === u.ID}
                       onRole={(role) => void patch(u.ID, { role })}

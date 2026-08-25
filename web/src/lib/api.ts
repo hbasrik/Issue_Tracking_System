@@ -28,6 +28,20 @@ export interface LoginResponse {
   permissions: string[];
 }
 
+export interface RoleGrant {
+  id: number;
+  code: string;
+  name: string;
+  is_active: boolean;
+  permissions: string[];
+}
+
+export interface PermissionRow {
+  id: number;
+  code: string;
+  description: string;
+}
+
 export interface BlockingIssue {
   id: number;
   status: string;
@@ -114,6 +128,24 @@ export const api = {
     return request<User>(`/users/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(body),
+    });
+  },
+
+  getRBAC() {
+    return request<{ roles: RoleGrant[]; permissions: PermissionRow[] }>('/rbac');
+  },
+
+  createRole(body: { code: string; name: string }) {
+    return request<RoleGrant>('/roles', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  },
+
+  replaceRolePermissions(id: number, permissions: string[]) {
+    return request<{ id: number; permissions: string[] }>(`/roles/${id}/permissions`, {
+      method: 'PUT',
+      body: JSON.stringify({ permissions }),
     });
   },
 

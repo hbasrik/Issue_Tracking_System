@@ -49,6 +49,7 @@ func main() {
 		Auth:               usecase.NewAuthenticator(userRepo),
 		Roles:              roleRepo,
 		Users:              usecase.NewUserAdmin(userRepo, roleRepo),
+		RoleAdmin:          usecase.NewRoleAdmin(roleRepo, userRepo),
 		Vehicles:           usecase.NewVehicleService(vehicleRepo, checklistRepo, auditRepo, uow),
 		StationSteps:       usecase.NewStationStepResultRecorder(vehicleRepo, stationStepRepo),
 		Checklists:         checklists,

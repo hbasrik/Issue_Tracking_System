@@ -7,6 +7,7 @@ import HomePage from './pages/HomePage';
 import IssuesPage from './pages/IssuesPage';
 import LoginPage from './pages/LoginPage';
 import NotAuthorizedPage from './pages/NotAuthorizedPage';
+import RolesPage from './pages/RolesPage';
 import SettingsPage from './pages/SettingsPage';
 import TemplatesPage from './pages/TemplatesPage';
 import UsersPage from './pages/UsersPage';
@@ -37,6 +38,7 @@ export default function App() {
           </Route>
           <Route element={<RequirePermission code={Perm.AdminManageUsers} />}>
             <Route path="/users" element={<UsersPage />} />
+            <Route path="/roles" element={<RolesPage />} />
           </Route>
           <Route path="/settings" element={<SettingsPage />} />
         </Route>
