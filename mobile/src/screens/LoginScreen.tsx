@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Keyboard, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Keyboard, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { ApiError } from '../api/client';
 import { useAuth } from '../auth/AuthProvider';
 import { useTheme } from '../theme/ThemeProvider';
@@ -32,7 +32,7 @@ export default function LoginScreen() {
 
   return (
     <Screen>
-      <View style={styles.center}>
+      <Pressable style={styles.center} onPress={Keyboard.dismiss} accessible={false}>
         <Title>Karea</Title>
         <Subtitle>Operator field sign-in</Subtitle>
         <Text style={[styles.label, { color: tokens.textSecondary }]}>Email</Text>
@@ -85,7 +85,7 @@ export default function LoginScreen() {
         <View style={{ marginTop: 20 }}>
           <PrimaryButton label={busy ? 'Signing in…' : 'Sign in'} onPress={onSubmit} disabled={busy} />
         </View>
-      </View>
+      </Pressable>
     </Screen>
   );
 }
