@@ -166,7 +166,8 @@ func (r *ChecklistResultRecorder) ListTemplates(ctx context.Context) ([]domain.C
 	return items, nil
 }
 
-// ListTemplateItems returns the active items of one template for the editor.
+// ListTemplateItems returns every item of one template (including inactive)
+// for the editor pane.
 func (r *ChecklistResultRecorder) ListTemplateItems(ctx context.Context, templateID int) ([]domain.ChecklistTemplateItem, error) {
 	items, err := r.checklist.ListTemplateItems(ctx, templateID)
 	if err != nil {

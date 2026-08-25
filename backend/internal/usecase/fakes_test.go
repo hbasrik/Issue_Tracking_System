@@ -251,6 +251,34 @@ func (f *fakeChecklistRepo) ListTemplateItems(_ context.Context, _ int) ([]domai
 	return nil, nil
 }
 
+func (f *fakeChecklistRepo) GetTemplate(_ context.Context, _ int) (*domain.ChecklistTemplate, error) {
+	return nil, domain.ErrNotFound
+}
+
+func (f *fakeChecklistRepo) GetTemplateItem(_ context.Context, _ int) (*domain.ChecklistTemplateItem, error) {
+	return nil, domain.ErrNotFound
+}
+
+func (f *fakeChecklistRepo) CreateTemplateItem(_ context.Context, _ *domain.ChecklistTemplateItem) (*domain.ChecklistTemplateItem, error) {
+	return nil, domain.ErrNotFound
+}
+
+func (f *fakeChecklistRepo) UpdateTemplateItem(_ context.Context, _ *domain.ChecklistTemplateItem) error {
+	return domain.ErrNotFound
+}
+
+func (f *fakeChecklistRepo) DeleteTemplateItem(_ context.Context, _ int) error {
+	return domain.ErrNotFound
+}
+
+func (f *fakeChecklistRepo) ReorderTemplateItems(_ context.Context, _ int, _ []int) error {
+	return domain.ErrNotFound
+}
+
+func (f *fakeChecklistRepo) CountProgressVINs(_ context.Context, _ int) (int, error) {
+	return 0, nil
+}
+
 // fakeIssueRepo is an in-memory IssueRepository keyed by issue id.
 type fakeIssueRepo struct {
 	issues map[int64]*domain.Issue
