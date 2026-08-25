@@ -219,7 +219,7 @@ CREATE TABLE vehicles (
 );
 
 COMMENT ON COLUMN vehicles.current_global_status IS
-    'Auto-transitioned by triggers. PLANNED -> IN_PRODUCTION on first station-step progress row '
+    'Auto-transitioned by triggers. PLANNED -> IN_PRODUCTION when the first station-step is processed (leaves PENDING) '
     '(Karar 10). IN_PRODUCTION -> IN_WAREHOUSE when EOL branch phase ships '
     '(soft-warning on open issues). IN_WAREHOUSE -> WITH_CUSTOMER when the shipment/customer '
     'checklist is fully OK/CONDITIONAL_OK (independent track from the EOL branch/depot/document '
@@ -603,40 +603,55 @@ CREATE TRIGGER trg_assign_checklist_templates
     FOR EACH ROW EXECUTE FUNCTION fn_assign_checklist_templates();
 
 -- --- Materialize station-step / checklist / EOL-workflow rows for a ----
--- new vehicle. Copies the active station_steps catalogue and the three
--- assigned templates into vehicle-scoped progress rows so the mobile app
--- always has a concrete row to tick against (status = PENDING), and
--- opens the EOL workflow at stage BRANCH.
+-- new vehicle, including PLANNED (Karar 10). PLANNED is a visibility
+-- label; shop-floor rows must exist so the first processed station step
+-- can flip PLANNED -> IN_PRODUCTION. PENDING inserts do not enter the line.
+CREATE OR REPLACE FUNCTION fn_materialize_vehicle_progress(
+    p_vin VARCHAR(17),
+    p_eol_template_id INT,
+    p_shipment_template_id INT,
+    p_test_template_id INT
+) RETURNS void AS $$
+BEGIN
+    INSERT INTO vehicle_station_step_progress (vin, station_id, station_step_id, status)
+    SELECT p_vin, ss.station_id, ss.id, 'PENDING'
+    FROM station_steps ss
+    WHERE ss.is_active = TRUE
+    ON CONFLICT (vin, station_step_id) DO NOTHING;
+
+    INSERT INTO checklist_item_progress (vin, checklist_type, check_item_id, check_status)
+    SELECT p_vin, 'EOL', cti.id, 'PENDING'
+    FROM checklist_template_items cti
+    WHERE cti.template_id = p_eol_template_id AND cti.is_active = TRUE
+    ON CONFLICT (vin, check_item_id) DO NOTHING;
+
+    INSERT INTO checklist_item_progress (vin, checklist_type, check_item_id, check_status)
+    SELECT p_vin, 'SHIPMENT', cti.id, 'PENDING'
+    FROM checklist_template_items cti
+    WHERE cti.template_id = p_shipment_template_id AND cti.is_active = TRUE
+    ON CONFLICT (vin, check_item_id) DO NOTHING;
+
+    INSERT INTO checklist_item_progress (vin, checklist_type, check_item_id, check_status)
+    SELECT p_vin, 'TEST', cti.id, 'PENDING'
+    FROM checklist_template_items cti
+    WHERE cti.template_id = p_test_template_id AND cti.is_active = TRUE
+    ON CONFLICT (vin, check_item_id) DO NOTHING;
+
+    INSERT INTO vehicle_eol_workflow (vin, current_stage)
+    VALUES (p_vin, 'BRANCH')
+    ON CONFLICT (vin) DO NOTHING;
+END;
+$$ LANGUAGE plpgsql;
+
 CREATE OR REPLACE FUNCTION fn_initialize_vehicle_progress()
 RETURNS TRIGGER AS $$
 BEGIN
-    IF NEW.current_global_status::text = 'PLANNED' THEN
-        RETURN NEW;
-    END IF;
-
-    INSERT INTO vehicle_station_step_progress (vin, station_id, station_step_id, status)
-    SELECT NEW.vin, ss.station_id, ss.id, 'PENDING'
-    FROM station_steps ss
-    WHERE ss.is_active = TRUE;
-
-    INSERT INTO checklist_item_progress (vin, checklist_type, check_item_id, check_status)
-    SELECT NEW.vin, 'EOL', cti.id, 'PENDING'
-    FROM checklist_template_items cti
-    WHERE cti.template_id = NEW.eol_template_id AND cti.is_active = TRUE;
-
-    INSERT INTO checklist_item_progress (vin, checklist_type, check_item_id, check_status)
-    SELECT NEW.vin, 'SHIPMENT', cti.id, 'PENDING'
-    FROM checklist_template_items cti
-    WHERE cti.template_id = NEW.shipment_template_id AND cti.is_active = TRUE;
-
-    INSERT INTO checklist_item_progress (vin, checklist_type, check_item_id, check_status)
-    SELECT NEW.vin, 'TEST', cti.id, 'PENDING'
-    FROM checklist_template_items cti
-    WHERE cti.template_id = NEW.test_template_id AND cti.is_active = TRUE;
-
-    INSERT INTO vehicle_eol_workflow (vin, current_stage)
-    VALUES (NEW.vin, 'BRANCH');
-
+    PERFORM fn_materialize_vehicle_progress(
+        NEW.vin,
+        NEW.eol_template_id,
+        NEW.shipment_template_id,
+        NEW.test_template_id
+    );
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -659,6 +674,7 @@ DECLARE
     v_done INT;
     v_new_percentage NUMERIC(5,2);
     v_new_station_id INT;
+    v_enter_line BOOLEAN;
 BEGIN
     SELECT count(*), count(*) FILTER (WHERE status = 'OK')
     INTO v_total, v_done
@@ -677,11 +693,18 @@ BEGIN
         (SELECT MAX(sequence_no) FROM stations WHERE is_active = TRUE)
     ) INTO v_new_station_id;
 
+    -- Karar 10: PENDING catalogue copies must not enter the line. The first
+    -- processed (non-PENDING) station step flips PLANNED -> IN_PRODUCTION.
+    v_enter_line := TG_OP = 'UPDATE' AND NEW.status::text IS DISTINCT FROM 'PENDING';
+
     UPDATE vehicles
     SET total_progress_percentage = v_new_percentage,
-        current_station_id = (SELECT id FROM stations WHERE sequence_no = v_new_station_id),
+        current_station_id = CASE
+            WHEN current_global_status::text = 'PLANNED' AND NOT v_enter_line THEN current_station_id
+            ELSE (SELECT id FROM stations WHERE sequence_no = v_new_station_id)
+        END,
         current_global_status = CASE
-            WHEN current_global_status::text = 'PLANNED' THEN 'IN_PRODUCTION'::vehicle_status_enum
+            WHEN current_global_status::text = 'PLANNED' AND v_enter_line THEN 'IN_PRODUCTION'::vehicle_status_enum
             ELSE current_global_status
         END
     WHERE vin = NEW.vin;
