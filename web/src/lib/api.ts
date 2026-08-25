@@ -105,6 +105,17 @@ export const api = {
     });
   },
 
+  listUsers() {
+    return request<{ items: User[] }>('/users');
+  },
+
+  updateUser(id: number, body: { role?: UserRole; is_active?: boolean }) {
+    return request<User>(`/users/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    });
+  },
+
   listVehicles(params: {
     vin?: string;
     status?: string;

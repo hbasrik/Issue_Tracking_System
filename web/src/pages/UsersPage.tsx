@@ -1,3 +1,5 @@
+import { useCallback, useEffect, useId, useState } from 'react';
+import { useAuth } from '../auth/AuthProvider';
 import { StatusBadge } from '../components/StatusBadge';
 import {
   DataCard,
@@ -5,47 +7,161 @@ import {
   DesktopTableShell,
   MobileCardStack,
 } from '../components/DataCard';
+import { api, ApiError, type User, type UserRole } from '../lib/api';
 
-const USERS = [
-  {
-    id: 1,
-    fullName: 'Local Manager',
-    email: 'manager@karea.local',
-    role: 'MANAGER_ADMIN' as const,
-    isActive: true,
-  },
-  {
-    id: 2,
-    fullName: 'Assembly Operator',
-    email: 'operator.one@karea.local',
-    role: 'OPERATOR' as const,
-    isActive: true,
-  },
-  {
-    id: 3,
-    fullName: 'Quality Operator',
-    email: 'operator.two@karea.local',
-    role: 'OPERATOR' as const,
-    isActive: true,
-  },
-];
+function roleLabel(role: UserRole): string {
+  return role === 'MANAGER_ADMIN' ? 'Manager/Admin' : 'Operator';
+}
+
+function userEditLocks(u: User, currentUserId: number | undefined, users: User[]) {
+  const isSelf = currentUserId === u.ID;
+  const activeManagers = users.filter(
+    (x) => x.IsActive && x.Role === 'MANAGER_ADMIN',
+  );
+  const isLastActiveManager =
+    u.IsActive && u.Role === 'MANAGER_ADMIN' && activeManagers.length === 1;
+
+  const reasons: string[] = [];
+  if (isSelf) {
+    reasons.push(
+      'You cannot change your own role or deactivate your own account.',
+    );
+  }
+  if (isLastActiveManager) {
+    reasons.push('At least one active Manager/Admin must remain.');
+  }
+
+  return {
+    isSelf,
+    isLastActiveManager,
+    roleSelectDisabled: isSelf,
+    operatorOptionDisabled: isLastActiveManager,
+    activeSelectDisabled: isSelf || isLastActiveManager,
+    reasons,
+  };
+}
+
+function UserAssignControls({
+  user: u,
+  users,
+  currentUserId,
+  busy,
+  onRole,
+  onActive,
+}: {
+  user: User;
+  users: User[];
+  currentUserId: number | undefined;
+  busy: boolean;
+  onRole: (role: UserRole) => void;
+  onActive: (isActive: boolean) => void;
+}) {
+  const reasonId = useId();
+  const locks = userEditLocks(u, currentUserId, users);
+  const selectClass =
+    'min-h-touch rounded-lg border bg-[var(--bg-page)] px-2 text-[13px] disabled:cursor-not-allowed disabled:opacity-60';
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex flex-wrap gap-2">
+        <select
+          value={u.Role}
+          disabled={busy || locks.roleSelectDisabled}
+          onChange={(e) => onRole(e.target.value as UserRole)}
+          className={selectClass}
+          style={{ borderColor: 'var(--border)' }}
+          aria-label={`Role for ${u.FullName}`}
+          aria-describedby={locks.reasons.length ? reasonId : undefined}
+        >
+          <option value="OPERATOR" disabled={locks.operatorOptionDisabled}>
+            OPERATOR
+          </option>
+          <option value="MANAGER_ADMIN">MANAGER_ADMIN</option>
+        </select>
+        <select
+          value={u.IsActive ? 'active' : 'inactive'}
+          disabled={busy || locks.activeSelectDisabled}
+          onChange={(e) => onActive(e.target.value === 'active')}
+          className={selectClass}
+          style={{ borderColor: 'var(--border)' }}
+          aria-label={`Status for ${u.FullName}`}
+          aria-describedby={locks.reasons.length ? reasonId : undefined}
+        >
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+        </select>
+      </div>
+      {locks.reasons.length > 0 && (
+        <p id={reasonId} className="text-[12px] text-[var(--text-secondary)]">
+          {locks.reasons.join(' ')}
+        </p>
+      )}
+    </div>
+  );
+}
 
 /** Users & Roles — §4.6. Exactly two roles. */
 export default function UsersPage() {
+  const { user: currentUser } = useAuth();
+  const [users, setUsers] = useState<User[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [busyId, setBusyId] = useState<number | null>(null);
+
+  const load = useCallback(async () => {
+    const res = await api.listUsers();
+    setUsers(res.items ?? []);
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    setError(null);
+    load().catch((err) => {
+      if (!cancelled) {
+        setError(err instanceof Error ? err.message : 'failed to load users');
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [load]);
+
+  async function patch(id: number, body: { role?: UserRole; is_active?: boolean }) {
+    setBusyId(id);
+    setError(null);
+    try {
+      const updated = await api.updateUser(id, body);
+      setUsers((prev) => prev.map((u) => (u.ID === updated.ID ? updated : u)));
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'update failed');
+      try {
+        await load();
+      } catch {
+        /* keep the previous error */
+      }
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   return (
     <section>
       <h1 className="text-xl font-semibold sm:text-2xl">Users & Roles</h1>
       <p className="mt-1 text-[13px] text-[var(--text-secondary)]">
         Operator (mobile) and Manager/Admin (web) — Decision Log #4
       </p>
+      {error && (
+        <p className="mt-3 text-[13px]" style={{ color: 'var(--status-not-ok)' }}>
+          {error}
+        </p>
+      )}
 
       <div className="mt-6">
         <MobileCardStack>
-          {USERS.map((u) => (
-            <DataCard key={u.id}>
-              <p className="font-medium">{u.fullName}</p>
+          {users.map((u) => (
+            <DataCard key={u.ID}>
+              <p className="font-medium">{u.FullName}</p>
               <DataCardField label="Email">
-                <span className="break-all">{u.email}</span>
+                <span className="break-all">{u.Email}</span>
               </DataCardField>
               <DataCardField label="Role">
                 <span
@@ -56,25 +172,24 @@ export default function UsersPage() {
                       'color-mix(in srgb, var(--accent) 15%, transparent)',
                   }}
                 >
-                  {u.role === 'MANAGER_ADMIN' ? 'Manager/Admin' : 'Operator'}
+                  {roleLabel(u.Role)}
                 </span>
               </DataCardField>
               <DataCardField label="Status">
                 <StatusBadge
                   kind="stationStep"
-                  value={u.isActive ? 'OK' : 'PENDING'}
+                  value={u.IsActive ? 'OK' : 'PENDING'}
                 />
               </DataCardField>
               <DataCardField label="Assign">
-                <select
-                  defaultValue={u.role}
-                  className="min-h-touch rounded-lg border bg-[var(--bg-page)] px-2 text-[13px]"
-                  style={{ borderColor: 'var(--border)' }}
-                  aria-label={`Role for ${u.fullName}`}
-                >
-                  <option value="OPERATOR">OPERATOR</option>
-                  <option value="MANAGER_ADMIN">MANAGER_ADMIN</option>
-                </select>
+                <UserAssignControls
+                  user={u}
+                  users={users}
+                  currentUserId={currentUser?.ID}
+                  busy={busyId === u.ID}
+                  onRole={(role) => void patch(u.ID, { role })}
+                  onActive={(isActive) => void patch(u.ID, { is_active: isActive })}
+                />
               </DataCardField>
             </DataCard>
           ))}
@@ -95,14 +210,14 @@ export default function UsersPage() {
               </tr>
             </thead>
             <tbody>
-              {USERS.map((u) => (
+              {users.map((u) => (
                 <tr
-                  key={u.id}
+                  key={u.ID}
                   className="border-t"
                   style={{ borderColor: 'var(--border)' }}
                 >
-                  <td className="px-4 py-3">{u.fullName}</td>
-                  <td className="px-4 py-3">{u.email}</td>
+                  <td className="px-4 py-3">{u.FullName}</td>
+                  <td className="px-4 py-3">{u.Email}</td>
                   <td className="px-4 py-3">
                     <span
                       className="rounded-full px-2.5 py-0.5 text-[12px] font-medium"
@@ -112,25 +227,24 @@ export default function UsersPage() {
                           'color-mix(in srgb, var(--accent) 15%, transparent)',
                       }}
                     >
-                      {u.role === 'MANAGER_ADMIN' ? 'Manager/Admin' : 'Operator'}
+                      {roleLabel(u.Role)}
                     </span>
                   </td>
                   <td className="px-4 py-3">
                     <StatusBadge
                       kind="stationStep"
-                      value={u.isActive ? 'OK' : 'PENDING'}
+                      value={u.IsActive ? 'OK' : 'PENDING'}
                     />
                   </td>
                   <td className="px-4 py-3">
-                    <select
-                      defaultValue={u.role}
-                      className="min-h-touch rounded-lg border bg-[var(--bg-page)] px-2 text-[13px]"
-                      style={{ borderColor: 'var(--border)' }}
-                      aria-label={`Role for ${u.fullName}`}
-                    >
-                      <option value="OPERATOR">OPERATOR</option>
-                      <option value="MANAGER_ADMIN">MANAGER_ADMIN</option>
-                    </select>
+                    <UserAssignControls
+                      user={u}
+                      users={users}
+                      currentUserId={currentUser?.ID}
+                      busy={busyId === u.ID}
+                      onRole={(role) => void patch(u.ID, { role })}
+                      onActive={(isActive) => void patch(u.ID, { is_active: isActive })}
+                    />
                   </td>
                 </tr>
               ))}
