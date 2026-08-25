@@ -71,17 +71,20 @@ func (r *ChecklistProgressRepo) ResolveDefaultTemplateID(ctx context.Context, ch
 	return id, nil
 }
 
-// ListItemsWithProgress joins template items with per-vehicle progress.
+// ListItemsWithProgress returns only rows that were materialized onto the
+// vehicle. Starting from checklist_item_progress (INNER JOIN) means a
+// catalogue item added later is not backfilled onto existing VINs, and a
+// deactivated item still appears on vehicles that already have progress.
 func (r *ChecklistProgressRepo) ListItemsWithProgress(ctx context.Context, vin string, checklistType domain.ChecklistType, templateID int) ([]domain.ChecklistItemView, error) {
 	rows, err := r.pool.Query(ctx,
 		`SELECT cti.id, cti.item_no, cti.item_text,
 		        COALESCE(p.check_status::text, 'PENDING'),
 		        COALESCE(p.rework_desc, ''), COALESCE(p.conditional_desc, ''), COALESCE(p.rejected_desc, ''),
 		        cti.eol_phase::text, p.id
-		 FROM checklist_template_items cti
-		 LEFT JOIN checklist_item_progress p
-		   ON p.check_item_id = cti.id AND p.vin = $1 AND p.checklist_type = $2
-		 WHERE cti.template_id = $3 AND cti.is_active = TRUE
+		 FROM checklist_item_progress p
+		 JOIN checklist_template_items cti ON cti.id = p.check_item_id
+		 WHERE p.vin = $1 AND p.checklist_type = $2
+		   AND cti.template_id = $3
 		 ORDER BY cti.item_no`, vin, string(checklistType), templateID)
 	if err != nil {
 		return nil, err
@@ -173,12 +176,12 @@ func (r *ChecklistProgressRepo) ListTemplates(ctx context.Context) ([]domain.Che
 	return out, rows.Err()
 }
 
-// ListTemplateItems returns the active items of one template in display order.
+// ListTemplateItems returns every item of one template (including inactive).
 func (r *ChecklistProgressRepo) ListTemplateItems(ctx context.Context, templateID int) ([]domain.ChecklistTemplateItem, error) {
 	rows, err := r.pool.Query(ctx,
 		`SELECT id, template_id, item_no, item_text, station_id, eol_phase::text, is_active
 		 FROM checklist_template_items
-		 WHERE template_id = $1 AND is_active = TRUE
+		 WHERE template_id = $1
 		 ORDER BY item_no`, templateID)
 	if err != nil {
 		return nil, err
@@ -202,4 +205,138 @@ func (r *ChecklistProgressRepo) ListTemplateItems(ctx context.Context, templateI
 		out = append(out, item)
 	}
 	return out, rows.Err()
+}
+
+func scanTemplateItem(row pgx.Row) (*domain.ChecklistTemplateItem, error) {
+	var item domain.ChecklistTemplateItem
+	var eolPhase *string
+	if err := row.Scan(
+		&item.ID, &item.TemplateID, &item.ItemNo, &item.ItemText,
+		&item.StationID, &eolPhase, &item.IsActive,
+	); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, domain.ErrNotFound
+		}
+		return nil, err
+	}
+	if eolPhase != nil && *eolPhase != "" {
+		p := domain.EOLItemPhase(*eolPhase)
+		item.EolPhase = &p
+	}
+	return &item, nil
+}
+
+const templateItemColumns = `id, template_id, item_no, item_text, station_id, eol_phase::text, is_active`
+
+// GetTemplate returns one checklist_templates row.
+func (r *ChecklistProgressRepo) GetTemplate(ctx context.Context, templateID int) (*domain.ChecklistTemplate, error) {
+	var row domain.ChecklistTemplate
+	var typeText string
+	err := r.pool.QueryRow(ctx,
+		`SELECT id, vehicle_model_id, type::text, name, is_active
+		 FROM checklist_templates WHERE id = $1`, templateID).
+		Scan(&row.ID, &row.VehicleModelID, &typeText, &row.Name, &row.IsActive)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, domain.ErrNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+	row.Type = domain.ChecklistType(typeText)
+	return &row, nil
+}
+
+// GetTemplateItem returns one catalogue item.
+func (r *ChecklistProgressRepo) GetTemplateItem(ctx context.Context, itemID int) (*domain.ChecklistTemplateItem, error) {
+	return scanTemplateItem(r.pool.QueryRow(ctx,
+		`SELECT `+templateItemColumns+` FROM checklist_template_items WHERE id = $1`, itemID))
+}
+
+// CreateTemplateItem inserts a catalogue item with the next item_no.
+func (r *ChecklistProgressRepo) CreateTemplateItem(ctx context.Context, item *domain.ChecklistTemplateItem) (*domain.ChecklistTemplateItem, error) {
+	var phase any
+	if item.EolPhase != nil {
+		phase = string(*item.EolPhase)
+	}
+	return scanTemplateItem(r.pool.QueryRow(ctx,
+		`INSERT INTO checklist_template_items (template_id, item_no, item_text, station_id, eol_phase, is_active)
+		 VALUES (
+		   $1,
+		   COALESCE((SELECT MAX(item_no) FROM checklist_template_items WHERE template_id = $1), 0) + 1,
+		   $2, $3, $4, TRUE
+		 )
+		 RETURNING `+templateItemColumns,
+		item.TemplateID, item.ItemText, item.StationID, phase))
+}
+
+// UpdateTemplateItem persists item_text, eol_phase and is_active.
+func (r *ChecklistProgressRepo) UpdateTemplateItem(ctx context.Context, item *domain.ChecklistTemplateItem) error {
+	var phase any
+	if item.EolPhase != nil {
+		phase = string(*item.EolPhase)
+	}
+	tag, err := r.pool.Exec(ctx,
+		`UPDATE checklist_template_items
+		 SET item_text = $2, eol_phase = $3, is_active = $4
+		 WHERE id = $1`,
+		item.ID, item.ItemText, phase, item.IsActive)
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		return domain.ErrNotFound
+	}
+	return nil
+}
+
+// DeleteTemplateItem removes an unused catalogue row.
+func (r *ChecklistProgressRepo) DeleteTemplateItem(ctx context.Context, itemID int) error {
+	tag, err := r.pool.Exec(ctx,
+		`DELETE FROM checklist_template_items WHERE id = $1`, itemID)
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		return domain.ErrNotFound
+	}
+	return nil
+}
+
+// ReorderTemplateItems assigns item_no 1..n. Temporary negative numbers
+// avoid UNIQUE (template_id, item_no) collisions mid-swap.
+func (r *ChecklistProgressRepo) ReorderTemplateItems(ctx context.Context, templateID int, itemIDs []int) error {
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+
+	for i, id := range itemIDs {
+		tag, err := tx.Exec(ctx,
+			`UPDATE checklist_template_items SET item_no = $1 WHERE id = $2 AND template_id = $3`,
+			-(i + 1), id, templateID)
+		if err != nil {
+			return err
+		}
+		if tag.RowsAffected() == 0 {
+			return domain.ErrNotFound
+		}
+	}
+	for i, id := range itemIDs {
+		if _, err := tx.Exec(ctx,
+			`UPDATE checklist_template_items SET item_no = $1 WHERE id = $2 AND template_id = $3`,
+			i+1, id, templateID); err != nil {
+			return err
+		}
+	}
+	return tx.Commit(ctx)
+}
+
+// CountProgressVINs returns distinct vehicles with progress for this item.
+func (r *ChecklistProgressRepo) CountProgressVINs(ctx context.Context, itemID int) (int, error) {
+	var n int
+	err := r.pool.QueryRow(ctx,
+		`SELECT COUNT(DISTINCT vin)::int FROM checklist_item_progress WHERE check_item_id = $1`,
+		itemID).Scan(&n)
+	return n, err
 }

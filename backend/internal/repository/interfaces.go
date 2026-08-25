@@ -55,8 +55,10 @@ type ChecklistProgressRepository interface {
 	// ResolveDefaultTemplateID returns the active default template (vehicle_model_id
 	// IS NULL) for the given checklist type.
 	ResolveDefaultTemplateID(ctx context.Context, checklistType domain.ChecklistType) (int, error)
-	// ListItemsWithProgress joins template items with per-vehicle progress for
-	// the given template.
+	// ListItemsWithProgress returns the vehicle's materialized checklist
+	// rows joined to catalogue text. Items added to the template after the
+	// vehicle was created are omitted (no backfill); deactivated items that
+	// already have progress remain visible.
 	ListItemsWithProgress(ctx context.Context, vin string, checklistType domain.ChecklistType, templateID int) ([]domain.ChecklistItemView, error)
 	// SaveResult updates a single pre-materialized checklist progress row.
 	SaveResult(ctx context.Context, result domain.ChecklistProgress) error
@@ -64,9 +66,25 @@ type ChecklistProgressRepository interface {
 	// active items. The /templates admin page uses this so EOL/SHIPMENT/TEST
 	// counts always match checklist_template_items rather than a hardcoded seed.
 	ListTemplates(ctx context.Context) ([]domain.ChecklistTemplateSummary, error)
-	// ListTemplateItems returns the active items of one template, in item_no
-	// order, for the template editor pane.
+	// GetTemplate returns one checklist_templates row, or domain.ErrNotFound.
+	GetTemplate(ctx context.Context, templateID int) (*domain.ChecklistTemplate, error)
+	// GetTemplateItem returns one checklist_template_items row.
+	GetTemplateItem(ctx context.Context, itemID int) (*domain.ChecklistTemplateItem, error)
+	// ListTemplateItems returns every item of one template (including inactive),
+	// in item_no order, for the template editor pane.
 	ListTemplateItems(ctx context.Context, templateID int) ([]domain.ChecklistTemplateItem, error)
+	// CreateTemplateItem inserts a catalogue item and assigns the next item_no.
+	CreateTemplateItem(ctx context.Context, item *domain.ChecklistTemplateItem) (*domain.ChecklistTemplateItem, error)
+	// UpdateTemplateItem persists item_text, eol_phase and is_active.
+	UpdateTemplateItem(ctx context.Context, item *domain.ChecklistTemplateItem) error
+	// DeleteTemplateItem removes a catalogue row. Callers must refuse when
+	// progress exists; this is a hard delete of an unused item only.
+	DeleteTemplateItem(ctx context.Context, itemID int) error
+	// ReorderTemplateItems assigns item_no 1..n in the given id order.
+	ReorderTemplateItems(ctx context.Context, templateID int, itemIDs []int) error
+	// CountProgressVINs returns how many distinct vehicles have a progress
+	// row for this catalogue item (used to block DELETE).
+	CountProgressVINs(ctx context.Context, itemID int) (int, error)
 }
 
 // IssueRepository persists and queries issues.
