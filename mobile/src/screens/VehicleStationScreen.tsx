@@ -35,6 +35,8 @@ import {
   Title,
 } from '../components/ui';
 import { useTheme } from '../theme/ThemeProvider';
+import { useAuth } from '../auth/AuthProvider';
+import { Perm } from '../auth/permissions';
 import { statusColors } from '../theme/tokens';
 import type { RootStackParamList } from '../navigation/types';
 
@@ -106,6 +108,7 @@ export default function VehicleStationScreen() {
   const route = useRoute<RouteProp<RootStackParamList, 'VehicleStation'>>();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { tokens } = useTheme();
+  const { has } = useAuth();
   const vin = route.params.vin;
 
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
@@ -123,8 +126,12 @@ export default function VehicleStationScreen() {
       const [v, res, issueRes, ready] = await Promise.all([
         api.getVehicle(vin),
         api.getStationSteps(vin),
-        api.listIssues(undefined, vin).catch(() => ({ items: [] as Issue[] })),
-        api.shipmentReadiness(vin).catch(() => null),
+        has(Perm.IssueView)
+          ? api.listIssues(undefined, vin).catch(() => ({ items: [] as Issue[] }))
+          : Promise.resolve({ items: [] as Issue[] }),
+        has(Perm.ChecklistShipmentView)
+          ? api.shipmentReadiness(vin).catch(() => null)
+          : Promise.resolve(null),
       ]);
       setVehicle(v);
       setSteps(res.Items ?? []);
@@ -135,7 +142,7 @@ export default function VehicleStationScreen() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load vehicle');
     }
-  }, [vin]);
+  }, [vin, has]);
 
   useFocusEffect(
     useCallback(() => {
@@ -220,22 +227,29 @@ export default function VehicleStationScreen() {
               ))}
             </Card>
           ) : null}
-          <OutlineButton
-            label="Shipment Checklist"
-            onPress={() => navigation.navigate('ShipmentChecklist', { vin })}
-          />
-          <OutlineButton
-            label="Test Checklist"
-            onPress={() => navigation.navigate('TestChecklist', { vin })}
-          />
-          <OutlineButton
-            label="EoL Checklist"
-            onPress={() => navigation.navigate('EOLChecklist', { vin })}
-          />
+          {has(Perm.ChecklistShipmentView) ? (
+            <OutlineButton
+              label="Shipment Checklist"
+              onPress={() => navigation.navigate('ShipmentChecklist', { vin })}
+            />
+          ) : null}
+          {has(Perm.ChecklistTestView) ? (
+            <OutlineButton
+              label="Test Checklist"
+              onPress={() => navigation.navigate('TestChecklist', { vin })}
+            />
+          ) : null}
+          {has(Perm.ChecklistEOLView) ? (
+            <OutlineButton
+              label="EoL Checklist"
+              onPress={() => navigation.navigate('EOLChecklist', { vin })}
+            />
+          ) : null}
         </View>
 
         {error ? <ErrorText>{error}</ErrorText> : null}
 
+        {has(Perm.IssueView) ? (
         <View style={{ marginBottom: 16 }}>
           <Text
             style={{
@@ -261,6 +275,7 @@ export default function VehicleStationScreen() {
             ))
           )}
         </View>
+        ) : null}
 
         {stations.map((station) => {
           const openCount = openByStation[String(station.id)] ?? 0;
@@ -319,17 +334,17 @@ export default function VehicleStationScreen() {
                           selected={step.Status === 'OK'}
                           color={statusColors.ok}
                           onPress={() => void setStatus(step, 'OK')}
-                          disabled={busyId === step.ID}
+                          disabled={busyId === step.ID || !has(Perm.StationStepEdit)}
                         />
                         <StatusChoiceButton
                           label="NOT OK"
                           selected={step.Status === 'NOT_OK'}
                           color={statusColors.notOk}
                           onPress={() => void setStatus(step, 'NOT_OK')}
-                          disabled={busyId === step.ID}
+                          disabled={busyId === step.ID || !has(Perm.StationStepEdit)}
                         />
                       </View>
-                      {step.Status === 'NOT_OK' ? (
+                      {step.Status === 'NOT_OK' && has(Perm.IssueCreate) ? (
                         <View style={{ marginTop: 10 }}>
                           <OutlineButton
                             label="Report Issue"

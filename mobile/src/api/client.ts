@@ -13,7 +13,7 @@ if (__DEV__) {
   console.info('[karea] API_BASE_URL', API_BASE_URL);
 }
 
-export type UserRole = 'OPERATOR' | 'MANAGER_ADMIN';
+export type UserRole = string;
 
 export interface User {
   ID: number;
@@ -26,6 +26,7 @@ export interface User {
 export interface LoginResponse {
   token: string;
   user: User;
+  permissions: string[];
 }
 
 export interface ApiErrorBody {

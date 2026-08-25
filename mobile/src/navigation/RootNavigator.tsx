@@ -3,6 +3,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { useAuth } from '../auth/AuthProvider';
 import { useTheme } from '../theme/ThemeProvider';
+import { Perm } from '../auth/permissions';
 import type { MainDrawerParamList, RootStackParamList } from './types';
 
 import LoginScreen from '../screens/LoginScreen';
@@ -24,6 +25,7 @@ const Drawer = createDrawerNavigator<MainDrawerParamList>();
 
 function MainDrawer() {
   const { tokens } = useTheme();
+  const { has } = useAuth();
   return (
     <Drawer.Navigator
       screenOptions={{
@@ -45,16 +47,20 @@ function MainDrawer() {
         component={HomeScreen}
         options={{ title: 'Home', drawerLabel: 'Home' }}
       />
-      <Drawer.Screen
-        name="Vehicles"
-        component={VehiclesScreen}
-        options={{ title: 'Vehicles', drawerLabel: 'Vehicles' }}
-      />
-      <Drawer.Screen
-        name="MyIssues"
-        component={MyIssuesScreen}
-        options={{ title: 'Issues', drawerLabel: 'Issues' }}
-      />
+      {has(Perm.VehicleView) ? (
+        <Drawer.Screen
+          name="Vehicles"
+          component={VehiclesScreen}
+          options={{ title: 'Vehicles', drawerLabel: 'Vehicles' }}
+        />
+      ) : null}
+      {has(Perm.IssueView) ? (
+        <Drawer.Screen
+          name="MyIssues"
+          component={MyIssuesScreen}
+          options={{ title: 'Issues', drawerLabel: 'Issues' }}
+        />
+      ) : null}
       <Drawer.Screen
         name="Profile"
         component={ProfileScreen}
@@ -65,7 +71,7 @@ function MainDrawer() {
 }
 
 export function RootNavigator() {
-  const { isAuthenticated, isOperator } = useAuth();
+  const { isAuthenticated, has } = useAuth();
   const { mode, tokens } = useTheme();
 
   const navTheme = {
@@ -95,7 +101,7 @@ export function RootNavigator() {
             component={LoginScreen}
             options={{ headerShown: false }}
           />
-        ) : !isOperator ? (
+        ) : !has(Perm.MobileAccess) ? (
           <Stack.Screen
             name="Unauthorized"
             component={UnauthorizedScreen}

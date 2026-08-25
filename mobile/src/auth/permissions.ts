@@ -1,0 +1,17 @@
+export const Perm = {
+  MobileAccess: 'mobile.access',
+  WebAccess: 'web.access',
+  VehicleView: 'vehicle.view',
+  StationStepEdit: 'station.step.edit',
+  ChecklistTestView: 'checklist.test.view',
+  ChecklistTestEdit: 'checklist.test.edit',
+  ChecklistShipmentView: 'checklist.shipment.view',
+  ChecklistShipmentEdit: 'checklist.shipment.edit',
+  ChecklistEOLView: 'checklist.eol.view',
+  ChecklistEOLEdit: 'checklist.eol.edit',
+  IssueView: 'issue.view',
+  IssueCreate: 'issue.create',
+  IssueTransitionProgress: 'issue.transition.progress',
+  IssueTransitionApprove: 'issue.transition.approve',
+  IssueTransitionConditionalApprove: 'issue.transition.conditional_approve',
+} as const;

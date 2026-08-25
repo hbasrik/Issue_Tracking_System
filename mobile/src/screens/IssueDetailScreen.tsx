@@ -32,6 +32,8 @@ import {
 } from '../components/ui';
 import { SeverityIndicator } from '../components/SeverityIndicator';
 import { useTheme } from '../theme/ThemeProvider';
+import { useAuth } from '../auth/AuthProvider';
+import { Perm } from '../auth/permissions';
 import { issueStatusColor, issueStatusLabel } from '../lib/issueStatus';
 import type { RootStackParamList } from '../navigation/types';
 
@@ -51,6 +53,7 @@ function formatDate(iso?: string): string {
 export default function IssueDetailScreen() {
   const route = useRoute<RouteProp<RootStackParamList, 'IssueDetail'>>();
   const { tokens } = useTheme();
+  const { has } = useAuth();
   const [issue, setIssue] = useState<Issue | null>(null);
   const [history, setHistory] = useState<IssueStatusHistoryEntry[]>([]);
   const [reportPhotos, setReportPhotos] = useState<MediaAttachment[]>([]);
@@ -202,8 +205,25 @@ export default function IssueDetailScreen() {
 
   if (!issue && !error) return <Loading />;
 
+  async function applyStatus(status: Issue['Status']) {
+    if (!issue) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await api.updateIssueStatus(issue.ID, status);
+      await load();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : String(err));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   const next = issue ? nextOperatorStatus(issue.Status) : null;
-  const canMarkDone = issue?.Status === 'IN_PROGRESS';
+  const canMarkDone = issue?.Status === 'IN_PROGRESS' && has(Perm.IssueTransitionProgress);
+  const canApprove = issue?.Status === 'DONE' && has(Perm.IssueTransitionApprove);
+  const canConditional =
+    issue?.Status === 'DONE' && has(Perm.IssueTransitionConditionalApprove);
 
   return (
     <Screen padded={false}>
@@ -372,7 +392,7 @@ export default function IssueDetailScreen() {
               </>
             )}
 
-            {next === 'IN_PROGRESS' ? (
+            {next === 'IN_PROGRESS' && has(Perm.IssueTransitionProgress) ? (
               <View style={{ marginTop: 20 }}>
                 <PrimaryButton
                   label={busy ? 'Güncelleniyor…' : 'İşlemde'}
@@ -520,12 +540,34 @@ export default function IssueDetailScreen() {
               </View>
             ) : null}
 
-            {!next && !canMarkDone ? (
-              <Subtitle>
-                {issue.Status === 'DONE'
-                  ? 'Kalite Onay / Şartlı Onay bekleniyor (burada yapılamaz)'
-                  : 'Operatör için başka geçiş yok'}
-              </Subtitle>
+            {canApprove || canConditional ? (
+              <View style={{ marginTop: 20, gap: 8 }}>
+                {canApprove ? (
+                  <PrimaryButton
+                    label={busy ? 'Güncelleniyor…' : 'Kalite Onay'}
+                    onPress={() => void applyStatus('APPROVED')}
+                    disabled={busy}
+                  />
+                ) : null}
+                {canConditional ? (
+                  <OutlineButton
+                    label={busy ? 'Güncelleniyor…' : 'Şartlı Onay'}
+                    onPress={() => {
+                      if (!busy) void applyStatus('CONDITIONAL_APPROVED');
+                    }}
+                  />
+                ) : null}
+              </View>
+            ) : null}
+
+            {!has(Perm.IssueTransitionProgress) &&
+            !has(Perm.IssueTransitionApprove) &&
+            !has(Perm.IssueTransitionConditionalApprove) ? (
+              <Subtitle>Bu issue için yetkili bir işlem yok</Subtitle>
+            ) : issue.Status === 'DONE' && !canApprove && !canConditional ? (
+              <Subtitle>Kalite Onay / Şartlı Onay bekleniyor</Subtitle>
+            ) : !next && !canMarkDone && !canApprove && !canConditional ? (
+              <Subtitle>Bu issue için başka geçiş yok</Subtitle>
             ) : null}
           </>
         ) : null}

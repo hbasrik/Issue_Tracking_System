@@ -16,6 +16,7 @@ import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { api, type Vehicle } from '../api/client';
 import { useAuth } from '../auth/AuthProvider';
+import { Perm } from '../auth/permissions';
 import { DurumOverview } from '../components/DurumOverview';
 import { VehicleSearchPanel } from '../components/VehicleSearchPanel';
 import {
@@ -68,7 +69,7 @@ function statCardColor(key: HomeIssueStatKey): string {
  */
 export default function HomeScreen() {
   const navigation = useNavigation<HomeNavigation>();
-  const { user, token } = useAuth();
+  const { user, token, has } = useAuth();
   const { tokens } = useTheme();
   const [counts, setCounts] = useState<Record<HomeIssueStatKey, number>>({
     open: 0,
@@ -82,7 +83,7 @@ export default function HomeScreen() {
   const [statsKey, setStatsKey] = useState(0);
 
   const loadStats = useCallback(async () => {
-    if (!token) return;
+    if (!token || !has(Perm.IssueView)) return;
     try {
       const res = await api.listIssues();
       const items = res.items ?? [];
@@ -108,7 +109,7 @@ export default function HomeScreen() {
         console.warn('[karea] home stats failed', err);
       }
     }
-  }, [token]);
+  }, [token, has]);
 
   useFocusEffect(
     useCallback(() => {
@@ -149,6 +150,7 @@ export default function HomeScreen() {
           <Subtitle>{user?.FullName ?? 'Operator'}</Subtitle>
         </View>
 
+        {has(Perm.IssueCreate) ? (
         <View style={{ marginTop: 20 }}>
           <PrimaryButton
             label="Issue Bildir"
@@ -158,7 +160,9 @@ export default function HomeScreen() {
             Bağımsız issue bildirimi — istasyon adımına bağlı değil
           </Subtitle>
         </View>
+        ) : null}
 
+        {has(Perm.VehicleView) ? (
         <View style={{ marginTop: 20 }}>
           <Text
             style={{
@@ -172,7 +176,9 @@ export default function HomeScreen() {
           </Text>
           <VehicleSearchPanel onSelect={openVehicle} />
         </View>
+        ) : null}
 
+        {has(Perm.IssueView) ? (
         <View
           style={{
             flexDirection: 'row',
@@ -216,10 +222,13 @@ export default function HomeScreen() {
             );
           })}
         </View>
+        ) : null}
 
+        {has(Perm.VehicleView) ? (
         <View style={{ marginTop: 8 }} key={statsKey}>
           <DurumOverview />
         </View>
+        ) : null}
       </ScrollView>
     </Screen>
   );

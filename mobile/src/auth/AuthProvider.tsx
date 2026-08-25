@@ -8,22 +8,18 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import {
-  api,
-  setTokenGetter,
-  type User,
-  type UserRole,
-} from '../api/client';
+import { api, setTokenGetter, type User } from '../api/client';
 
 interface AuthContextValue {
   user: User | null;
   token: string | null;
+  permissions: string[];
   isAuthenticated: boolean;
-  isOperator: boolean;
-  activeStationId: number | null;
-  setActiveStationId: (id: number | null) => void;
+  has: (code: string) => boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
+  activeStationId: number | null;
+  setActiveStationId: (id: number | null) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -32,44 +28,48 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
+  const [permissions, setPermissions] = useState<string[]>([]);
   const [activeStationId, setActiveStationId] = useState<number | null>(null);
   const tokenRef = useRef<string | null>(null);
   tokenRef.current = token;
 
-  // Layout (not paint-deferred useEffect) so Home's useFocusEffect never
-  // races an empty getter. This runs on mount with token=null — it does
-  // not await and does not restore a stored session.
   useLayoutEffect(() => {
     setTokenGetter(() => tokenRef.current);
   }, [token]);
 
   const login = useCallback(async (email: string, password: string) => {
     const res = await api.login(email, password);
-    // Bind before React re-renders Home; useLayoutEffect also refreshes the
-    // getter, but this covers the same tick as setState.
     setTokenGetter(() => res.token);
     setToken(res.token);
     setUser(res.user);
+    setPermissions(res.permissions ?? []);
   }, []);
 
   const logout = useCallback(() => {
     setToken(null);
     setUser(null);
+    setPermissions([]);
     setActiveStationId(null);
   }, []);
+
+  const has = useCallback(
+    (code: string) => permissions.includes(code),
+    [permissions],
+  );
 
   const value = useMemo(
     () => ({
       user,
       token,
+      permissions,
       isAuthenticated: !!token && !!user,
-      isOperator: user?.Role === ('OPERATOR' as UserRole),
-      activeStationId,
-      setActiveStationId,
+      has,
       login,
       logout,
+      activeStationId,
+      setActiveStationId,
     }),
-    [user, token, activeStationId, login, logout],
+    [user, token, permissions, has, login, logout, activeStationId],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
