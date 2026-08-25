@@ -1,9 +1,9 @@
 import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
+  Keyboard,
   Pressable,
   RefreshControl,
-  ScrollView,
   Text,
   View,
 } from 'react-native';
@@ -18,6 +18,7 @@ import { api, type Vehicle } from '../api/client';
 import { useAuth } from '../auth/AuthProvider';
 import { Perm } from '../auth/permissions';
 import { DurumOverview } from '../components/DurumOverview';
+import { DismissKeyboardScrollView } from '../components/keyboard';
 import { VehicleSearchPanel } from '../components/VehicleSearchPanel';
 import {
   Card,
@@ -126,16 +127,18 @@ export default function HomeScreen() {
   }
 
   function openVehicle(v: Vehicle) {
+    Keyboard.dismiss();
     navigation.navigate('VehicleStation', { vin: v.VIN });
   }
 
   function openStat(key: HomeIssueStatKey) {
+    Keyboard.dismiss();
     navigation.navigate('MyIssues', { homeStat: key });
   }
 
   return (
     <Screen padded={false}>
-      <ScrollView
+      <DismissKeyboardScrollView
         contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
         refreshControl={
           <RefreshControl
@@ -229,7 +232,7 @@ export default function HomeScreen() {
           <DurumOverview />
         </View>
         ) : null}
-      </ScrollView>
+      </DismissKeyboardScrollView>
     </Screen>
   );
 }
