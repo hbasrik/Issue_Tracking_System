@@ -328,7 +328,7 @@ export default function IssuesPage() {
               style={{ borderColor: 'var(--border)' }}
             />
           </div>
-          <div className="shrink-0">
+          <div className="max-w-full shrink-0">
             <p
               className="mb-2 text-[13px] font-semibold"
               style={{ color: 'var(--text-secondary)' }}
@@ -355,7 +355,7 @@ export default function IssuesPage() {
         </div>
 
         <div className="flex flex-wrap items-start gap-x-6 gap-y-3">
-          <div className="shrink-0">
+          <div className="max-w-full shrink-0">
             <p
               className="mb-2 text-[13px] font-semibold"
               style={{ color: 'var(--text-secondary)' }}
@@ -380,7 +380,7 @@ export default function IssuesPage() {
               })}
             </div>
           </div>
-          <div className="shrink-0">
+          <div className="max-w-full shrink-0">
             <p
               className="mb-2 text-[13px] font-semibold"
               style={{ color: 'var(--text-secondary)' }}
