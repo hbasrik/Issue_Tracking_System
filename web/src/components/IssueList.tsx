@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import {
   api,
@@ -14,7 +14,6 @@ import { IssueActions } from './IssueActions';
 import { MediaGallery } from './MediaGallery';
 import { VehicleIdentity } from './VehicleIdentity';
 import { DataCard, DataCardField } from './DataCard';
-import { useIsDesktop, useIsWide } from '../lib/useMediaQuery';
 import { IssueStatusHistory } from './IssueStatusHistory';
 import { SectionHeading } from './SectionHeading';
 import {
@@ -131,14 +130,13 @@ export function IssueDetailPanel({
   issue,
   onStatusChanged,
 }: {
-  issue: Issue | null;
+  issue: Issue;
   onStatusChanged?: () => void;
 }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function transition(status: string) {
-    if (!issue) return;
     setBusy(true);
     setError(null);
     try {
@@ -153,68 +151,83 @@ export function IssueDetailPanel({
 
   return (
     <div
-      className="rounded-xl border bg-[var(--bg-surface-1)] p-[var(--space-4)] sm:p-[var(--space-5)]"
-      style={{ borderColor: 'var(--border)' }}
+      className="flex flex-col gap-[var(--space-4)] rounded-xl p-[var(--space-3)] sm:p-[var(--space-4)]"
+      style={{
+        backgroundColor: 'var(--bg-surface-2)',
+        border: '1px solid var(--border)',
+      }}
     >
-      <h2 className="text-lg font-semibold">{issueDetailCopy.panelTitle}</h2>
-      {!issue && (
-        <p className="mt-[var(--space-2)] text-[15px] text-[var(--text-secondary)]">
-          {issueDetailCopy.empty}
-        </p>
-      )}
       {error && (
-        <p className="mt-[var(--space-3)] text-[13px]" style={{ color: 'var(--status-not-ok)' }}>
+        <p className="text-[13px]" style={{ color: 'var(--status-not-ok)' }}>
           {error}
         </p>
       )}
-      {issue && (
-        <div className="mt-[var(--space-4)] flex flex-col gap-[var(--space-5)] text-[15px]">
-          <VehicleIdentity vin={issue.VIN} variant="hero" />
-
-          <div className="flex flex-wrap items-center gap-[var(--space-2)]">
-            <SeverityIndicator severity={issue.Severity} />
-            <StatusBadge kind="issue" value={issue.Status} />
-          </div>
-
-          <p className="break-words text-[17px] font-medium leading-relaxed">
-            {issue.Description}
-          </p>
-
+      <DetailBlock>
+        <VehicleIdentity vin={issue.VIN} variant="hero" />
+        <div className="mt-[var(--space-4)] flex flex-wrap items-center gap-[var(--space-2)]">
+          <SeverityIndicator severity={issue.Severity} />
+          <StatusBadge kind="issue" value={issue.Status} />
+        </div>
+        <p className="mt-[var(--space-5)] break-words text-[17px] font-medium leading-relaxed">
+          {issue.Description}
+        </p>
+        <div className="mt-[var(--space-5)]">
           <IssueInfoFields issue={issue} />
-
+        </div>
+        <div className="mt-[var(--space-5)]">
           <IssueActions
             status={issue.Status}
             busy={busy}
             onTransition={(status) => void transition(status)}
           />
-
-          <div className="flex flex-col gap-[var(--space-3)]">
-            <SectionHeading>{issueDetailCopy.history}</SectionHeading>
-            <IssueStatusHistory issueId={issue.ID} hideTitle />
-          </div>
-
-          <div className="flex flex-col gap-[var(--space-4)]">
-            <SectionHeading>{issueDetailCopy.photos}</SectionHeading>
-            <MediaGallery
-              entityType="ISSUE"
-              entityId={String(issue.ID)}
-              heading={issueDetailCopy.reportPhotos}
-            />
-            <MediaGallery
-              entityType="ISSUE_RESOLUTION"
-              entityId={String(issue.ID)}
-              heading={issueDetailCopy.resolutionPhotos}
-            />
-          </div>
         </div>
-      )}
+      </DetailBlock>
+      <DetailBlock heading={issueDetailCopy.history}>
+        <IssueStatusHistory issueId={issue.ID} hideTitle />
+      </DetailBlock>
+      <DetailBlock heading={issueDetailCopy.photos}>
+        <div className="flex flex-col gap-[var(--space-4)]">
+          <MediaGallery
+            entityType="ISSUE"
+            entityId={String(issue.ID)}
+            heading={issueDetailCopy.reportPhotos}
+          />
+          <MediaGallery
+            entityType="ISSUE_RESOLUTION"
+            entityId={String(issue.ID)}
+            heading={issueDetailCopy.resolutionPhotos}
+          />
+        </div>
+      </DetailBlock>
+    </div>
+  );
+}
+
+function DetailBlock({
+  heading,
+  children,
+}: {
+  heading?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div
+      className="rounded-xl border bg-[var(--bg-surface-1)] p-[var(--space-4)] sm:p-[var(--space-5)]"
+      style={{ borderColor: 'var(--border)' }}
+    >
+      {heading ? (
+        <div className="mb-[var(--space-3)]">
+          <SectionHeading>{heading}</SectionHeading>
+        </div>
+      ) : null}
+      {children}
     </div>
   );
 }
 
 /**
- * Clickable issue cards + detail. Desktop (≥1024px): list/table with a side
- * panel. Phone and tablet: accordion — detail expands under the clicked card.
+ * Clickable issue cards / table. Detail always expands under the clicked
+ * row (accordion) — same pattern on every viewport.
  */
 export function IssueList({
   items,
@@ -227,10 +240,7 @@ export function IssueList({
   hideVin?: boolean;
   onStatusChanged?: () => void;
 }) {
-  const isDesktop = useIsDesktop();
-  const isWide = useIsWide();
   const [selectedId, setSelectedId] = useState<number | null>(null);
-  const selected = items.find((r) => r.ID === selectedId) ?? null;
 
   useEffect(() => {
     if (selectedId != null && !items.some((r) => r.ID === selectedId)) {
@@ -239,117 +249,135 @@ export function IssueList({
   }, [items, selectedId]);
 
   function toggle(id: number) {
-    setSelectedId((cur) => (cur === id && !isDesktop ? null : id));
+    setSelectedId((cur) => (cur === id ? null : id));
   }
 
-  const detail = (
-    <IssueDetailPanel issue={selected} onStatusChanged={onStatusChanged} />
-  );
+  const colCount = hideVin ? 6 : 7;
 
   return (
-    <div
-      className={`grid gap-4 ${isWide ? 'grid-cols-[minmax(0,1fr)_minmax(22rem,26rem)]' : ''}`}
-    >
-      <div className="min-w-0">
-        <div className="space-y-3 lg:hidden">
-          {items.length === 0 && (
-            <p className="text-[15px] text-[var(--text-secondary)]">{emptyLabel}</p>
-          )}
-          {items.map((r) => (
-            <div key={r.ID}>
-              <DataCard selected={selectedId === r.ID} onClick={() => toggle(r.ID)}>
-                <IssueCardSummary issue={r} hideVin={hideVin} />
-              </DataCard>
-              {selectedId === r.ID && !isDesktop && (
-                <div className="mt-2">{detail}</div>
-              )}
-            </div>
-          ))}
-        </div>
-
-        <div
-          className="hidden overflow-x-auto rounded-xl border bg-[var(--bg-surface-1)] lg:block"
-          style={{ borderColor: 'var(--border)' }}
-        >
-          <table className="w-full min-w-[42rem] text-left text-[15px]">
-            <thead>
-              <tr
-                className="border-b text-[13px] text-[var(--text-secondary)]"
-                style={{ borderColor: 'var(--border)' }}
-              >
-                <th className="whitespace-nowrap px-3 py-3">Fotoğraflar</th>
-                <th className="whitespace-nowrap px-3 py-3">ID</th>
-                <th className="whitespace-nowrap px-3 py-3">Bildirim tarihi</th>
-                {!hideVin && (
-                  <th className="whitespace-nowrap px-3 py-3">VIN</th>
-                )}
-                <th className="whitespace-nowrap px-3 py-3">Severity</th>
-                <th className="whitespace-nowrap px-3 py-3">Durum</th>
-                <th className="whitespace-nowrap px-3 py-3">Bildiren</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.length === 0 && (
-                <tr>
-                  <td
-                    colSpan={hideVin ? 6 : 7}
-                    className="px-3 py-6 text-[var(--text-secondary)]"
-                  >
-                    {emptyLabel}
-                  </td>
-                </tr>
-              )}
-              {items.map((r) => (
-                <tr
-                  key={r.ID}
-                  className="cursor-pointer border-t hover:bg-[var(--bg-surface-2)]"
-                  style={{
-                    borderColor: 'var(--border)',
-                    backgroundColor:
-                      selectedId === r.ID ? 'var(--bg-surface-2)' : undefined,
-                  }}
-                  onClick={() => toggle(r.ID)}
-                >
-                  <td className="px-3 py-3">
-                    <IssueThumb path={r.ReportPhotoPath} />
-                  </td>
-                  <td className="whitespace-nowrap px-3 py-3">#{r.ID}</td>
-                  <td className="whitespace-nowrap px-3 py-3 text-[13px] tabular-nums text-[var(--text-secondary)]">
-                    {formatIssueListAt(r.CreatedAt || r.IssueDate)}
-                  </td>
-                  {!hideVin && (
-                    <td className="whitespace-nowrap px-3 py-3">
-                      <Link
-                        to={`/vehicles/${r.VIN}?tab=issues`}
-                        className="text-[var(--accent)] hover:underline"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        …{r.VIN.slice(-5)}
-                      </Link>
-                    </td>
-                  )}
-                  <td className="whitespace-nowrap px-3 py-3">
-                    <SeverityIndicator severity={r.Severity} />
-                  </td>
-                  <td className="whitespace-nowrap px-3 py-3">
-                    <StatusBadge kind="issue" value={r.Status} />
-                  </td>
-                  <td className="whitespace-nowrap px-3 py-3 text-[13px] text-[var(--text-primary)]">
-                    {r.ReporterName || `kullanıcı #${r.IssueReporterID}`}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+    <div className="min-w-0">
+      <div className="space-y-3 lg:hidden">
+        {items.length === 0 && (
+          <p className="text-[15px] text-[var(--text-secondary)]">{emptyLabel}</p>
+        )}
+        {items.map((r) => (
+          <div key={r.ID}>
+            <DataCard selected={selectedId === r.ID} onClick={() => toggle(r.ID)}>
+              <IssueCardSummary issue={r} hideVin={hideVin} />
+            </DataCard>
+            {selectedId === r.ID && (
+              <div className="mt-2">
+                <IssueDetailPanel issue={r} onStatusChanged={onStatusChanged} />
+              </div>
+            )}
+          </div>
+        ))}
       </div>
 
-      {isWide && (
-        <div className="sticky top-4 min-w-0 self-start">{detail}</div>
-      )}
-      {isDesktop && !isWide && selected && (
-        <div className="min-w-0">{detail}</div>
-      )}
+      <div
+        className="hidden overflow-x-auto rounded-xl border bg-[var(--bg-surface-1)] lg:block"
+        style={{ borderColor: 'var(--border)' }}
+      >
+        <table className="w-full min-w-[42rem] text-left text-[15px]">
+          <thead>
+            <tr
+              className="border-b text-[13px] text-[var(--text-secondary)]"
+              style={{ borderColor: 'var(--border)' }}
+            >
+              <th className="whitespace-nowrap px-3 py-3">Fotoğraflar</th>
+              <th className="whitespace-nowrap px-3 py-3">ID</th>
+              <th className="whitespace-nowrap px-3 py-3">Bildirim tarihi</th>
+              {!hideVin && (
+                <th className="whitespace-nowrap px-3 py-3">VIN</th>
+              )}
+              <th className="whitespace-nowrap px-3 py-3">Severity</th>
+              <th className="whitespace-nowrap px-3 py-3">Durum</th>
+              <th className="whitespace-nowrap px-3 py-3">Bildiren</th>
+            </tr>
+          </thead>
+          <tbody>
+            {items.length === 0 && (
+              <tr>
+                <td
+                  colSpan={colCount}
+                  className="px-3 py-6 text-[var(--text-secondary)]"
+                >
+                  {emptyLabel}
+                </td>
+              </tr>
+            )}
+            {items.map((r) => {
+              const open = selectedId === r.ID;
+              return (
+                <Fragment key={r.ID}>
+                  <tr
+                    className="cursor-pointer border-t hover:bg-[var(--bg-surface-2)]"
+                    style={{
+                      borderColor: 'var(--border)',
+                      backgroundColor: open ? 'var(--bg-surface-2)' : undefined,
+                      boxShadow: open
+                        ? 'inset 3px 0 0 var(--accent)'
+                        : undefined,
+                    }}
+                    onClick={() => toggle(r.ID)}
+                    aria-expanded={open}
+                  >
+                    <td className="px-3 py-3">
+                      <IssueThumb path={r.ReportPhotoPath} />
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-3">#{r.ID}</td>
+                    <td className="whitespace-nowrap px-3 py-3 text-[13px] tabular-nums text-[var(--text-secondary)]">
+                      {formatIssueListAt(r.CreatedAt || r.IssueDate)}
+                    </td>
+                    {!hideVin && (
+                      <td className="whitespace-nowrap px-3 py-3">
+                        <Link
+                          to={`/vehicles/${r.VIN}?tab=issues`}
+                          className="text-[var(--accent)] hover:underline"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          …{r.VIN.slice(-5)}
+                        </Link>
+                      </td>
+                    )}
+                    <td className="whitespace-nowrap px-3 py-3">
+                      <SeverityIndicator severity={r.Severity} />
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-3">
+                      <StatusBadge kind="issue" value={r.Status} />
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-3 text-[13px] text-[var(--text-primary)]">
+                      {r.ReporterName || `kullanıcı #${r.IssueReporterID}`}
+                    </td>
+                  </tr>
+                  {open && (
+                    <tr>
+                      <td
+                        colSpan={colCount}
+                        className="px-3 pb-3 pt-0"
+                        style={{
+                          backgroundColor: 'var(--bg-page)',
+                          borderColor: 'var(--border)',
+                        }}
+                      >
+                        <div
+                          className="pt-3"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <IssueDetailPanel
+                            issue={r}
+                            onStatusChanged={onStatusChanged}
+                          />
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </Fragment>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
