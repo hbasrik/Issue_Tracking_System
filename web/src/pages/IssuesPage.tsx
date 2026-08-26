@@ -17,10 +17,8 @@ import {
 import { useTheme } from '../theme/ThemeProvider';
 import {
   brandColors,
-  chipSelectedInk,
   inkOn,
   readableOn,
-  selectedChipFill,
   tokensFor,
 } from '../theme/tokens';
 import {
@@ -39,6 +37,12 @@ import {
 type IssueStatus = Issue['Status'];
 
 const SEVERITIES: SeverityLevel[] = ['CRITICAL', 'MEDIUM', 'LOW'];
+
+const SEVERITY_LABELS: Record<SeverityLevel, string> = {
+  CRITICAL: 'Kritik',
+  MEDIUM: 'Orta',
+  LOW: 'Düşük',
+};
 
 const STATUSES: { value: IssueStatus; label: string }[] = [
   { value: 'OPEN', label: 'Açık' },
@@ -344,8 +348,8 @@ export default function IssuesPage() {
                     key={t.ID}
                     type="button"
                     onClick={() => toggleType(t.ID)}
-                    className={CHIP_CLASS}
-                    style={chipStyle(selected, brandColors.primary, pageBg)}
+                    className={TYPE_CHIP_CLASS}
+                    style={typeChipStyle(selected)}
                   >
                     {issueTypeChipLabel(t.Name)}
                   </button>
@@ -389,19 +393,19 @@ export default function IssuesPage() {
               {SEVERITIES.map((s) => {
                 const selected = !homeStat && !analysisStat && severities.has(s);
                 const color = severityFillColor(s);
-                const ink = selected
-                  ? chipSelectedInk
-                  : readableOn(color, pageBg);
+                const name = SEVERITY_LABELS[s];
                 return (
                   <button
                     key={s}
                     type="button"
                     onClick={() => toggleSeverity(s)}
-                    className={CHIP_CLASS}
-                    style={severityChipStyle(selected, color, pageBg)}
+                    className={SEVERITY_CHIP_CLASS}
+                    style={severityChipStyle(selected, color)}
+                    aria-label={name}
+                    aria-pressed={selected}
+                    title={name}
                   >
-                    <SeverityIndicator severity={s} ink={ink} />
-                    <span>{s}</span>
+                    <SeverityIndicator severity={s} decorative />
                   </button>
                 );
               })}
@@ -426,6 +430,12 @@ export default function IssuesPage() {
 const CHIP_CLASS =
   'inline-flex min-h-[36px] items-center gap-1.5 rounded-full border px-3 text-[12px] font-semibold outline-none focus-visible:[box-shadow:0_0_0_2px_var(--chip-focus)]';
 
+const TYPE_CHIP_CLASS =
+  'inline-flex min-h-[36px] items-center rounded-full px-3 text-[12px] font-semibold outline-none focus-visible:[box-shadow:0_0_0_2px_var(--chip-focus)]';
+
+const SEVERITY_CHIP_CLASS =
+  'inline-flex min-h-touch min-w-touch items-center justify-center rounded-full px-2.5 outline-none focus-visible:[box-shadow:0_0_0_2px_var(--chip-focus)]';
+
 function chipStyle(
   selected: boolean,
   color: string,
@@ -442,27 +452,24 @@ function chipStyle(
   };
 }
 
-function severityChipStyle(
-  selected: boolean,
-  color: string,
-  pageBg: string,
-): CSSProperties {
-  if (!selected) {
-    return {
-      borderColor: color,
-      backgroundColor: pageBg,
-      color: readableOn(color, pageBg),
-      outline: 'none',
-      ['--chip-focus' as string]: color,
-    };
-  }
-  const fill = selectedChipFill(color);
+function typeChipStyle(selected: boolean): CSSProperties {
   return {
-    borderColor: 'transparent',
-    backgroundColor: fill,
-    color: chipSelectedInk,
+    border: 'none',
+    backgroundColor: selected ? 'var(--bg-surface-2)' : 'transparent',
+    color: selected ? 'var(--text-primary)' : 'var(--text-secondary)',
     outline: 'none',
-    ['--chip-focus' as string]: fill,
+    ['--chip-focus' as string]: 'var(--text-secondary)',
+  };
+}
+
+function severityChipStyle(selected: boolean, color: string): CSSProperties {
+  return {
+    border: 'none',
+    backgroundColor: selected
+      ? `color-mix(in srgb, ${color} 22%, var(--bg-surface-1))`
+      : 'transparent',
+    outline: 'none',
+    ['--chip-focus' as string]: color,
   };
 }
 

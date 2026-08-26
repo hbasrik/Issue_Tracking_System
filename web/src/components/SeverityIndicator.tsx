@@ -41,6 +41,8 @@ interface SeverityIndicatorProps {
   label?: string;
   /** Bar + count ink — pass the same color as surrounding chip text. */
   ink?: string;
+  /** Parent already names the control — hide bars from the accessibility tree. */
+  decorative?: boolean;
 }
 
 /**
@@ -53,6 +55,7 @@ export function SeverityIndicator({
   className = '',
   label,
   ink,
+  decorative = false,
 }: SeverityIndicatorProps) {
   const level = normalizeSeverity(severity);
   const filled = level ? FILLED[level] : 0;
@@ -67,9 +70,10 @@ export function SeverityIndicator({
     <span
       className={`inline-flex items-end gap-0.5 align-middle ${className}`}
       style={{ gap: SEVERITY_BAR.gap }}
-      role="img"
-      aria-label={aria}
-      title={aria}
+      role={decorative ? undefined : 'img'}
+      aria-hidden={decorative || undefined}
+      aria-label={decorative ? undefined : aria}
+      title={decorative ? undefined : aria}
     >
       {SEVERITY_BAR.heights.map((h, i) => (
         <span

@@ -137,24 +137,6 @@ export function contrastAgainst(fg: string, bg: string): number {
   return contrastRatio(fg, bg);
 }
 
-/** White ink on filled severity chips — same across CRITICAL / MEDIUM / LOW. */
-export const chipSelectedInk = mixTowardWhite(brandColors.primary, 100);
-
-/**
- * Fill for a selected severity chip: keep `color` if white text meets AA,
- * otherwise darken toward black until it does.
- */
-export function selectedChipFill(color: string): string {
-  if (contrastRatio(chipSelectedInk, color) >= 4.5) return color;
-  const hex = toHex(color);
-  if (!hex) return color;
-  for (let p = 5; p <= 85; p += 5) {
-    const darker = mixTowardBlack(hex, p);
-    if (contrastRatio(chipSelectedInk, darker) >= 4.5) return darker;
-  }
-  return mixTowardBlack(hex, 85);
-}
-
 /** White or ink on `bg` — pick the one that meets WCAG AA against the fill. */
 export function inkOn(bg: string): string {
   const rgb = parseRgb(bg);
