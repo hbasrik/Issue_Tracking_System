@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { api, mediaFileUrl, type Issue, type MediaAttachment } from '../lib/api';
+import { api, mediaFileUrl, type Issue, type IssueType, type MediaAttachment } from '../lib/api';
 import { IssueList } from '../components/IssueList';
 import { issueMatchesListQuery } from '../lib/issueVinFilter';
+import { issueTypeChipLabel } from '../lib/issueTypeLabel';
 import {
   HOME_ISSUE_STAT_LABELS,
   isHomeIssueStatKey,
@@ -51,6 +52,8 @@ export default function IssuesPage() {
   const analysisTo = searchParams.get('to') ?? undefined;
 
   const [listQuery, setListQuery] = useState('');
+  const [issueTypes, setIssueTypes] = useState<IssueType[]>([]);
+  const [typeIds, setTypeIds] = useState<Set<number>>(new Set());
   const [severities, setSeverities] = useState<Set<SeverityLevel>>(new Set());
   const [statuses, setStatuses] = useState<Set<string>>(new Set());
   const [items, setItems] = useState<Issue[]>([]);
@@ -61,7 +64,10 @@ export default function IssuesPage() {
   const load = useCallback(async () => {
     setError(null);
     try {
-      const res = await api.listIssues();
+      const [res, typesRes] = await Promise.all([
+        api.listIssues(),
+        api.listIssueTypes().catch(() => ({ items: [] as IssueType[] })),
+      ]);
       const list = (res.items ?? []).slice().sort((a, b) => {
         const ta = Date.parse(a.CreatedAt || a.IssueDate || '') || 0;
         const tb = Date.parse(b.CreatedAt || b.IssueDate || '') || 0;
@@ -69,6 +75,7 @@ export default function IssuesPage() {
         return b.ID - a.ID;
       });
       setItems(list);
+      setIssueTypes(typesRes.items ?? []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load issues');
       setItems([]);
@@ -91,6 +98,16 @@ export default function IssuesPage() {
       },
       { replace: true },
     );
+  }
+
+  function toggleType(id: number) {
+    if (homeStat || analysisStat) clearHomeStat();
+    setTypeIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
   }
 
   function toggleSeverity(s: SeverityLevel) {
@@ -130,6 +147,11 @@ export default function IssuesPage() {
         if (!issueMatchesListQuery(issue, listQuery)) {
           return false;
         }
+        if (typeIds.size > 0) {
+          if (issue.IssueTypeID == null || !typeIds.has(issue.IssueTypeID)) {
+            return false;
+          }
+        }
         if (severities.size > 0 && !severities.has(issue.Severity as SeverityLevel)) {
           return false;
         }
@@ -138,7 +160,7 @@ export default function IssuesPage() {
         }
         return true;
       }),
-    [items, listQuery, homeStat, homeStatNow, analysisStat, analysisFrom, analysisTo, severities, statuses],
+    [items, listQuery, homeStat, homeStatNow, analysisStat, analysisFrom, analysisTo, typeIds, severities, statuses],
   );
 
   async function attachmentsFor(issues: Issue[]) {
@@ -300,6 +322,39 @@ export default function IssuesPage() {
             className="mt-1 w-full rounded-lg border bg-[var(--bg-surface-1)] px-3 py-2 text-[15px] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] outline-none focus:border-[var(--accent)]"
             style={{ borderColor: 'var(--border)' }}
           />
+        </div>
+
+        <div>
+          <p
+            className="mb-2 text-[13px] font-semibold"
+            style={{ color: 'var(--text-secondary)' }}
+          >
+            Tür
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {issueTypes.map((t) => {
+              const selected = !homeStat && !analysisStat && typeIds.has(t.ID);
+              return (
+                <button
+                  key={t.ID}
+                  type="button"
+                  onClick={() => toggleType(t.ID)}
+                  className="min-h-[36px] rounded-full border px-3 text-[12px] font-semibold"
+                  style={{
+                    borderColor: selected ? 'var(--accent)' : 'var(--border)',
+                    backgroundColor: selected
+                      ? 'var(--bg-surface-2)'
+                      : 'var(--bg-surface-1)',
+                    color: selected
+                      ? 'var(--accent)'
+                      : 'var(--text-secondary)',
+                  }}
+                >
+                  {issueTypeChipLabel(t.Name)}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         <div>
