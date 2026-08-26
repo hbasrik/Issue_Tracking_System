@@ -95,12 +95,17 @@ button:not(:disabled),
     filter 120ms ease;
 }
 
-button:not(:disabled):hover,
+button:not(:disabled):not(.rounded-full):hover,
 [role='button']:hover {
   background-image: linear-gradient(
     color-mix(in srgb, var(--text-primary) 7%, transparent),
     color-mix(in srgb, var(--text-primary) 7%, transparent)
   );
+}
+
+button.rounded-full:hover {
+  background-image: none;
+  filter: brightness(0.97);
 }
 
 button:not(:disabled):focus-visible,
