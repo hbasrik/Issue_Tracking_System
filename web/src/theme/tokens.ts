@@ -133,6 +133,28 @@ function toHex(color: string): string | null {
   return `#${rgb.map((n) => n.toString(16).padStart(2, '0')).join('')}`;
 }
 
+/** White ink on selected (filled) chips — always the same, never per-token. */
+export const chipSelectedInk = mixTowardWhite(brandColors.primary, 100);
+
+/**
+ * Fill for a selected chip: keep `color` if white text meets AA, otherwise
+ * darken it toward black (no new palette hex) until it does.
+ */
+export function selectedChipFill(color: string): string {
+  if (contrastRatio(chipSelectedInk, color) >= 4.5) return color;
+  const hex = toHex(color);
+  if (!hex) return color;
+  for (let p = 5; p <= 85; p += 5) {
+    const darker = mixTowardBlack(hex, p);
+    if (contrastRatio(chipSelectedInk, darker) >= 4.5) return darker;
+  }
+  return mixTowardBlack(hex, 85);
+}
+
+export function contrastAgainst(fg: string, bg: string): number {
+  return contrastRatio(fg, bg);
+}
+
 /** White or ink on `bg` — pick the one that meets WCAG AA against the fill. */
 export function inkOn(bg: string): string {
   const rgb = parseRgb(bg);
