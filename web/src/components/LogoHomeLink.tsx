@@ -7,7 +7,7 @@ export function LogoHomeLink({ height = 40 }: { height?: number }) {
     <Link
       to="/"
       aria-label="Ana sayfa"
-      className="inline-flex cursor-pointer rounded-lg transition-transform duration-150 hover:scale-[1.04] hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sidebar-text)]"
+      className="logo-home-link inline-flex cursor-pointer rounded-lg transition-transform duration-150 hover:scale-[1.04] hover:shadow-md"
     >
       <Logo height={height} />
     </Link>

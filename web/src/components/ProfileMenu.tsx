@@ -91,7 +91,7 @@ export function ProfileMenu() {
             role="menuitem"
             to="/settings"
             onClick={() => setOpen(false)}
-            className="block px-3 py-2.5 text-[14px] text-[var(--text-primary)] outline-none hover:bg-[var(--bg-surface-2)] focus-visible:bg-[var(--bg-surface-2)]"
+            className="block px-3 py-2.5 text-[14px] text-[var(--text-primary)] outline-none hover:bg-[var(--bg-surface-2)] focus-visible:bg-[var(--bg-surface-2)] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--accent)]"
           >
             Ayarlar
           </Link>
@@ -102,7 +102,7 @@ export function ProfileMenu() {
               setOpen(false);
               logout();
             }}
-            className="block w-full px-3 py-2.5 text-left text-[14px] text-[var(--text-primary)] outline-none hover:bg-[var(--bg-surface-2)] focus-visible:bg-[var(--bg-surface-2)]"
+            className="block w-full px-3 py-2.5 text-left text-[14px] text-[var(--text-primary)] outline-none hover:bg-[var(--bg-surface-2)] focus-visible:bg-[var(--bg-surface-2)] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--accent)]"
           >
             Çıkış
           </button>

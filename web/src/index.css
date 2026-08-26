@@ -30,6 +30,7 @@
   --status-severity-critical: #c62222;
   --status-severity-medium: #eab308;
   --status-severity-low: #327cb2;
+  accent-color: var(--accent);
 }
 
 :root[data-theme='dark'] {
@@ -40,6 +41,7 @@
   --text-primary: #f5f7fa;
   --text-secondary: #8b98a5;
   --accent: #ff3b1e;
+  accent-color: var(--accent);
 }
 
 body {
@@ -108,10 +110,38 @@ button.rounded-full:hover {
   filter: brightness(0.97);
 }
 
+/* Satsuma focus — replace the UA blue ring everywhere we can control. */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 button:not(:disabled):focus-visible,
 [role='button']:focus-visible,
 a:focus-visible {
   outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+input,
+textarea,
+select {
+  accent-color: var(--accent);
+}
+
+input:focus,
+input:focus-visible,
+textarea:focus,
+textarea:focus-visible,
+select:focus,
+select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-color: var(--accent) !important;
+}
+
+.logo-home-link:focus-visible {
+  outline: 2px solid var(--sidebar-text);
   outline-offset: 2px;
 }
 

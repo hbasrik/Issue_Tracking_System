@@ -282,7 +282,7 @@ function EolItemRow({
           required
           disabled={disabled}
           placeholder="Description required for this status"
-          className="mt-2 w-full max-w-full rounded-lg border bg-[var(--bg-page)] px-3 py-2 text-[13px] outline-none"
+          className="mt-2 w-full max-w-full rounded-lg border bg-[var(--bg-page)] px-3 py-2 text-[13px]"
           style={{ borderColor: 'var(--status-not-ok)', minHeight: 64 }}
         />
       )}

@@ -123,8 +123,8 @@ export function VinSearchBox({
         placeholder={placeholder}
         className={
           onChrome
-            ? 'w-full rounded-lg border px-3 py-2 text-[15px] outline-none placeholder:text-[#5B6672] focus-visible:border-[var(--accent)] focus-visible:ring-2 focus-visible:ring-[var(--accent)]'
-            : 'w-full rounded-lg border bg-[var(--bg-surface-1)] px-3 py-2 text-[15px] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] outline-none focus:border-[var(--accent)]'
+            ? 'w-full rounded-lg border px-3 py-2 text-[15px] placeholder:text-[#5B6672]'
+            : 'w-full rounded-lg border bg-[var(--bg-surface-1)] px-3 py-2 text-[15px] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]'
         }
         style={
           onChrome
