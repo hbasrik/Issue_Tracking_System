@@ -64,8 +64,7 @@ export function IssueStatusHistory({
           {items.map((row) => (
             <li
               key={row.ID}
-              className="rounded-lg border bg-[var(--bg-surface-2)] px-3 py-2 text-[13px]"
-              style={{ borderColor: 'var(--border)' }}
+              className="text-[13px] text-[var(--text-primary)]"
             >
               <p className="font-medium text-[var(--text-primary)]">
                 {issueStatusLabel(row.FromStatus)} → {issueStatusLabel(row.ToStatus)}:{' '}
