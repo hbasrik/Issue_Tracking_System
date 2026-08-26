@@ -4,7 +4,6 @@ import {
   Keyboard,
   Pressable,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import {
@@ -26,6 +25,7 @@ import {
   Screen,
   Subtitle,
   Title,
+  AppTextInput,
 } from '../components/ui';
 import {
   SeverityIndicator,
@@ -33,6 +33,8 @@ import {
   type SeverityLevel,
 } from '../components/SeverityIndicator';
 import { useTheme } from '../theme/ThemeProvider';
+import { inkOn, mixColors, readableOn } from '../theme/tokens';
+import { issueStatusColor } from '../lib/issueStatus';
 import {
   HOME_ISSUE_STAT_LABELS,
   matchesHomeIssueStat,
@@ -50,6 +52,12 @@ type MyIssuesNavigation = CompositeNavigationProp<
 >;
 
 const SEVERITIES: SeverityLevel[] = ['CRITICAL', 'MEDIUM', 'LOW'];
+
+const SEVERITY_LABELS: Record<SeverityLevel, string> = {
+  CRITICAL: 'Kritik',
+  MEDIUM: 'Orta',
+  LOW: 'Düşük',
+};
 
 const STATUSES: { value: IssueStatus; label: string }[] = [
   { value: 'OPEN', label: 'Açık' },
@@ -217,7 +225,7 @@ export default function MyIssuesScreen() {
             >
               VIN / bildiren
             </Text>
-            <TextInput
+            <AppTextInput
               value={listQuery}
               onChangeText={(q) => {
                 if (homeStat) clearHomeStat();
@@ -265,21 +273,23 @@ export default function MyIssuesScreen() {
                   <Pressable
                     key={t.ID}
                     onPress={() => toggleType(t.ID)}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected }}
                     style={{
                       paddingHorizontal: 12,
                       minHeight: 36,
                       borderRadius: 999,
-                      borderWidth: 1,
-                      borderColor: selected ? tokens.accent : tokens.border,
-                      backgroundColor: selected
-                        ? tokens.bgSurface2
-                        : tokens.bgSurface1,
+                      backgroundColor: mixColors(
+                        tokens.textPrimary,
+                        tokens.bgSurface1,
+                        selected ? 14 : 6,
+                      ),
                       justifyContent: 'center',
                     }}
                   >
                     <Text
                       style={{
-                        color: selected ? tokens.accent : tokens.textSecondary,
+                        color: selected ? tokens.textPrimary : tokens.textSecondary,
                         fontSize: 12,
                         fontWeight: '600',
                       }}
@@ -302,37 +312,31 @@ export default function MyIssuesScreen() {
             >
               Severity
             </Text>
-            <View style={{ flexDirection: 'row', gap: 8 }}>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               {SEVERITIES.map((s) => {
                 const selected = !homeStat && severities.has(s);
                 const color = severityFillColor(s);
+                const name = SEVERITY_LABELS[s];
                 return (
                   <Pressable
                     key={s}
                     onPress={() => toggleSeverity(s)}
+                    accessibilityRole="button"
+                    accessibilityLabel={name}
+                    accessibilityState={{ selected }}
                     style={{
-                      flex: 1,
                       minHeight: 44,
-                      borderRadius: 10,
-                      borderWidth: 1.5,
-                      borderColor: selected ? color : tokens.border,
-                      backgroundColor: selected ? color + '33' : tokens.bgSurface1,
+                      minWidth: 44,
+                      borderRadius: 999,
                       alignItems: 'center',
                       justifyContent: 'center',
-                      gap: 4,
-                      paddingVertical: 6,
+                      paddingHorizontal: 10,
+                      backgroundColor: selected
+                        ? mixColors(color, tokens.bgSurface1, 22)
+                        : 'transparent',
                     }}
                   >
                     <SeverityIndicator severity={s} />
-                    <Text
-                      style={{
-                        color: selected ? color : tokens.textSecondary,
-                        fontWeight: '600',
-                        fontSize: 10,
-                      }}
-                    >
-                      {s}
-                    </Text>
                   </Pressable>
                 );
               })}
@@ -352,25 +356,28 @@ export default function MyIssuesScreen() {
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               {STATUSES.map((s) => {
                 const selected = !homeStat && statuses.has(s.value);
+                const color = issueStatusColor(s.value);
+                const fill = selected ? color : tokens.bgPage;
+                const ink = selected ? inkOn(color) : readableOn(color, tokens.bgPage);
                 return (
                   <Pressable
                     key={s.value}
                     onPress={() => toggleStatus(s.value)}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected }}
                     style={{
                       paddingHorizontal: 12,
                       minHeight: 36,
                       borderRadius: 999,
                       borderWidth: 1,
-                      borderColor: selected ? tokens.accent : tokens.border,
-                      backgroundColor: selected
-                        ? tokens.bgSurface2
-                        : tokens.bgSurface1,
+                      borderColor: color,
+                      backgroundColor: fill,
                       justifyContent: 'center',
                     }}
                   >
                     <Text
                       style={{
-                        color: selected ? tokens.accent : tokens.textSecondary,
+                        color: ink,
                         fontSize: 12,
                         fontWeight: '600',
                       }}
