@@ -116,6 +116,11 @@ const statusColorBase = {
   issueDone: brandColors.secondary,
   /** Kalite Onay — full green (same swatch as `ok`). */
   issueResolved: '#22C55E',
+  /**
+   * Şartlı Onay — palette olive, a paler sibling of Kalite Onay green.
+   * Same hex everywhere (chip, badge, home) — not mixed per theme.
+   */
+  issueConditionalApproved: brandColors.neutralOlive,
 };
 
 export const statusColors = {
@@ -125,13 +130,56 @@ export const statusColors = {
       ? mixTowardWhite(lightInk, 58)
       : brandColors.neutralGray;
   },
-  /** Şartlı Onay — opened toward white on dark, toward black on light. */
-  get issueConditionalApproved() {
-    return currentMode === 'light'
-      ? mixTowardBlack(statusColorBase.ok, 22)
-      : mixTowardWhite(statusColorBase.ok, 42);
-  },
 };
+
+function srgbChannel(c: number): number {
+  const s = c / 255;
+  return s <= 0.04045 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+}
+
+function parseRgb(color: string): [number, number, number] | null {
+  if (color.startsWith('#')) {
+    const h = color.replace('#', '');
+    if (h.length < 6) return null;
+    return [
+      Number.parseInt(h.slice(0, 2), 16),
+      Number.parseInt(h.slice(2, 4), 16),
+      Number.parseInt(h.slice(4, 6), 16),
+    ];
+  }
+  const m = color.match(/^rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)$/);
+  if (!m) return null;
+  return [Number(m[1]), Number(m[2]), Number(m[3])];
+}
+
+function luminance(rgb: [number, number, number]): number {
+  return (
+    0.2126 * srgbChannel(rgb[0]) +
+    0.7152 * srgbChannel(rgb[1]) +
+    0.0722 * srgbChannel(rgb[2])
+  );
+}
+
+function contrastRatio(a: string, b: string): number {
+  const ra = parseRgb(a);
+  const rb = parseRgb(b);
+  if (!ra || !rb) return 0;
+  const L1 = luminance(ra);
+  const L2 = luminance(rb);
+  const [hi, lo] = L1 > L2 ? [L1, L2] : [L2, L1];
+  return (hi + 0.05) / (lo + 0.05);
+}
+
+/** White or ink on `bg` — pick the one that meets WCAG AA against the fill. */
+export function inkOn(bg: string): string {
+  const rgb = parseRgb(bg);
+  if (!rgb) return mixTowardWhite(brandColors.primary, 100);
+  const L = luminance(rgb);
+  const contrastWhite = 1.05 / (L + 0.05);
+  return contrastWhite >= 4.5
+    ? mixTowardWhite(brandColors.primary, 100)
+    : lightInk;
+}
 
 export type ThemeTokens = {
   bgPage: string;

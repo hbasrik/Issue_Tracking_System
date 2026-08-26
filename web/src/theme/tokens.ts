@@ -13,7 +13,7 @@ export function parseThemeMode(raw: string | null | undefined): ThemeMode | null
   return null;
 }
 
-/** Active mode for status colors that differ on light vs dark (Şartlı Onay). */
+/** Active mode for status colors that differ on light vs dark (empty bars). */
 let currentMode: ThemeMode = 'light';
 
 export function bindThemeMode(mode: ThemeMode): void {
@@ -133,24 +133,6 @@ function toHex(color: string): string | null {
   return `#${rgb.map((n) => n.toString(16).padStart(2, '0')).join('')}`;
 }
 
-/** White ink on selected (filled) chips — always the same, never per-token. */
-export const chipSelectedInk = mixTowardWhite(brandColors.primary, 100);
-
-/**
- * Fill for a selected chip: keep `color` if white text meets AA, otherwise
- * darken it toward black (no new palette hex) until it does.
- */
-export function selectedChipFill(color: string): string {
-  if (contrastRatio(chipSelectedInk, color) >= 4.5) return color;
-  const hex = toHex(color);
-  if (!hex) return color;
-  for (let p = 5; p <= 85; p += 5) {
-    const darker = mixTowardBlack(hex, p);
-    if (contrastRatio(chipSelectedInk, darker) >= 4.5) return darker;
-  }
-  return mixTowardBlack(hex, 85);
-}
-
 export function contrastAgainst(fg: string, bg: string): number {
   return contrastRatio(fg, bg);
 }
@@ -229,6 +211,11 @@ const statusColorBase = {
   issueDone: brandColors.secondary,
   /** Kalite Onay — full green (same swatch as `ok`). */
   issueResolved: '#22C55E',
+  /**
+   * Şartlı Onay — palette olive, a paler sibling of Kalite Onay green.
+   * Same hex everywhere (chip, badge, home/analiz) — not mixed per theme.
+   */
+  issueConditionalApproved: brandColors.neutralOlive,
 };
 
 export const statusColors = {
@@ -238,12 +225,6 @@ export const statusColors = {
     return currentMode === 'light'
       ? mixTowardWhite(lightInk, 58)
       : brandColors.neutralGray;
-  },
-  /** Şartlı Onay — paler mix of Kalite Onay green so the pair stays distinct. */
-  get issueConditionalApproved() {
-    return currentMode === 'light'
-      ? mixTowardWhite(statusColorBase.ok, 52)
-      : mixTowardWhite(statusColorBase.ok, 58);
   },
 };
 
