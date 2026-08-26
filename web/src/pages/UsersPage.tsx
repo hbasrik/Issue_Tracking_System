@@ -15,9 +15,10 @@ import {
   type User,
   type UserRole,
 } from '../lib/api';
+import { roleDisplayName } from '../lib/roleLabels';
 
 function roleLabel(role: string, roles: RoleGrant[]): string {
-  return roles.find((r) => r.code === role)?.name ?? role;
+  return roleDisplayName(role, roles);
 }
 
 function userAdminRoleCodes(roles: RoleGrant[]): Set<string> {
@@ -103,7 +104,7 @@ function UserAssignControls({
               value={role.code}
               disabled={locks.isLastUserAdmin && !adminRoles.has(role.code)}
             >
-              {role.code}
+              {roleDisplayName(role.code, roles)}
             </option>
           ))}
         </select>

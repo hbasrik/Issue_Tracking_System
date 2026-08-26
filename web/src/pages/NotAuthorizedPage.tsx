@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
+import { roleDisplayName } from '../lib/roleLabels';
 
 export default function NotAuthorizedPage() {
   const { logout, user } = useAuth();
@@ -14,7 +15,7 @@ export default function NotAuthorizedPage() {
         {user && (
           <>
             {' '}
-            Giriş yapan: <strong>{user.Email}</strong> ({user.Role}).
+            Giriş yapan: <strong>{user.Email}</strong> ({roleDisplayName(user.Role)}).
           </>
         )}
       </p>
