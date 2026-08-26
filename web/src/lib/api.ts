@@ -305,6 +305,10 @@ export const api = {
     return request<{ items: Issue[] }>(`/issues${q ? `?${q}` : ''}`);
   },
 
+  listIssueTypes() {
+    return request<{ items: IssueType[] }>('/issue-types');
+  },
+
   getIssue(id: number) {
     return request<Issue>(`/issues/${id}`);
   },
@@ -491,6 +495,11 @@ export interface DocumentApproveResult {
   vin: string;
   current_stage: EOLStage;
   vehicle_status: string;
+}
+
+export interface IssueType {
+  ID: number;
+  Name: string;
 }
 
 export interface Issue {
