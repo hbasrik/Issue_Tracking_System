@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import {
   api,
   formatIssueCreatedAt,
+  formatIssueListAt,
   mediaThumbUrl,
   type Issue,
 } from '../lib/api';
@@ -13,7 +14,7 @@ import { IssueActions } from './IssueActions';
 import { MediaGallery } from './MediaGallery';
 import { VehicleIdentity } from './VehicleIdentity';
 import { DataCard, DataCardField } from './DataCard';
-import { useIsDesktop } from '../lib/useMediaQuery';
+import { useIsDesktop, useIsWide } from '../lib/useMediaQuery';
 import { IssueStatusHistory } from './IssueStatusHistory';
 import { SectionHeading } from './SectionHeading';
 import {
@@ -227,6 +228,7 @@ export function IssueList({
   onStatusChanged?: () => void;
 }) {
   const isDesktop = useIsDesktop();
+  const isWide = useIsWide();
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const selected = items.find((r) => r.ID === selectedId) ?? null;
 
@@ -245,8 +247,10 @@ export function IssueList({
   );
 
   return (
-    <div className="grid gap-4 lg:grid-cols-2">
-      <div>
+    <div
+      className={`grid gap-4 ${isWide ? 'grid-cols-[minmax(0,1fr)_minmax(22rem,26rem)]' : ''}`}
+    >
+      <div className="min-w-0">
         <div className="space-y-3 lg:hidden">
           {items.length === 0 && (
             <p className="text-[15px] text-[var(--text-secondary)]">{emptyLabel}</p>
@@ -264,22 +268,24 @@ export function IssueList({
         </div>
 
         <div
-          className="hidden overflow-hidden rounded-xl border bg-[var(--bg-surface-1)] lg:block"
+          className="hidden overflow-x-auto rounded-xl border bg-[var(--bg-surface-1)] lg:block"
           style={{ borderColor: 'var(--border)' }}
         >
-          <table className="w-full text-left text-[15px]">
+          <table className="w-full min-w-[42rem] text-left text-[15px]">
             <thead>
               <tr
                 className="border-b text-[13px] text-[var(--text-secondary)]"
                 style={{ borderColor: 'var(--border)' }}
               >
-                <th className="px-4 py-3">Fotoğraflar</th>
-                <th className="px-4 py-3">ID</th>
-                <th className="px-4 py-3">Bildirim tarihi</th>
-                {!hideVin && <th className="px-4 py-3">VIN</th>}
-                <th className="px-4 py-3">Severity</th>
-                <th className="px-4 py-3">Durum</th>
-                <th className="px-4 py-3">Bildiren</th>
+                <th className="whitespace-nowrap px-3 py-3">Fotoğraflar</th>
+                <th className="whitespace-nowrap px-3 py-3">ID</th>
+                <th className="whitespace-nowrap px-3 py-3">Bildirim tarihi</th>
+                {!hideVin && (
+                  <th className="whitespace-nowrap px-3 py-3">VIN</th>
+                )}
+                <th className="whitespace-nowrap px-3 py-3">Severity</th>
+                <th className="whitespace-nowrap px-3 py-3">Durum</th>
+                <th className="whitespace-nowrap px-3 py-3">Bildiren</th>
               </tr>
             </thead>
             <tbody>
@@ -287,7 +293,7 @@ export function IssueList({
                 <tr>
                   <td
                     colSpan={hideVin ? 6 : 7}
-                    className="px-4 py-6 text-[var(--text-secondary)]"
+                    className="px-3 py-6 text-[var(--text-secondary)]"
                   >
                     {emptyLabel}
                   </td>
@@ -304,15 +310,15 @@ export function IssueList({
                   }}
                   onClick={() => toggle(r.ID)}
                 >
-                  <td className="px-4 py-3">
+                  <td className="px-3 py-3">
                     <IssueThumb path={r.ReportPhotoPath} />
                   </td>
-                  <td className="px-4 py-3">#{r.ID}</td>
-                  <td className="px-4 py-3 text-[13px] text-[var(--text-secondary)]">
-                    {formatIssueCreatedAt(r.CreatedAt || r.IssueDate)}
+                  <td className="whitespace-nowrap px-3 py-3">#{r.ID}</td>
+                  <td className="whitespace-nowrap px-3 py-3 text-[13px] tabular-nums text-[var(--text-secondary)]">
+                    {formatIssueListAt(r.CreatedAt || r.IssueDate)}
                   </td>
                   {!hideVin && (
-                    <td className="px-4 py-3">
+                    <td className="whitespace-nowrap px-3 py-3">
                       <Link
                         to={`/vehicles/${r.VIN}?tab=issues`}
                         className="text-[var(--accent)] hover:underline"
@@ -322,13 +328,13 @@ export function IssueList({
                       </Link>
                     </td>
                   )}
-                  <td className="px-4 py-3">
+                  <td className="whitespace-nowrap px-3 py-3">
                     <SeverityIndicator severity={r.Severity} />
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="whitespace-nowrap px-3 py-3">
                     <StatusBadge kind="issue" value={r.Status} />
                   </td>
-                  <td className="px-4 py-3 text-[13px] text-[var(--text-secondary)]">
+                  <td className="whitespace-nowrap px-3 py-3 text-[13px] text-[var(--text-primary)]">
                     {r.ReporterName || `kullanıcı #${r.IssueReporterID}`}
                   </td>
                 </tr>
@@ -338,7 +344,12 @@ export function IssueList({
         </div>
       </div>
 
-      {isDesktop && <div className="sticky top-4 self-start">{detail}</div>}
+      {isWide && (
+        <div className="sticky top-4 min-w-0 self-start">{detail}</div>
+      )}
+      {isDesktop && !isWide && selected && (
+        <div className="min-w-0">{detail}</div>
+      )}
     </div>
   );
 }
