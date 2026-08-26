@@ -6,9 +6,9 @@ export default function SettingsPage() {
 
   return (
     <section>
-      <h1 className="text-2xl font-semibold">Settings</h1>
+      <h1 className="text-2xl font-semibold">Ayarlar</h1>
       <p className="mt-1 text-[13px] text-[var(--text-secondary)]">
-        Appearance and preferences
+        Görünüm ve tercihler
       </p>
 
       <div
@@ -16,10 +16,10 @@ export default function SettingsPage() {
         style={{ borderColor: 'var(--border)' }}
       >
         <div>
-          <h2 className="text-[15px] font-medium">Theme</h2>
+          <h2 className="text-[15px] font-medium">Tema</h2>
           <p className="mt-1 text-[13px] text-[var(--text-secondary)]">
-            Light is the default. Choosing Dark or Light here is saved for
-            later visits.
+            Varsayılan açık temadır. Koyu veya açık seçimi sonraki ziyaretler
+            için kaydedilir.
           </p>
           <div className="mt-3 flex gap-2">
             <button
@@ -32,7 +32,7 @@ export default function SettingsPage() {
               }`}
               style={mode !== 'dark' ? { borderColor: 'var(--border)' } : undefined}
             >
-              Dark
+              Koyu
             </button>
             <button
               type="button"
@@ -44,7 +44,7 @@ export default function SettingsPage() {
               }`}
               style={mode !== 'light' ? { borderColor: 'var(--border)' } : undefined}
             >
-              Light
+              Açık
             </button>
             <button
               type="button"
@@ -52,13 +52,13 @@ export default function SettingsPage() {
               className="min-h-touch rounded-lg border px-4 text-[15px]"
               style={{ borderColor: 'var(--border)' }}
             >
-              Toggle
+              Değiştir
             </button>
           </div>
         </div>
 
         <div>
-          <h2 className="text-[15px] font-medium">Language</h2>
+          <h2 className="text-[15px] font-medium">Dil</h2>
           <select
             className="mt-2 rounded-lg border bg-[var(--bg-page)] px-3 py-2 text-[15px]"
             style={{ borderColor: 'var(--border)' }}
@@ -70,10 +70,10 @@ export default function SettingsPage() {
         </div>
 
         <div>
-          <h2 className="text-[15px] font-medium">Notifications</h2>
+          <h2 className="text-[15px] font-medium">Bildirimler</h2>
           <label className="mt-2 flex items-center gap-2 text-[15px]">
             <input type="checkbox" defaultChecked />
-            Critical issue alerts
+            Kritik issue uyarıları
           </label>
         </div>
       </div>

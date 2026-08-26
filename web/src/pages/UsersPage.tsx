@@ -176,10 +176,10 @@ export default function UsersPage() {
 
   return (
     <section>
-      <h1 className="text-xl font-semibold sm:text-2xl">Users & Roles</h1>
+      <h1 className="text-xl font-semibold sm:text-2xl">Kullanıcılar ve roller</h1>
       <p className="mt-1 text-[13px] text-[var(--text-secondary)]">
-        Assign any catalogue role. Permission grants are edited on the Roles
-        matrix. At least one active admin.manage_users holder must remain.
+        Katalogdaki herhangi bir rolü atayın. İzinler Roller matrisinden
+        düzenlenir. En az bir aktif admin.manage_users sahibi kalmalıdır.
       </p>
       {error && (
         <p className="mt-3 text-[13px]" style={{ color: 'var(--status-not-ok)' }}>
@@ -207,7 +207,7 @@ export default function UsersPage() {
                   {roleLabel(u.Role, roles)}
                 </span>
               </DataCardField>
-              <DataCardField label="Status">
+                <DataCardField label="Durum">
                 <StatusBadge
                   kind="stationStep"
                   value={u.IsActive ? 'OK' : 'PENDING'}

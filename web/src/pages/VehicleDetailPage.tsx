@@ -25,12 +25,12 @@ function isTab(value: string | null): value is Tab {
 }
 
 const TABS: { id: Tab; label: string; perm?: string }[] = [
-  { id: 'overview', label: 'Overview' },
-  { id: 'shipment', label: 'Shipment', perm: Perm.ChecklistShipmentView },
+  { id: 'overview', label: 'Genel bakış' },
+  { id: 'shipment', label: 'Sevkiyat', perm: Perm.ChecklistShipmentView },
   { id: 'test', label: 'Test', perm: Perm.ChecklistTestView },
   { id: 'eol', label: 'EoL', perm: Perm.ChecklistEOLView },
   { id: 'issues', label: 'Issues', perm: Perm.IssueView },
-  { id: 'audit', label: 'Audit Log' },
+  { id: 'audit', label: 'Denetim kaydı' },
 ];
 
 const STATUS_OPTIONS = [
@@ -92,7 +92,7 @@ export default function VehicleDetailPage() {
         setReadiness(ready);
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Failed to load vehicle');
+          setError(err instanceof Error ? err.message : 'Araç yüklenemedi');
         }
       }
     })();
@@ -138,7 +138,7 @@ export default function VehicleDetailPage() {
   }
 
   if (!vehicle) {
-    return <p className="text-[var(--text-secondary)]">Loading…</p>;
+    return <p className="text-[var(--text-secondary)]">Yükleniyor…</p>;
   }
 
   const pct = Number(vehicle.TotalProgressPercentage);

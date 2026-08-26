@@ -76,7 +76,7 @@ export default function HomePage() {
         setStations(stationRes.items ?? []);
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Failed to load dashboard');
+          setError(err instanceof Error ? err.message : 'Panel yüklenemedi');
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -94,7 +94,7 @@ export default function HomePage() {
 
   return (
     <section>
-      <h1 className="text-xl font-semibold sm:text-2xl">Dashboard</h1>
+      <h1 className="text-xl font-semibold sm:text-2xl">Ana sayfa</h1>
       <p className="mt-1 text-[13px]" style={mutedCaption}>
         Canlı hata metrikleri — son 24 saat ve dönemsel trend
       </p>

@@ -88,10 +88,10 @@ export default function RolesPage() {
 
   return (
     <section>
-      <h1 className="text-xl font-semibold sm:text-2xl">Roles & Permissions</h1>
+      <h1 className="text-xl font-semibold sm:text-2xl">Roller ve izinler</h1>
       <p className="mt-1 text-[13px] text-[var(--text-secondary)]">
-        Grant or revoke permissions without a code change. Removing Kullanıcı
-        ve rol yönetimi from the last granting role is rejected.
+        Kod değiştirmeden izin verin veya alın. Son yönetici rolünden
+        Kullanıcı ve rol yönetimi iznini kaldırmak reddedilir.
       </p>
       {error && (
         <p className="mt-3 text-[13px]" style={{ color: 'var(--status-not-ok)' }}>

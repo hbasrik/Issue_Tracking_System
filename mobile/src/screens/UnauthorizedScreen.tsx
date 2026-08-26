@@ -9,17 +9,16 @@ export default function UnauthorizedScreen() {
   return (
     <Screen>
       <View style={styles.center}>
-        <Title>Unauthorized</Title>
+        <Title>Yetkiniz yok</Title>
         <Subtitle>
-          This mobile app requires the mobile.access permission. Use an
-          account that is granted that permission, or open the web dashboard
-          if you have web.access.
+          Bu uygulama mobile.access izni gerektirir. Bu izne sahip bir hesap
+          kullanın veya web.access varsa web panelini açın.
         </Subtitle>
         <Text style={{ marginTop: 16, color: tokens.textSecondary, fontSize: 13 }}>
-          Sign out and try a field account (operator, quality, or assembly).
+          Çıkış yapıp saha hesabıyla deneyin (operator, quality veya assembly).
         </Text>
         <View style={{ marginTop: 24 }}>
-          <PrimaryButton label="Log out" onPress={logout} danger />
+          <PrimaryButton label="Çıkış" onPress={logout} danger />
         </View>
       </View>
     </Screen>

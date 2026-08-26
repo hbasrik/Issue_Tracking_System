@@ -30,7 +30,7 @@ export function VinSearchBox({
   resultTo = (v) => `/vehicles/${v.VIN}`,
   placeholder = 'Son 5 haneyi girin (örn. 00057)',
   className = '',
-  ariaLabel = 'VIN suffix search',
+  ariaLabel = 'VIN son 5 hane araması',
 }: VinSearchBoxProps) {
   const location = useLocation();
   const rootRef = useRef<HTMLDivElement>(null);

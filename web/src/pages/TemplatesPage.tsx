@@ -210,7 +210,7 @@ export default function TemplatesPage() {
 
   return (
     <section>
-      <h1 className="text-xl font-semibold sm:text-2xl">Checklist Templates</h1>
+      <h1 className="text-xl font-semibold sm:text-2xl">Checklist şablonları</h1>
       <p className="mt-1 text-[13px] text-[var(--text-secondary)]">
         Multi-template admin — model × EOL / SHIPMENT / TEST. Yeni madde yalnızca
         bundan sonra eklenen araçlarda çıkar; silmek yerine pasife çekin.
@@ -231,7 +231,7 @@ export default function TemplatesPage() {
             }
           >
             {loading && (
-              <p className="text-[var(--text-secondary)]">Loading…</p>
+              <p className="text-[var(--text-secondary)]">Yükleniyor…</p>
             )}
             {templates.map((row) => (
               <DataCard
@@ -249,7 +249,7 @@ export default function TemplatesPage() {
                   </span>
                 </DataCardField>
                 <DataCardField label="Aktif madde">{row.ItemCount}</DataCardField>
-                <DataCardField label="Status">
+                <DataCardField label="Durum">
                   {row.IsActive ? 'Active' : 'Inactive'}
                 </DataCardField>
               </DataCard>
@@ -273,7 +273,7 @@ export default function TemplatesPage() {
                 {loading && (
                   <tr>
                     <td className="px-4 py-3 text-[var(--text-secondary)]" colSpan={4}>
-                      Loading…
+                      Yükleniyor…
                     </td>
                   </tr>
                 )}

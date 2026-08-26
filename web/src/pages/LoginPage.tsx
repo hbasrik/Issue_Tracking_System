@@ -25,7 +25,7 @@ export default function LoginPage() {
     try {
       await login(email, password);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Login failed');
+      setError(err instanceof ApiError ? err.message : 'Giriş başarısız');
     } finally {
       setBusy(false);
     }
@@ -42,10 +42,10 @@ export default function LoginPage() {
           Karea
         </h1>
         <p className="mt-1 text-[13px] text-[var(--text-secondary)]">
-          Web sign in
+          Web girişi
         </p>
         <label className="mt-6 block text-[13px] text-[var(--text-secondary)]">
-          Email
+          E-posta
           <input
             type="email"
             value={email}
@@ -56,7 +56,7 @@ export default function LoginPage() {
           />
         </label>
         <label className="mt-4 block text-[13px] text-[var(--text-secondary)]">
-          Password
+          Şifre
           <input
             type="password"
             value={password}
@@ -76,7 +76,7 @@ export default function LoginPage() {
           disabled={busy}
           className="mt-6 w-full rounded-lg bg-[var(--accent)] py-2.5 text-[15px] font-medium text-white disabled:opacity-60"
         >
-          {busy ? 'Signing in…' : 'Sign in'}
+          {busy ? 'Giriş yapılıyor…' : 'Giriş yap'}
         </button>
       </form>
     </div>

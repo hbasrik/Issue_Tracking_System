@@ -72,7 +72,7 @@ export default function VehiclesScreen() {
       const items = (res.Items ?? []).slice().sort(compareVinDesc);
       setVehicles(items);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load vehicles');
+      setError(err instanceof Error ? err.message : 'Araçlar yüklenemedi');
       setVehicles([]);
     } finally {
       setLoading(false);
@@ -126,7 +126,7 @@ export default function VehiclesScreen() {
         }
         ListHeaderComponent={
           <Pressable onPress={Keyboard.dismiss} accessible={false} style={{ marginBottom: 12 }}>
-            <Title>Vehicles</Title>
+            <Title>Araçlar</Title>
             <Subtitle>Tüm araçlar — istasyon kuyruğundan bağımsız</Subtitle>
             <View style={{ marginTop: 12 }}>
               <VehicleSearchPanel

@@ -90,7 +90,7 @@ export default function AnalysisPage() {
       setDefects(d.DefectRate ?? []);
       setStations(stationRes.items ?? []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load analysis');
+      setError(err instanceof Error ? err.message : 'Analiz yüklenemedi');
     }
   }, [applied]);
 
@@ -234,9 +234,9 @@ export default function AnalysisPage() {
     <section>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold sm:text-2xl">Analysis</h1>
+          <h1 className="text-xl font-semibold sm:text-2xl">Analiz</h1>
           <p className="mt-1 text-[13px] text-[var(--text-secondary)]">
-            Filters, charts, and vehicle severity breakdown
+            Filtreler, grafikler ve araç severity kırılımı
           </p>
         </div>
         <button

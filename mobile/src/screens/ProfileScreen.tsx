@@ -22,16 +22,16 @@ export default function ProfileScreen() {
       </Card>
       <Card>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Text style={{ color: tokens.textPrimary, fontSize: 15 }}>Theme</Text>
+          <Text style={{ color: tokens.textPrimary, fontSize: 15 }}>Tema</Text>
           <Pressable onPress={toggle} style={{ minHeight: 44, justifyContent: 'center' }}>
             <Text style={{ color: tokens.accent, fontWeight: '600' }}>
-              {mode === 'dark' ? 'Switch to Light' : 'Switch to Dark'}
+              {mode === 'dark' ? 'Açık temaya geç' : 'Koyu temaya geç'}
             </Text>
           </Pressable>
         </View>
       </Card>
       <View style={{ marginTop: 24 }}>
-        <PrimaryButton label="Log out" onPress={logout} danger />
+        <PrimaryButton label="Çıkış" onPress={logout} danger />
       </View>
     </Screen>
   );

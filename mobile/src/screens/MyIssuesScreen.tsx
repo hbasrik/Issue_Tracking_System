@@ -98,7 +98,7 @@ export default function MyIssuesScreen() {
       setItems(list);
       setIssueTypes(typesRes.items ?? []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load issues');
+      setError(err instanceof Error ? err.message : 'Issue listesi yüklenemedi');
     } finally {
       setLoading(false);
     }

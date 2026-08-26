@@ -347,7 +347,7 @@ export default function VehicleStationScreen() {
                       {step.Status === 'NOT_OK' && has(Perm.IssueCreate) ? (
                         <View style={{ marginTop: 10 }}>
                           <OutlineButton
-                            label="Report Issue"
+                            label="Issue Bildir"
                             danger
                             onPress={() =>
                               navigation.navigate('IssueReport', {

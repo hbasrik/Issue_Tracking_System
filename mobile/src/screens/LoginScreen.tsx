@@ -24,7 +24,7 @@ export default function LoginScreen() {
     try {
       await login(email.trim(), password);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Login failed');
+      setError(err instanceof ApiError ? err.message : 'Giriş başarısız');
     } finally {
       setBusy(false);
     }
@@ -34,8 +34,8 @@ export default function LoginScreen() {
     <Screen>
       <Pressable style={styles.center} onPress={Keyboard.dismiss} accessible={false}>
         <Title>Karea</Title>
-        <Subtitle>Operator field sign-in</Subtitle>
-        <Text style={[styles.label, { color: tokens.textSecondary }]}>Email</Text>
+        <Subtitle>Saha girişi</Subtitle>
+        <Text style={[styles.label, { color: tokens.textSecondary }]}>E-posta</Text>
         <TextInput
           value={email}
           onChangeText={setEmail}
@@ -57,7 +57,7 @@ export default function LoginScreen() {
             },
           ]}
         />
-        <Text style={[styles.label, { color: tokens.textSecondary }]}>Password</Text>
+        <Text style={[styles.label, { color: tokens.textSecondary }]}>Şifre</Text>
         <TextInput
           ref={passwordRef}
           value={password}
@@ -83,7 +83,7 @@ export default function LoginScreen() {
         />
         {error ? <ErrorText>{error}</ErrorText> : null}
         <View style={{ marginTop: 20 }}>
-          <PrimaryButton label={busy ? 'Signing in…' : 'Sign in'} onPress={onSubmit} disabled={busy} />
+          <PrimaryButton label={busy ? 'Giriş yapılıyor…' : 'Giriş yap'} onPress={onSubmit} disabled={busy} />
         </View>
       </Pressable>
     </Screen>

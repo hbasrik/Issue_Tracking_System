@@ -87,7 +87,7 @@ export default function VehiclesPage() {
         setTotal(res.Total ?? 0);
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Failed to load vehicles');
+          setError(err instanceof Error ? err.message : 'Araçlar yüklenemedi');
           setItems([]);
         }
       } finally {
@@ -103,9 +103,9 @@ export default function VehiclesPage() {
 
   return (
     <section>
-      <h1 className="text-xl font-semibold sm:text-2xl">Vehicles</h1>
+      <h1 className="text-xl font-semibold sm:text-2xl">Araçlar</h1>
       <p className="mt-1 text-[13px] text-[var(--text-secondary)]">
-        Filterable vehicle table
+        Filtrelenebilir araç tablosu
       </p>
 
       {analysisLabel && (
@@ -192,13 +192,13 @@ export default function VehiclesPage() {
           empty={
             !loading && items.length === 0 ? (
               <p className="text-[15px] text-[var(--text-secondary)]">
-                No vehicles found
+                Araç bulunamadı
               </p>
             ) : null
           }
         >
           {loading && (
-            <p className="text-[var(--text-secondary)]">Loading…</p>
+            <p className="text-[var(--text-secondary)]">Yükleniyor…</p>
           )}
           {items.map((v) => (
             <Link
@@ -207,17 +207,17 @@ export default function VehiclesPage() {
               className="block rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
             >
               <DataCard className="cursor-pointer transition-colors hover:bg-[var(--bg-surface-2)]">
-                <VehicleIdentity vin={v.VIN} compact />
+                <VehicleIdentity vin={v.VIN} variant="compact" />
                 <DataCardField label="Model">
                   {v.VehicleModelID != null ? `#${v.VehicleModelID}` : '—'}
                 </DataCardField>
-                <DataCardField label="Status">
+                <DataCardField label="Durum">
                   <StatusBadge kind="vehicle" value={v.CurrentGlobalStatus} />
                 </DataCardField>
-                <DataCardField label="Station">
+                <DataCardField label="İstasyon">
                   {v.CurrentStationID ?? '—'}
                 </DataCardField>
-                <DataCardField label="Completion">
+                <DataCardField label="Tamamlanma">
                   {Number(v.TotalProgressPercentage).toFixed(1)}%
                 </DataCardField>
               </DataCard>
@@ -234,23 +234,23 @@ export default function VehiclesPage() {
               >
                 <th className="px-4 py-3 font-medium">VIN</th>
                 <th className="px-4 py-3 font-medium">Model</th>
-                <th className="px-4 py-3 font-medium">Status</th>
-                <th className="px-4 py-3 font-medium">Station</th>
-                <th className="px-4 py-3 font-medium">Completion %</th>
+                <th className="px-4 py-3 font-medium">Durum</th>
+                <th className="px-4 py-3 font-medium">İstasyon</th>
+                <th className="px-4 py-3 font-medium">Tamamlanma %</th>
               </tr>
             </thead>
             <tbody>
               {loading && (
                 <tr>
                   <td colSpan={5} className="px-4 py-6 text-[var(--text-secondary)]">
-                    Loading…
+                    Yükleniyor…
                   </td>
                 </tr>
               )}
               {!loading && items.length === 0 && (
                 <tr>
                   <td colSpan={5} className="px-4 py-6 text-[var(--text-secondary)]">
-                    No vehicles found
+                    Araç bulunamadı
                   </td>
                 </tr>
               )}
@@ -276,7 +276,7 @@ export default function VehiclesPage() {
                   }}
                 >
                   <td className="px-4 py-3">
-                    <VehicleIdentity vin={v.VIN} compact />
+                    <VehicleIdentity vin={v.VIN} variant="compact" />
                   </td>
                   <td className="px-4 py-3">
                     {v.VehicleModelID != null ? `#${v.VehicleModelID}` : '—'}

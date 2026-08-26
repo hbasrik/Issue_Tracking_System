@@ -150,7 +150,7 @@ export default function HomeScreen() {
       >
         <View>
           <Title>Karea</Title>
-          <Subtitle>{user?.FullName ?? 'Operator'}</Subtitle>
+          <Subtitle>{user?.FullName ?? 'Operatör'}</Subtitle>
         </View>
 
         {has(Perm.IssueCreate) ? (
