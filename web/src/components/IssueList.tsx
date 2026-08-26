@@ -320,6 +320,14 @@ export function IssueList({
                         : undefined,
                     }}
                     onClick={() => toggle(r.ID)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        toggle(r.ID);
+                      }
+                    }}
+                    tabIndex={0}
+                    role="button"
                     aria-expanded={open}
                   >
                     <td className="px-3 py-3">

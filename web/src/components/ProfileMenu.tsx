@@ -68,12 +68,7 @@ export function ProfileMenu() {
         aria-controls={menuId}
         aria-label="Profil menüsü"
         onClick={() => setOpen((v) => !v)}
-        className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full text-[13px] font-semibold outline-none transition-colors hover:bg-[var(--bg-surface-2)] focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
-        style={{
-          color: 'var(--text-primary)',
-          backgroundColor: 'var(--bg-surface-1)',
-          border: '1px solid var(--border)',
-        }}
+        className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-[var(--border)] bg-[var(--bg-surface-1)] text-[13px] font-semibold text-[var(--text-primary)] outline-none hover:bg-[var(--bg-surface-2)] focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
       >
         {initials}
       </button>

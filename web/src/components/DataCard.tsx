@@ -33,7 +33,7 @@ export function DataCard({
   const interactive = Boolean(onClick);
   const className = `rounded-xl border bg-[var(--bg-surface-1)] p-4 space-y-2.5 ${
     interactive
-      ? 'cursor-pointer transition-colors hover:bg-[var(--bg-surface-2)] active:bg-[var(--bg-surface-2)]'
+      ? 'cursor-pointer transition-colors hover:bg-[var(--bg-surface-2)] active:bg-[var(--bg-surface-2)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]'
       : ''
   } ${selected ? 'ring-1 ring-[var(--accent)]' : ''} ${extraClass}`;
 

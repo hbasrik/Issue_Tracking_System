@@ -450,7 +450,7 @@ function StatCard({
   return (
     <Link
       to={to}
-      className="rounded-xl border bg-[var(--bg-surface-1)] p-5 transition-colors hover:bg-[var(--bg-surface-2)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]"
+      className="rounded-xl border bg-[var(--bg-surface-1)] p-5 transition-colors hover:bg-[var(--bg-surface-2)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
       style={{ borderColor: 'var(--border)' }}
     >
       <div className="flex items-start justify-between gap-3">

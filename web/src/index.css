@@ -84,3 +84,50 @@ body {
 .analysis-pie .recharts-pie-sector {
   cursor: default;
 }
+
+/* Quiet hover / focus for clickable controls. Inert cards stay still. */
+button:not(:disabled),
+[role='button'] {
+  transition:
+    background-color 120ms ease,
+    box-shadow 120ms ease,
+    transform 120ms ease,
+    filter 120ms ease;
+}
+
+button:not(:disabled):hover,
+[role='button']:hover {
+  background-image: linear-gradient(
+    color-mix(in srgb, var(--text-primary) 7%, transparent),
+    color-mix(in srgb, var(--text-primary) 7%, transparent)
+  );
+}
+
+button:not(:disabled):focus-visible,
+[role='button']:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+a.rounded-xl {
+  transition: box-shadow 120ms ease, transform 120ms ease, background-color 120ms ease;
+}
+
+a.rounded-xl:hover {
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--text-primary) 10%, transparent);
+  transform: translateY(-1px);
+}
+
+tr.cursor-pointer {
+  transition: background-color 120ms ease;
+}
+
+tr.cursor-pointer:hover {
+  background-color: var(--bg-surface-2);
+}
+
+tr.cursor-pointer:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}

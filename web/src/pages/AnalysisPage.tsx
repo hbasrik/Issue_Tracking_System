@@ -790,7 +790,7 @@ function KpiCard({
     return (
       <Link
         to={to}
-        className="rounded-xl border p-4 transition-colors hover:bg-[var(--bg-surface-2)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]"
+        className="rounded-xl border p-4 transition-colors hover:bg-[var(--bg-surface-2)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
         style={style}
       >
         {body}
