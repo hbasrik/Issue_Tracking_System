@@ -92,15 +92,16 @@ export function AppShell() {
 
       <div className="flex min-w-0 flex-1 flex-col">
         <header
-          className="flex flex-wrap items-center gap-3 px-3 py-3 sm:gap-4 sm:px-6"
-          style={{ backgroundColor: 'var(--sidebar-bg)' }}
+          className="flex flex-wrap items-center gap-3 border-b px-3 py-3 sm:gap-4 sm:px-6"
+          style={{
+            backgroundColor: 'var(--bg-page)',
+            borderColor: 'var(--border)',
+          }}
         >
           <button
             type="button"
-            className="flex min-h-touch min-w-touch items-center justify-center rounded-lg text-[var(--sidebar-text)] hover:bg-[color-mix(in_srgb,var(--sidebar-text)_12%,transparent)] lg:hidden"
-            style={{
-              border: '1px solid color-mix(in srgb, var(--sidebar-text) 35%, transparent)',
-            }}
+            className="flex min-h-touch min-w-touch items-center justify-center rounded-lg text-[var(--text-primary)] hover:bg-[var(--bg-surface-2)] lg:hidden"
+            style={{ border: '1px solid var(--border)' }}
             aria-expanded={navOpen}
             aria-controls={drawerId}
             aria-label="Menüyü aç"

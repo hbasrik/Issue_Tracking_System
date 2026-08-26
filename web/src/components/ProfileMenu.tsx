@@ -68,11 +68,11 @@ export function ProfileMenu() {
         aria-controls={menuId}
         aria-label="Profil menüsü"
         onClick={() => setOpen((v) => !v)}
-        className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full text-[13px] font-semibold outline-none transition-colors hover:bg-[color-mix(in_srgb,var(--sidebar-text)_22%,transparent)] focus-visible:ring-2 focus-visible:ring-[var(--sidebar-text)]"
+        className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full text-[13px] font-semibold outline-none transition-colors hover:bg-[var(--bg-surface-2)] focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
         style={{
-          color: 'var(--sidebar-text)',
-          backgroundColor: 'color-mix(in srgb, var(--sidebar-text) 18%, transparent)',
-          border: '1px solid color-mix(in srgb, var(--sidebar-text) 40%, transparent)',
+          color: 'var(--text-primary)',
+          backgroundColor: 'var(--bg-surface-1)',
+          border: '1px solid var(--border)',
         }}
       >
         {initials}
