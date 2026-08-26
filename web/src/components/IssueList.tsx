@@ -142,8 +142,15 @@ export function IssueDetailPanel({
           </p>
           <p className="break-words">{issue.Description}</p>
           <p className="text-[13px] text-[var(--text-secondary)]">
-            Reporter: {issue.ReporterName || `user #${issue.IssueReporterID}`}
+            Bildiren
           </p>
+          <p className="font-medium">
+            {issue.ReporterName || `user #${issue.IssueReporterID}`}
+          </p>
+          <p className="text-[13px] text-[var(--text-secondary)]">
+            Hata türü
+          </p>
+          <p className="font-medium">{issue.IssueTypeName || '—'}</p>
           <div className="flex flex-wrap items-center gap-2">
             <SeverityIndicator severity={issue.Severity} />
             <StatusBadge kind="issue" value={issue.Status} />
