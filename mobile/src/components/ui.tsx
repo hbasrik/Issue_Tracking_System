@@ -1,26 +1,35 @@
 import { ActivityIndicator, Pressable, StyleSheet, Text, View, type ViewStyle } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeProvider';
 import { statusColors } from '../theme/tokens';
 
 export function Screen({
   children,
   padded = true,
+  safe = false,
 }: {
   children: React.ReactNode;
   padded?: boolean;
+  /** Headerless screens — inset from notch / home indicator / landscape sides. */
+  safe?: boolean;
 }) {
   const { tokens } = useTheme();
-  return (
-    <View
-      style={[
-        styles.flex,
-        { backgroundColor: tokens.bgPage },
-        padded && styles.pad,
-      ]}
-    >
-      {children}
-    </View>
-  );
+  const style = [
+    styles.flex,
+    { backgroundColor: tokens.bgPage },
+    padded && styles.pad,
+  ];
+  if (safe) {
+    return (
+      <SafeAreaView
+        style={style}
+        edges={['top', 'bottom', 'left', 'right']}
+      >
+        {children}
+      </SafeAreaView>
+    );
+  }
+  return <View style={style}>{children}</View>;
 }
 
 export function Title({ children }: { children: React.ReactNode }) {

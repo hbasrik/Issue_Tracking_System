@@ -31,7 +31,7 @@ export default function LoginScreen() {
   }
 
   return (
-    <Screen>
+    <Screen safe>
       <Pressable style={styles.center} onPress={Keyboard.dismiss} accessible={false}>
         <Title>Karea</Title>
         <Subtitle>Saha girişi</Subtitle>
