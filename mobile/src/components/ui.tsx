@@ -1,4 +1,4 @@
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View, type ViewStyle } from 'react-native';
 import { useTheme } from '../theme/ThemeProvider';
 import { statusColors } from '../theme/tokens';
 
@@ -35,13 +35,20 @@ export function Subtitle({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function Card({ children }: { children: React.ReactNode }) {
+export function Card({
+  children,
+  style,
+}: {
+  children: React.ReactNode;
+  style?: ViewStyle;
+}) {
   const { tokens } = useTheme();
   return (
     <View
       style={[
         styles.card,
         { backgroundColor: tokens.bgSurface1, borderColor: tokens.border },
+        style,
       ]}
     >
       {children}
@@ -156,7 +163,7 @@ const styles = StyleSheet.create({
   pad: { padding: 16 },
   title: { fontSize: 24, fontWeight: '600' },
   subtitle: { marginTop: 4, fontSize: 13, fontWeight: '500' },
-  sectionHeading: { marginTop: 20, fontSize: 15, fontWeight: '600' },
+  sectionHeading: { fontSize: 15, fontWeight: '600' },
   card: {
     borderWidth: 1,
     borderRadius: 12,
