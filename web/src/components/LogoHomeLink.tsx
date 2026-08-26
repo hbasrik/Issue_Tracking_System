@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Logo } from './Logo';
 
-/** Clickable brand mark — home. Hover lifts the white plate slightly. */
+/** Clickable brand mark — home. */
 export function LogoHomeLink({ height = 40 }: { height?: number }) {
   return (
     <Link
