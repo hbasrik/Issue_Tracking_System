@@ -144,11 +144,19 @@ export function ErrorText({ children }: { children: string }) {
   return <Text style={styles.error}>{children}</Text>;
 }
 
+export function SectionHeading({ children }: { children: React.ReactNode }) {
+  const { tokens } = useTheme();
+  return (
+    <Text style={[styles.sectionHeading, { color: tokens.accent }]}>{children}</Text>
+  );
+}
+
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   pad: { padding: 16 },
   title: { fontSize: 24, fontWeight: '600' },
   subtitle: { marginTop: 4, fontSize: 13, fontWeight: '500' },
+  sectionHeading: { marginTop: 20, fontSize: 15, fontWeight: '600' },
   card: {
     borderWidth: 1,
     borderRadius: 12,

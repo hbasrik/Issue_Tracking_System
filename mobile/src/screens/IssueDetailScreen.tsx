@@ -26,11 +26,13 @@ import {
   OutlineButton,
   PrimaryButton,
   Screen,
+  SectionHeading,
   Subtitle,
-  Title,
 } from '../components/ui';
 import { SeverityIndicator } from '../components/SeverityIndicator';
+import { VehicleIdentity } from '../components/VehicleIdentity';
 import { useTheme } from '../theme/ThemeProvider';
+import { space } from '../theme/tokens';
 import { useAuth } from '../auth/AuthProvider';
 import { Perm } from '../auth/permissions';
 import { issueStatusColor, issueStatusLabel } from '../lib/issueStatus';
@@ -39,6 +41,7 @@ import {
   DismissKeyboardScrollView,
   iosDoneAccessoryProps,
 } from '../components/keyboard';
+import { issueDetailCopy, issueStationLabel } from '../lib/issueDetailCopy';
 import type { RootStackParamList } from '../navigation/types';
 
 function nextOperatorStatus(status: Issue['Status']): Issue['Status'] | null {
@@ -51,7 +54,26 @@ function formatDate(iso?: string): string {
   if (!iso || iso.startsWith('0001')) return '—';
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleString();
+  return d.toLocaleString('tr-TR');
+}
+
+function InfoRow({ label, value }: { label: string; value: string }) {
+  const { tokens } = useTheme();
+  return (
+    <View style={{ marginTop: space[3] }}>
+      <Text style={{ color: tokens.textSecondary, fontSize: 12 }}>{label}</Text>
+      <Text
+        style={{
+          color: tokens.textPrimary,
+          fontSize: 15,
+          fontWeight: '600',
+          marginTop: 2,
+        }}
+      >
+        {value}
+      </Text>
+    </View>
+  );
 }
 
 export default function IssueDetailScreen() {
@@ -89,7 +111,7 @@ export default function IssueDetailScreen() {
         setResolutionUploaded(true);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load issue');
+      setError(err instanceof Error ? err.message : 'Issue yüklenemedi');
     }
   }, [route.params.id]);
 
@@ -157,7 +179,7 @@ export default function IssueDetailScreen() {
     } catch (err) {
       setError(
         `Çözüm fotoğrafı yüklenemedi: ${
-          err instanceof Error ? err.message : 'upload failed'
+          err instanceof Error ? err.message : 'yükleme başarısız'
         }`,
       );
       setResolutionUploaded(false);
@@ -235,176 +257,59 @@ export default function IssueDetailScreen() {
 
   return (
     <Screen padded={false}>
-      <DismissKeyboardScrollView contentContainerStyle={{ padding: 16, paddingBottom: 48 }}>
-        <Title>Issue #{route.params.id}</Title>
+      <DismissKeyboardScrollView contentContainerStyle={{ padding: space[4], paddingBottom: 48 }}>
         {issue ? (
           <>
             <Card>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <Badge label={issueStatusLabel(issue.Status)} color={issueStatusColor(issue.Status)} />
+              <VehicleIdentity vin={issue.VIN} variant="hero" />
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: space[2],
+                  marginTop: space[4],
+                }}
+              >
                 <SeverityIndicator severity={issue.Severity} size="md" />
+                <Badge
+                  label={issueStatusLabel(issue.Status)}
+                  color={issueStatusColor(issue.Status)}
+                />
               </View>
-              <Text style={{ color: tokens.textSecondary, marginTop: 12, fontSize: 12 }}>
-                Bildiren
-              </Text>
-              <Text style={{ color: tokens.textPrimary, fontSize: 15, fontWeight: '600' }}>
-                {issue.ReporterName || `User #${issue.IssueReporterID}`}
-              </Text>
-              <Text style={{ color: tokens.textSecondary, marginTop: 8, fontSize: 12 }}>
-                Hata türü
-              </Text>
-              <Text style={{ color: tokens.textPrimary, fontSize: 15, fontWeight: '600' }}>
-                {issue.IssueTypeName || '—'}
-              </Text>
-              <Text style={{ color: tokens.textSecondary, marginTop: 8, fontSize: 12 }}>
-                Bildirim tarihi
-              </Text>
-              <Text style={{ color: tokens.textPrimary, fontSize: 14 }}>
-                {formatDate(issue.IssueDate || issue.CreatedAt)}
-              </Text>
-              <Text style={{ color: tokens.textSecondary, marginTop: 8, fontSize: 12 }}>
-                VIN
-              </Text>
               <Text
                 style={{
                   color: tokens.textPrimary,
-                  fontSize: 15,
+                  fontSize: 17,
                   fontWeight: '600',
-                  fontVariant: ['tabular-nums'],
+                  lineHeight: 24,
+                  marginTop: space[5],
                 }}
               >
-                {issue.VIN}
-              </Text>
-            </Card>
-
-            <Text
-              style={{
-                color: tokens.textPrimary,
-                fontWeight: '700',
-                fontSize: 16,
-                marginTop: 20,
-              }}
-            >
-              Durum Geçmişi
-            </Text>
-            <Card>
-              {history.length === 0 ? (
-                <Subtitle>Henüz durum değişikliği yok</Subtitle>
-              ) : (
-                history.map((row) => (
-                  <View key={row.ID} style={{ marginTop: 8 }}>
-                    <Text style={{ color: tokens.textPrimary, fontWeight: '600', fontSize: 14 }}>
-                      {issueStatusLabel(row.FromStatus || '')} → {issueStatusLabel(row.ToStatus || '')}:{' '}
-                      {row.ActorName || '—'}, {formatDate(row.EventAt)}
-                    </Text>
-                  </View>
-                ))
-              )}
-            </Card>
-
-            <Text
-              style={{
-                color: tokens.textPrimary,
-                fontWeight: '700',
-                fontSize: 16,
-                marginTop: 20,
-              }}
-            >
-              Bildirim
-            </Text>
-            <Card>
-              <Text style={{ color: tokens.textPrimary, fontSize: 15 }}>
                 {issue.Description}
               </Text>
-              {reportPhotos.length === 0 ? (
-                <Subtitle>Rapor fotoğrafı yok</Subtitle>
-              ) : (
-                reportPhotos.map((p) => {
-                  const uri = mediaFileUrl(p.storage_path);
-                  return (
-                    <Pressable
-                      key={p.id}
-                      onPress={() => setViewerUri(uri)}
-                      style={{ marginTop: 12 }}
-                      accessibilityRole="imagebutton"
-                      accessibilityLabel={`Enlarge ${p.file_name}`}
-                    >
-                      <Image
-                        source={{ uri }}
-                        style={{
-                          width: '100%',
-                          height: 200,
-                          borderRadius: 10,
-                          backgroundColor: tokens.bgSurface2,
-                        }}
-                        resizeMode="cover"
-                      />
-                      <Text style={{ color: tokens.textSecondary, marginTop: 4, fontSize: 12 }}>
-                        {p.file_name}
-                      </Text>
-                    </Pressable>
-                  );
-                })
-              )}
+              <InfoRow
+                label={issueDetailCopy.reporter}
+                value={issue.ReporterName || `kullanıcı #${issue.IssueReporterID}`}
+              />
+              <InfoRow
+                label={issueDetailCopy.issueType}
+                value={issue.IssueTypeName || '—'}
+              />
+              <InfoRow
+                label={issueDetailCopy.station}
+                value={issueStationLabel(issue)}
+              />
+              <InfoRow
+                label={issueDetailCopy.reportedAt}
+                value={formatDate(issue.IssueDate || issue.CreatedAt)}
+              />
+              {issue.SolutionDescription?.trim() ? (
+                <InfoRow
+                  label={issueDetailCopy.solution}
+                  value={issue.SolutionDescription.trim()}
+                />
+              ) : null}
             </Card>
-
-            {(issue.Status === 'DONE' ||
-              issue.Status === 'APPROVED' ||
-              issue.Status === 'CONDITIONAL_APPROVED' ||
-              resolutionPhotos.length > 0 ||
-              !!issue.SolutionDescription) && (
-              <>
-                <Text
-                  style={{
-                    color: tokens.textPrimary,
-                    fontWeight: '700',
-                    fontSize: 16,
-                    marginTop: 20,
-                  }}
-                >
-                  Çözüm
-                </Text>
-                <Card>
-                  <Text style={{ color: tokens.textPrimary, fontSize: 15 }}>
-                    {issue.SolutionDescription?.trim()
-                      ? issue.SolutionDescription
-                      : '—'}
-                  </Text>
-                  {resolutionPhotos.length === 0 ? (
-                    <Subtitle>Çözüm fotoğrafı yok</Subtitle>
-                  ) : (
-                    resolutionPhotos.map((p) => {
-                      const uri = mediaFileUrl(p.storage_path);
-                      return (
-                        <Pressable
-                          key={p.id}
-                          onPress={() => setViewerUri(uri)}
-                          style={{ marginTop: 12 }}
-                          accessibilityRole="imagebutton"
-                          accessibilityLabel={`Enlarge ${p.file_name}`}
-                        >
-                          <Image
-                            source={{ uri }}
-                            style={{
-                              width: '100%',
-                              height: 200,
-                              borderRadius: 10,
-                              backgroundColor: tokens.bgSurface2,
-                            }}
-                            resizeMode="cover"
-                          />
-                          <Text
-                            style={{ color: tokens.textSecondary, marginTop: 4, fontSize: 12 }}
-                          >
-                            {p.file_name}
-                          </Text>
-                        </Pressable>
-                      );
-                    })
-                  )}
-                </Card>
-              </>
-            )}
 
             {next === 'IN_PROGRESS' && has(Perm.IssueTransitionProgress) ? (
               <View style={{ marginTop: 20 }}>
@@ -584,6 +489,99 @@ export default function IssueDetailScreen() {
             ) : !next && !canMarkDone && !canApprove && !canConditional ? (
               <Subtitle>Bu issue için başka geçiş yok</Subtitle>
             ) : null}
+
+            <SectionHeading>{issueDetailCopy.history}</SectionHeading>
+            <Card>
+              {history.length === 0 ? (
+                <Subtitle>Henüz durum değişikliği yok</Subtitle>
+              ) : (
+                history.map((row) => (
+                  <View key={row.ID} style={{ marginTop: space[2] }}>
+                    <Text style={{ color: tokens.textPrimary, fontWeight: '600', fontSize: 14 }}>
+                      {issueStatusLabel(row.FromStatus || '')} → {issueStatusLabel(row.ToStatus || '')}:{' '}
+                      {row.ActorName || '—'}, {formatDate(row.EventAt)}
+                    </Text>
+                  </View>
+                ))
+              )}
+            </Card>
+
+            <SectionHeading>{issueDetailCopy.photos}</SectionHeading>
+            <Card>
+              <Text style={{ color: tokens.textSecondary, fontSize: 13, fontWeight: '500' }}>
+                {issueDetailCopy.reportPhotos}
+              </Text>
+              {reportPhotos.length === 0 ? (
+                <Subtitle>{issueDetailCopy.photosEmpty}</Subtitle>
+              ) : (
+                reportPhotos.map((p) => {
+                  const uri = mediaFileUrl(p.storage_path);
+                  return (
+                    <Pressable
+                      key={p.id}
+                      onPress={() => setViewerUri(uri)}
+                      style={{ marginTop: space[3] }}
+                      accessibilityRole="imagebutton"
+                      accessibilityLabel={`Büyüt: ${p.file_name}`}
+                    >
+                      <Image
+                        source={{ uri }}
+                        style={{
+                          width: '100%',
+                          height: 200,
+                          borderRadius: 10,
+                          backgroundColor: tokens.bgSurface2,
+                        }}
+                        resizeMode="cover"
+                      />
+                      <Text style={{ color: tokens.textSecondary, marginTop: 4, fontSize: 12 }}>
+                        {p.file_name}
+                      </Text>
+                    </Pressable>
+                  );
+                })
+              )}
+              <Text
+                style={{
+                  color: tokens.textSecondary,
+                  fontSize: 13,
+                  fontWeight: '500',
+                  marginTop: space[5],
+                }}
+              >
+                {issueDetailCopy.resolutionPhotos}
+              </Text>
+              {resolutionPhotos.length === 0 ? (
+                <Subtitle>{issueDetailCopy.photosEmpty}</Subtitle>
+              ) : (
+                resolutionPhotos.map((p) => {
+                  const uri = mediaFileUrl(p.storage_path);
+                  return (
+                    <Pressable
+                      key={p.id}
+                      onPress={() => setViewerUri(uri)}
+                      style={{ marginTop: space[3] }}
+                      accessibilityRole="imagebutton"
+                      accessibilityLabel={`Büyüt: ${p.file_name}`}
+                    >
+                      <Image
+                        source={{ uri }}
+                        style={{
+                          width: '100%',
+                          height: 200,
+                          borderRadius: 10,
+                          backgroundColor: tokens.bgSurface2,
+                        }}
+                        resizeMode="cover"
+                      />
+                      <Text style={{ color: tokens.textSecondary, marginTop: 4, fontSize: 12 }}>
+                        {p.file_name}
+                      </Text>
+                    </Pressable>
+                  );
+                })
+              )}
+            </Card>
           </>
         ) : null}
         {error ? <ErrorText>{error}</ErrorText> : null}
@@ -608,7 +606,7 @@ export default function IssueDetailScreen() {
             onPress={() => setViewerUri(null)}
             style={{ position: 'absolute', top: 48, right: 20, zIndex: 2, minHeight: 44 }}
             accessibilityRole="button"
-            accessibilityLabel="Close photo"
+            accessibilityLabel="Fotoğrafı kapat"
           >
             <Text style={{ color: '#fff', fontSize: 16, fontWeight: '600' }}>Kapat</Text>
           </Pressable>

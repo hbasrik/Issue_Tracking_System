@@ -30,7 +30,7 @@ export function IssueActions({
   if (actions.length === 0) return null;
 
   return (
-    <div className="mt-3 flex flex-wrap gap-2">
+    <div className="flex flex-wrap gap-2">
       {actions.map((a) => (
         <button
           key={a.status}

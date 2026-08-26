@@ -203,6 +203,7 @@ export interface Issue {
   ReporterName?: string;
   IssueTypeID?: number | null;
   IssueTypeName?: string;
+  StationName?: string;
   /** Earliest ISSUE media attachment storage_path, when present. */
   ReportPhotoPath?: string;
 }

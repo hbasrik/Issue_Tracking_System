@@ -77,7 +77,7 @@ export default function IssuesPage() {
       setItems(list);
       setIssueTypes(typesRes.items ?? []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load issues');
+      setError(err instanceof Error ? err.message : 'Issue listesi yüklenemedi');
       setItems([]);
     }
   }, []);
@@ -249,8 +249,7 @@ export default function IssuesPage() {
             className="mt-1 text-[13px]"
             style={{ color: 'var(--text-secondary)' }}
           >
-            Global issue queue — quality approval (Tamamlandı → Kalite Onay or Şartlı Onay)
-            is Manager-only
+            Kalite onayı (Tamamlandı → Kalite Onay veya Şartlı Onay) yalnızca yönetici
           </p>
         </div>
         <div className="flex flex-wrap gap-2">

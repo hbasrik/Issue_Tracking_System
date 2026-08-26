@@ -575,7 +575,7 @@ export function formatIssueCreatedAt(iso?: string): string {
   if (!iso || iso.startsWith('0001')) return '—';
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleString();
+  return d.toLocaleString('tr-TR');
 }
 
 export interface AnalysisQuery {

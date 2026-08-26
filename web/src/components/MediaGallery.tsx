@@ -12,10 +12,17 @@ interface MediaGalleryProps {
   entityId: string;
   /** When set, the gallery lists every photo for this VIN (Karar 11). */
   listByVin?: string;
+  /** Override the section heading. */
+  heading?: string;
 }
 
 /** Thumbnail grid + upload for media_attachments (Karar 8). */
-export function MediaGallery({ entityType, entityId, listByVin }: MediaGalleryProps) {
+export function MediaGallery({
+  entityType,
+  entityId,
+  listByVin,
+  heading,
+}: MediaGalleryProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [items, setItems] = useState<MediaAttachment[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -30,7 +37,7 @@ export function MediaGallery({ entityType, entityId, listByVin }: MediaGalleryPr
         : await api.listMedia(entityType, entityId);
       setItems(res.items ?? []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'failed to load attachments');
+      setError(err instanceof Error ? err.message : 'Fotoğraflar yüklenemedi');
       setItems([]);
     }
   }, [entityType, entityId, listByVin]);
@@ -56,7 +63,7 @@ export function MediaGallery({ entityType, entityId, listByVin }: MediaGalleryPr
       await api.uploadMedia(entityType, entityId, file);
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'upload failed');
+      setError(err instanceof Error ? err.message : 'Yükleme başarısız');
     } finally {
       setBusy(false);
       if (inputRef.current) inputRef.current.value = '';
@@ -66,7 +73,15 @@ export function MediaGallery({ entityType, entityId, listByVin }: MediaGalleryPr
   return (
     <div>
       <div className="flex items-center justify-between gap-3">
-        <h3 className="text-[15px] font-medium">{listByVin ? 'All photos' : 'Attachments'}</h3>
+        <h3
+          className={
+            heading
+              ? 'text-[13px] font-medium text-[var(--text-secondary)]'
+              : 'text-[15px] font-semibold text-[var(--accent)]'
+          }
+        >
+          {heading ?? (listByVin ? 'Tüm fotoğraflar' : 'Fotoğraflar')}
+        </h3>
         <button
           type="button"
           disabled={busy || !entityId}
@@ -74,7 +89,7 @@ export function MediaGallery({ entityType, entityId, listByVin }: MediaGalleryPr
           className="rounded-lg border px-3 py-1.5 text-[13px] disabled:opacity-60"
           style={{ borderColor: 'var(--border)' }}
         >
-          {busy ? 'Uploading…' : 'Upload'}
+          {busy ? 'Yükleniyor…' : 'Yükle'}
         </button>
         <input
           ref={inputRef}
@@ -91,7 +106,7 @@ export function MediaGallery({ entityType, entityId, listByVin }: MediaGalleryPr
       )}
       {items.length === 0 && !error && (
         <p className="mt-3 text-[13px] text-[var(--text-secondary)]">
-          No attachments yet
+          Henüz fotoğraf yok
         </p>
       )}
       {items.length > 0 && (
@@ -115,7 +130,7 @@ export function MediaGallery({ entityType, entityId, listByVin }: MediaGalleryPr
                     unreadable
                       ? `${item.file_name} (tarayıcıda açılamaz)`
                       : isImage
-                        ? `Enlarge ${item.file_name}`
+                        ? `Büyüt: ${item.file_name}`
                         : item.file_name
                   }
                 >
@@ -161,7 +176,7 @@ export function MediaGallery({ entityType, entityId, listByVin }: MediaGalleryPr
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4"
           role="dialog"
           aria-modal="true"
-          aria-label="Photo viewer"
+          aria-label="Fotoğraf görüntüleyici"
           onClick={() => setLightbox(null)}
         >
           <button
@@ -169,7 +184,7 @@ export function MediaGallery({ entityType, entityId, listByVin }: MediaGalleryPr
             className="absolute right-4 top-4 rounded-lg bg-white/10 px-3 py-2 text-[13px] text-white"
             onClick={() => setLightbox(null)}
           >
-            Close
+            Kapat
           </button>
           <img
             src={mediaFileUrl(lightbox.storage_path)}

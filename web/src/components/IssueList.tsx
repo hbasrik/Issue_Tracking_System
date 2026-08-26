@@ -15,6 +15,11 @@ import { VehicleIdentity } from './VehicleIdentity';
 import { DataCard, DataCardField } from './DataCard';
 import { useIsDesktop } from '../lib/useMediaQuery';
 import { IssueStatusHistory } from './IssueStatusHistory';
+import { SectionHeading } from './SectionHeading';
+import {
+  issueDetailCopy,
+  issueStationLabel,
+} from '../lib/issueDetailCopy';
 
 function IssueThumb({ path }: { path?: string }) {
   if (!path) {
@@ -62,7 +67,7 @@ function IssueCardSummary({
       <IssueThumb path={issue.ReportPhotoPath} />
       <div className="min-w-0 flex-1 space-y-1">
         <DataCardField label="ID">#{issue.ID}</DataCardField>
-        <DataCardField label="Created">
+        <DataCardField label="Bildirim tarihi">
           {formatIssueCreatedAt(issue.CreatedAt || issue.IssueDate)}
         </DataCardField>
         {!hideVin && (
@@ -79,13 +84,44 @@ function IssueCardSummary({
         <DataCardField label="Severity">
           <SeverityIndicator severity={issue.Severity} />
         </DataCardField>
-        <DataCardField label="Status">
+        <DataCardField label="Durum">
           <StatusBadge kind="issue" value={issue.Status} />
         </DataCardField>
         <DataCardField label="Bildiren">
-          {issue.ReporterName || `user #${issue.IssueReporterID}`}
+          {issue.ReporterName || `kullanıcı #${issue.IssueReporterID}`}
         </DataCardField>
       </div>
+    </div>
+  );
+}
+
+/** Label / value block — stacked on narrow, 2-column grid from sm up. */
+function IssueInfoFields({ issue }: { issue: Issue }) {
+  const rows: [string, string][] = [
+    [
+      issueDetailCopy.reporter,
+      issue.ReporterName || `kullanıcı #${issue.IssueReporterID}`,
+    ],
+    [issueDetailCopy.issueType, issue.IssueTypeName || '—'],
+    [issueDetailCopy.station, issueStationLabel(issue)],
+    [
+      issueDetailCopy.reportedAt,
+      formatIssueCreatedAt(issue.CreatedAt || issue.IssueDate),
+    ],
+  ];
+  if (issue.SolutionDescription?.trim()) {
+    rows.push([issueDetailCopy.solution, issue.SolutionDescription.trim()]);
+  }
+  return (
+    <div className="flex flex-col gap-[var(--space-4)] sm:grid sm:grid-cols-[minmax(8.5rem,auto)_1fr] sm:gap-x-[var(--space-6)] sm:gap-y-[var(--space-3)]">
+      {rows.map(([label, value]) => (
+        <div key={label} className="flex flex-col gap-0.5 sm:contents">
+          <p className="text-[13px] text-[var(--text-secondary)]">{label}</p>
+          <p className="text-[15px] font-medium text-[var(--text-primary)]">
+            {value}
+          </p>
+        </div>
+      ))}
     </div>
   );
 }
@@ -108,7 +144,7 @@ export function IssueDetailPanel({
       await api.updateIssueStatus(issue.ID, status);
       onStatusChanged?.();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'status update failed');
+      setError(err instanceof Error ? err.message : 'Durum güncellenemedi');
     } finally {
       setBusy(false);
     }
@@ -116,55 +152,58 @@ export function IssueDetailPanel({
 
   return (
     <div
-      className="rounded-xl border bg-[var(--bg-surface-1)] p-4 sm:p-5"
+      className="rounded-xl border bg-[var(--bg-surface-1)] p-[var(--space-4)] sm:p-[var(--space-5)]"
       style={{ borderColor: 'var(--border)' }}
     >
-      <h2 className="text-lg font-semibold">Issue detail</h2>
+      <h2 className="text-lg font-semibold">{issueDetailCopy.panelTitle}</h2>
       {!issue && (
-        <p className="mt-2 text-[15px] text-[var(--text-secondary)]">
-          Select an issue from the list.
+        <p className="mt-[var(--space-2)] text-[15px] text-[var(--text-secondary)]">
+          {issueDetailCopy.empty}
         </p>
       )}
       {error && (
-        <p className="mt-3 text-[13px]" style={{ color: 'var(--status-not-ok)' }}>
+        <p className="mt-[var(--space-3)] text-[13px]" style={{ color: 'var(--status-not-ok)' }}>
           {error}
         </p>
       )}
       {issue && (
-        <div className="mt-4 space-y-3 text-[15px]">
-          <VehicleIdentity vin={issue.VIN} compact />
-          <p className="text-[13px] text-[var(--text-secondary)]">
-            Created {formatIssueCreatedAt(issue.CreatedAt || issue.IssueDate)}
-          </p>
-          <p>
-            <span className="text-[var(--text-secondary)]">Station:</span>{' '}
-            {issue.StationID ?? '—'}
-          </p>
-          <p className="break-words">{issue.Description}</p>
-          <p className="text-[13px] text-[var(--text-secondary)]">
-            Bildiren
-          </p>
-          <p className="font-medium">
-            {issue.ReporterName || `user #${issue.IssueReporterID}`}
-          </p>
-          <p className="text-[13px] text-[var(--text-secondary)]">
-            Hata türü
-          </p>
-          <p className="font-medium">{issue.IssueTypeName || '—'}</p>
-          <div className="flex flex-wrap items-center gap-2">
+        <div className="mt-[var(--space-4)] flex flex-col gap-[var(--space-5)] text-[15px]">
+          <VehicleIdentity vin={issue.VIN} variant="hero" />
+
+          <div className="flex flex-wrap items-center gap-[var(--space-2)]">
             <SeverityIndicator severity={issue.Severity} />
             <StatusBadge kind="issue" value={issue.Status} />
           </div>
+
+          <p className="break-words text-[17px] font-medium leading-relaxed">
+            {issue.Description}
+          </p>
+
+          <IssueInfoFields issue={issue} />
+
           <IssueActions
             status={issue.Status}
             busy={busy}
             onTransition={(status) => void transition(status)}
           />
-          <div className="pt-2">
-            <IssueStatusHistory issueId={issue.ID} />
+
+          <div className="flex flex-col gap-[var(--space-3)]">
+            <SectionHeading>{issueDetailCopy.history}</SectionHeading>
+            <IssueStatusHistory issueId={issue.ID} hideTitle />
           </div>
-          <div className="pt-4">
-            <MediaGallery entityType="ISSUE" entityId={String(issue.ID)} />
+
+          <div className="flex flex-col gap-[var(--space-4)]">
+            <SectionHeading>{issueDetailCopy.photos}</SectionHeading>
+            <MediaGallery
+              entityType="ISSUE"
+              entityId={String(issue.ID)}
+              heading={issueDetailCopy.reportPhotos}
+            />
+            <MediaGallery
+              entityType="ISSUE_RESOLUTION"
+              entityId={String(issue.ID)}
+              heading={issueDetailCopy.resolutionPhotos}
+            />
           </div>
         </div>
       )}
@@ -178,7 +217,7 @@ export function IssueDetailPanel({
  */
 export function IssueList({
   items,
-  emptyLabel = 'No issues',
+  emptyLabel = 'Issue yok',
   hideVin = false,
   onStatusChanged,
 }: {
@@ -234,12 +273,12 @@ export function IssueList({
                 className="border-b text-[13px] text-[var(--text-secondary)]"
                 style={{ borderColor: 'var(--border)' }}
               >
-                <th className="px-4 py-3">Photo</th>
+                <th className="px-4 py-3">Fotoğraflar</th>
                 <th className="px-4 py-3">ID</th>
-                <th className="px-4 py-3">Created</th>
+                <th className="px-4 py-3">Bildirim tarihi</th>
                 {!hideVin && <th className="px-4 py-3">VIN</th>}
                 <th className="px-4 py-3">Severity</th>
-                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">Durum</th>
                 <th className="px-4 py-3">Bildiren</th>
               </tr>
             </thead>
@@ -290,7 +329,7 @@ export function IssueList({
                     <StatusBadge kind="issue" value={r.Status} />
                   </td>
                   <td className="px-4 py-3 text-[13px] text-[var(--text-secondary)]">
-                    {r.ReporterName || `user #${r.IssueReporterID}`}
+                    {r.ReporterName || `kullanıcı #${r.IssueReporterID}`}
                   </td>
                 </tr>
               ))}

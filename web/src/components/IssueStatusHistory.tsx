@@ -10,7 +10,13 @@ function formatEventAt(iso: string): string {
 }
 
 /** Chronological ISSUE_STATUS_CHANGE trail from GET /issues/:id/history. */
-export function IssueStatusHistory({ issueId }: { issueId: number }) {
+export function IssueStatusHistory({
+  issueId,
+  hideTitle,
+}: {
+  issueId: number;
+  hideTitle?: boolean;
+}) {
   const [items, setItems] = useState<IssueStatusHistoryEntry[]>([]);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,7 +41,11 @@ export function IssueStatusHistory({ issueId }: { issueId: number }) {
 
   return (
     <div>
-      <h3 className="text-[15px] font-semibold">Durum Geçmişi</h3>
+      {!hideTitle && (
+        <h3 className="text-[15px] font-semibold text-[var(--accent)]">
+          Durum Geçmişi
+        </h3>
+      )}
       {error && (
         <p className="mt-2 text-[13px]" style={{ color: 'var(--status-not-ok)' }}>
           {error}
