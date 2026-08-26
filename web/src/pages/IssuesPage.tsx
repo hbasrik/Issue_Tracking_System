@@ -329,7 +329,7 @@ export default function IssuesPage() {
               }}
               placeholder="VIN veya bildiren adı"
               aria-label="VIN veya bildiren adı"
-              className="mt-1 w-full rounded-lg border bg-[var(--bg-page)] px-3 py-2 text-[15px] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] outline-none focus:border-[var(--accent)]"
+              className="mt-1 w-full rounded-lg border bg-[var(--bg-page)] px-3 py-2 text-[15px] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]"
               style={{ borderColor: 'var(--border)' }}
             />
           </div>
@@ -428,13 +428,13 @@ export default function IssuesPage() {
 }
 
 const CHIP_CLASS =
-  'inline-flex min-h-[36px] items-center gap-1.5 rounded-full border px-3 text-[12px] font-semibold outline-none focus-visible:[box-shadow:0_0_0_2px_var(--chip-focus)]';
+  'inline-flex min-h-[36px] items-center gap-1.5 rounded-full border px-3 text-[12px] font-semibold';
 
 const TYPE_CHIP_CLASS =
-  'inline-flex min-h-[36px] items-center rounded-full px-3 text-[12px] font-semibold outline-none focus-visible:[box-shadow:0_0_0_2px_var(--chip-focus)]';
+  'inline-flex min-h-[36px] items-center rounded-full px-3 text-[12px] font-semibold';
 
 const SEVERITY_CHIP_CLASS =
-  'inline-flex min-h-touch min-w-touch items-center justify-center rounded-full px-2.5 outline-none focus-visible:[box-shadow:0_0_0_2px_var(--chip-focus)]';
+  'inline-flex min-h-touch min-w-touch items-center justify-center rounded-full px-2.5';
 
 function chipStyle(
   selected: boolean,
@@ -447,18 +447,16 @@ function chipStyle(
     borderColor: color,
     backgroundColor: fill,
     color: ink,
-    outline: 'none',
-    ['--chip-focus' as string]: color,
   };
 }
 
 function typeChipStyle(selected: boolean): CSSProperties {
   return {
     border: 'none',
-    backgroundColor: selected ? 'var(--bg-surface-2)' : 'transparent',
+    backgroundColor: selected
+      ? 'color-mix(in srgb, var(--text-primary) 14%, var(--bg-surface-1))'
+      : 'color-mix(in srgb, var(--text-primary) 6%, var(--bg-surface-1))',
     color: selected ? 'var(--text-primary)' : 'var(--text-secondary)',
-    outline: 'none',
-    ['--chip-focus' as string]: 'var(--text-secondary)',
   };
 }
 
@@ -468,8 +466,6 @@ function severityChipStyle(selected: boolean, color: string): CSSProperties {
     backgroundColor: selected
       ? `color-mix(in srgb, ${color} 22%, var(--bg-surface-1))`
       : 'transparent',
-    outline: 'none',
-    ['--chip-focus' as string]: color,
   };
 }
 
