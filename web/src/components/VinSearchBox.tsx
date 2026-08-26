@@ -131,6 +131,7 @@ export function VinSearchBox({
             ? {
                 backgroundColor: lightTokens['bg-surface-1'],
                 color: lightTokens['text-primary'],
+                borderColor: lightTokens.border,
               }
             : { borderColor: 'var(--border)' }
         }
