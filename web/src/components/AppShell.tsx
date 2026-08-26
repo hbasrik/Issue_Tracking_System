@@ -91,33 +91,32 @@ export function AppShell() {
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header
-          className="flex flex-wrap items-center gap-3 border-b px-3 py-3 sm:gap-4 sm:px-6"
-          style={{
-            backgroundColor: 'var(--bg-page)',
-            borderColor: 'var(--border)',
-          }}
-        >
-          <button
-            type="button"
-            className="flex min-h-touch min-w-touch items-center justify-center rounded-lg text-[var(--text-primary)] hover:bg-[var(--bg-surface-2)] lg:hidden"
-            style={{ border: '1px solid var(--border)' }}
-            aria-expanded={navOpen}
-            aria-controls={drawerId}
-            aria-label="Menüyü aç"
-            onClick={() => setNavOpen(true)}
+        <div className="px-3 pt-3 sm:px-4 sm:pt-4 lg:px-6 lg:pt-6">
+          <header
+            className="mx-auto flex w-full max-w-[1440px] flex-wrap items-center gap-3 rounded-xl border bg-[var(--bg-surface-1)] px-3 py-3 sm:gap-4 sm:px-4"
+            style={{ borderColor: 'var(--border)' }}
           >
-            <MenuIcon />
-          </button>
+            <button
+              type="button"
+              className="flex min-h-touch min-w-touch items-center justify-center rounded-lg text-[var(--text-primary)] hover:bg-[var(--bg-surface-2)] lg:hidden"
+              style={{ border: '1px solid var(--border)' }}
+              aria-expanded={navOpen}
+              aria-controls={drawerId}
+              aria-label="Menüyü aç"
+              onClick={() => setNavOpen(true)}
+            >
+              <MenuIcon />
+            </button>
 
-          <div className="min-w-0 flex-1 basis-[10rem] sm:max-w-xs">
-            {has(Perm.VehicleView) ? <VinSearchBox onChrome /> : null}
-          </div>
+            <div className="min-w-0 flex-1 basis-[10rem] sm:max-w-xs">
+              {has(Perm.VehicleView) ? <VinSearchBox onChrome /> : null}
+            </div>
 
-          <div className="ml-auto flex items-center">
-            <ProfileMenu />
-          </div>
-        </header>
+            <div className="ml-auto flex items-center">
+              <ProfileMenu />
+            </div>
+          </header>
+        </div>
 
         <main className="mx-auto w-full max-w-[1440px] flex-1 overflow-x-hidden p-3 sm:p-4 lg:p-6">
           <Outlet />
