@@ -62,7 +62,7 @@ export default function IssueReportScreen() {
   async function pickPhoto() {
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!perm.granted) {
-      setError('Photo permission denied');
+      setError('Galeri izni reddedildi');
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -103,11 +103,11 @@ export default function IssueReportScreen() {
   async function submit() {
     setError(null);
     if (!description.trim()) {
-      setError('Description is required');
+      setError('Açıklama zorunlu');
       return;
     }
     if (!severity) {
-      setError('Severity is required');
+      setError('Severity seçimi zorunlu');
       return;
     }
     setBusy(true);
@@ -130,7 +130,7 @@ export default function IssueReportScreen() {
         navigation.goBack();
       }
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Failed to create issue');
+      setError(err instanceof ApiError ? err.message : 'Issue oluşturulamadı');
     } finally {
       setBusy(false);
     }

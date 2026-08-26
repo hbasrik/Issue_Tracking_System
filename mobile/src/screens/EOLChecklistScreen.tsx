@@ -99,7 +99,7 @@ export default function EOLChecklistScreen() {
       }
       setDrafts(next);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load EoL checklist');
+      setError(err instanceof Error ? err.message : 'EoL listesi yüklenemedi');
     } finally {
       setLoaded(true);
     }
@@ -143,7 +143,7 @@ export default function EOLChecklistScreen() {
   async function saveItem(item: ChecklistItem) {
     const d = drafts[item.ItemID];
     if (!d?.status) {
-      setError('Select a status');
+      setError('Durum seçin');
       return;
     }
     if (needsDesc(d.status as ChecklistItem['Status']) && !d.desc.trim()) {
@@ -165,7 +165,7 @@ export default function EOLChecklistScreen() {
       await api.recordChecklist(vin, 'eol', item.ItemID, body);
       await load();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Save failed');
+      setError(err instanceof ApiError ? err.message : 'Kaydedilemedi');
     } finally {
       setBusy(false);
     }

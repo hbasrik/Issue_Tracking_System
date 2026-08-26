@@ -140,7 +140,7 @@ export default function VehicleStationScreen() {
       setReadiness(ready);
       setExpandedStation((prev) => prev ?? v.CurrentStationID);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load vehicle');
+      setError(err instanceof Error ? err.message : 'Araç yüklenemedi');
     }
   }, [vin, has]);
 
@@ -182,7 +182,7 @@ export default function VehicleStationScreen() {
       await api.recordStationStep(vin, step.ID, status);
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update station step');
+      setError(err instanceof Error ? err.message : 'İstasyon adımı güncellenemedi');
     } finally {
       setBusyId(null);
     }

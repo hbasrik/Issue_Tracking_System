@@ -48,7 +48,7 @@ export default function ShipmentChecklistScreen() {
       const res = await api.getChecklist(vin, 'shipment');
       setItems(res.items ?? []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load shipment checklist');
+      setError(err instanceof Error ? err.message : 'Sevk listesi yüklenemedi');
     }
   }, [vin]);
 
@@ -72,7 +72,7 @@ export default function ShipmentChecklistScreen() {
       await api.recordChecklist(vin, 'shipment', item.ItemID, { status: 'OK' });
       await load();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Update failed');
+      setError(err instanceof ApiError ? err.message : 'Güncellenemedi');
     } finally {
       setBusyId(null);
     }

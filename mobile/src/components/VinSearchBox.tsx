@@ -57,7 +57,7 @@ export function VinSearchBox({
       setResults(items);
       onResultsRef.current?.(items);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Search failed');
+      setError(err instanceof Error ? err.message : 'Arama başarısız');
       setResults([]);
       onResultsRef.current?.([]);
     } finally {

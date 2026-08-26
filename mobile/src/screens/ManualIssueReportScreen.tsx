@@ -89,7 +89,7 @@ export default function ManualIssueReportScreen() {
         );
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Failed to load form data');
+          setError(err instanceof Error ? err.message : 'Form yüklenemedi');
         }
       }
     })();
@@ -212,7 +212,7 @@ export default function ManualIssueReportScreen() {
         navigation.goBack();
       }
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Failed to create issue');
+      setError(err instanceof ApiError ? err.message : 'Issue oluşturulamadı');
     } finally {
       setBusy(false);
     }

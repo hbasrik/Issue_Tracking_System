@@ -56,7 +56,7 @@ export default function TestChecklistScreen() {
       const res = await api.getChecklist(vin, 'test');
       setItems(res.items ?? []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load test checklist');
+      setError(err instanceof Error ? err.message : 'Test listesi yüklenemedi');
     }
   }, [vin]);
 
@@ -78,7 +78,7 @@ export default function TestChecklistScreen() {
       await api.recordChecklist(vin, 'test', item.ItemID, { status: 'OK' });
       await load();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Update failed');
+      setError(err instanceof ApiError ? err.message : 'Güncellenemedi');
     } finally {
       setBusyId(null);
     }

@@ -42,7 +42,7 @@ export function DurumOverview() {
       setVehicles(rows);
       setStations(def.items ?? []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load status');
+      setError(err instanceof Error ? err.message : 'Durum yüklenemedi');
     } finally {
       setLoading(false);
     }

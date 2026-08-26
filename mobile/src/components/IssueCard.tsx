@@ -88,7 +88,7 @@ export function IssueCard({
               style={{ color: tokens.textSecondary, marginTop: 4, fontSize: 13 }}
               numberOfLines={1}
             >
-              {issue.ReporterName || `User #${issue.IssueReporterID}`}
+              {issue.ReporterName || `kullanıcı #${issue.IssueReporterID}`}
             </Text>
             <Text
               style={{ color: tokens.textSecondary, marginTop: 4, fontSize: 13 }}
