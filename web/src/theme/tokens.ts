@@ -137,6 +137,15 @@ export function contrastAgainst(fg: string, bg: string): number {
   return contrastRatio(fg, bg);
 }
 
+/** Blend `fg` over `bg` by `fgPct` (0–100) — same mix as CSS `color-mix`. */
+export function mixColors(fg: string, bg: string, fgPct: number): string {
+  const a = parseRgb(fg);
+  const b = parseRgb(bg);
+  if (!a || !b) return fg;
+  const t = Math.min(100, Math.max(0, fgPct)) / 100;
+  return `rgb(${Math.round(b[0] + (a[0] - b[0]) * t)}, ${Math.round(b[1] + (a[1] - b[1]) * t)}, ${Math.round(b[2] + (a[2] - b[2]) * t)})`;
+}
+
 /** White or ink on `bg` — pick the one that meets WCAG AA against the fill. */
 export function inkOn(bg: string): string {
   const rgb = parseRgb(bg);

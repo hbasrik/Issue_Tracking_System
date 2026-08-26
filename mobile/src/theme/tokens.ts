@@ -137,6 +137,12 @@ function srgbChannel(c: number): number {
   return s <= 0.04045 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
 }
 
+function toHex(color: string): string | null {
+  const rgb = parseRgb(color);
+  if (!rgb) return null;
+  return `#${rgb.map((n) => n.toString(16).padStart(2, '0')).join('')}`;
+}
+
 function parseRgb(color: string): [number, number, number] | null {
   if (color.startsWith('#')) {
     const h = color.replace('#', '');
@@ -179,6 +185,29 @@ export function inkOn(bg: string): string {
   return contrastWhite >= 4.5
     ? mixTowardWhite(brandColors.primary, 100)
     : lightInk;
+}
+
+/** Blend `fg` over `bg` by `fgPct` (0–100) — same mix as CSS `color-mix`. */
+export function mixColors(fg: string, bg: string, fgPct: number): string {
+  const a = parseRgb(fg);
+  const b = parseRgb(bg);
+  if (!a || !b) return fg;
+  const t = Math.min(100, Math.max(0, fgPct)) / 100;
+  return `rgb(${Math.round(b[0] + (a[0] - b[0]) * t)}, ${Math.round(b[1] + (a[1] - b[1]) * t)}, ${Math.round(b[2] + (a[2] - b[2]) * t)})`;
+}
+
+/** Keep `fg` if it meets AA on `bg`; otherwise walk it toward black/white until it does. */
+export function readableOn(fg: string, bg: string): string {
+  if (contrastRatio(fg, bg) >= 4.5) return fg;
+  const hex = toHex(fg);
+  if (!hex) return fg;
+  for (let p = 10; p <= 85; p += 5) {
+    const darker = mixTowardBlack(hex, p);
+    if (contrastRatio(darker, bg) >= 4.5) return darker;
+    const lighter = mixTowardWhite(hex, p);
+    if (contrastRatio(lighter, bg) >= 4.5) return lighter;
+  }
+  return inkOn(bg);
 }
 
 export type ThemeTokens = {
