@@ -12,6 +12,15 @@
   --text-primary: #101418;
   --text-secondary: #5b6672;
   --accent: #ff3b1e;
+  --sidebar-bg: rgb(214, 50, 25);
+  --sidebar-text: rgb(255, 255, 255);
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
   --status-ok: #22c55e;
   --status-not-ok: #c62222;
   --status-rework: #8b5cf6;

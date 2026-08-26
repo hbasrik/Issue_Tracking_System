@@ -53,6 +53,30 @@ export const brandColors = {
   critical: '#C62222',
 } as const;
 
+/**
+ * 4px spacing scale. Prefer these over ad-hoc margins so web and mobile
+ * share the same rhythm.
+ */
+export const space = {
+  1: 4,
+  2: 8,
+  3: 12,
+  4: 16,
+  5: 20,
+  6: 24,
+  8: 32,
+} as const;
+
+/**
+ * Sidebar / drawer chrome. White on raw Satsuma (#FF3B1E) is ~3.56:1 —
+ * short of WCAG AA (4.5:1) at 15px. Darken 16% toward black (~4.57:1)
+ * without introducing a new palette hex.
+ */
+export const sidebarTokens = {
+  bg: mixTowardBlack(brandColors.primary, 16),
+  text: mixTowardWhite(brandColors.primary, 100),
+} as const;
+
 export const darkTokens = {
   bgPage: '#0B0F14',
   bgSurface1: '#131920',
