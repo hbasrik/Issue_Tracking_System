@@ -308,7 +308,7 @@ export default function IssuesPage() {
         className="mt-4 space-y-4 rounded-xl border bg-[var(--bg-surface-1)] p-4"
         style={{ borderColor: 'var(--border)' }}
       >
-        <div className="grid grid-cols-1 items-start gap-x-6 gap-y-4 sm:grid-cols-[auto_auto]">
+        <div className="grid grid-cols-1 items-start justify-start gap-x-6 gap-y-4 sm:grid-cols-[max-content_max-content]">
           <div className="w-full max-w-sm">
             <label
               className="text-[13px] font-semibold"
