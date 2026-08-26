@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { api, type Vehicle } from '../lib/api';
+import { lightTokens } from '../theme/tokens';
 import { StatusBadge } from './StatusBadge';
 
 interface VinSearchBoxProps {
@@ -16,6 +17,8 @@ interface VinSearchBoxProps {
   placeholder?: string;
   className?: string;
   ariaLabel?: string;
+  /** Light field on Satsuma chrome so dark theme does not ink the header search. */
+  onChrome?: boolean;
 }
 
 /**
@@ -31,6 +34,7 @@ export function VinSearchBox({
   placeholder = 'Son 5 haneyi girin (örn. 00057)',
   className = '',
   ariaLabel = 'VIN son 5 hane araması',
+  onChrome = false,
 }: VinSearchBoxProps) {
   const location = useLocation();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -117,8 +121,19 @@ export function VinSearchBox({
           }
         }}
         placeholder={placeholder}
-        className="w-full rounded-lg border bg-[var(--bg-surface-1)] px-3 py-2 text-[15px] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] outline-none focus:border-[var(--accent)]"
-        style={{ borderColor: 'var(--border)' }}
+        className={
+          onChrome
+            ? 'w-full rounded-lg border-0 px-3 py-2 text-[15px] outline-none placeholder:text-[#5B6672] focus-visible:ring-2 focus-visible:ring-white'
+            : 'w-full rounded-lg border bg-[var(--bg-surface-1)] px-3 py-2 text-[15px] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] outline-none focus:border-[var(--accent)]'
+        }
+        style={
+          onChrome
+            ? {
+                backgroundColor: lightTokens['bg-surface-1'],
+                color: lightTokens['text-primary'],
+              }
+            : { borderColor: 'var(--border)' }
+        }
         aria-label={ariaLabel}
         aria-expanded={showDropdown}
       />

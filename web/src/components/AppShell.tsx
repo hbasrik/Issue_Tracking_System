@@ -110,7 +110,7 @@ export function AppShell() {
           </button>
 
           <div className="min-w-0 flex-1 basis-[10rem] sm:max-w-xs">
-            {has(Perm.VehicleView) ? <VinSearchBox /> : null}
+            {has(Perm.VehicleView) ? <VinSearchBox onChrome /> : null}
           </div>
 
           <div className="ml-auto flex items-center">
