@@ -17,8 +17,10 @@ import {
 import { useTheme } from '../theme/ThemeProvider';
 import {
   brandColors,
+  chipSelectedInk,
   inkOn,
   readableOn,
+  selectedChipFill,
   tokensFor,
 } from '../theme/tokens';
 import {
@@ -306,7 +308,7 @@ export default function IssuesPage() {
         className="mt-4 space-y-4 rounded-xl border bg-[var(--bg-surface-1)] p-4"
         style={{ borderColor: 'var(--border)' }}
       >
-        <div className="flex flex-wrap items-end gap-x-6 gap-y-3">
+        <div className="grid grid-cols-1 items-start gap-x-6 gap-y-4 sm:grid-cols-[auto_auto]">
           <div className="w-full max-w-sm">
             <label
               className="text-[13px] font-semibold"
@@ -327,7 +329,7 @@ export default function IssuesPage() {
               style={{ borderColor: 'var(--border)' }}
             />
           </div>
-          <div className="max-w-full shrink-0">
+          <div className="max-w-full">
             <p
               className="mb-2 text-[13px] font-semibold"
               style={{ color: 'var(--text-secondary)' }}
@@ -351,10 +353,7 @@ export default function IssuesPage() {
               })}
             </div>
           </div>
-        </div>
-
-        <div className="flex flex-wrap items-start gap-x-6 gap-y-3">
-          <div className="max-w-full shrink-0">
+          <div className="max-w-full">
             <p
               className="mb-2 text-[13px] font-semibold"
               style={{ color: 'var(--text-secondary)' }}
@@ -379,7 +378,7 @@ export default function IssuesPage() {
               })}
             </div>
           </div>
-          <div className="max-w-full shrink-0">
+          <div className="max-w-full">
             <p
               className="mb-2 text-[13px] font-semibold"
               style={{ color: 'var(--text-secondary)' }}
@@ -390,14 +389,16 @@ export default function IssuesPage() {
               {SEVERITIES.map((s) => {
                 const selected = !homeStat && !analysisStat && severities.has(s);
                 const color = severityFillColor(s);
-                const ink = selected ? inkOn(color) : readableOn(color, pageBg);
+                const ink = selected
+                  ? chipSelectedInk
+                  : readableOn(color, pageBg);
                 return (
                   <button
                     key={s}
                     type="button"
                     onClick={() => toggleSeverity(s)}
                     className={CHIP_CLASS}
-                    style={chipStyle(selected, color, pageBg)}
+                    style={severityChipStyle(selected, color, pageBg)}
                   >
                     <SeverityIndicator severity={s} ink={ink} />
                     <span>{s}</span>
@@ -438,6 +439,30 @@ function chipStyle(
     color: ink,
     outline: 'none',
     ['--chip-focus' as string]: color,
+  };
+}
+
+function severityChipStyle(
+  selected: boolean,
+  color: string,
+  pageBg: string,
+): CSSProperties {
+  if (!selected) {
+    return {
+      borderColor: color,
+      backgroundColor: pageBg,
+      color: readableOn(color, pageBg),
+      outline: 'none',
+      ['--chip-focus' as string]: color,
+    };
+  }
+  const fill = selectedChipFill(color);
+  return {
+    borderColor: 'transparent',
+    backgroundColor: fill,
+    color: chipSelectedInk,
+    outline: 'none',
+    ['--chip-focus' as string]: fill,
   };
 }
 
