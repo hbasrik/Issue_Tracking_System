@@ -1,4 +1,4 @@
-import { inkOn, statusColors } from '../theme/tokens';
+import { chipSelectedInk, statusColors } from '../theme/tokens';
 
 export type SeverityLevel = 'CRITICAL' | 'MEDIUM' | 'LOW';
 
@@ -57,7 +57,7 @@ export function SeverityIndicator({
   const level = normalizeSeverity(severity);
   const filled = level ? FILLED[level] : 0;
   const tone = level ? FILL_COLOR[level] : statusColors.severityEmpty;
-  const fill = inverted ? inkOn(tone) : tone;
+  const fill = inverted ? chipSelectedInk : tone;
   const empty = inverted
     ? `color-mix(in srgb, ${fill} 35%, transparent)`
     : statusColors.severityEmpty;
