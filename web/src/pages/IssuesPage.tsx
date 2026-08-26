@@ -386,7 +386,7 @@ export default function IssuesPage() {
             >
               Durum
             </p>
-            <div className="flex flex-nowrap gap-2 overflow-x-auto">
+            <div className="flex flex-wrap gap-2">
               {STATUSES.map((s) => {
                 const selected = !homeStat && !analysisStat && statuses.has(s.value);
                 const color = issueStatusColor(s.value);
