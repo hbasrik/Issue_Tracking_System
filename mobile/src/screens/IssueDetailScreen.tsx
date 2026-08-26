@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useFocusEffect, useRoute, type RouteProp } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   ApiError,
   api,
@@ -78,6 +79,7 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 
 export default function IssueDetailScreen() {
   const route = useRoute<RouteProp<RootStackParamList, 'IssueDetail'>>();
+  const insets = useSafeAreaInsets();
   const { tokens } = useTheme();
   const { has } = useAuth();
   const [issue, setIssue] = useState<Issue | null>(null);
@@ -617,7 +619,13 @@ export default function IssueDetailScreen() {
         >
           <Pressable
             onPress={() => setViewerUri(null)}
-            style={{ position: 'absolute', top: 48, right: 20, zIndex: 2, minHeight: 44 }}
+            style={{
+              position: 'absolute',
+              top: insets.top + 12,
+              right: 20 + insets.right,
+              zIndex: 2,
+              minHeight: 44,
+            }}
             accessibilityRole="button"
             accessibilityLabel="Fotoğrafı kapat"
           >
