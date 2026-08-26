@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { api, mediaFileUrl, type Issue, type IssueType, type MediaAttachment } from '../lib/api';
 import { IssueList } from '../components/IssueList';
@@ -14,12 +14,13 @@ import {
   isAnalysisIssueStatKey,
   matchesAnalysisIssueStat,
 } from '../lib/analysisIssueStats';
-import { brandColors } from '../theme/tokens';
+import { brandColors, inkOn } from '../theme/tokens';
 import {
   SeverityIndicator,
   severityFillColor,
   type SeverityLevel,
 } from '../components/SeverityIndicator';
+import { issueStatusColor } from '../lib/issueStatus';
 import {
   buildIssuesCsv,
   buildIssuesZip,
@@ -301,129 +302,116 @@ export default function IssuesPage() {
         </div>
       )}
 
-      <div className="mt-6 space-y-4">
-        <div className="w-full sm:max-w-sm">
-          <label
-            className="text-[13px]"
-            style={{ color: 'var(--text-secondary)' }}
-          >
-            VIN / bildiren
-          </label>
-          <input
-            type="search"
-            value={listQuery}
-            onChange={(e) => {
-              if (homeStat || analysisStat) clearHomeStat();
-              setListQuery(e.target.value);
-            }}
-            placeholder="VIN veya bildiren adı"
-            aria-label="VIN veya bildiren adı"
-            className="mt-1 w-full rounded-lg border bg-[var(--bg-surface-1)] px-3 py-2 text-[15px] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] outline-none focus:border-[var(--accent)]"
-            style={{ borderColor: 'var(--border)' }}
-          />
-        </div>
-
-        <div>
-          <p
-            className="mb-2 text-[13px] font-semibold"
-            style={{ color: 'var(--text-secondary)' }}
-          >
-            Tür
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {issueTypes.map((t) => {
-              const selected = !homeStat && !analysisStat && typeIds.has(t.ID);
-              return (
-                <button
-                  key={t.ID}
-                  type="button"
-                  onClick={() => toggleType(t.ID)}
-                  className="min-h-[36px] rounded-full border px-3 text-[12px] font-semibold"
-                  style={{
-                    borderColor: selected ? 'var(--accent)' : 'var(--border)',
-                    backgroundColor: selected
-                      ? 'var(--bg-surface-2)'
-                      : 'var(--bg-surface-1)',
-                    color: selected
-                      ? 'var(--accent)'
-                      : 'var(--text-secondary)',
-                  }}
-                >
-                  {issueTypeChipLabel(t.Name)}
-                </button>
-              );
-            })}
+      <div
+        className="mt-4 space-y-3 rounded-xl border bg-[var(--bg-surface-1)] p-4"
+        style={{ borderColor: 'var(--border)' }}
+      >
+        <div className="grid gap-4 md:grid-cols-[minmax(12rem,20rem)_1fr] md:items-end">
+          <div className="w-full">
+            <label
+              className="text-[13px]"
+              style={{ color: 'var(--text-secondary)' }}
+            >
+              VIN / bildiren
+            </label>
+            <input
+              type="search"
+              value={listQuery}
+              onChange={(e) => {
+                if (homeStat || analysisStat) clearHomeStat();
+                setListQuery(e.target.value);
+              }}
+              placeholder="VIN veya bildiren adı"
+              aria-label="VIN veya bildiren adı"
+              className="mt-1 w-full rounded-lg border bg-[var(--bg-page)] px-3 py-2 text-[15px] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] outline-none focus:border-[var(--accent)]"
+              style={{ borderColor: 'var(--border)' }}
+            />
           </div>
-        </div>
-
-        <div>
-          <p
-            className="mb-2 text-[13px] font-semibold"
-            style={{ color: 'var(--text-secondary)' }}
-          >
-            Severity
-          </p>
-          <div className="flex gap-2">
-            {SEVERITIES.map((s) => {
-              const selected = !homeStat && !analysisStat && severities.has(s);
-              const color = severityFillColor(s);
-              return (
-                <button
-                  key={s}
-                  type="button"
-                  onClick={() => toggleSeverity(s)}
-                  className="flex min-h-touch flex-1 flex-col items-center justify-center gap-1 rounded-[10px] border px-2 py-1.5"
-                  style={{
-                    borderColor: selected ? color : 'var(--border)',
-                    borderWidth: selected ? 1.5 : 1,
-                    backgroundColor: selected
-                      ? `color-mix(in srgb, ${color} 20%, transparent)`
-                      : 'var(--bg-surface-1)',
-                  }}
-                >
-                  <SeverityIndicator severity={s} />
-                  <span
-                    className="text-[10px] font-semibold"
-                    style={{ color: selected ? color : 'var(--text-secondary)' }}
+          <div>
+            <p
+              className="mb-2 text-[13px] font-semibold"
+              style={{ color: 'var(--text-secondary)' }}
+            >
+              Tür
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {issueTypes.map((t) => {
+                const selected = !homeStat && !analysisStat && typeIds.has(t.ID);
+                return (
+                  <button
+                    key={t.ID}
+                    type="button"
+                    onClick={() => toggleType(t.ID)}
+                    className="min-h-[36px] rounded-full border px-3 text-[12px] font-semibold outline-none"
+                    style={{
+                      borderColor: selected ? 'var(--accent)' : 'var(--border)',
+                      backgroundColor: selected
+                        ? 'var(--bg-surface-2)'
+                        : 'var(--bg-page)',
+                      color: selected
+                        ? 'var(--accent)'
+                        : 'var(--text-secondary)',
+                    }}
                   >
-                    {s}
-                  </span>
-                </button>
-              );
-            })}
+                    {issueTypeChipLabel(t.Name)}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
 
-        <div>
-          <p
-            className="mb-2 text-[13px] font-semibold"
-            style={{ color: 'var(--text-secondary)' }}
-          >
-            Durum
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {STATUSES.map((s) => {
-              const selected = !homeStat && !analysisStat && statuses.has(s.value);
-              return (
-                <button
-                  key={s.value}
-                  type="button"
-                  onClick={() => toggleStatus(s.value)}
-                  className="min-h-[36px] rounded-full border px-3 text-[12px] font-semibold"
-                  style={{
-                    borderColor: selected ? 'var(--accent)' : 'var(--border)',
-                    backgroundColor: selected
-                      ? 'var(--bg-surface-2)'
-                      : 'var(--bg-surface-1)',
-                    color: selected
-                      ? 'var(--accent)'
-                      : 'var(--text-secondary)',
-                  }}
-                >
-                  {s.label}
-                </button>
-              );
-            })}
+        <div className="grid gap-4 lg:grid-cols-2">
+          <div>
+            <p
+              className="mb-2 text-[13px] font-semibold"
+              style={{ color: 'var(--text-secondary)' }}
+            >
+              Severity
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {SEVERITIES.map((s) => {
+                const selected = !homeStat && !analysisStat && severities.has(s);
+                const color = severityFillColor(s);
+                return (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => toggleSeverity(s)}
+                    className="flex min-h-touch min-w-[5.5rem] flex-col items-center justify-center gap-1 rounded-[10px] border px-2 py-1.5 outline-none focus-visible:[box-shadow:0_0_0_2px_var(--chip-focus)]"
+                    style={chipStyle(selected, color)}
+                  >
+                    <SeverityIndicator severity={s} inverted={selected} />
+                    <span className="text-[10px] font-semibold">{s}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <div>
+            <p
+              className="mb-2 text-[13px] font-semibold"
+              style={{ color: 'var(--text-secondary)' }}
+            >
+              Durum
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {STATUSES.map((s) => {
+                const selected = !homeStat && !analysisStat && statuses.has(s.value);
+                const color = issueStatusColor(s.value);
+                return (
+                  <button
+                    key={s.value}
+                    type="button"
+                    onClick={() => toggleStatus(s.value)}
+                    className="min-h-[36px] rounded-full border px-3 text-[12px] font-semibold outline-none focus-visible:[box-shadow:0_0_0_2px_var(--chip-focus)]"
+                    style={chipStyle(selected, color)}
+                  >
+                    {s.label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
@@ -439,6 +427,15 @@ export default function IssuesPage() {
       </div>
     </section>
   );
+}
+
+function chipStyle(selected: boolean, color: string): CSSProperties {
+  return {
+    borderColor: color,
+    backgroundColor: selected ? color : 'var(--bg-page)',
+    color: selected ? inkOn(color) : color,
+    ['--chip-focus' as string]: color,
+  };
 }
 
 function exportStamp(): string {
