@@ -251,6 +251,12 @@ export default function IssueDetailScreen() {
                 {issue.ReporterName || `User #${issue.IssueReporterID}`}
               </Text>
               <Text style={{ color: tokens.textSecondary, marginTop: 8, fontSize: 12 }}>
+                Hata türü
+              </Text>
+              <Text style={{ color: tokens.textPrimary, fontSize: 15, fontWeight: '600' }}>
+                {issue.IssueTypeName || '—'}
+              </Text>
+              <Text style={{ color: tokens.textSecondary, marginTop: 8, fontSize: 12 }}>
                 Bildirim tarihi
               </Text>
               <Text style={{ color: tokens.textPrimary, fontSize: 14 }}>
