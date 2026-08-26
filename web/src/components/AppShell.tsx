@@ -2,7 +2,8 @@ import { useEffect, useId, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { Perm } from '../auth/permissions';
-import { Logo } from './Logo';
+import { LogoHomeLink } from './LogoHomeLink';
+import { ProfileMenu } from './ProfileMenu';
 import { VinSearchBox } from './VinSearchBox';
 
 const NAV: { to: string; label: string; end?: boolean; perm?: string }[] = [
@@ -13,7 +14,6 @@ const NAV: { to: string; label: string; end?: boolean; perm?: string }[] = [
   { to: '/templates', label: 'Şablonlar', perm: Perm.AdminManageMasters },
   { to: '/users', label: 'Kullanıcılar', perm: Perm.AdminManageUsers },
   { to: '/roles', label: 'Roller', perm: Perm.AdminManageUsers },
-  { to: '/settings', label: 'Ayarlar' },
 ];
 
 /**
@@ -21,7 +21,7 @@ const NAV: { to: string; label: string; end?: boolean; perm?: string }[] = [
  * hamburger + drawer on tablet/mobile (<1024px).
  */
 export function AppShell() {
-  const { user, logout, has } = useAuth();
+  const { has } = useAuth();
   const location = useLocation();
   const [navOpen, setNavOpen] = useState(false);
   const drawerId = useId();
@@ -53,7 +53,7 @@ export function AppShell() {
         aria-label="Ana menü"
       >
         <div className="px-[var(--space-5)] py-[var(--space-5)]">
-          <Logo />
+          <LogoHomeLink />
         </div>
         <NavLinks />
       </aside>
@@ -77,7 +77,7 @@ export function AppShell() {
         aria-label="Ana menü"
       >
         <div className="flex items-center justify-between px-[var(--space-5)] py-[var(--space-4)]">
-          <Logo />
+          <LogoHomeLink />
           <button
             type="button"
             onClick={() => setNavOpen(false)}
@@ -92,13 +92,15 @@ export function AppShell() {
 
       <div className="flex min-w-0 flex-1 flex-col">
         <header
-          className="flex flex-wrap items-center gap-3 border-b bg-[var(--bg-surface-1)] px-3 py-3 sm:gap-4 sm:px-6"
-          style={{ borderColor: 'var(--border)' }}
+          className="flex flex-wrap items-center gap-3 px-3 py-3 sm:gap-4 sm:px-6"
+          style={{ backgroundColor: 'var(--sidebar-bg)' }}
         >
           <button
             type="button"
-            className="flex min-h-touch min-w-touch items-center justify-center rounded-lg border text-[var(--text-secondary)] lg:hidden"
-            style={{ borderColor: 'var(--border)' }}
+            className="flex min-h-touch min-w-touch items-center justify-center rounded-lg text-[var(--sidebar-text)] hover:bg-[color-mix(in_srgb,var(--sidebar-text)_12%,transparent)] lg:hidden"
+            style={{
+              border: '1px solid color-mix(in srgb, var(--sidebar-text) 35%, transparent)',
+            }}
             aria-expanded={navOpen}
             aria-controls={drawerId}
             aria-label="Menüyü aç"
@@ -111,31 +113,8 @@ export function AppShell() {
             {has(Perm.VehicleView) ? <VinSearchBox /> : null}
           </div>
 
-          <div className="ml-auto flex flex-wrap items-center justify-end gap-2 sm:gap-3">
-            {user && (
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="hidden text-[13px] text-[var(--text-secondary)] sm:inline">
-                  {user.FullName}
-                </span>
-                <span
-                  className="rounded-full px-2 py-0.5 text-[12px] font-medium"
-                  style={{
-                    color: 'var(--accent)',
-                    backgroundColor:
-                      'color-mix(in srgb, var(--accent) 15%, transparent)',
-                  }}
-                >
-                  {user.Role}
-                </span>
-                <button
-                  type="button"
-                  onClick={logout}
-                  className="min-h-touch text-[13px] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-                >
-                  Çıkış
-                </button>
-              </div>
-            )}
+          <div className="ml-auto flex items-center">
+            <ProfileMenu />
           </div>
         </header>
 
