@@ -17,9 +17,8 @@ import {
 import { useTheme } from '../theme/ThemeProvider';
 import {
   brandColors,
-  chipSelectedInk,
+  inkOn,
   readableOn,
-  selectedChipFill,
   tokensFor,
 } from '../theme/tokens';
 import {
@@ -391,6 +390,7 @@ export default function IssuesPage() {
               {SEVERITIES.map((s) => {
                 const selected = !homeStat && !analysisStat && severities.has(s);
                 const color = severityFillColor(s);
+                const ink = selected ? inkOn(color) : readableOn(color, pageBg);
                 return (
                   <button
                     key={s}
@@ -399,7 +399,7 @@ export default function IssuesPage() {
                     className={CHIP_CLASS}
                     style={chipStyle(selected, color, pageBg)}
                   >
-                    <SeverityIndicator severity={s} inverted={selected} />
+                    <SeverityIndicator severity={s} ink={ink} />
                     <span>{s}</span>
                   </button>
                 );
@@ -430,13 +430,14 @@ function chipStyle(
   color: string,
   pageBg: string,
 ): CSSProperties {
-  const fill = selected ? selectedChipFill(color) : pageBg;
+  const fill = selected ? color : pageBg;
+  const ink = selected ? inkOn(color) : readableOn(color, pageBg);
   return {
-    borderColor: selected ? fill : color,
+    borderColor: color,
     backgroundColor: fill,
-    color: selected ? chipSelectedInk : readableOn(color, pageBg),
+    color: ink,
     outline: 'none',
-    ['--chip-focus' as string]: selected ? fill : color,
+    ['--chip-focus' as string]: color,
   };
 }
 
