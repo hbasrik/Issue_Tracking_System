@@ -252,16 +252,8 @@ export default function IssuesPage() {
 
   return (
     <section>
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-semibold sm:text-2xl">Issues</h1>
-          <p
-            className="mt-1 text-[13px]"
-            style={{ color: 'var(--text-secondary)' }}
-          >
-            Kalite onayı (Tamamlandı → Kalite Onay veya Şartlı Onay) yalnızca yönetici
-          </p>
-        </div>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-xl font-semibold sm:text-2xl">Issues</h1>
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
@@ -315,7 +307,7 @@ export default function IssuesPage() {
         className="mt-4 space-y-4 rounded-xl border bg-[var(--bg-surface-1)] p-4"
         style={{ borderColor: 'var(--border)' }}
       >
-        <div className="w-full">
+        <div className="w-full max-w-sm">
           <label
             className="text-[13px] font-semibold"
             style={{ color: 'var(--text-secondary)' }}
@@ -336,8 +328,8 @@ export default function IssuesPage() {
           />
         </div>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <div className="min-w-0">
+        <div className="flex flex-wrap items-start gap-x-6 gap-y-3">
+          <div className="shrink-0">
             <p
               className="mb-2 text-[13px] font-semibold"
               style={{ color: 'var(--text-secondary)' }}
@@ -361,7 +353,7 @@ export default function IssuesPage() {
               })}
             </div>
           </div>
-          <div className="min-w-0">
+          <div className="shrink-0">
             <p
               className="mb-2 text-[13px] font-semibold"
               style={{ color: 'var(--text-secondary)' }}
@@ -394,7 +386,7 @@ export default function IssuesPage() {
             >
               Durum
             </p>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-nowrap gap-2 overflow-x-auto">
               {STATUSES.map((s) => {
                 const selected = !homeStat && !analysisStat && statuses.has(s.value);
                 const color = issueStatusColor(s.value);
@@ -403,7 +395,7 @@ export default function IssuesPage() {
                     key={s.value}
                     type="button"
                     onClick={() => toggleStatus(s.value)}
-                    className={CHIP_CLASS}
+                    className={`${CHIP_CLASS} shrink-0`}
                     style={chipStyle(selected, color, pageBg)}
                   >
                     {s.label}
