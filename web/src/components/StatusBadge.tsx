@@ -1,4 +1,4 @@
-import { statusColors } from '../theme/tokens';
+import { inkOn, statusColors } from '../theme/tokens';
 import { issueStatusColor, issueStatusLabel } from '../lib/issueStatus';
 
 type BadgeKind =
@@ -15,18 +15,18 @@ interface StatusBadgeProps {
 }
 
 /**
- * Status badges per docs/07 Section 5 — exact color mapping.
- * Pill chip: 12px text, bg = status color at 15% opacity.
- * Severity uses SeverityIndicator (Wi-Fi bars), not this component.
+ * Status badges — same token fill as selected filter chips, ink chosen
+ * for WCAG AA on that fill (white on dark, dark on light).
  */
 export function StatusBadge({ kind, value, className = '' }: StatusBadgeProps) {
   const { color, label } = resolve(kind, value);
+  const ink = inkOn(color);
   return (
     <span
       className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[12px] font-medium ${className}`}
       style={{
-        color,
-        backgroundColor: hexAlpha(color, 0.15),
+        color: ink,
+        backgroundColor: color,
       }}
     >
       {label}
@@ -89,19 +89,4 @@ function resolve(
     default:
       return { color: statusColors.pending, label: value };
   }
-}
-
-function hexAlpha(color: string, alpha: number): string {
-  if (color.startsWith('#')) {
-    const h = color.replace('#', '');
-    const r = parseInt(h.slice(0, 2), 16);
-    const g = parseInt(h.slice(2, 4), 16);
-    const b = parseInt(h.slice(4, 6), 16);
-    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-  }
-  const rgb = color.match(/^rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)$/);
-  if (rgb) {
-    return `rgba(${rgb[1]}, ${rgb[2]}, ${rgb[3]}, ${alpha})`;
-  }
-  return `color-mix(in srgb, ${color} ${Math.round(alpha * 100)}%, transparent)`;
 }
