@@ -239,11 +239,11 @@ export const statusColors = {
       ? mixTowardWhite(lightInk, 58)
       : brandColors.neutralGray;
   },
-  /** Şartlı Onay — opened toward white on dark, toward black on light. */
+  /** Şartlı Onay — paler mix of Kalite Onay green so the pair stays distinct. */
   get issueConditionalApproved() {
     return currentMode === 'light'
-      ? mixTowardBlack(statusColorBase.ok, 22)
-      : mixTowardWhite(statusColorBase.ok, 42);
+      ? mixTowardWhite(statusColorBase.ok, 52)
+      : mixTowardWhite(statusColorBase.ok, 58);
   },
 };
 
