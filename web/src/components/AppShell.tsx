@@ -45,14 +45,14 @@ export function AppShell() {
   }, [navOpen]);
 
   return (
-    <div className="flex min-h-screen overflow-x-hidden bg-[var(--bg-page)] text-[var(--text-primary)]">
+    <div className="flex h-screen max-h-dvh overflow-hidden bg-[var(--bg-page)] text-[var(--text-primary)]">
       {/* Desktop sidebar */}
       <aside
-        className="hidden w-60 shrink-0 flex-col lg:flex"
+        className="hidden h-full w-60 shrink-0 flex-col overflow-hidden lg:flex"
         style={{ backgroundColor: 'var(--sidebar-bg)' }}
         aria-label="Ana menü"
       >
-        <div className="px-[var(--space-5)] py-[var(--space-5)]">
+        <div className="shrink-0 px-[var(--space-5)] py-[var(--space-5)]">
           <LogoHomeLink />
         </div>
         <NavLinks />
@@ -69,14 +69,14 @@ export function AppShell() {
       )}
       <aside
         id={drawerId}
-        className={`fixed inset-y-0 left-0 z-50 flex w-[min(18rem,88vw)] flex-col shadow-xl transition-transform duration-200 ease-out lg:hidden ${
+        className={`fixed inset-y-0 left-0 z-50 flex w-[min(18rem,88vw)] flex-col overflow-hidden shadow-xl transition-transform duration-200 ease-out lg:hidden ${
           navOpen ? 'translate-x-0' : '-translate-x-full pointer-events-none'
         }`}
         style={{ backgroundColor: 'var(--sidebar-bg)' }}
         aria-hidden={!navOpen}
         aria-label="Ana menü"
       >
-        <div className="flex items-center justify-between px-[var(--space-5)] py-[var(--space-4)]">
+        <div className="flex shrink-0 items-center justify-between px-[var(--space-5)] py-[var(--space-4)]">
           <LogoHomeLink />
           <button
             type="button"
@@ -90,9 +90,9 @@ export function AppShell() {
         <NavLinks onNavigate={() => setNavOpen(false)} />
       </aside>
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <header
-          className="flex w-full flex-wrap items-center gap-2 rounded-b-xl border-b bg-[var(--bg-surface-1)] px-3 py-1.5 sm:px-4"
+          className="flex w-full shrink-0 flex-wrap items-center gap-2 rounded-b-xl border-b bg-[var(--bg-surface-1)] px-3 py-1.5 sm:px-4"
           style={{ borderColor: 'var(--border)' }}
         >
           <button
@@ -116,9 +116,11 @@ export function AppShell() {
           </div>
         </header>
 
-        <main className="mx-auto w-full max-w-[1440px] flex-1 overflow-x-hidden p-3 sm:p-4 lg:p-6">
-          <Outlet />
-        </main>
+        <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain">
+          <main className="mx-auto w-full max-w-[1440px] p-3 sm:p-4 lg:p-6">
+            <Outlet />
+          </main>
+        </div>
       </div>
     </div>
   );
@@ -127,7 +129,7 @@ export function AppShell() {
 function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
   const { has } = useAuth();
   return (
-    <nav className="flex flex-1 flex-col gap-0.5 px-[var(--space-3)] pb-[var(--space-4)]">
+    <nav className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto overscroll-contain px-[var(--space-3)] pb-[var(--space-4)]">
       {NAV.filter((item) => !item.perm || has(item.perm)).map((item) => (
         <NavLink
           key={item.to}
