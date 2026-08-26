@@ -578,6 +578,21 @@ export function formatIssueCreatedAt(iso?: string): string {
   return d.toLocaleString('tr-TR');
 }
 
+/** Compact one-line stamp for the Issues table (no wrap). */
+export function formatIssueListAt(iso?: string): string {
+  if (!iso || iso.startsWith('0001')) return '—';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleString('tr-TR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+}
+
 export interface AnalysisQuery {
   from?: string;
   to?: string;
