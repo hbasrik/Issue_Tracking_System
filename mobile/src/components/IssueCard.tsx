@@ -57,21 +57,35 @@ export function IssueCard({
               style={{
                 flexDirection: 'row',
                 alignItems: 'center',
+                justifyContent: 'space-between',
                 gap: 8,
                 marginBottom: 6,
-                flexWrap: 'wrap',
               }}
             >
-              <Text
+              <View
                 style={{
-                  color: tokens.textSecondary,
-                  fontSize: 12,
-                  fontWeight: '600',
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 8,
+                  flex: 1,
+                  minWidth: 0,
+                  flexWrap: 'wrap',
                 }}
               >
-                #{issue.ID}
-              </Text>
-              <Badge label={issueStatusLabel(issue.Status)} color={issueStatusColor(issue.Status)} />
+                <Text
+                  style={{
+                    color: tokens.textSecondary,
+                    fontSize: 12,
+                    fontWeight: '600',
+                  }}
+                >
+                  #{issue.ID}
+                </Text>
+                <Badge
+                  label={issueStatusLabel(issue.Status)}
+                  color={issueStatusColor(issue.Status)}
+                />
+              </View>
               <SeverityIndicator severity={issue.Severity} />
             </View>
             {!hideVin ? (
