@@ -259,7 +259,7 @@ export default function IssuesPage() {
             type="button"
             disabled={exporting !== null || visible.length === 0}
             onClick={() => void exportCsv()}
-            className="min-h-touch rounded-lg border px-3 py-1.5 text-[13px] disabled:opacity-40"
+            className="min-h-touch rounded-lg border px-3 py-1.5 text-[13px] hover:bg-[var(--bg-surface-2)] disabled:opacity-40"
             style={{ borderColor: 'var(--border)' }}
           >
             {exporting === 'csv' ? 'CSV…' : `CSV (${visible.length})`}
@@ -268,7 +268,7 @@ export default function IssuesPage() {
             type="button"
             disabled={exporting !== null || visible.length === 0}
             onClick={() => void exportZip()}
-            className="min-h-touch rounded-lg bg-[var(--accent)] px-3 py-1.5 text-[13px] text-white disabled:opacity-40"
+            className="min-h-touch rounded-lg bg-[var(--accent)] px-3 py-1.5 text-[13px] text-white hover:brightness-110 disabled:opacity-40"
           >
             {exporting === 'zip' ? 'ZIP…' : `ZIP (${visible.length})`}
           </button>
@@ -292,7 +292,7 @@ export default function IssuesPage() {
           <button
             type="button"
             onClick={clearHomeStat}
-            className="min-h-touch rounded-lg border px-3 py-1.5 text-[13px]"
+            className="min-h-touch rounded-lg border px-3 py-1.5 text-[13px] hover:bg-[var(--bg-surface-2)]"
             style={{
               borderColor: 'var(--border)',
               color: brandColors.secondary,
@@ -307,28 +307,27 @@ export default function IssuesPage() {
         className="mt-4 space-y-4 rounded-xl border bg-[var(--bg-surface-1)] p-4"
         style={{ borderColor: 'var(--border)' }}
       >
-        <div className="w-full max-w-sm">
-          <label
-            className="text-[13px] font-semibold"
-            style={{ color: 'var(--text-secondary)' }}
-          >
-            VIN / bildiren
-          </label>
-          <input
-            type="search"
-            value={listQuery}
-            onChange={(e) => {
-              if (homeStat || analysisStat) clearHomeStat();
-              setListQuery(e.target.value);
-            }}
-            placeholder="VIN veya bildiren adı"
-            aria-label="VIN veya bildiren adı"
-            className="mt-1 w-full rounded-lg border bg-[var(--bg-page)] px-3 py-2 text-[15px] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] outline-none focus:border-[var(--accent)]"
-            style={{ borderColor: 'var(--border)' }}
-          />
-        </div>
-
-        <div className="flex flex-wrap items-start gap-x-6 gap-y-3">
+        <div className="flex flex-wrap items-end gap-x-6 gap-y-3">
+          <div className="w-full max-w-sm">
+            <label
+              className="text-[13px] font-semibold"
+              style={{ color: 'var(--text-secondary)' }}
+            >
+              VIN / bildiren
+            </label>
+            <input
+              type="search"
+              value={listQuery}
+              onChange={(e) => {
+                if (homeStat || analysisStat) clearHomeStat();
+                setListQuery(e.target.value);
+              }}
+              placeholder="VIN veya bildiren adı"
+              aria-label="VIN veya bildiren adı"
+              className="mt-1 w-full rounded-lg border bg-[var(--bg-page)] px-3 py-2 text-[15px] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] outline-none focus:border-[var(--accent)]"
+              style={{ borderColor: 'var(--border)' }}
+            />
+          </div>
           <div className="shrink-0">
             <p
               className="mb-2 text-[13px] font-semibold"
@@ -348,6 +347,34 @@ export default function IssuesPage() {
                     style={chipStyle(selected, brandColors.primary, pageBg)}
                   >
                     {issueTypeChipLabel(t.Name)}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-start gap-x-6 gap-y-3">
+          <div className="shrink-0">
+            <p
+              className="mb-2 text-[13px] font-semibold"
+              style={{ color: 'var(--text-secondary)' }}
+            >
+              Durum
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {STATUSES.map((s) => {
+                const selected = !homeStat && !analysisStat && statuses.has(s.value);
+                const color = issueStatusColor(s.value);
+                return (
+                  <button
+                    key={s.value}
+                    type="button"
+                    onClick={() => toggleStatus(s.value)}
+                    className={`${CHIP_CLASS} shrink-0`}
+                    style={chipStyle(selected, color, pageBg)}
+                  >
+                    {s.label}
                   </button>
                 );
               })}
@@ -374,31 +401,6 @@ export default function IssuesPage() {
                   >
                     <SeverityIndicator severity={s} inverted={selected} />
                     <span>{s}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-          <div className="min-w-0">
-            <p
-              className="mb-2 text-[13px] font-semibold"
-              style={{ color: 'var(--text-secondary)' }}
-            >
-              Durum
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {STATUSES.map((s) => {
-                const selected = !homeStat && !analysisStat && statuses.has(s.value);
-                const color = issueStatusColor(s.value);
-                return (
-                  <button
-                    key={s.value}
-                    type="button"
-                    onClick={() => toggleStatus(s.value)}
-                    className={`${CHIP_CLASS} shrink-0`}
-                    style={chipStyle(selected, color, pageBg)}
-                  >
-                    {s.label}
                   </button>
                 );
               })}
