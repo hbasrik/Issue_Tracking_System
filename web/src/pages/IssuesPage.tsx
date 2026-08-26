@@ -15,7 +15,13 @@ import {
   matchesAnalysisIssueStat,
 } from '../lib/analysisIssueStats';
 import { useTheme } from '../theme/ThemeProvider';
-import { brandColors, inkOn, readableOn, tokensFor } from '../theme/tokens';
+import {
+  brandColors,
+  chipSelectedInk,
+  readableOn,
+  selectedChipFill,
+  tokensFor,
+} from '../theme/tokens';
 import {
   SeverityIndicator,
   severityFillColor,
@@ -306,31 +312,32 @@ export default function IssuesPage() {
       )}
 
       <div
-        className="mt-4 space-y-3 rounded-xl border bg-[var(--bg-surface-1)] p-4"
+        className="mt-4 space-y-4 rounded-xl border bg-[var(--bg-surface-1)] p-4"
         style={{ borderColor: 'var(--border)' }}
       >
-        <div className="grid gap-4 md:grid-cols-[minmax(12rem,20rem)_1fr] md:items-end">
-          <div className="w-full">
-            <label
-              className="text-[13px]"
-              style={{ color: 'var(--text-secondary)' }}
-            >
-              VIN / bildiren
-            </label>
-            <input
-              type="search"
-              value={listQuery}
-              onChange={(e) => {
-                if (homeStat || analysisStat) clearHomeStat();
-                setListQuery(e.target.value);
-              }}
-              placeholder="VIN veya bildiren adı"
-              aria-label="VIN veya bildiren adı"
-              className="mt-1 w-full rounded-lg border bg-[var(--bg-page)] px-3 py-2 text-[15px] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] outline-none focus:border-[var(--accent)]"
-              style={{ borderColor: 'var(--border)' }}
-            />
-          </div>
-          <div>
+        <div className="w-full">
+          <label
+            className="text-[13px] font-semibold"
+            style={{ color: 'var(--text-secondary)' }}
+          >
+            VIN / bildiren
+          </label>
+          <input
+            type="search"
+            value={listQuery}
+            onChange={(e) => {
+              if (homeStat || analysisStat) clearHomeStat();
+              setListQuery(e.target.value);
+            }}
+            placeholder="VIN veya bildiren adı"
+            aria-label="VIN veya bildiren adı"
+            className="mt-1 w-full rounded-lg border bg-[var(--bg-page)] px-3 py-2 text-[15px] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] outline-none focus:border-[var(--accent)]"
+            style={{ borderColor: 'var(--border)' }}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div className="min-w-0">
             <p
               className="mb-2 text-[13px] font-semibold"
               style={{ color: 'var(--text-secondary)' }}
@@ -345,16 +352,8 @@ export default function IssuesPage() {
                     key={t.ID}
                     type="button"
                     onClick={() => toggleType(t.ID)}
-                    className="min-h-[36px] rounded-full border px-3 text-[12px] font-semibold outline-none"
-                    style={{
-                      borderColor: selected ? 'var(--accent)' : 'var(--border)',
-                      backgroundColor: selected
-                        ? 'var(--bg-surface-2)'
-                        : 'var(--bg-page)',
-                      color: selected
-                        ? 'var(--accent)'
-                        : 'var(--text-secondary)',
-                    }}
+                    className={CHIP_CLASS}
+                    style={chipStyle(selected, brandColors.primary, pageBg)}
                   >
                     {issueTypeChipLabel(t.Name)}
                   </button>
@@ -362,10 +361,7 @@ export default function IssuesPage() {
               })}
             </div>
           </div>
-        </div>
-
-        <div className="grid gap-4 lg:grid-cols-2">
-          <div>
+          <div className="min-w-0">
             <p
               className="mb-2 text-[13px] font-semibold"
               style={{ color: 'var(--text-secondary)' }}
@@ -381,17 +377,17 @@ export default function IssuesPage() {
                     key={s}
                     type="button"
                     onClick={() => toggleSeverity(s)}
-                    className="flex min-h-touch min-w-[5.5rem] flex-col items-center justify-center gap-1 rounded-[10px] border px-2 py-1.5 outline-none focus-visible:[box-shadow:0_0_0_2px_var(--chip-focus)]"
+                    className={CHIP_CLASS}
                     style={chipStyle(selected, color, pageBg)}
                   >
                     <SeverityIndicator severity={s} inverted={selected} />
-                    <span className="text-[10px] font-semibold">{s}</span>
+                    <span>{s}</span>
                   </button>
                 );
               })}
             </div>
           </div>
-          <div>
+          <div className="min-w-0">
             <p
               className="mb-2 text-[13px] font-semibold"
               style={{ color: 'var(--text-secondary)' }}
@@ -407,7 +403,7 @@ export default function IssuesPage() {
                     key={s.value}
                     type="button"
                     onClick={() => toggleStatus(s.value)}
-                    className="min-h-[36px] rounded-full border px-3 text-[12px] font-semibold outline-none focus-visible:[box-shadow:0_0_0_2px_var(--chip-focus)]"
+                    className={CHIP_CLASS}
                     style={chipStyle(selected, color, pageBg)}
                   >
                     {s.label}
@@ -432,17 +428,21 @@ export default function IssuesPage() {
   );
 }
 
+const CHIP_CLASS =
+  'inline-flex min-h-[36px] items-center gap-1.5 rounded-full border px-3 text-[12px] font-semibold outline-none focus-visible:[box-shadow:0_0_0_2px_var(--chip-focus)]';
+
 function chipStyle(
   selected: boolean,
   color: string,
   pageBg: string,
 ): CSSProperties {
+  const fill = selected ? selectedChipFill(color) : pageBg;
   return {
-    borderColor: color,
-    backgroundColor: selected ? color : pageBg,
-    color: selected ? inkOn(color) : readableOn(color, pageBg),
+    borderColor: selected ? fill : color,
+    backgroundColor: fill,
+    color: selected ? chipSelectedInk : readableOn(color, pageBg),
     outline: 'none',
-    ['--chip-focus' as string]: color,
+    ['--chip-focus' as string]: selected ? fill : color,
   };
 }
 
