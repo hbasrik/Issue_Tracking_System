@@ -2,7 +2,6 @@ import { useState } from 'react';
 import {
   Pressable,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
@@ -21,6 +20,7 @@ import {
   Screen,
   Subtitle,
   Title,
+  AppTextInput,
 } from '../components/ui';
 import {
   SeverityIndicator,
@@ -158,7 +158,7 @@ export default function IssueReportScreen() {
         <Text style={{ color: tokens.textSecondary, marginTop: 16, fontSize: 13 }}>
           Description *
         </Text>
-        <TextInput
+        <AppTextInput
           value={description}
           onChangeText={setDescription}
           multiline

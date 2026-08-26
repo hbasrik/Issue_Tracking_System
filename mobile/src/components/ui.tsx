@@ -1,4 +1,14 @@
-import { ActivityIndicator, Pressable, StyleSheet, Text, View, type ViewStyle } from 'react-native';
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+  type TextInputProps,
+  type ViewStyle,
+} from 'react-native';
+import { forwardRef, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeProvider';
 import { inkOn, statusColors } from '../theme/tokens';
@@ -31,6 +41,35 @@ export function Screen({
   }
   return <View style={style}>{children}</View>;
 }
+
+/** Text field whose focus border uses the brand accent (Satsuma). */
+export const AppTextInput = forwardRef<TextInput, TextInputProps>(
+  function AppTextInput(
+    { style, onFocus, onBlur, selectionColor, cursorColor, ...rest },
+    ref,
+  ) {
+    const { tokens } = useTheme();
+    const [focused, setFocused] = useState(false);
+    return (
+      <TextInput
+        ref={ref}
+        underlineColorAndroid="transparent"
+        {...rest}
+        onFocus={(e) => {
+          setFocused(true);
+          onFocus?.(e);
+        }}
+        onBlur={(e) => {
+          setFocused(false);
+          onBlur?.(e);
+        }}
+        selectionColor={selectionColor ?? tokens.accent}
+        cursorColor={cursorColor ?? tokens.accent}
+        style={[style, focused ? { borderColor: tokens.accent } : null]}
+      />
+    );
+  },
+);
 
 export function Title({ children }: { children: React.ReactNode }) {
   const { tokens } = useTheme();

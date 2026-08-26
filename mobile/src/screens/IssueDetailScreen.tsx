@@ -4,7 +4,6 @@ import {
   Modal,
   Pressable,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
@@ -29,6 +28,7 @@ import {
   Screen,
   SectionHeading,
   Subtitle,
+  AppTextInput,
 } from '../components/ui';
 import { SeverityIndicator } from '../components/SeverityIndicator';
 import { VehicleIdentity } from '../components/VehicleIdentity';
@@ -405,7 +405,7 @@ export default function IssueDetailScreen() {
                   >
                     Açıklama *
                   </Text>
-                  <TextInput
+                  <AppTextInput
                     value={solutionText}
                     onChangeText={setSolutionText}
                     placeholder="Yapılan tamir / çözüm"

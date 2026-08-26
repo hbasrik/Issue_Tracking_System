@@ -5,7 +5,6 @@ import {
   Pressable,
   ScrollView,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
@@ -34,6 +33,7 @@ import {
   Screen,
   Subtitle,
   Title,
+  AppTextInput,
 } from '../components/ui';
 import {
   SeverityIndicator,
@@ -348,7 +348,7 @@ export default function ManualIssueReportScreen() {
         </Pressable>
 
         <Text style={labelStyle(tokens)}>Açıklama *</Text>
-        <TextInput
+        <AppTextInput
           value={description}
           onChangeText={setDescription}
           multiline

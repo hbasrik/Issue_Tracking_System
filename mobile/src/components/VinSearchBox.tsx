@@ -4,12 +4,11 @@ import {
   Pressable,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import { api, type Vehicle } from '../api/client';
 import { useTheme } from '../theme/ThemeProvider';
-import { Badge, Card, ErrorText, Subtitle } from './ui';
+import { Badge, Card, ErrorText, Subtitle, AppTextInput } from './ui';
 
 function vinTail(vin: string): string {
   return vin.slice(-5);
@@ -77,7 +76,7 @@ export function VinSearchBox({
 
   return (
     <View>
-      <TextInput
+      <AppTextInput
         value={query}
         onChangeText={(text) => {
           setQuery(text);

@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { Keyboard, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Keyboard, Pressable, StyleSheet, Text, View, type TextInput } from 'react-native';
 import { ApiError } from '../api/client';
 import { useAuth } from '../auth/AuthProvider';
 import { useTheme } from '../theme/ThemeProvider';
-import { ErrorText, PrimaryButton, Screen, Subtitle, Title } from '../components/ui';
+import { AppTextInput, ErrorText, PrimaryButton, Screen, Subtitle, Title } from '../components/ui';
 
 export default function LoginScreen() {
   const { login } = useAuth();
@@ -36,7 +36,7 @@ export default function LoginScreen() {
         <Title>Karea</Title>
         <Subtitle>Saha girişi</Subtitle>
         <Text style={[styles.label, { color: tokens.textSecondary }]}>E-posta</Text>
-        <TextInput
+        <AppTextInput
           value={email}
           onChangeText={setEmail}
           autoCapitalize="none"
@@ -58,7 +58,7 @@ export default function LoginScreen() {
           ]}
         />
         <Text style={[styles.label, { color: tokens.textSecondary }]}>Şifre</Text>
-        <TextInput
+        <AppTextInput
           ref={passwordRef}
           value={password}
           onChangeText={setPassword}

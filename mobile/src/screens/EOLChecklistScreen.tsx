@@ -4,7 +4,6 @@ import {
   Pressable,
   ScrollView,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import {
@@ -27,6 +26,7 @@ import {
   Screen,
   Subtitle,
   Title,
+  AppTextInput,
 } from '../components/ui';
 import {
   DismissKeyboardScrollView,
@@ -239,7 +239,7 @@ export default function EOLChecklistScreen() {
                 })}
               </View>
               {needsDesc(d.status as ChecklistItem['Status']) ? (
-                <TextInput
+                <AppTextInput
                   value={d.desc}
                   onChangeText={(text) =>
                     setDrafts((prev) => ({
