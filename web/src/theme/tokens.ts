@@ -89,6 +89,40 @@ export function mixTowardBlack(hex: string, blackPct: number): string {
   return `rgb(${Math.round(r * (1 - t))}, ${Math.round(g * (1 - t))}, ${Math.round(b * (1 - t))})`;
 }
 
+function srgbChannel(c: number): number {
+  const s = c / 255;
+  return s <= 0.04045 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+}
+
+function parseRgb(color: string): [number, number, number] | null {
+  if (color.startsWith('#')) {
+    const h = color.replace('#', '');
+    if (h.length < 6) return null;
+    return [
+      Number.parseInt(h.slice(0, 2), 16),
+      Number.parseInt(h.slice(2, 4), 16),
+      Number.parseInt(h.slice(4, 6), 16),
+    ];
+  }
+  const m = color.match(/^rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)$/);
+  if (!m) return null;
+  return [Number(m[1]), Number(m[2]), Number(m[3])];
+}
+
+/** White or ink on `bg` — pick the one that meets WCAG AA against the fill. */
+export function inkOn(bg: string): string {
+  const rgb = parseRgb(bg);
+  if (!rgb) return mixTowardWhite(brandColors.primary, 100);
+  const L =
+    0.2126 * srgbChannel(rgb[0]) +
+    0.7152 * srgbChannel(rgb[1]) +
+    0.0722 * srgbChannel(rgb[2]);
+  const contrastWhite = 1.05 / (L + 0.05);
+  return contrastWhite >= 4.5
+    ? mixTowardWhite(brandColors.primary, 100)
+    : lightInk;
+}
+
 export const darkTokens = {
   'bg-page': '#0B0F14',
   'bg-surface-1': '#131920',

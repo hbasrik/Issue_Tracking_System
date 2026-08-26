@@ -1,4 +1,4 @@
-import { statusColors } from '../theme/tokens';
+import { inkOn, statusColors } from '../theme/tokens';
 
 export type SeverityLevel = 'CRITICAL' | 'MEDIUM' | 'LOW';
 
@@ -39,6 +39,8 @@ interface SeverityIndicatorProps {
   className?: string;
   /** Accessible name; defaults to the severity level. */
   label?: string;
+  /** Invert bar colors so they read on a filled severity chip. */
+  inverted?: boolean;
 }
 
 /**
@@ -50,11 +52,15 @@ export function SeverityIndicator({
   count,
   className = '',
   label,
+  inverted = false,
 }: SeverityIndicatorProps) {
   const level = normalizeSeverity(severity);
   const filled = level ? FILLED[level] : 0;
-  const fill = level ? FILL_COLOR[level] : statusColors.severityEmpty;
-  const empty = statusColors.severityEmpty;
+  const tone = level ? FILL_COLOR[level] : statusColors.severityEmpty;
+  const fill = inverted ? inkOn(tone) : tone;
+  const empty = inverted
+    ? `color-mix(in srgb, ${fill} 35%, transparent)`
+    : statusColors.severityEmpty;
   const aria = label ?? (level ?? severity);
 
   return (
