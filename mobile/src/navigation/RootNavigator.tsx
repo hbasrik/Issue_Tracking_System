@@ -5,6 +5,8 @@ import { useAuth } from '../auth/AuthProvider';
 import { useTheme } from '../theme/ThemeProvider';
 import { Perm } from '../auth/permissions';
 import type { MainDrawerParamList, RootStackParamList } from './types';
+import { AppDrawer } from '../components/AppDrawer';
+import { sidebarTokens } from '../theme/tokens';
 
 import LoginScreen from '../screens/LoginScreen';
 import UnauthorizedScreen from '../screens/UnauthorizedScreen';
@@ -28,30 +30,33 @@ function MainDrawer() {
   const { has } = useAuth();
   return (
     <Drawer.Navigator
+      drawerContent={(props) => <AppDrawer {...props} />}
       screenOptions={{
         headerStyle: { backgroundColor: tokens.bgSurface1 },
         headerTintColor: tokens.textPrimary,
         headerTitleStyle: { fontWeight: '600' },
         drawerStyle: {
-          backgroundColor: tokens.bgSurface1,
+          backgroundColor: sidebarTokens.bg,
           width: 280,
         },
-        drawerActiveTintColor: tokens.accent,
-        drawerInactiveTintColor: tokens.textSecondary,
-        drawerActiveBackgroundColor: tokens.bgSurface2,
+        drawerActiveTintColor: sidebarTokens.text,
+        drawerInactiveTintColor: 'rgba(255,255,255,0.88)',
+        drawerActiveBackgroundColor: 'rgba(255,255,255,0.20)',
+        drawerInactiveBackgroundColor: 'transparent',
         drawerLabelStyle: { fontWeight: '600', fontSize: 15 },
+        drawerItemStyle: { borderRadius: 8, marginHorizontal: 8 },
       }}
     >
       <Drawer.Screen
         name="Home"
         component={HomeScreen}
-        options={{ title: 'Home', drawerLabel: 'Home' }}
+        options={{ title: 'Ana sayfa', drawerLabel: 'Ana sayfa' }}
       />
       {has(Perm.VehicleView) ? (
         <Drawer.Screen
           name="Vehicles"
           component={VehiclesScreen}
-          options={{ title: 'Vehicles', drawerLabel: 'Vehicles' }}
+          options={{ title: 'Araçlar', drawerLabel: 'Araçlar' }}
         />
       ) : null}
       {has(Perm.IssueView) ? (
@@ -64,7 +69,7 @@ function MainDrawer() {
       <Drawer.Screen
         name="Profile"
         component={ProfileScreen}
-        options={{ title: 'Profile', drawerLabel: 'Profile' }}
+        options={{ title: 'Profil', drawerLabel: 'Profil' }}
       />
     </Drawer.Navigator>
   );
@@ -105,7 +110,7 @@ export function RootNavigator() {
           <Stack.Screen
             name="Unauthorized"
             component={UnauthorizedScreen}
-            options={{ title: 'Unauthorized' }}
+            options={{ title: 'Yetkisiz' }}
           />
         ) : (
           <>
@@ -117,12 +122,12 @@ export function RootNavigator() {
             <Stack.Screen
               name="VehicleStation"
               component={VehicleStationScreen}
-              options={{ title: 'Station Progress' }}
+              options={{ title: 'İstasyon ilerlemesi' }}
             />
             <Stack.Screen
               name="IssueReport"
               component={IssueReportScreen}
-              options={{ title: 'Report Issue' }}
+              options={{ title: 'Issue Bildir' }}
             />
             <Stack.Screen
               name="ManualIssueReport"
@@ -132,22 +137,22 @@ export function RootNavigator() {
             <Stack.Screen
               name="EOLChecklist"
               component={EOLChecklistScreen}
-              options={{ title: 'EoL Checklist' }}
+              options={{ title: 'EoL Kontrolü' }}
             />
             <Stack.Screen
               name="ShipmentChecklist"
               component={ShipmentChecklistScreen}
-              options={{ title: 'Shipment Checklist' }}
+              options={{ title: 'Sevk öncesi kontrol' }}
             />
             <Stack.Screen
               name="TestChecklist"
               component={TestChecklistScreen}
-              options={{ title: 'Test Checklist' }}
+              options={{ title: 'Test Kontrolü' }}
             />
             <Stack.Screen
               name="IssueDetail"
               component={IssueDetailScreen}
-              options={{ title: 'Issue' }}
+              options={{ title: 'Issue Detayı' }}
             />
           </>
         )}
