@@ -109,18 +109,53 @@ function parseRgb(color: string): [number, number, number] | null {
   return [Number(m[1]), Number(m[2]), Number(m[3])];
 }
 
+function luminance(rgb: [number, number, number]): number {
+  return (
+    0.2126 * srgbChannel(rgb[0]) +
+    0.7152 * srgbChannel(rgb[1]) +
+    0.0722 * srgbChannel(rgb[2])
+  );
+}
+
+function contrastRatio(a: string, b: string): number {
+  const ra = parseRgb(a);
+  const rb = parseRgb(b);
+  if (!ra || !rb) return 0;
+  const L1 = luminance(ra);
+  const L2 = luminance(rb);
+  const [hi, lo] = L1 > L2 ? [L1, L2] : [L2, L1];
+  return (hi + 0.05) / (lo + 0.05);
+}
+
+function toHex(color: string): string | null {
+  const rgb = parseRgb(color);
+  if (!rgb) return null;
+  return `#${rgb.map((n) => n.toString(16).padStart(2, '0')).join('')}`;
+}
+
 /** White or ink on `bg` — pick the one that meets WCAG AA against the fill. */
 export function inkOn(bg: string): string {
   const rgb = parseRgb(bg);
   if (!rgb) return mixTowardWhite(brandColors.primary, 100);
-  const L =
-    0.2126 * srgbChannel(rgb[0]) +
-    0.7152 * srgbChannel(rgb[1]) +
-    0.0722 * srgbChannel(rgb[2]);
+  const L = luminance(rgb);
   const contrastWhite = 1.05 / (L + 0.05);
   return contrastWhite >= 4.5
     ? mixTowardWhite(brandColors.primary, 100)
     : lightInk;
+}
+
+/** Keep `fg` if it meets AA on `bg`; otherwise walk it toward black/white until it does. */
+export function readableOn(fg: string, bg: string): string {
+  if (contrastRatio(fg, bg) >= 4.5) return fg;
+  const hex = toHex(fg);
+  if (!hex) return fg;
+  for (let p = 10; p <= 85; p += 5) {
+    const darker = mixTowardBlack(hex, p);
+    if (contrastRatio(darker, bg) >= 4.5) return darker;
+    const lighter = mixTowardWhite(hex, p);
+    if (contrastRatio(lighter, bg) >= 4.5) return lighter;
+  }
+  return inkOn(bg);
 }
 
 export const darkTokens = {

@@ -14,7 +14,8 @@ import {
   isAnalysisIssueStatKey,
   matchesAnalysisIssueStat,
 } from '../lib/analysisIssueStats';
-import { brandColors, inkOn } from '../theme/tokens';
+import { useTheme } from '../theme/ThemeProvider';
+import { brandColors, inkOn, readableOn, tokensFor } from '../theme/tokens';
 import {
   SeverityIndicator,
   severityFillColor,
@@ -42,6 +43,8 @@ const STATUSES: { value: IssueStatus; label: string }[] = [
 
 /** Issues list + detail — quality sign-off is gated on issue.transition.* permissions. */
 export default function IssuesPage() {
+  const { mode } = useTheme();
+  const pageBg = tokensFor(mode)['bg-page'];
   const [searchParams, setSearchParams] = useSearchParams();
   const homeStatParam = searchParams.get('homeStat');
   const homeStat = isHomeIssueStatKey(homeStatParam) ? homeStatParam : null;
@@ -379,7 +382,7 @@ export default function IssuesPage() {
                     type="button"
                     onClick={() => toggleSeverity(s)}
                     className="flex min-h-touch min-w-[5.5rem] flex-col items-center justify-center gap-1 rounded-[10px] border px-2 py-1.5 outline-none focus-visible:[box-shadow:0_0_0_2px_var(--chip-focus)]"
-                    style={chipStyle(selected, color)}
+                    style={chipStyle(selected, color, pageBg)}
                   >
                     <SeverityIndicator severity={s} inverted={selected} />
                     <span className="text-[10px] font-semibold">{s}</span>
@@ -405,7 +408,7 @@ export default function IssuesPage() {
                     type="button"
                     onClick={() => toggleStatus(s.value)}
                     className="min-h-[36px] rounded-full border px-3 text-[12px] font-semibold outline-none focus-visible:[box-shadow:0_0_0_2px_var(--chip-focus)]"
-                    style={chipStyle(selected, color)}
+                    style={chipStyle(selected, color, pageBg)}
                   >
                     {s.label}
                   </button>
@@ -429,11 +432,16 @@ export default function IssuesPage() {
   );
 }
 
-function chipStyle(selected: boolean, color: string): CSSProperties {
+function chipStyle(
+  selected: boolean,
+  color: string,
+  pageBg: string,
+): CSSProperties {
   return {
     borderColor: color,
-    backgroundColor: selected ? color : 'var(--bg-page)',
-    color: selected ? inkOn(color) : color,
+    backgroundColor: selected ? color : pageBg,
+    color: selected ? inkOn(color) : readableOn(color, pageBg),
+    outline: 'none',
     ['--chip-focus' as string]: color,
   };
 }
