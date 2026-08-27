@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useState } from 'react';
+import { useCallback, useEffect, useId, useState, type FormEvent } from 'react';
 import { useAuth } from '../auth/AuthProvider';
 import { Perm } from '../auth/permissions';
 import { StatusBadge } from '../components/StatusBadge';
@@ -15,6 +15,7 @@ import {
   type User,
   type UserRole,
 } from '../lib/api';
+import { PASSWORD_RULE_HINT, passwordErrorMessage } from '../lib/password';
 import { roleDisplayName } from '../lib/roleLabels';
 
 function roleLabel(role: string, roles: RoleGrant[]): string {
@@ -47,6 +48,7 @@ function userEditLocks(
     reasons.push(
       'You cannot change your own role or deactivate your own account.',
     );
+    reasons.push('Kendi şifrenizi Ayarlar’dan değiştirin.');
   }
   if (isLastUserAdmin) {
     reasons.push(
@@ -59,6 +61,7 @@ function userEditLocks(
     isLastUserAdmin,
     roleSelectDisabled: isSelf,
     activeSelectDisabled: isSelf || isLastUserAdmin,
+    resetDisabled: isSelf,
     reasons,
   };
 }
@@ -71,6 +74,7 @@ function UserAssignControls({
   busy,
   onRole,
   onActive,
+  onReset,
 }: {
   user: User;
   users: User[];
@@ -79,6 +83,7 @@ function UserAssignControls({
   busy: boolean;
   onRole: (role: UserRole) => void;
   onActive: (isActive: boolean) => void;
+  onReset: () => void;
 }) {
   const reasonId = useId();
   const adminRoles = userAdminRoleCodes(roles);
@@ -120,6 +125,15 @@ function UserAssignControls({
           <option value="active">Active</option>
           <option value="inactive">Inactive</option>
         </select>
+        <button
+          type="button"
+          disabled={busy || locks.resetDisabled}
+          onClick={onReset}
+          className="min-h-touch rounded-lg border px-3 text-[13px] disabled:cursor-not-allowed disabled:opacity-60"
+          style={{ borderColor: 'var(--border)' }}
+        >
+          Şifreyi sıfırla
+        </button>
       </div>
       {locks.reasons.length > 0 && (
         <p id={reasonId} className="text-[12px] text-[var(--text-secondary)]">
@@ -130,6 +144,175 @@ function UserAssignControls({
   );
 }
 
+function TemporaryPasswordBanner({
+  label,
+  password,
+  onDismiss,
+}: {
+  label: string;
+  password: string;
+  onDismiss: () => void;
+}) {
+  const [copied, setCopied] = useState(false);
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(password);
+      setCopied(true);
+    } catch {
+      setCopied(false);
+    }
+  }
+
+  return (
+    <div
+      className="mt-4 rounded-xl border bg-[var(--bg-surface-1)] p-4"
+      style={{ borderColor: 'var(--accent)' }}
+      role="status"
+    >
+      <p className="text-[15px] font-medium">{label}</p>
+      <p className="mt-1 text-[13px] text-[var(--text-secondary)]">
+        Bu şifre yalnızca bir kez gösterilir. Kullanıcı ilk girişte değiştirmek
+        zorundadır. {PASSWORD_RULE_HINT}
+      </p>
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <input
+          readOnly
+          value={password}
+          className="min-h-touch min-w-[12rem] flex-1 rounded-lg border bg-[var(--bg-page)] px-3 font-mono text-[15px]"
+          style={{ borderColor: 'var(--border)' }}
+          aria-label="Geçici şifre"
+        />
+        <button
+          type="button"
+          onClick={() => void copy()}
+          className="min-h-touch rounded-lg bg-[var(--accent)] px-4 text-[15px] font-medium text-white"
+        >
+          {copied ? 'Kopyalandı' : 'Kopyala'}
+        </button>
+        <button
+          type="button"
+          onClick={onDismiss}
+          className="min-h-touch rounded-lg border px-4 text-[15px]"
+          style={{ borderColor: 'var(--border)' }}
+        >
+          Gizle
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function CreateUserForm({
+  roles,
+  onCreated,
+}: {
+  roles: RoleGrant[];
+  onCreated: (user: User, temporaryPassword: string) => void;
+}) {
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [role, setRole] = useState('OPERATOR');
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (roles.length === 0) return;
+    if (!roles.some((r) => r.code === role)) {
+      setRole(roles[0].code);
+    }
+  }, [roles, role]);
+
+  async function onSubmit(e: FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setBusy(true);
+    try {
+      const res = await api.createUser({
+        full_name: fullName,
+        email,
+        role,
+      });
+      setFullName('');
+      setEmail('');
+      onCreated(res.user, res.temporary_password);
+    } catch (err) {
+      setError(
+        err instanceof ApiError ? passwordErrorMessage(err) : 'Kullanıcı oluşturulamadı',
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const fieldClass =
+    'mt-1 w-full rounded-lg border bg-[var(--bg-page)] px-3 py-2 text-[15px]';
+
+  return (
+    <form
+      onSubmit={onSubmit}
+      className="mt-6 rounded-xl border bg-[var(--bg-surface-1)] p-5"
+      style={{ borderColor: 'var(--border)' }}
+    >
+      <h2 className="text-[15px] font-medium">Yeni kullanıcı</h2>
+      <p className="mt-1 text-[13px] text-[var(--text-secondary)]">
+        Sistem geçici bir şifre üretir ve yalnızca bir kez gösterir.{' '}
+        {PASSWORD_RULE_HINT} Yeni kullanıcı aktif oluşturulur.
+      </p>
+      <div className="mt-4 grid gap-4 sm:grid-cols-3">
+        <label className="block text-[13px] text-[var(--text-secondary)]">
+          Ad soyad
+          <input
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            required
+            className={fieldClass}
+            style={{ borderColor: 'var(--border)' }}
+          />
+        </label>
+        <label className="block text-[13px] text-[var(--text-secondary)]">
+          E-posta
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            className={fieldClass}
+            style={{ borderColor: 'var(--border)' }}
+          />
+        </label>
+        <label className="block text-[13px] text-[var(--text-secondary)]">
+          Rol
+          <select
+            value={role}
+            onChange={(e) => setRole(e.target.value)}
+            className={fieldClass}
+            style={{ borderColor: 'var(--border)' }}
+          >
+            {roles.map((r) => (
+              <option key={r.code} value={r.code}>
+                {roleDisplayName(r.code, roles)}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+      {error && (
+        <p className="mt-3 text-[13px]" style={{ color: 'var(--status-not-ok)' }}>
+          {error}
+        </p>
+      )}
+      <button
+        type="submit"
+        disabled={busy}
+        className="mt-4 min-h-touch rounded-lg bg-[var(--accent)] px-4 text-[15px] font-medium text-white disabled:opacity-60"
+      >
+        {busy ? 'Oluşturuluyor…' : 'Kullanıcı oluştur'}
+      </button>
+    </form>
+  );
+}
+
 /** Users & Roles — assign catalogue roles without locking out admin.manage_users. */
 export default function UsersPage() {
   const { user: currentUser } = useAuth();
@@ -137,6 +320,10 @@ export default function UsersPage() {
   const [roles, setRoles] = useState<RoleGrant[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<number | null>(null);
+  const [revealed, setRevealed] = useState<{
+    label: string;
+    password: string;
+  } | null>(null);
 
   const load = useCallback(async () => {
     const [userRes, rbac] = await Promise.all([api.listUsers(), api.getRBAC()]);
@@ -175,6 +362,31 @@ export default function UsersPage() {
     }
   }
 
+  async function resetPassword(u: User) {
+    if (
+      !window.confirm(
+        `${u.FullName} için yeni geçici şifre üretilsin mi? Kullanıcı bir sonraki girişte şifre değiştirmek zorunda kalır.`,
+      )
+    ) {
+      return;
+    }
+    setBusyId(u.ID);
+    setError(null);
+    try {
+      const res = await api.resetUserPassword(u.ID);
+      setRevealed({
+        label: `${u.FullName} için geçici şifre`,
+        password: res.temporary_password,
+      });
+    } catch (err) {
+      setError(
+        err instanceof ApiError ? passwordErrorMessage(err) : 'Şifre sıfırlanamadı',
+      );
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   return (
     <section>
       <h1 className="text-xl font-semibold sm:text-2xl">Kullanıcılar ve roller</h1>
@@ -186,6 +398,24 @@ export default function UsersPage() {
         <p className="mt-3 text-[13px]" style={{ color: 'var(--status-not-ok)' }}>
           {error}
         </p>
+      )}
+
+      <CreateUserForm
+        roles={roles}
+        onCreated={(user, temporaryPassword) => {
+          setUsers((prev) => [...prev, user].sort((a, b) => a.ID - b.ID));
+          setRevealed({
+            label: `${user.FullName} için geçici şifre`,
+            password: temporaryPassword,
+          });
+        }}
+      />
+      {revealed && (
+        <TemporaryPasswordBanner
+          label={revealed.label}
+          password={revealed.password}
+          onDismiss={() => setRevealed(null)}
+        />
       )}
 
       <div className="mt-6">
@@ -223,6 +453,7 @@ export default function UsersPage() {
                   busy={busyId === u.ID}
                   onRole={(role) => void patch(u.ID, { role })}
                   onActive={(isActive) => void patch(u.ID, { is_active: isActive })}
+                  onReset={() => void resetPassword(u)}
                 />
               </DataCardField>
             </DataCard>
@@ -279,6 +510,7 @@ export default function UsersPage() {
                       busy={busyId === u.ID}
                       onRole={(role) => void patch(u.ID, { role })}
                       onActive={(isActive) => void patch(u.ID, { is_active: isActive })}
+                      onReset={() => void resetPassword(u)}
                     />
                   </td>
                 </tr>

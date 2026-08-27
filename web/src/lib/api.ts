@@ -19,6 +19,7 @@ export interface User {
   Email: string;
   Role: UserRole;
   IsActive: boolean;
+  MustChangePassword?: boolean;
   CreatedAt?: string;
 }
 
@@ -120,8 +121,32 @@ export const api = {
     });
   },
 
+  changePassword(body: {
+    current_password: string;
+    new_password: string;
+    confirm_password: string;
+  }) {
+    return request<{ ok: boolean }>('/auth/change-password', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  },
+
   listUsers() {
     return request<{ items: User[] }>('/users');
+  },
+
+  createUser(body: { full_name: string; email: string; role: UserRole }) {
+    return request<{ user: User; temporary_password: string }>('/users', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  },
+
+  resetUserPassword(id: number) {
+    return request<{ temporary_password: string }>(`/users/${id}/reset-password`, {
+      method: 'POST',
+    });
   },
 
   updateUser(id: number, body: { role?: UserRole; is_active?: boolean }) {
