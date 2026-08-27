@@ -15,6 +15,8 @@ import {
   Subtitle,
   Title,
 } from '../components/ui';
+import { ActionStamp } from '../components/ActionStamp';
+import { checklistActorLines } from '../lib/actionStamp';
 import { useTheme } from '../theme/ThemeProvider';
 import { statusColors } from '../theme/tokens';
 import type { RootStackParamList } from '../navigation/types';
@@ -140,6 +142,7 @@ export default function ShipmentChecklistScreen() {
                         {item.ItemNo}. {item.ItemText}
                       </Text>
                     </View>
+                    <ActionStamp lines={checklistActorLines(item)} />
                   </Card>
                 </Pressable>
               );

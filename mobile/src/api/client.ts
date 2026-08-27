@@ -144,6 +144,8 @@ export interface StationStepItem {
   Name: string;
   Status: 'PENDING' | 'OK' | 'NOT_OK';
   RelatedIssueID?: number | null;
+  CheckedByName?: string;
+  CheckedAt?: string | null;
 }
 
 export type ChecklistType = 'eol' | 'shipment' | 'test';
@@ -160,6 +162,13 @@ export interface ChecklistItem {
   ConditionalDesc?: string;
   RejectedDesc?: string;
   EolPhase?: EOLItemPhase | null;
+  ProgressID?: number | null;
+  CheckerName?: string;
+  CheckDate?: string | null;
+  RejectedByName?: string;
+  RejectedAt?: string | null;
+  ApprovedByName?: string;
+  ApprovedAt?: string | null;
 }
 
 export type EOLStage = 'BRANCH' | 'DEPOT' | 'DOCUMENT' | 'COMPLETED';
@@ -209,6 +218,14 @@ export interface Issue {
 }
 
 export interface IssueStatusHistoryEntry {
+  ID: number;
+  FromStatus: string;
+  ToStatus: string;
+  ActorName: string;
+  EventAt: string;
+}
+
+export interface VehicleStatusHistoryEntry {
   ID: number;
   FromStatus: string;
   ToStatus: string;
@@ -282,6 +299,12 @@ export const api = {
 
   getVehicle(vin: string) {
     return request<Vehicle>(`/vehicles/${encodeURIComponent(vin)}`);
+  },
+
+  getVehicleStatusHistory(vin: string) {
+    return request<{ items: VehicleStatusHistoryEntry[] }>(
+      `/vehicles/${encodeURIComponent(vin)}/status-history`,
+    );
   },
 
   shipmentReadiness(vin: string) {

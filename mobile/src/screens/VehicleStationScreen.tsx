@@ -21,6 +21,7 @@ import {
   type ShipmentReadiness,
   type StationStepItem,
   type Vehicle,
+  type VehicleStatusHistoryEntry,
 } from '../api/client';
 import { ProgressRing } from '../components/ProgressRing';
 import { IssueCard } from '../components/IssueCard';
@@ -38,6 +39,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { useAuth } from '../auth/AuthProvider';
 import { Perm } from '../auth/permissions';
 import { statusColors } from '../theme/tokens';
+import { ActionStamp } from '../components/ActionStamp';
 import type { RootStackParamList } from '../navigation/types';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -115,6 +117,7 @@ export default function VehicleStationScreen() {
   const [steps, setSteps] = useState<StationStepItem[]>([]);
   const [issues, setIssues] = useState<Issue[]>([]);
   const [readiness, setReadiness] = useState<ShipmentReadiness | null>(null);
+  const [statusHistory, setStatusHistory] = useState<VehicleStatusHistoryEntry[]>([]);
   const [openByStation, setOpenByStation] = useState<Record<string, number>>({});
   const [expandedStation, setExpandedStation] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -123,7 +126,7 @@ export default function VehicleStationScreen() {
   const load = useCallback(async () => {
     setError(null);
     try {
-      const [v, res, issueRes, ready] = await Promise.all([
+      const [v, res, issueRes, ready, historyRes] = await Promise.all([
         api.getVehicle(vin),
         api.getStationSteps(vin),
         has(Perm.IssueView)
@@ -132,12 +135,14 @@ export default function VehicleStationScreen() {
         has(Perm.ChecklistShipmentView)
           ? api.shipmentReadiness(vin).catch(() => null)
           : Promise.resolve(null),
+        api.getVehicleStatusHistory(vin).catch(() => ({ items: [] as VehicleStatusHistoryEntry[] })),
       ]);
       setVehicle(v);
       setSteps(res.Items ?? []);
       setOpenByStation(res.OpenIssuesByStation ?? {});
       setIssues(issueRes.items ?? []);
       setReadiness(ready);
+      setStatusHistory(historyRes.items ?? []);
       setExpandedStation((prev) => prev ?? v.CurrentStationID);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Araç yüklenemedi');
@@ -193,6 +198,8 @@ export default function VehicleStationScreen() {
     setExpandedStation((cur) => (cur === stationId ? null : stationId));
   }
 
+  const lastStatusChange = statusHistory[statusHistory.length - 1];
+
   if (!vehicle && !error) return <Loading />;
 
   return (
@@ -209,6 +216,14 @@ export default function VehicleStationScreen() {
             …{vinTail(vin)}
             {currentStationName !== '—' ? ` · ${currentStationName}` : ''}
           </Text>
+          {vehicle?.CurrentGlobalStatus ? (
+            <Text style={{ color: tokens.textSecondary, marginTop: 4, fontSize: 13 }}>
+              {vehicle.CurrentGlobalStatus}
+            </Text>
+          ) : null}
+          {lastStatusChange ? (
+            <ActionStamp name={lastStatusChange.ActorName} at={lastStatusChange.EventAt} />
+          ) : null}
         </View>
 
         <View style={{ gap: 8, marginBottom: 16 }}>
@@ -328,6 +343,9 @@ export default function VehicleStationScreen() {
                         </Text>
                         <Badge label={step.Status} color={stepColor(step.Status)} />
                       </View>
+                      {step.Status !== 'PENDING' ? (
+                        <ActionStamp name={step.CheckedByName} at={step.CheckedAt} />
+                      ) : null}
                       <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
                         <StatusChoiceButton
                           label="OK"

@@ -32,6 +32,8 @@ import {
   DismissKeyboardScrollView,
   iosDoneAccessoryProps,
 } from '../components/keyboard';
+import { ActionStamp } from '../components/ActionStamp';
+import { checklistActorLines } from '../lib/actionStamp';
 import { useTheme } from '../theme/ThemeProvider';
 import { statusColors } from '../theme/tokens';
 import type { RootStackParamList } from '../navigation/types';
@@ -173,6 +175,21 @@ export default function EOLChecklistScreen() {
 
   if (!loaded) return <Loading />;
 
+  const workflowStages = [
+    {
+      title: 'Şubeden sevk',
+      record: workflow?.branch_ship,
+    },
+    {
+      title: 'Depodan serbest bırakma',
+      record: workflow?.depot_release,
+    },
+    {
+      title: 'Evrak onayı',
+      record: workflow?.document_approve,
+    },
+  ] as const;
+
   if (!operatorStage) {
     return (
       <Screen>
@@ -188,6 +205,14 @@ export default function EOLChecklistScreen() {
             Bu aşamada operatör için madde yok — onay web panelinden yapılır.
           </Text>
         </Card>
+        {workflowStages.map((row) => (
+          <Card key={row.title}>
+            <Text style={{ color: tokens.textPrimary, fontWeight: '600', fontSize: 15 }}>
+              {row.title}
+            </Text>
+            <ActionStamp name={row.record?.by_name} at={row.record?.at} />
+          </Card>
+        ))}
         {error ? <ErrorText>{error}</ErrorText> : null}
       </Screen>
     );
@@ -200,6 +225,14 @@ export default function EOLChecklistScreen() {
         <Subtitle>
           {STAGE_LABELS[stage]} · {evaluated}/{stageItems.length} değerlendirildi
         </Subtitle>
+        {workflowStages.map((row) => (
+          <Card key={row.title}>
+            <Text style={{ color: tokens.textPrimary, fontWeight: '600', fontSize: 15 }}>
+              {row.title}
+            </Text>
+            <ActionStamp name={row.record?.by_name} at={row.record?.at} />
+          </Card>
+        ))}
         {error ? <ErrorText>{error}</ErrorText> : null}
 
         {stageItems.map((item) => {
@@ -209,6 +242,7 @@ export default function EOLChecklistScreen() {
               <Text style={{ color: tokens.textPrimary, fontSize: 15 }}>
                 {item.ItemNo}. {item.ItemText}
               </Text>
+              <ActionStamp lines={checklistActorLines(item)} />
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
                 {STATUSES.map((s) => {
                   const selected = d.status === s.value;
