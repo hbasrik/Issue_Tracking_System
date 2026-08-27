@@ -208,7 +208,7 @@ func newAdmin(users ...*domain.User) *usecase.UserAdmin {
 		copied := *u
 		byID[u.ID] = &copied
 	}
-	return usecase.NewUserAdmin(&adminUserRepo{users: byID}, adminRoleRepo{})
+	return usecase.NewUserAdmin(&adminUserRepo{users: byID}, adminRoleRepo{}, nil)
 }
 
 func TestUserAdmin_LastManagerCannotDemoteSelf(t *testing.T) {
@@ -391,5 +391,49 @@ func TestUserAdmin_ResetPasswordSetsMustChange(t *testing.T) {
 	}
 	if target == nil || !target.MustChangePassword {
 		t.Fatalf("must_change = %+v", target)
+	}
+}
+
+func TestUserAdmin_CreateRejectsInvalidEmail(t *testing.T) {
+	admin := newAdmin(user(1, managerRole, true))
+	_, err := admin.Create(context.Background(), usecase.CreateUserInput{
+		FullName: "X",
+		Email:    "test@gmail",
+		Role:     domain.RoleCodeOperator,
+	})
+	if !errors.Is(err, domain.ErrEmailInvalid) {
+		t.Fatalf("err = %v, want ErrEmailInvalid", err)
+	}
+}
+
+func TestUserAdmin_CreateRejectsDisallowedDomain(t *testing.T) {
+	admin := usecase.NewUserAdmin(
+		&adminUserRepo{users: map[int]*domain.User{1: user(1, managerRole, true)}},
+		adminRoleRepo{},
+		[]string{"karea.local"},
+	)
+	_, err := admin.Create(context.Background(), usecase.CreateUserInput{
+		FullName: "X",
+		Email:    "user@gmail.com",
+		Role:     domain.RoleCodeOperator,
+	})
+	var denied *domain.EmailDomainNotAllowedError
+	if !errors.As(err, &denied) {
+		t.Fatalf("err = %v, want EmailDomainNotAllowedError", err)
+	}
+}
+
+func TestUserAdmin_CreateAllowsAnyDomainWhenAllowlistEmpty(t *testing.T) {
+	admin := newAdmin(user(1, managerRole, true))
+	created, err := admin.Create(context.Background(), usecase.CreateUserInput{
+		FullName: "X",
+		Email:    "anyone@gmail.com",
+		Role:     domain.RoleCodeOperator,
+	})
+	if err != nil {
+		t.Fatalf("empty allowlist should accept gmail.com: %v", err)
+	}
+	if created.User.Email != "anyone@gmail.com" {
+		t.Errorf("email = %q", created.User.Email)
 	}
 }

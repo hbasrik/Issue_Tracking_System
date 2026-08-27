@@ -16,6 +16,9 @@ type Config struct {
 	DatabaseURL        string
 	JWTSecret          string
 	CORSAllowedOrigins []string
+	// AllowedEmailDomains is the company-domain allowlist for user create.
+	// Empty means no restriction (local development).
+	AllowedEmailDomains []string
 	// UploadDir is where media attachments are written. Karar 8 defers the
 	// cloud-storage decision, so uploads live on local disk for now.
 	UploadDir string
@@ -27,15 +30,16 @@ func Load() Config {
 	loadDotEnv()
 
 	return Config{
-		AppEnv:             envOrDefault("APP_ENV", "development"),
-		Port:               envOrDefault("PORT", "8080"),
-		DatabaseURL:        os.Getenv("DATABASE_URL"),
-		JWTSecret:          os.Getenv("JWT_SECRET"),
-		CORSAllowedOrigins: parseCSVOrigins(envOrDefault(
+		AppEnv:      envOrDefault("APP_ENV", "development"),
+		Port:        envOrDefault("PORT", "8080"),
+		DatabaseURL: os.Getenv("DATABASE_URL"),
+		JWTSecret:   os.Getenv("JWT_SECRET"),
+		CORSAllowedOrigins: parseCSV(envOrDefault(
 			"CORS_ALLOWED_ORIGIN",
 			"http://localhost:5173,http://localhost:5174",
 		)),
-		UploadDir:          envOrDefault("UPLOAD_DIR", "uploads"),
+		AllowedEmailDomains: parseCSV(os.Getenv("ALLOWED_EMAIL_DOMAINS")),
+		UploadDir:           envOrDefault("UPLOAD_DIR", "uploads"),
 	}
 }
 
@@ -75,11 +79,9 @@ func envOrDefault(key, fallback string) string {
 	return fallback
 }
 
-// parseCSVOrigins splits a comma-separated exact-origin allowlist and trims
-// whitespace. Empty segments are dropped. Callers must pass concrete origins
-// (e.g. http://localhost:5173,http://localhost:5174) — wildcards are not
-// supported and must not be introduced here.
-func parseCSVOrigins(raw string) []string {
+// parseCSV splits a comma-separated list and trims whitespace. Empty
+// segments are dropped.
+func parseCSV(raw string) []string {
 	parts := strings.Split(raw, ",")
 	out := make([]string, 0, len(parts))
 	for _, p := range parts {
@@ -88,4 +90,11 @@ func parseCSVOrigins(raw string) []string {
 		}
 	}
 	return out
+}
+
+// parseCSVOrigins splits a comma-separated exact-origin allowlist.
+// Callers must pass concrete origins (e.g. http://localhost:5173) —
+// wildcards are not supported and must not be introduced here.
+func parseCSVOrigins(raw string) []string {
+	return parseCSV(raw)
 }

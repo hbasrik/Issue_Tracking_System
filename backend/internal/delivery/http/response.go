@@ -39,6 +39,7 @@ func writeError(w http.ResponseWriter, err error) {
 	var depot *domain.DepotReleaseBlockedError
 	var rejected *domain.DatabaseRejectedError
 	var itemInUse *domain.TemplateItemInUseError
+	var emailDomain *domain.EmailDomainNotAllowedError
 	switch {
 	case errors.As(err, &gate):
 		writeJSON(w, http.StatusConflict, errorResponse{
@@ -54,6 +55,8 @@ func writeError(w http.ResponseWriter, err error) {
 		writeJSON(w, http.StatusConflict, errorResponse{Error: rejected.Error()})
 	case errors.As(err, &itemInUse):
 		writeJSON(w, http.StatusConflict, errorResponse{Error: itemInUse.Error()})
+	case errors.As(err, &emailDomain):
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: emailDomain.Error()})
 	case errors.Is(err, domain.ErrDepotChecklistLocked),
 		errors.Is(err, domain.ErrInvalidStatusTransition),
 		errors.Is(err, domain.ErrLastActiveManager),
@@ -92,7 +95,8 @@ func writeError(w http.ResponseWriter, err error) {
 		errors.Is(err, domain.ErrEmailRequired),
 		errors.Is(err, domain.ErrPasswordTooShort),
 		errors.Is(err, domain.ErrPasswordTooWeak),
-		errors.Is(err, domain.ErrPasswordMismatch):
+		errors.Is(err, domain.ErrPasswordMismatch),
+		errors.Is(err, domain.ErrEmailInvalid):
 		writeJSON(w, http.StatusBadRequest, errorResponse{Error: err.Error()})
 	default:
 		log.Printf("http: unhandled error: %v", err)

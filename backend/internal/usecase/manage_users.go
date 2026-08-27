@@ -12,13 +12,27 @@ import (
 // last-admin.manage_users invariants. Authorization to call these methods is
 // admin.manage_users at the route; the rules below keep Users & Roles reachable.
 type UserAdmin struct {
-	users repository.UserRepository
-	roles repository.RoleRepository
+	users               repository.UserRepository
+	roles               repository.RoleRepository
+	allowedEmailDomains []string
 }
 
-// NewUserAdmin wires the usecase with its repositories.
-func NewUserAdmin(users repository.UserRepository, roles repository.RoleRepository) *UserAdmin {
-	return &UserAdmin{users: users, roles: roles}
+// NewUserAdmin wires the usecase with its repositories. allowedEmailDomains
+// is the create-user allowlist; empty means any well-formed address is accepted.
+func NewUserAdmin(users repository.UserRepository, roles repository.RoleRepository, allowedEmailDomains []string) *UserAdmin {
+	return &UserAdmin{
+		users:               users,
+		roles:               roles,
+		allowedEmailDomains: domain.NormalizeEmailDomains(allowedEmailDomains),
+	}
+}
+
+// AllowedEmailDomains is the configured create-user allowlist (possibly empty).
+func (a *UserAdmin) AllowedEmailDomains() []string {
+	if a == nil || a.allowedEmailDomains == nil {
+		return []string{}
+	}
+	return a.allowedEmailDomains
 }
 
 // UpdateUserInput is a partial update. At least one field must be set by the
@@ -123,8 +137,11 @@ func (a *UserAdmin) Create(ctx context.Context, in CreateUserInput) (*CreatedUse
 		return nil, domain.ErrFullNameRequired
 	}
 	email := normalizeEmail(in.Email)
-	if email == "" {
-		return nil, domain.ErrEmailRequired
+	if err := domain.ValidateEmail(email); err != nil {
+		return nil, err
+	}
+	if err := domain.CheckAllowedEmailDomain(email, a.allowedEmailDomains); err != nil {
+		return nil, err
 	}
 	role, err := a.roles.GetByCode(ctx, in.Role)
 	if err != nil {

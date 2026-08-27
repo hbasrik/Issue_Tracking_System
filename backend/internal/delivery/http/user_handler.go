@@ -27,7 +27,10 @@ func (s *server) handleUserList(w http.ResponseWriter, r *http.Request) {
 	for i := range items {
 		out = append(out, publicUser(&items[i]))
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"items": out})
+	writeJSON(w, http.StatusOK, map[string]any{
+		"items":                 out,
+		"allowed_email_domains": s.deps.Users.AllowedEmailDomains(),
+	})
 }
 
 // handleUserUpdate applies a role and/or is_active change. Self-lockout and

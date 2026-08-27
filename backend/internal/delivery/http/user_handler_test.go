@@ -141,6 +141,10 @@ func httpUser(id int, role domain.Role) *domain.User {
 }
 
 func usersRouter(users map[int]*domain.User) http.Handler {
+	return usersRouterWithDomains(users, nil)
+}
+
+func usersRouterWithDomains(users map[int]*domain.User, domains []string) http.Handler {
 	roles := newFakeRoleRepo()
 	copied := make(map[int]*domain.User, len(users))
 	for id, u := range users {
@@ -151,7 +155,7 @@ func usersRouter(users map[int]*domain.User) http.Handler {
 	return apphttp.NewRouter(apphttp.Deps{
 		Issuer: issuer,
 		Roles:  roles,
-		Users:  usecase.NewUserAdmin(&httpAdminUserRepo{users: copied}, roles),
+		Users:  usecase.NewUserAdmin(&httpAdminUserRepo{users: copied}, roles, domains),
 	})
 }
 
@@ -357,5 +361,70 @@ func TestUserResetPassword_SelfForbidden(t *testing.T) {
 	router.ServeHTTP(rec, req)
 	if rec.Code != http.StatusForbidden {
 		t.Fatalf("status = %d body %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestUserCreate_InvalidEmail(t *testing.T) {
+	router := usersRouter(map[int]*domain.User{
+		1: httpUser(1, httpManagerRole),
+	})
+	for _, addr := range []string{"test@gmail", "test@", "@x.com"} {
+		raw, _ := json.Marshal(map[string]string{
+			"full_name": "X",
+			"email":     addr,
+			"role":      domain.RoleCodeOperator,
+		})
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/users", bytes.NewReader(raw))
+		req.Header.Set("Authorization", "Bearer "+managerToken(t, router))
+		req.Header.Set("Content-Type", "application/json")
+		rec := httptest.NewRecorder()
+		router.ServeHTTP(rec, req)
+		if rec.Code != http.StatusBadRequest {
+			t.Fatalf("%s: status = %d body %s", addr, rec.Code, rec.Body.String())
+		}
+	}
+}
+
+func TestUserCreate_DomainNotAllowed(t *testing.T) {
+	router := usersRouterWithDomains(map[int]*domain.User{
+		1: httpUser(1, httpManagerRole),
+	}, []string{"karea.local"})
+	raw, _ := json.Marshal(map[string]string{
+		"full_name": "X",
+		"email":     "user@gmail.com",
+		"role":      domain.RoleCodeOperator,
+	})
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/users", bytes.NewReader(raw))
+	req.Header.Set("Authorization", "Bearer "+managerToken(t, router))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d body %s", rec.Code, rec.Body.String())
+	}
+	if !bytes.Contains(rec.Body.Bytes(), []byte("karea.local")) {
+		t.Fatalf("body should list accepted domains: %s", rec.Body.String())
+	}
+}
+
+func TestUserList_IncludesAllowedEmailDomains(t *testing.T) {
+	router := usersRouterWithDomains(map[int]*domain.User{
+		1: httpUser(1, httpManagerRole),
+	}, []string{"karea.local"})
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/users", nil)
+	req.Header.Set("Authorization", "Bearer "+managerToken(t, router))
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d body %s", rec.Code, rec.Body.String())
+	}
+	var body struct {
+		Allowed []string `json:"allowed_email_domains"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+		t.Fatal(err)
+	}
+	if len(body.Allowed) != 1 || body.Allowed[0] != "karea.local" {
+		t.Fatalf("allowed = %#v", body.Allowed)
 	}
 }

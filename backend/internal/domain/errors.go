@@ -86,6 +86,9 @@ var (
 	ErrFullNameRequired = errors.New("full_name is required")
 	// ErrEmailRequired indicates create-user omitted a non-empty email.
 	ErrEmailRequired = errors.New("email is required")
+	// ErrEmailInvalid indicates the address is not a complete email
+	// (missing TLD, missing local part, etc.).
+	ErrEmailInvalid = errors.New("email address is not valid")
 	// ErrPasswordTooShort indicates a new password is under MinPasswordLength.
 	ErrPasswordTooShort = errors.New("password must be at least 8 characters")
 	// ErrPasswordTooWeak indicates a new password lacks a letter or a digit.
