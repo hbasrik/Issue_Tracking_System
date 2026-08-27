@@ -185,7 +185,8 @@ func (e *TemplateItemInUseError) Error() string {
 }
 
 // UserInUseError is returned when DELETE is attempted on a user who still
-// appears on shop-floor, workflow, audit, or media rows. Deactivate instead.
+// appears on shop-floor, workflow, work-event audit, or media rows.
+// Deactivate instead.
 type UserInUseError struct {
 	ReferenceCount int
 }

@@ -202,10 +202,12 @@ func (a *UserAdmin) ResetPassword(ctx context.Context, actorID, targetID int) (s
 	return plain, nil
 }
 
-// Delete hard-deletes a user who has never been referenced. Last-admin and
-// self-delete follow the same order as Update so the last manage_users
-// holder cannot remove themselves (409) and a peer cannot remove their own
-// row (403). Referenced accounts return UserInUseError (409).
+// Delete hard-deletes a user who has never produced shop-floor, media, or
+// work-event audit rows (Karar 7). Last-admin and self-delete follow the
+// same order as Update so the last manage_users holder cannot remove
+// themselves (409) and a peer cannot remove their own row (403).
+// Referenced accounts return UserInUseError (409). performed_by is never
+// nulled.
 func (a *UserAdmin) Delete(ctx context.Context, actorID, targetID int) error {
 	target, err := a.users.GetByID(ctx, targetID)
 	if err != nil {

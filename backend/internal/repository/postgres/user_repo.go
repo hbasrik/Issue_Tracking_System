@@ -155,10 +155,8 @@ func (r *UserRepo) UpdatePassword(ctx context.Context, id int, passwordHash stri
 	return nil
 }
 
-// CountReferences sums shop-floor and media FKs. audit_logs is excluded:
-// ISSUE_STATUS_CHANGE (and similar) can remain after the issue row no longer
-// points at the user, and login never writes audit — neither should block
-// delete. Real work still appears on issue_list, progress, EOL, or media.
+// CountReferences sums shop-floor and media FKs plus work-event audit_logs
+// rows (domain.WorkAuditEventTypes). Login is not stored in audit_logs.
 func (r *UserRepo) CountReferences(ctx context.Context, id int) (int, error) {
 	var n int
 	err := r.pool.QueryRow(ctx, `
@@ -188,32 +186,25 @@ func (r *UserRepo) CountReferences(ctx context.Context, id int) (int, error) {
 			SELECT COUNT(*) FROM vehicle_eol_workflow WHERE document_approved_by = $1
 			UNION ALL
 			SELECT COUNT(*) FROM media_attachments WHERE uploaded_by = $1
-		) s`, id).Scan(&n)
+			UNION ALL
+			SELECT COUNT(*) FROM audit_logs
+			 WHERE performed_by = $1
+			   AND event_type::text = ANY($2::text[])
+		) s`, id, domain.WorkAuditEventTypeStrings()).Scan(&n)
 	return n, err
 }
 
-// Delete detaches audit_logs.performed_by (history stays, actor name
-// becomes empty) then removes the users row. Shop-floor FKs still fail
-// the write and map to UserInUseError.
+// Delete removes the users row. performed_by on audit_logs is never nulled
+// (Karar 7 history). A leftover FK maps to UserInUseError.
 func (r *UserRepo) Delete(ctx context.Context, id int) error {
-	tx, err := r.pool.Begin(ctx)
-	if err != nil {
-		return err
-	}
-	defer func() { _ = tx.Rollback(ctx) }()
-
-	if _, err := tx.Exec(ctx,
-		`UPDATE audit_logs SET performed_by = NULL WHERE performed_by = $1`, id); err != nil {
-		return err
-	}
-	tag, err := tx.Exec(ctx, `DELETE FROM users WHERE id = $1`, id)
+	tag, err := r.pool.Exec(ctx, `DELETE FROM users WHERE id = $1`, id)
 	if err != nil {
 		return mapUserDelete(err)
 	}
 	if tag.RowsAffected() == 0 {
 		return domain.ErrNotFound
 	}
-	return tx.Commit(ctx)
+	return nil
 }
 
 func mapUniqueEmail(err error) error {

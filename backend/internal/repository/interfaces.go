@@ -154,13 +154,12 @@ type UserRepository interface {
 	Create(ctx context.Context, user *domain.User) (*domain.User, error)
 	// UpdatePassword replaces password_hash and must_change_password.
 	UpdatePassword(ctx context.Context, id int, passwordHash string, mustChange bool) error
-	// CountReferences sums FK hits on shop-floor and media rows (issues,
-	// station steps, checklists, EOL sign-offs, uploads). Audit-only rows
-	// are ignored so a leftover history stamp cannot block delete. Zero
-	// means hard-delete is safe.
+	// CountReferences sums shop-floor FKs plus work-event audit_logs rows
+	// (see domain.WorkAuditEventTypes). Zero means hard-delete is safe.
 	CountReferences(ctx context.Context, id int) (int, error)
 	// Delete removes the users row. Callers must refuse when references
-	// exist; a leftover FK surfaces as a 23503 from Postgres.
+	// exist; performed_by on audit_logs is never nulled. A leftover FK
+	// surfaces as a 23503 from Postgres.
 	Delete(ctx context.Context, id int) error
 }
 
