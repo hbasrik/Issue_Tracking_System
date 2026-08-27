@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useId, useState, type FormEvent } from 'react';
 import { useAuth } from '../auth/AuthProvider';
 import { Perm } from '../auth/permissions';
-import { StatusBadge } from '../components/StatusBadge';
+import { ActiveBadge } from '../components/ActiveBadge';
 import {
   DataCard,
   DataCardField,
@@ -16,6 +16,11 @@ import {
   type UserRole,
 } from '../lib/api';
 import { PASSWORD_RULE_HINT, passwordErrorMessage } from '../lib/password';
+import {
+  EMAIL_FORMAT_HINT,
+  allowedDomainsHint,
+  emailCreateErrorMessage,
+} from '../lib/email';
 import { roleDisplayName } from '../lib/roleLabels';
 
 function roleLabel(role: string, roles: RoleGrant[]): string {
@@ -122,8 +127,8 @@ function UserAssignControls({
           aria-label={`Status for ${u.FullName}`}
           aria-describedby={locks.reasons.length ? reasonId : undefined}
         >
-          <option value="active">Active</option>
-          <option value="inactive">Inactive</option>
+          <option value="active">Aktif</option>
+          <option value="inactive">Pasif</option>
         </select>
         <button
           type="button"
@@ -205,15 +210,18 @@ function TemporaryPasswordBanner({
 
 function CreateUserForm({
   roles,
+  allowedEmailDomains,
   onCreated,
 }: {
   roles: RoleGrant[];
+  allowedEmailDomains: string[];
   onCreated: (user: User, temporaryPassword: string) => void;
 }) {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [role, setRole] = useState('OPERATOR');
   const [error, setError] = useState<string | null>(null);
+  const [emailHint, setEmailHint] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -223,8 +231,19 @@ function CreateUserForm({
     }
   }, [roles, role]);
 
+  function onEmailChange(value: string) {
+    setEmail(value);
+    setEmailHint(emailCreateErrorMessage(value, allowedEmailDomains));
+  }
+
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
+    const formatErr = emailCreateErrorMessage(email, allowedEmailDomains);
+    if (formatErr) {
+      setEmailHint(formatErr);
+      setError(formatErr);
+      return;
+    }
     setError(null);
     setBusy(true);
     try {
@@ -235,6 +254,7 @@ function CreateUserForm({
       });
       setFullName('');
       setEmail('');
+      setEmailHint(null);
       onCreated(res.user, res.temporary_password);
     } catch (err) {
       setError(
@@ -247,12 +267,14 @@ function CreateUserForm({
 
   const fieldClass =
     'mt-1 w-full rounded-lg border bg-[var(--bg-page)] px-3 py-2 text-[15px]';
+  const domainHint = allowedDomainsHint(allowedEmailDomains);
 
   return (
     <form
       onSubmit={onSubmit}
       className="mt-6 rounded-xl border bg-[var(--bg-surface-1)] p-5"
       style={{ borderColor: 'var(--border)' }}
+      noValidate
     >
       <h2 className="text-[15px] font-medium">Yeni kullanıcı</h2>
       <p className="mt-1 text-[13px] text-[var(--text-secondary)]">
@@ -273,13 +295,27 @@ function CreateUserForm({
         <label className="block text-[13px] text-[var(--text-secondary)]">
           E-posta
           <input
-            type="email"
+            type="text"
+            inputMode="email"
+            autoComplete="email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => onEmailChange(e.target.value)}
             required
+            aria-invalid={emailHint ? true : undefined}
             className={fieldClass}
-            style={{ borderColor: 'var(--border)' }}
+            style={{
+              borderColor: emailHint ? 'var(--status-not-ok)' : 'var(--border)',
+            }}
           />
+          <span className="mt-1 block text-[12px] text-[var(--text-secondary)]">
+            {EMAIL_FORMAT_HINT}
+            {domainHint ? ` ${domainHint}` : ''}
+          </span>
+          {emailHint && (
+            <span className="mt-1 block text-[12px]" style={{ color: 'var(--status-not-ok)' }}>
+              {emailHint}
+            </span>
+          )}
         </label>
         <label className="block text-[13px] text-[var(--text-secondary)]">
           Rol
@@ -318,6 +354,7 @@ export default function UsersPage() {
   const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [roles, setRoles] = useState<RoleGrant[]>([]);
+  const [allowedEmailDomains, setAllowedEmailDomains] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<number | null>(null);
   const [revealed, setRevealed] = useState<{
@@ -328,6 +365,7 @@ export default function UsersPage() {
   const load = useCallback(async () => {
     const [userRes, rbac] = await Promise.all([api.listUsers(), api.getRBAC()]);
     setUsers(userRes.items ?? []);
+    setAllowedEmailDomains(userRes.allowed_email_domains ?? []);
     setRoles(rbac.roles ?? []);
   }, []);
 
@@ -402,6 +440,7 @@ export default function UsersPage() {
 
       <CreateUserForm
         roles={roles}
+        allowedEmailDomains={allowedEmailDomains}
         onCreated={(user, temporaryPassword) => {
           setUsers((prev) => [...prev, user].sort((a, b) => a.ID - b.ID));
           setRevealed({
@@ -438,11 +477,8 @@ export default function UsersPage() {
                   {roleLabel(u.Role, roles)}
                 </span>
               </DataCardField>
-                <DataCardField label="Durum">
-                <StatusBadge
-                  kind="stationStep"
-                  value={u.IsActive ? 'OK' : 'PENDING'}
-                />
+              <DataCardField label="Durum">
+                <ActiveBadge active={u.IsActive} />
               </DataCardField>
               <DataCardField label="Assign">
                 <UserAssignControls
@@ -470,7 +506,7 @@ export default function UsersPage() {
                 <th className="px-4 py-3">Name</th>
                 <th className="px-4 py-3">Email</th>
                 <th className="px-4 py-3">Role</th>
-                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">Durum</th>
                 <th className="px-4 py-3">Assign</th>
               </tr>
             </thead>
@@ -496,10 +532,7 @@ export default function UsersPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3">
-                    <StatusBadge
-                      kind="stationStep"
-                      value={u.IsActive ? 'OK' : 'PENDING'}
-                    />
+                    <ActiveBadge active={u.IsActive} />
                   </td>
                   <td className="px-4 py-3">
                     <UserAssignControls

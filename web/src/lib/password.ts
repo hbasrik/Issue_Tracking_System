@@ -22,7 +22,15 @@ export function passwordErrorMessage(err: unknown): string {
       return 'Ad soyad gerekli.';
     case 'email is required':
       return 'E-posta gerekli.';
+    case 'email address is not valid':
+      return 'Geçerli bir e-posta girin (alan adı uzantısı gerekli, örn. ad@sirket.com).';
     default:
+      if (msg.startsWith('email domain is not allowed')) {
+        const listed = msg.split('accepted domains:')[1]?.trim();
+        return listed
+          ? `Bu alan adına izin yok. Kabul edilenler: ${listed}`
+          : 'Bu alan adına izin yok.';
+      }
       return msg;
   }
 }

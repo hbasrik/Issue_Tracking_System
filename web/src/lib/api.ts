@@ -133,7 +133,7 @@ export const api = {
   },
 
   listUsers() {
-    return request<{ items: User[] }>('/users');
+    return request<{ items: User[]; allowed_email_domains?: string[] }>('/users');
   },
 
   createUser(body: { full_name: string; email: string; role: UserRole }) {

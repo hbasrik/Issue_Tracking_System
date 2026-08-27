@@ -6,6 +6,7 @@ import {
   type ChecklistTemplate,
   type ChecklistTemplateItem,
 } from '../lib/api';
+import { ActiveBadge } from '../components/ActiveBadge';
 import { StatusBadge } from '../components/StatusBadge';
 import {
   DataCard,
@@ -250,7 +251,7 @@ export default function TemplatesPage() {
                 </DataCardField>
                 <DataCardField label="Aktif madde">{row.ItemCount}</DataCardField>
                 <DataCardField label="Durum">
-                  {row.IsActive ? 'Active' : 'Inactive'}
+                  <ActiveBadge active={row.IsActive} />
                 </DataCardField>
               </DataCard>
             ))}
@@ -266,7 +267,7 @@ export default function TemplatesPage() {
                   <th className="px-4 py-3">Model</th>
                   <th className="px-4 py-3">Type</th>
                   <th className="px-4 py-3">Aktif madde</th>
-                  <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3">Durum</th>
                 </tr>
               </thead>
               <tbody>
@@ -298,7 +299,7 @@ export default function TemplatesPage() {
                     </td>
                     <td className="px-4 py-3">{row.ItemCount}</td>
                     <td className="px-4 py-3">
-                      {row.IsActive ? 'Active' : 'Inactive'}
+                      <ActiveBadge active={row.IsActive} />
                     </td>
                   </tr>
                 ))}
