@@ -156,6 +156,10 @@ export const api = {
     });
   },
 
+  deleteUser(id: number) {
+    return request<void>(`/users/${id}`, { method: 'DELETE' });
+  },
+
   getRBAC() {
     return request<{ roles: RoleGrant[]; permissions: PermissionRow[] }>('/rbac');
   },

@@ -54,6 +54,7 @@ function userEditLocks(
       'You cannot change your own role or deactivate your own account.',
     );
     reasons.push('Kendi şifrenizi Ayarlar’dan değiştirin.');
+    reasons.push('Kendi hesabınızı silemezsiniz.');
   }
   if (isLastUserAdmin) {
     reasons.push(
@@ -67,6 +68,7 @@ function userEditLocks(
     roleSelectDisabled: isSelf,
     activeSelectDisabled: isSelf || isLastUserAdmin,
     resetDisabled: isSelf,
+    deleteDisabled: isSelf || isLastUserAdmin,
     reasons,
   };
 }
@@ -80,6 +82,7 @@ function UserAssignControls({
   onRole,
   onActive,
   onReset,
+  onDelete,
 }: {
   user: User;
   users: User[];
@@ -89,6 +92,7 @@ function UserAssignControls({
   onRole: (role: UserRole) => void;
   onActive: (isActive: boolean) => void;
   onReset: () => void;
+  onDelete: () => void;
 }) {
   const reasonId = useId();
   const adminRoles = userAdminRoleCodes(roles);
@@ -125,6 +129,7 @@ function UserAssignControls({
           className={selectClass}
           style={{ borderColor: 'var(--border)' }}
           aria-label={`Status for ${u.FullName}`}
+          title="Pasif kullanıcı giriş yapamaz, geçmiş kayıtları korunur"
           aria-describedby={locks.reasons.length ? reasonId : undefined}
         >
           <option value="active">Aktif</option>
@@ -145,6 +150,14 @@ function UserAssignControls({
           {locks.reasons.join(' ')}
         </p>
       )}
+      <button
+        type="button"
+        disabled={busy || locks.deleteDisabled}
+        onClick={onDelete}
+        className="self-start text-[12px] text-[var(--text-secondary)] underline decoration-transparent underline-offset-2 hover:underline hover:decoration-current disabled:cursor-not-allowed disabled:no-underline disabled:opacity-40"
+      >
+        Hesabı sil
+      </button>
     </div>
   );
 }
@@ -425,12 +438,37 @@ export default function UsersPage() {
     }
   }
 
+  async function deleteUser(u: User) {
+    if (
+      !window.confirm(
+        `${u.FullName} kalıcı olarak silinsin mi? Yalnızca hiç işlem yapmamış hesaplar silinebilir. İşlem yapmış kullanıcıları pasife çekin.`,
+      )
+    ) {
+      return;
+    }
+    setBusyId(u.ID);
+    setError(null);
+    try {
+      await api.deleteUser(u.ID);
+      setUsers((prev) => prev.filter((x) => x.ID !== u.ID));
+    } catch (err) {
+      setError(
+        err instanceof ApiError ? passwordErrorMessage(err) : 'Kullanıcı silinemedi',
+      );
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   return (
     <section>
       <h1 className="text-xl font-semibold sm:text-2xl">Kullanıcılar ve roller</h1>
       <p className="mt-1 text-[13px] text-[var(--text-secondary)]">
         Katalogdaki herhangi bir rolü atayın. İzinler Roller matrisinden
         düzenlenir. En az bir aktif admin.manage_users sahibi kalmalıdır.
+        Hesabı kapatmanın yolu Aktif/Pasif anahtarıdır: pasif kullanıcı giriş
+        yapamaz, geçmiş kayıtları korunur. Silme yalnızca hiç işlem yapmamış
+        hesaplar içindir.
       </p>
       {error && (
         <p className="mt-3 text-[13px]" style={{ color: 'var(--status-not-ok)' }}>
@@ -490,6 +528,7 @@ export default function UsersPage() {
                   onRole={(role) => void patch(u.ID, { role })}
                   onActive={(isActive) => void patch(u.ID, { is_active: isActive })}
                   onReset={() => void resetPassword(u)}
+                  onDelete={() => void deleteUser(u)}
                 />
               </DataCardField>
             </DataCard>
@@ -544,6 +583,7 @@ export default function UsersPage() {
                       onRole={(role) => void patch(u.ID, { role })}
                       onActive={(isActive) => void patch(u.ID, { is_active: isActive })}
                       onReset={() => void resetPassword(u)}
+                  onDelete={() => void deleteUser(u)}
                     />
                   </td>
                 </tr>

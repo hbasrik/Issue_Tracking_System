@@ -18,6 +18,10 @@ export function passwordErrorMessage(err: unknown): string {
       return 'Bu e-posta zaten kullanılıyor.';
     case 'you cannot reset your own password this way':
       return 'Kendi şifrenizi buradan sıfırlayamazsınız. Ayarlar’dan değiştirin.';
+    case 'you cannot delete your own account':
+      return 'Kendi hesabınızı silemezsiniz.';
+    case 'cannot remove the last user who can manage users':
+      return 'En az bir aktif kullanıcı-yönetimi izni sahibi kalmalıdır.';
     case 'full_name is required':
       return 'Ad soyad gerekli.';
     case 'email is required':
