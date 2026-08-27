@@ -520,6 +520,7 @@ export interface BranchShipResult {
 export interface DepotReleaseResult {
   vin: string;
   current_stage: EOLStage;
+  vehicle_status?: string;
 }
 
 export interface DocumentApproveResult {

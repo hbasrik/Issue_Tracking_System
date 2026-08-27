@@ -14,13 +14,20 @@ import { SeverityIndicator } from './SeverityIndicator';
 import { StatusBadge } from './StatusBadge';
 import { ActionStamp } from './ActionStamp';
 
-const STAGES: { id: Exclude<EOLStage, 'COMPLETED'>; label: string }[] = [
-  { id: 'BRANCH', label: 'Branch' },
-  { id: 'DEPOT', label: 'Depot' },
-  { id: 'DOCUMENT', label: 'Document' },
+const STAGES: { id: Exclude<EOLStage, 'COMPLETED' | 'DOCUMENT'>; label: string }[] = [
+  { id: 'BRANCH', label: 'Şube' },
+  { id: 'DEPOT', label: 'Depo' },
 ];
 
-const STAGE_ORDER: EOLStage[] = ['BRANCH', 'DEPOT', 'DOCUMENT', 'COMPLETED'];
+const STAGE_ORDER: EOLStage[] = ['BRANCH', 'DEPOT', 'COMPLETED'];
+
+function passing(status: ChecklistItem['Status']): boolean {
+  return status === 'OK' || status === 'CONDITIONAL_OK';
+}
+
+function stepperStage(stage: EOLStage): EOLStage {
+  return stage === 'DOCUMENT' ? 'COMPLETED' : stage;
+}
 
 interface EolWorkflowTabProps {
   vin: string;
@@ -28,8 +35,9 @@ interface EolWorkflowTabProps {
 }
 
 /**
- * Vehicle Detail EoL tab: Branch → Depot → Document stepper, per-stage
- * checklist, and permission-gated actions (Karar 2).
+ * Vehicle Detail EoL tab: Şube → Depo. Branch-ship stays visible while
+ * the stage is open (disabled until every BRANCH item passes). Depot
+ * release stays visible until done, disabled until the branch has shipped.
  */
 export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
   const { has } = useAuth();
@@ -134,21 +142,6 @@ export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
     }
   }
 
-  async function approveDocument() {
-    setBusy(true);
-    setError(null);
-    setBlocking(null);
-    try {
-      await api.eolDocumentApprove(vin);
-      await load();
-      onVehicleChanged();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'document approval failed');
-    } finally {
-      setBusy(false);
-    }
-  }
-
   if (!workflow && error) {
     return (
       <p className="text-[13px]" style={{ color: 'var(--status-not-ok)' }}>
@@ -160,10 +153,32 @@ export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
     return <p className="text-[var(--text-secondary)]">Loading EoL…</p>;
   }
 
-  const currentIndex = STAGE_ORDER.indexOf(workflow.current_stage);
-  const depotLocked = eolItems.some(
-    (item) => item.EolPhase === 'BRANCH' && !['OK', 'CONDITIONAL_OK'].includes(item.Status),
-  );
+  const currentIndex = STAGE_ORDER.indexOf(stepperStage(workflow.current_stage));
+  const branchItems = eolItems.filter((item) => item.EolPhase === 'BRANCH');
+  const branchRemaining = branchItems.filter((item) => !passing(item.Status)).length;
+  const depotLocked = branchRemaining > 0;
+
+  const canShip =
+    has(Perm.EOLBranchShip) &&
+    workflow.current_stage === 'BRANCH' &&
+    branchRemaining === 0;
+  let shipDisabledReason: string | undefined;
+  if (!has(Perm.EOLBranchShip)) {
+    shipDisabledReason = 'Bu işlem için yetkiniz yok';
+  } else if (branchRemaining > 0) {
+    shipDisabledReason = `Şube checklistinde ${branchRemaining} madde kaldı`;
+  }
+
+  const canRelease =
+    has(Perm.EOLDepotRelease) &&
+    Boolean(workflow.branch_ship.at) &&
+    workflow.current_stage === 'DEPOT';
+  let releaseDisabledReason: string | undefined;
+  if (!has(Perm.EOLDepotRelease)) {
+    releaseDisabledReason = 'Bu işlem için yetkiniz yok';
+  } else if (!workflow.branch_ship.at) {
+    releaseDisabledReason = 'Önce şubeden sevk yapılmalı';
+  }
 
   return (
     <div className="space-y-5">
@@ -207,7 +222,7 @@ export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
         <ol className="mt-4 flex flex-wrap items-center gap-2">
           {STAGES.map((stage, i) => {
             const done = i < currentIndex;
-            const active = stage.id === workflow.current_stage;
+            const active = stage.id === stepperStage(workflow.current_stage);
             return (
               <li key={stage.id} className="flex min-w-0 flex-1 basis-[30%] items-center gap-2">
                 <div
@@ -239,8 +254,10 @@ export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
         title="Şubeden sevk"
         name={workflow.branch_ship.by_name}
         at={workflow.branch_ship.at}
-        actionLabel="Şubeden sevk"
-        actionEnabled={has(Perm.EOLBranchShip) && workflow.current_stage === 'BRANCH'}
+        actionLabel="Şubeden Depoya Sevk"
+        showAction={!workflow.branch_ship.at}
+        actionEnabled={canShip}
+        actionDisabledReason={shipDisabledReason}
         busy={busy}
         onAction={shipToDepot}
       >
@@ -259,7 +276,9 @@ export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
         name={workflow.depot_release.by_name}
         at={workflow.depot_release.at}
         actionLabel="Depodan serbest bırak"
-        actionEnabled={has(Perm.EOLDepotRelease) && workflow.current_stage === 'DEPOT'}
+        showAction={!workflow.depot_release.at}
+        actionEnabled={canRelease}
+        actionDisabledReason={releaseDisabledReason}
         busy={busy}
         onAction={releaseFromDepot}
       >
@@ -273,21 +292,6 @@ export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
           locked={depotLocked}
           lockHint="Complete the Branch checklist first"
         />
-      </StageCard>
-
-      <StageCard
-        title="Evrak onayı"
-        name={workflow.document_approve.by_name}
-        at={workflow.document_approve.at}
-        actionLabel="Evrakı onayla"
-        actionEnabled={has(Perm.EOLDocumentApprove) && workflow.current_stage === 'DOCUMENT'}
-        busy={busy}
-        onAction={approveDocument}
-      >
-        <p className="text-[15px] text-[var(--text-secondary)]">
-          Document approval has no checklist — it is the final sign-off after
-          depot release.
-        </p>
       </StageCard>
 
       {error && (
@@ -340,7 +344,9 @@ function StageCard({
   name,
   at,
   actionLabel,
+  showAction,
   actionEnabled,
+  actionDisabledReason,
   busy,
   onAction,
   children,
@@ -349,7 +355,9 @@ function StageCard({
   name?: string;
   at: string | null;
   actionLabel: string;
+  showAction: boolean;
   actionEnabled: boolean;
+  actionDisabledReason?: string;
   busy: boolean;
   onAction: () => void;
   children: ReactNode;
@@ -361,15 +369,22 @@ function StageCard({
           <h3 className="text-[15px] font-medium">{title}</h3>
           <ActionStamp name={name} at={at} />
         </div>
-        {actionEnabled && (
-          <button
-            type="button"
-            disabled={busy}
-            onClick={onAction}
-            className="min-h-touch rounded-lg bg-[var(--accent)] px-4 text-[15px] text-white disabled:opacity-60"
-          >
-            {actionLabel}
-          </button>
+        {showAction && (
+          <div className="max-w-xs text-right">
+            <button
+              type="button"
+              disabled={busy || !actionEnabled}
+              onClick={onAction}
+              className="min-h-touch rounded-lg bg-[var(--accent)] px-4 text-[15px] text-white disabled:opacity-60"
+            >
+              {actionLabel}
+            </button>
+            {!actionEnabled && actionDisabledReason ? (
+              <p className="mt-1 text-[12px] text-[var(--text-secondary)]">
+                {actionDisabledReason}
+              </p>
+            ) : null}
+          </div>
         )}
       </div>
       {children}
