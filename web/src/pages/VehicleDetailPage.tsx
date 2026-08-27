@@ -18,6 +18,7 @@ import {
   type Vehicle,
   type VehicleStatusHistoryEntry,
 } from '../lib/api';
+import { apiErrorMessage } from '../lib/apiErrors';
 import { useAuth } from '../auth/AuthProvider';
 import { Perm } from '../auth/permissions';
 
@@ -140,7 +141,7 @@ export default function VehicleDetailPage() {
         setBlockingModal(err.body.blocking_item_ids ?? []);
         setError(err.message);
       } else {
-        setError(err instanceof Error ? err.message : 'Status update failed');
+        setError(err instanceof Error ? apiErrorMessage(err) : 'Durum güncellenemedi');
       }
     } finally {
       setBusy(false);

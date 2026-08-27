@@ -6,6 +6,7 @@ import {
   type ChecklistTemplate,
   type ChecklistTemplateItem,
 } from '../lib/api';
+import { apiErrorMessage } from '../lib/apiErrors';
 import { ActiveBadge } from '../components/ActiveBadge';
 import { StatusBadge } from '../components/StatusBadge';
 import {
@@ -63,7 +64,7 @@ export default function TemplatesPage() {
     try {
       await loadTemplates();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'failed to load templates');
+      setError(err instanceof Error ? apiErrorMessage(err) : 'Şablonlar yüklenemedi');
     } finally {
       setLoading(false);
     }
@@ -94,7 +95,7 @@ export default function TemplatesPage() {
       setNewText('');
       setNewPhase('BRANCH');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'failed to load template items');
+      setError(err instanceof Error ? apiErrorMessage(err) : 'Şablon maddeleri yüklenemedi');
     }
   }
 
@@ -123,7 +124,7 @@ export default function TemplatesPage() {
       setNewText('');
       await refreshSelected(selected.ID);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'add failed');
+      setError(err instanceof ApiError ? apiErrorMessage(err) : 'Madde eklenemedi');
     } finally {
       setBusy(false);
     }
@@ -144,7 +145,7 @@ export default function TemplatesPage() {
       await api.updateChecklistTemplateItem(selected.ID, item.ID, body);
       await refreshSelected(selected.ID);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'save failed');
+      setError(err instanceof ApiError ? apiErrorMessage(err) : 'Kayıt başarısız');
     } finally {
       setBusy(false);
     }
@@ -160,7 +161,7 @@ export default function TemplatesPage() {
       });
       await refreshSelected(selected.ID);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'update failed');
+      setError(err instanceof ApiError ? apiErrorMessage(err) : 'Güncelleme başarısız');
     } finally {
       setBusy(false);
     }
@@ -174,7 +175,7 @@ export default function TemplatesPage() {
       await api.deleteChecklistTemplateItem(selected.ID, item.ID);
       await refreshSelected(selected.ID);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'delete failed');
+      setError(err instanceof ApiError ? apiErrorMessage(err) : 'Silinemedi');
     } finally {
       setBusy(false);
     }
@@ -201,7 +202,7 @@ export default function TemplatesPage() {
       const row = list.find((t) => t.ID === selected.ID);
       if (row) setSelected(row);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'reorder failed');
+      setError(err instanceof ApiError ? apiErrorMessage(err) : 'Sıralama kaydedilemedi');
     } finally {
       setBusy(false);
     }

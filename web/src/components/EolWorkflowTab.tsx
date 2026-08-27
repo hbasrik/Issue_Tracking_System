@@ -7,6 +7,7 @@ import {
   type EOLStage,
   type EOLWorkflowView,
 } from '../lib/api';
+import { apiErrorMessage } from '../lib/apiErrors';
 import { useAuth } from '../auth/AuthProvider';
 import { Perm } from '../auth/permissions';
 import { ChecklistPanel } from './ChecklistPanel';
@@ -65,7 +66,7 @@ export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
       await load();
       onVehicleChanged();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'EoL reset failed');
+      setError(err instanceof Error ? apiErrorMessage(err) : 'EoL sıfırlanamadı');
     } finally {
       setBusy(false);
     }
@@ -90,7 +91,7 @@ export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
         );
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'failed to load EoL workflow');
+      setError(err instanceof Error ? apiErrorMessage(err) : 'EoL iş akışı yüklenemedi');
     }
   }, [vin]);
 
@@ -115,7 +116,7 @@ export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
       await load();
       onVehicleChanged();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'branch ship failed');
+      setError(err instanceof Error ? apiErrorMessage(err) : 'Şube sevkiyatı kaydedilemedi');
     } finally {
       setBusy(false);
     }
@@ -135,7 +136,7 @@ export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
         setBlocking(err.body.blocking_issues ?? []);
         setError(err.message);
       } else {
-        setError(err instanceof Error ? err.message : 'depot release failed');
+        setError(err instanceof Error ? apiErrorMessage(err) : 'Depo çıkışı kaydedilemedi');
       }
     } finally {
       setBusy(false);

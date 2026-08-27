@@ -5,6 +5,7 @@ import {
   type ChecklistItem,
   type ChecklistType,
 } from '../lib/api';
+import { apiErrorMessage } from '../lib/apiErrors';
 import { StatusBadge } from './StatusBadge';
 import { ActionStamp } from './ActionStamp';
 import { checklistActorLines } from '../lib/actionStamp';
@@ -99,7 +100,7 @@ export function ChecklistPanel({
       const res = await api.getVehicleChecklist(vin, type);
       setLoaded(res.items ?? []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'failed to load checklist');
+      setError(err instanceof Error ? apiErrorMessage(err) : 'Kontrol listesi yüklenemedi');
       setLoaded([]);
     }
   }, [vin, type, onReload]);
@@ -214,7 +215,7 @@ function EolItemRow({
 
   async function save() {
     if (!status) {
-      setError('Select OK, NOT_OK, REWORK, or CONDITIONAL_OK');
+      setError('OK, NOT_OK, REWORK veya CONDITIONAL_OK seçin');
       return;
     }
     setBusy(true);
@@ -234,10 +235,10 @@ function EolItemRow({
     } catch (err) {
       const message =
         err instanceof ApiError
-          ? err.message
+          ? apiErrorMessage(err)
           : err instanceof Error
-            ? err.message
-            : 'save failed';
+            ? apiErrorMessage(err)
+            : 'Kayıt başarısız';
       setError(message);
     } finally {
       setBusy(false);
@@ -353,10 +354,10 @@ function YesNoItemRow({
       setYes(previous);
       const message =
         err instanceof ApiError
-          ? err.message
+          ? apiErrorMessage(err)
           : err instanceof Error
-            ? err.message
-            : 'save failed';
+            ? apiErrorMessage(err)
+            : 'Kayıt başarısız';
       setError(message);
     } finally {
       setBusy(false);
