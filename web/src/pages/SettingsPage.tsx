@@ -1,8 +1,11 @@
+import { useState } from 'react';
 import { useTheme } from '../theme/ThemeProvider';
+import { ChangePasswordForm } from '../components/ChangePasswordForm';
 
-/** Settings — dark/light toggle + preferences shell (§2.1). */
+/** Settings — dark/light toggle + own password. */
 export default function SettingsPage() {
   const { mode, setMode, toggle } = useTheme();
+  const [passwordSaved, setPasswordSaved] = useState(false);
 
   return (
     <section>
@@ -77,6 +80,29 @@ export default function SettingsPage() {
           </label>
         </div>
       </div>
+
+      <div
+        className="mt-6 max-w-lg space-y-4 rounded-xl border bg-[var(--bg-surface-1)] p-5"
+        style={{ borderColor: 'var(--border)' }}
+      >
+        <div>
+          <h2 className="text-[15px] font-medium">Şifre</h2>
+          <p className="mt-1 text-[13px] text-[var(--text-secondary)]">
+            Kendi şifrenizi değiştirin. Yönetici sıfırlaması bu sayfadan
+            yapılmaz.
+          </p>
+        </div>
+        {passwordSaved && (
+          <p className="text-[13px]" style={{ color: 'var(--status-ok)' }}>
+            Şifre güncellendi.
+          </p>
+        )}
+        <ChangePasswordForm
+          onSuccess={() => setPasswordSaved(true)}
+          submitLabel="Şifreyi kaydet"
+        />
+      </div>
     </section>
   );
 }
+

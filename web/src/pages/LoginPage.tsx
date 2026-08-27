@@ -5,12 +5,15 @@ import { Perm } from '../auth/permissions';
 import { ApiError } from '../lib/api';
 
 export default function LoginPage() {
-  const { login, isAuthenticated, has } = useAuth();
+  const { login, isAuthenticated, has, user } = useAuth();
   const [email, setEmail] = useState('manager@karea.local');
   const [password, setPassword] = useState('changeme123');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
+  if (isAuthenticated && user?.MustChangePassword) {
+    return <Navigate to="/change-password" replace />;
+  }
   if (isAuthenticated && has(Perm.WebAccess)) {
     return <Navigate to="/" replace />;
   }

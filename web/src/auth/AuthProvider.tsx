@@ -17,6 +17,7 @@ interface AuthContextValue {
   has: (code: string) => boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
+  markPasswordChanged: () => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -44,6 +45,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setPermissions([]);
   }, []);
 
+  const markPasswordChanged = useCallback(() => {
+    setUser((current) =>
+      current ? { ...current, MustChangePassword: false } : null,
+    );
+  }, []);
+
   const has = useCallback(
     (code: string) => permissions.includes(code),
     [permissions],
@@ -58,8 +65,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       has,
       login,
       logout,
+      markPasswordChanged,
     }),
-    [user, token, permissions, has, login, logout],
+    [user, token, permissions, has, login, logout, markPasswordChanged],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

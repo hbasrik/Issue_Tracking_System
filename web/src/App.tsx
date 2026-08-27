@@ -3,6 +3,7 @@ import { RequirePermission, RequireWebAccess } from './auth/RequirePermission';
 import { Perm } from './auth/permissions';
 import { AppShell } from './components/AppShell';
 import AnalysisPage from './pages/AnalysisPage';
+import ChangePasswordPage from './pages/ChangePasswordPage';
 import HomePage from './pages/HomePage';
 import IssuesPage from './pages/IssuesPage';
 import LoginPage from './pages/LoginPage';
@@ -18,6 +19,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/change-password" element={<ChangePasswordPage />} />
       <Route path="/not-authorized" element={<NotAuthorizedPage />} />
 
       <Route element={<RequireWebAccess />}>
