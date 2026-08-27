@@ -75,6 +75,10 @@ func (f *loginUserRepo) UpdatePassword(_ context.Context, id int, hash string, m
 	return domain.ErrNotFound
 }
 
+func (f *loginUserRepo) CountReferences(context.Context, int) (int, error) { return 0, nil }
+
+func (f *loginUserRepo) Delete(context.Context, int) error { return nil }
+
 func hashPassword(t *testing.T, password string) string {
 	t.Helper()
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)

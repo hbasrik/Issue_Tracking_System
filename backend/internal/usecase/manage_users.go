@@ -202,6 +202,44 @@ func (a *UserAdmin) ResetPassword(ctx context.Context, actorID, targetID int) (s
 	return plain, nil
 }
 
+// Delete hard-deletes a user who has never been referenced. Last-admin and
+// self-delete follow the same order as Update so the last manage_users
+// holder cannot remove themselves (409) and a peer cannot remove their own
+// row (403). Referenced accounts return UserInUseError (409).
+func (a *UserAdmin) Delete(ctx context.Context, actorID, targetID int) error {
+	target, err := a.users.GetByID(ctx, targetID)
+	if err != nil {
+		return err
+	}
+
+	wasHolder, err := isUserAdminHolder(ctx, a.roles, target.IsActive, target.Role)
+	if err != nil {
+		return err
+	}
+	if wasHolder {
+		n, err := a.users.CountActiveUsersWithPermission(ctx, domain.PermissionAdminManageUsers)
+		if err != nil {
+			return err
+		}
+		if n <= 1 {
+			return domain.ErrLastActiveManager
+		}
+	}
+
+	if actorID == targetID {
+		return domain.ErrCannotDeleteSelf
+	}
+
+	refs, err := a.users.CountReferences(ctx, targetID)
+	if err != nil {
+		return err
+	}
+	if refs > 0 {
+		return &domain.UserInUseError{ReferenceCount: refs}
+	}
+	return a.users.Delete(ctx, targetID)
+}
+
 func isUserAdminHolder(ctx context.Context, roles repository.RoleRepository, active bool, role domain.Role) (bool, error) {
 	if !active || !role.IsActive {
 		return false, nil

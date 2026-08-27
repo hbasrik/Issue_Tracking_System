@@ -155,10 +155,68 @@ func (r *UserRepo) UpdatePassword(ctx context.Context, id int, passwordHash stri
 	return nil
 }
 
+// CountReferences sums every FK that points at this user. The same issue row
+// can contribute more than once when the user both reported and approved it.
+func (r *UserRepo) CountReferences(ctx context.Context, id int) (int, error) {
+	var n int
+	err := r.pool.QueryRow(ctx, `
+		SELECT COALESCE(SUM(n), 0) FROM (
+			SELECT COUNT(*) AS n FROM issue_list WHERE issue_reporter_id = $1
+			UNION ALL
+			SELECT COUNT(*) FROM issue_list WHERE process_reporter_id = $1
+			UNION ALL
+			SELECT COUNT(*) FROM issue_list WHERE finish_reporter_id = $1
+			UNION ALL
+			SELECT COUNT(*) FROM issue_list WHERE approve_reporter_id = $1
+			UNION ALL
+			SELECT COUNT(*) FROM issue_list WHERE conditional_approve_reporter_id = $1
+			UNION ALL
+			SELECT COUNT(*) FROM vehicle_station_step_progress WHERE checked_by = $1
+			UNION ALL
+			SELECT COUNT(*) FROM checklist_item_progress WHERE checker_id = $1
+			UNION ALL
+			SELECT COUNT(*) FROM checklist_item_progress WHERE rejected_by = $1
+			UNION ALL
+			SELECT COUNT(*) FROM checklist_item_progress WHERE approved_by = $1
+			UNION ALL
+			SELECT COUNT(*) FROM vehicle_eol_workflow WHERE branch_shipped_by = $1
+			UNION ALL
+			SELECT COUNT(*) FROM vehicle_eol_workflow WHERE depot_released_by = $1
+			UNION ALL
+			SELECT COUNT(*) FROM vehicle_eol_workflow WHERE document_approved_by = $1
+			UNION ALL
+			SELECT COUNT(*) FROM audit_logs WHERE performed_by = $1
+			UNION ALL
+			SELECT COUNT(*) FROM media_attachments WHERE uploaded_by = $1
+		) s`, id).Scan(&n)
+	return n, err
+}
+
+// Delete removes the users row. A leftover FK is mapped to UserInUseError so
+// a missed reference table cannot surface as a 500.
+func (r *UserRepo) Delete(ctx context.Context, id int) error {
+	tag, err := r.pool.Exec(ctx, `DELETE FROM users WHERE id = $1`, id)
+	if err != nil {
+		return mapUserDelete(err)
+	}
+	if tag.RowsAffected() == 0 {
+		return domain.ErrNotFound
+	}
+	return nil
+}
+
 func mapUniqueEmail(err error) error {
 	var pgErr *pgconn.PgError
 	if errors.As(err, &pgErr) && pgErr.Code == "23505" {
 		return domain.ErrEmailTaken
+	}
+	return err
+}
+
+func mapUserDelete(err error) error {
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) && pgErr.Code == "23503" {
+		return &domain.UserInUseError{}
 	}
 	return err
 }

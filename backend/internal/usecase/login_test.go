@@ -69,6 +69,10 @@ func (f *fakeUserRepo) UpdatePassword(_ context.Context, id int, hash string, mu
 	return domain.ErrNotFound
 }
 
+func (f *fakeUserRepo) CountReferences(context.Context, int) (int, error) { return 0, nil }
+
+func (f *fakeUserRepo) Delete(context.Context, int) error { return nil }
+
 func mustHash(t *testing.T, password string) string {
 	t.Helper()
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)

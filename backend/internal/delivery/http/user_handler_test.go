@@ -27,6 +27,7 @@ var (
 
 type httpAdminUserRepo struct {
 	users map[int]*domain.User
+	refs  map[int]int
 }
 
 func (r *httpAdminUserRepo) GetByEmail(_ context.Context, email string) (*domain.User, error) {
@@ -130,6 +131,21 @@ func (r *httpAdminUserRepo) UpdatePassword(_ context.Context, id int, hash strin
 	return nil
 }
 
+func (r *httpAdminUserRepo) CountReferences(_ context.Context, id int) (int, error) {
+	if r.refs == nil {
+		return 0, nil
+	}
+	return r.refs[id], nil
+}
+
+func (r *httpAdminUserRepo) Delete(_ context.Context, id int) error {
+	if _, ok := r.users[id]; !ok {
+		return domain.ErrNotFound
+	}
+	delete(r.users, id)
+	return nil
+}
+
 func httpUser(id int, role domain.Role) *domain.User {
 	return &domain.User{
 		ID:       id,
@@ -141,10 +157,18 @@ func httpUser(id int, role domain.Role) *domain.User {
 }
 
 func usersRouter(users map[int]*domain.User) http.Handler {
-	return usersRouterWithDomains(users, nil)
+	return usersRouterFull(users, nil, nil)
 }
 
 func usersRouterWithDomains(users map[int]*domain.User, domains []string) http.Handler {
+	return usersRouterFull(users, domains, nil)
+}
+
+func usersRouterWithRefs(users map[int]*domain.User, refs map[int]int) http.Handler {
+	return usersRouterFull(users, nil, refs)
+}
+
+func usersRouterFull(users map[int]*domain.User, domains []string, refs map[int]int) http.Handler {
 	roles := newFakeRoleRepo()
 	copied := make(map[int]*domain.User, len(users))
 	for id, u := range users {
@@ -155,7 +179,7 @@ func usersRouterWithDomains(users map[int]*domain.User, domains []string) http.H
 	return apphttp.NewRouter(apphttp.Deps{
 		Issuer: issuer,
 		Roles:  roles,
-		Users:  usecase.NewUserAdmin(&httpAdminUserRepo{users: copied}, roles, domains),
+		Users:  usecase.NewUserAdmin(&httpAdminUserRepo{users: copied, refs: refs}, roles, domains),
 	})
 }
 
@@ -426,5 +450,96 @@ func TestUserList_IncludesAllowedEmailDomains(t *testing.T) {
 	}
 	if len(body.Allowed) != 1 || body.Allowed[0] != "karea.local" {
 		t.Fatalf("allowed = %#v", body.Allowed)
+	}
+}
+
+func deleteUser(router http.Handler, token string, id int) *httptest.ResponseRecorder {
+	req := httptest.NewRequest(http.MethodDelete, "/api/v1/users/"+strconv.Itoa(id), nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+	return rec
+}
+
+func TestUserDelete_Unused_NoContent(t *testing.T) {
+	router := usersRouter(map[int]*domain.User{
+		1: httpUser(1, httpManagerRole),
+		2: httpUser(2, httpOperatorRole),
+	})
+	rec := deleteUser(router, managerToken(t, router), 2)
+	if rec.Code != http.StatusNoContent {
+		t.Fatalf("status = %d body %s", rec.Code, rec.Body.String())
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/users", nil)
+	req.Header.Set("Authorization", "Bearer "+managerToken(t, router))
+	list := httptest.NewRecorder()
+	router.ServeHTTP(list, req)
+	if list.Code != http.StatusOK {
+		t.Fatalf("list status = %d body %s", list.Code, list.Body.String())
+	}
+	if bytes.Contains(list.Body.Bytes(), []byte(`"ID":2`)) {
+		t.Fatalf("deleted user still listed: %s", list.Body.String())
+	}
+}
+
+func TestUserDelete_InUse_Conflict(t *testing.T) {
+	router := usersRouterWithRefs(map[int]*domain.User{
+		1: httpUser(1, httpManagerRole),
+		2: httpUser(2, httpOperatorRole),
+	}, map[int]int{2: 12})
+	rec := deleteUser(router, managerToken(t, router), 2)
+	if rec.Code != http.StatusConflict {
+		t.Fatalf("status = %d body %s", rec.Code, rec.Body.String())
+	}
+	if !bytes.Contains(rec.Body.Bytes(), []byte("12 kayıtta")) {
+		t.Fatalf("body should include reference count: %s", rec.Body.String())
+	}
+	if !bytes.Contains(rec.Body.Bytes(), []byte("pasife çekebilirsiniz")) {
+		t.Fatalf("body should suggest deactivate: %s", rec.Body.String())
+	}
+}
+
+func TestUserDelete_Self_Forbidden(t *testing.T) {
+	router := usersRouter(map[int]*domain.User{
+		1: httpUser(1, httpManagerRole),
+		2: httpUser(2, httpManagerRole),
+	})
+	rec := deleteUser(router, managerToken(t, router), 1)
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("status = %d body %s", rec.Code, rec.Body.String())
+	}
+	if !bytes.Contains(rec.Body.Bytes(), []byte("you cannot delete your own account")) {
+		t.Fatalf("body = %s", rec.Body.String())
+	}
+}
+
+func TestUserDelete_LastAdmin_Conflict(t *testing.T) {
+	router := usersRouter(map[int]*domain.User{
+		1: httpUser(1, httpManagerRole),
+		2: httpUser(2, httpOperatorRole),
+	})
+	rec := deleteUser(router, managerToken(t, router), 1)
+	if rec.Code != http.StatusConflict {
+		t.Fatalf("status = %d body %s", rec.Code, rec.Body.String())
+	}
+	if !bytes.Contains(rec.Body.Bytes(), []byte(domain.ErrLastActiveManager.Error())) {
+		t.Fatalf("body = %s", rec.Body.String())
+	}
+}
+
+func TestUserDelete_OperatorForbidden(t *testing.T) {
+	router := usersRouter(map[int]*domain.User{
+		1: httpUser(1, httpManagerRole),
+		2: httpUser(2, httpOperatorRole),
+	})
+	issuer := auth.NewIssuer("test-secret", time.Hour)
+	token, err := issuer.Issue(operatorUserID, domain.RoleCodeOperator)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rec := deleteUser(router, token, 2)
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("status = %d body %s", rec.Code, rec.Body.String())
 	}
 }

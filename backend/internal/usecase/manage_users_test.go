@@ -23,6 +23,7 @@ var (
 
 type adminUserRepo struct {
 	users map[int]*domain.User
+	refs  map[int]int
 }
 
 func (r *adminUserRepo) GetByEmail(_ context.Context, email string) (*domain.User, error) {
@@ -129,6 +130,21 @@ func (r *adminUserRepo) UpdatePassword(_ context.Context, id int, hash string, m
 	return nil
 }
 
+func (r *adminUserRepo) CountReferences(_ context.Context, id int) (int, error) {
+	if r.refs == nil {
+		return 0, nil
+	}
+	return r.refs[id], nil
+}
+
+func (r *adminUserRepo) Delete(_ context.Context, id int) error {
+	if _, ok := r.users[id]; !ok {
+		return domain.ErrNotFound
+	}
+	delete(r.users, id)
+	return nil
+}
+
 type adminRoleRepo struct{}
 
 func (adminRoleRepo) GetPermissionsForUser(context.Context, int) ([]domain.Permission, error) {
@@ -209,6 +225,15 @@ func newAdmin(users ...*domain.User) *usecase.UserAdmin {
 		byID[u.ID] = &copied
 	}
 	return usecase.NewUserAdmin(&adminUserRepo{users: byID}, adminRoleRepo{}, nil)
+}
+
+func newAdminWithRefs(refs map[int]int, users ...*domain.User) *usecase.UserAdmin {
+	byID := make(map[int]*domain.User, len(users))
+	for _, u := range users {
+		copied := *u
+		byID[u.ID] = &copied
+	}
+	return usecase.NewUserAdmin(&adminUserRepo{users: byID, refs: refs}, adminRoleRepo{}, nil)
 }
 
 func TestUserAdmin_LastManagerCannotDemoteSelf(t *testing.T) {
@@ -435,5 +460,64 @@ func TestUserAdmin_CreateAllowsAnyDomainWhenAllowlistEmpty(t *testing.T) {
 	}
 	if created.User.Email != "anyone@gmail.com" {
 		t.Errorf("email = %q", created.User.Email)
+	}
+}
+
+func TestUserAdmin_DeleteUnusedOperator(t *testing.T) {
+	admin := newAdmin(user(1, managerRole, true), user(2, operatorRole, true))
+	if err := admin.Delete(context.Background(), 1, 2); err != nil {
+		t.Fatalf("Delete: %v", err)
+	}
+	if _, err := admin.List(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	got, err := admin.List(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 1 || got[0].ID != 1 {
+		t.Fatalf("remaining = %+v", got)
+	}
+}
+
+func TestUserAdmin_DeleteRejectsReferenced(t *testing.T) {
+	admin := newAdminWithRefs(
+		map[int]int{2: 7},
+		user(1, managerRole, true),
+		user(2, operatorRole, true),
+	)
+	err := admin.Delete(context.Background(), 1, 2)
+	var inUse *domain.UserInUseError
+	if !errors.As(err, &inUse) {
+		t.Fatalf("err = %v, want UserInUseError", err)
+	}
+	if inUse.ReferenceCount != 7 {
+		t.Fatalf("count = %d", inUse.ReferenceCount)
+	}
+	if err.Error() != "bu kullanıcı 7 kayıtta kullanılmış, silinemez — pasife çekebilirsiniz" {
+		t.Fatalf("message = %q", err.Error())
+	}
+}
+
+func TestUserAdmin_DeleteRejectsSelfWhenPeerRemains(t *testing.T) {
+	admin := newAdmin(user(1, managerRole, true), user(2, managerRole, true))
+	err := admin.Delete(context.Background(), 1, 1)
+	if !errors.Is(err, domain.ErrCannotDeleteSelf) {
+		t.Fatalf("err = %v, want ErrCannotDeleteSelf", err)
+	}
+}
+
+func TestUserAdmin_DeleteRejectsLastManager(t *testing.T) {
+	admin := newAdmin(user(1, managerRole, true), user(2, operatorRole, true))
+	err := admin.Delete(context.Background(), 1, 1)
+	if !errors.Is(err, domain.ErrLastActiveManager) {
+		t.Fatalf("err = %v, want ErrLastActiveManager", err)
+	}
+}
+
+func TestUserAdmin_DeleteUnusedPeerManager(t *testing.T) {
+	admin := newAdmin(user(1, managerRole, true), user(2, managerRole, true))
+	if err := admin.Delete(context.Background(), 1, 2); err != nil {
+		t.Fatalf("Delete peer manager: %v", err)
 	}
 }

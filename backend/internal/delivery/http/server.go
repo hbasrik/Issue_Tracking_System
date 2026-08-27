@@ -185,6 +185,7 @@ func NewRouter(deps Deps) http.Handler {
 				r.Get("/users", s.handleUserList)
 				r.Post("/users", s.handleUserCreate)
 				r.Patch("/users/{id}", s.handleUserUpdate)
+				r.Delete("/users/{id}", s.handleUserDelete)
 				r.Post("/users/{id}/reset-password", s.handleUserResetPassword)
 				r.Get("/rbac", s.handleRBACMatrix)
 				r.Post("/roles", s.handleRoleCreate)

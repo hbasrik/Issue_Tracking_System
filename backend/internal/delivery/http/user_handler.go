@@ -117,3 +117,23 @@ func (s *server) handleUserResetPassword(w http.ResponseWriter, r *http.Request)
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"temporary_password": plain})
 }
+
+// handleUserDelete hard-deletes an unused user. Referenced accounts, self,
+// and the last admin.manage_users holder are rejected in the usecase.
+func (s *server) handleUserDelete(w http.ResponseWriter, r *http.Request) {
+	if s.deps.Users == nil {
+		writeError(w, domain.ErrNotFound)
+		return
+	}
+	id, err := strconv.Atoi(chi.URLParam(r, "id"))
+	if err != nil || id < 1 {
+		badRequest(w, "id must be a positive integer")
+		return
+	}
+	claims, _ := ClaimsFromContext(r.Context())
+	if err := s.deps.Users.Delete(r.Context(), claims.UserID, id); err != nil {
+		writeError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusNoContent, nil)
+}

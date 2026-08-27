@@ -164,6 +164,26 @@ func TestWriteErrorTemplateItemInUse(t *testing.T) {
 	}
 }
 
+func TestWriteErrorUserInUse(t *testing.T) {
+	rec := httptest.NewRecorder()
+	writeError(rec, &domain.UserInUseError{ReferenceCount: 3})
+
+	if rec.Code != http.StatusConflict {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusConflict)
+	}
+
+	var body struct {
+		Error string `json:"error"`
+	}
+	if err := json.NewDecoder(rec.Body).Decode(&body); err != nil {
+		t.Fatalf("decode body: %v", err)
+	}
+	want := "bu kullanıcı 3 kayıtta kullanılmış, silinemez — pasife çekebilirsiniz"
+	if body.Error != want {
+		t.Errorf("error = %q, want %q", body.Error, want)
+	}
+}
+
 func TestWriteErrorUnsupportedImageFormat(t *testing.T) {
 	rec := httptest.NewRecorder()
 	writeError(rec, domain.ErrUnsupportedImageFormat)

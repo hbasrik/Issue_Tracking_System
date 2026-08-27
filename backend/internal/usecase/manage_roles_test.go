@@ -159,6 +159,10 @@ func (matrixUserRepo) UpdatePassword(context.Context, int, string, bool) error {
 	return nil
 }
 
+func (matrixUserRepo) CountReferences(context.Context, int) (int, error) { return 0, nil }
+
+func (matrixUserRepo) Delete(context.Context, int) error { return nil }
+
 func TestRoleAdmin_CannotStripLastUserAdminGrant(t *testing.T) {
 	roles := newMatrixRoleRepo()
 	admin := usecase.NewRoleAdmin(roles, matrixUserRepo{holders: map[int]int{2: 1}})

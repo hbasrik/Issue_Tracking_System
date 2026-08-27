@@ -101,6 +101,8 @@ var (
 	// ErrCannotResetOwnPassword indicates an admin tried the reset-password
 	// action on their own account; they must use the change-password flow.
 	ErrCannotResetOwnPassword = errors.New("you cannot reset your own password this way")
+	// ErrCannotDeleteSelf indicates an admin tried to DELETE their own row.
+	ErrCannotDeleteSelf = errors.New("you cannot delete your own account")
 )
 
 // DatabaseRejectedError wraps a PostgreSQL RAISE EXCEPTION (SQLSTATE P0001)
@@ -180,4 +182,21 @@ func (e *TemplateItemInUseError) Error() string {
 		n = e.VehicleCount
 	}
 	return fmt.Sprintf("bu madde %d araçta kullanılmış, silinemez — pasife çekebilirsiniz", n)
+}
+
+// UserInUseError is returned when DELETE is attempted on a user who still
+// appears on shop-floor, workflow, audit, or media rows. Deactivate instead.
+type UserInUseError struct {
+	ReferenceCount int
+}
+
+func (e *UserInUseError) Error() string {
+	n := 0
+	if e != nil {
+		n = e.ReferenceCount
+	}
+	if n <= 0 {
+		return "bu kullanıcı kayıtlarda kullanılmış, silinemez — pasife çekebilirsiniz"
+	}
+	return fmt.Sprintf("bu kullanıcı %d kayıtta kullanılmış, silinemez — pasife çekebilirsiniz", n)
 }

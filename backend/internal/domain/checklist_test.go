@@ -48,3 +48,15 @@ func TestTemplateItemInUseError(t *testing.T) {
 		t.Fatalf("error = %q, want %q", err.Error(), want)
 	}
 }
+
+func TestUserInUseError(t *testing.T) {
+	err := &UserInUseError{ReferenceCount: 9}
+	want := "bu kullanıcı 9 kayıtta kullanılmış, silinemez — pasife çekebilirsiniz"
+	if err.Error() != want {
+		t.Fatalf("error = %q, want %q", err.Error(), want)
+	}
+	empty := &UserInUseError{}
+	if empty.Error() != "bu kullanıcı kayıtlarda kullanılmış, silinemez — pasife çekebilirsiniz" {
+		t.Fatalf("empty = %q", empty.Error())
+	}
+}

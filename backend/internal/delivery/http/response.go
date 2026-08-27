@@ -40,6 +40,7 @@ func writeError(w http.ResponseWriter, err error) {
 	var rejected *domain.DatabaseRejectedError
 	var itemInUse *domain.TemplateItemInUseError
 	var emailDomain *domain.EmailDomainNotAllowedError
+	var userInUse *domain.UserInUseError
 	switch {
 	case errors.As(err, &gate):
 		writeJSON(w, http.StatusConflict, errorResponse{
@@ -55,6 +56,8 @@ func writeError(w http.ResponseWriter, err error) {
 		writeJSON(w, http.StatusConflict, errorResponse{Error: rejected.Error()})
 	case errors.As(err, &itemInUse):
 		writeJSON(w, http.StatusConflict, errorResponse{Error: itemInUse.Error()})
+	case errors.As(err, &userInUse):
+		writeJSON(w, http.StatusConflict, errorResponse{Error: userInUse.Error()})
 	case errors.As(err, &emailDomain):
 		writeJSON(w, http.StatusBadRequest, errorResponse{Error: emailDomain.Error()})
 	case errors.Is(err, domain.ErrDepotChecklistLocked),
@@ -72,6 +75,7 @@ func writeError(w http.ResponseWriter, err error) {
 		errors.Is(err, domain.ErrCannotChangeOwnRole),
 		errors.Is(err, domain.ErrCannotDeactivateSelf),
 		errors.Is(err, domain.ErrCannotResetOwnPassword),
+		errors.Is(err, domain.ErrCannotDeleteSelf),
 		errors.Is(err, domain.ErrMustChangePassword),
 		errors.Is(err, domain.ErrForbidden),
 		errors.Is(err, auth.ErrForbidden):
