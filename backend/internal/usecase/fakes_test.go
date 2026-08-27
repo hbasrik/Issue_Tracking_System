@@ -582,7 +582,7 @@ func (f *fakeEOLWorkflowRepo) MarkDepotReleased(_ context.Context, vin string, a
 	now := time.Now()
 	w.DepotReleasedAt = &now
 	w.DepotReleasedBy = &actorID
-	w.CurrentStage = domain.EOLStageDocument
+	w.CurrentStage = domain.EOLStageCompleted
 	return nil
 }
 

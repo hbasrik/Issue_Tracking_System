@@ -7,8 +7,10 @@ import (
 	"github.com/karea/backend/internal/repository"
 )
 
-// EOLDocumentApprover performs stage 3 of the EOL workflow (Karar 2): the
-// final document sign-off that completes the workflow and ships the vehicle.
+// EOLDocumentApprover is the unused leftover of the old document stage.
+// The live flow completes and ships at depot release. This usecase still
+// writes document_approved_* (columns retained for a possible re-enable)
+// but it does not move the vehicle to SHIPPED.
 type EOLDocumentApprover struct {
 	vehicles repository.VehicleRepository
 	workflow repository.EOLWorkflowRepository
@@ -31,11 +33,12 @@ type DocumentApproveOutput struct {
 	VehicleStatus domain.VehicleStatus    `json:"vehicle_status"`
 }
 
-// Approve records the document sign-off and moves the vehicle to SHIPPED.
-// The depot-release hard block already guaranteed there are no open issues, so
-// this stage has no gate of its own.
+// Approve records the unused document columns if the depot has already
+// released. It does not change vehicle status; SHIPPED is written by depot
+// release.
 func (s *EOLDocumentApprover) Approve(ctx context.Context, vin string, actorID int) (*DocumentApproveOutput, error) {
-	if _, err := s.vehicles.GetByVIN(ctx, vin); err != nil {
+	vehicle, err := s.vehicles.GetByVIN(ctx, vin)
+	if err != nil {
 		return nil, err
 	}
 
@@ -47,20 +50,14 @@ func (s *EOLDocumentApprover) Approve(ctx context.Context, vin string, actorID i
 		return nil, domain.ErrInvalidStatusTransition
 	}
 
-	err = s.uow.WithinTx(ctx, func(txCtx context.Context) error {
-		if err := s.workflow.MarkDocumentApproved(txCtx, vin, actorID); err != nil {
-			return err
-		}
-		return s.vehicles.UpdateStatus(txCtx, vin, domain.VehicleStatusShipped)
-	})
-	if err != nil {
+	if err := s.workflow.MarkDocumentApproved(ctx, vin, actorID); err != nil {
 		return nil, err
 	}
 
 	return &DocumentApproveOutput{
 		VIN:           vin,
 		CurrentStage:  domain.EOLStageCompleted,
-		VehicleStatus: domain.VehicleStatusShipped,
+		VehicleStatus: vehicle.CurrentGlobalStatus,
 	}, nil
 }
 

@@ -96,13 +96,14 @@ func (r *EOLWorkflowRepo) MarkBranchShipped(ctx context.Context, vin string, act
 		vin, actorID, openIssueCount)
 }
 
-// MarkDepotReleased records the depot release. fn_enforce_depot_release raises
-// if any issue is still open, so a caller that skipped the gate check still
-// cannot get past this write.
+// MarkDepotReleased records the depot release and completes the workflow.
+// fn_enforce_depot_release raises if the branch has not shipped or any issue
+// is still open, so a caller that skipped the gate check still cannot get
+// past this write.
 func (r *EOLWorkflowRepo) MarkDepotReleased(ctx context.Context, vin string, actorID int) error {
 	return r.mark(ctx,
 		`UPDATE vehicle_eol_workflow
-		 SET depot_released_at = now(), depot_released_by = $2, current_stage = 'DOCUMENT'
+		 SET depot_released_at = now(), depot_released_by = $2, current_stage = 'COMPLETED'
 		 WHERE vin = $1 AND depot_released_at IS NULL`,
 		vin, actorID)
 }
@@ -122,7 +123,8 @@ func (r *EOLWorkflowRepo) ResetToBranch(ctx context.Context, vin string) error {
 		vin)
 }
 
-// MarkDocumentApproved records the final EOL sign-off.
+// MarkDocumentApproved writes the unused document columns. Live flow does
+// not call this; columns stay so the stage can be re-enabled later.
 func (r *EOLWorkflowRepo) MarkDocumentApproved(ctx context.Context, vin string, actorID int) error {
 	return r.mark(ctx,
 		`UPDATE vehicle_eol_workflow
@@ -136,7 +138,7 @@ func (r *EOLWorkflowRepo) MarkDocumentApproved(ctx context.Context, vin string, 
 func (r *EOLWorkflowRepo) mark(ctx context.Context, query string, args ...any) error {
 	tag, err := executor(ctx, r.pool).Exec(ctx, query, args...)
 	if err != nil {
-		return err
+		return mapRaiseException(err)
 	}
 	if tag.RowsAffected() == 0 {
 		return domain.ErrNotFound

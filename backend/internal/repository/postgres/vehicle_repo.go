@@ -88,9 +88,9 @@ func vehicleFilterClause(f domain.VehicleListFilter) (string, []any) {
 		fromN, untilN := len(args)-1, len(args)
 		conds = append(conds, fmt.Sprintf(`EXISTS (
 			SELECT 1 FROM (
-				SELECT vin, document_approved_at AS at
+				SELECT vin, COALESCE(document_approved_at, depot_released_at) AS at
 				FROM vehicle_eol_workflow
-				WHERE document_approved_at IS NOT NULL
+				WHERE document_approved_at IS NOT NULL OR depot_released_at IS NOT NULL
 				UNION ALL
 				SELECT vin, event_at
 				FROM audit_logs

@@ -143,7 +143,7 @@ func TestEOLDepotRelease_BlockedByOpenIssues(t *testing.T) {
 }
 
 // TestEOLDepotRelease_SucceedsWhenNoOpenIssues proves the gate opens once every
-// issue is closed, advancing the workflow to the document stage.
+// issue is closed, completing the workflow and shipping the vehicle.
 func TestEOLDepotRelease_SucceedsWhenNoOpenIssues(t *testing.T) {
 	f := newEOLFixture(t)
 	// An APPROVED issue is closed, so it does not hold the gate shut.
@@ -156,8 +156,11 @@ func TestEOLDepotRelease_SucceedsWhenNoOpenIssues(t *testing.T) {
 	if err != nil {
 		t.Fatalf("depot release with no open issues must succeed, got %v", err)
 	}
-	if out.CurrentStage != domain.EOLStageDocument {
-		t.Errorf("stage = %q, want %q", out.CurrentStage, domain.EOLStageDocument)
+	if out.CurrentStage != domain.EOLStageCompleted {
+		t.Errorf("stage = %q, want %q", out.CurrentStage, domain.EOLStageCompleted)
+	}
+	if out.VehicleStatus != domain.VehicleStatusShipped {
+		t.Errorf("reported status = %q, want %q", out.VehicleStatus, domain.VehicleStatusShipped)
 	}
 
 	workflow, err := f.workflow.Get(context.Background(), eolTestVIN)
@@ -167,14 +170,17 @@ func TestEOLDepotRelease_SucceedsWhenNoOpenIssues(t *testing.T) {
 	if workflow.DepotReleasedAt == nil {
 		t.Error("depot_released_at was not written")
 	}
-	if workflow.CurrentStage != domain.EOLStageDocument {
-		t.Errorf("stored stage = %q, want %q", workflow.CurrentStage, domain.EOLStageDocument)
+	if workflow.CurrentStage != domain.EOLStageCompleted {
+		t.Errorf("stored stage = %q, want %q", workflow.CurrentStage, domain.EOLStageCompleted)
+	}
+	if got := f.vehicles.vehicles[eolTestVIN].CurrentGlobalStatus; got != domain.VehicleStatusShipped {
+		t.Errorf("vehicle status = %q, want %q", got, domain.VehicleStatusShipped)
 	}
 }
 
-// TestEOLDocumentApprove_SetsVehicleShipped proves stage 3 completes the
-// workflow and moves the vehicle to SHIPPED.
-func TestEOLDocumentApprove_SetsVehicleShipped(t *testing.T) {
+// TestEOLDocumentApprove_DoesNotShip proves the leftover document endpoint
+// still writes its columns but is no longer the SHIPPED transition.
+func TestEOLDocumentApprove_DoesNotShip(t *testing.T) {
 	f := newEOLFixture(t)
 	ctx := context.Background()
 	if _, err := f.branchShip.Ship(ctx, eolTestVIN, 7); err != nil {
@@ -191,11 +197,8 @@ func TestEOLDocumentApprove_SetsVehicleShipped(t *testing.T) {
 	if out.CurrentStage != domain.EOLStageCompleted {
 		t.Errorf("stage = %q, want %q", out.CurrentStage, domain.EOLStageCompleted)
 	}
-	if out.VehicleStatus != domain.VehicleStatusShipped {
-		t.Errorf("reported status = %q, want %q", out.VehicleStatus, domain.VehicleStatusShipped)
-	}
 	if got := f.vehicles.vehicles[eolTestVIN].CurrentGlobalStatus; got != domain.VehicleStatusShipped {
-		t.Errorf("vehicle status = %q, want %q", got, domain.VehicleStatusShipped)
+		t.Errorf("vehicle status = %q, want it to stay %q", got, domain.VehicleStatusShipped)
 	}
 
 	workflow, err := f.workflow.Get(ctx, eolTestVIN)

@@ -23,8 +23,8 @@ func (s *server) handleEOLBranchShip(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, out)
 }
 
-// handleEOLDepotRelease performs EOL stage 2. This is the hard-block gate: if
-// any issue is still open the response is 409 listing the blocking issues.
+// handleEOLDepotRelease performs EOL stage 2: hard-block on open issues,
+// then complete the workflow and mark the vehicle SHIPPED.
 func (s *server) handleEOLDepotRelease(w http.ResponseWriter, r *http.Request) {
 	vin := chi.URLParam(r, "vin")
 	claims, _ := ClaimsFromContext(r.Context())
@@ -37,8 +37,8 @@ func (s *server) handleEOLDepotRelease(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, out)
 }
 
-// handleEOLDocumentApprove performs EOL stage 3, completing the workflow and
-// moving the vehicle to SHIPPED.
+// handleEOLDocumentApprove is the unused leftover of the document stage.
+// UI no longer calls it; depot release is what ships the vehicle.
 func (s *server) handleEOLDocumentApprove(w http.ResponseWriter, r *http.Request) {
 	vin := chi.URLParam(r, "vin")
 	claims, _ := ClaimsFromContext(r.Context())

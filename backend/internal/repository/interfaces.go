@@ -163,12 +163,14 @@ type EOLWorkflowRepository interface {
 	// soft-warning snapshot of how many issues were still open, and advances
 	// the workflow to DEPOT.
 	MarkBranchShipped(ctx context.Context, vin string, actorID, openIssueCount int) error
-	// MarkDepotReleased records the depot release and advances the workflow to
-	// DOCUMENT. fn_enforce_depot_release rejects the write if open issues
-	// remain, so this fails even when the caller skipped the gate check.
+	// MarkDepotReleased records the depot release and completes the workflow.
+	// fn_enforce_depot_release rejects the write if the branch has not shipped
+	// or if open issues remain, so this fails even when the caller skipped
+	// the gate check.
 	MarkDepotReleased(ctx context.Context, vin string, actorID int) error
-	// MarkDocumentApproved records the final sign-off and completes the
-	// workflow.
+	// MarkDocumentApproved writes the unused document_approved_* columns.
+	// The live flow does not call this; depot release is what completes
+	// and ships.
 	MarkDocumentApproved(ctx context.Context, vin string, actorID int) error
 	// ResetToBranch clears every stage timestamp and returns the workflow to
 	// BRANCH. Dev-only: the HTTP layer 404s this outside APP_ENV=development.

@@ -2,10 +2,9 @@ package domain
 
 import "time"
 
-// EOLWorkflowStage mirrors the eol_workflow_stage_enum type. Karar 2 replaces
-// v1's single EoL gate with three sequential stages, each with its own
-// transition rule: branch shipment warns on open issues, depot release is a
-// hard block, and document approval is the final sign-off.
+// EOLWorkflowStage mirrors the eol_workflow_stage_enum type. Live flow is
+// BRANCH → DEPOT → COMPLETED. DOCUMENT remains a valid enum value for rows
+// written before the document stage was removed from the product.
 type EOLWorkflowStage string
 
 const (
