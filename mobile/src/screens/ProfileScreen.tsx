@@ -2,6 +2,7 @@ import { Pressable, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthProvider';
 import { Badge, Card, PrimaryButton, Screen, Subtitle, Title } from '../components/ui';
 import { useTheme } from '../theme/ThemeProvider';
+import ChangePasswordScreen from './ChangePasswordScreen';
 
 export default function ProfileScreen() {
   const { user, logout } = useAuth();
@@ -10,7 +11,7 @@ export default function ProfileScreen() {
   return (
     <Screen>
       <Title>Profil</Title>
-      <Subtitle>Rol, tema ve çıkış</Subtitle>
+      <Subtitle>Rol, tema, şifre ve çıkış</Subtitle>
       <Card>
         <Text style={{ color: tokens.textPrimary, fontSize: 18, fontWeight: '600' }}>
           {user?.FullName}
@@ -30,6 +31,7 @@ export default function ProfileScreen() {
           </Pressable>
         </View>
       </Card>
+      <ChangePasswordScreen />
       <View style={{ marginTop: 24 }}>
         <PrimaryButton label="Çıkış" onPress={logout} danger />
       </View>

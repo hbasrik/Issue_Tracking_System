@@ -10,6 +10,7 @@ import { sidebarTokens } from '../theme/tokens';
 
 import LoginScreen from '../screens/LoginScreen';
 import UnauthorizedScreen from '../screens/UnauthorizedScreen';
+import ChangePasswordScreen from '../screens/ChangePasswordScreen';
 import HomeScreen from '../screens/HomeScreen';
 import VehiclesScreen from '../screens/VehiclesScreen';
 import MyIssuesScreen from '../screens/MyIssuesScreen';
@@ -76,7 +77,7 @@ function MainDrawer() {
 }
 
 export function RootNavigator() {
-  const { isAuthenticated, has } = useAuth();
+  const { isAuthenticated, has, user } = useAuth();
   const { mode, tokens } = useTheme();
 
   const navTheme = {
@@ -106,6 +107,13 @@ export function RootNavigator() {
             component={LoginScreen}
             options={{ headerShown: false }}
           />
+        ) : user?.MustChangePassword ? (
+          <Stack.Screen
+            name="ChangePassword"
+            options={{ headerShown: false, gestureEnabled: false }}
+          >
+            {() => <ChangePasswordScreen forced />}
+          </Stack.Screen>
         ) : !has(Perm.MobileAccess) ? (
           <Stack.Screen
             name="Unauthorized"

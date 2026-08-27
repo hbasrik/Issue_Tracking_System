@@ -18,6 +18,7 @@ interface AuthContextValue {
   has: (code: string) => boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
+  markPasswordChanged: () => void;
   activeStationId: number | null;
   setActiveStationId: (id: number | null) => void;
 }
@@ -52,6 +53,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setActiveStationId(null);
   }, []);
 
+  const markPasswordChanged = useCallback(() => {
+    setUser((current) =>
+      current ? { ...current, MustChangePassword: false } : null,
+    );
+  }, []);
+
   const has = useCallback(
     (code: string) => permissions.includes(code),
     [permissions],
@@ -66,10 +73,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       has,
       login,
       logout,
+      markPasswordChanged,
       activeStationId,
       setActiveStationId,
     }),
-    [user, token, permissions, has, login, logout, activeStationId],
+    [user, token, permissions, has, login, logout, markPasswordChanged, activeStationId],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

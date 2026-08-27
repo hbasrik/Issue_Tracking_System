@@ -21,6 +21,7 @@ export interface User {
   Email: string;
   Role: UserRole;
   IsActive: boolean;
+  MustChangePassword?: boolean;
 }
 
 export interface LoginResponse {
@@ -277,6 +278,17 @@ export const api = {
     return request<LoginResponse>('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
+    });
+  },
+
+  changePassword(body: {
+    current_password: string;
+    new_password: string;
+    confirm_password: string;
+  }) {
+    return request<{ ok: boolean }>('/auth/change-password', {
+      method: 'POST',
+      body: JSON.stringify(body),
     });
   },
 

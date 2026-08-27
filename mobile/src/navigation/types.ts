@@ -4,6 +4,7 @@ import type { HomeIssueStatKey } from '../lib/homeIssueStats';
 export type RootStackParamList = {
   Login: undefined;
   Unauthorized: undefined;
+  ChangePassword: undefined;
   /** Drawer shell: Home, Vehicles, Issues, Profile. */
   MainDrawer: NavigatorScreenParams<MainDrawerParamList> | undefined;
   VehicleStation: { vin: string };
