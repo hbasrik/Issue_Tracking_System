@@ -116,6 +116,7 @@ func NewRouter(deps Deps) http.Handler {
 				// Static /search wins over {vin} in chi's trie.
 				r.Get("/vehicles/search", s.handleVehicleSearch)
 				r.Get("/vehicles/{vin}", s.handleVehicleGet)
+				r.Get("/vehicles/{vin}/status-history", s.handleVehicleStatusHistory)
 				r.Get("/vehicles/{vin}/station-steps", s.handleVehicleStationSteps)
 				r.Get("/vehicles/{vin}/checklist/{type}", s.handleVehicleChecklistGet)
 				r.Get("/vehicles/{vin}/eol", s.handleEOLWorkflowGet)

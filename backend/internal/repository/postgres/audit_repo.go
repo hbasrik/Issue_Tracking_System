@@ -61,3 +61,32 @@ func (r *AuditRepo) ListIssueStatusHistory(ctx context.Context, issueID int64) (
 	}
 	return out, rows.Err()
 }
+
+// ListVehicleStatusHistory returns STATUS_CHANGE rows for one VIN, oldest
+// first. performed_by is left-joined so a deactivated user still shows.
+func (r *AuditRepo) ListVehicleStatusHistory(ctx context.Context, vin string) ([]domain.VehicleStatusHistoryEntry, error) {
+	rows, err := r.pool.Query(ctx,
+		`SELECT a.id,
+		        COALESCE(a.old_value, ''),
+		        COALESCE(a.new_value, ''),
+		        COALESCE(u.full_name, ''),
+		        a.event_at
+		 FROM audit_logs a
+		 LEFT JOIN users u ON u.id = a.performed_by
+		 WHERE a.vin = $1 AND a.event_type = 'STATUS_CHANGE'
+		 ORDER BY a.event_at ASC, a.id ASC`, vin)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var out []domain.VehicleStatusHistoryEntry
+	for rows.Next() {
+		var e domain.VehicleStatusHistoryEntry
+		if err := rows.Scan(&e.ID, &e.FromStatus, &e.ToStatus, &e.ActorName, &e.EventAt); err != nil {
+			return nil, err
+		}
+		out = append(out, e)
+	}
+	return out, rows.Err()
+}

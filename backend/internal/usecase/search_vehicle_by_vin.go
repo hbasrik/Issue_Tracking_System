@@ -143,6 +143,25 @@ func (s *VehicleService) ChangeStatus(ctx context.Context, vin string, target do
 	return vehicle, nil
 }
 
+// ListStatusHistory returns chronological STATUS_CHANGE events for the VIN.
+// A missing vehicle 404s so callers do not see an empty trail for a bogus VIN.
+func (s *VehicleService) ListStatusHistory(ctx context.Context, vin string) ([]domain.VehicleStatusHistoryEntry, error) {
+	if _, err := s.vehicles.GetByVIN(ctx, vin); err != nil {
+		return nil, err
+	}
+	if s.audit == nil {
+		return []domain.VehicleStatusHistoryEntry{}, nil
+	}
+	items, err := s.audit.ListVehicleStatusHistory(ctx, vin)
+	if err != nil {
+		return nil, err
+	}
+	if items == nil {
+		return []domain.VehicleStatusHistoryEntry{}, nil
+	}
+	return items, nil
+}
+
 const maxBulkImportVINs = 500
 
 // VehicleBulkImportResult is the outcome of a PLANNED VIN bulk insert.

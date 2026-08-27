@@ -109,6 +109,10 @@ func (httpNoopAudit) ListIssueStatusHistory(context.Context, int64) ([]domain.Is
 	return []domain.IssueStatusHistoryEntry{}, nil
 }
 
+func (httpNoopAudit) ListVehicleStatusHistory(context.Context, string) ([]domain.VehicleStatusHistoryEntry, error) {
+	return []domain.VehicleStatusHistoryEntry{}, nil
+}
+
 type httpNoopUoW struct{}
 
 func (httpNoopUoW) WithinTx(ctx context.Context, fn func(context.Context) error) error {

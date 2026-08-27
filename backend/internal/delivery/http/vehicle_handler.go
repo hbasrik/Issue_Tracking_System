@@ -158,6 +158,22 @@ func (s *server) handleVehicleStationSteps(w http.ResponseWriter, r *http.Reques
 	writeJSON(w, http.StatusOK, result)
 }
 
+// handleVehicleStatusHistory lists STATUS_CHANGE audit rows for one vehicle,
+// oldest first, with the acting user's name already joined.
+func (s *server) handleVehicleStatusHistory(w http.ResponseWriter, r *http.Request) {
+	vin := chi.URLParam(r, "vin")
+	if s.deps.Vehicles == nil {
+		writeError(w, domain.ErrNotFound)
+		return
+	}
+	items, err := s.deps.Vehicles.ListStatusHistory(r.Context(), vin)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"items": items})
+}
+
 // handleVehicleChecklistGet returns checklist items for eol, shipment, or
 // test. vehicle.view gets the caller onto the vehicle; the matching
 // checklist.*.view code is required on top so Quality can open Test without

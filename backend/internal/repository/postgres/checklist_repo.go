@@ -80,9 +80,15 @@ func (r *ChecklistProgressRepo) ListItemsWithProgress(ctx context.Context, vin s
 		`SELECT cti.id, cti.item_no, cti.item_text,
 		        COALESCE(p.check_status::text, 'PENDING'),
 		        COALESCE(p.rework_desc, ''), COALESCE(p.conditional_desc, ''), COALESCE(p.rejected_desc, ''),
-		        cti.eol_phase::text, p.id
+		        cti.eol_phase::text, p.id,
+		        p.check_date, COALESCE(checker.full_name, ''),
+		        p.rejected_date, COALESCE(rej.full_name, ''),
+		        p.approved_date, COALESCE(appr.full_name, '')
 		 FROM checklist_item_progress p
 		 JOIN checklist_template_items cti ON cti.id = p.check_item_id
+		 LEFT JOIN users checker ON checker.id = p.checker_id
+		 LEFT JOIN users rej ON rej.id = p.rejected_by
+		 LEFT JOIN users appr ON appr.id = p.approved_by
 		 WHERE p.vin = $1 AND p.checklist_type = $2
 		   AND cti.template_id = $3
 		 ORDER BY cti.item_no`, vin, string(checklistType), templateID)
@@ -100,6 +106,9 @@ func (r *ChecklistProgressRepo) ListItemsWithProgress(ctx context.Context, vin s
 			&item.ItemID, &item.ItemNo, &item.ItemText, &status,
 			&item.ReworkDesc, &item.ConditionalDesc, &item.RejectedDesc,
 			&eolPhase, &item.ProgressID,
+			&item.CheckDate, &item.CheckerName,
+			&item.RejectedAt, &item.RejectedByName,
+			&item.ApprovedAt, &item.ApprovedByName,
 		); err != nil {
 			return nil, err
 		}
@@ -107,6 +116,14 @@ func (r *ChecklistProgressRepo) ListItemsWithProgress(ctx context.Context, vin s
 		if eolPhase != nil && *eolPhase != "" {
 			p := domain.EOLItemPhase(*eolPhase)
 			item.EolPhase = &p
+		}
+		if item.Status == domain.CheckStatusPending {
+			item.CheckerName = ""
+			item.CheckDate = nil
+			item.RejectedByName = ""
+			item.RejectedAt = nil
+			item.ApprovedByName = ""
+			item.ApprovedAt = nil
 		}
 		out = append(out, item)
 	}
@@ -121,12 +138,16 @@ func (r *ChecklistProgressRepo) ListItemsWithProgress(ctx context.Context, vin s
 func (r *ChecklistProgressRepo) SaveResult(ctx context.Context, result domain.ChecklistProgress) error {
 	tag, err := r.pool.Exec(ctx,
 		`UPDATE checklist_item_progress
-		 SET check_status = $3,
+		 SET check_status = $3::check_status_enum,
 		     checker_id = $4,
 		     check_date = now(),
 		     rework_desc = NULLIF($5, ''),
 		     conditional_desc = NULLIF($6, ''),
-		     rejected_desc = NULLIF($7, '')
+		     rejected_desc = NULLIF($7, ''),
+		     rejected_by = CASE WHEN $3::check_status_enum = 'NOT_OK' THEN $4 ELSE rejected_by END,
+		     rejected_date = CASE WHEN $3::check_status_enum = 'NOT_OK' THEN now() ELSE rejected_date END,
+		     approved_by = CASE WHEN $3::check_status_enum IN ('OK', 'CONDITIONAL_OK') THEN $4 ELSE approved_by END,
+		     approved_date = CASE WHEN $3::check_status_enum IN ('OK', 'CONDITIONAL_OK') THEN now() ELSE approved_date END
 		 WHERE vin = $1 AND check_item_id = $2 AND checklist_type = $8`,
 		result.VIN, result.CheckItemID, string(result.CheckStatus), result.CheckerID,
 		result.ReworkDesc, result.ConditionalDesc, result.RejectedDesc, string(result.ChecklistType))

@@ -3,6 +3,7 @@ package usecase_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/karea/backend/internal/domain"
 	"github.com/karea/backend/internal/usecase"
@@ -77,5 +78,34 @@ func TestIssueStatusChangeRecordsPerformedBy(t *testing.T) {
 	}
 	if *entry.PerformedBy != actorID {
 		t.Errorf("performed_by = %d, want %d", *entry.PerformedBy, actorID)
+	}
+}
+
+// TestVehicleListStatusHistory_ReturnsNamedRows proves GET-side history
+// surfaces the last STATUS_CHANGE with an actor name already joined.
+func TestVehicleListStatusHistory_ReturnsNamedRows(t *testing.T) {
+	const vin = "VIN0000000000001"
+	vehicles := newFakeVehicleRepo()
+	vehicles.vehicles[vin] = &domain.Vehicle{
+		VIN:                 vin,
+		CurrentGlobalStatus: domain.VehicleStatusOnHold,
+	}
+	audit := newFakeAuditRepo()
+	at := time.Now()
+	audit.entries = []domain.AuditLog{{
+		ID: 3, VIN: vin, EventType: domain.AuditEventStatusChange,
+		OldValue: "IN_PRODUCTION", NewValue: "ON_HOLD", EventAt: at,
+	}}
+	svc := usecase.NewVehicleService(vehicles, newFakeChecklistRepo(), audit, &passthroughFakeUoW{})
+
+	items, err := svc.ListStatusHistory(context.Background(), vin)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(items) != 1 {
+		t.Fatalf("items = %d, want 1", len(items))
+	}
+	if items[0].FromStatus != "IN_PRODUCTION" || items[0].ToStatus != "ON_HOLD" {
+		t.Errorf("unexpected %q -> %q", items[0].FromStatus, items[0].ToStatus)
 	}
 }

@@ -77,11 +77,13 @@ func (r *StationStepProgressRepo) SaveResult(ctx context.Context, vin string, st
 func (r *StationStepProgressRepo) ListCatalogueWithProgress(ctx context.Context, vin string) ([]domain.StationStepItemView, error) {
 	rows, err := r.pool.Query(ctx,
 		`SELECT ss.id, ss.station_id, s.name, ss.sequence_no, ss.name,
-		        COALESCE(vssp.status::text, 'PENDING'), vssp.related_issue_id
+		        COALESCE(vssp.status::text, 'PENDING'), vssp.related_issue_id,
+		        vssp.checked_at, COALESCE(u.full_name, '')
 		 FROM station_steps ss
 		 JOIN stations s ON s.id = ss.station_id
 		 LEFT JOIN vehicle_station_step_progress vssp
 		   ON vssp.station_step_id = ss.id AND vssp.vin = $1
+		 LEFT JOIN users u ON u.id = vssp.checked_by
 		 WHERE ss.is_active = TRUE AND s.is_active = TRUE
 		 ORDER BY s.sequence_no, ss.sequence_no`, vin)
 	if err != nil {
@@ -95,11 +97,15 @@ func (r *StationStepProgressRepo) ListCatalogueWithProgress(ctx context.Context,
 		var status string
 		if err := rows.Scan(
 			&item.ID, &item.StationID, &item.StationName, &item.SequenceNo, &item.Name,
-			&status, &item.RelatedIssueID,
+			&status, &item.RelatedIssueID, &item.CheckedAt, &item.CheckedByName,
 		); err != nil {
 			return nil, err
 		}
 		item.Status = domain.StationStepStatus(status)
+		if item.Status == domain.StationStepStatusPending {
+			item.CheckedByName = ""
+			item.CheckedAt = nil
+		}
 		out = append(out, item)
 	}
 	return out, rows.Err()

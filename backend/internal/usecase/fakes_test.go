@@ -480,6 +480,22 @@ func (f *fakeAuditRepo) ListIssueStatusHistory(_ context.Context, issueID int64)
 	return out, nil
 }
 
+func (f *fakeAuditRepo) ListVehicleStatusHistory(_ context.Context, vin string) ([]domain.VehicleStatusHistoryEntry, error) {
+	var out []domain.VehicleStatusHistoryEntry
+	for _, e := range f.entries {
+		if e.EventType != domain.AuditEventStatusChange || e.VIN != vin {
+			continue
+		}
+		out = append(out, domain.VehicleStatusHistoryEntry{
+			ID:         e.ID,
+			FromStatus: e.OldValue,
+			ToStatus:   e.NewValue,
+			EventAt:    e.EventAt,
+		})
+	}
+	return out, nil
+}
+
 func metadataIssueID(meta map[string]any) (int64, bool) {
 	if meta == nil {
 		return 0, false

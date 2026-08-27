@@ -39,3 +39,14 @@ type IssueStatusHistoryEntry struct {
 	ActorName  string
 	EventAt    time.Time
 }
+
+// VehicleStatusHistoryEntry is one STATUS_CHANGE row for a vehicle, resolved
+// with the acting user's display name. Inactive users still resolve; a
+// missing user row yields an empty ActorName rather than dropping the event.
+type VehicleStatusHistoryEntry struct {
+	ID         int64
+	FromStatus string
+	ToStatus   string
+	ActorName  string
+	EventAt    time.Time
+}

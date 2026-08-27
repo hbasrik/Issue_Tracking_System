@@ -163,7 +163,8 @@ type ChecklistProgress struct {
 // per-vehicle checklist progress. EolPhase is set only for EoL items so the
 // Vehicle Detail stepper can split Branch vs Depot without a second query.
 // ProgressID is the checklist_item_progress row id, used as entity_id when
-// attaching media (CHECKLIST_ITEM_PROGRESS).
+// attaching media (CHECKLIST_ITEM_PROGRESS). Actor names are joined in the
+// list query so the UI never N+1s users.
 type ChecklistItemView struct {
 	ItemID          int
 	ItemNo          int16
@@ -174,4 +175,10 @@ type ChecklistItemView struct {
 	RejectedDesc    string
 	EolPhase        *EOLItemPhase
 	ProgressID      *int64
+	CheckerName     string     `json:"CheckerName,omitempty"`
+	CheckDate       *time.Time `json:"CheckDate,omitempty"`
+	RejectedByName  string     `json:"RejectedByName,omitempty"`
+	RejectedAt      *time.Time `json:"RejectedAt,omitempty"`
+	ApprovedByName  string     `json:"ApprovedByName,omitempty"`
+	ApprovedAt      *time.Time `json:"ApprovedAt,omitempty"`
 }

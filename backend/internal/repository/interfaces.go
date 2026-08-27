@@ -217,4 +217,7 @@ type AuditRepository interface {
 	// ListIssueStatusHistory returns ISSUE_STATUS_CHANGE events for one issue,
 	// oldest first, with the acting user's display name.
 	ListIssueStatusHistory(ctx context.Context, issueID int64) ([]domain.IssueStatusHistoryEntry, error)
+	// ListVehicleStatusHistory returns STATUS_CHANGE events for one VIN,
+	// oldest first, with the acting user's display name.
+	ListVehicleStatusHistory(ctx context.Context, vin string) ([]domain.VehicleStatusHistoryEntry, error)
 }

@@ -58,7 +58,8 @@ type VehicleStationStepProgress struct {
 }
 
 // StationStepItemView is the operator-facing join of the station step
-// catalogue with per-vehicle progress.
+// catalogue with per-vehicle progress. CheckedByName/CheckedAt are the
+// last operator who ticked the step (empty while Status is PENDING).
 type StationStepItemView struct {
 	ID             int
 	StationID      int
@@ -67,6 +68,8 @@ type StationStepItemView struct {
 	Name           string
 	Status         StationStepStatus
 	RelatedIssueID *int64
+	CheckedByName  string     `json:"CheckedByName,omitempty"`
+	CheckedAt      *time.Time `json:"CheckedAt,omitempty"`
 }
 
 // VehicleStationStepsResult is returned by the per-vehicle station step read.
