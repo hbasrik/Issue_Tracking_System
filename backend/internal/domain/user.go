@@ -127,5 +127,9 @@ type User struct {
 	// be logged.
 	PasswordHash string `json:"-"`
 	IsActive     bool
-	CreatedAt    time.Time
+	// MustChangePassword is set when an admin created the account or reset
+	// the password. The user may authenticate, but every other API call is
+	// rejected until they change the password.
+	MustChangePassword bool
+	CreatedAt          time.Time
 }

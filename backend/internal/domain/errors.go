@@ -80,6 +80,24 @@ var (
 	// ErrTemplateItemReorderInvalid indicates the reorder payload did not
 	// list every item on the template exactly once.
 	ErrTemplateItemReorderInvalid = errors.New("item_ids must list every item on the template exactly once")
+	// ErrEmailTaken indicates create-user hit the unique email constraint.
+	ErrEmailTaken = errors.New("email is already in use")
+	// ErrFullNameRequired indicates create-user omitted a non-empty name.
+	ErrFullNameRequired = errors.New("full_name is required")
+	// ErrEmailRequired indicates create-user omitted a non-empty email.
+	ErrEmailRequired = errors.New("email is required")
+	// ErrPasswordTooShort indicates a new password is under MinPasswordLength.
+	ErrPasswordTooShort = errors.New("password must be at least 8 characters")
+	// ErrPasswordTooWeak indicates a new password lacks a letter or a digit.
+	ErrPasswordTooWeak = errors.New("password must contain at least one letter and one digit")
+	// ErrPasswordMismatch indicates new_password and confirmation differ.
+	ErrPasswordMismatch = errors.New("new password and confirmation do not match")
+	// ErrMustChangePassword indicates the JWT is valid but the user must
+	// rotate their password before any other authenticated action.
+	ErrMustChangePassword = errors.New("password must be changed before continuing")
+	// ErrCannotResetOwnPassword indicates an admin tried the reset-password
+	// action on their own account; they must use the change-password flow.
+	ErrCannotResetOwnPassword = errors.New("you cannot reset your own password this way")
 )
 
 // DatabaseRejectedError wraps a PostgreSQL RAISE EXCEPTION (SQLSTATE P0001)
