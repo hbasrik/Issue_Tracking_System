@@ -30,7 +30,7 @@ services:
       DATABASE_URL: postgres://karea:karea_secret@postgres:5432/karea?sslmode=disable
       JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-change-in-production}
       CORS_ALLOWED_ORIGIN: ${CORS_ALLOWED_ORIGIN:-http://localhost:5173,http://localhost:5174}
-      ALLOWED_EMAIL_DOMAINS: ${ALLOWED_EMAIL_DOMAINS:-}
+      ALLOWED_EMAIL_DOMAINS: ${ALLOWED_EMAIL_DOMAINS:-karea.com,karea.local}
     depends_on:
       postgres:
         condition: service_healthy
