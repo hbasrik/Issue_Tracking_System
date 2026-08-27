@@ -27,7 +27,13 @@ func (f *fakeUserRepo) GetByEmail(_ context.Context, email string) (*domain.User
 	return &copied, nil
 }
 
-func (f *fakeUserRepo) GetByID(context.Context, int) (*domain.User, error) {
+func (f *fakeUserRepo) GetByID(_ context.Context, id int) (*domain.User, error) {
+	for _, user := range f.byEmail {
+		if user.ID == id {
+			copied := *user
+			return &copied, nil
+		}
+	}
 	return nil, domain.ErrNotFound
 }
 
@@ -45,6 +51,22 @@ func (f *fakeUserRepo) CountActiveUsersWithPermission(context.Context, string) (
 
 func (f *fakeUserRepo) CountActiveUsersWithPermissionExceptRole(context.Context, string, int) (int, error) {
 	return 0, nil
+}
+
+func (f *fakeUserRepo) Create(_ context.Context, user *domain.User) (*domain.User, error) {
+	copied := *user
+	return &copied, nil
+}
+
+func (f *fakeUserRepo) UpdatePassword(_ context.Context, id int, hash string, mustChange bool) error {
+	for _, u := range f.byEmail {
+		if u.ID == id {
+			u.PasswordHash = hash
+			u.MustChangePassword = mustChange
+			return nil
+		}
+	}
+	return domain.ErrNotFound
 }
 
 func mustHash(t *testing.T, password string) string {
@@ -139,5 +161,63 @@ func TestLogin_UnknownEmail(t *testing.T) {
 	_, err := authn.Login(context.Background(), "missing@karea.local", "secret")
 	if !errors.Is(err, domain.ErrInvalidCredentials) {
 		t.Fatalf("err = %v, want ErrInvalidCredentials", err)
+	}
+}
+
+func TestChangePassword_WrongCurrent(t *testing.T) {
+	repo := &fakeUserRepo{byEmail: map[string]*domain.User{
+		"op@karea.local": {
+			ID:           1,
+			Email:        "op@karea.local",
+			PasswordHash: mustHash(t, "secret12"),
+			IsActive:     true,
+			Role:         domain.Role{Code: domain.RoleCodeOperator, IsActive: true},
+		},
+	}}
+	authn := usecase.NewAuthenticator(repo)
+	err := authn.ChangePassword(context.Background(), 1, "wrong-pass", "newpass12", "newpass12")
+	if !errors.Is(err, domain.ErrInvalidCredentials) {
+		t.Fatalf("err = %v, want ErrInvalidCredentials", err)
+	}
+}
+
+func TestChangePassword_TooShort(t *testing.T) {
+	repo := &fakeUserRepo{byEmail: map[string]*domain.User{
+		"op@karea.local": {
+			ID:           1,
+			Email:        "op@karea.local",
+			PasswordHash: mustHash(t, "secret12"),
+			IsActive:     true,
+			Role:         domain.Role{Code: domain.RoleCodeOperator, IsActive: true},
+		},
+	}}
+	authn := usecase.NewAuthenticator(repo)
+	err := authn.ChangePassword(context.Background(), 1, "secret12", "ab1", "ab1")
+	if !errors.Is(err, domain.ErrPasswordTooShort) {
+		t.Fatalf("err = %v, want ErrPasswordTooShort", err)
+	}
+}
+
+func TestChangePassword_ClearsMustChange(t *testing.T) {
+	repo := &fakeUserRepo{byEmail: map[string]*domain.User{
+		"op@karea.local": {
+			ID:                 1,
+			Email:              "op@karea.local",
+			PasswordHash:       mustHash(t, "secret12"),
+			IsActive:           true,
+			MustChangePassword: true,
+			Role:               domain.Role{Code: domain.RoleCodeOperator, IsActive: true},
+		},
+	}}
+	authn := usecase.NewAuthenticator(repo)
+	if err := authn.ChangePassword(context.Background(), 1, "secret12", "newpass12", "newpass12"); err != nil {
+		t.Fatalf("ChangePassword: %v", err)
+	}
+	got, err := repo.GetByID(context.Background(), 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.MustChangePassword {
+		t.Fatal("must_change_password should be cleared")
 	}
 }

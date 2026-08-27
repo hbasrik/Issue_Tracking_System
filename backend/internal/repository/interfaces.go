@@ -149,6 +149,11 @@ type UserRepository interface {
 	// CountActiveUsersWithPermissionExceptRole is the same count excluding
 	// one role, used when that role is about to lose the permission.
 	CountActiveUsersWithPermissionExceptRole(ctx context.Context, permissionCode string, roleID int) (int, error)
+	// Create inserts a user and returns the stored row (with generated id).
+	// Duplicate emails return domain.ErrEmailTaken.
+	Create(ctx context.Context, user *domain.User) (*domain.User, error)
+	// UpdatePassword replaces password_hash and must_change_password.
+	UpdatePassword(ctx context.Context, id int, passwordHash string, mustChange bool) error
 }
 
 // EOLWorkflowRepository persists and queries the three-stage EOL workflow

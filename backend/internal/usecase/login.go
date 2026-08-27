@@ -44,3 +44,31 @@ func (a *Authenticator) Login(ctx context.Context, email, password string) (*dom
 	}
 	return user, nil
 }
+
+// ChangePassword replaces the caller's password after verifying the current
+// one. A successful change clears must_change_password.
+func (a *Authenticator) ChangePassword(ctx context.Context, userID int, current, newPassword, confirm string) error {
+	if newPassword != confirm {
+		return domain.ErrPasswordMismatch
+	}
+	if err := domain.ValidatePassword(newPassword); err != nil {
+		return err
+	}
+	user, err := a.users.GetByID(ctx, userID)
+	if err != nil {
+		return err
+	}
+	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(current)); err != nil {
+		return domain.ErrInvalidCredentials
+	}
+	hash, err := hashPassword(newPassword)
+	if err != nil {
+		return err
+	}
+	return a.users.UpdatePassword(ctx, userID, hash, false)
+}
+
+// GetByID returns the user row for middleware that needs must_change_password.
+func (a *Authenticator) GetByID(ctx context.Context, id int) (*domain.User, error) {
+	return a.users.GetByID(ctx, id)
+}

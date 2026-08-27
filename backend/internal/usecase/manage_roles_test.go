@@ -150,6 +150,15 @@ func (r matrixUserRepo) CountActiveUsersWithPermissionExceptRole(_ context.Conte
 	return n, nil
 }
 
+func (matrixUserRepo) Create(_ context.Context, user *domain.User) (*domain.User, error) {
+	copied := *user
+	return &copied, nil
+}
+
+func (matrixUserRepo) UpdatePassword(context.Context, int, string, bool) error {
+	return nil
+}
+
 func TestRoleAdmin_CannotStripLastUserAdminGrant(t *testing.T) {
 	roles := newMatrixRoleRepo()
 	admin := usecase.NewRoleAdmin(roles, matrixUserRepo{holders: map[int]int{2: 1}})

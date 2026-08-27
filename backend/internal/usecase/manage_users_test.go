@@ -25,7 +25,13 @@ type adminUserRepo struct {
 	users map[int]*domain.User
 }
 
-func (r *adminUserRepo) GetByEmail(context.Context, string) (*domain.User, error) {
+func (r *adminUserRepo) GetByEmail(_ context.Context, email string) (*domain.User, error) {
+	for _, user := range r.users {
+		if user.Email == email {
+			copied := *user
+			return &copied, nil
+		}
+	}
 	return nil, domain.ErrNotFound
 }
 
@@ -92,6 +98,35 @@ func (r *adminUserRepo) CountActiveUsersWithPermissionExceptRole(_ context.Conte
 		}
 	}
 	return n, nil
+}
+
+func (r *adminUserRepo) Create(_ context.Context, user *domain.User) (*domain.User, error) {
+	for _, existing := range r.users {
+		if existing.Email == user.Email {
+			return nil, domain.ErrEmailTaken
+		}
+	}
+	id := 1
+	for existingID := range r.users {
+		if existingID >= id {
+			id = existingID + 1
+		}
+	}
+	copied := *user
+	copied.ID = id
+	r.users[id] = &copied
+	out := copied
+	return &out, nil
+}
+
+func (r *adminUserRepo) UpdatePassword(_ context.Context, id int, hash string, mustChange bool) error {
+	user, ok := r.users[id]
+	if !ok {
+		return domain.ErrNotFound
+	}
+	user.PasswordHash = hash
+	user.MustChangePassword = mustChange
+	return nil
 }
 
 type adminRoleRepo struct{}
@@ -278,5 +313,83 @@ func TestUserAdmin_MissingUser(t *testing.T) {
 	})
 	if !errors.Is(err, domain.ErrNotFound) {
 		t.Fatalf("err = %v, want ErrNotFound", err)
+	}
+}
+
+func TestUserAdmin_CreateGeneratesPasswordAndFlagsMustChange(t *testing.T) {
+	admin := newAdmin(user(1, managerRole, true))
+
+	created, err := admin.Create(context.Background(), usecase.CreateUserInput{
+		FullName: "  Yeni Operatör ",
+		Email:    "New.Op@Karea.local",
+		Role:     domain.RoleCodeOperator,
+	})
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+	if created.TemporaryPassword == "" {
+		t.Fatal("temporary password must be returned once")
+	}
+	if err := domain.ValidatePassword(created.TemporaryPassword); err != nil {
+		t.Fatalf("generated password rejected: %v", err)
+	}
+	if created.User.Email != "new.op@karea.local" {
+		t.Errorf("email = %q", created.User.Email)
+	}
+	if created.User.FullName != "Yeni Operatör" {
+		t.Errorf("name = %q", created.User.FullName)
+	}
+	if !created.User.IsActive || !created.User.MustChangePassword {
+		t.Fatalf("active=%v must_change=%v", created.User.IsActive, created.User.MustChangePassword)
+	}
+	if created.User.PasswordHash == "" || created.User.PasswordHash == created.TemporaryPassword {
+		t.Fatal("hash must be stored, not the plaintext")
+	}
+}
+
+func TestUserAdmin_CreateDuplicateEmail(t *testing.T) {
+	existing := user(1, managerRole, true)
+	existing.Email = "taken@karea.local"
+	admin := newAdmin(existing)
+
+	_, err := admin.Create(context.Background(), usecase.CreateUserInput{
+		FullName: "Other",
+		Email:    "taken@karea.local",
+		Role:     domain.RoleCodeOperator,
+	})
+	if !errors.Is(err, domain.ErrEmailTaken) {
+		t.Fatalf("err = %v, want ErrEmailTaken", err)
+	}
+}
+
+func TestUserAdmin_ResetPasswordRefusesSelf(t *testing.T) {
+	admin := newAdmin(user(1, managerRole, true), user(2, operatorRole, true))
+	_, err := admin.ResetPassword(context.Background(), 1, 1)
+	if !errors.Is(err, domain.ErrCannotResetOwnPassword) {
+		t.Fatalf("err = %v, want ErrCannotResetOwnPassword", err)
+	}
+}
+
+func TestUserAdmin_ResetPasswordSetsMustChange(t *testing.T) {
+	admin := newAdmin(user(1, managerRole, true), user(2, operatorRole, true))
+	plain, err := admin.ResetPassword(context.Background(), 1, 2)
+	if err != nil {
+		t.Fatalf("ResetPassword: %v", err)
+	}
+	if err := domain.ValidatePassword(plain); err != nil {
+		t.Fatalf("generated password: %v", err)
+	}
+	got, err := admin.List(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	var target *domain.User
+	for i := range got {
+		if got[i].ID == 2 {
+			target = &got[i]
+		}
+	}
+	if target == nil || !target.MustChangePassword {
+		t.Fatalf("must_change = %+v", target)
 	}
 }
