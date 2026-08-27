@@ -3,6 +3,7 @@ import { Navigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { Perm } from '../auth/permissions';
 import { ApiError } from '../lib/api';
+import { apiErrorMessage } from '../lib/apiErrors';
 
 export default function LoginPage() {
   const { login, isAuthenticated, has, user } = useAuth();
@@ -28,7 +29,7 @@ export default function LoginPage() {
     try {
       await login(email, password);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Giriş başarısız');
+      setError(err instanceof ApiError ? apiErrorMessage(err) : 'Giriş başarısız');
     } finally {
       setBusy(false);
     }

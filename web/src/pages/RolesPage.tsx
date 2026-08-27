@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { api, ApiError, type PermissionRow, type RoleGrant } from '../lib/api';
+import { apiErrorMessage } from '../lib/apiErrors';
 import { groupPermissions } from '../lib/permissionLabels';
 
 /** Role × permission matrix. Saving writes role_permissions immediately. */
@@ -30,7 +31,7 @@ export default function RolesPage() {
     setError(null);
     load().catch((err) => {
       if (!cancelled) {
-        setError(err instanceof Error ? err.message : 'failed to load matrix');
+        setError(err instanceof Error ? apiErrorMessage(err) : 'Matris yüklenemedi');
       }
     });
     return () => {
@@ -61,7 +62,7 @@ export default function RolesPage() {
       await api.replaceRolePermissions(role.id, codes);
       await load();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'save failed');
+      setError(err instanceof ApiError ? apiErrorMessage(err) : 'Kayıt başarısız');
     } finally {
       setBusyId(null);
     }
@@ -77,7 +78,7 @@ export default function RolesPage() {
       setName('');
       await load();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'create failed');
+      setError(err instanceof ApiError ? apiErrorMessage(err) : 'Rol oluşturulamadı');
     } finally {
       setCreating(false);
     }

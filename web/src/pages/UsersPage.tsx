@@ -16,6 +16,7 @@ import {
   type UserRole,
 } from '../lib/api';
 import { PASSWORD_RULE_HINT, passwordErrorMessage } from '../lib/password';
+import { apiErrorMessage } from '../lib/apiErrors';
 import {
   EMAIL_FORMAT_HINT,
   allowedDomainsHint,
@@ -48,28 +49,27 @@ function userEditLocks(
   const isLastUserAdmin =
     u.IsActive && adminRoles.has(u.Role) && holders.length === 1;
 
-  const reasons: string[] = [];
-  if (isSelf) {
-    reasons.push(
-      'You cannot change your own role or deactivate your own account.',
-    );
-    reasons.push('Kendi şifrenizi Ayarlar’dan değiştirin.');
-    reasons.push('Kendi hesabınızı silemezsiniz.');
-  }
-  if (isLastUserAdmin) {
-    reasons.push(
-      'At least one active user with admin.manage_users must remain.',
-    );
-  }
-
   return {
     isSelf,
     isLastUserAdmin,
     roleSelectDisabled: isSelf,
+    roleTitle: isSelf ? 'Kendi rolünüzü değiştiremezsiniz.' : undefined,
     activeSelectDisabled: isSelf || isLastUserAdmin,
+    activeTitle: isSelf
+      ? 'Kendi hesabınızı pasife çekemezsiniz.'
+      : isLastUserAdmin
+        ? 'En az bir aktif yönetici kalmalıdır.'
+        : 'Pasif kullanıcı giriş yapamaz, geçmiş kayıtları korunur.',
     resetDisabled: isSelf,
+    resetTitle: isSelf
+      ? 'Kendi şifrenizi Ayarlar’dan değiştirin.'
+      : undefined,
     deleteDisabled: isSelf || isLastUserAdmin,
-    reasons,
+    deleteTitle: isSelf
+      ? 'Kendi hesabınızı silemezsiniz.'
+      : isLastUserAdmin
+        ? 'En az bir aktif yönetici kalmalıdır.'
+        : 'Yalnızca hiç işlem yapmamış hesaplar silinebilir.',
   };
 }
 
@@ -99,6 +99,9 @@ function UserAssignControls({
   const locks = userEditLocks(u, currentUserId, users, adminRoles);
   const selectClass =
     'min-h-touch rounded-lg border bg-[var(--bg-page)] px-2 text-[13px] disabled:cursor-not-allowed disabled:opacity-60';
+  const helpId = locks.roleSelectDisabled || locks.activeSelectDisabled || locks.resetDisabled || locks.deleteDisabled
+    ? reasonId
+    : undefined;
 
   return (
     <div className="flex flex-col gap-2">
@@ -109,8 +112,9 @@ function UserAssignControls({
           onChange={(e) => onRole(e.target.value)}
           className={selectClass}
           style={{ borderColor: 'var(--border)' }}
-          aria-label={`Role for ${u.FullName}`}
-          aria-describedby={locks.reasons.length ? reasonId : undefined}
+          aria-label={`${u.FullName} için rol`}
+          title={locks.roleTitle}
+          aria-describedby={helpId}
         >
           {roles.map((role) => (
             <option
@@ -128,9 +132,9 @@ function UserAssignControls({
           onChange={(e) => onActive(e.target.value === 'active')}
           className={selectClass}
           style={{ borderColor: 'var(--border)' }}
-          aria-label={`Status for ${u.FullName}`}
-          title="Pasif kullanıcı giriş yapamaz, geçmiş kayıtları korunur"
-          aria-describedby={locks.reasons.length ? reasonId : undefined}
+          aria-label={`${u.FullName} için durum`}
+          title={locks.activeTitle}
+          aria-describedby={helpId}
         >
           <option value="active">Aktif</option>
           <option value="inactive">Pasif</option>
@@ -139,25 +143,27 @@ function UserAssignControls({
           type="button"
           disabled={busy || locks.resetDisabled}
           onClick={onReset}
+          title={locks.resetTitle}
           className="min-h-touch rounded-lg border px-3 text-[13px] disabled:cursor-not-allowed disabled:opacity-60"
           style={{ borderColor: 'var(--border)' }}
         >
           Şifreyi sıfırla
         </button>
       </div>
-      {locks.reasons.length > 0 && (
-        <p id={reasonId} className="text-[12px] text-[var(--text-secondary)]">
-          {locks.reasons.join(' ')}
-        </p>
-      )}
       <button
         type="button"
         disabled={busy || locks.deleteDisabled}
         onClick={onDelete}
-        className="self-start text-[12px] text-[var(--text-secondary)] underline decoration-transparent underline-offset-2 hover:underline hover:decoration-current disabled:cursor-not-allowed disabled:no-underline disabled:opacity-40"
+        title={locks.deleteTitle}
+        className="self-start text-[13px] text-[var(--text-secondary)] underline underline-offset-2 hover:text-[var(--text-primary)] disabled:cursor-not-allowed disabled:no-underline disabled:opacity-40"
       >
         Hesabı sil
       </button>
+      <span id={reasonId} className="sr-only">
+        {[locks.roleTitle, locks.activeTitle, locks.resetTitle, locks.deleteTitle]
+          .filter(Boolean)
+          .join(' ')}
+      </span>
     </div>
   );
 }
@@ -362,7 +368,7 @@ function CreateUserForm({
   );
 }
 
-/** Users & Roles — assign catalogue roles without locking out admin.manage_users. */
+/** Users & Roles — assign catalogue roles without locking out the last admin. */
 export default function UsersPage() {
   const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
@@ -370,6 +376,7 @@ export default function UsersPage() {
   const [allowedEmailDomains, setAllowedEmailDomains] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<number | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<User | null>(null);
   const [revealed, setRevealed] = useState<{
     label: string;
     password: string;
@@ -387,7 +394,7 @@ export default function UsersPage() {
     setError(null);
     load().catch((err) => {
       if (!cancelled) {
-        setError(err instanceof Error ? err.message : 'failed to load users');
+        setError(err instanceof Error ? apiErrorMessage(err) : 'Kullanıcılar yüklenemedi');
       }
     });
     return () => {
@@ -402,7 +409,7 @@ export default function UsersPage() {
       const updated = await api.updateUser(id, body);
       setUsers((prev) => prev.map((u) => (u.ID === updated.ID ? updated : u)));
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'update failed');
+      setError(err instanceof ApiError ? apiErrorMessage(err) : 'Güncelleme başarısız');
       try {
         await load();
       } catch {
@@ -438,23 +445,25 @@ export default function UsersPage() {
     }
   }
 
-  async function deleteUser(u: User) {
-    if (
-      !window.confirm(
-        `${u.FullName} kalıcı olarak silinsin mi? Yalnızca hiç işlem yapmamış hesaplar silinebilir. İşlem yapmış kullanıcıları pasife çekin.`,
-      )
-    ) {
-      return;
-    }
+  function requestDelete(u: User) {
+    setError(null);
+    setPendingDelete(u);
+  }
+
+  async function confirmDelete() {
+    const u = pendingDelete;
+    if (!u) return;
     setBusyId(u.ID);
     setError(null);
     try {
       await api.deleteUser(u.ID);
       setUsers((prev) => prev.filter((x) => x.ID !== u.ID));
+      setPendingDelete(null);
     } catch (err) {
       setError(
-        err instanceof ApiError ? passwordErrorMessage(err) : 'Kullanıcı silinemedi',
+        err instanceof ApiError ? apiErrorMessage(err) : 'Kullanıcı silinemedi',
       );
+      setPendingDelete(null);
     } finally {
       setBusyId(null);
     }
@@ -465,15 +474,54 @@ export default function UsersPage() {
       <h1 className="text-xl font-semibold sm:text-2xl">Kullanıcılar ve roller</h1>
       <p className="mt-1 text-[13px] text-[var(--text-secondary)]">
         Katalogdaki herhangi bir rolü atayın. İzinler Roller matrisinden
-        düzenlenir. En az bir aktif admin.manage_users sahibi kalmalıdır.
-        Hesabı kapatmanın yolu Aktif/Pasif anahtarıdır: pasif kullanıcı giriş
-        yapamaz, geçmiş kayıtları korunur. Silme yalnızca hiç işlem yapmamış
-        hesaplar içindir.
+        düzenlenir. En az bir aktif yönetici kalmalıdır. Hesabı kapatmanın yolu
+        Aktif/Pasif anahtarıdır: pasif kullanıcı giriş yapamaz, geçmiş kayıtları
+        korunur. Silme yalnızca hiç işlem yapmamış hesaplar içindir.
       </p>
       {error && (
-        <p className="mt-3 text-[13px]" style={{ color: 'var(--status-not-ok)' }}>
-          {error}
-        </p>
+        <div
+          className="mt-3 rounded-xl border px-4 py-3"
+          style={{ borderColor: 'var(--status-not-ok)' }}
+          role="alert"
+        >
+          <p className="text-[13px]" style={{ color: 'var(--status-not-ok)' }}>
+            {error}
+          </p>
+        </div>
+      )}
+      {pendingDelete && (
+        <div
+          className="mt-3 rounded-xl border bg-[var(--bg-surface-1)] p-4"
+          style={{ borderColor: 'var(--status-not-ok)' }}
+          role="status"
+        >
+          <p className="text-[15px] font-medium">Hesabı sil</p>
+          <p className="mt-1 text-[13px] text-[var(--text-secondary)]">
+            {pendingDelete.FullName} ({pendingDelete.Email}) kalıcı olarak
+            silinsin mi? Yalnızca hiç işlem yapmamış hesaplar silinebilir. İşlem
+            yapmış kullanıcıları pasife çekin.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              disabled={busyId === pendingDelete.ID}
+              onClick={() => void confirmDelete()}
+              className="min-h-touch rounded-lg px-4 text-[15px] font-medium text-white disabled:opacity-60"
+              style={{ backgroundColor: 'var(--status-not-ok)' }}
+            >
+              {busyId === pendingDelete.ID ? 'Siliniyor…' : 'Evet, sil'}
+            </button>
+            <button
+              type="button"
+              disabled={busyId === pendingDelete.ID}
+              onClick={() => setPendingDelete(null)}
+              className="min-h-touch rounded-lg border px-4 text-[15px]"
+              style={{ borderColor: 'var(--border)' }}
+            >
+              Vazgeç
+            </button>
+          </div>
+        </div>
       )}
 
       <CreateUserForm
@@ -500,10 +548,10 @@ export default function UsersPage() {
           {users.map((u) => (
             <DataCard key={u.ID}>
               <p className="font-medium">{u.FullName}</p>
-              <DataCardField label="Email">
+              <DataCardField label="E-posta">
                 <span className="break-all">{u.Email}</span>
               </DataCardField>
-              <DataCardField label="Role">
+              <DataCardField label="Rol">
                 <span
                   className="rounded-full px-2.5 py-0.5 text-[12px] font-medium"
                   style={{
@@ -518,7 +566,7 @@ export default function UsersPage() {
               <DataCardField label="Durum">
                 <ActiveBadge active={u.IsActive} />
               </DataCardField>
-              <DataCardField label="Assign">
+              <DataCardField label="Atama">
                 <UserAssignControls
                   user={u}
                   users={users}
@@ -528,7 +576,7 @@ export default function UsersPage() {
                   onRole={(role) => void patch(u.ID, { role })}
                   onActive={(isActive) => void patch(u.ID, { is_active: isActive })}
                   onReset={() => void resetPassword(u)}
-                  onDelete={() => void deleteUser(u)}
+                  onDelete={() => requestDelete(u)}
                 />
               </DataCardField>
             </DataCard>
@@ -542,11 +590,11 @@ export default function UsersPage() {
                 className="border-b text-[13px] text-[var(--text-secondary)]"
                 style={{ borderColor: 'var(--border)' }}
               >
-                <th className="px-4 py-3">Name</th>
-                <th className="px-4 py-3">Email</th>
-                <th className="px-4 py-3">Role</th>
+                <th className="px-4 py-3">Ad</th>
+                <th className="px-4 py-3">E-posta</th>
+                <th className="px-4 py-3">Rol</th>
                 <th className="px-4 py-3">Durum</th>
-                <th className="px-4 py-3">Assign</th>
+                <th className="px-4 py-3">Atama</th>
               </tr>
             </thead>
             <tbody>
@@ -583,7 +631,7 @@ export default function UsersPage() {
                       onRole={(role) => void patch(u.ID, { role })}
                       onActive={(isActive) => void patch(u.ID, { is_active: isActive })}
                       onReset={() => void resetPassword(u)}
-                  onDelete={() => void deleteUser(u)}
+                  onDelete={() => requestDelete(u)}
                     />
                   </td>
                 </tr>
