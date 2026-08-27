@@ -61,13 +61,11 @@ function needsDesc(s: ChecklistItem['Status']): boolean {
 }
 
 /**
- * EoL checklist — the operator's slice of the three-stage workflow (Karar 2).
+ * EoL checklist — the operator's slice of Şube → Depo.
  *
  * Only the items belonging to the vehicle's current stage are shown: BRANCH
  * items while it sits at the branch, DEPOT items once it has been shipped.
- * Advancing the stage itself (Ship to Depot / Release from Depot / document
- * approval) is Manager/Admin work on the web dashboard, so this screen offers
- * no action beyond recording item results.
+ * Advancing the stage itself is Manager/Admin work on the web dashboard.
  */
 export default function EOLChecklistScreen() {
   const route = useRoute<RouteProp<RootStackParamList, 'EOLChecklist'>>();
@@ -184,10 +182,6 @@ export default function EOLChecklistScreen() {
       title: 'Depodan serbest bırakma',
       record: workflow?.depot_release,
     },
-    {
-      title: 'Evrak onayı',
-      record: workflow?.document_approve,
-    },
   ] as const;
 
   if (!operatorStage) {
@@ -197,12 +191,7 @@ export default function EOLChecklistScreen() {
         <Subtitle>{STAGE_LABELS[stage]}</Subtitle>
         <Card>
           <Text style={{ color: tokens.textPrimary, fontSize: 15 }}>
-            {stage === 'COMPLETED'
-              ? 'EoL süreci tamamlandı.'
-              : 'Evrak onayı bekleniyor.'}
-          </Text>
-          <Text style={{ color: tokens.textSecondary, marginTop: 8, fontSize: 13 }}>
-            Bu aşamada operatör için madde yok — onay web panelinden yapılır.
+            EoL süreci tamamlandı.
           </Text>
         </Card>
         {workflowStages.map((row) => (
