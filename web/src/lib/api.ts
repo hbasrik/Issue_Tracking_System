@@ -181,6 +181,19 @@ export const api = {
     return request<Vehicle>(`/vehicles/${encodeURIComponent(vin)}`);
   },
 
+  getVehicleStatusHistory(vin: string) {
+    return request<{ items: VehicleStatusHistoryEntry[] }>(
+      `/vehicles/${encodeURIComponent(vin)}/status-history`,
+    );
+  },
+
+  getStationSteps(vin: string) {
+    return request<{
+      Items: StationStepItem[];
+      OpenIssuesByStation: Record<string, number>;
+    }>(`/vehicles/${encodeURIComponent(vin)}/station-steps`);
+  },
+
   searchVehicles(vinSuffix: string) {
     const q = new URLSearchParams({ vin_suffix: vinSuffix });
     return request<{ items: Vehicle[] }>(`/vehicles/search?${q}`);
@@ -426,6 +439,18 @@ export interface Station {
   IsActive: boolean;
 }
 
+export interface StationStepItem {
+  ID: number;
+  StationID: number;
+  StationName: string;
+  SequenceNo: number;
+  Name: string;
+  Status: 'PENDING' | 'OK' | 'NOT_OK';
+  RelatedIssueID?: number | null;
+  CheckedByName?: string;
+  CheckedAt?: string | null;
+}
+
 export type ChecklistTemplateType = 'EOL' | 'SHIPMENT' | 'TEST';
 
 export interface ChecklistTemplate {
@@ -459,6 +484,12 @@ export interface ChecklistItem {
   RejectedDesc: string;
   EolPhase?: 'BRANCH' | 'DEPOT' | null;
   ProgressID?: number | null;
+  CheckerName?: string;
+  CheckDate?: string | null;
+  RejectedByName?: string;
+  RejectedAt?: string | null;
+  ApprovedByName?: string;
+  ApprovedAt?: string | null;
 }
 
 export type EOLStage = 'BRANCH' | 'DEPOT' | 'DOCUMENT' | 'COMPLETED';
@@ -532,6 +563,14 @@ export interface Issue {
 }
 
 export interface IssueStatusHistoryEntry {
+  ID: number;
+  FromStatus: string;
+  ToStatus: string;
+  ActorName: string;
+  EventAt: string;
+}
+
+export interface VehicleStatusHistoryEntry {
   ID: number;
   FromStatus: string;
   ToStatus: string;

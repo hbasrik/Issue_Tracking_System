@@ -7,7 +7,17 @@ import { EolWorkflowTab } from '../components/EolWorkflowTab';
 import { MediaGallery } from '../components/MediaGallery';
 import { VehicleIssuesPanel } from '../components/VehicleIssuesPanel';
 import { ShipmentReadinessBanner } from '../components/ShipmentReadinessBanner';
-import { api, ApiError, type ShipmentReadiness, type Station, type Vehicle } from '../lib/api';
+import { StationStepsPanel } from '../components/StationStepsPanel';
+import { VehicleStatusHistory } from '../components/VehicleStatusHistory';
+import { ActionStamp } from '../components/ActionStamp';
+import {
+  api,
+  ApiError,
+  type ShipmentReadiness,
+  type Station,
+  type Vehicle,
+  type VehicleStatusHistoryEntry,
+} from '../lib/api';
 import { useAuth } from '../auth/AuthProvider';
 import { Perm } from '../auth/permissions';
 
@@ -57,15 +67,25 @@ export default function VehicleDetailPage() {
   const [blockingModal, setBlockingModal] = useState<number[] | null>(null);
   const [busy, setBusy] = useState(false);
   const [readiness, setReadiness] = useState<ShipmentReadiness | null>(null);
+  const [statusHistory, setStatusHistory] = useState<VehicleStatusHistoryEntry[]>([]);
+  const [historyError, setHistoryError] = useState<string | null>(null);
 
   const loadVehicle = useCallback(async () => {
     const v = await api.getVehicle(vin);
     setVehicle(v);
     setStatusDraft(v.CurrentGlobalStatus);
-    const ready = has(Perm.ChecklistShipmentView)
-      ? await api.shipmentReadiness(vin).catch(() => null)
-      : null;
+    const [ready, historyRes] = await Promise.all([
+      has(Perm.ChecklistShipmentView)
+        ? api.shipmentReadiness(vin).catch(() => null)
+        : Promise.resolve(null),
+      api.getVehicleStatusHistory(vin).catch(() => {
+        setHistoryError('Durum geçmişi yüklenemedi');
+        return { items: [] as VehicleStatusHistoryEntry[] };
+      }),
+    ]);
     setReadiness(ready);
+    setStatusHistory(historyRes.items ?? []);
+    if (historyRes.items) setHistoryError(null);
   }, [vin, has]);
 
   useEffect(() => {
@@ -78,18 +98,21 @@ export default function VehicleDetailPage() {
     (async () => {
       setError(null);
       try {
-        const [v, stationRes, ready] = await Promise.all([
+        const [v, stationRes, ready, historyRes] = await Promise.all([
           api.getVehicle(vin),
           api.listStations().catch(() => ({ items: [] as Station[] })),
           has(Perm.ChecklistShipmentView)
             ? api.shipmentReadiness(vin).catch(() => null)
             : Promise.resolve(null),
+          api.getVehicleStatusHistory(vin).catch(() => ({ items: [] as VehicleStatusHistoryEntry[] })),
         ]);
         if (cancelled) return;
         setVehicle(v);
         setStatusDraft(v.CurrentGlobalStatus);
         setStations(stationRes.items ?? []);
         setReadiness(ready);
+        setStatusHistory(historyRes.items ?? []);
+        setHistoryError(null);
       } catch (err) {
         if (!cancelled) {
           setError(err instanceof Error ? err.message : 'Araç yüklenemedi');
@@ -109,6 +132,9 @@ export default function VehicleDetailPage() {
     try {
       const updated = await api.updateVehicleStatus(vehicle.VIN, statusDraft);
       setVehicle(updated);
+      const historyRes = await api.getVehicleStatusHistory(vehicle.VIN);
+      setStatusHistory(historyRes.items ?? []);
+      setHistoryError(null);
     } catch (err) {
       if (err instanceof ApiError && err.status === 409) {
         setBlockingModal(err.body.blocking_item_ids ?? []);
@@ -143,6 +169,7 @@ export default function VehicleDetailPage() {
 
   const pct = Number(vehicle.TotalProgressPercentage);
   const currentStation = stations.find((s) => s.ID === vehicle.CurrentStationID);
+  const lastStatusChange = statusHistory[statusHistory.length - 1];
 
   return (
     <section>
@@ -165,6 +192,9 @@ export default function VehicleDetailPage() {
                 : 'No model'}
             </span>
           </div>
+          {lastStatusChange ? (
+            <ActionStamp name={lastStatusChange.ActorName} at={lastStatusChange.EventAt} />
+          ) : null}
         </div>
       </div>
 
@@ -252,6 +282,9 @@ export default function VehicleDetailPage() {
                   {error}
                 </p>
               )}
+              {lastStatusChange ? (
+                <ActionStamp name={lastStatusChange.ActorName} at={lastStatusChange.EventAt} />
+              ) : null}
               <div className="mt-6">
                 <h3 className="text-[15px] font-medium">Station stepper</h3>
                 <div className="mt-3 flex flex-wrap gap-2">
@@ -286,6 +319,7 @@ export default function VehicleDetailPage() {
                 </div>
               </div>
             </div>
+            <StationStepsPanel vin={vehicle.VIN} />
             <div
               className="rounded-xl border bg-[var(--bg-surface-1)] p-5"
               style={{ borderColor: 'var(--border)' }}
@@ -316,10 +350,7 @@ export default function VehicleDetailPage() {
         )}
         {activeTab === 'issues' && has(Perm.IssueView) && <VehicleIssuesPanel vin={vehicle.VIN} />}
         {activeTab === 'audit' && (
-          <PlaceholderPanel
-            title="Audit log"
-            body="Status and checklist change history for this vehicle (audit_logs)."
-          />
+          <VehicleStatusHistory items={statusHistory} error={historyError} />
         )}
       </div>
 
@@ -390,17 +421,5 @@ function ProgressRing({ percentage }: { percentage: number }) {
         {percentage.toFixed(0)}%
       </text>
     </svg>
-  );
-}
-
-function PlaceholderPanel({ title, body }: { title: string; body: string }) {
-  return (
-    <div
-      className="rounded-xl border bg-[var(--bg-surface-1)] p-5"
-      style={{ borderColor: 'var(--border)' }}
-    >
-      <h2 className="text-lg font-semibold">{title}</h2>
-      <p className="mt-2 text-[15px] text-[var(--text-secondary)]">{body}</p>
-    </div>
   );
 }

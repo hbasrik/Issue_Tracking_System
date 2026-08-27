@@ -12,6 +12,7 @@ import { Perm } from '../auth/permissions';
 import { ChecklistPanel } from './ChecklistPanel';
 import { SeverityIndicator } from './SeverityIndicator';
 import { StatusBadge } from './StatusBadge';
+import { ActionStamp } from './ActionStamp';
 
 const STAGES: { id: Exclude<EOLStage, 'COMPLETED'>; label: string }[] = [
   { id: 'BRANCH', label: 'Branch' },
@@ -235,9 +236,10 @@ export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
       </div>
 
       <StageCard
-        title="Branch"
-        record={formatRecord(workflow.branch_ship)}
-        actionLabel="Ship to Depot"
+        title="Şubeden sevk"
+        name={workflow.branch_ship.by_name}
+        at={workflow.branch_ship.at}
+        actionLabel="Şubeden sevk"
         actionEnabled={has(Perm.EOLBranchShip) && workflow.current_stage === 'BRANCH'}
         busy={busy}
         onAction={shipToDepot}
@@ -253,9 +255,10 @@ export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
       </StageCard>
 
       <StageCard
-        title="Depot"
-        record={formatRecord(workflow.depot_release)}
-        actionLabel="Release from Depot"
+        title="Depodan serbest bırakma"
+        name={workflow.depot_release.by_name}
+        at={workflow.depot_release.at}
+        actionLabel="Depodan serbest bırak"
         actionEnabled={has(Perm.EOLDepotRelease) && workflow.current_stage === 'DEPOT'}
         busy={busy}
         onAction={releaseFromDepot}
@@ -273,9 +276,10 @@ export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
       </StageCard>
 
       <StageCard
-        title="Document"
-        record={formatRecord(workflow.document_approve)}
-        actionLabel="Approve Document"
+        title="Evrak onayı"
+        name={workflow.document_approve.by_name}
+        at={workflow.document_approve.at}
+        actionLabel="Evrakı onayla"
         actionEnabled={has(Perm.EOLDocumentApprove) && workflow.current_stage === 'DOCUMENT'}
         busy={busy}
         onAction={approveDocument}
@@ -333,7 +337,8 @@ export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
 
 function StageCard({
   title,
-  record,
+  name,
+  at,
   actionLabel,
   actionEnabled,
   busy,
@@ -341,7 +346,8 @@ function StageCard({
   children,
 }: {
   title: string;
-  record: string;
+  name?: string;
+  at: string | null;
   actionLabel: string;
   actionEnabled: boolean;
   busy: boolean;
@@ -353,7 +359,7 @@ function StageCard({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h3 className="text-[15px] font-medium">{title}</h3>
-          <p className="text-[13px] text-[var(--text-secondary)]">{record}</p>
+          <ActionStamp name={name} at={at} />
         </div>
         {actionEnabled && (
           <button
@@ -369,10 +375,4 @@ function StageCard({
       {children}
     </div>
   );
-}
-
-function formatRecord(record: EOLWorkflowView['branch_ship']): string {
-  if (!record.at) return 'Not yet completed';
-  const when = new Date(record.at).toLocaleString();
-  return record.by_name ? `${when} · ${record.by_name}` : when;
 }

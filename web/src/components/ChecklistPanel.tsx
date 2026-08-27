@@ -6,6 +6,8 @@ import {
   type ChecklistType,
 } from '../lib/api';
 import { StatusBadge } from './StatusBadge';
+import { ActionStamp } from './ActionStamp';
+import { checklistActorLines } from '../lib/actionStamp';
 import { statusColors } from '../theme/tokens';
 import { useAuth } from '../auth/AuthProvider';
 import { Perm } from '../auth/permissions';
@@ -253,6 +255,7 @@ function EolItemRow({
         </span>
         <StatusBadge kind="eol" value={item.Status} />
       </div>
+      <ActionStamp lines={checklistActorLines(item)} />
       <div className="mt-2 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
         {EOL_STATUSES.map((value) => {
           const selected = status === value;
@@ -383,6 +386,7 @@ function YesNoItemRow({
         </label>
         <StatusBadge kind="shipment" value={item.Status} />
       </div>
+      <ActionStamp lines={checklistActorLines(item)} />
       {error && (
         <p className="mt-2 text-[13px]" style={{ color: 'var(--status-not-ok)' }} role="alert">
           {error}
