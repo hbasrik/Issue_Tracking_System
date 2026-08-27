@@ -113,6 +113,32 @@ func bearerToken(header string) (string, bool) {
 	return token, token != ""
 }
 
+// requirePasswordChanged 403s authenticated requests when the user still has
+// must_change_password. Skipped when Auth is not wired (unit tests).
+func (s *server) requirePasswordChanged(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if s.deps.Auth == nil {
+			next.ServeHTTP(w, r)
+			return
+		}
+		claims, ok := ClaimsFromContext(r.Context())
+		if !ok {
+			writeError(w, auth.ErrInvalidToken)
+			return
+		}
+		user, err := s.deps.Auth.GetByID(r.Context(), claims.UserID)
+		if err != nil {
+			writeError(w, err)
+			return
+		}
+		if user.MustChangePassword {
+			writeError(w, domain.ErrMustChangePassword)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
 // requireCode resolves the caller's permission set (cached per request) and
 // 403s when the given code is missing. Handlers that branch on a URL
 // parameter (checklist type) use this instead of route-level middleware.

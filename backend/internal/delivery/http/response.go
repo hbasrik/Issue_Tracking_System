@@ -56,7 +56,8 @@ func writeError(w http.ResponseWriter, err error) {
 		writeJSON(w, http.StatusConflict, errorResponse{Error: itemInUse.Error()})
 	case errors.Is(err, domain.ErrDepotChecklistLocked),
 		errors.Is(err, domain.ErrInvalidStatusTransition),
-		errors.Is(err, domain.ErrLastActiveManager):
+		errors.Is(err, domain.ErrLastActiveManager),
+		errors.Is(err, domain.ErrEmailTaken):
 		writeJSON(w, http.StatusConflict, errorResponse{Error: err.Error()})
 	case errors.Is(err, domain.ErrNotFound):
 		writeJSON(w, http.StatusNotFound, errorResponse{Error: err.Error()})
@@ -67,6 +68,8 @@ func writeError(w http.ResponseWriter, err error) {
 	case errors.Is(err, domain.ErrAccountInactive),
 		errors.Is(err, domain.ErrCannotChangeOwnRole),
 		errors.Is(err, domain.ErrCannotDeactivateSelf),
+		errors.Is(err, domain.ErrCannotResetOwnPassword),
+		errors.Is(err, domain.ErrMustChangePassword),
 		errors.Is(err, domain.ErrForbidden),
 		errors.Is(err, auth.ErrForbidden):
 		writeJSON(w, http.StatusForbidden, errorResponse{Error: err.Error()})
@@ -84,7 +87,12 @@ func writeError(w http.ResponseWriter, err error) {
 		errors.Is(err, domain.ErrTemplateItemTextTooLong),
 		errors.Is(err, domain.ErrEOLPhaseRequired),
 		errors.Is(err, domain.ErrEOLPhaseNotAllowed),
-		errors.Is(err, domain.ErrTemplateItemReorderInvalid):
+		errors.Is(err, domain.ErrTemplateItemReorderInvalid),
+		errors.Is(err, domain.ErrFullNameRequired),
+		errors.Is(err, domain.ErrEmailRequired),
+		errors.Is(err, domain.ErrPasswordTooShort),
+		errors.Is(err, domain.ErrPasswordTooWeak),
+		errors.Is(err, domain.ErrPasswordMismatch):
 		writeJSON(w, http.StatusBadRequest, errorResponse{Error: err.Error()})
 	default:
 		log.Printf("http: unhandled error: %v", err)

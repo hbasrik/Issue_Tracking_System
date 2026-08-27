@@ -33,7 +33,13 @@ func (f *loginUserRepo) GetByEmail(_ context.Context, email string) (*domain.Use
 	return &copied, nil
 }
 
-func (f *loginUserRepo) GetByID(context.Context, int) (*domain.User, error) {
+func (f *loginUserRepo) GetByID(_ context.Context, id int) (*domain.User, error) {
+	for _, user := range f.byEmail {
+		if user.ID == id {
+			copied := *user
+			return &copied, nil
+		}
+	}
 	return nil, domain.ErrNotFound
 }
 
@@ -51,6 +57,22 @@ func (f *loginUserRepo) CountActiveUsersWithPermission(context.Context, string) 
 
 func (f *loginUserRepo) CountActiveUsersWithPermissionExceptRole(context.Context, string, int) (int, error) {
 	return 0, nil
+}
+
+func (f *loginUserRepo) Create(_ context.Context, user *domain.User) (*domain.User, error) {
+	copied := *user
+	return &copied, nil
+}
+
+func (f *loginUserRepo) UpdatePassword(_ context.Context, id int, hash string, mustChange bool) error {
+	for _, u := range f.byEmail {
+		if u.ID == id {
+			u.PasswordHash = hash
+			u.MustChangePassword = mustChange
+			return nil
+		}
+	}
+	return domain.ErrNotFound
 }
 
 func hashPassword(t *testing.T, password string) string {
@@ -185,5 +207,96 @@ func TestLogin_WrongPassword_Unauthorized(t *testing.T) {
 	rec := postLogin(router, "op@karea.local", "wrong")
 	if rec.Code != http.StatusUnauthorized {
 		t.Fatalf("status = %d body %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestChangePassword_WrongCurrent_Unauthorized(t *testing.T) {
+	router := loginRouter(t, map[string]*domain.User{
+		"op@karea.local": {
+			ID:           operatorUserID,
+			Email:        "op@karea.local",
+			PasswordHash: hashPassword(t, "secret12"),
+			IsActive:     true,
+			Role:         domain.Role{Code: domain.RoleCodeOperator, IsActive: true},
+		},
+	})
+	issuer := auth.NewIssuer("test-secret", time.Hour)
+	token, err := issuer.Issue(operatorUserID, domain.RoleCodeOperator)
+	if err != nil {
+		t.Fatal(err)
+	}
+	body, _ := json.Marshal(map[string]string{
+		"current_password": "nope-nope",
+		"new_password":     "newpass12",
+		"confirm_password": "newpass12",
+	})
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/change-password", bytes.NewReader(body))
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("status = %d body %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestChangePassword_TooShort_BadRequest(t *testing.T) {
+	router := loginRouter(t, map[string]*domain.User{
+		"op@karea.local": {
+			ID:           operatorUserID,
+			Email:        "op@karea.local",
+			PasswordHash: hashPassword(t, "secret12"),
+			IsActive:     true,
+			Role:         domain.Role{Code: domain.RoleCodeOperator, IsActive: true},
+		},
+	})
+	issuer := auth.NewIssuer("test-secret", time.Hour)
+	token, err := issuer.Issue(operatorUserID, domain.RoleCodeOperator)
+	if err != nil {
+		t.Fatal(err)
+	}
+	body, _ := json.Marshal(map[string]string{
+		"current_password": "secret12",
+		"new_password":     "ab1",
+		"confirm_password": "ab1",
+	})
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/change-password", bytes.NewReader(body))
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d body %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestLogin_IncludesMustChangePassword(t *testing.T) {
+	router := loginRouter(t, map[string]*domain.User{
+		"op@karea.local": {
+			ID:                 operatorUserID,
+			Email:              "op@karea.local",
+			PasswordHash:       hashPassword(t, "secret"),
+			IsActive:           true,
+			MustChangePassword: true,
+			Role:               domain.Role{Code: domain.RoleCodeOperator, IsActive: true},
+		},
+	})
+	rec := postLogin(router, "op@karea.local", "secret")
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d body %s", rec.Code, rec.Body.String())
+	}
+	if bytes.Contains(bytes.ToLower(rec.Body.Bytes()), []byte("password_hash")) {
+		t.Fatal("login must not return password_hash")
+	}
+	var body struct {
+		User struct {
+			MustChangePassword bool `json:"MustChangePassword"`
+		} `json:"user"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+		t.Fatal(err)
+	}
+	if !body.User.MustChangePassword {
+		t.Fatal("MustChangePassword should be true")
 	}
 }

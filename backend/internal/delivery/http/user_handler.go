@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
+	"github.com/karea/backend/internal/domain"
 	"github.com/karea/backend/internal/usecase"
 )
 
@@ -59,4 +60,57 @@ func (s *server) handleUserUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, publicUser(user))
+}
+
+type createUserRequest struct {
+	FullName string `json:"full_name"`
+	Email    string `json:"email"`
+	Role     string `json:"role"`
+}
+
+// handleUserCreate inserts an active user with a generated password. The
+// plaintext is returned once; the hash is never serialized.
+func (s *server) handleUserCreate(w http.ResponseWriter, r *http.Request) {
+	if s.deps.Users == nil {
+		writeError(w, domain.ErrNotFound)
+		return
+	}
+	var req createUserRequest
+	if err := decodeJSON(r, &req); err != nil {
+		badRequest(w, "invalid request body")
+		return
+	}
+	created, err := s.deps.Users.Create(r.Context(), usecase.CreateUserInput{
+		FullName: req.FullName,
+		Email:    req.Email,
+		Role:     req.Role,
+	})
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusCreated, map[string]any{
+		"user":               publicUser(created.User),
+		"temporary_password": created.TemporaryPassword,
+	})
+}
+
+// handleUserResetPassword generates a one-time password for another user.
+func (s *server) handleUserResetPassword(w http.ResponseWriter, r *http.Request) {
+	if s.deps.Users == nil {
+		writeError(w, domain.ErrNotFound)
+		return
+	}
+	id, err := strconv.Atoi(chi.URLParam(r, "id"))
+	if err != nil || id < 1 {
+		badRequest(w, "id must be a positive integer")
+		return
+	}
+	claims, _ := ClaimsFromContext(r.Context())
+	plain, err := s.deps.Users.ResetPassword(r.Context(), claims.UserID, id)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"temporary_password": plain})
 }

@@ -91,21 +91,30 @@ func NewRouter(deps Deps) http.Handler {
 		// Public: authentication.
 		r.Post("/auth/login", s.handleLogin)
 
+		r.Group(func(r chi.Router) {
+			r.Use(RequireAuth(deps.Issuer))
+			r.Post("/auth/change-password", s.handleChangePassword)
+		})
+
 		// Development-only EoL rewind. requireDevelopment 404s before auth so
 		// a production probe cannot distinguish "exists but forbidden" from
 		// "no such route".
 		r.Group(func(r chi.Router) {
 			r.Use(s.requireDevelopment)
 			r.Use(RequireAuth(deps.Issuer))
+			r.Use(s.requirePasswordChanged)
 			r.With(permissions.RequirePermission(domain.PermissionAdminManageMasters)).
 				Post("/vehicles/{vin}/eol/reset", s.handleEOLWorkflowReset)
 		})
 
 		// Authenticated routes. Every gate below is a permission code, never a
 		// role code, so extending the role matrix is a role_permissions insert
-		// rather than a routing change (Karar 3).
+		// rather than a routing change (Karar 3). Users with
+		// must_change_password may only hit /auth/change-password (registered
+		// on the group above).
 		r.Group(func(r chi.Router) {
 			r.Use(RequireAuth(deps.Issuer))
+			r.Use(s.requirePasswordChanged)
 
 			// Read access. vehicle.view covers the vehicle record and the
 			// shop-floor reads that hang off it. Type-specific checklist and
@@ -174,7 +183,9 @@ func NewRouter(deps Deps) http.Handler {
 			r.Group(func(r chi.Router) {
 				r.Use(permissions.RequirePermission(domain.PermissionAdminManageUsers))
 				r.Get("/users", s.handleUserList)
+				r.Post("/users", s.handleUserCreate)
 				r.Patch("/users/{id}", s.handleUserUpdate)
+				r.Post("/users/{id}/reset-password", s.handleUserResetPassword)
 				r.Get("/rbac", s.handleRBACMatrix)
 				r.Post("/roles", s.handleRoleCreate)
 				r.Put("/roles/{id}/permissions", s.handleRolePermissionsPut)

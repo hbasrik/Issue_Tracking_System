@@ -23,12 +23,13 @@ type loginResponse struct {
 // its code so the API contract is unchanged now that domain.User.Role is a
 // table row rather than an enum value.
 type loginUser struct {
-	ID        int       `json:"ID"`
-	FullName  string    `json:"FullName"`
-	Email     string    `json:"Email"`
-	Role      string    `json:"Role"`
-	IsActive  bool      `json:"IsActive"`
-	CreatedAt time.Time `json:"CreatedAt"`
+	ID                 int       `json:"ID"`
+	FullName           string    `json:"FullName"`
+	Email              string    `json:"Email"`
+	Role               string    `json:"Role"`
+	IsActive           bool      `json:"IsActive"`
+	MustChangePassword bool      `json:"MustChangePassword"`
+	CreatedAt          time.Time `json:"CreatedAt"`
 }
 
 // handleLogin verifies credentials and returns a signed JWT carrying the user
@@ -75,14 +76,41 @@ func (s *server) handleLogin(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+type changePasswordRequest struct {
+	CurrentPassword string `json:"current_password"`
+	NewPassword     string `json:"new_password"`
+	ConfirmPassword string `json:"confirm_password"`
+}
+
+// handleChangePassword lets the authenticated user rotate their password.
+// It is allowed while must_change_password is set so first-login can complete.
+func (s *server) handleChangePassword(w http.ResponseWriter, r *http.Request) {
+	if s.deps.Auth == nil {
+		writeError(w, domain.ErrNotFound)
+		return
+	}
+	var req changePasswordRequest
+	if err := decodeJSON(r, &req); err != nil {
+		badRequest(w, "invalid request body")
+		return
+	}
+	claims, _ := ClaimsFromContext(r.Context())
+	if err := s.deps.Auth.ChangePassword(r.Context(), claims.UserID, req.CurrentPassword, req.NewPassword, req.ConfirmPassword); err != nil {
+		writeError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"ok": true})
+}
+
 func publicUser(user *domain.User) loginUser {
 	return loginUser{
-		ID:        user.ID,
-		FullName:  user.FullName,
-		Email:     user.Email,
-		Role:      user.Role.Code,
-		IsActive:  user.IsActive,
-		CreatedAt: user.CreatedAt,
+		ID:                 user.ID,
+		FullName:           user.FullName,
+		Email:              user.Email,
+		Role:               user.Role.Code,
+		IsActive:           user.IsActive,
+		MustChangePassword: user.MustChangePassword,
+		CreatedAt:          user.CreatedAt,
 	}
 }
 

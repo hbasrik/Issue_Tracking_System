@@ -29,7 +29,13 @@ type httpAdminUserRepo struct {
 	users map[int]*domain.User
 }
 
-func (r *httpAdminUserRepo) GetByEmail(context.Context, string) (*domain.User, error) {
+func (r *httpAdminUserRepo) GetByEmail(_ context.Context, email string) (*domain.User, error) {
+	for _, user := range r.users {
+		if user.Email == email {
+			copied := *user
+			return &copied, nil
+		}
+	}
 	return nil, domain.ErrNotFound
 }
 
@@ -93,6 +99,35 @@ func (r *httpAdminUserRepo) CountActiveUsersWithPermissionExceptRole(_ context.C
 		}
 	}
 	return n, nil
+}
+
+func (r *httpAdminUserRepo) Create(_ context.Context, user *domain.User) (*domain.User, error) {
+	for _, existing := range r.users {
+		if existing.Email == user.Email {
+			return nil, domain.ErrEmailTaken
+		}
+	}
+	id := 1
+	for existingID := range r.users {
+		if existingID >= id {
+			id = existingID + 1
+		}
+	}
+	copied := *user
+	copied.ID = id
+	r.users[id] = &copied
+	out := copied
+	return &out, nil
+}
+
+func (r *httpAdminUserRepo) UpdatePassword(_ context.Context, id int, hash string, mustChange bool) error {
+	user, ok := r.users[id]
+	if !ok {
+		return domain.ErrNotFound
+	}
+	user.PasswordHash = hash
+	user.MustChangePassword = mustChange
+	return nil
 }
 
 func httpUser(id int, role domain.Role) *domain.User {
@@ -250,5 +285,77 @@ func TestUserUpdate_DeactivateSelf_Forbidden(t *testing.T) {
 	}
 	if !bytes.Contains(rec.Body.Bytes(), []byte(domain.ErrCannotDeactivateSelf.Error())) {
 		t.Fatalf("body = %s", rec.Body.String())
+	}
+}
+
+func TestUserCreate_ReturnsTemporaryPasswordNotHash(t *testing.T) {
+	router := usersRouter(map[int]*domain.User{
+		1: httpUser(1, httpManagerRole),
+	})
+	raw, _ := json.Marshal(map[string]string{
+		"full_name": "Test Operator",
+		"email":     "temp.op@karea.local",
+		"role":      domain.RoleCodeOperator,
+	})
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/users", bytes.NewReader(raw))
+	req.Header.Set("Authorization", "Bearer "+managerToken(t, router))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("status = %d body %s", rec.Code, rec.Body.String())
+	}
+	if bytes.Contains(bytes.ToLower(rec.Body.Bytes()), []byte("password_hash")) {
+		t.Fatal("response must not contain password_hash")
+	}
+	var body struct {
+		TemporaryPassword string `json:"temporary_password"`
+		User              struct {
+			Email              string `json:"Email"`
+			MustChangePassword bool   `json:"MustChangePassword"`
+			IsActive           bool   `json:"IsActive"`
+		} `json:"user"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+		t.Fatal(err)
+	}
+	if body.TemporaryPassword == "" || !body.User.MustChangePassword || !body.User.IsActive {
+		t.Fatalf("body = %+v", body)
+	}
+	if body.User.Email != "temp.op@karea.local" {
+		t.Fatalf("email = %q", body.User.Email)
+	}
+}
+
+func TestUserCreate_DuplicateEmail(t *testing.T) {
+	existing := httpUser(1, httpManagerRole)
+	existing.Email = "taken@karea.local"
+	router := usersRouter(map[int]*domain.User{1: existing})
+	raw, _ := json.Marshal(map[string]string{
+		"full_name": "Other",
+		"email":     "taken@karea.local",
+		"role":      domain.RoleCodeOperator,
+	})
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/users", bytes.NewReader(raw))
+	req.Header.Set("Authorization", "Bearer "+managerToken(t, router))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+	if rec.Code != http.StatusConflict {
+		t.Fatalf("status = %d body %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestUserResetPassword_SelfForbidden(t *testing.T) {
+	router := usersRouter(map[int]*domain.User{
+		1: httpUser(1, httpManagerRole),
+		2: httpUser(2, httpOperatorRole),
+	})
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/users/1/reset-password", nil)
+	req.Header.Set("Authorization", "Bearer "+managerToken(t, router))
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("status = %d body %s", rec.Code, rec.Body.String())
 	}
 }
