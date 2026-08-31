@@ -34,19 +34,24 @@ export type ChecklistActorFields = {
   ApprovedAt?: string | null;
 };
 
-/** Checker first; extra reject/approve lines only when they differ. */
+/** Checker first; Onay only while passing, Red only while NOT_OK. */
 export function checklistActorLines(item: ChecklistActorFields): string[] {
   if (item.Status === 'PENDING') return [];
   const lines: string[] = [];
   const checker = formatActionStamp(item.CheckerName, item.CheckDate);
   if (checker) lines.push(checker);
-  const rejected = formatActionStamp(item.RejectedByName, item.RejectedAt);
-  if (rejected && rejected !== checker) {
-    lines.push(`Red · ${rejected}`);
+  if (item.Status === 'NOT_OK') {
+    const rejected = formatActionStamp(item.RejectedByName, item.RejectedAt);
+    if (rejected && rejected !== checker) {
+      lines.push(`Red · ${rejected}`);
+    }
+    return lines;
   }
-  const approved = formatActionStamp(item.ApprovedByName, item.ApprovedAt);
-  if (approved && approved !== checker) {
-    lines.push(`Onay · ${approved}`);
+  if (item.Status === 'OK' || item.Status === 'CONDITIONAL_OK') {
+    const approved = formatActionStamp(item.ApprovedByName, item.ApprovedAt);
+    if (approved && approved !== checker) {
+      lines.push(`Onay · ${approved}`);
+    }
   }
   return lines;
 }

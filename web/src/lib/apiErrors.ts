@@ -28,6 +28,8 @@ export function apiErrorMessage(err: unknown): string {
       return 'E-posta gerekli.';
     case 'email address is not valid':
       return 'Geçerli bir e-posta girin (alan adı uzantısı gerekli, örn. ad@sirket.com).';
+    case 'description is required for this status':
+      return 'Bu durum için açıklama gerekli.';
     case 'entity not found':
       return 'Kayıt bulunamadı.';
     case 'operation not permitted for role':

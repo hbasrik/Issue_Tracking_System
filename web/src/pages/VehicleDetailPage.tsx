@@ -334,16 +334,16 @@ export default function VehicleDetailPage() {
           <ChecklistPanel
             vin={vehicle.VIN}
             type="shipment"
-            title="Shipment checklist"
-            hint="Yes/No checkbox — saves immediately. Incomplete items block WITH_CUSTOMER / SHIPPED."
+            title="Sevk kontrol listesi"
+            hint="Evet/Hayır kutusu — hemen kaydedilir. Eksik maddeler WITH_CUSTOMER / SHIPPED geçişini engeller."
           />
         )}
         {activeTab === 'test' && has(Perm.ChecklistTestView) && (
           <ChecklistPanel
             vin={vehicle.VIN}
             type="test"
-            title="Test checklist"
-            hint="Yes/No checkbox — saves immediately. Informational quality tracking, no vehicle-status gate."
+            title="Test kontrol listesi"
+            hint="Evet/Hayır kutusu — hemen kaydedilir. Kalite kaydıdır, araç durumunu değiştirmez."
           />
         )}
         {activeTab === 'eol' && has(Perm.ChecklistEOLView) && (
@@ -362,14 +362,14 @@ export default function VehicleDetailPage() {
             style={{ borderColor: 'var(--border)' }}
           >
             <h3 className="text-lg font-semibold" style={{ color: 'var(--status-not-ok)' }}>
-              Gate blocked
+              Geçiş engellendi
             </h3>
             <p className="mt-2 text-[15px] text-[var(--text-secondary)]">
-              The following checklist items block this transition:
+              Bu geçişi şu kontrol listesi maddeleri engelliyor:
             </p>
             <ul className="mt-3 list-inside list-disc text-[15px]">
               {blockingModal.map((id) => (
-                <li key={id}>Item #{id}</li>
+                <li key={id}>Madde #{id}</li>
               ))}
             </ul>
             <button
@@ -378,7 +378,7 @@ export default function VehicleDetailPage() {
               style={{ borderColor: 'var(--border)' }}
               onClick={() => setBlockingModal(null)}
             >
-              Close
+              Kapat
             </button>
           </div>
         </div>

@@ -130,7 +130,7 @@ export function ChecklistPanel({
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-lg font-semibold">{title}</h2>
         <p className="text-[13px] text-[var(--text-secondary)]">
-          {visible.length === 0 ? '0 items' : `${done}/${visible.length} passing`}
+          {visible.length === 0 ? '0 madde' : `${done}/${visible.length} geçti`}
         </p>
       </div>
       {hint && (
@@ -139,8 +139,8 @@ export function ChecklistPanel({
       {(locked || !canEdit) && (
         <p className="mt-2 text-[13px]" style={{ color: 'var(--status-conditional-ok)' }} role="status">
           {locked
-            ? (lockHint ?? 'Complete the Branch checklist first')
-            : 'View only — checklist.edit is not granted'}
+            ? (lockHint ?? 'Önce şube kontrol listesini tamamlayın')
+            : 'Yalnızca görüntüleme — düzenleme yetkiniz yok'}
         </p>
       )}
       {error && (
@@ -178,7 +178,7 @@ export function ChecklistPanel({
       </ul>
       {visible.length === 0 && !error && (
         <p className="mt-3 text-[13px] text-[var(--text-secondary)]">
-          No items for this stage
+          Bu aşamada madde yok
         </p>
       )}
     </div>
@@ -197,6 +197,7 @@ function EolItemRow({
   disabled?: boolean;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
+  const [fileName, setFileName] = useState('');
   const savedStatus = (EOL_STATUSES as readonly string[]).includes(item.Status)
     ? (item.Status as EolStatus)
     : '';
@@ -218,6 +219,10 @@ function EolItemRow({
       setError('OK, NOT_OK, REWORK veya CONDITIONAL_OK seçin');
       return;
     }
+    if (needsDescription(status) && !desc.trim()) {
+      setError('Bu durum için açıklama gerekli');
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
@@ -230,6 +235,7 @@ function EolItemRow({
         }
         await api.uploadMedia('CHECKLIST_ITEM_PROGRESS', String(progressId), file);
         if (fileRef.current) fileRef.current.value = '';
+        setFileName('');
       }
       await onSaved();
     } catch (err) {
@@ -285,21 +291,31 @@ function EolItemRow({
           onChange={(e) => setDesc(e.target.value)}
           required
           disabled={disabled}
-          placeholder="Description required for this status"
+          placeholder="Bu durum için açıklama zorunlu"
           className="mt-2 w-full max-w-full rounded-lg border bg-[var(--bg-page)] px-3 py-2 text-[13px]"
           style={{ borderColor: 'var(--status-not-ok)', minHeight: 64 }}
         />
       )}
       <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
         <label className="flex min-h-touch flex-wrap items-center gap-2 text-[13px] text-[var(--text-secondary)]">
-          Photo
+          Fotoğraf
           <input
             ref={fileRef}
             type="file"
             accept="image/*"
             disabled={disabled}
-            className="max-w-full text-[13px]"
+            className="sr-only"
+            onChange={(e) => setFileName(e.target.files?.[0]?.name ?? '')}
           />
+          <span
+            className="inline-flex min-h-touch cursor-pointer items-center rounded-lg border px-3 text-[13px]"
+            style={{ borderColor: 'var(--border)', color: 'var(--text-primary)' }}
+          >
+            Dosya seç
+          </span>
+          {fileName ? (
+            <span className="max-w-[12rem] truncate">{fileName}</span>
+          ) : null}
         </label>
         <button
           type="button"
@@ -307,7 +323,7 @@ function EolItemRow({
           onClick={() => void save()}
           className="min-h-touch rounded-lg bg-[var(--accent)] px-4 text-[13px] text-white disabled:opacity-60"
         >
-          {busy ? 'Saving…' : 'Save'}
+          {busy ? 'Kaydediliyor…' : 'Kaydet'}
         </button>
       </div>
       {error && (
@@ -381,7 +397,7 @@ function YesNoItemRow({
             </span>
             {item.ItemText}
             <span className="ml-2 text-[13px] text-[var(--text-secondary)]">
-              {yes ? 'Yes (OK)' : 'No (NOT_OK)'}
+              {yes ? 'Evet (OK)' : 'Hayır (NOT_OK)'}
             </span>
           </span>
         </label>

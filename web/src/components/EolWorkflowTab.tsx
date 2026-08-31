@@ -52,7 +52,7 @@ export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
   async function resetWorkflow() {
     if (
       !window.confirm(
-        'Reset this vehicle’s EoL workflow to Branch / IN_PRODUCTION? Test-only — not available outside development.',
+        'Bu aracın EoL iş akışını Şube / IN_PRODUCTION durumuna sıfırla? Yalnızca geliştirme — production’da yok.',
       )
     ) {
       return;
@@ -87,7 +87,7 @@ export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
         !view.depot_release.at
       ) {
         setWarning(
-          `shipped with ${view.branch_open_issue_count_at_shipment} open issue(s) still unresolved`,
+          `sevk edildi; ${view.branch_open_issue_count_at_shipment} açık sorun hâlâ çözülmedi`,
         );
       }
     } catch (err) {
@@ -108,7 +108,7 @@ export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
       if (out.warning || out.open_issue_count > 0) {
         setWarning(
           out.warning ||
-            `shipped with ${out.open_issue_count} open issue(s) still unresolved`,
+            `sevk edildi; ${out.open_issue_count} açık sorun hâlâ çözülmedi`,
         );
       } else {
         setWarning(null);
@@ -151,7 +151,7 @@ export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
     );
   }
   if (!workflow) {
-    return <p className="text-[var(--text-secondary)]">Loading EoL…</p>;
+    return <p className="text-[var(--text-secondary)]">EoL yükleniyor…</p>;
   }
 
   const currentIndex = STAGE_ORDER.indexOf(stepperStage(workflow.current_stage));
@@ -202,12 +202,12 @@ export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
         className="rounded-xl border bg-[var(--bg-surface-1)] p-4 sm:p-5"
         style={{ borderColor: 'var(--border)' }}
       >
-        <h2 className="text-lg font-semibold">EoL workflow</h2>
+        <h2 className="text-lg font-semibold">EoL iş akışı</h2>
         {import.meta.env.DEV && (
           <div className="mt-3 rounded-lg border px-3 py-2" style={{ borderColor: 'var(--status-conditional-ok)' }}>
             <p className="text-[13px]" style={{ color: 'var(--status-conditional-ok)' }}>
-              Test-only tool — resets EoL to Branch and vehicle status to
-              IN_PRODUCTION. Hidden and 404 outside APP_ENV=development.
+              Yalnızca geliştirme — EoL’u Şube’ye ve araç durumunu
+              IN_PRODUCTION’a sıfırlar. APP_ENV=development dışında gizli ve 404.
             </p>
             <button
               type="button"
@@ -216,7 +216,7 @@ export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
               className="mt-2 min-h-touch rounded-lg border px-3 text-[13px] disabled:opacity-60"
               style={{ borderColor: 'var(--border)' }}
             >
-              Reset EoL Workflow
+              EoL iş akışını sıfırla
             </button>
           </div>
         )}
@@ -266,7 +266,7 @@ export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
           vin={vin}
           type="eol"
           eolPhase="BRANCH"
-          title="Branch checklist"
+          title="Şube kontrol listesi"
           items={eolItems}
           onReload={load}
         />
@@ -287,11 +287,11 @@ export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
           vin={vin}
           type="eol"
           eolPhase="DEPOT"
-          title="Depot checklist"
+          title="Depo kontrol listesi"
           items={eolItems}
           onReload={load}
           locked={depotLocked}
-          lockHint="Complete the Branch checklist first"
+          lockHint="Önce şube kontrol listesini tamamlayın"
         />
       </StageCard>
 
@@ -308,16 +308,16 @@ export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
             style={{ borderColor: 'var(--border)' }}
           >
             <h3 className="text-lg font-semibold" style={{ color: 'var(--status-not-ok)' }}>
-              Depot release blocked
+              Depo çıkışı engellendi
             </h3>
             <p className="mt-2 text-[15px] text-[var(--text-secondary)]">
-              Open issues must be closed before release:
+              Serbest bırakmadan önce açık sorunlar kapatılmalı:
             </p>
             <ul className="mt-3 space-y-2 text-[15px]">
-              {blocking.length === 0 && <li>No issue details returned</li>}
+              {blocking.length === 0 && <li>Sorun detayı dönmedi</li>}
               {blocking.map((issue) => (
                 <li key={issue.id} className="flex items-center justify-between gap-3">
-                  <span>Issue #{issue.id}</span>
+                  <span>Sorun #{issue.id}</span>
                   <span className="flex items-center gap-2 text-[13px] text-[var(--text-secondary)]">
                     <SeverityIndicator severity={issue.severity} />
                     <StatusBadge kind="issue" value={issue.status} />
@@ -331,7 +331,7 @@ export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
               style={{ borderColor: 'var(--border)' }}
               onClick={() => setBlocking(null)}
             >
-              Close
+              Kapat
             </button>
           </div>
         </div>

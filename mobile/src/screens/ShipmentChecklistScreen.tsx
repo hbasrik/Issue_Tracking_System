@@ -177,10 +177,10 @@ export default function ShipmentChecklistScreen() {
           label="Sevk Onayına Gönder"
           onPress={() => {
             if (!allDone) {
-              setError(`${remaining} items remaining — complete 43/43 before submit`);
+              setError(`${remaining} madde kaldı — göndermeden önce tüm maddeleri tamamlayın`);
             } else {
               setError(
-                'Operator marks items only; WITH_CUSTOMER/SHIPPED status is set by Manager on web',
+                'Operatör yalnızca maddeleri işaretler; WITH_CUSTOMER/SHIPPED durumunu yönetici web panelinden verir',
               );
             }
           }}

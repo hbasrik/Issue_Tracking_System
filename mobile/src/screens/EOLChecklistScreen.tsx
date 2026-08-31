@@ -147,7 +147,7 @@ export default function EOLChecklistScreen() {
       return;
     }
     if (needsDesc(d.status as ChecklistItem['Status']) && !d.desc.trim()) {
-      setError('Description required for non-OK statuses');
+      setError('Bu durum için açıklama gerekli');
       return;
     }
     setBusy(true);
@@ -290,7 +290,7 @@ export default function EOLChecklistScreen() {
               ) : null}
               <View style={{ marginTop: 10 }}>
                 <PrimaryButton
-                  label={busy ? 'Saving…' : 'Save item'}
+                  label={busy ? 'Kaydediliyor…' : 'Kaydet'}
                   onPress={() => saveItem(item)}
                   disabled={busy}
                 />
