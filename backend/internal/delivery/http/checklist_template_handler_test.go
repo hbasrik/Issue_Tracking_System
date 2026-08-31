@@ -175,7 +175,7 @@ func newChecklistTemplateRouter(checklists repository.ChecklistProgressRepositor
 	router := apphttp.NewRouter(apphttp.Deps{
 		Issuer:     issuer,
 		Roles:      newFakeRoleRepo(),
-		Checklists: usecase.NewChecklistResultRecorder(nil, checklists),
+		Checklists: usecase.NewChecklistResultRecorder(nil, checklists, nil, nil),
 	})
 	return router, issuer
 }

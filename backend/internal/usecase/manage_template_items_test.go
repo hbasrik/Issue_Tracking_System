@@ -139,7 +139,7 @@ func (f *templateCatalogueFake) CountProgressVINs(_ context.Context, itemID int)
 
 func TestCreateTemplateItem_AppendsActiveEOLItem(t *testing.T) {
 	fake := newTemplateCatalogueFake()
-	svc := NewChecklistResultRecorder(nil, fake)
+	svc := NewChecklistResultRecorder(nil, fake, nil, nil)
 	depot := domain.EOLItemPhaseDepot
 
 	got, err := svc.CreateTemplateItem(context.Background(), CreateTemplateItemInput{
@@ -160,7 +160,7 @@ func TestCreateTemplateItem_AppendsActiveEOLItem(t *testing.T) {
 
 func TestCreateTemplateItem_RejectsPhaseOnTest(t *testing.T) {
 	fake := newTemplateCatalogueFake()
-	svc := NewChecklistResultRecorder(nil, fake)
+	svc := NewChecklistResultRecorder(nil, fake, nil, nil)
 	branch := domain.EOLItemPhaseBranch
 	_, err := svc.CreateTemplateItem(context.Background(), CreateTemplateItemInput{
 		TemplateID: 2,
@@ -174,7 +174,7 @@ func TestCreateTemplateItem_RejectsPhaseOnTest(t *testing.T) {
 
 func TestUpdateTemplateItem_Deactivates(t *testing.T) {
 	fake := newTemplateCatalogueFake()
-	svc := NewChecklistResultRecorder(nil, fake)
+	svc := NewChecklistResultRecorder(nil, fake, nil, nil)
 	off := false
 	got, err := svc.UpdateTemplateItem(context.Background(), UpdateTemplateItemInput{
 		TemplateID: 1,
@@ -191,7 +191,7 @@ func TestUpdateTemplateItem_Deactivates(t *testing.T) {
 
 func TestDeleteTemplateItem_InUse(t *testing.T) {
 	fake := newTemplateCatalogueFake()
-	svc := NewChecklistResultRecorder(nil, fake)
+	svc := NewChecklistResultRecorder(nil, fake, nil, nil)
 	err := svc.DeleteTemplateItem(context.Background(), 1, 10)
 	var inUse *domain.TemplateItemInUseError
 	if !errors.As(err, &inUse) || inUse.VehicleCount != 3 {
@@ -204,7 +204,7 @@ func TestDeleteTemplateItem_InUse(t *testing.T) {
 
 func TestDeleteTemplateItem_Unused(t *testing.T) {
 	fake := newTemplateCatalogueFake()
-	svc := NewChecklistResultRecorder(nil, fake)
+	svc := NewChecklistResultRecorder(nil, fake, nil, nil)
 	if err := svc.DeleteTemplateItem(context.Background(), 1, 11); err != nil {
 		t.Fatalf("delete unused: %v", err)
 	}
@@ -215,7 +215,7 @@ func TestDeleteTemplateItem_Unused(t *testing.T) {
 
 func TestReorderTemplateItems(t *testing.T) {
 	fake := newTemplateCatalogueFake()
-	svc := NewChecklistResultRecorder(nil, fake)
+	svc := NewChecklistResultRecorder(nil, fake, nil, nil)
 	if err := svc.ReorderTemplateItems(context.Background(), 1, []int{11, 10}); err != nil {
 		t.Fatalf("reorder: %v", err)
 	}
@@ -227,7 +227,7 @@ func TestReorderTemplateItems(t *testing.T) {
 
 func TestReorderTemplateItems_RejectsPartialList(t *testing.T) {
 	fake := newTemplateCatalogueFake()
-	svc := NewChecklistResultRecorder(nil, fake)
+	svc := NewChecklistResultRecorder(nil, fake, nil, nil)
 	err := svc.ReorderTemplateItems(context.Background(), 1, []int{10})
 	if !errors.Is(err, domain.ErrTemplateItemReorderInvalid) {
 		t.Fatalf("err = %v", err)

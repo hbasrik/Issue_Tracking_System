@@ -14,14 +14,25 @@ import (
 type ChecklistResultRecorder struct {
 	vehicles  repository.VehicleRepository
 	checklist repository.ChecklistProgressRepository
+	audit     repository.AuditRepository
+	uow       repository.TransactionManager
 }
 
 // NewChecklistResultRecorder wires the usecase with its repositories.
+// audit and uow may be nil (template-admin tests); production wires both
+// so every item result is appended as CHECKLIST_ITEM_UPDATE.
 func NewChecklistResultRecorder(
 	vehicles repository.VehicleRepository,
 	checklist repository.ChecklistProgressRepository,
+	audit repository.AuditRepository,
+	uow repository.TransactionManager,
 ) *ChecklistResultRecorder {
-	return &ChecklistResultRecorder{vehicles: vehicles, checklist: checklist}
+	return &ChecklistResultRecorder{
+		vehicles:  vehicles,
+		checklist: checklist,
+		audit:     audit,
+		uow:       uow,
+	}
 }
 
 // RecordChecklistInput is the request to record one checklist item result.
@@ -83,7 +94,30 @@ func (r *ChecklistResultRecorder) Record(ctx context.Context, in RecordChecklist
 		ConditionalDesc: in.ConditionalDesc,
 		RejectedDesc:    in.RejectedDesc,
 	}
-	if err := r.checklist.SaveResult(ctx, result); err != nil {
+
+	oldStatus := domain.CheckStatusPending
+	existing, err := r.checklist.ListByVINAndType(ctx, in.VIN, in.ChecklistType)
+	if err != nil {
+		return nil, err
+	}
+	for _, row := range existing {
+		if row.CheckItemID == in.ItemID {
+			oldStatus = row.CheckStatus
+			break
+		}
+	}
+
+	save := func(ctx context.Context) error {
+		if err := r.checklist.SaveResult(ctx, result); err != nil {
+			return err
+		}
+		return r.appendChecklistAudit(ctx, in, oldStatus)
+	}
+	if r.uow != nil {
+		if err := r.uow.WithinTx(ctx, save); err != nil {
+			return nil, err
+		}
+	} else if err := save(ctx); err != nil {
 		return nil, err
 	}
 
@@ -151,6 +185,24 @@ func (r *ChecklistResultRecorder) ListForVehicle(ctx context.Context, vin string
 	}
 
 	return r.checklist.ListItemsWithProgress(ctx, vin, checklistType, resolved)
+}
+
+func (r *ChecklistResultRecorder) appendChecklistAudit(ctx context.Context, in RecordChecklistInput, old domain.CheckStatus) error {
+	if r == nil || r.audit == nil {
+		return nil
+	}
+	actor := in.CheckerID
+	return r.audit.Append(ctx, domain.AuditLog{
+		VIN:         in.VIN,
+		EventType:   domain.AuditEventChecklistItemUpdate,
+		OldValue:    string(old),
+		NewValue:    string(in.Status),
+		PerformedBy: &actor,
+		Metadata: map[string]any{
+			"item_id":        in.ItemID,
+			"checklist_type": string(in.ChecklistType),
+		},
+	})
 }
 
 // ListTemplates returns every checklist template with a live item count for

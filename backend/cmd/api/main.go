@@ -43,7 +43,7 @@ func main() {
 	issuer := auth.NewIssuer(cfg.JWTSecret, 24*time.Hour)
 	mediaStore := storage.NewLocalDisk(cfg.UploadDir)
 
-	checklists := usecase.NewChecklistResultRecorder(vehicleRepo, checklistRepo)
+	checklists := usecase.NewChecklistResultRecorder(vehicleRepo, checklistRepo, auditRepo, uow)
 	router := deliveryhttp.NewRouter(deliveryhttp.Deps{
 		Issuer:             issuer,
 		Auth:               usecase.NewAuthenticator(userRepo),

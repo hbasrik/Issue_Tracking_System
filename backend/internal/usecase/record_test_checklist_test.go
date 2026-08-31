@@ -26,7 +26,7 @@ func newTestChecklistFixture(t *testing.T) (*usecase.ChecklistResultRecorder, *f
 		{VIN: testChecklistVIN, ChecklistType: domain.ChecklistTypeTest, CheckItemID: 1, CheckStatus: domain.CheckStatusPending},
 		{VIN: testChecklistVIN, ChecklistType: domain.ChecklistTypeTest, CheckItemID: 2, CheckStatus: domain.CheckStatusPending},
 	}
-	return usecase.NewChecklistResultRecorder(vehicles, checklist), vehicles
+	return usecase.NewChecklistResultRecorder(vehicles, checklist, nil, nil), vehicles
 }
 
 // TestRecordChecklistResult_TestItemDoesNotChangeVehicleStatus proves the Karar

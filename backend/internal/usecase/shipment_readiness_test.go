@@ -59,7 +59,7 @@ func TestShipmentReadiness_ListsIncompleteChecklistsAndOpenIssues(t *testing.T) 
 
 	reader := usecase.NewShipmentReadinessReader(
 		vehicles,
-		usecase.NewChecklistResultRecorder(vehicles, checklists),
+		usecase.NewChecklistResultRecorder(vehicles, checklists, nil, nil),
 		issues,
 	)
 	got, err := reader.ForVIN(context.Background(), vin)
@@ -96,7 +96,7 @@ func TestShipmentReadiness_ShippedIsReady(t *testing.T) {
 	}
 	reader := usecase.NewShipmentReadinessReader(
 		vehicles,
-		usecase.NewChecklistResultRecorder(vehicles, newFakeChecklistRepo()),
+		usecase.NewChecklistResultRecorder(vehicles, newFakeChecklistRepo(), nil, nil),
 		newFakeIssueRepo(),
 	)
 	got, err := reader.ForVIN(context.Background(), vin)

@@ -27,7 +27,7 @@ func TestRecordChecklistResult_ShipmentGateBlocksTransition(t *testing.T) {
 		{VIN: vin, ChecklistType: domain.ChecklistTypeShipment, CheckItemID: 3, CheckStatus: domain.CheckStatusNotOK, RejectedDesc: "seal failed"},
 	}
 
-	rec := usecase.NewChecklistResultRecorder(vehicles, checklist)
+	rec := usecase.NewChecklistResultRecorder(vehicles, checklist, nil, nil)
 	ctx := context.Background()
 
 	// Operator re-confirms item 1 as OK and requests the gate exit. Because
@@ -73,7 +73,7 @@ func TestRecordChecklistResult_ShipmentGateOpensTransition(t *testing.T) {
 		{VIN: vin, ChecklistType: domain.ChecklistTypeShipment, CheckItemID: 2, CheckStatus: domain.CheckStatusPending},
 	}
 
-	rec := usecase.NewChecklistResultRecorder(vehicles, checklist)
+	rec := usecase.NewChecklistResultRecorder(vehicles, checklist, nil, nil)
 	ctx := context.Background()
 
 	out, err := rec.Record(ctx, usecase.RecordChecklistInput{
@@ -109,7 +109,7 @@ func TestRecordChecklistResult_MissingDescriptionRejected(t *testing.T) {
 		{VIN: vin, ChecklistType: domain.ChecklistTypeEOL, CheckItemID: 1, CheckStatus: domain.CheckStatusPending},
 	}
 
-	rec := usecase.NewChecklistResultRecorder(vehicles, checklist)
+	rec := usecase.NewChecklistResultRecorder(vehicles, checklist, nil, nil)
 
 	_, err := rec.Record(context.Background(), usecase.RecordChecklistInput{
 		VIN:           vin,
@@ -135,7 +135,7 @@ func TestRecordChecklistResult_ShipmentItemDoesNotRequireDescription(t *testing.
 		{VIN: vin, ChecklistType: domain.ChecklistTypeShipment, CheckItemID: 1, CheckStatus: domain.CheckStatusPending},
 	}
 
-	rec := usecase.NewChecklistResultRecorder(vehicles, checklist)
+	rec := usecase.NewChecklistResultRecorder(vehicles, checklist, nil, nil)
 	_, err := rec.Record(context.Background(), usecase.RecordChecklistInput{
 		VIN:           vin,
 		ChecklistType: domain.ChecklistTypeShipment,
@@ -165,7 +165,7 @@ func TestRecordChecklistResult_DepotLockedUntilBranchPassing(t *testing.T) {
 		{ItemID: 10, Status: domain.CheckStatusPending, EolPhase: &depot},
 	}
 
-	rec := usecase.NewChecklistResultRecorder(vehicles, checklist)
+	rec := usecase.NewChecklistResultRecorder(vehicles, checklist, nil, nil)
 	_, err := rec.Record(context.Background(), usecase.RecordChecklistInput{
 		VIN:           vin,
 		ChecklistType: domain.ChecklistTypeEOL,
@@ -195,7 +195,7 @@ func TestRecordChecklistResult_DepotUnlocksWhenBranchPassing(t *testing.T) {
 		{ItemID: 10, Status: domain.CheckStatusPending, EolPhase: &depot},
 	}
 
-	rec := usecase.NewChecklistResultRecorder(vehicles, checklist)
+	rec := usecase.NewChecklistResultRecorder(vehicles, checklist, nil, nil)
 	_, err := rec.Record(context.Background(), usecase.RecordChecklistInput{
 		VIN:           vin,
 		ChecklistType: domain.ChecklistTypeEOL,
@@ -205,5 +205,47 @@ func TestRecordChecklistResult_DepotUnlocksWhenBranchPassing(t *testing.T) {
 	})
 	if err != nil {
 		t.Fatalf("depot item should be writable once branch is passing, got %v", err)
+	}
+}
+
+func TestRecordChecklistResult_WritesChecklistItemUpdateAudit(t *testing.T) {
+	const vin = "1HGCM82633A004399"
+	vehicles := newFakeVehicleRepo()
+	vehicles.vehicles[vin] = &domain.Vehicle{
+		VIN:                 vin,
+		CurrentGlobalStatus: domain.VehicleStatusInProduction,
+	}
+	checklist := newFakeChecklistRepo()
+	checklist.rows[vin] = []domain.ChecklistProgress{
+		{VIN: vin, ChecklistType: domain.ChecklistTypeEOL, CheckItemID: 1, CheckStatus: domain.CheckStatusOK},
+	}
+	audit := newFakeAuditRepo()
+	rec := usecase.NewChecklistResultRecorder(vehicles, checklist, audit, &passthroughFakeUoW{})
+	_, err := rec.Record(context.Background(), usecase.RecordChecklistInput{
+		VIN:           vin,
+		ChecklistType: domain.ChecklistTypeEOL,
+		ItemID:        1,
+		Status:        domain.CheckStatusNotOK,
+		CheckerID:     3,
+		RejectedDesc:  "found defective after OK",
+	})
+	if err != nil {
+		t.Fatalf("Record: %v", err)
+	}
+	if len(audit.entries) != 1 {
+		t.Fatalf("audit entries = %d, want 1", len(audit.entries))
+	}
+	e := audit.entries[0]
+	if e.EventType != domain.AuditEventChecklistItemUpdate {
+		t.Errorf("event = %q, want CHECKLIST_ITEM_UPDATE", e.EventType)
+	}
+	if e.OldValue != string(domain.CheckStatusOK) || e.NewValue != string(domain.CheckStatusNotOK) {
+		t.Errorf("old/new = %q → %q", e.OldValue, e.NewValue)
+	}
+	if e.PerformedBy == nil || *e.PerformedBy != 3 {
+		t.Errorf("performed_by = %v", e.PerformedBy)
+	}
+	if e.Metadata["item_id"] != 1 {
+		t.Errorf("metadata item_id = %v", e.Metadata["item_id"])
 	}
 }

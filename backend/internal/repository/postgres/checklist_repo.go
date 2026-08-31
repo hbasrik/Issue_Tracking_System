@@ -130,24 +130,23 @@ func (r *ChecklistProgressRepo) ListItemsWithProgress(ctx context.Context, vin s
 	return out, rows.Err()
 }
 
-// SaveResult updates a pre-materialized checklist progress row. The mandatory
-// description columns are also enforced by the chk_description_required_by_status
-// database constraint (EoL only). Depot sequencing is enforced by
-// trg_enforce_eol_depot_after_branch; RAISE EXCEPTION is mapped so the API
-// returns the trigger message instead of a generic 500.
+// SaveResult updates a pre-materialized checklist progress row. Actor stamps
+// follow the new status: OK/CONDITIONAL_OK write approved_*; NOT_OK writes
+// rejected_*; any other status clears both so a later NOT_OK cannot keep an
+// older Onay stamp. Description CHECK and depot sequencing stay in the DB.
 func (r *ChecklistProgressRepo) SaveResult(ctx context.Context, result domain.ChecklistProgress) error {
-	tag, err := r.pool.Exec(ctx,
+	tag, err := executor(ctx, r.pool).Exec(ctx,
 		`UPDATE checklist_item_progress
 		 SET check_status = $3::check_status_enum,
-		     checker_id = $4,
+		     checker_id = $4::int,
 		     check_date = now(),
 		     rework_desc = NULLIF($5, ''),
 		     conditional_desc = NULLIF($6, ''),
 		     rejected_desc = NULLIF($7, ''),
-		     rejected_by = CASE WHEN $3::check_status_enum = 'NOT_OK' THEN $4 ELSE rejected_by END,
-		     rejected_date = CASE WHEN $3::check_status_enum = 'NOT_OK' THEN now() ELSE rejected_date END,
-		     approved_by = CASE WHEN $3::check_status_enum IN ('OK', 'CONDITIONAL_OK') THEN $4 ELSE approved_by END,
-		     approved_date = CASE WHEN $3::check_status_enum IN ('OK', 'CONDITIONAL_OK') THEN now() ELSE approved_date END
+		     rejected_by = CASE WHEN $3::check_status_enum = 'NOT_OK' THEN $4::int ELSE NULL END,
+		     rejected_date = CASE WHEN $3::check_status_enum = 'NOT_OK' THEN now() ELSE NULL END,
+		     approved_by = CASE WHEN $3::check_status_enum IN ('OK', 'CONDITIONAL_OK') THEN $4::int ELSE NULL END,
+		     approved_date = CASE WHEN $3::check_status_enum IN ('OK', 'CONDITIONAL_OK') THEN now() ELSE NULL END
 		 WHERE vin = $1 AND check_item_id = $2 AND checklist_type = $8`,
 		result.VIN, result.CheckItemID, string(result.CheckStatus), result.CheckerID,
 		result.ReworkDesc, result.ConditionalDesc, result.RejectedDesc, string(result.ChecklistType))
