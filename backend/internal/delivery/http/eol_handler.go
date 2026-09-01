@@ -23,13 +23,27 @@ func (s *server) handleEOLBranchShip(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, out)
 }
 
-// handleEOLDepotRelease performs EOL stage 2: hard-block on open issues,
-// then complete the workflow and mark the vehicle SHIPPED.
+// handleEOLDepotRelease performs EOL stage 2: hard-block on open issues and
+// depot EoL items, then completes the workflow while the vehicle stays
+// IN_WAREHOUSE.
 func (s *server) handleEOLDepotRelease(w http.ResponseWriter, r *http.Request) {
 	vin := chi.URLParam(r, "vin")
 	claims, _ := ClaimsFromContext(r.Context())
 
 	out, err := s.deps.EOLDepotRelease.Release(r.Context(), vin, claims.UserID)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, out)
+}
+
+// handleEOLDeliver marks the vehicle delivered after depot release.
+func (s *server) handleEOLDeliver(w http.ResponseWriter, r *http.Request) {
+	vin := chi.URLParam(r, "vin")
+	claims, _ := ClaimsFromContext(r.Context())
+
+	out, err := s.deps.EOLDeliver.Deliver(r.Context(), vin, claims.UserID)
 	if err != nil {
 		writeError(w, err)
 		return

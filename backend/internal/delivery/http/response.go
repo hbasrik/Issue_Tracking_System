@@ -15,9 +15,11 @@ import (
 // the UI can list it (FR-3.7): checklist item IDs for the shipment gate, or
 // the open issues for the EOL depot-release gate.
 type errorResponse struct {
-	Error           string                 `json:"error"`
-	BlockingItemIDs []int                  `json:"blocking_item_ids,omitempty"`
-	BlockingIssues  []domain.BlockingIssue `json:"blocking_issues,omitempty"`
+	Error               string                      `json:"error"`
+	BlockingItemIDs     []int                       `json:"blocking_item_ids,omitempty"`
+	BlockingIssues      []domain.BlockingIssue      `json:"blocking_issues,omitempty"`
+	ChecklistBlockers   []domain.EOLChecklistBlocker `json:"checklist_blockers,omitempty"`
+	DepotItemsRemaining int                         `json:"depot_items_remaining,omitempty"`
 }
 
 // writeJSON serializes v as JSON with the given status code.
@@ -37,6 +39,7 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 func writeError(w http.ResponseWriter, err error) {
 	var gate *domain.GateBlockedError
 	var depot *domain.DepotReleaseBlockedError
+	var branchShip *domain.EOLBranchShipBlockedError
 	var rejected *domain.DatabaseRejectedError
 	var itemInUse *domain.TemplateItemInUseError
 	var emailDomain *domain.EmailDomainNotAllowedError
@@ -47,10 +50,16 @@ func writeError(w http.ResponseWriter, err error) {
 			Error:           gate.Error(),
 			BlockingItemIDs: gate.BlockingItemIDs,
 		})
+	case errors.As(err, &branchShip):
+		writeJSON(w, http.StatusConflict, errorResponse{
+			Error:             branchShip.Error(),
+			ChecklistBlockers: branchShip.Blockers,
+		})
 	case errors.As(err, &depot):
 		writeJSON(w, http.StatusConflict, errorResponse{
-			Error:          depot.Error(),
-			BlockingIssues: depot.BlockingIssues,
+			Error:               depot.Error(),
+			BlockingIssues:      depot.BlockingIssues,
+			DepotItemsRemaining: depot.DepotItemsRemaining,
 		})
 	case errors.As(err, &rejected):
 		writeJSON(w, http.StatusConflict, errorResponse{Error: rejected.Error()})

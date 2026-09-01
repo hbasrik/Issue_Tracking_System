@@ -38,6 +38,7 @@ type Deps struct {
 	EOLWorkflow        *usecase.EOLWorkflowReader
 	EOLBranchShip      *usecase.EOLBranchShipper
 	EOLDepotRelease    *usecase.EOLDepotReleaser
+	EOLDeliver         *usecase.EOLDeliverer
 	EOLDocumentApprove *usecase.EOLDocumentApprover
 	EOLReset           *usecase.EOLWorkflowResetter
 	ShipmentReadiness  *usecase.ShipmentReadinessReader
@@ -207,6 +208,8 @@ func NewRouter(deps Deps) http.Handler {
 				Post("/vehicles/{vin}/eol/branch-ship", s.handleEOLBranchShip)
 			r.With(permissions.RequirePermission(domain.PermissionEOLDepotRelease)).
 				Post("/vehicles/{vin}/eol/depot-release", s.handleEOLDepotRelease)
+			r.With(permissions.RequirePermission(domain.PermissionEOLDeliver)).
+				Post("/vehicles/{vin}/eol/deliver", s.handleEOLDeliver)
 			r.With(permissions.RequirePermission(domain.PermissionEOLDocumentApprove)).
 				Post("/vehicles/{vin}/eol/document-approve", s.handleEOLDocumentApprove)
 		})
