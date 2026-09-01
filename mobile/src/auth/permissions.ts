@@ -14,4 +14,7 @@ export const Perm = {
   IssueTransitionProgress: 'issue.transition.progress',
   IssueTransitionApprove: 'issue.transition.approve',
   IssueTransitionConditionalApprove: 'issue.transition.conditional_approve',
+  EOLBranchShip: 'eol.branch_ship',
+  EOLDepotRelease: 'eol.depot_release',
+  EOLDeliver: 'eol.deliver',
 } as const;

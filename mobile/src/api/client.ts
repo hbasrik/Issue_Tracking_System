@@ -186,6 +186,7 @@ export interface EOLWorkflowView {
   branch_ship: EOLStageRecord;
   depot_release: EOLStageRecord;
   document_approve: EOLStageRecord;
+  deliver: EOLStageRecord;
   branch_open_issue_count_at_shipment: number | null;
 }
 
@@ -355,6 +356,32 @@ export const api = {
    */
   getEOLWorkflow(vin: string) {
     return request<EOLWorkflowView>(`/vehicles/${encodeURIComponent(vin)}/eol`);
+  },
+
+  eolBranchShip(vin: string) {
+    return request<{
+      vin: string;
+      current_stage: EOLStage;
+      vehicle_status: string;
+      open_issue_count: number;
+      warning?: string;
+    }>(`/vehicles/${encodeURIComponent(vin)}/eol/branch-ship`, { method: 'POST' });
+  },
+
+  eolDepotRelease(vin: string) {
+    return request<{
+      vin: string;
+      current_stage: EOLStage;
+      vehicle_status: string;
+    }>(`/vehicles/${encodeURIComponent(vin)}/eol/depot-release`, { method: 'POST' });
+  },
+
+  eolDeliver(vin: string) {
+    return request<{
+      vin: string;
+      current_stage: EOLStage;
+      vehicle_status: string;
+    }>(`/vehicles/${encodeURIComponent(vin)}/eol/deliver`, { method: 'POST' });
   },
 
   recordChecklist(
