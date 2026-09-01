@@ -17,8 +17,9 @@
     "noFallthroughCasesInSwitch": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["src/*"],
+      "@karea/i18n": ["../shared/i18n/index.ts"]
     }
   },
-  "include": ["src"]
+  "include": ["src", "../shared/i18n"]
 }

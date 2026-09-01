@@ -18,6 +18,11 @@ export default defineConfig(({ mode }) => {
   return {
     envDir: repoRoot,
     plugins: [react()],
+    resolve: {
+      alias: {
+        '@karea/i18n': path.resolve(repoRoot, 'shared/i18n'),
+      },
+    },
     server: {
       port: 5173,
       proxy: {
