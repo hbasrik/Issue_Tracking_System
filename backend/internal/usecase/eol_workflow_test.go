@@ -20,6 +20,7 @@ type eolFixture struct {
 
 	branchShip      *usecase.EOLBranchShipper
 	depotRelease    *usecase.EOLDepotReleaser
+	deliver         *usecase.EOLDeliverer
 	documentApprove *usecase.EOLDocumentApprover
 	reset           *usecase.EOLWorkflowResetter
 }
@@ -36,15 +37,18 @@ func newEOLFixture(t *testing.T) *eolFixture {
 	workflow := newFakeEOLWorkflowRepo()
 	workflow.seed(eolTestVIN)
 	audit := newFakeAuditRepo()
+	checklist := newFakeChecklistRepo()
 	uow := &passthroughFakeUoW{}
+	checklists := usecase.NewChecklistResultRecorder(vehicles, checklist, audit, uow)
 
 	return &eolFixture{
 		vehicles:        vehicles,
 		issues:          issues,
 		workflow:        workflow,
 		audit:           audit,
-		branchShip:      usecase.NewEOLBranchShipper(vehicles, issues, workflow, uow),
-		depotRelease:    usecase.NewEOLDepotReleaser(vehicles, issues, workflow, uow),
+		branchShip:      usecase.NewEOLBranchShipper(vehicles, issues, workflow, checklists, checklist, uow),
+		depotRelease:    usecase.NewEOLDepotReleaser(vehicles, issues, workflow, checklists, uow),
+		deliver:         usecase.NewEOLDeliverer(vehicles, workflow, uow),
 		documentApprove: usecase.NewEOLDocumentApprover(vehicles, workflow, uow),
 		reset:           usecase.NewEOLWorkflowResetter(vehicles, workflow, audit, uow),
 	}
@@ -159,8 +163,8 @@ func TestEOLDepotRelease_SucceedsWhenNoOpenIssues(t *testing.T) {
 	if out.CurrentStage != domain.EOLStageCompleted {
 		t.Errorf("stage = %q, want %q", out.CurrentStage, domain.EOLStageCompleted)
 	}
-	if out.VehicleStatus != domain.VehicleStatusShipped {
-		t.Errorf("reported status = %q, want %q", out.VehicleStatus, domain.VehicleStatusShipped)
+	if out.VehicleStatus != domain.VehicleStatusInWarehouse {
+		t.Errorf("reported status = %q, want %q", out.VehicleStatus, domain.VehicleStatusInWarehouse)
 	}
 
 	workflow, err := f.workflow.Get(context.Background(), eolTestVIN)
@@ -173,8 +177,8 @@ func TestEOLDepotRelease_SucceedsWhenNoOpenIssues(t *testing.T) {
 	if workflow.CurrentStage != domain.EOLStageCompleted {
 		t.Errorf("stored stage = %q, want %q", workflow.CurrentStage, domain.EOLStageCompleted)
 	}
-	if got := f.vehicles.vehicles[eolTestVIN].CurrentGlobalStatus; got != domain.VehicleStatusShipped {
-		t.Errorf("vehicle status = %q, want %q", got, domain.VehicleStatusShipped)
+	if got := f.vehicles.vehicles[eolTestVIN].CurrentGlobalStatus; got != domain.VehicleStatusInWarehouse {
+		t.Errorf("vehicle status = %q, want %q", got, domain.VehicleStatusInWarehouse)
 	}
 }
 
@@ -197,8 +201,8 @@ func TestEOLDocumentApprove_DoesNotShip(t *testing.T) {
 	if out.CurrentStage != domain.EOLStageCompleted {
 		t.Errorf("stage = %q, want %q", out.CurrentStage, domain.EOLStageCompleted)
 	}
-	if got := f.vehicles.vehicles[eolTestVIN].CurrentGlobalStatus; got != domain.VehicleStatusShipped {
-		t.Errorf("vehicle status = %q, want it to stay %q", got, domain.VehicleStatusShipped)
+	if got := f.vehicles.vehicles[eolTestVIN].CurrentGlobalStatus; got != domain.VehicleStatusInWarehouse {
+		t.Errorf("vehicle status = %q, want it to stay %q", got, domain.VehicleStatusInWarehouse)
 	}
 
 	workflow, err := f.workflow.Get(ctx, eolTestVIN)

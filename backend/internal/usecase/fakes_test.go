@@ -586,6 +586,17 @@ func (f *fakeEOLWorkflowRepo) MarkDepotReleased(_ context.Context, vin string, a
 	return nil
 }
 
+func (f *fakeEOLWorkflowRepo) MarkDelivered(_ context.Context, vin string, actorID int) error {
+	w, ok := f.rows[vin]
+	if !ok || w.DeliveredAt != nil || w.DepotReleasedAt == nil {
+		return domain.ErrNotFound
+	}
+	now := time.Now()
+	w.DeliveredAt = &now
+	w.DeliveredBy = &actorID
+	return nil
+}
+
 func (f *fakeEOLWorkflowRepo) MarkDocumentApproved(_ context.Context, vin string, actorID int) error {
 	w, ok := f.rows[vin]
 	if !ok || w.DocumentApprovedAt != nil {
@@ -611,6 +622,8 @@ func (f *fakeEOLWorkflowRepo) ResetToBranch(_ context.Context, vin string) error
 	w.DepotReleasedBy = nil
 	w.DocumentApprovedAt = nil
 	w.DocumentApprovedBy = nil
+	w.DeliveredAt = nil
+	w.DeliveredBy = nil
 	return nil
 }
 
@@ -673,6 +686,7 @@ func managerPermissions() domain.PermissionSet {
 		{Code: domain.PermissionEOLBranchShip},
 		{Code: domain.PermissionEOLDepotRelease},
 		{Code: domain.PermissionEOLDocumentApprove},
+		{Code: domain.PermissionEOLDeliver},
 		{Code: domain.PermissionAnalysisView},
 		{Code: domain.PermissionAdminManageMasters},
 		{Code: domain.PermissionAdminManageUsers},
