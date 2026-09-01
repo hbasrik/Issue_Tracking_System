@@ -11,15 +11,16 @@ import (
 // EOLBranchShipper performs stage 1 of the EOL workflow (Karar 2): shipping a
 // vehicle from the branch to the depot.
 //
-// This is the soft-warning gate. Open issues are counted and reported back so
-// the UI can raise a banner, but they never block the transition — the same
-// rule fn_enforce_branch_shipment implements, which records the count and
-// lets the update through.
+// Branch shipment is a hard-block gate on three checklists (EOL BRANCH, TEST,
+// SHIPMENT). Open issues are counted and reported back as a soft warning but
+// never block the transition.
 type EOLBranchShipper struct {
-	vehicles repository.VehicleRepository
-	issues   repository.IssueRepository
-	workflow repository.EOLWorkflowRepository
-	uow      repository.TransactionManager
+	vehicles   repository.VehicleRepository
+	issues     repository.IssueRepository
+	workflow   repository.EOLWorkflowRepository
+	checklists *ChecklistResultRecorder
+	progress   repository.ChecklistProgressRepository
+	uow        repository.TransactionManager
 }
 
 // NewEOLBranchShipper wires the usecase with its repositories.
@@ -27,9 +28,18 @@ func NewEOLBranchShipper(
 	vehicles repository.VehicleRepository,
 	issues repository.IssueRepository,
 	workflow repository.EOLWorkflowRepository,
+	checklists *ChecklistResultRecorder,
+	progress repository.ChecklistProgressRepository,
 	uow repository.TransactionManager,
 ) *EOLBranchShipper {
-	return &EOLBranchShipper{vehicles: vehicles, issues: issues, workflow: workflow, uow: uow}
+	return &EOLBranchShipper{
+		vehicles:   vehicles,
+		issues:     issues,
+		workflow:   workflow,
+		checklists: checklists,
+		progress:   progress,
+		uow:        uow,
+	}
 }
 
 // BranchShipOutput reports the result of a branch shipment. OpenIssueCount is
@@ -55,6 +65,14 @@ func (s *EOLBranchShipper) Ship(ctx context.Context, vin string, actorID int) (*
 	}
 	if workflow.BranchShippedAt != nil {
 		return nil, domain.ErrInvalidStatusTransition
+	}
+
+	blockers, err := BranchShipBlockers(ctx, vin, s.checklists, s.progress)
+	if err != nil {
+		return nil, err
+	}
+	if len(blockers) > 0 {
+		return nil, &domain.EOLBranchShipBlockedError{VIN: vin, Blockers: blockers}
 	}
 
 	openIssues, err := s.issues.ListOpenByVIN(ctx, vin)
