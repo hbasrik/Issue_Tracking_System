@@ -10,14 +10,15 @@ import {
 import { apiErrorMessage } from '../lib/apiErrors';
 import { useAuth } from '../auth/AuthProvider';
 import { Perm } from '../auth/permissions';
+import { useI18n } from '../i18n';
 import { ChecklistPanel } from './ChecklistPanel';
 import { SeverityIndicator } from './SeverityIndicator';
 import { StatusBadge } from './StatusBadge';
 import { ActionStamp } from './ActionStamp';
 
-const STAGES: { id: Exclude<EOLStage, 'COMPLETED' | 'DOCUMENT'>; label: string }[] = [
-  { id: 'BRANCH', label: 'Şube' },
-  { id: 'DEPOT', label: 'Depo' },
+const STAGE_IDS: { id: Exclude<EOLStage, 'COMPLETED' | 'DOCUMENT'> }[] = [
+  { id: 'BRANCH' },
+  { id: 'DEPOT' },
 ];
 
 const STAGE_ORDER: EOLStage[] = ['BRANCH', 'DEPOT', 'COMPLETED'];
@@ -30,31 +31,33 @@ function stepperStage(stage: EOLStage): EOLStage {
   return stage === 'DOCUMENT' ? 'COMPLETED' : stage;
 }
 
+function countRemaining(items: ChecklistItem[]): number {
+  return items.filter((item) => !passing(item.Status)).length;
+}
+
 interface EolWorkflowTabProps {
   vin: string;
   onVehicleChanged: () => void;
 }
 
 /**
- * Vehicle Detail EoL tab: Şube → Depo. Branch-ship stays visible while
- * the stage is open (disabled until every BRANCH item passes). Depot
- * release stays visible until done, disabled until the branch has shipped.
+ * Vehicle Detail EoL tab: Şube → Depo → Teslim. Stage actions stay visible
+ * while open and disable with per-checklist reasons until every gate passes.
  */
 export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
   const { has } = useAuth();
+  const { t } = useI18n();
   const [workflow, setWorkflow] = useState<EOLWorkflowView | null>(null);
   const [eolItems, setEolItems] = useState<ChecklistItem[]>([]);
+  const [testItems, setTestItems] = useState<ChecklistItem[]>([]);
+  const [shipmentItems, setShipmentItems] = useState<ChecklistItem[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [warning, setWarning] = useState<string | null>(null);
   const [blocking, setBlocking] = useState<BlockingIssue[] | null>(null);
   const [busy, setBusy] = useState(false);
 
   async function resetWorkflow() {
-    if (
-      !window.confirm(
-        'Bu aracın EoL iş akışını Şube / IN_PRODUCTION durumuna sıfırla? Yalnızca geliştirme — production’da yok.',
-      )
-    ) {
+    if (!window.confirm(t('eol.resetConfirm'))) {
       return;
     }
     setBusy(true);
@@ -66,7 +69,7 @@ export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
       await load();
       onVehicleChanged();
     } catch (err) {
-      setError(err instanceof Error ? apiErrorMessage(err) : 'EoL sıfırlanamadı');
+      setError(err instanceof Error ? apiErrorMessage(err, t) : t('eol.resetFailed'));
     } finally {
       setBusy(false);
     }
@@ -75,25 +78,29 @@ export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
   const load = useCallback(async () => {
     setError(null);
     try {
-      const [view, checklist] = await Promise.all([
+      const [view, eol, test, shipment] = await Promise.all([
         api.getEOLWorkflow(vin),
         api.getVehicleChecklist(vin, 'eol'),
+        api.getVehicleChecklist(vin, 'test'),
+        api.getVehicleChecklist(vin, 'shipment'),
       ]);
       setWorkflow(view);
-      setEolItems(checklist.items ?? []);
+      setEolItems(eol.items ?? []);
+      setTestItems(test.items ?? []);
+      setShipmentItems(shipment.items ?? []);
       if (
         view.branch_open_issue_count_at_shipment &&
         view.branch_open_issue_count_at_shipment > 0 &&
         !view.depot_release.at
       ) {
         setWarning(
-          `sevk edildi; ${view.branch_open_issue_count_at_shipment} açık sorun hâlâ çözülmedi`,
+          t('eol.shippedOpen', { n: view.branch_open_issue_count_at_shipment }),
         );
       }
     } catch (err) {
-      setError(err instanceof Error ? apiErrorMessage(err) : 'EoL iş akışı yüklenemedi');
+      setError(err instanceof Error ? apiErrorMessage(err, t) : t('eol.loadFailed'));
     }
-  }, [vin]);
+  }, [vin, t]);
 
   useEffect(() => {
     void load();
@@ -107,8 +114,7 @@ export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
       const out = await api.eolBranchShip(vin);
       if (out.warning || out.open_issue_count > 0) {
         setWarning(
-          out.warning ||
-            `sevk edildi; ${out.open_issue_count} açık sorun hâlâ çözülmedi`,
+          out.warning || t('eol.shippedOpen', { n: out.open_issue_count }),
         );
       } else {
         setWarning(null);
@@ -116,7 +122,7 @@ export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
       await load();
       onVehicleChanged();
     } catch (err) {
-      setError(err instanceof Error ? apiErrorMessage(err) : 'Şube sevkiyatı kaydedilemedi');
+      setError(err instanceof Error ? apiErrorMessage(err, t) : t('eol.branchShipFailed'));
     } finally {
       setBusy(false);
     }
@@ -134,10 +140,24 @@ export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
     } catch (err) {
       if (err instanceof ApiError && err.status === 409) {
         setBlocking(err.body.blocking_issues ?? []);
-        setError(err.message);
+        setError(apiErrorMessage(err, t));
       } else {
-        setError(err instanceof Error ? apiErrorMessage(err) : 'Depo çıkışı kaydedilemedi');
+        setError(err instanceof Error ? apiErrorMessage(err, t) : t('eol.depotReleaseFailed'));
       }
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function markDelivered() {
+    setBusy(true);
+    setError(null);
+    try {
+      await api.eolDeliver(vin);
+      await load();
+      onVehicleChanged();
+    } catch (err) {
+      setError(err instanceof Error ? apiErrorMessage(err, t) : t('eol.deliverFailed'));
     } finally {
       setBusy(false);
     }
@@ -151,35 +171,70 @@ export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
     );
   }
   if (!workflow) {
-    return <p className="text-[var(--text-secondary)]">EoL yükleniyor…</p>;
+    return <p className="text-[var(--text-secondary)]">{t('eol.loading')}</p>;
   }
 
   const currentIndex = STAGE_ORDER.indexOf(stepperStage(workflow.current_stage));
   const branchItems = eolItems.filter((item) => item.EolPhase === 'BRANCH');
-  const branchRemaining = branchItems.filter((item) => !passing(item.Status)).length;
+  const depotItems = eolItems.filter((item) => item.EolPhase === 'DEPOT');
+  const branchRemaining = countRemaining(branchItems);
+  const testRemaining = countRemaining(testItems);
+  const shipmentRemaining = countRemaining(shipmentItems);
+  const depotRemaining = countRemaining(depotItems);
   const depotLocked = branchRemaining > 0;
 
   const canShip =
     has(Perm.EOLBranchShip) &&
     workflow.current_stage === 'BRANCH' &&
-    branchRemaining === 0;
-  let shipDisabledReason: string | undefined;
+    branchRemaining === 0 &&
+    testRemaining === 0 &&
+    shipmentRemaining === 0;
+  const shipDisabledReasons: string[] = [];
   if (!has(Perm.EOLBranchShip)) {
-    shipDisabledReason = 'Bu işlem için yetkiniz yok';
-  } else if (branchRemaining > 0) {
-    shipDisabledReason = `Şube checklistinde ${branchRemaining} madde kaldı`;
+    shipDisabledReasons.push(t('eol.forbidden'));
+  } else if (workflow.current_stage !== 'BRANCH') {
+    shipDisabledReasons.push(t('eol.needBranchShip'));
+  } else {
+    if (branchRemaining > 0) {
+      shipDisabledReasons.push(t('eol.branchRemaining', { n: branchRemaining }));
+    }
+    if (testRemaining > 0) {
+      shipDisabledReasons.push(t('eol.branchBlockerTest', { n: testRemaining }));
+    }
+    if (shipmentRemaining > 0) {
+      shipDisabledReasons.push(t('eol.branchBlockerShipment', { n: shipmentRemaining }));
+    }
   }
 
   const canRelease =
     has(Perm.EOLDepotRelease) &&
     Boolean(workflow.branch_ship.at) &&
-    workflow.current_stage === 'DEPOT';
-  let releaseDisabledReason: string | undefined;
+    workflow.current_stage === 'DEPOT' &&
+    depotRemaining === 0;
+  const releaseDisabledReasons: string[] = [];
   if (!has(Perm.EOLDepotRelease)) {
-    releaseDisabledReason = 'Bu işlem için yetkiniz yok';
+    releaseDisabledReasons.push(t('eol.forbidden'));
   } else if (!workflow.branch_ship.at) {
-    releaseDisabledReason = 'Önce şubeden sevk yapılmalı';
+    releaseDisabledReasons.push(t('eol.needBranchShip'));
+  } else if (depotRemaining > 0) {
+    releaseDisabledReasons.push(t('eol.depotRemaining', { n: depotRemaining }));
   }
+
+  const canDeliver =
+    has(Perm.EOLDeliver) &&
+    Boolean(workflow.depot_release.at) &&
+    !workflow.deliver?.at;
+  const deliverDisabledReasons: string[] = [];
+  if (!has(Perm.EOLDeliver)) {
+    deliverDisabledReasons.push(t('eol.forbidden'));
+  } else if (!workflow.depot_release.at) {
+    deliverDisabledReasons.push(t('eol.needDepotRelease'));
+  }
+
+  const stages = STAGE_IDS.map((stage) => ({
+    ...stage,
+    label: stage.id === 'BRANCH' ? t('checklist.branch') : t('checklist.depot'),
+  }));
 
   return (
     <div className="space-y-5">
@@ -202,12 +257,11 @@ export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
         className="rounded-xl border bg-[var(--bg-surface-1)] p-4 sm:p-5"
         style={{ borderColor: 'var(--border)' }}
       >
-        <h2 className="text-lg font-semibold">EoL iş akışı</h2>
+        <h2 className="text-lg font-semibold">{t('eol.title')}</h2>
         {import.meta.env.DEV && (
           <div className="mt-3 rounded-lg border px-3 py-2" style={{ borderColor: 'var(--status-conditional-ok)' }}>
             <p className="text-[13px]" style={{ color: 'var(--status-conditional-ok)' }}>
-              Yalnızca geliştirme — EoL’u Şube’ye ve araç durumunu
-              IN_PRODUCTION’a sıfırlar. APP_ENV=development dışında gizli ve 404.
+              {t('eol.resetHint')}
             </p>
             <button
               type="button"
@@ -216,12 +270,12 @@ export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
               className="mt-2 min-h-touch rounded-lg border px-3 text-[13px] disabled:opacity-60"
               style={{ borderColor: 'var(--border)' }}
             >
-              EoL iş akışını sıfırla
+              {t('eol.resetButton')}
             </button>
           </div>
         )}
         <ol className="mt-4 flex flex-wrap items-center gap-2">
-          {STAGES.map((stage, i) => {
+          {stages.map((stage, i) => {
             const done = i < currentIndex;
             const active = stage.id === stepperStage(workflow.current_stage);
             return (
@@ -239,7 +293,7 @@ export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
                 >
                   {i + 1}. {stage.label}
                 </div>
-                {i < STAGES.length - 1 && (
+                {i < stages.length - 1 && (
                   <span
                     className="hidden h-px flex-1 sm:block"
                     style={{ backgroundColor: 'var(--border)' }}
@@ -252,13 +306,13 @@ export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
       </div>
 
       <StageCard
-        title="Şubeden sevk"
+        title={t('checklist.shipFromBranch')}
         name={workflow.branch_ship.by_name}
         at={workflow.branch_ship.at}
-        actionLabel="Şubeden Depoya Sevk"
+        actionLabel={t('eol.shipBranch')}
         showAction={!workflow.branch_ship.at}
         actionEnabled={canShip}
-        actionDisabledReason={shipDisabledReason}
+        actionDisabledReasons={shipDisabledReasons}
         busy={busy}
         onAction={shipToDepot}
       >
@@ -266,20 +320,20 @@ export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
           vin={vin}
           type="eol"
           eolPhase="BRANCH"
-          title="Şube kontrol listesi"
+          title={t('checklist.branchTitle')}
           items={eolItems}
           onReload={load}
         />
       </StageCard>
 
       <StageCard
-        title="Depodan serbest bırakma"
+        title={t('checklist.releaseFromDepot')}
         name={workflow.depot_release.by_name}
         at={workflow.depot_release.at}
-        actionLabel="Depodan serbest bırak"
+        actionLabel={t('eol.releaseDepot')}
         showAction={!workflow.depot_release.at}
         actionEnabled={canRelease}
-        actionDisabledReason={releaseDisabledReason}
+        actionDisabledReasons={releaseDisabledReasons}
         busy={busy}
         onAction={releaseFromDepot}
       >
@@ -287,13 +341,25 @@ export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
           vin={vin}
           type="eol"
           eolPhase="DEPOT"
-          title="Depo kontrol listesi"
+          title={t('checklist.depotTitle')}
           items={eolItems}
           onReload={load}
           locked={depotLocked}
-          lockHint="Önce şube kontrol listesini tamamlayın"
+          lockHint={t('checklist.lockHint')}
         />
       </StageCard>
+
+      <StageCard
+        title={t('eol.deliver')}
+        name={workflow.deliver?.by_name}
+        at={workflow.deliver?.at ?? null}
+        actionLabel={t('eol.deliver')}
+        showAction={Boolean(workflow.depot_release.at) && !workflow.deliver?.at}
+        actionEnabled={canDeliver}
+        actionDisabledReasons={deliverDisabledReasons}
+        busy={busy}
+        onAction={markDelivered}
+      />
 
       {error && (
         <p className="text-[13px]" style={{ color: 'var(--status-not-ok)' }}>
@@ -308,16 +374,16 @@ export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
             style={{ borderColor: 'var(--border)' }}
           >
             <h3 className="text-lg font-semibold" style={{ color: 'var(--status-not-ok)' }}>
-              Depo çıkışı engellendi
+              {t('eol.depotBlocked')}
             </h3>
             <p className="mt-2 text-[15px] text-[var(--text-secondary)]">
-              Serbest bırakmadan önce açık sorunlar kapatılmalı:
+              {t('eol.depotBlockedHint')}
             </p>
             <ul className="mt-3 space-y-2 text-[15px]">
-              {blocking.length === 0 && <li>Sorun detayı dönmedi</li>}
+              {blocking.length === 0 && <li>{t('eol.noIssueDetails')}</li>}
               {blocking.map((issue) => (
                 <li key={issue.id} className="flex items-center justify-between gap-3">
-                  <span>Sorun #{issue.id}</span>
+                  <span>{t('eol.issueN', { id: issue.id })}</span>
                   <span className="flex items-center gap-2 text-[13px] text-[var(--text-secondary)]">
                     <SeverityIndicator severity={issue.severity} />
                     <StatusBadge kind="issue" value={issue.status} />
@@ -331,7 +397,7 @@ export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
               style={{ borderColor: 'var(--border)' }}
               onClick={() => setBlocking(null)}
             >
-              Kapat
+              {t('common.close')}
             </button>
           </div>
         </div>
@@ -347,7 +413,7 @@ function StageCard({
   actionLabel,
   showAction,
   actionEnabled,
-  actionDisabledReason,
+  actionDisabledReasons,
   busy,
   onAction,
   children,
@@ -358,10 +424,10 @@ function StageCard({
   actionLabel: string;
   showAction: boolean;
   actionEnabled: boolean;
-  actionDisabledReason?: string;
+  actionDisabledReasons?: string[];
   busy: boolean;
   onAction: () => void;
-  children: ReactNode;
+  children?: ReactNode;
 }) {
   return (
     <div className="space-y-3">
@@ -380,10 +446,12 @@ function StageCard({
             >
               {actionLabel}
             </button>
-            {!actionEnabled && actionDisabledReason ? (
-              <p className="mt-1 text-[12px] text-[var(--text-secondary)]">
-                {actionDisabledReason}
-              </p>
+            {!actionEnabled && actionDisabledReasons && actionDisabledReasons.length > 0 ? (
+              <ul className="mt-1 space-y-0.5 text-[12px] text-[var(--text-secondary)]">
+                {actionDisabledReasons.map((reason) => (
+                  <li key={reason}>{reason}</li>
+                ))}
+              </ul>
             ) : null}
           </div>
         )}
