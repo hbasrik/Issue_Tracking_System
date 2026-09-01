@@ -1,3 +1,4 @@
+import { useI18n } from '../i18n';
 import { formatActionStamp } from '../lib/actionStamp';
 
 /** Quiet actor line under a completed action. Renders nothing when empty. */
@@ -10,7 +11,9 @@ export function ActionStamp({
   at?: string | null;
   lines?: string[];
 }) {
-  const text = lines ?? (formatActionStamp(name, at) ? [formatActionStamp(name, at)!] : []);
+  const { locale } = useI18n();
+  const stamp = formatActionStamp(name, at, locale);
+  const text = lines ?? (stamp ? [stamp] : []);
   if (text.length === 0) return null;
   return (
     <div className="mt-1 space-y-0.5">

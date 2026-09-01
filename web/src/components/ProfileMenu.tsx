@@ -1,11 +1,13 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
+import { useI18n } from '../i18n';
 import { roleDisplayName, userInitials } from '../lib/roleLabels';
 
 /** Header avatar + menu: name, readable role, settings, logout. */
 export function ProfileMenu() {
   const { user, logout } = useAuth();
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -56,7 +58,7 @@ export function ProfileMenu() {
   if (!user) return null;
 
   const initials = userInitials(user.FullName);
-  const roleName = roleDisplayName(user.Role);
+  const roleName = roleDisplayName(user.Role, t);
 
   return (
     <div ref={rootRef} className="relative">
@@ -66,7 +68,7 @@ export function ProfileMenu() {
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls={menuId}
-        aria-label="Profil menüsü"
+        aria-label={t('nav.profileMenu')}
         onClick={() => setOpen((v) => !v)}
         className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-[var(--border)] bg-[var(--bg-surface-1)] text-[13px] font-semibold text-[var(--text-primary)] outline-none hover:bg-[var(--bg-surface-2)] focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
       >
@@ -93,7 +95,7 @@ export function ProfileMenu() {
             onClick={() => setOpen(false)}
             className="block px-3 py-2.5 text-[14px] text-[var(--text-primary)] outline-none hover:bg-[var(--bg-surface-2)] focus-visible:bg-[var(--bg-surface-2)] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--accent)]"
           >
-            Ayarlar
+            {t('nav.settings')}
           </Link>
           <button
             type="button"
@@ -104,7 +106,7 @@ export function ProfileMenu() {
             }}
             className="block w-full px-3 py-2.5 text-left text-[14px] text-[var(--text-primary)] outline-none hover:bg-[var(--bg-surface-2)] focus-visible:bg-[var(--bg-surface-2)] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--accent)]"
           >
-            Çıkış
+            {t('common.logout')}
           </button>
         </div>
       )}

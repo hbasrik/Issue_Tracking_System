@@ -1,4 +1,5 @@
 import { statusColors } from '../theme/tokens';
+import { useI18n } from '../i18n';
 
 export type SeverityLevel = 'CRITICAL' | 'MEDIUM' | 'LOW';
 
@@ -57,6 +58,7 @@ export function SeverityIndicator({
   ink,
   decorative = false,
 }: SeverityIndicatorProps) {
+  const { t } = useI18n();
   const level = normalizeSeverity(severity);
   const filled = level ? FILLED[level] : 0;
   const tone = level ? FILL_COLOR[level] : statusColors.severityEmpty;
@@ -64,7 +66,15 @@ export function SeverityIndicator({
   const empty = ink
     ? `color-mix(in srgb, ${fill} 35%, transparent)`
     : statusColors.severityEmpty;
-  const aria = label ?? (level ?? severity);
+  const translated =
+    level === 'CRITICAL'
+      ? t('severity.critical')
+      : level === 'MEDIUM'
+        ? t('severity.medium')
+        : level === 'LOW'
+          ? t('severity.low')
+          : severity;
+  const aria = label ?? translated;
 
   return (
     <span

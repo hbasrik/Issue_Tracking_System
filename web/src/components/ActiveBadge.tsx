@@ -1,7 +1,9 @@
+import { useI18n } from '../i18n';
 import { inkOn, statusColors } from '../theme/tokens';
 
 /** Active / inactive for users and catalogue rows — not an issue or station status. */
 export function ActiveBadge({ active }: { active: boolean }) {
+  const { t } = useI18n();
   const color = active ? statusColors.ok : statusColors.pending;
   const ink = inkOn(color);
   return (
@@ -9,7 +11,7 @@ export function ActiveBadge({ active }: { active: boolean }) {
       className="inline-flex items-center rounded-full px-2.5 py-0.5 text-[12px] font-medium"
       style={{ color: ink, backgroundColor: color }}
     >
-      {active ? 'Aktif' : 'Pasif'}
+      {active ? t('common.active') : t('common.inactive')}
     </span>
   );
 }

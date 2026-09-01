@@ -2,18 +2,19 @@ import { useEffect, useId, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { Perm } from '../auth/permissions';
+import { useI18n, type MessageKey } from '../i18n';
 import { LogoHomeLink } from './LogoHomeLink';
 import { ProfileMenu } from './ProfileMenu';
 import { VinSearchBox } from './VinSearchBox';
 
-const NAV: { to: string; label: string; end?: boolean; perm?: string }[] = [
-  { to: '/', label: 'Ana sayfa', end: true },
-  { to: '/vehicles', label: 'Araçlar', perm: Perm.VehicleView },
-  { to: '/issues', label: 'Issues', perm: Perm.IssueView },
-  { to: '/analysis', label: 'Analiz', perm: Perm.AnalysisView },
-  { to: '/templates', label: 'Şablonlar', perm: Perm.AdminManageMasters },
-  { to: '/users', label: 'Kullanıcılar', perm: Perm.AdminManageUsers },
-  { to: '/roles', label: 'Roller', perm: Perm.AdminManageUsers },
+const NAV: { to: string; labelKey: MessageKey; end?: boolean; perm?: string }[] = [
+  { to: '/', labelKey: 'nav.home', end: true },
+  { to: '/vehicles', labelKey: 'nav.vehicles', perm: Perm.VehicleView },
+  { to: '/issues', labelKey: 'nav.issues', perm: Perm.IssueView },
+  { to: '/analysis', labelKey: 'nav.analysis', perm: Perm.AnalysisView },
+  { to: '/templates', labelKey: 'nav.templates', perm: Perm.AdminManageMasters },
+  { to: '/users', labelKey: 'nav.users', perm: Perm.AdminManageUsers },
+  { to: '/roles', labelKey: 'nav.roles', perm: Perm.AdminManageUsers },
 ];
 
 /**
@@ -22,6 +23,7 @@ const NAV: { to: string; label: string; end?: boolean; perm?: string }[] = [
  */
 export function AppShell() {
   const { has } = useAuth();
+  const { t } = useI18n();
   const location = useLocation();
   const [navOpen, setNavOpen] = useState(false);
   const drawerId = useId();
@@ -50,7 +52,7 @@ export function AppShell() {
       <aside
         className="hidden h-full w-60 shrink-0 flex-col overflow-hidden lg:flex"
         style={{ backgroundColor: 'var(--sidebar-bg)' }}
-        aria-label="Ana menü"
+        aria-label={t('nav.mainMenu')}
       >
         <div className="shrink-0 px-[var(--space-5)] py-[var(--space-5)]">
           <LogoHomeLink />
@@ -63,7 +65,7 @@ export function AppShell() {
         <button
           type="button"
           className="fixed inset-0 z-40 bg-black/50 lg:hidden"
-          aria-label="Menüyü kapat"
+          aria-label={t('nav.closeMenu')}
           onClick={() => setNavOpen(false)}
         />
       )}
@@ -74,7 +76,7 @@ export function AppShell() {
         }`}
         style={{ backgroundColor: 'var(--sidebar-bg)' }}
         aria-hidden={!navOpen}
-        aria-label="Ana menü"
+        aria-label={t('nav.mainMenu')}
       >
         <div className="flex shrink-0 items-center justify-between px-[var(--space-5)] py-[var(--space-4)]">
           <LogoHomeLink />
@@ -82,7 +84,7 @@ export function AppShell() {
             type="button"
             onClick={() => setNavOpen(false)}
             className="flex min-h-touch min-w-touch items-center justify-center rounded-lg text-[var(--sidebar-text)] hover:bg-[color-mix(in_srgb,var(--sidebar-text)_12%,transparent)]"
-            aria-label="Menüyü kapat"
+            aria-label={t('nav.closeMenu')}
           >
             <CloseIcon />
           </button>
@@ -101,7 +103,7 @@ export function AppShell() {
             style={{ border: '1px solid var(--border)' }}
             aria-expanded={navOpen}
             aria-controls={drawerId}
-            aria-label="Menüyü aç"
+            aria-label={t('nav.openMenu')}
             onClick={() => setNavOpen(true)}
           >
             <MenuIcon />
@@ -128,6 +130,7 @@ export function AppShell() {
 
 function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
   const { has } = useAuth();
+  const { t } = useI18n();
   return (
     <nav className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto overscroll-contain px-[var(--space-3)] pb-[var(--space-4)]">
       {NAV.filter((item) => !item.perm || has(item.perm)).map((item) => (
@@ -144,7 +147,7 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
             }`
           }
         >
-          {item.label}
+          {t(item.labelKey)}
         </NavLink>
       ))}
     </nav>

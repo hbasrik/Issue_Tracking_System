@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
+import { useI18n } from '../i18n';
 import { api, ApiError } from '../lib/api';
-import { PASSWORD_RULE_HINT, passwordErrorMessage } from '../lib/password';
+import { passwordErrorMessage, passwordRuleHint } from '../lib/password';
 
 const fieldClass =
   'mt-1 w-full rounded-lg border bg-[var(--bg-page)] px-3 py-2 text-[15px] text-[var(--text-primary)]';
@@ -8,11 +9,12 @@ const fieldClass =
 /** Current + new + confirm. Used on the forced first-login page and Settings. */
 export function ChangePasswordForm({
   onSuccess,
-  submitLabel = 'Şifreyi değiştir',
+  submitLabel,
 }: {
   onSuccess: () => void;
   submitLabel?: string;
 }) {
+  const { t } = useI18n();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -23,7 +25,7 @@ export function ChangePasswordForm({
     e.preventDefault();
     setError(null);
     if (newPassword !== confirmPassword) {
-      setError('Yeni şifre ve tekrarı eşleşmiyor.');
+      setError(t('password.mismatch'));
       return;
     }
     setBusy(true);
@@ -39,7 +41,7 @@ export function ChangePasswordForm({
       onSuccess();
     } catch (err) {
       setError(
-        err instanceof ApiError ? passwordErrorMessage(err) : 'Şifre değiştirilemedi',
+        err instanceof ApiError ? passwordErrorMessage(err, t) : t('password.failed'),
       );
     } finally {
       setBusy(false);
@@ -48,9 +50,9 @@ export function ChangePasswordForm({
 
   return (
     <form onSubmit={onSubmit} className="space-y-4">
-      <p className="text-[13px] text-[var(--text-secondary)]">{PASSWORD_RULE_HINT}</p>
+      <p className="text-[13px] text-[var(--text-secondary)]">{passwordRuleHint(t)}</p>
       <label className="block text-[13px] text-[var(--text-secondary)]">
-        Mevcut şifre
+        {t('password.current')}
         <input
           type="password"
           value={currentPassword}
@@ -62,7 +64,7 @@ export function ChangePasswordForm({
         />
       </label>
       <label className="block text-[13px] text-[var(--text-secondary)]">
-        Yeni şifre
+        {t('password.new')}
         <input
           type="password"
           value={newPassword}
@@ -75,7 +77,7 @@ export function ChangePasswordForm({
         />
       </label>
       <label className="block text-[13px] text-[var(--text-secondary)]">
-        Yeni şifre (tekrar)
+        {t('password.confirm')}
         <input
           type="password"
           value={confirmPassword}
@@ -97,7 +99,7 @@ export function ChangePasswordForm({
         disabled={busy}
         className="min-h-touch w-full rounded-lg bg-[var(--accent)] py-2.5 text-[15px] font-medium text-white disabled:opacity-60"
       >
-        {busy ? 'Kaydediliyor…' : submitLabel}
+        {busy ? t('common.saving') : (submitLabel ?? t('password.submit'))}
       </button>
     </form>
   );

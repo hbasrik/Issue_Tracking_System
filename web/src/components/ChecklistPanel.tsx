@@ -6,6 +6,7 @@ import {
   type ChecklistType,
 } from '../lib/api';
 import { apiErrorMessage } from '../lib/apiErrors';
+import { useI18n } from '../i18n';
 import { StatusBadge } from './StatusBadge';
 import { ActionStamp } from './ActionStamp';
 import { checklistActorLines } from '../lib/actionStamp';
@@ -83,6 +84,7 @@ export function ChecklistPanel({
   lockHint,
 }: ChecklistPanelProps) {
   const { has } = useAuth();
+  const { t } = useI18n();
   const canEdit = has(checklistEditPerm(type));
   const [loaded, setLoaded] = useState<ChecklistItem[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -100,10 +102,10 @@ export function ChecklistPanel({
       const res = await api.getVehicleChecklist(vin, type);
       setLoaded(res.items ?? []);
     } catch (err) {
-      setError(err instanceof Error ? apiErrorMessage(err) : 'Kontrol listesi yüklenemedi');
+      setError(err instanceof Error ? apiErrorMessage(err, t) : t('checklist.loadFailed'));
       setLoaded([]);
     }
-  }, [vin, type, onReload]);
+  }, [vin, type, onReload, t]);
 
   useEffect(() => {
     if (controlled) return;
@@ -130,7 +132,9 @@ export function ChecklistPanel({
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-lg font-semibold">{title}</h2>
         <p className="text-[13px] text-[var(--text-secondary)]">
-          {visible.length === 0 ? '0 madde' : `${done}/${visible.length} geçti`}
+          {visible.length === 0
+            ? t('checklist.none')
+            : t('checklist.passing', { done, total: visible.length })}
         </p>
       </div>
       {hint && (
@@ -139,8 +143,8 @@ export function ChecklistPanel({
       {(locked || !canEdit) && (
         <p className="mt-2 text-[13px]" style={{ color: 'var(--status-conditional-ok)' }} role="status">
           {locked
-            ? (lockHint ?? 'Önce şube kontrol listesini tamamlayın')
-            : 'Yalnızca görüntüleme — düzenleme yetkiniz yok'}
+            ? (lockHint ?? t('checklist.lockHint'))
+            : t('checklist.viewOnly')}
         </p>
       )}
       {error && (
@@ -178,7 +182,7 @@ export function ChecklistPanel({
       </ul>
       {visible.length === 0 && !error && (
         <p className="mt-3 text-[13px] text-[var(--text-secondary)]">
-          Bu aşamada madde yok
+          {t('checklist.emptyStage')}
         </p>
       )}
     </div>
@@ -196,6 +200,7 @@ function EolItemRow({
   onSaved: () => Promise<void>;
   disabled?: boolean;
 }) {
+  const { t, locale } = useI18n();
   const fileRef = useRef<HTMLInputElement>(null);
   const [fileName, setFileName] = useState('');
   const savedStatus = (EOL_STATUSES as readonly string[]).includes(item.Status)
@@ -216,11 +221,11 @@ function EolItemRow({
 
   async function save() {
     if (!status) {
-      setError('OK, NOT_OK, REWORK veya CONDITIONAL_OK seçin');
+      setError(t('checklist.pickStatus'));
       return;
     }
     if (needsDescription(status) && !desc.trim()) {
-      setError('Bu durum için açıklama gerekli');
+      setError(t('checklist.descRequired'));
       return;
     }
     setBusy(true);
@@ -231,7 +236,7 @@ function EolItemRow({
       if (file) {
         const progressId = item.ProgressID;
         if (!progressId) {
-          throw new Error('item saved but has no progress id for photo upload');
+          throw new Error(t('checklist.noProgressId'));
         }
         await api.uploadMedia('CHECKLIST_ITEM_PROGRESS', String(progressId), file);
         if (fileRef.current) fileRef.current.value = '';
@@ -241,10 +246,10 @@ function EolItemRow({
     } catch (err) {
       const message =
         err instanceof ApiError
-          ? apiErrorMessage(err)
+          ? apiErrorMessage(err, t)
           : err instanceof Error
-            ? apiErrorMessage(err)
-            : 'Kayıt başarısız';
+            ? apiErrorMessage(err, t)
+            : t('checklist.saveFailed');
       setError(message);
     } finally {
       setBusy(false);
@@ -262,7 +267,7 @@ function EolItemRow({
         </span>
         <StatusBadge kind="eol" value={item.Status} />
       </div>
-      <ActionStamp lines={checklistActorLines(item)} />
+      <ActionStamp lines={checklistActorLines(item, t, locale)} />
       <div className="mt-2 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
         {EOL_STATUSES.map((value) => {
           const selected = status === value;
@@ -291,14 +296,14 @@ function EolItemRow({
           onChange={(e) => setDesc(e.target.value)}
           required
           disabled={disabled}
-          placeholder="Bu durum için açıklama zorunlu"
+          placeholder={t('checklist.descPlaceholder')}
           className="mt-2 w-full max-w-full rounded-lg border bg-[var(--bg-page)] px-3 py-2 text-[13px]"
           style={{ borderColor: 'var(--status-not-ok)', minHeight: 64 }}
         />
       )}
       <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
         <label className="flex min-h-touch flex-wrap items-center gap-2 text-[13px] text-[var(--text-secondary)]">
-          Fotoğraf
+          {t('checklist.photo')}
           <input
             ref={fileRef}
             type="file"
@@ -311,7 +316,7 @@ function EolItemRow({
             className="inline-flex min-h-touch cursor-pointer items-center rounded-lg border px-3 text-[13px]"
             style={{ borderColor: 'var(--border)', color: 'var(--text-primary)' }}
           >
-            Dosya seç
+            {t('checklist.chooseFile')}
           </span>
           {fileName ? (
             <span className="max-w-[12rem] truncate">{fileName}</span>
@@ -323,7 +328,7 @@ function EolItemRow({
           onClick={() => void save()}
           className="min-h-touch rounded-lg bg-[var(--accent)] px-4 text-[13px] text-white disabled:opacity-60"
         >
-          {busy ? 'Kaydediliyor…' : 'Kaydet'}
+          {busy ? t('common.saving') : t('common.save')}
         </button>
       </div>
       {error && (
@@ -348,6 +353,7 @@ function YesNoItemRow({
   onSaved: () => Promise<void>;
   disabled?: boolean;
 }) {
+  const { t, locale } = useI18n();
   const [yes, setYes] = useState(PASSING.has(item.Status));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -370,10 +376,10 @@ function YesNoItemRow({
       setYes(previous);
       const message =
         err instanceof ApiError
-          ? apiErrorMessage(err)
+          ? apiErrorMessage(err, t)
           : err instanceof Error
-            ? apiErrorMessage(err)
-            : 'Kayıt başarısız';
+            ? apiErrorMessage(err, t)
+            : t('checklist.saveFailed');
       setError(message);
     } finally {
       setBusy(false);
@@ -397,13 +403,13 @@ function YesNoItemRow({
             </span>
             {item.ItemText}
             <span className="ml-2 text-[13px] text-[var(--text-secondary)]">
-              {yes ? 'Evet (OK)' : 'Hayır (NOT_OK)'}
+              {yes ? t('checklist.yesOk') : t('checklist.noNotOk')}
             </span>
           </span>
         </label>
         <StatusBadge kind="shipment" value={item.Status} />
       </div>
-      <ActionStamp lines={checklistActorLines(item)} />
+      <ActionStamp lines={checklistActorLines(item, t, locale)} />
       {error && (
         <p className="mt-2 text-[13px]" style={{ color: 'var(--status-not-ok)' }} role="alert">
           {error}

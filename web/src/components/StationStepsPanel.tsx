@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useI18n } from '../i18n';
 import { api, type StationStepItem } from '../lib/api';
+import { apiErrorMessage } from '../lib/apiErrors';
 import { ActionStamp } from './ActionStamp';
 import { StatusBadge } from './StatusBadge';
 
 /** Per-vehicle station steps with the last operator who ticked each row. */
 export function StationStepsPanel({ vin }: { vin: string }) {
+  const { t } = useI18n();
   const [items, setItems] = useState<StationStepItem[]>([]);
   const [error, setError] = useState<string | null>(null);
 
@@ -18,14 +21,16 @@ export function StationStepsPanel({ vin }: { vin: string }) {
       })
       .catch((err) => {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'istasyon adımları yüklenemedi');
+          setError(
+            err instanceof Error ? apiErrorMessage(err, t) : t('vehicles.stepsFailed'),
+          );
           setItems([]);
         }
       });
     return () => {
       cancelled = true;
     };
-  }, [vin]);
+  }, [vin, t]);
 
   const groups = useMemo(() => {
     const out: { id: number; name: string; steps: StationStepItem[] }[] = [];
@@ -50,14 +55,14 @@ export function StationStepsPanel({ vin }: { vin: string }) {
       className="rounded-xl border bg-[var(--bg-surface-1)] p-5"
       style={{ borderColor: 'var(--border)' }}
     >
-      <h2 className="text-lg font-semibold">İstasyon adımları</h2>
+      <h2 className="text-lg font-semibold">{t('vehicles.stationSteps')}</h2>
       {error && (
         <p className="mt-2 text-[13px]" style={{ color: 'var(--status-not-ok)' }}>
           {error}
         </p>
       )}
       {groups.length === 0 && !error && (
-        <p className="mt-2 text-[13px] text-[var(--text-secondary)]">Adım yok</p>
+        <p className="mt-2 text-[13px] text-[var(--text-secondary)]">{t('vehicles.noSteps')}</p>
       )}
       <ul className="mt-4 space-y-4">
         {groups.map((group) => (

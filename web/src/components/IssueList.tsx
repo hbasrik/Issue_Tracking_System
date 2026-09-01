@@ -7,6 +7,8 @@ import {
   mediaThumbUrl,
   type Issue,
 } from '../lib/api';
+import { useI18n } from '../i18n';
+import { apiErrorMessage } from '../lib/apiErrors';
 import { isNonWebImage } from '../lib/mediaKind';
 import { StatusBadge } from './StatusBadge';
 import { SeverityIndicator } from './SeverityIndicator';
@@ -16,12 +18,10 @@ import { VehicleIdentity } from './VehicleIdentity';
 import { DataCard, DataCardField } from './DataCard';
 import { IssueStatusHistory } from './IssueStatusHistory';
 import { SectionHeading } from './SectionHeading';
-import {
-  issueDetailCopy,
-  issueStationLabel,
-} from '../lib/issueDetailCopy';
+import { issueStationLabel, reporterFallback } from '../lib/issueDetailCopy';
 
 function IssueThumb({ path }: { path?: string }) {
+  const { t } = useI18n();
   if (!path) {
     return (
       <div
@@ -29,7 +29,7 @@ function IssueThumb({ path }: { path?: string }) {
         style={{ backgroundColor: 'var(--bg-surface-2)' }}
         aria-hidden
       >
-        —
+        {t('common.emDash')}
       </div>
     );
   }
@@ -38,7 +38,7 @@ function IssueThumb({ path }: { path?: string }) {
       <div
         className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md text-center text-[10px] font-semibold leading-tight text-[var(--text-secondary)]"
         style={{ backgroundColor: 'var(--bg-surface-2)' }}
-        title="HEIC — tarayıcıda açılamaz"
+        title={t('issueDetail.heic')}
       >
         HEIC
       </div>
@@ -62,16 +62,18 @@ function IssueCardSummary({
   issue: Issue;
   hideVin?: boolean;
 }) {
+  const { t, locale } = useI18n();
+  const localeTag = locale === 'en' ? 'en-GB' : 'tr-TR';
   return (
     <div className="flex gap-3">
       <IssueThumb path={issue.ReportPhotoPath} />
       <div className="min-w-0 flex-1 space-y-1">
-        <DataCardField label="ID">#{issue.ID}</DataCardField>
-        <DataCardField label="Bildirim tarihi">
-          {formatIssueCreatedAt(issue.CreatedAt || issue.IssueDate)}
+        <DataCardField label={t('issue.id')}>#{issue.ID}</DataCardField>
+        <DataCardField label={t('issueDetail.reportedAt')}>
+          {formatIssueCreatedAt(issue.CreatedAt || issue.IssueDate, localeTag)}
         </DataCardField>
         {!hideVin && (
-          <DataCardField label="VIN">
+          <DataCardField label={t('issue.vin')}>
             <Link
               to={`/vehicles/${issue.VIN}?tab=issues`}
               className="text-[var(--accent)] hover:underline"
@@ -81,14 +83,14 @@ function IssueCardSummary({
             </Link>
           </DataCardField>
         )}
-        <DataCardField label="Severity">
+        <DataCardField label={t('severity.label')}>
           <SeverityIndicator severity={issue.Severity} />
         </DataCardField>
-        <DataCardField label="Durum">
+        <DataCardField label={t('issue.status')}>
           <StatusBadge kind="issue" value={issue.Status} />
         </DataCardField>
-        <DataCardField label="Bildiren">
-          {issue.ReporterName || `kullanıcı #${issue.IssueReporterID}`}
+        <DataCardField label={t('issueDetail.reporter')}>
+          {issue.ReporterName || reporterFallback(t, issue.IssueReporterID)}
         </DataCardField>
       </div>
     </div>
@@ -97,20 +99,22 @@ function IssueCardSummary({
 
 /** Label / value block — stacked on narrow, 2-column grid from sm up. */
 function IssueInfoFields({ issue }: { issue: Issue }) {
+  const { t, locale } = useI18n();
+  const localeTag = locale === 'en' ? 'en-GB' : 'tr-TR';
   const rows: [string, string][] = [
     [
-      issueDetailCopy.reporter,
-      issue.ReporterName || `kullanıcı #${issue.IssueReporterID}`,
+      t('issueDetail.reporter'),
+      issue.ReporterName || reporterFallback(t, issue.IssueReporterID),
     ],
-    [issueDetailCopy.issueType, issue.IssueTypeName || '—'],
-    [issueDetailCopy.station, issueStationLabel(issue)],
+    [t('issueDetail.issueType'), issue.IssueTypeName || t('common.emDash')],
+    [t('issueDetail.station'), issueStationLabel(issue)],
     [
-      issueDetailCopy.reportedAt,
-      formatIssueCreatedAt(issue.CreatedAt || issue.IssueDate),
+      t('issueDetail.reportedAt'),
+      formatIssueCreatedAt(issue.CreatedAt || issue.IssueDate, localeTag),
     ],
   ];
   if (issue.SolutionDescription?.trim()) {
-    rows.push([issueDetailCopy.solution, issue.SolutionDescription.trim()]);
+    rows.push([t('issueDetail.solution'), issue.SolutionDescription.trim()]);
   }
   return (
     <div className="flex flex-col gap-[var(--space-4)] sm:grid sm:grid-cols-[minmax(8.5rem,auto)_1fr] sm:gap-x-[var(--space-6)] sm:gap-y-[var(--space-3)]">
@@ -133,6 +137,7 @@ export function IssueDetailPanel({
   issue: Issue;
   onStatusChanged?: () => void;
 }) {
+  const { t } = useI18n();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -143,7 +148,7 @@ export function IssueDetailPanel({
       await api.updateIssueStatus(issue.ID, status);
       onStatusChanged?.();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Durum güncellenemedi');
+      setError(err instanceof Error ? apiErrorMessage(err, t) : t('issueDetail.statusFailed'));
     } finally {
       setBusy(false);
     }
@@ -182,20 +187,20 @@ export function IssueDetailPanel({
           />
         </div>
       </DetailBlock>
-      <DetailBlock heading={issueDetailCopy.history}>
+      <DetailBlock heading={t('issueDetail.history')}>
         <IssueStatusHistory issueId={issue.ID} hideTitle />
       </DetailBlock>
-      <DetailBlock heading={issueDetailCopy.photos}>
+      <DetailBlock heading={t('issueDetail.photos')}>
         <div className="flex flex-col gap-[var(--space-4)]">
           <MediaGallery
             entityType="ISSUE"
             entityId={String(issue.ID)}
-            heading={issueDetailCopy.reportPhotos}
+            heading={t('issueDetail.reportPhotos')}
           />
           <MediaGallery
             entityType="ISSUE_RESOLUTION"
             entityId={String(issue.ID)}
-            heading={issueDetailCopy.resolutionPhotos}
+            heading={t('issueDetail.resolutionPhotos')}
           />
         </div>
       </DetailBlock>
@@ -231,7 +236,7 @@ function DetailBlock({
  */
 export function IssueList({
   items,
-  emptyLabel = 'Issue yok',
+  emptyLabel,
   hideVin = false,
   onStatusChanged,
 }: {
@@ -240,6 +245,9 @@ export function IssueList({
   hideVin?: boolean;
   onStatusChanged?: () => void;
 }) {
+  const { t, locale } = useI18n();
+  const localeTag = locale === 'en' ? 'en-GB' : 'tr-TR';
+  const empty = emptyLabel ?? t('issueDetail.none');
   const [selectedId, setSelectedId] = useState<number | null>(null);
 
   useEffect(() => {
@@ -258,7 +266,7 @@ export function IssueList({
     <div className="min-w-0">
       <div className="space-y-3 lg:hidden">
         {items.length === 0 && (
-          <p className="text-[15px] text-[var(--text-secondary)]">{emptyLabel}</p>
+          <p className="text-[15px] text-[var(--text-secondary)]">{empty}</p>
         )}
         {items.map((r) => (
           <div key={r.ID}>
@@ -284,15 +292,15 @@ export function IssueList({
               className="border-b text-[13px] text-[var(--text-secondary)]"
               style={{ borderColor: 'var(--border)' }}
             >
-              <th className="whitespace-nowrap px-3 py-3">Fotoğraflar</th>
-              <th className="whitespace-nowrap px-3 py-3">ID</th>
-              <th className="whitespace-nowrap px-3 py-3">Bildirim tarihi</th>
+              <th className="whitespace-nowrap px-3 py-3">{t('issue.photosCol')}</th>
+              <th className="whitespace-nowrap px-3 py-3">{t('issue.id')}</th>
+              <th className="whitespace-nowrap px-3 py-3">{t('issueDetail.reportedAt')}</th>
               {!hideVin && (
-                <th className="whitespace-nowrap px-3 py-3">VIN</th>
+                <th className="whitespace-nowrap px-3 py-3">{t('issue.vin')}</th>
               )}
-              <th className="whitespace-nowrap px-3 py-3">Severity</th>
-              <th className="whitespace-nowrap px-3 py-3">Durum</th>
-              <th className="whitespace-nowrap px-3 py-3">Bildiren</th>
+              <th className="whitespace-nowrap px-3 py-3">{t('severity.label')}</th>
+              <th className="whitespace-nowrap px-3 py-3">{t('issue.status')}</th>
+              <th className="whitespace-nowrap px-3 py-3">{t('issueDetail.reporter')}</th>
             </tr>
           </thead>
           <tbody>
@@ -302,7 +310,7 @@ export function IssueList({
                   colSpan={colCount}
                   className="px-3 py-6 text-[var(--text-secondary)]"
                 >
-                  {emptyLabel}
+                  {empty}
                 </td>
               </tr>
             )}
@@ -335,7 +343,7 @@ export function IssueList({
                     </td>
                     <td className="whitespace-nowrap px-3 py-3">#{r.ID}</td>
                     <td className="whitespace-nowrap px-3 py-3 text-[13px] tabular-nums text-[var(--text-secondary)]">
-                      {formatIssueListAt(r.CreatedAt || r.IssueDate)}
+                      {formatIssueListAt(r.CreatedAt || r.IssueDate, localeTag)}
                     </td>
                     {!hideVin && (
                       <td className="whitespace-nowrap px-3 py-3">
@@ -355,7 +363,7 @@ export function IssueList({
                       <StatusBadge kind="issue" value={r.Status} />
                     </td>
                     <td className="whitespace-nowrap px-3 py-3 text-[13px] text-[var(--text-primary)]">
-                      {r.ReporterName || `kullanıcı #${r.IssueReporterID}`}
+                      {r.ReporterName || reporterFallback(t, r.IssueReporterID)}
                     </td>
                   </tr>
                   {open && (

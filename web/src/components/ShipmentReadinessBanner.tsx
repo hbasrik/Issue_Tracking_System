@@ -1,3 +1,4 @@
+import { useI18n } from '../i18n';
 import type { ShipmentReadiness } from '../lib/api';
 
 /** Soft pre-shipment warning — does not replace depot-release hard blocks. */
@@ -6,6 +7,7 @@ export function ShipmentReadinessBanner({
 }: {
   readiness: ShipmentReadiness | null;
 }) {
+  const { t } = useI18n();
   if (!readiness || readiness.ready || readiness.warnings.length === 0) {
     return null;
   }
@@ -18,10 +20,9 @@ export function ShipmentReadinessBanner({
       }}
       role="status"
     >
-      <h3 className="text-[15px] font-semibold">Sevk öncesi uyarı</h3>
+      <h3 className="text-[15px] font-semibold">{t('vehicles.readinessTitle')}</h3>
       <p className="mt-1 text-[13px] text-[var(--text-secondary)]">
-        Araç sevk edilmeden önce aşağıdaki kalemler tamamlanmalı. Depot Release
-        hard-block kuralları değişmedi.
+        {t('vehicles.readinessHint')}
       </p>
       <ul className="mt-3 list-disc space-y-1 pl-5 text-[14px]">
         {readiness.warnings.map((w, i) => (

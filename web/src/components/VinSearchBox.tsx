@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useI18n } from '../i18n';
 import { api, type Vehicle } from '../lib/api';
 import { lightTokens } from '../theme/tokens';
 import { StatusBadge } from './StatusBadge';
@@ -31,11 +32,12 @@ export function VinSearchBox({
   onResults,
   showResults = true,
   resultTo = (v) => `/vehicles/${v.VIN}`,
-  placeholder = 'Son 5 haneyi girin (örn. 00057)',
+  placeholder,
   className = '',
-  ariaLabel = 'VIN son 5 hane araması',
+  ariaLabel,
   onChrome = false,
 }: VinSearchBoxProps) {
+  const { t } = useI18n();
   const location = useLocation();
   const rootRef = useRef<HTMLDivElement>(null);
   const [internal, setInternal] = useState('');
@@ -56,7 +58,7 @@ export function VinSearchBox({
     if (!showResults && !onResultsRef.current) {
       return;
     }
-    const t = window.setTimeout(async () => {
+    const timer = window.setTimeout(async () => {
       setLoading(true);
       try {
         const res = await api.searchVehicles(suffix.trim());
@@ -71,7 +73,7 @@ export function VinSearchBox({
         setLoading(false);
       }
     }, 200);
-    return () => window.clearTimeout(t);
+    return () => window.clearTimeout(timer);
   }, [suffix, showResults]);
 
   useEffect(() => {
@@ -120,7 +122,7 @@ export function VinSearchBox({
             setOpen(true);
           }
         }}
-        placeholder={placeholder}
+        placeholder={placeholder ?? t('search.placeholder')}
         className={
           onChrome
             ? 'w-full rounded-lg border px-3 py-2 text-[15px] placeholder:text-[#5B6672]'
@@ -135,7 +137,7 @@ export function VinSearchBox({
               }
             : { borderColor: 'var(--border)' }
         }
-        aria-label={ariaLabel}
+        aria-label={ariaLabel ?? t('search.aria')}
         aria-expanded={showDropdown}
       />
       {showDropdown && (
@@ -145,18 +147,18 @@ export function VinSearchBox({
         >
           {loading && (
             <p className="px-3 py-2 text-[13px] text-[var(--text-secondary)]">
-              Searching…
+              {t('common.searching')}
             </p>
           )}
           {!loading && results.length === 0 && (
             <p className="px-3 py-2 text-[13px] text-[var(--text-secondary)]">
-              No matches
+              {t('common.noMatches')}
             </p>
           )}
           {!loading && results.length >= 2 && (
             <p className="border-b px-3 py-1.5 text-[12px] text-[var(--text-secondary)]"
               style={{ borderColor: 'var(--border)' }}>
-              {results.length} araç eşleşti, doğrusunu seçin
+              {t('search.matches', { n: results.length })}
             </p>
           )}
           {results.map((v) => {

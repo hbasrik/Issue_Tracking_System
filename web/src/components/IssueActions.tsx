@@ -1,5 +1,6 @@
 import { useAuth } from '../auth/AuthProvider';
 import { Perm } from '../auth/permissions';
+import { useI18n } from '../i18n';
 
 /** Status transition buttons gated on issue.transition.* permissions. */
 export function IssueActions({
@@ -12,19 +13,20 @@ export function IssueActions({
   onTransition: (status: string) => void;
 }) {
   const { has } = useAuth();
+  const { t } = useI18n();
   const actions: { status: string; label: string; primary?: boolean }[] = [];
 
   if (status === 'OPEN' && has(Perm.IssueTransitionProgress)) {
-    actions.push({ status: 'IN_PROGRESS', label: 'İşlemde', primary: true });
+    actions.push({ status: 'IN_PROGRESS', label: t('status.issue.inProgress'), primary: true });
   }
   if (status === 'IN_PROGRESS' && has(Perm.IssueTransitionProgress)) {
-    actions.push({ status: 'DONE', label: 'Tamamlandı', primary: true });
+    actions.push({ status: 'DONE', label: t('status.issue.done'), primary: true });
   }
   if (status === 'DONE' && has(Perm.IssueTransitionApprove)) {
-    actions.push({ status: 'APPROVED', label: 'Kalite Onay', primary: true });
+    actions.push({ status: 'APPROVED', label: t('status.issue.approved'), primary: true });
   }
   if (status === 'DONE' && has(Perm.IssueTransitionConditionalApprove)) {
-    actions.push({ status: 'CONDITIONAL_APPROVED', label: 'Şartlı Onay' });
+    actions.push({ status: 'CONDITIONAL_APPROVED', label: t('status.issue.conditionalApproved') });
   }
 
   if (actions.length === 0) return null;
@@ -47,7 +49,7 @@ export function IssueActions({
           }
           style={a.primary ? undefined : { borderColor: 'var(--border)' }}
         >
-          {busy ? 'Güncelleniyor…' : a.label}
+          {busy ? t('common.updating') : a.label}
         </button>
       ))}
     </div>

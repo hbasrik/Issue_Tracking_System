@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useI18n } from '../i18n';
 import { api, type Issue } from '../lib/api';
+import { apiErrorMessage } from '../lib/apiErrors';
 import { IssueList } from './IssueList';
 
 /**
@@ -8,6 +10,7 @@ import { IssueList } from './IssueList';
  * card on phone/tablet — same pattern as the global Issues page.
  */
 export function VehicleIssuesPanel({ vin }: { vin: string }) {
+  const { t } = useI18n();
   const [items, setItems] = useState<Issue[]>([]);
   const [error, setError] = useState<string | null>(null);
 
@@ -17,10 +20,10 @@ export function VehicleIssuesPanel({ vin }: { vin: string }) {
       const res = await api.listIssues(undefined, vin);
       setItems(res.items ?? []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Issue listesi yüklenemedi');
+      setError(err instanceof Error ? apiErrorMessage(err, t) : t('issue.listFailed'));
       setItems([]);
     }
-  }, [vin]);
+  }, [vin, t]);
 
   useEffect(() => {
     void load();
@@ -28,9 +31,9 @@ export function VehicleIssuesPanel({ vin }: { vin: string }) {
 
   return (
     <div>
-      <h2 className="text-lg font-semibold">Araç issue listesi</h2>
+      <h2 className="text-lg font-semibold">{t('vehicles.issueList')}</h2>
       <p className="mt-1 text-[13px] text-[var(--text-secondary)]">
-        Bu VIN'e ait tüm issue kayıtları
+        {t('vehicles.issueListHint')}
       </p>
 
       {error && (
@@ -42,7 +45,7 @@ export function VehicleIssuesPanel({ vin }: { vin: string }) {
       <div className="mt-4">
         <IssueList
           items={items}
-          emptyLabel="Bu araç için issue yok"
+          emptyLabel={t('vehicles.noIssues')}
           hideVin
           onStatusChanged={() => void load()}
         />

@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useI18n } from '../i18n';
 import {
   api,
   mediaFileUrl,
   type MediaAttachment,
   type MediaEntityType,
 } from '../lib/api';
+import { apiErrorMessage } from '../lib/apiErrors';
 import { isNonWebImage } from '../lib/mediaKind';
 
 interface MediaGalleryProps {
@@ -23,6 +25,7 @@ export function MediaGallery({
   listByVin,
   heading,
 }: MediaGalleryProps) {
+  const { t } = useI18n();
   const inputRef = useRef<HTMLInputElement>(null);
   const [items, setItems] = useState<MediaAttachment[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -37,10 +40,10 @@ export function MediaGallery({
         : await api.listMedia(entityType, entityId);
       setItems(res.items ?? []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Fotoğraflar yüklenemedi');
+      setError(err instanceof Error ? apiErrorMessage(err, t) : t('media.loadFailed'));
       setItems([]);
     }
-  }, [entityType, entityId, listByVin]);
+  }, [entityType, entityId, listByVin, t]);
 
   useEffect(() => {
     void load();
@@ -63,7 +66,7 @@ export function MediaGallery({
       await api.uploadMedia(entityType, entityId, file);
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Yükleme başarısız');
+      setError(err instanceof Error ? apiErrorMessage(err, t) : t('media.uploadFailed'));
     } finally {
       setBusy(false);
       if (inputRef.current) inputRef.current.value = '';
@@ -80,7 +83,7 @@ export function MediaGallery({
               : 'text-[15px] font-semibold text-[var(--accent)]'
           }
         >
-          {heading ?? (listByVin ? 'Tüm fotoğraflar' : 'Fotoğraflar')}
+          {heading ?? (listByVin ? t('media.all') : t('media.photos'))}
         </h3>
         <button
           type="button"
@@ -89,7 +92,7 @@ export function MediaGallery({
           className="rounded-lg border px-3 py-1.5 text-[13px] disabled:opacity-60"
           style={{ borderColor: 'var(--border)' }}
         >
-          {busy ? 'Yükleniyor…' : 'Yükle'}
+          {busy ? t('issueDetail.uploading') : t('issueDetail.upload')}
         </button>
         <input
           ref={inputRef}
@@ -106,7 +109,7 @@ export function MediaGallery({
       )}
       {items.length === 0 && !error && (
         <p className="mt-3 text-[13px] text-[var(--text-secondary)]">
-          Henüz fotoğraf yok
+          {t('media.empty')}
         </p>
       )}
       {items.length > 0 && (
@@ -128,9 +131,9 @@ export function MediaGallery({
                   style={{ borderColor: 'var(--border)' }}
                   aria-label={
                     unreadable
-                      ? `${item.file_name} (tarayıcıda açılamaz)`
+                      ? t('media.unreadableAria', { name: item.file_name })
                       : isImage
-                        ? `Büyüt: ${item.file_name}`
+                        ? t('issueDetail.enlarge', { name: item.file_name })
                         : item.file_name
                   }
                 >
@@ -148,10 +151,10 @@ export function MediaGallery({
                         color: 'var(--text-secondary)',
                       }}
                     >
-                      <span>{unreadable ? 'HEIC' : extOf(item.file_name).toUpperCase() || 'FILE'}</span>
+                      <span>{unreadable ? 'HEIC' : extOf(item.file_name).toUpperCase() || t('media.file')}</span>
                       {unreadable && (
                         <span className="text-[11px] font-normal">
-                          Tarayıcıda açılamaz
+                          {t('media.unreadable')}
                         </span>
                       )}
                     </div>
@@ -176,7 +179,7 @@ export function MediaGallery({
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4"
           role="dialog"
           aria-modal="true"
-          aria-label="Fotoğraf görüntüleyici"
+          aria-label={t('media.viewer')}
           onClick={() => setLightbox(null)}
         >
           <button
@@ -184,7 +187,7 @@ export function MediaGallery({
             className="absolute right-4 top-4 rounded-lg bg-white/10 px-3 py-2 text-[13px] text-white"
             onClick={() => setLightbox(null)}
           >
-            Kapat
+            {t('common.close')}
           </button>
           <img
             src={mediaFileUrl(lightbox.storage_path)}
