@@ -53,6 +53,14 @@ export interface ApiErrorBody {
   error: string;
   blocking_item_ids?: number[];
   blocking_issues?: BlockingIssue[];
+  checklist_blockers?: EOLChecklistBlocker[];
+  depot_items_remaining?: number;
+}
+
+export interface EOLChecklistBlocker {
+  checklist_type: 'EOL' | 'TEST' | 'SHIPMENT';
+  eol_phase?: 'BRANCH' | 'DEPOT';
+  remaining: number;
 }
 
 export class ApiError extends Error {
@@ -332,6 +340,13 @@ export const api = {
     );
   },
 
+  eolDeliver(vin: string) {
+    return request<DeliverResult>(
+      `/vehicles/${encodeURIComponent(vin)}/eol/deliver`,
+      { method: 'POST' },
+    );
+  },
+
   eolDocumentApprove(vin: string) {
     return request<DocumentApproveResult>(
       `/vehicles/${encodeURIComponent(vin)}/eol/document-approve`,
@@ -535,6 +550,7 @@ export interface EOLWorkflowView {
   branch_ship: EOLStageRecord;
   depot_release: EOLStageRecord;
   document_approve: EOLStageRecord;
+  deliver: EOLStageRecord;
   branch_open_issue_count_at_shipment: number | null;
 }
 
@@ -550,6 +566,12 @@ export interface DepotReleaseResult {
   vin: string;
   current_stage: EOLStage;
   vehicle_status?: string;
+}
+
+export interface DeliverResult {
+  vin: string;
+  current_stage: EOLStage;
+  vehicle_status: string;
 }
 
 export interface DocumentApproveResult {
@@ -640,19 +662,19 @@ export function mediaThumbUrl(storagePath: string): string {
   return `${mediaFileUrl(storagePath)}?thumb=1`;
 }
 
-export function formatIssueCreatedAt(iso?: string): string {
+export function formatIssueCreatedAt(iso?: string, locale = 'tr-TR'): string {
   if (!iso || iso.startsWith('0001')) return '—';
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleString('tr-TR');
+  return d.toLocaleString(locale);
 }
 
 /** Compact one-line stamp for the Issues table (no wrap). */
-export function formatIssueListAt(iso?: string): string {
+export function formatIssueListAt(iso?: string, locale = 'tr-TR'): string {
   if (!iso || iso.startsWith('0001')) return '—';
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleString('tr-TR', {
+  return d.toLocaleString(locale, {
     day: '2-digit',
     month: '2-digit',
     year: '2-digit',

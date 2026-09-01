@@ -11,6 +11,7 @@ export const Perm = {
   ChecklistEOLEdit: 'checklist.eol.edit',
   EOLBranchShip: 'eol.branch_ship',
   EOLDepotRelease: 'eol.depot_release',
+  EOLDeliver: 'eol.deliver',
   EOLDocumentApprove: 'eol.document_approve',
   IssueView: 'issue.view',
   IssueCreate: 'issue.create',
