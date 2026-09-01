@@ -5,12 +5,12 @@ import { IssueList } from '../components/IssueList';
 import { issueMatchesListQuery } from '../lib/issueVinFilter';
 import { issueTypeChipLabel } from '../lib/issueTypeLabel';
 import {
-  HOME_ISSUE_STAT_LABELS,
+  homeIssueStatLabel,
   isHomeIssueStatKey,
   matchesHomeIssueStat,
 } from '../lib/homeIssueStats';
 import {
-  ANALYSIS_ISSUE_STAT_LABELS,
+  analysisIssueStatLabel,
   isAnalysisIssueStatKey,
   matchesAnalysisIssueStat,
 } from '../lib/analysisIssueStats';
@@ -26,34 +26,41 @@ import {
   severityFillColor,
   type SeverityLevel,
 } from '../components/SeverityIndicator';
-import { issueStatusColor } from '../lib/issueStatus';
+import { issueStatusColor, issueStatusLabel } from '../lib/issueStatus';
 import {
   buildIssuesCsv,
   buildIssuesZip,
   downloadBlob,
   type IssueExportPhoto,
 } from '../lib/issueExport';
+import { useI18n, type Translate } from '../i18n';
 
 type IssueStatus = Issue['Status'];
 
 const SEVERITIES: SeverityLevel[] = ['CRITICAL', 'MEDIUM', 'LOW'];
 
-const SEVERITY_LABELS: Record<SeverityLevel, string> = {
-  CRITICAL: 'Kritik',
-  MEDIUM: 'Orta',
-  LOW: 'Düşük',
-};
-
-const STATUSES: { value: IssueStatus; label: string }[] = [
-  { value: 'OPEN', label: 'Açık' },
-  { value: 'IN_PROGRESS', label: 'İşlemde' },
-  { value: 'DONE', label: 'Tamamlandı' },
-  { value: 'CONDITIONAL_APPROVED', label: 'Şartlı Onay' },
-  { value: 'APPROVED', label: 'Kalite Onay' },
+const STATUSES: IssueStatus[] = [
+  'OPEN',
+  'IN_PROGRESS',
+  'DONE',
+  'CONDITIONAL_APPROVED',
+  'APPROVED',
 ];
+
+function severityLabel(s: SeverityLevel, t: Translate): string {
+  switch (s) {
+    case 'CRITICAL':
+      return t('severity.critical');
+    case 'MEDIUM':
+      return t('severity.medium');
+    case 'LOW':
+      return t('severity.low');
+  }
+}
 
 /** Issues list + detail — quality sign-off is gated on issue.transition.* permissions. */
 export default function IssuesPage() {
+  const { t } = useI18n();
   const { mode } = useTheme();
   const pageBg = tokensFor(mode)['bg-page'];
   const [searchParams, setSearchParams] = useSearchParams();
@@ -92,10 +99,10 @@ export default function IssuesPage() {
       setItems(list);
       setIssueTypes(typesRes.items ?? []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Issue listesi yüklenemedi');
+      setError(err instanceof Error ? err.message : t('issue.listFailed'));
       setItems([]);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     void load();
@@ -215,13 +222,13 @@ export default function IssuesPage() {
       for (const issue of visible) {
         urls.set(issue.ID, photoUrls(attachments.get(issue.ID) ?? { report: [], resolution: [] }));
       }
-      const csv = buildIssuesCsv(visible, urls);
+      const csv = buildIssuesCsv(visible, urls, t);
       downloadBlob(
         new Blob([csv], { type: 'text/csv;charset=utf-8' }),
         `issues-${exportStamp()}.csv`,
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'CSV dışa aktarma başarısız');
+      setError(err instanceof Error ? err.message : t('issue.exportCsvFailed'));
     } finally {
       setExporting(null);
     }
@@ -242,23 +249,39 @@ export default function IssuesPage() {
           ...(await fetchExportPhotos(issue.ID, 'cozum', pack.resolution)),
         );
       }
-      const csv = buildIssuesCsv(visible, urls);
+      const csv = buildIssuesCsv(visible, urls, t);
       const zip = buildIssuesZip(csv, photos);
       downloadBlob(
         new Blob([zip as BlobPart], { type: 'application/zip' }),
         `issues-${exportStamp()}.zip`,
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'ZIP dışa aktarma başarısız');
+      setError(err instanceof Error ? err.message : t('issue.exportZipFailed'));
     } finally {
       setExporting(null);
     }
   }
 
+  const analysisBanner = analysisStat
+    ? analysisFrom || analysisTo
+      ? t('issue.analysisFilterRange', {
+          label: analysisIssueStatLabel(analysisStat, t),
+          range: t('analysis.to', {
+            from: analysisFrom || '…',
+            to: analysisTo || '…',
+          }),
+          n: visible.length,
+        })
+      : t('issue.analysisFilter', {
+          label: analysisIssueStatLabel(analysisStat, t),
+          n: visible.length,
+        })
+    : null;
+
   return (
     <section>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-xl font-semibold sm:text-2xl">Issues</h1>
+        <h1 className="text-xl font-semibold sm:text-2xl">{t('nav.issues')}</h1>
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
@@ -267,7 +290,9 @@ export default function IssuesPage() {
             className="min-h-touch rounded-lg border px-3 py-1.5 text-[13px] hover:bg-[var(--bg-surface-2)] disabled:opacity-40"
             style={{ borderColor: 'var(--border)' }}
           >
-            {exporting === 'csv' ? 'CSV…' : `CSV (${visible.length})`}
+            {exporting === 'csv'
+              ? t('issue.exportingCsv')
+              : t('issue.csvN', { n: visible.length })}
           </button>
           <button
             type="button"
@@ -275,7 +300,9 @@ export default function IssuesPage() {
             onClick={() => void exportZip()}
             className="min-h-touch rounded-lg bg-[var(--accent)] px-3 py-1.5 text-[13px] text-white hover:brightness-110 disabled:opacity-40"
           >
-            {exporting === 'zip' ? 'ZIP…' : `ZIP (${visible.length})`}
+            {exporting === 'zip'
+              ? t('issue.exportingZip')
+              : t('issue.zipN', { n: visible.length })}
           </button>
         </div>
       </div>
@@ -287,12 +314,11 @@ export default function IssuesPage() {
         >
           <p className="text-[13px] text-[var(--text-primary)]">
             {homeStat
-              ? `Home filtre: ${HOME_ISSUE_STAT_LABELS[homeStat]} · ${visible.length} kayıt`
-              : `Analiz filtre: ${ANALYSIS_ISSUE_STAT_LABELS[analysisStat!]}${
-                  analysisFrom || analysisTo
-                    ? ` · ${analysisFrom || '…'} → ${analysisTo || '…'}`
-                    : ''
-                } · ${visible.length} kayıt`}
+              ? t('issue.homeFilter', {
+                  label: homeIssueStatLabel(homeStat, t),
+                  n: visible.length,
+                })
+              : analysisBanner}
           </p>
           <button
             type="button"
@@ -303,7 +329,7 @@ export default function IssuesPage() {
               color: brandColors.secondary,
             }}
           >
-            Temizle
+            {t('common.clear')}
           </button>
         </div>
       )}
@@ -318,7 +344,7 @@ export default function IssuesPage() {
               className="text-[13px] font-semibold"
               style={{ color: 'var(--text-secondary)' }}
             >
-              VIN / bildiren
+              {t('issue.searchLabel')}
             </label>
             <input
               type="search"
@@ -327,8 +353,8 @@ export default function IssuesPage() {
                 if (homeStat || analysisStat) clearHomeStat();
                 setListQuery(e.target.value);
               }}
-              placeholder="VIN veya bildiren adı"
-              aria-label="VIN veya bildiren adı"
+              placeholder={t('issue.searchPlaceholder')}
+              aria-label={t('issue.searchPlaceholder')}
               className="mt-1 w-full rounded-lg border bg-[var(--bg-page)] px-3 py-2 text-[15px] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]"
               style={{ borderColor: 'var(--border)' }}
             />
@@ -338,20 +364,20 @@ export default function IssuesPage() {
               className="mb-2 text-[13px] font-semibold"
               style={{ color: 'var(--text-secondary)' }}
             >
-              Tür
+              {t('issue.type')}
             </p>
             <div className="flex flex-wrap gap-2">
-              {issueTypes.map((t) => {
-                const selected = !homeStat && !analysisStat && typeIds.has(t.ID);
+              {issueTypes.map((itype) => {
+                const selected = !homeStat && !analysisStat && typeIds.has(itype.ID);
                 return (
                   <button
-                    key={t.ID}
+                    key={itype.ID}
                     type="button"
-                    onClick={() => toggleType(t.ID)}
+                    onClick={() => toggleType(itype.ID)}
                     className={TYPE_CHIP_CLASS}
                     style={typeChipStyle(selected)}
                   >
-                    {issueTypeChipLabel(t.Name)}
+                    {issueTypeChipLabel(itype.Name)}
                   </button>
                 );
               })}
@@ -362,21 +388,21 @@ export default function IssuesPage() {
               className="mb-2 text-[13px] font-semibold"
               style={{ color: 'var(--text-secondary)' }}
             >
-              Durum
+              {t('issue.status')}
             </p>
             <div className="flex flex-wrap gap-2">
-              {STATUSES.map((s) => {
-                const selected = !homeStat && !analysisStat && statuses.has(s.value);
-                const color = issueStatusColor(s.value);
+              {STATUSES.map((status) => {
+                const selected = !homeStat && !analysisStat && statuses.has(status);
+                const color = issueStatusColor(status);
                 return (
                   <button
-                    key={s.value}
+                    key={status}
                     type="button"
-                    onClick={() => toggleStatus(s.value)}
+                    onClick={() => toggleStatus(status)}
                     className={`${CHIP_CLASS} shrink-0`}
                     style={chipStyle(selected, color, pageBg)}
                   >
-                    {s.label}
+                    {issueStatusLabel(status, t)}
                   </button>
                 );
               })}
@@ -387,13 +413,13 @@ export default function IssuesPage() {
               className="mb-2 text-[13px] font-semibold"
               style={{ color: 'var(--text-secondary)' }}
             >
-              Severity
+              {t('severity.label')}
             </p>
             <div className="flex flex-wrap gap-2">
               {SEVERITIES.map((s) => {
                 const selected = !homeStat && !analysisStat && severities.has(s);
                 const color = severityFillColor(s);
-                const name = SEVERITY_LABELS[s];
+                const name = severityLabel(s, t);
                 return (
                   <button
                     key={s}

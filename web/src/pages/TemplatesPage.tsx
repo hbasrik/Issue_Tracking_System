@@ -15,6 +15,7 @@ import {
   DesktopTableShell,
   MobileCardStack,
 } from '../components/DataCard';
+import { useI18n, type Translate } from '../i18n';
 
 function typeBadgeValue(type: ChecklistTemplate['Type']): string {
   if (type === 'EOL') return 'OK';
@@ -22,8 +23,8 @@ function typeBadgeValue(type: ChecklistTemplate['Type']): string {
   return 'CONDITIONAL_OK';
 }
 
-function modelLabel(modelId: number | null): string {
-  return modelId == null ? 'Default (all models)' : `Model #${modelId}`;
+function modelLabel(modelId: number | null, t: Translate): string {
+  return modelId == null ? t('common.defaultAllModels') : t('common.modelN', { id: modelId });
 }
 
 function activeCount(items: ChecklistTemplateItem[]): number {
@@ -39,6 +40,7 @@ const btnGhost =
 
 /** Checklist Templates admin — live catalogue, editable with admin.manage_masters. */
 export default function TemplatesPage() {
+  const { t } = useI18n();
   const [templates, setTemplates] = useState<ChecklistTemplate[]>([]);
   const [selected, setSelected] = useState<ChecklistTemplate | null>(null);
   const [items, setItems] = useState<ChecklistTemplateItem[]>([]);
@@ -64,11 +66,11 @@ export default function TemplatesPage() {
     try {
       await loadTemplates();
     } catch (err) {
-      setError(err instanceof Error ? apiErrorMessage(err) : 'Şablonlar yüklenemedi');
+      setError(err instanceof Error ? apiErrorMessage(err, t) : t('templates.loadFailed'));
     } finally {
       setLoading(false);
     }
-  }, [loadTemplates]);
+  }, [loadTemplates, t]);
 
   useEffect(() => {
     void load();
@@ -95,13 +97,13 @@ export default function TemplatesPage() {
       setNewText('');
       setNewPhase('BRANCH');
     } catch (err) {
-      setError(err instanceof Error ? apiErrorMessage(err) : 'Şablon maddeleri yüklenemedi');
+      setError(err instanceof Error ? apiErrorMessage(err, t) : t('templates.itemsFailed'));
     }
   }
 
   async function refreshSelected(templateId: number) {
     const list = await loadTemplates();
-    const row = list.find((t) => t.ID === templateId) ?? null;
+    const row = list.find((tmpl) => tmpl.ID === templateId) ?? null;
     if (row) {
       await openEditor(row);
     }
@@ -124,7 +126,7 @@ export default function TemplatesPage() {
       setNewText('');
       await refreshSelected(selected.ID);
     } catch (err) {
-      setError(err instanceof ApiError ? apiErrorMessage(err) : 'Madde eklenemedi');
+      setError(err instanceof ApiError ? apiErrorMessage(err, t) : t('templates.addFailed'));
     } finally {
       setBusy(false);
     }
@@ -145,7 +147,7 @@ export default function TemplatesPage() {
       await api.updateChecklistTemplateItem(selected.ID, item.ID, body);
       await refreshSelected(selected.ID);
     } catch (err) {
-      setError(err instanceof ApiError ? apiErrorMessage(err) : 'Kayıt başarısız');
+      setError(err instanceof ApiError ? apiErrorMessage(err, t) : t('templates.saveFailed'));
     } finally {
       setBusy(false);
     }
@@ -161,7 +163,7 @@ export default function TemplatesPage() {
       });
       await refreshSelected(selected.ID);
     } catch (err) {
-      setError(err instanceof ApiError ? apiErrorMessage(err) : 'Güncelleme başarısız');
+      setError(err instanceof ApiError ? apiErrorMessage(err, t) : t('templates.updateFailed'));
     } finally {
       setBusy(false);
     }
@@ -175,7 +177,7 @@ export default function TemplatesPage() {
       await api.deleteChecklistTemplateItem(selected.ID, item.ID);
       await refreshSelected(selected.ID);
     } catch (err) {
-      setError(err instanceof ApiError ? apiErrorMessage(err) : 'Silinemedi');
+      setError(err instanceof ApiError ? apiErrorMessage(err, t) : t('templates.deleteFailed'));
     } finally {
       setBusy(false);
     }
@@ -199,10 +201,10 @@ export default function TemplatesPage() {
       );
       setItems(res.items ?? next);
       const list = await loadTemplates();
-      const row = list.find((t) => t.ID === selected.ID);
+      const row = list.find((tmpl) => tmpl.ID === selected.ID);
       if (row) setSelected(row);
     } catch (err) {
-      setError(err instanceof ApiError ? apiErrorMessage(err) : 'Sıralama kaydedilemedi');
+      setError(err instanceof ApiError ? apiErrorMessage(err, t) : t('templates.reorderFailed'));
     } finally {
       setBusy(false);
     }
@@ -212,10 +214,9 @@ export default function TemplatesPage() {
 
   return (
     <section>
-      <h1 className="text-xl font-semibold sm:text-2xl">Checklist şablonları</h1>
+      <h1 className="text-xl font-semibold sm:text-2xl">{t('templates.title')}</h1>
       <p className="mt-1 text-[13px] text-[var(--text-secondary)]">
-        Multi-template admin — model × EOL / SHIPMENT / TEST. Yeni madde yalnızca
-        bundan sonra eklenen araçlarda çıkar; silmek yerine pasife çekin.
+        {t('templates.hint')}
       </p>
       {error && (
         <p className="mt-3 text-[13px]" style={{ color: 'var(--status-not-ok)' }}>
@@ -228,12 +229,12 @@ export default function TemplatesPage() {
           <MobileCardStack
             empty={
               !loading && templates.length === 0 ? (
-                <p className="text-[15px] text-[var(--text-secondary)]">No templates</p>
+                <p className="text-[15px] text-[var(--text-secondary)]">{t('templates.empty')}</p>
               ) : null
             }
           >
             {loading && (
-              <p className="text-[var(--text-secondary)]">Yükleniyor…</p>
+              <p className="text-[var(--text-secondary)]">{t('common.loading')}</p>
             )}
             {templates.map((row) => (
               <DataCard
@@ -241,17 +242,17 @@ export default function TemplatesPage() {
                 selected={selected?.ID === row.ID}
                 onClick={() => void openEditor(row)}
               >
-                <DataCardField label="Model">
-                  {modelLabel(row.VehicleModelID)}
+                <DataCardField label={t('templates.model')}>
+                  {modelLabel(row.VehicleModelID, t)}
                 </DataCardField>
-                <DataCardField label="Type">
+                <DataCardField label={t('templates.type')}>
                   <span className="inline-flex items-center gap-1">
                     <StatusBadge kind="eol" value={typeBadgeValue(row.Type)} />
                     {row.Type}
                   </span>
                 </DataCardField>
-                <DataCardField label="Aktif madde">{row.ItemCount}</DataCardField>
-                <DataCardField label="Durum">
+                <DataCardField label={t('templates.activeItems')}>{row.ItemCount}</DataCardField>
+                <DataCardField label={t('templates.status')}>
                   <ActiveBadge active={row.IsActive} />
                 </DataCardField>
               </DataCard>
@@ -265,24 +266,24 @@ export default function TemplatesPage() {
                   className="border-b text-[13px] text-[var(--text-secondary)]"
                   style={{ borderColor: 'var(--border)' }}
                 >
-                  <th className="px-4 py-3">Model</th>
-                  <th className="px-4 py-3">Type</th>
-                  <th className="px-4 py-3">Aktif madde</th>
-                  <th className="px-4 py-3">Durum</th>
+                  <th className="px-4 py-3">{t('templates.model')}</th>
+                  <th className="px-4 py-3">{t('templates.type')}</th>
+                  <th className="px-4 py-3">{t('templates.activeItems')}</th>
+                  <th className="px-4 py-3">{t('templates.status')}</th>
                 </tr>
               </thead>
               <tbody>
                 {loading && (
                   <tr>
                     <td className="px-4 py-3 text-[var(--text-secondary)]" colSpan={4}>
-                      Yükleniyor…
+                      {t('common.loading')}
                     </td>
                   </tr>
                 )}
                 {!loading && templates.length === 0 && (
                   <tr>
                     <td className="px-4 py-3 text-[var(--text-secondary)]" colSpan={4}>
-                      No templates
+                      {t('templates.empty')}
                     </td>
                   </tr>
                 )}
@@ -293,7 +294,7 @@ export default function TemplatesPage() {
                     style={{ borderColor: 'var(--border)' }}
                     onClick={() => void openEditor(row)}
                   >
-                    <td className="px-4 py-3">{modelLabel(row.VehicleModelID)}</td>
+                    <td className="px-4 py-3">{modelLabel(row.VehicleModelID, t)}</td>
                     <td className="px-4 py-3">
                       <StatusBadge kind="eol" value={typeBadgeValue(row.Type)} />{' '}
                       {row.Type}
@@ -313,18 +314,18 @@ export default function TemplatesPage() {
           className="rounded-xl border bg-[var(--bg-surface-1)] p-4 sm:p-5"
           style={{ borderColor: 'var(--border)' }}
         >
-          <h2 className="text-lg font-semibold">Template editor</h2>
+          <h2 className="text-lg font-semibold">{t('templates.editor')}</h2>
           {!selected && (
             <p className="mt-2 text-[15px] text-[var(--text-secondary)]">
-              Select a template to edit items.
+              {t('templates.pick')}
             </p>
           )}
           {selected && (
             <>
               <p className="mt-2 break-words text-[15px]">{selected.Name}</p>
               <p className="mt-1 text-[13px] text-[var(--text-secondary)]">
-                {liveActive} aktif madde
-                {items.length !== liveActive ? ` · ${items.length} toplam` : ''}
+                {t('templates.activeCount', { n: liveActive })}
+                {items.length !== liveActive ? t('templates.totalItems', { n: items.length }) : ''}
               </p>
               <label className="mt-3 flex min-h-touch items-center gap-2 text-[13px] text-[var(--text-secondary)]">
                 <input
@@ -332,20 +333,20 @@ export default function TemplatesPage() {
                   checked={hideInactive}
                   onChange={(e) => setHideInactive(e.target.checked)}
                 />
-                Pasif maddeleri gizle
+                {t('templates.hideInactive')}
               </label>
 
               <div
                 className="mt-4 space-y-2 rounded-lg border p-3"
                 style={{ borderColor: 'var(--border)' }}
               >
-                <p className="text-[13px] font-medium">Yeni madde</p>
+                <p className="text-[13px] font-medium">{t('templates.newItem')}</p>
                 <input
                   className={inputClass}
                   style={{ borderColor: 'var(--border)' }}
                   value={newText}
                   onChange={(e) => setNewText(e.target.value)}
-                  placeholder="Madde metni"
+                  placeholder={t('templates.itemText')}
                   maxLength={250}
                 />
                 {selected.Type === 'EOL' ? (
@@ -356,10 +357,10 @@ export default function TemplatesPage() {
                     onChange={(e) =>
                       setNewPhase(e.target.value as 'BRANCH' | 'DEPOT')
                     }
-                    aria-label="EoL phase"
+                    aria-label={t('templates.eolPhase')}
                   >
-                    <option value="BRANCH">BRANCH</option>
-                    <option value="DEPOT">DEPOT</option>
+                    <option value="BRANCH">{t('templates.branch')}</option>
+                    <option value="DEPOT">{t('templates.depot')}</option>
                   </select>
                 ) : null}
                 <button
@@ -368,7 +369,7 @@ export default function TemplatesPage() {
                   disabled={busy || !newText.trim()}
                   onClick={() => void addItem()}
                 >
-                  Ekle
+                  {t('common.add')}
                 </button>
               </div>
 
@@ -389,7 +390,7 @@ export default function TemplatesPage() {
                       <div className="min-w-0 flex-1 space-y-2">
                         {!item.IsActive ? (
                           <span className="text-[11px] font-semibold uppercase tracking-wide text-[var(--text-secondary)]">
-                            Pasif
+                            {t('common.inactive')}
                           </span>
                         ) : null}
                         <textarea
@@ -417,10 +418,10 @@ export default function TemplatesPage() {
                                 [item.ID]: e.target.value as 'BRANCH' | 'DEPOT',
                               }))
                             }
-                            aria-label={`EoL phase for item ${item.ItemNo}`}
+                            aria-label={t('templates.eolPhaseItem', { n: item.ItemNo })}
                           >
-                            <option value="BRANCH">BRANCH</option>
-                            <option value="DEPOT">DEPOT</option>
+                            <option value="BRANCH">{t('templates.branch')}</option>
+                            <option value="DEPOT">{t('templates.depot')}</option>
                           </select>
                         ) : null}
                         <div className="flex flex-wrap gap-2">
@@ -430,7 +431,7 @@ export default function TemplatesPage() {
                             disabled={busy}
                             onClick={() => void saveItem(item)}
                           >
-                            Kaydet
+                            {t('common.save')}
                           </button>
                           <button
                             type="button"
@@ -438,7 +439,7 @@ export default function TemplatesPage() {
                             style={{ borderColor: 'var(--border)' }}
                             disabled={busy || visIdx === 0}
                             onClick={() => void move(item, -1)}
-                            aria-label="Move up"
+                            aria-label={t('common.moveUp')}
                           >
                             <ChevronUp size={16} />
                           </button>
@@ -448,7 +449,7 @@ export default function TemplatesPage() {
                             style={{ borderColor: 'var(--border)' }}
                             disabled={busy || visIdx === visible.length - 1}
                             onClick={() => void move(item, 1)}
-                            aria-label="Move down"
+                            aria-label={t('common.moveDown')}
                           >
                             <ChevronDown size={16} />
                           </button>
@@ -459,7 +460,7 @@ export default function TemplatesPage() {
                             disabled={busy}
                             onClick={() => void setActive(item, !item.IsActive)}
                           >
-                            {item.IsActive ? 'Pasife çek' : 'Aktife al'}
+                            {item.IsActive ? t('common.deactivate') : t('common.activate')}
                           </button>
                           <button
                             type="button"
@@ -471,7 +472,7 @@ export default function TemplatesPage() {
                             disabled={busy}
                             onClick={() => void removeItem(item)}
                           >
-                            Sil
+                            {t('common.delete')}
                           </button>
                         </div>
                       </div>

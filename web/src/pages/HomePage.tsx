@@ -42,6 +42,8 @@ import {
 import type { HomeIssueStatKey } from '../lib/homeIssueStats';
 import { severityFillColor } from '../components/SeverityIndicator';
 import { brandColors, statusColors } from '../theme/tokens';
+import { useI18n } from '../i18n';
+import { localeTag } from '../../../shared/i18n';
 
 const CHART_TOOLTIP = {
   background: 'var(--bg-surface-1)',
@@ -55,6 +57,7 @@ const mutedCaption = { color: 'var(--text-secondary)' } as const;
 
 /** Home dashboard — live issue metrics from the current database. */
 export default function HomePage() {
+  const { t, locale } = useI18n();
   const [issues, setIssues] = useState<Issue[]>([]);
   const [vehicles, setVehicles] = useState<VehicleSeverityBreakdown[]>([]);
   const [stations, setStations] = useState<Station[]>([]);
@@ -76,7 +79,7 @@ export default function HomePage() {
         setStations(stationRes.items ?? []);
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Panel yüklenemedi');
+          setError(err instanceof Error ? err.message : t('home.loadFailed'));
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -85,18 +88,49 @@ export default function HomePage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [t]);
 
   const metrics = useMemo(
-    () => buildHomeDashboard(issues, vehicles, stations),
-    [issues, vehicles, stations],
+    () => buildHomeDashboard(issues, vehicles, stations, new Date(), localeTag(locale)),
+    [issues, vehicles, stations, locale],
+  );
+
+  const openByStation = useMemo(
+    () =>
+      metrics.openByStation.map((row) => {
+        if (row.station === 'Unknown') {
+          return { ...row, station: t('home.unknownStation') };
+        }
+        const fallback = /^Station (\d+)$/.exec(row.station);
+        if (fallback) {
+          return { ...row, station: t('analysis.stationN', { id: fallback[1] }) };
+        }
+        return row;
+      }),
+    [metrics.openByStation, t],
+  );
+
+  const openSeverity = useMemo(
+    () =>
+      metrics.openSeverity.map((entry) => ({
+        ...entry,
+        name:
+          entry.name === 'Critical'
+            ? t('severity.critical')
+            : entry.name === 'Medium'
+              ? t('severity.medium')
+              : entry.name === 'Low'
+                ? t('severity.low')
+                : entry.name,
+      })),
+    [metrics.openSeverity, t],
   );
 
   return (
     <section>
-      <h1 className="text-xl font-semibold sm:text-2xl">Ana sayfa</h1>
+      <h1 className="text-xl font-semibold sm:text-2xl">{t('home.title')}</h1>
       <p className="mt-1 text-[13px]" style={mutedCaption}>
-        Canlı hata metrikleri — son 24 saat ve dönemsel trend
+        {t('home.subtitle')}
       </p>
 
       {error && (
@@ -107,13 +141,13 @@ export default function HomePage() {
 
       {loading && !error && (
         <p className="mt-4 text-[13px]" style={mutedCaption}>
-          Metrikler yükleniyor…
+          {t('home.metricsLoading')}
         </p>
       )}
 
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatCard
-          title="Toplam Açık Hata"
+          title={t('home.stat.open')}
           value={metrics.openNow}
           previous={metrics.openPrev}
           icon={<AlertCircle size={20} />}
@@ -121,7 +155,7 @@ export default function HomePage() {
           to="/issues?homeStat=open"
         />
         <StatCard
-          title="Bugün Kapanan"
+          title={t('home.stat.closedToday')}
           value={metrics.closedToday}
           previous={metrics.closedPrevDay}
           icon={<CheckCircle2 size={20} />}
@@ -129,7 +163,7 @@ export default function HomePage() {
           to="/issues?homeStat=closed_today"
         />
         <StatCard
-          title="İşlemde"
+          title={t('home.stat.inProgress')}
           value={metrics.inProgressNow}
           previous={metrics.inProgressPrev}
           icon={<Timer size={20} />}
@@ -139,7 +173,7 @@ export default function HomePage() {
       </div>
       <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
         <StatCard
-          title="Şartlı Onay (Bugün)"
+          title={t('home.stat.conditionalToday')}
           value={metrics.conditionalToday}
           previous={metrics.conditionalPrevDay}
           icon={<ShieldAlert size={20} />}
@@ -147,7 +181,7 @@ export default function HomePage() {
           to="/issues?homeStat=conditional_approved_today"
         />
         <StatCard
-          title="Kalite Onay (Bugün)"
+          title={t('home.stat.approvedToday')}
           value={metrics.approvedToday}
           previous={metrics.approvedPrevDay}
           icon={<BadgeCheck size={20} />}
@@ -159,12 +193,12 @@ export default function HomePage() {
       <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-5">
         <ChartCard
           className="lg:col-span-3"
-          title="En Çok Hatalı Araçlar"
-          subtitle="Açık hata sayısına göre ilk 8 — çubuk, listedeki en yüksek sayıya oranlı"
+          title={t('home.topVehicles')}
+          subtitle={t('home.topVehiclesHint')}
         >
           {metrics.topVehicles.length === 0 ? (
             <p className="py-8 text-[13px]" style={mutedCaption}>
-              Açık hatalı araç yok
+              {t('home.noTopVehicles')}
             </p>
           ) : (
             <ol className="space-y-3">
@@ -217,8 +251,8 @@ export default function HomePage() {
 
         <ChartCard
           className="lg:col-span-2"
-          title="Çözüm Oranı"
-          subtitle="Kalite Onay + Şartlı Onay / tüm hatalar"
+          title={t('home.resolutionRate')}
+          subtitle={t('home.resolutionHint')}
         >
           <ResolutionGauge
             rate={metrics.resolutionRate}
@@ -230,19 +264,19 @@ export default function HomePage() {
 
       <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
         <ChartCard
-          title="Severity Dağılımı"
-          subtitle="Açık hataların Critical / Medium / Low kırılımı"
+          title={t('home.severityDist')}
+          subtitle={t('home.severityHint')}
         >
           <div className="h-[220px] w-full min-w-0 sm:h-[240px]">
             {metrics.openNow === 0 ? (
               <p className="flex h-full items-center text-[13px]" style={mutedCaption}>
-                Açık hata yok
+                {t('home.noOpenIssues')}
               </p>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={metrics.openSeverity}
+                    data={openSeverity}
                     dataKey="value"
                     nameKey="name"
                     cx="50%"
@@ -252,7 +286,7 @@ export default function HomePage() {
                     paddingAngle={2}
                     stroke="none"
                   >
-                    {metrics.openSeverity.map((entry) => (
+                    {openSeverity.map((entry) => (
                       <Cell key={entry.name} fill={entry.color} />
                     ))}
                   </Pie>
@@ -268,18 +302,18 @@ export default function HomePage() {
         </ChartCard>
 
         <ChartCard
-          title="İstasyon Bazlı Açık Hata"
-          subtitle="Hangi istasyonda kaç açık hata var"
+          title={t('home.openByStation')}
+          subtitle={t('home.openByStationHint')}
         >
           <div className="h-[220px] w-full min-w-0 sm:h-[240px]">
-            {metrics.openByStation.length === 0 ? (
+            {openByStation.length === 0 ? (
               <p className="flex h-full items-center text-[13px]" style={mutedCaption}>
-                Açık hata yok
+                {t('home.noStationDefects')}
               </p>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
-                  data={metrics.openByStation}
+                  data={openByStation}
                   layout="vertical"
                   margin={{ top: 4, right: 12, left: 4, bottom: 4 }}
                 >
@@ -297,13 +331,13 @@ export default function HomePage() {
                   />
                   <Tooltip
                     contentStyle={CHART_TOOLTIP}
-                    formatter={(value: number) => [value, 'Açık hata']}
+                    formatter={(value: number) => [value, t('home.openIssue')]}
                   />
                   <Bar
                     dataKey="count"
                     fill={brandColors.secondary}
                     fillOpacity={0.78}
-                    name="Açık hata"
+                    name={t('home.openIssue')}
                     radius={[0, 6, 6, 0]}
                   />
                 </BarChart>
@@ -313,24 +347,24 @@ export default function HomePage() {
         </ChartCard>
 
         <ChartCard
-          title="Ortalama Çözüm Süresi"
-          subtitle="Bildirimden Kalite Onay / Şartlı Onay’a"
+          title={t('home.mttr')}
+          subtitle={t('home.mttrHint')}
         >
           <p className="text-3xl font-semibold tabular-nums text-[var(--text-primary)]">
-            {metrics.mttrHours == null ? '—' : formatMttr(metrics.mttrHours)}
+            {metrics.mttrHours == null ? t('common.emDash') : formatMttr(metrics.mttrHours, t)}
           </p>
           <p className="mt-2 text-[13px]" style={mutedCaption}>
             {metrics.mttrSample === 0
-              ? 'Henüz kapanmış hata yok'
-              : `${metrics.mttrSample} kapanmış hata üzerinden`}
+              ? t('home.mttrEmpty')
+              : t('home.mttrSample', { n: metrics.mttrSample })}
           </p>
         </ChartCard>
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
         <ChartCard
-          title="Haftalık Bildirilen Hatalar"
-          subtitle="Son 7 günde bildirilen hatalar"
+          title={t('home.weekly')}
+          subtitle={t('home.weeklyHint')}
         >
           <div className="h-[220px] w-full min-w-0 sm:h-[260px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -351,13 +385,13 @@ export default function HomePage() {
                 />
                 <Tooltip
                   contentStyle={CHART_TOOLTIP}
-                  formatter={(value: number) => [value, 'Bildirilen']}
+                  formatter={(value: number) => [value, t('home.reported')]}
                 />
                 <Bar
                   dataKey="count"
                   fill={brandColors.neutralWarm}
                   fillOpacity={0.92}
-                  name="Bildirilen"
+                  name={t('home.reported')}
                   radius={[6, 6, 0, 0]}
                 />
               </BarChart>
@@ -366,13 +400,13 @@ export default function HomePage() {
         </ChartCard>
 
         <ChartCard
-          title="Açık Hata Stoğu"
-          subtitle="Gün sonu açık hata sayısı — son 90 gün veya ilk hatadan beri"
+          title={t('home.backlog')}
+          subtitle={t('home.backlogHint')}
         >
           <div className="h-[220px] w-full min-w-0 sm:h-[260px]">
             {metrics.backlog.length === 0 ? (
               <p className="flex h-full items-center text-[13px]" style={mutedCaption}>
-                Henüz hata kaydı yok
+                {t('home.noRecords')}
               </p>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
@@ -408,12 +442,12 @@ export default function HomePage() {
                   />
                   <Tooltip
                     contentStyle={CHART_TOOLTIP}
-                    formatter={(value: number) => [value, 'Açık stok']}
+                    formatter={(value: number) => [value, t('home.backlogSeries')]}
                   />
                   <Area
                     type="monotone"
                     dataKey="open"
-                    name="Açık stok"
+                    name={t('home.backlogSeries')}
                     stroke={brandColors.secondary}
                     fill="url(#homeBacklogFill)"
                     strokeWidth={2}
@@ -443,6 +477,7 @@ function StatCard({
   accent: string;
   to: `/issues?homeStat=${HomeIssueStatKey}`;
 }) {
+  const { t } = useI18n();
   const polarity = deltaPolarity(value, previous);
   const color = deltaColor(polarity);
   const delta = formatPercentDelta(value, previous);
@@ -472,7 +507,7 @@ function StatCard({
         {value}
       </p>
       <p className="mt-1 text-[12px]" style={mutedCaption}>
-        24 saat önce: {previous}
+        {t('home.hoursAgo', { n: previous })}
       </p>
     </Link>
   );
@@ -536,6 +571,7 @@ function ResolutionGauge({
   resolved: number;
   total: number;
 }) {
+  const { t } = useI18n();
   const pct = Math.round(rate * 100);
   const r = 78;
   const cx = 100;
@@ -572,7 +608,7 @@ function ResolutionGauge({
         </text>
       </svg>
       <p className="mt-1 text-[13px]" style={mutedCaption}>
-        {resolved} / {total} hata kapanmış
+        {t('home.resolvedOfTotal', { resolved, total })}
       </p>
     </div>
   );

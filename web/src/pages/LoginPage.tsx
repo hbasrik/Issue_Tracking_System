@@ -2,10 +2,12 @@ import { useState, type FormEvent } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { Perm } from '../auth/permissions';
+import { useI18n } from '../i18n';
 import { ApiError } from '../lib/api';
 import { apiErrorMessage } from '../lib/apiErrors';
 
 export default function LoginPage() {
+  const { t } = useI18n();
   const { login, isAuthenticated, has, user } = useAuth();
   const [email, setEmail] = useState('manager@karea.local');
   const [password, setPassword] = useState('changeme123');
@@ -29,7 +31,7 @@ export default function LoginPage() {
     try {
       await login(email, password);
     } catch (err) {
-      setError(err instanceof ApiError ? apiErrorMessage(err) : 'Giriş başarısız');
+      setError(err instanceof ApiError ? apiErrorMessage(err, t) : t('login.failed'));
     } finally {
       setBusy(false);
     }
@@ -43,13 +45,13 @@ export default function LoginPage() {
         style={{ borderColor: 'var(--border)' }}
       >
         <h1 className="text-2xl font-semibold text-[var(--text-primary)]">
-          Karea
+          {t('login.brand')}
         </h1>
         <p className="mt-1 text-[13px] text-[var(--text-secondary)]">
-          Web girişi
+          {t('login.webSubtitle')}
         </p>
         <label className="mt-6 block text-[13px] text-[var(--text-secondary)]">
-          E-posta
+          {t('login.email')}
           <input
             type="email"
             value={email}
@@ -60,7 +62,7 @@ export default function LoginPage() {
           />
         </label>
         <label className="mt-4 block text-[13px] text-[var(--text-secondary)]">
-          Şifre
+          {t('login.password')}
           <input
             type="password"
             value={password}
@@ -80,7 +82,7 @@ export default function LoginPage() {
           disabled={busy}
           className="mt-6 w-full rounded-lg bg-[var(--accent)] py-2.5 text-[15px] font-medium text-white disabled:opacity-60"
         >
-          {busy ? 'Giriş yapılıyor…' : 'Giriş yap'}
+          {busy ? t('login.submitting') : t('login.submit')}
         </button>
       </form>
     </div>

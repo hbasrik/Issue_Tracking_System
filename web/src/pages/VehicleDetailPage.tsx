@@ -21,6 +21,9 @@ import {
 import { apiErrorMessage } from '../lib/apiErrors';
 import { useAuth } from '../auth/AuthProvider';
 import { Perm } from '../auth/permissions';
+import { useI18n } from '../i18n';
+import { formatActionStamp } from '../lib/actionStamp';
+import type { MessageKey } from '../../../shared/i18n';
 
 type Tab = 'overview' | 'eol' | 'shipment' | 'test' | 'issues' | 'audit';
 
@@ -35,25 +38,26 @@ function isTab(value: string | null): value is Tab {
   );
 }
 
-const TABS: { id: Tab; label: string; perm?: string }[] = [
-  { id: 'overview', label: 'Genel bakış' },
-  { id: 'shipment', label: 'Sevkiyat', perm: Perm.ChecklistShipmentView },
-  { id: 'test', label: 'Test', perm: Perm.ChecklistTestView },
-  { id: 'eol', label: 'EoL', perm: Perm.ChecklistEOLView },
-  { id: 'issues', label: 'Issues', perm: Perm.IssueView },
-  { id: 'audit', label: 'Denetim kaydı' },
+const TAB_DEFS: { id: Tab; labelKey: MessageKey; perm?: string }[] = [
+  { id: 'overview', labelKey: 'vehicles.tab.overview' },
+  { id: 'shipment', labelKey: 'vehicles.tab.shipment', perm: Perm.ChecklistShipmentView },
+  { id: 'test', labelKey: 'vehicles.tab.test', perm: Perm.ChecklistTestView },
+  { id: 'eol', labelKey: 'vehicles.tab.eol', perm: Perm.ChecklistEOLView },
+  { id: 'issues', labelKey: 'vehicles.tab.issues', perm: Perm.IssueView },
+  { id: 'audit', labelKey: 'vehicles.tab.audit' },
 ];
 
 const STATUS_OPTIONS = [
   'IN_PRODUCTION',
   'IN_WAREHOUSE',
-  'WITH_CUSTOMER',
+  'DELIVERED',
   'SHIPPED',
   'ON_HOLD',
 ] as const;
 
 /** Vehicle detail with Overview / EoL / Shipment / Test / Issues / Audit Log tabs. */
 export default function VehicleDetailPage() {
+  const { t, locale } = useI18n();
   const { vin = '' } = useParams();
   const { has } = useAuth();
   const [searchParams] = useSearchParams();
@@ -80,14 +84,14 @@ export default function VehicleDetailPage() {
         ? api.shipmentReadiness(vin).catch(() => null)
         : Promise.resolve(null),
       api.getVehicleStatusHistory(vin).catch(() => {
-        setHistoryError('Durum geçmişi yüklenemedi');
+        setHistoryError(t('vehicles.historyFailed'));
         return { items: [] as VehicleStatusHistoryEntry[] };
       }),
     ]);
     setReadiness(ready);
     setStatusHistory(historyRes.items ?? []);
     if (historyRes.items) setHistoryError(null);
-  }, [vin, has]);
+  }, [vin, has, t]);
 
   useEffect(() => {
     const fromUrl = searchParams.get('tab');
@@ -116,14 +120,14 @@ export default function VehicleDetailPage() {
         setHistoryError(null);
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Araç yüklenemedi');
+          setError(err instanceof Error ? err.message : t('vehicles.loadOneFailed'));
         }
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [vin, has]);
+  }, [vin, has, t]);
 
   async function saveStatus() {
     if (!vehicle) return;
@@ -141,21 +145,21 @@ export default function VehicleDetailPage() {
         setBlockingModal(err.body.blocking_item_ids ?? []);
         setError(err.message);
       } else {
-        setError(err instanceof Error ? apiErrorMessage(err) : 'Durum güncellenemedi');
+        setError(err instanceof Error ? apiErrorMessage(err, t) : t('vehicles.statusFailed'));
       }
     } finally {
       setBusy(false);
     }
   }
 
-  const visibleTabs = TABS.filter((t) => !t.perm || has(t.perm));
-  const activeTab = visibleTabs.some((t) => t.id === tab) ? tab : 'overview';
+  const visibleTabs = TAB_DEFS.filter((tabItem) => !tabItem.perm || has(tabItem.perm));
+  const activeTab = visibleTabs.some((tabItem) => tabItem.id === tab) ? tab : 'overview';
 
   if (error && !vehicle) {
     return (
       <section>
         <Link to="/vehicles" className="text-[13px] text-[var(--accent)]">
-          ← Vehicles
+          {t('vehicles.backToList')}
         </Link>
         <p className="mt-4" style={{ color: 'var(--status-not-ok)' }}>
           {error}
@@ -165,37 +169,41 @@ export default function VehicleDetailPage() {
   }
 
   if (!vehicle) {
-    return <p className="text-[var(--text-secondary)]">Yükleniyor…</p>;
+    return <p className="text-[var(--text-secondary)]">{t('common.loading')}</p>;
   }
 
   const pct = Number(vehicle.TotalProgressPercentage);
   const currentStation = stations.find((s) => s.ID === vehicle.CurrentStationID);
   const lastStatusChange = statusHistory[statusHistory.length - 1];
+  const lastStamp = lastStatusChange
+    ? formatActionStamp(lastStatusChange.ActorName, lastStatusChange.EventAt, locale)
+    : null;
 
   return (
     <section>
       <Link to="/vehicles" className="text-[13px] text-[var(--accent)]">
-        ← Vehicles
+        {t('vehicles.backToList')}
       </Link>
       <div className="mt-4 flex flex-wrap items-start gap-4 sm:gap-6">
-        <ProgressRing percentage={pct} />
+        <ProgressRing
+          percentage={pct}
+          ariaLabel={t('common.percentComplete', { n: pct.toFixed(0) })}
+        />
         <div className="min-w-0 flex-1">
           <VehicleIdentity vin={vehicle.VIN} />
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <StatusBadge kind="vehicle" value={vehicle.CurrentGlobalStatus} />
             <span className="text-[13px] text-[var(--text-secondary)]">
               {currentStation
-                ? `${currentStation.Name} · seq ${currentStation.SequenceNo}`
-                : 'No current station'}
+                ? t('vehicles.seq', { name: currentStation.Name, n: currentStation.SequenceNo })
+                : t('vehicles.noStation')}
               {' · '}
               {vehicle.VehicleModelID != null
-                ? `Model #${vehicle.VehicleModelID}`
-                : 'No model'}
+                ? t('common.modelN', { id: vehicle.VehicleModelID })
+                : t('vehicles.noModel')}
             </span>
           </div>
-          {lastStatusChange ? (
-            <ActionStamp name={lastStatusChange.ActorName} at={lastStatusChange.EventAt} />
-          ) : null}
+          {lastStamp ? <ActionStamp lines={[lastStamp]} /> : null}
         </div>
       </div>
 
@@ -210,20 +218,20 @@ export default function VehicleDetailPage() {
         style={{ borderColor: 'var(--border)' }}
         role="tablist"
       >
-        {visibleTabs.map((t) => (
+        {visibleTabs.map((tabItem) => (
           <button
-            key={t.id}
+            key={tabItem.id}
             type="button"
             role="tab"
-            aria-selected={activeTab === t.id}
-            onClick={() => setTab(t.id)}
+            aria-selected={activeTab === tabItem.id}
+            onClick={() => setTab(tabItem.id)}
             className={`min-h-touch shrink-0 whitespace-nowrap px-3 text-[15px] sm:px-4 ${
-              activeTab === t.id
+              activeTab === tabItem.id
                 ? 'border-b-2 border-[var(--accent)] font-medium text-[var(--accent)]'
                 : 'text-[var(--text-secondary)]'
             }`}
           >
-            {t.label}
+            {t(tabItem.labelKey)}
           </button>
         ))}
       </div>
@@ -235,9 +243,9 @@ export default function VehicleDetailPage() {
               className="rounded-xl border bg-[var(--bg-surface-1)] p-5"
               style={{ borderColor: 'var(--border)' }}
             >
-              <h2 className="text-lg font-semibold">Status editor</h2>
+              <h2 className="text-lg font-semibold">{t('vehicles.statusEditor')}</h2>
               <p className="mt-1 text-[13px] text-[var(--text-secondary)]">
-                Hard-block transitions return 409 with blocking item IDs (§4.3).
+                {t('vehicles.statusEditorHint')}
               </p>
               <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
                 <select
@@ -269,13 +277,12 @@ export default function VehicleDetailPage() {
                   onClick={saveStatus}
                   className="min-h-touch rounded-lg bg-[var(--accent)] px-4 text-[15px] text-white disabled:opacity-60"
                 >
-                  Kaydet
+                  {t('common.save')}
                 </button>
               </div>
               {vehicle.CurrentGlobalStatus === 'PLANNED' && (
                 <p className="mt-2 text-[13px] text-[var(--text-secondary)]">
-                  PLANNED duruma elle geçilemez; hatta ilk istasyon adımı işlenince
-                  otomatik IN_PRODUCTION olur.
+                  {t('vehicles.plannedHint')}
                 </p>
               )}
               {error && (
@@ -283,11 +290,9 @@ export default function VehicleDetailPage() {
                   {error}
                 </p>
               )}
-              {lastStatusChange ? (
-                <ActionStamp name={lastStatusChange.ActorName} at={lastStatusChange.EventAt} />
-              ) : null}
+              {lastStamp ? <ActionStamp lines={[lastStamp]} /> : null}
               <div className="mt-6">
-                <h3 className="text-[15px] font-medium">Station stepper</h3>
+                <h3 className="text-[15px] font-medium">{t('vehicles.stationStepper')}</h3>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {stations
                     .slice()
@@ -334,16 +339,16 @@ export default function VehicleDetailPage() {
           <ChecklistPanel
             vin={vehicle.VIN}
             type="shipment"
-            title="Sevk kontrol listesi"
-            hint="Evet/Hayır kutusu — hemen kaydedilir. Eksik maddeler WITH_CUSTOMER / SHIPPED geçişini engeller."
+            title={t('vehicles.shipmentTitle')}
+            hint={t('vehicles.shipmentHint')}
           />
         )}
         {activeTab === 'test' && has(Perm.ChecklistTestView) && (
           <ChecklistPanel
             vin={vehicle.VIN}
             type="test"
-            title="Test kontrol listesi"
-            hint="Evet/Hayır kutusu — hemen kaydedilir. Kalite kaydıdır, araç durumunu değiştirmez."
+            title={t('vehicles.testTitle')}
+            hint={t('vehicles.testHint')}
           />
         )}
         {activeTab === 'eol' && has(Perm.ChecklistEOLView) && (
@@ -362,14 +367,14 @@ export default function VehicleDetailPage() {
             style={{ borderColor: 'var(--border)' }}
           >
             <h3 className="text-lg font-semibold" style={{ color: 'var(--status-not-ok)' }}>
-              Geçiş engellendi
+              {t('vehicles.gateBlocked')}
             </h3>
             <p className="mt-2 text-[15px] text-[var(--text-secondary)]">
-              Bu geçişi şu kontrol listesi maddeleri engelliyor:
+              {t('vehicles.gateBlockedHint')}
             </p>
             <ul className="mt-3 list-inside list-disc text-[15px]">
               {blockingModal.map((id) => (
-                <li key={id}>Madde #{id}</li>
+                <li key={id}>{t('vehicles.itemN', { id })}</li>
               ))}
             </ul>
             <button
@@ -378,7 +383,7 @@ export default function VehicleDetailPage() {
               style={{ borderColor: 'var(--border)' }}
               onClick={() => setBlockingModal(null)}
             >
-              Kapat
+              {t('common.close')}
             </button>
           </div>
         </div>
@@ -387,12 +392,18 @@ export default function VehicleDetailPage() {
   );
 }
 
-function ProgressRing({ percentage }: { percentage: number }) {
+function ProgressRing({
+  percentage,
+  ariaLabel,
+}: {
+  percentage: number;
+  ariaLabel: string;
+}) {
   const r = 36;
   const c = 2 * Math.PI * r;
   const offset = c * (1 - Math.min(100, Math.max(0, percentage)) / 100);
   return (
-    <svg width="96" height="96" viewBox="0 0 96 96" aria-label={`${percentage}% complete`}>
+    <svg width="96" height="96" viewBox="0 0 96 96" aria-label={ariaLabel}>
       <circle
         cx="48"
         cy="48"

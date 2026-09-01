@@ -1,21 +1,26 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
+import { useI18n } from '../i18n';
 import { roleDisplayName } from '../lib/roleLabels';
 
 export default function NotAuthorizedPage() {
+  const { t } = useI18n();
   const { logout, user } = useAuth();
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-[var(--bg-page)] px-4 text-center">
       <h1 className="text-2xl font-semibold text-[var(--text-primary)]">
-        Yetkiniz yok
+        {t('auth.noAccessTitle')}
       </h1>
       <p className="mt-2 max-w-md text-[15px] text-[var(--text-secondary)]">
-        Web paneli web.access izni gerektirir.
+        {t('auth.noWebAccess')}
         {user && (
           <>
             {' '}
-            Giriş yapan: <strong>{user.Email}</strong> ({roleDisplayName(user.Role)}).
+            {t('auth.signedInAs', {
+              email: user.Email,
+              role: roleDisplayName(user.Role, t),
+            })}
           </>
         )}
       </p>
@@ -25,14 +30,14 @@ export default function NotAuthorizedPage() {
           onClick={logout}
           className="rounded-lg bg-[var(--accent)] px-4 py-2 text-[15px] text-white"
         >
-          Çıkış
+          {t('common.logout')}
         </button>
         <Link
           to="/login"
           className="rounded-lg border px-4 py-2 text-[15px] text-[var(--text-primary)]"
           style={{ borderColor: 'var(--border)' }}
         >
-          Girişe dön
+          {t('login.back')}
         </Link>
       </div>
     </div>

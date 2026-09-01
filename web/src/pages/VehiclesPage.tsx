@@ -11,29 +11,52 @@ import {
   MobileCardStack,
 } from '../components/DataCard';
 import { brandColors } from '../theme/tokens';
+import { useI18n, type MessageKey, type Translate } from '../i18n';
 
 const STATUSES = [
   '',
+  'PLANNED',
   'IN_PRODUCTION',
   'IN_WAREHOUSE',
-  'WITH_CUSTOMER',
+  'DELIVERED',
   'SHIPPED',
   'ON_HOLD',
 ] as const;
 
-const ANALYSIS_STAT_LABELS: Record<string, string> = {
-  on_line: 'Hattaki araçlar (IN_PRODUCTION, anlık)',
-  shipped_today: 'Bugün sevk',
-  shipped_week: 'Haftalık sevk',
-  depot_released: 'Depo serbest',
+const ANALYSIS_STAT_KEYS: Record<string, MessageKey> = {
+  on_line: 'vehicles.inProductionNow',
+  shipped_today: 'vehicles.shippedToday',
+  shipped_week: 'vehicles.shippedWeek',
+  depot_released: 'vehicles.depotRelease',
 };
 
 function compareVinDesc(a: Vehicle, b: Vehicle): number {
   return b.VIN.localeCompare(a.VIN);
 }
 
+function vehicleStatusLabel(status: string, t: Translate): string {
+  switch (status) {
+    case 'PLANNED':
+      return t('status.vehicle.planned');
+    case 'IN_PRODUCTION':
+      return t('status.vehicle.inProduction');
+    case 'IN_WAREHOUSE':
+      return t('status.vehicle.inWarehouse');
+    case 'DELIVERED':
+    case 'WITH_CUSTOMER':
+      return t('status.vehicle.delivered');
+    case 'SHIPPED':
+      return t('status.vehicle.shipped');
+    case 'ON_HOLD':
+      return t('status.vehicle.onHold');
+    default:
+      return status;
+  }
+}
+
 /** Vehicle list — §4.3 filterable table; stacked cards below tablet. */
 export default function VehiclesPage() {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const vin = searchParams.get('vin') ?? '';
@@ -87,7 +110,7 @@ export default function VehiclesPage() {
         setTotal(res.Total ?? 0);
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Araçlar yüklenemedi');
+          setError(err instanceof Error ? err.message : t('vehicles.loadFailed'));
           setItems([]);
         }
       } finally {
@@ -97,15 +120,16 @@ export default function VehiclesPage() {
     return () => {
       cancelled = true;
     };
-  }, [vin, status, page, analysisStat, from, to]);
+  }, [vin, status, page, analysisStat, from, to, t]);
 
-  const analysisLabel = ANALYSIS_STAT_LABELS[analysisStat];
+  const analysisKey = ANALYSIS_STAT_KEYS[analysisStat];
+  const analysisLabel = analysisKey ? t(analysisKey) : undefined;
 
   return (
     <section>
-      <h1 className="text-xl font-semibold sm:text-2xl">Araçlar</h1>
+      <h1 className="text-xl font-semibold sm:text-2xl">{t('vehicles.title')}</h1>
       <p className="mt-1 text-[13px] text-[var(--text-secondary)]">
-        Filtrelenebilir araç tablosu
+        {t('vehicles.subtitle')}
       </p>
 
       {analysisLabel && (
@@ -114,12 +138,13 @@ export default function VehiclesPage() {
           style={{ borderColor: 'var(--border)' }}
         >
           <p className="text-[13px] text-[var(--text-primary)]">
-            Analiz filtre: {analysisLabel}
             {analysisStat !== 'on_line' && (from || to)
-              ? ` · ${from || '…'} → ${to || '…'}`
-              : ''}
-            {' · '}
-            {total} kayıt
+              ? t('issue.analysisFilterRange', {
+                  label: analysisLabel,
+                  range: t('analysis.to', { from: from || '…', to: to || '…' }),
+                  n: total,
+                })
+              : t('issue.analysisFilter', { label: analysisLabel, n: total })}
           </p>
           <button
             type="button"
@@ -130,14 +155,14 @@ export default function VehiclesPage() {
               color: brandColors.secondary,
             }}
           >
-            Temizle
+            {t('common.clear')}
           </button>
         </div>
       )}
       <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
         <div className="w-full sm:w-64">
           <label className="text-[13px] text-[var(--text-secondary)]">
-            VIN search
+            {t('vehicles.vinSearch')}
           </label>
           <VinSearchBox
             value={vin}
@@ -154,7 +179,7 @@ export default function VehiclesPage() {
         </div>
         <div className="w-full sm:w-auto">
           <label className="text-[13px] text-[var(--text-secondary)]">
-            Status
+            {t('issue.status')}
           </label>
           <select
             value={status}
@@ -174,7 +199,7 @@ export default function VehiclesPage() {
           >
             {STATUSES.map((s) => (
               <option key={s || 'all'} value={s}>
-                {s || 'All statuses'}
+                {vehicleStatusLabel(s, t)}
               </option>
             ))}
           </select>
@@ -192,13 +217,13 @@ export default function VehiclesPage() {
           empty={
             !loading && items.length === 0 ? (
               <p className="text-[15px] text-[var(--text-secondary)]">
-                Araç bulunamadı
+                {t('vehicles.notFound')}
               </p>
             ) : null
           }
         >
           {loading && (
-            <p className="text-[var(--text-secondary)]">Yükleniyor…</p>
+            <p className="text-[var(--text-secondary)]">{t('common.loading')}</p>
           )}
           {items.map((v) => (
             <Link
@@ -208,16 +233,16 @@ export default function VehiclesPage() {
             >
               <DataCard className="cursor-pointer transition-colors hover:bg-[var(--bg-surface-2)]">
                 <VehicleIdentity vin={v.VIN} variant="compact" />
-                <DataCardField label="Model">
-                  {v.VehicleModelID != null ? `#${v.VehicleModelID}` : '—'}
+                <DataCardField label={t('templates.model')}>
+                  {v.VehicleModelID != null ? `#${v.VehicleModelID}` : t('common.emDash')}
                 </DataCardField>
-                <DataCardField label="Durum">
+                <DataCardField label={t('issue.status')}>
                   <StatusBadge kind="vehicle" value={v.CurrentGlobalStatus} />
                 </DataCardField>
-                <DataCardField label="İstasyon">
-                  {v.CurrentStationID ?? '—'}
+                <DataCardField label={t('vehicles.station')}>
+                  {v.CurrentStationID ?? t('common.emDash')}
                 </DataCardField>
-                <DataCardField label="Tamamlanma">
+                <DataCardField label={t('vehicles.completion')}>
                   {Number(v.TotalProgressPercentage).toFixed(1)}%
                 </DataCardField>
               </DataCard>
@@ -232,25 +257,25 @@ export default function VehiclesPage() {
                 className="border-b text-[13px] text-[var(--text-secondary)]"
                 style={{ borderColor: 'var(--border)' }}
               >
-                <th className="px-4 py-3 font-medium">VIN</th>
-                <th className="px-4 py-3 font-medium">Model</th>
-                <th className="px-4 py-3 font-medium">Durum</th>
-                <th className="px-4 py-3 font-medium">İstasyon</th>
-                <th className="px-4 py-3 font-medium">Tamamlanma %</th>
+                <th className="px-4 py-3 font-medium">{t('issue.vin')}</th>
+                <th className="px-4 py-3 font-medium">{t('templates.model')}</th>
+                <th className="px-4 py-3 font-medium">{t('issue.status')}</th>
+                <th className="px-4 py-3 font-medium">{t('vehicles.station')}</th>
+                <th className="px-4 py-3 font-medium">{t('vehicles.completionPct')}</th>
               </tr>
             </thead>
             <tbody>
               {loading && (
                 <tr>
                   <td colSpan={5} className="px-4 py-6 text-[var(--text-secondary)]">
-                    Yükleniyor…
+                    {t('common.loading')}
                   </td>
                 </tr>
               )}
               {!loading && items.length === 0 && (
                 <tr>
                   <td colSpan={5} className="px-4 py-6 text-[var(--text-secondary)]">
-                    Araç bulunamadı
+                    {t('vehicles.notFound')}
                   </td>
                 </tr>
               )}
@@ -279,12 +304,12 @@ export default function VehiclesPage() {
                     <VehicleIdentity vin={v.VIN} variant="compact" />
                   </td>
                   <td className="px-4 py-3">
-                    {v.VehicleModelID != null ? `#${v.VehicleModelID}` : '—'}
+                    {v.VehicleModelID != null ? `#${v.VehicleModelID}` : t('common.emDash')}
                   </td>
                   <td className="px-4 py-3">
                     <StatusBadge kind="vehicle" value={v.CurrentGlobalStatus} />
                   </td>
-                  <td className="px-4 py-3">{v.CurrentStationID ?? '—'}</td>
+                  <td className="px-4 py-3">{v.CurrentStationID ?? t('common.emDash')}</td>
                   <td className="px-4 py-3">
                     {Number(v.TotalProgressPercentage).toFixed(1)}%
                   </td>
@@ -297,7 +322,7 @@ export default function VehiclesPage() {
 
       <div className="mt-4 flex flex-wrap items-center gap-3 text-[13px] text-[var(--text-secondary)]">
         <span>
-          {total} total · page {page}
+          {t('vehicles.pagination', { total, page })}
         </span>
         <button
           type="button"
@@ -310,7 +335,7 @@ export default function VehiclesPage() {
           className="min-h-touch rounded border px-3 disabled:opacity-40"
           style={{ borderColor: 'var(--border)' }}
         >
-          Prev
+          {t('common.prev')}
         </button>
         <button
           type="button"
@@ -323,7 +348,7 @@ export default function VehiclesPage() {
           className="min-h-touch rounded border px-3 disabled:opacity-40"
           style={{ borderColor: 'var(--border)' }}
         >
-          Next
+          {t('common.next')}
         </button>
       </div>
     </section>

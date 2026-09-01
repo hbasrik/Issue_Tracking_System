@@ -28,13 +28,14 @@ import { SeverityIndicator, severityFillColor } from '../components/SeverityIndi
 import { issueStatusColor, issueStatusLabel } from '../lib/issueStatus';
 import { muteColor, rankTopVehicles } from '../lib/homeDashboard';
 import { statusColors } from '../theme/tokens';
+import { useI18n } from '../i18n';
 
 const VEHICLE_STATUSES = [
   '',
   'PLANNED',
   'IN_PRODUCTION',
   'IN_WAREHOUSE',
-  'WITH_CUSTOMER',
+  'DELIVERED',
   'SHIPPED',
   'ON_HOLD',
 ] as const;
@@ -44,6 +45,7 @@ const VEHICLE_STATUSES = [
  * Export/Print to A4 PDF via jspdf + html2canvas.
  */
 export default function AnalysisPage() {
+  const { t } = useI18n();
   const [searchParams, setSearchParams] = useSearchParams();
   const exportRef = useRef<HTMLDivElement>(null);
 
@@ -90,9 +92,9 @@ export default function AnalysisPage() {
       setDefects(d.DefectRate ?? []);
       setStations(stationRes.items ?? []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Analiz yüklenemedi');
+      setError(err instanceof Error ? err.message : t('analysis.loadFailed'));
     }
-  }, [applied]);
+  }, [applied, t]);
 
   useEffect(() => {
     void load();
@@ -113,28 +115,28 @@ export default function AnalysisPage() {
     const completed = dash?.WorkSplit.Completed ?? 0;
     const ongoing = dash?.WorkSplit.Ongoing ?? 0;
     return [
-      { name: 'Biten', value: completed, color: statusColors.ok },
-      { name: 'Devam eden', value: ongoing, color: statusColors.issueInProgress },
+      { name: t('analysis.completedSlice'), value: completed, color: statusColors.ok },
+      { name: t('analysis.inProgress'), value: ongoing, color: statusColors.issueInProgress },
     ];
-  }, [dash]);
+  }, [dash, t]);
 
   const statusPie = useMemo(
     () =>
       (dash?.IssueStatus ?? []).map((row) => ({
-        name: issueStatusLabel(row.Status),
+        name: issueStatusLabel(row.Status, t),
         value: row.Count,
         color: issueStatusColor(row.Status),
       })),
-    [dash],
+    [dash, t],
   );
 
   const mttrBars = useMemo(
     () =>
       mttr.map((r) => ({
-        station: r.StationName || stations.find((s) => s.ID === r.StationID)?.Name || `Station ${r.StationID}`,
+        station: r.StationName || stations.find((s) => s.ID === r.StationID)?.Name || t('analysis.stationN', { id: r.StationID }),
         hours: r.Hours ?? Number((r.MeanTimeToResolve / 1e9 / 3600).toFixed(2)),
       })),
-    [mttr, stations],
+    [mttr, stations, t],
   );
 
   const defectBars = useMemo(
@@ -142,10 +144,10 @@ export default function AnalysisPage() {
       [...defects]
         .sort((a, b) => b.IssueCount - a.IssueCount)
         .map((r) => ({
-          station: r.StationName || `Station ${r.StationID}`,
+          station: r.StationName || t('analysis.stationN', { id: r.StationID }),
           issues: r.IssueCount,
         })),
-    [defects],
+    [defects, t],
   );
 
   const stackedSeverity = useMemo(
@@ -213,30 +215,30 @@ export default function AnalysisPage() {
 
       pdf.save(`karea-analysis-${new Date().toISOString().slice(0, 10)}.pdf`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'PDF export failed');
+      setError(err instanceof Error ? err.message : t('analysis.pdfFailed'));
     } finally {
       setExporting(false);
     }
   }
 
   const filterSummary = [
-    applied.from && `from ${applied.from}`,
-    applied.to && `to ${applied.to}`,
-    applied.station && `station ${applied.station}`,
-    applied.status && `status ${applied.status}`,
-    applied.issue_type && `issue type ${applied.issue_type}`,
-    applied.vin_suffix && `VIN …${applied.vin_suffix}`,
+    applied.from && t('analysis.fromFilter', { from: applied.from }),
+    applied.to && t('analysis.toFilter', { to: applied.to }),
+    applied.station && t('analysis.stationFilter', { id: applied.station }),
+    applied.status && t('analysis.statusFilter', { status: applied.status }),
+    applied.issue_type && t('analysis.typeFilter', { type: applied.issue_type }),
+    applied.vin_suffix && t('analysis.vinFilter', { suffix: applied.vin_suffix }),
   ]
     .filter(Boolean)
-    .join(' · ') || 'No filters (all data)';
+    .join(' · ') || t('analysis.noFilters');
 
   return (
     <section>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold sm:text-2xl">Analiz</h1>
+          <h1 className="text-xl font-semibold sm:text-2xl">{t('analysis.title')}</h1>
           <p className="mt-1 text-[13px] text-[var(--text-secondary)]">
-            Filtreler, grafikler ve araç severity kırılımı
+            {t('analysis.subtitle')}
           </p>
         </div>
         <button
@@ -245,7 +247,7 @@ export default function AnalysisPage() {
           disabled={exporting}
           className="min-h-touch w-full rounded-lg bg-[var(--accent)] px-4 text-[15px] font-medium text-white disabled:opacity-60 sm:w-auto"
         >
-          {exporting ? 'Exporting…' : 'Export / Print'}
+          {exporting ? t('analysis.exporting') : t('analysis.exportPrint')}
         </button>
       </div>
 
@@ -254,7 +256,7 @@ export default function AnalysisPage() {
         className="mt-6 grid grid-cols-1 gap-3 rounded-xl border bg-[var(--bg-surface-1)] p-4 sm:flex sm:flex-wrap sm:items-end"
         style={{ borderColor: 'var(--border)' }}
       >
-        <Field label="From">
+        <Field label={t('analysis.fromLabel')}>
           <input
             type="date"
             value={draftFrom}
@@ -263,7 +265,7 @@ export default function AnalysisPage() {
             style={{ borderColor: 'var(--border)' }}
           />
         </Field>
-        <Field label="To">
+        <Field label={t('analysis.toLabel')}>
           <input
             type="date"
             value={draftTo}
@@ -272,14 +274,14 @@ export default function AnalysisPage() {
             style={{ borderColor: 'var(--border)' }}
           />
         </Field>
-        <Field label="Station">
+        <Field label={t('vehicles.station')}>
           <select
             value={draftStation}
             onChange={(e) => setDraftStation(e.target.value)}
             className="min-h-touch w-full rounded-lg border bg-[var(--bg-page)] px-3 text-[15px] sm:w-auto"
             style={{ borderColor: 'var(--border)' }}
           >
-            <option value="">All</option>
+            <option value="">{t('common.all')}</option>
             {stations
               .slice()
               .sort((a, b) => a.SequenceNo - b.SequenceNo)
@@ -290,7 +292,7 @@ export default function AnalysisPage() {
               ))}
           </select>
         </Field>
-        <Field label="Vehicle status">
+        <Field label={t('analysis.vehicleStatus')}>
           <select
             value={draftStatus}
             onChange={(e) => setDraftStatus(e.target.value)}
@@ -299,22 +301,22 @@ export default function AnalysisPage() {
           >
             {VEHICLE_STATUSES.map((s) => (
               <option key={s || 'all'} value={s}>
-                {s || 'All'}
+                {s || t('common.all')}
               </option>
             ))}
           </select>
         </Field>
-        <Field label="Issue type">
+        <Field label={t('analysis.issueType')}>
           <input
             type="text"
             value={draftIssueType}
             onChange={(e) => setDraftIssueType(e.target.value)}
-            placeholder="e.g. Electrical"
+            placeholder={t('analysis.issueTypePlaceholder')}
             className="min-h-touch w-full rounded-lg border bg-[var(--bg-page)] px-3 text-[15px] sm:w-40"
             style={{ borderColor: 'var(--border)' }}
           />
         </Field>
-        <Field label="VIN suffix">
+        <Field label={t('analysis.vinSuffix')}>
           <VinSearchBox
             value={draftVin}
             onChange={setDraftVin}
@@ -327,7 +329,7 @@ export default function AnalysisPage() {
           onClick={applyFilters}
           className="min-h-touch w-full rounded-lg bg-[var(--accent)] px-4 text-[15px] text-white sm:w-auto"
         >
-          Uygula
+          {t('analysis.apply')}
         </button>
       </div>
 
@@ -339,61 +341,61 @@ export default function AnalysisPage() {
 
       <div ref={exportRef} className="mt-6 space-y-6 bg-[var(--bg-page)] p-1">
         <p className="text-[13px] text-[var(--text-secondary)]">
-          Active filters: {filterSummary}
+          {t('analysis.activeFilters', { summary: filterSummary })}
         </p>
 
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <KpiCard
-            title="Bugün sevk"
+            title={t('analysis.kpi.shippedToday')}
             value={dash?.KPIs.ShippedToday ?? 0}
             accent={statusColors.vehicleShipped}
             to={vehicleStatLink('shipped_today', true)}
           />
           <KpiCard
-            title="Haftalık sevk"
+            title={t('analysis.kpi.shippedWeek')}
             value={dash?.KPIs.ShippedWeek ?? 0}
             accent={statusColors.ok}
             to={vehicleStatLink('shipped_week', true)}
           />
           <KpiCard
-            title="Depo serbest"
+            title={t('analysis.kpi.depot')}
             value={dash?.KPIs.DepotReleasedInRange ?? 0}
             accent={statusColors.info}
             to={vehicleStatLink('depot_released', true)}
           />
           <KpiCard
-            title="Hattaki araçlar"
+            title={t('analysis.kpi.inProd')}
             value={dash?.KPIs.OnLineCount ?? 0}
             accent={statusColors.vehicleInProduction}
             snapshot
             to={vehicleStatLink('on_line', false)}
           />
           <KpiCard
-            title="Açık hatalar"
+            title={t('analysis.kpi.open')}
             value={dash?.KPIs.OpenIssuesInRange ?? 0}
             accent={statusColors.issueOpen}
             to={issueStatLink('open_active')}
           />
           <KpiCard
-            title="Biten işler"
+            title={t('analysis.kpi.done')}
             value={dash?.WorkSplit.Completed ?? 0}
             accent={statusColors.issueResolved}
             to={issueStatLink('completed')}
           />
           <KpiCard
-            title="Ort. çözüm (saat)"
+            title={t('analysis.kpi.mttr')}
             value={
               dash?.KPIs.AvgResolutionHours == null
-                ? '—'
+                ? t('common.emDash')
                 : dash.KPIs.AvgResolutionHours.toFixed(2)
             }
             accent={statusColors.issueInProgress}
           />
           <KpiCard
-            title="İlk seferde doğru"
+            title={t('analysis.kpi.fpy')}
             value={
               dash?.KPIs.FirstTimeRightPercent == null
-                ? '—'
+                ? t('common.emDash')
                 : `${dash.KPIs.FirstTimeRightPercent}%`
             }
             accent={statusColors.issueDone}
@@ -401,7 +403,7 @@ export default function AnalysisPage() {
         </div>
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          <ChartCard title="Biten / Devam Eden İşler">
+          <ChartCard title={t('analysis.doneVsOpen')}>
             <div className="analysis-pie h-[220px] w-full min-w-0 sm:h-[260px]">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -436,7 +438,7 @@ export default function AnalysisPage() {
             </div>
           </ChartCard>
 
-          <ChartCard title="Hata durum dağılımı">
+          <ChartCard title={t('analysis.statusDist')}>
             <div className="analysis-pie h-[220px] w-full min-w-0 sm:h-[260px]">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -473,7 +475,7 @@ export default function AnalysisPage() {
         </div>
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          <ChartCard title="İstasyon Bazlı MTTR (hours)">
+          <ChartCard title={t('analysis.stationMttr')}>
             <div className="h-[220px] w-full min-w-0 sm:h-[260px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
@@ -491,16 +493,16 @@ export default function AnalysisPage() {
                     tick={{ fill: 'var(--text-secondary)', fontSize: 10 }}
                   />
                   <Tooltip />
-                  <Bar dataKey="hours" fill={statusColors.info} name="MTTR (h)" />
+                  <Bar dataKey="hours" fill={statusColors.info} name={t('analysis.mttrH')} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </ChartCard>
 
-          <ChartCard title="En çok açık hatası olan ilk 5 araç">
+          <ChartCard title={t('analysis.top5')}>
             {topVehicles.length === 0 ? (
               <p className="py-8 text-[13px] text-[var(--text-secondary)]">
-                Açık hatalı araç yok
+                {t('home.noOpenVehicles')}
               </p>
             ) : (
               <ol className="space-y-3">
@@ -551,7 +553,7 @@ export default function AnalysisPage() {
           </ChartCard>
         </div>
 
-        <ChartCard title="Defect Rate per Station (Pareto)">
+        <ChartCard title={t('analysis.pareto')}>
           <div className="h-[220px] w-full min-w-0 sm:h-[240px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
@@ -572,7 +574,7 @@ export default function AnalysisPage() {
                   tick={{ fill: 'var(--text-secondary)', fontSize: 10 }}
                 />
                 <Tooltip />
-                <Bar dataKey="issues" fill={statusColors.notOk} name="Issues" />
+                <Bar dataKey="issues" fill={statusColors.notOk} name={t('nav.issues')} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -583,10 +585,10 @@ export default function AnalysisPage() {
           style={{ borderColor: 'var(--border)' }}
         >
           <h2 className="text-lg font-semibold">
-            Araç Bazlı Açık Hata Dağılımı
+            {t('analysis.vehicleBreakdown')}
           </h2>
           <p className="mt-1 text-[13px] text-[var(--text-secondary)]">
-            VIN × severity (Decision Log #7) — sorted by total open issues
+            {t('analysis.vehicleBreakdownHint')}
           </p>
 
           <div className="mt-4 h-48 w-full min-w-0 sm:h-56">
@@ -607,9 +609,9 @@ export default function AnalysisPage() {
                 />
                 <Tooltip />
                 <Legend wrapperStyle={{ fontSize: 12 }} />
-                <Bar dataKey="critical" stackId="a" fill={statusColors.severityCritical} name="Critical" />
-                <Bar dataKey="medium" stackId="a" fill={statusColors.severityMedium} name="Medium" />
-                <Bar dataKey="low" stackId="a" fill={statusColors.severityLow} name="Low" />
+                <Bar dataKey="critical" stackId="a" fill={statusColors.severityCritical} name={t('severity.critical')} />
+                <Bar dataKey="medium" stackId="a" fill={statusColors.severityMedium} name={t('severity.medium')} />
+                <Bar dataKey="low" stackId="a" fill={statusColors.severityLow} name={t('severity.low')} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -617,7 +619,7 @@ export default function AnalysisPage() {
           <div className="mt-4 space-y-3 sm:hidden">
             {severity.length === 0 && (
               <p className="text-[var(--text-secondary)]">
-                No open-issue rows for current filters
+                {t('analysis.noOpenRows')}
               </p>
             )}
             {severity.map((row) => (
@@ -636,19 +638,19 @@ export default function AnalysisPage() {
                   {row.VIN}
                 </p>
                 <div className="flex items-center justify-between text-[15px]">
-                  <span className="text-[13px] text-[var(--text-secondary)]">Total</span>
+                  <span className="text-[13px] text-[var(--text-secondary)]">{t('analysis.total')}</span>
                   <span>{row.TotalOpenIssues}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-[13px] text-[var(--text-secondary)]">Critical</span>
+                  <span className="text-[13px] text-[var(--text-secondary)]">{t('severity.critical')}</span>
                   <SeverityIndicator severity="CRITICAL" count={row.CriticalCount} />
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-[13px] text-[var(--text-secondary)]">Medium</span>
+                  <span className="text-[13px] text-[var(--text-secondary)]">{t('severity.medium')}</span>
                   <SeverityIndicator severity="MEDIUM" count={row.MediumCount} />
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-[13px] text-[var(--text-secondary)]">Low</span>
+                  <span className="text-[13px] text-[var(--text-secondary)]">{t('severity.low')}</span>
                   <SeverityIndicator severity="LOW" count={row.LowCount} />
                 </div>
               </div>
@@ -658,18 +660,18 @@ export default function AnalysisPage() {
           <table className="mt-4 hidden w-full text-left text-[15px] sm:table">
             <thead>
               <tr className="text-[13px] text-[var(--text-secondary)]">
-                <th className="pb-2 font-medium">VIN</th>
-                <th className="pb-2 font-medium">Total</th>
-                <th className="pb-2 font-medium">Critical</th>
-                <th className="pb-2 font-medium">Medium</th>
-                <th className="pb-2 font-medium">Low</th>
+                <th className="pb-2 font-medium">{t('issue.vin')}</th>
+                <th className="pb-2 font-medium">{t('analysis.total')}</th>
+                <th className="pb-2 font-medium">{t('severity.critical')}</th>
+                <th className="pb-2 font-medium">{t('severity.medium')}</th>
+                <th className="pb-2 font-medium">{t('severity.low')}</th>
               </tr>
             </thead>
             <tbody>
               {severity.length === 0 && (
                 <tr>
                   <td colSpan={5} className="py-4 text-[var(--text-secondary)]">
-                    No open-issue rows for current filters
+                    {t('analysis.noOpenRows')}
                   </td>
                 </tr>
               )}
@@ -690,8 +692,12 @@ export default function AnalysisPage() {
                       {row.VIN}
                     </span>
                     <div className="text-[12px] text-[var(--text-secondary)]">
-                      {row.TotalOpenIssues} open — {row.CriticalCount} critical,{' '}
-                      {row.MediumCount} medium, {row.LowCount} low
+                      {t('analysis.openBreakdown', {
+                        open: row.TotalOpenIssues,
+                        critical: row.CriticalCount,
+                        medium: row.MediumCount,
+                        low: row.LowCount,
+                      })}
                     </div>
                   </td>
                   <td className="py-2.5">{row.TotalOpenIssues}</td>
@@ -758,6 +764,7 @@ function KpiCard({
   to?: string;
   snapshot?: boolean;
 }) {
+  const { t } = useI18n();
   const body = (
     <>
       <div className="flex items-start justify-between gap-2">
@@ -770,7 +777,7 @@ function KpiCard({
               backgroundColor: `color-mix(in srgb, ${accent} 16%, transparent)`,
             }}
           >
-            anlık
+            {t('analysis.snapshot')}
           </span>
         )}
       </div>

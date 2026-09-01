@@ -15,18 +15,14 @@ import {
   type User,
   type UserRole,
 } from '../lib/api';
-import { PASSWORD_RULE_HINT, passwordErrorMessage } from '../lib/password';
+import { passwordErrorMessage, passwordRuleHint } from '../lib/password';
 import { apiErrorMessage } from '../lib/apiErrors';
 import {
-  EMAIL_FORMAT_HINT,
   allowedDomainsHint,
   emailCreateErrorMessage,
 } from '../lib/email';
 import { roleDisplayName } from '../lib/roleLabels';
-
-function roleLabel(role: string, roles: RoleGrant[]): string {
-  return roleDisplayName(role, roles);
-}
+import { useI18n, type Translate } from '../i18n';
 
 function userAdminRoleCodes(roles: RoleGrant[]): Set<string> {
   return new Set(
@@ -41,6 +37,7 @@ function userEditLocks(
   currentUserId: number | undefined,
   users: User[],
   adminRoles: Set<string>,
+  t: Translate,
 ) {
   const isSelf = currentUserId === u.ID;
   const holders = users.filter(
@@ -53,23 +50,23 @@ function userEditLocks(
     isSelf,
     isLastUserAdmin,
     roleSelectDisabled: isSelf,
-    roleTitle: isSelf ? 'Kendi rolünüzü değiştiremezsiniz.' : undefined,
+    roleTitle: isSelf ? t('users.cannotChangeOwnRole') : undefined,
     activeSelectDisabled: isSelf || isLastUserAdmin,
     activeTitle: isSelf
-      ? 'Kendi hesabınızı pasife çekemezsiniz.'
+      ? t('users.cannotDeactivateSelf')
       : isLastUserAdmin
-        ? 'En az bir aktif yönetici kalmalıdır.'
-        : 'Pasif kullanıcı giriş yapamaz, geçmiş kayıtları korunur.',
+        ? t('users.lastAdmin')
+        : t('users.inactiveHint'),
     resetDisabled: isSelf,
     resetTitle: isSelf
-      ? 'Kendi şifrenizi Ayarlar’dan değiştirin.'
+      ? t('users.changeOwnPassword')
       : undefined,
     deleteDisabled: isSelf || isLastUserAdmin,
     deleteTitle: isSelf
-      ? 'Kendi hesabınızı silemezsiniz.'
+      ? t('users.cannotDeleteSelf')
       : isLastUserAdmin
-        ? 'En az bir aktif yönetici kalmalıdır.'
-        : 'Yalnızca hiç işlem yapmamış hesaplar silinebilir.',
+        ? t('users.lastAdmin')
+        : t('users.deleteUnusedOnly'),
   };
 }
 
@@ -94,9 +91,10 @@ function UserAssignControls({
   onReset: () => void;
   onDelete: () => void;
 }) {
+  const { t } = useI18n();
   const reasonId = useId();
   const adminRoles = userAdminRoleCodes(roles);
-  const locks = userEditLocks(u, currentUserId, users, adminRoles);
+  const locks = userEditLocks(u, currentUserId, users, adminRoles, t);
   const selectClass =
     'min-h-touch rounded-lg border bg-[var(--bg-page)] px-2 text-[13px] disabled:cursor-not-allowed disabled:opacity-60';
   const helpId = locks.roleSelectDisabled || locks.activeSelectDisabled || locks.resetDisabled || locks.deleteDisabled
@@ -112,7 +110,7 @@ function UserAssignControls({
           onChange={(e) => onRole(e.target.value)}
           className={selectClass}
           style={{ borderColor: 'var(--border)' }}
-          aria-label={`${u.FullName} için rol`}
+          aria-label={t('users.roleAria', { name: u.FullName })}
           title={locks.roleTitle}
           aria-describedby={helpId}
         >
@@ -122,7 +120,7 @@ function UserAssignControls({
               value={role.code}
               disabled={locks.isLastUserAdmin && !adminRoles.has(role.code)}
             >
-              {roleDisplayName(role.code, roles)}
+              {roleDisplayName(role.code, t, roles)}
             </option>
           ))}
         </select>
@@ -132,12 +130,12 @@ function UserAssignControls({
           onChange={(e) => onActive(e.target.value === 'active')}
           className={selectClass}
           style={{ borderColor: 'var(--border)' }}
-          aria-label={`${u.FullName} için durum`}
+          aria-label={t('users.statusAria', { name: u.FullName })}
           title={locks.activeTitle}
           aria-describedby={helpId}
         >
-          <option value="active">Aktif</option>
-          <option value="inactive">Pasif</option>
+          <option value="active">{t('common.active')}</option>
+          <option value="inactive">{t('common.inactive')}</option>
         </select>
         <button
           type="button"
@@ -147,7 +145,7 @@ function UserAssignControls({
           className="min-h-touch rounded-lg border px-3 text-[13px] disabled:cursor-not-allowed disabled:opacity-60"
           style={{ borderColor: 'var(--border)' }}
         >
-          Şifreyi sıfırla
+          {t('users.resetPassword')}
         </button>
       </div>
       <button
@@ -157,7 +155,7 @@ function UserAssignControls({
         title={locks.deleteTitle}
         className="self-start text-[13px] text-[var(--text-secondary)] underline underline-offset-2 hover:text-[var(--text-primary)] disabled:cursor-not-allowed disabled:no-underline disabled:opacity-40"
       >
-        Hesabı sil
+        {t('users.deleteAccount')}
       </button>
       <span id={reasonId} className="sr-only">
         {[locks.roleTitle, locks.activeTitle, locks.resetTitle, locks.deleteTitle]
@@ -177,6 +175,7 @@ function TemporaryPasswordBanner({
   password: string;
   onDismiss: () => void;
 }) {
+  const { t } = useI18n();
   const [copied, setCopied] = useState(false);
 
   async function copy() {
@@ -196,8 +195,7 @@ function TemporaryPasswordBanner({
     >
       <p className="text-[15px] font-medium">{label}</p>
       <p className="mt-1 text-[13px] text-[var(--text-secondary)]">
-        Bu şifre yalnızca bir kez gösterilir. Kullanıcı ilk girişte değiştirmek
-        zorundadır. {PASSWORD_RULE_HINT}
+        {t('users.tempShownOnce')} {passwordRuleHint(t)}
       </p>
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <input
@@ -205,14 +203,14 @@ function TemporaryPasswordBanner({
           value={password}
           className="min-h-touch min-w-[12rem] flex-1 rounded-lg border bg-[var(--bg-page)] px-3 font-mono text-[15px]"
           style={{ borderColor: 'var(--border)' }}
-          aria-label="Geçici şifre"
+          aria-label={t('users.tempPassword')}
         />
         <button
           type="button"
           onClick={() => void copy()}
           className="min-h-touch rounded-lg bg-[var(--accent)] px-4 text-[15px] font-medium text-white"
         >
-          {copied ? 'Kopyalandı' : 'Kopyala'}
+          {copied ? t('common.copied') : t('common.copy')}
         </button>
         <button
           type="button"
@@ -220,7 +218,7 @@ function TemporaryPasswordBanner({
           className="min-h-touch rounded-lg border px-4 text-[15px]"
           style={{ borderColor: 'var(--border)' }}
         >
-          Gizle
+          {t('common.hide')}
         </button>
       </div>
     </div>
@@ -236,6 +234,7 @@ function CreateUserForm({
   allowedEmailDomains: string[];
   onCreated: (user: User, temporaryPassword: string) => void;
 }) {
+  const { t } = useI18n();
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [role, setRole] = useState('OPERATOR');
@@ -252,12 +251,12 @@ function CreateUserForm({
 
   function onEmailChange(value: string) {
     setEmail(value);
-    setEmailHint(emailCreateErrorMessage(value, allowedEmailDomains));
+    setEmailHint(emailCreateErrorMessage(t, value, allowedEmailDomains));
   }
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
-    const formatErr = emailCreateErrorMessage(email, allowedEmailDomains);
+    const formatErr = emailCreateErrorMessage(t, email, allowedEmailDomains);
     if (formatErr) {
       setEmailHint(formatErr);
       setError(formatErr);
@@ -277,7 +276,7 @@ function CreateUserForm({
       onCreated(res.user, res.temporary_password);
     } catch (err) {
       setError(
-        err instanceof ApiError ? passwordErrorMessage(err) : 'Kullanıcı oluşturulamadı',
+        err instanceof ApiError ? passwordErrorMessage(err, t) : t('users.createFailed'),
       );
     } finally {
       setBusy(false);
@@ -286,7 +285,7 @@ function CreateUserForm({
 
   const fieldClass =
     'mt-1 w-full rounded-lg border bg-[var(--bg-page)] px-3 py-2 text-[15px]';
-  const domainHint = allowedDomainsHint(allowedEmailDomains);
+  const domainHint = allowedDomainsHint(t, allowedEmailDomains);
 
   return (
     <form
@@ -295,14 +294,13 @@ function CreateUserForm({
       style={{ borderColor: 'var(--border)' }}
       noValidate
     >
-      <h2 className="text-[15px] font-medium">Yeni kullanıcı</h2>
+      <h2 className="text-[15px] font-medium">{t('users.newUser')}</h2>
       <p className="mt-1 text-[13px] text-[var(--text-secondary)]">
-        Sistem geçici bir şifre üretir ve yalnızca bir kez gösterir.{' '}
-        {PASSWORD_RULE_HINT} Yeni kullanıcı aktif oluşturulur.
+        {t('users.createHint', { hint: passwordRuleHint(t) })}
       </p>
       <div className="mt-4 grid gap-4 sm:grid-cols-3">
         <label className="block text-[13px] text-[var(--text-secondary)]">
-          Ad soyad
+          {t('users.fullName')}
           <input
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
@@ -312,7 +310,7 @@ function CreateUserForm({
           />
         </label>
         <label className="block text-[13px] text-[var(--text-secondary)]">
-          E-posta
+          {t('users.email')}
           <input
             type="text"
             inputMode="email"
@@ -327,7 +325,7 @@ function CreateUserForm({
             }}
           />
           <span className="mt-1 block text-[12px] text-[var(--text-secondary)]">
-            {EMAIL_FORMAT_HINT}
+            {t('email.formatHint')}
             {domainHint ? ` ${domainHint}` : ''}
           </span>
           {emailHint && (
@@ -337,7 +335,7 @@ function CreateUserForm({
           )}
         </label>
         <label className="block text-[13px] text-[var(--text-secondary)]">
-          Rol
+          {t('users.role')}
           <select
             value={role}
             onChange={(e) => setRole(e.target.value)}
@@ -346,7 +344,7 @@ function CreateUserForm({
           >
             {roles.map((r) => (
               <option key={r.code} value={r.code}>
-                {roleDisplayName(r.code, roles)}
+                {roleDisplayName(r.code, t, roles)}
               </option>
             ))}
           </select>
@@ -362,7 +360,7 @@ function CreateUserForm({
         disabled={busy}
         className="mt-4 min-h-touch rounded-lg bg-[var(--accent)] px-4 text-[15px] font-medium text-white disabled:opacity-60"
       >
-        {busy ? 'Oluşturuluyor…' : 'Kullanıcı oluştur'}
+        {busy ? t('common.creating') : t('users.create')}
       </button>
     </form>
   );
@@ -370,6 +368,7 @@ function CreateUserForm({
 
 /** Users & Roles — assign catalogue roles without locking out the last admin. */
 export default function UsersPage() {
+  const { t } = useI18n();
   const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [roles, setRoles] = useState<RoleGrant[]>([]);
@@ -394,13 +393,13 @@ export default function UsersPage() {
     setError(null);
     load().catch((err) => {
       if (!cancelled) {
-        setError(err instanceof Error ? apiErrorMessage(err) : 'Kullanıcılar yüklenemedi');
+        setError(err instanceof Error ? apiErrorMessage(err, t) : t('users.loadFailed'));
       }
     });
     return () => {
       cancelled = true;
     };
-  }, [load]);
+  }, [load, t]);
 
   async function patch(id: number, body: { role?: UserRole; is_active?: boolean }) {
     setBusyId(id);
@@ -409,7 +408,7 @@ export default function UsersPage() {
       const updated = await api.updateUser(id, body);
       setUsers((prev) => prev.map((u) => (u.ID === updated.ID ? updated : u)));
     } catch (err) {
-      setError(err instanceof ApiError ? apiErrorMessage(err) : 'Güncelleme başarısız');
+      setError(err instanceof ApiError ? apiErrorMessage(err, t) : t('users.updateFailed'));
       try {
         await load();
       } catch {
@@ -421,11 +420,7 @@ export default function UsersPage() {
   }
 
   async function resetPassword(u: User) {
-    if (
-      !window.confirm(
-        `${u.FullName} için yeni geçici şifre üretilsin mi? Kullanıcı bir sonraki girişte şifre değiştirmek zorunda kalır.`,
-      )
-    ) {
+    if (!window.confirm(t('users.resetConfirm', { name: u.FullName }))) {
       return;
     }
     setBusyId(u.ID);
@@ -433,12 +428,12 @@ export default function UsersPage() {
     try {
       const res = await api.resetUserPassword(u.ID);
       setRevealed({
-        label: `${u.FullName} için geçici şifre`,
+        label: t('users.tempPasswordFor', { name: u.FullName }),
         password: res.temporary_password,
       });
     } catch (err) {
       setError(
-        err instanceof ApiError ? passwordErrorMessage(err) : 'Şifre sıfırlanamadı',
+        err instanceof ApiError ? passwordErrorMessage(err, t) : t('users.resetFailed'),
       );
     } finally {
       setBusyId(null);
@@ -461,7 +456,7 @@ export default function UsersPage() {
       setPendingDelete(null);
     } catch (err) {
       setError(
-        err instanceof ApiError ? apiErrorMessage(err) : 'Kullanıcı silinemedi',
+        err instanceof ApiError ? apiErrorMessage(err, t) : t('users.deleteFailed'),
       );
       setPendingDelete(null);
     } finally {
@@ -471,12 +466,9 @@ export default function UsersPage() {
 
   return (
     <section>
-      <h1 className="text-xl font-semibold sm:text-2xl">Kullanıcılar ve roller</h1>
+      <h1 className="text-xl font-semibold sm:text-2xl">{t('users.heading')}</h1>
       <p className="mt-1 text-[13px] text-[var(--text-secondary)]">
-        Katalogdaki herhangi bir rolü atayın. İzinler Roller matrisinden
-        düzenlenir. En az bir aktif yönetici kalmalıdır. Hesabı kapatmanın yolu
-        Aktif/Pasif anahtarıdır: pasif kullanıcı giriş yapamaz, geçmiş kayıtları
-        korunur. Silme yalnızca hiç işlem yapmamış hesaplar içindir.
+        {t('users.subtitle')}
       </p>
       {error && (
         <div
@@ -495,11 +487,12 @@ export default function UsersPage() {
           style={{ borderColor: 'var(--status-not-ok)' }}
           role="status"
         >
-          <p className="text-[15px] font-medium">Hesabı sil</p>
+          <p className="text-[15px] font-medium">{t('users.deleteAccount')}</p>
           <p className="mt-1 text-[13px] text-[var(--text-secondary)]">
-            {pendingDelete.FullName} ({pendingDelete.Email}) kalıcı olarak
-            silinsin mi? Yalnızca hiç işlem yapmamış hesaplar silinebilir. İşlem
-            yapmış kullanıcıları pasife çekin.
+            {t('users.deleteBody', {
+              name: pendingDelete.FullName,
+              email: pendingDelete.Email,
+            })}
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             <button
@@ -509,7 +502,7 @@ export default function UsersPage() {
               className="min-h-touch rounded-lg px-4 text-[15px] font-medium text-white disabled:opacity-60"
               style={{ backgroundColor: 'var(--status-not-ok)' }}
             >
-              {busyId === pendingDelete.ID ? 'Siliniyor…' : 'Evet, sil'}
+              {busyId === pendingDelete.ID ? t('common.deleting') : t('common.confirmDelete')}
             </button>
             <button
               type="button"
@@ -518,7 +511,7 @@ export default function UsersPage() {
               className="min-h-touch rounded-lg border px-4 text-[15px]"
               style={{ borderColor: 'var(--border)' }}
             >
-              Vazgeç
+              {t('common.cancel')}
             </button>
           </div>
         </div>
@@ -530,7 +523,7 @@ export default function UsersPage() {
         onCreated={(user, temporaryPassword) => {
           setUsers((prev) => [...prev, user].sort((a, b) => a.ID - b.ID));
           setRevealed({
-            label: `${user.FullName} için geçici şifre`,
+            label: t('users.tempPasswordFor', { name: user.FullName }),
             password: temporaryPassword,
           });
         }}
@@ -548,10 +541,10 @@ export default function UsersPage() {
           {users.map((u) => (
             <DataCard key={u.ID}>
               <p className="font-medium">{u.FullName}</p>
-              <DataCardField label="E-posta">
+              <DataCardField label={t('users.email')}>
                 <span className="break-all">{u.Email}</span>
               </DataCardField>
-              <DataCardField label="Rol">
+              <DataCardField label={t('users.role')}>
                 <span
                   className="rounded-full px-2.5 py-0.5 text-[12px] font-medium"
                   style={{
@@ -560,13 +553,13 @@ export default function UsersPage() {
                       'color-mix(in srgb, var(--accent) 15%, transparent)',
                   }}
                 >
-                  {roleLabel(u.Role, roles)}
+                  {roleDisplayName(u.Role, t, roles)}
                 </span>
               </DataCardField>
-              <DataCardField label="Durum">
+              <DataCardField label={t('issue.status')}>
                 <ActiveBadge active={u.IsActive} />
               </DataCardField>
-              <DataCardField label="Atama">
+              <DataCardField label={t('users.assignment')}>
                 <UserAssignControls
                   user={u}
                   users={users}
@@ -590,11 +583,11 @@ export default function UsersPage() {
                 className="border-b text-[13px] text-[var(--text-secondary)]"
                 style={{ borderColor: 'var(--border)' }}
               >
-                <th className="px-4 py-3">Ad</th>
-                <th className="px-4 py-3">E-posta</th>
-                <th className="px-4 py-3">Rol</th>
-                <th className="px-4 py-3">Durum</th>
-                <th className="px-4 py-3">Atama</th>
+                <th className="px-4 py-3">{t('common.name')}</th>
+                <th className="px-4 py-3">{t('users.email')}</th>
+                <th className="px-4 py-3">{t('users.role')}</th>
+                <th className="px-4 py-3">{t('issue.status')}</th>
+                <th className="px-4 py-3">{t('users.assignment')}</th>
               </tr>
             </thead>
             <tbody>
@@ -615,7 +608,7 @@ export default function UsersPage() {
                           'color-mix(in srgb, var(--accent) 15%, transparent)',
                       }}
                     >
-                      {roleLabel(u.Role, roles)}
+                      {roleDisplayName(u.Role, t, roles)}
                     </span>
                   </td>
                   <td className="px-4 py-3">

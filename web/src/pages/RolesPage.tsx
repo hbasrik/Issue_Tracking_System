@@ -2,9 +2,11 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { api, ApiError, type PermissionRow, type RoleGrant } from '../lib/api';
 import { apiErrorMessage } from '../lib/apiErrors';
 import { groupPermissions } from '../lib/permissionLabels';
+import { useI18n } from '../i18n';
 
 /** Role × permission matrix. Saving writes role_permissions immediately. */
 export default function RolesPage() {
+  const { t } = useI18n();
   const [roles, setRoles] = useState<RoleGrant[]>([]);
   const [permissions, setPermissions] = useState<PermissionRow[]>([]);
   const [drafts, setDrafts] = useState<Record<number, Set<string>>>({});
@@ -31,13 +33,13 @@ export default function RolesPage() {
     setError(null);
     load().catch((err) => {
       if (!cancelled) {
-        setError(err instanceof Error ? apiErrorMessage(err) : 'Matris yüklenemedi');
+        setError(err instanceof Error ? apiErrorMessage(err, t) : t('roles.loadFailed'));
       }
     });
     return () => {
       cancelled = true;
     };
-  }, [load]);
+  }, [load, t]);
 
   function toggle(roleId: number, perm: string) {
     setDrafts((prev) => {
@@ -62,7 +64,7 @@ export default function RolesPage() {
       await api.replaceRolePermissions(role.id, codes);
       await load();
     } catch (err) {
-      setError(err instanceof ApiError ? apiErrorMessage(err) : 'Kayıt başarısız');
+      setError(err instanceof ApiError ? apiErrorMessage(err, t) : t('roles.saveFailed'));
     } finally {
       setBusyId(null);
     }
@@ -78,21 +80,20 @@ export default function RolesPage() {
       setName('');
       await load();
     } catch (err) {
-      setError(err instanceof ApiError ? apiErrorMessage(err) : 'Rol oluşturulamadı');
+      setError(err instanceof ApiError ? apiErrorMessage(err, t) : t('roles.createFailed'));
     } finally {
       setCreating(false);
     }
   }
 
-  const groups = groupPermissions(permissions);
+  const groups = groupPermissions(permissions, t);
   const roleColWidth = '8.5rem';
 
   return (
     <section>
-      <h1 className="text-xl font-semibold sm:text-2xl">Roller ve izinler</h1>
+      <h1 className="text-xl font-semibold sm:text-2xl">{t('roles.title')}</h1>
       <p className="mt-1 text-[13px] text-[var(--text-secondary)]">
-        Kod değiştirmeden izin verin veya alın. Son yönetici rolünden
-        Kullanıcı ve rol yönetimi iznini kaldırmak reddedilir.
+        {t('roles.hint')}
       </p>
       {error && (
         <p className="mt-3 text-[13px]" style={{ color: 'var(--status-not-ok)' }}>
@@ -106,22 +107,22 @@ export default function RolesPage() {
         style={{ borderColor: 'var(--border)' }}
       >
         <label className="block text-[13px] text-[var(--text-secondary)]">
-          Code
+          {t('roles.code')}
           <input
             value={code}
             onChange={(e) => setCode(e.target.value.toUpperCase())}
             required
-            placeholder="QUALITY_LEAD"
+            placeholder={t('roles.codePlaceholder')}
             className="mt-1 w-full rounded-lg border bg-[var(--bg-page)] px-3 py-2 text-[15px] text-[var(--text-primary)]"
             style={{ borderColor: 'var(--border)' }}
           />
         </label>
         <label className="block text-[13px] text-[var(--text-secondary)]">
-          Name
+          {t('roles.name')}
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Quality Lead"
+            placeholder={t('roles.namePlaceholder')}
             className="mt-1 w-full rounded-lg border bg-[var(--bg-page)] px-3 py-2 text-[15px] text-[var(--text-primary)]"
             style={{ borderColor: 'var(--border)' }}
           />
@@ -131,7 +132,7 @@ export default function RolesPage() {
           disabled={creating || !code.trim()}
           className="min-h-touch rounded-lg bg-[var(--accent)] px-4 text-[15px] text-white disabled:opacity-60"
         >
-          {creating ? 'Creating…' : 'Create role'}
+          {creating ? t('roles.creating') : t('roles.create')}
         </button>
       </form>
 
@@ -146,7 +147,7 @@ export default function RolesPage() {
                 className="sticky left-0 top-0 z-30 bg-[var(--bg-surface-1)] px-4 py-3 font-medium text-[var(--text-primary)]"
                 style={{ minWidth: '16rem', width: '16rem' }}
               >
-                İzin
+                {t('roles.permission')}
               </th>
               {roles.map((role) => (
                 <th
@@ -164,7 +165,7 @@ export default function RolesPage() {
                     onClick={() => void save(role)}
                     className="mt-2 min-h-touch w-full rounded-lg bg-[var(--accent)] px-2 text-[12px] font-medium text-white disabled:opacity-40"
                   >
-                    {busyId === role.id ? 'Saving…' : 'Save'}
+                    {busyId === role.id ? t('common.saving') : t('roles.save')}
                   </button>
                 </th>
               ))}
