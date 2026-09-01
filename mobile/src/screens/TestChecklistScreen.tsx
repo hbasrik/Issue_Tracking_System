@@ -5,7 +5,7 @@ import {
   useRoute,
   type RouteProp,
 } from '@react-navigation/native';
-import { ApiError, api, type ChecklistItem } from '../api/client';
+import { api, type ChecklistItem } from '../api/client';
 import {
   Card,
   ErrorText,
@@ -16,22 +16,25 @@ import {
 } from '../components/ui';
 import { ActionStamp } from '../components/ActionStamp';
 import { checklistActorLines } from '../lib/actionStamp';
+import { apiErrorMessage } from '../lib/password';
+import { useI18n } from '../i18n';
 import { useTheme } from '../theme/ThemeProvider';
 import { statusColors } from '../theme/tokens';
 import type { RootStackParamList } from '../navigation/types';
+import type { MessageKey } from '../../../shared/i18n';
 
-const SECTIONS: { title: string; from: number; to: number }[] = [
-  { title: 'Fren & Stabilite', from: 1, to: 4 },
-  { title: 'Direksiyon & Aks', from: 5, to: 7 },
-  { title: 'Aydınlatma', from: 8, to: 10 },
-  { title: 'Diyagnostik', from: 11, to: 12 },
-  { title: 'Yüksek Gerilim & Şarj', from: 13, to: 16 },
-  { title: 'Tahrik & Termal', from: 17, to: 21 },
-  { title: 'Gösterge & Yol Testi', from: 22, to: 25 },
-  { title: 'Gövde & Güvenlik', from: 26, to: 29 },
-  { title: 'ADAS', from: 30, to: 36 },
-  { title: 'Bilgi-Eğlence', from: 37, to: 39 },
-  { title: 'Final', from: 40, to: 45 },
+const SECTIONS: { titleKey: MessageKey; from: number; to: number }[] = [
+  { titleKey: 'checklist.section.brakes', from: 1, to: 4 },
+  { titleKey: 'checklist.section.steering', from: 5, to: 7 },
+  { titleKey: 'checklist.section.lights', from: 8, to: 10 },
+  { titleKey: 'checklist.section.diag', from: 11, to: 12 },
+  { titleKey: 'checklist.section.hv', from: 13, to: 16 },
+  { titleKey: 'checklist.section.drive', from: 17, to: 21 },
+  { titleKey: 'checklist.section.dash', from: 22, to: 25 },
+  { titleKey: 'checklist.section.body', from: 26, to: 29 },
+  { titleKey: 'checklist.section.adas', from: 30, to: 36 },
+  { titleKey: 'checklist.section.infotainment', from: 37, to: 39 },
+  { titleKey: 'checklist.section.final', from: 40, to: 45 },
 ];
 
 function isDone(s: ChecklistItem['Status']): boolean {
@@ -46,6 +49,7 @@ function isDone(s: ChecklistItem['Status']): boolean {
 export default function TestChecklistScreen() {
   const route = useRoute<RouteProp<RootStackParamList, 'TestChecklist'>>();
   const { tokens } = useTheme();
+  const { t, locale } = useI18n();
   const vin = route.params.vin;
 
   const [items, setItems] = useState<ChecklistItem[]>([]);
@@ -58,9 +62,9 @@ export default function TestChecklistScreen() {
       const res = await api.getChecklist(vin, 'test');
       setItems(res.items ?? []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Test listesi yüklenemedi');
+      setError(apiErrorMessage(err, t));
     }
-  }, [vin]);
+  }, [vin, t]);
 
   useFocusEffect(
     useCallback(() => {
@@ -80,7 +84,7 @@ export default function TestChecklistScreen() {
       await api.recordChecklist(vin, 'test', item.ItemID, { status: 'OK' });
       await load();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Güncellenemedi');
+      setError(apiErrorMessage(err, t));
     } finally {
       setBusyId(null);
     }
@@ -100,9 +104,9 @@ export default function TestChecklistScreen() {
   return (
     <Screen padded={false}>
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 100 }}>
-        <Title>Test Kontrolü</Title>
+        <Title>{t('nav.testChecklist')}</Title>
         <Subtitle>
-          {completed} / {total} tamamlandı
+          {t('checklist.progress', { done: completed, total })}
         </Subtitle>
 
         <View
@@ -126,9 +130,9 @@ export default function TestChecklistScreen() {
         {error ? <ErrorText>{error}</ErrorText> : null}
 
         {grouped.map((g) => (
-          <View key={g.title} style={{ marginTop: 16 }}>
+          <View key={g.titleKey} style={{ marginTop: 16 }}>
             <Text style={{ color: tokens.textSecondary, fontWeight: '600', fontSize: 13 }}>
-              {g.title}
+              {t(g.titleKey)}
             </Text>
             {g.items.map((item) => {
               const checked = isDone(item.Status);
@@ -154,7 +158,7 @@ export default function TestChecklistScreen() {
                         {item.ItemNo}. {item.ItemText}
                       </Text>
                     </View>
-                    <ActionStamp lines={checklistActorLines(item)} />
+                    <ActionStamp lines={checklistActorLines(item, t, locale)} />
                   </Card>
                 </Pressable>
               );
@@ -182,10 +186,12 @@ export default function TestChecklistScreen() {
             fontSize: 13,
           }}
         >
-          {remaining === 0 ? 'Tüm testler tamam' : `${remaining} test eksik`}
+          {remaining === 0
+            ? t('checklist.allTestsDone')
+            : t('checklist.testsRemaining', { n: remaining })}
         </Text>
         <Text style={{ color: tokens.textSecondary, marginTop: 6, fontSize: 12 }}>
-          Test sonuçları kalite kaydıdır; araç durumunu değiştirmez.
+          {t('checklist.testRecordHint')}
         </Text>
       </View>
     </Screen>

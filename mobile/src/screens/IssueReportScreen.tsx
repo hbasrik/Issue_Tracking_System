@@ -10,7 +10,7 @@ import {
   useRoute,
   type RouteProp,
 } from '@react-navigation/native';
-import { ApiError, api, type LocalFile } from '../api/client';
+import { api, type LocalFile } from '../api/client';
 import {
   Badge,
   Card,
@@ -25,6 +25,7 @@ import {
 import {
   SeverityIndicator,
   severityFillColor,
+  severityLabel,
   type SeverityLevel,
 } from '../components/SeverityIndicator';
 import { useTheme } from '../theme/ThemeProvider';
@@ -35,26 +36,24 @@ import {
   iosDoneAccessoryProps,
 } from '../components/keyboard';
 import { prepareUploadImage } from '../lib/prepareUploadImage';
+import { apiErrorMessage } from '../lib/password';
+import { useI18n } from '../i18n';
+import { formatDateTime } from '../../../shared/i18n';
 
-const SEVERITIES: { value: SeverityLevel; label: string }[] = [
-  { value: 'CRITICAL', label: 'Critical' },
-  { value: 'MEDIUM', label: 'Medium' },
-  { value: 'LOW', label: 'Low' },
-];
+const SEVERITIES: SeverityLevel[] = ['CRITICAL', 'MEDIUM', 'LOW'];
 
 /** Issue girme formu — §3.3. Soft-warning: after save, return to station screen (no block). */
 export default function IssueReportScreen() {
   const route = useRoute<RouteProp<RootStackParamList, 'IssueReport'>>();
   const navigation = useNavigation();
   const { tokens } = useTheme();
+  const { t, locale } = useI18n();
   const { vin, stationStepId, stationId, stationName, stationStepName } =
     route.params;
 
   const [description, setDescription] = useState('');
   const [severity, setSeverity] = useState<'CRITICAL' | 'MEDIUM' | 'LOW' | null>(null);
   const [photo, setPhoto] = useState<LocalFile | null>(null);
-  // Set once the issue exists, so a failed photo upload can be retried without
-  // creating a second issue.
   const [createdIssueId, setCreatedIssueId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -62,7 +61,7 @@ export default function IssueReportScreen() {
   async function pickPhoto() {
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!perm.granted) {
-      setError('Galeri izni reddedildi');
+      setError(t('issueDetail.galleryDenied'));
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -74,17 +73,11 @@ export default function IssueReportScreen() {
       try {
         setPhoto(await prepareUploadImage(asset));
       } catch (err) {
-        setError(
-          err instanceof Error ? err.message : 'Fotoğraf dönüştürülemedi',
-        );
+        setError(apiErrorMessage(err, t));
       }
     }
   }
 
-  /**
-   * Attaches the picked photo to an issue. media_attachments is keyed by an
-   * existing entity, so this can only run once the issue has an id.
-   */
   async function uploadPhoto(issueId: number): Promise<boolean> {
     if (!photo) return true;
     try {
@@ -92,9 +85,10 @@ export default function IssueReportScreen() {
       return true;
     } catch (err) {
       setError(
-        `Issue #${issueId} kaydedildi, fotoğraf yüklenemedi: ${
-          err instanceof Error ? err.message : 'upload failed'
-        }`,
+        t('report.savedPhotoFailed', {
+          id: issueId,
+          msg: apiErrorMessage(err, t),
+        }),
       );
       return false;
     }
@@ -103,11 +97,11 @@ export default function IssueReportScreen() {
   async function submit() {
     setError(null);
     if (!description.trim()) {
-      setError('Açıklama zorunlu');
+      setError(t('report.descRequired'));
       return;
     }
     if (!severity) {
-      setError('Severity seçimi zorunlu');
+      setError(t('report.severityRequired'));
       return;
     }
     setBusy(true);
@@ -126,11 +120,10 @@ export default function IssueReportScreen() {
         setCreatedIssueId(issueId);
       }
       if (await uploadPhoto(issueId)) {
-        // Soft-warning UX: return immediately — station screen stays navigable
         navigation.goBack();
       }
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Issue oluşturulamadı');
+      setError(apiErrorMessage(err, t));
     } finally {
       setBusy(false);
     }
@@ -139,8 +132,8 @@ export default function IssueReportScreen() {
   return (
     <Screen padded={false}>
       <DismissKeyboardScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
-        <Title>Issue Bildir</Title>
-        <Subtitle>Station step failure report</Subtitle>
+        <Title>{t('nav.reportIssue')}</Title>
+        <Subtitle>{t('report.stationStepSubtitle')}</Subtitle>
 
         <Card>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
@@ -148,15 +141,15 @@ export default function IssueReportScreen() {
             <Badge label={stationName} color={statusColors.info} />
           </View>
           <Text style={{ color: tokens.textSecondary, marginTop: 10, fontSize: 13 }}>
-            {stationStepName} (read-only)
+            {t('report.readOnly', { name: stationStepName })}
           </Text>
           <Text style={{ color: tokens.textSecondary, marginTop: 4, fontSize: 12 }}>
-            {new Date().toLocaleString()}
+            {formatDateTime(new Date().toISOString(), locale)}
           </Text>
         </Card>
 
         <Text style={{ color: tokens.textSecondary, marginTop: 16, fontSize: 13 }}>
-          Description *
+          {t('issueDetail.descriptionStar')}
         </Text>
         <AppTextInput
           value={description}
@@ -179,16 +172,16 @@ export default function IssueReportScreen() {
         />
 
         <Text style={{ color: tokens.textSecondary, marginTop: 16, fontSize: 13 }}>
-          Severity *
+          {t('severity.label')} *
         </Text>
         <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
           {SEVERITIES.map((s) => {
-            const selected = severity === s.value;
-            const color = severityFillColor(s.value);
+            const selected = severity === s;
+            const color = severityFillColor(s);
             return (
               <Pressable
-                key={s.value}
-                onPress={() => setSeverity(s.value)}
+                key={s}
+                onPress={() => setSeverity(s)}
                 style={{
                   flex: 1,
                   minHeight: 44,
@@ -201,7 +194,7 @@ export default function IssueReportScreen() {
                   gap: 4,
                 }}
               >
-                <SeverityIndicator severity={s.value} />
+                <SeverityIndicator severity={s} />
                 <Text
                   style={{
                     color: selected ? color : tokens.textSecondary,
@@ -209,7 +202,7 @@ export default function IssueReportScreen() {
                     fontSize: 11,
                   }}
                 >
-                  {s.label}
+                  {severityLabel(s, t)}
                 </Text>
               </Pressable>
             );
@@ -220,8 +213,8 @@ export default function IssueReportScreen() {
           <OutlineButton
             label={
               photo
-                ? `Fotoğraf seçildi: ${photo.name} (değiştir)`
-                : 'Fotoğraf ekle (opsiyonel)'
+                ? t('report.pickedPhoto', { name: photo.name })
+                : t('report.addPhotoOptional')
             }
             onPress={pickPhoto}
           />
@@ -233,10 +226,10 @@ export default function IssueReportScreen() {
           <PrimaryButton
             label={
               busy
-                ? 'Saving…'
+                ? t('common.saving')
                 : createdIssueId != null
-                  ? 'Fotoğrafı Tekrar Yükle'
-                  : 'Issue’ı Kaydet ve Devam Et'
+                  ? t('report.retryUpload')
+                  : t('report.saveContinue')
             }
             onPress={submit}
             disabled={busy}
@@ -245,7 +238,7 @@ export default function IssueReportScreen() {
         {createdIssueId != null ? (
           <View style={{ marginTop: 12 }}>
             <OutlineButton
-              label="Fotoğrafsız devam et"
+              label={t('report.continueNoPhoto')}
               onPress={() => navigation.goBack()}
             />
           </View>

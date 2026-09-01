@@ -1,13 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 import { Keyboard, Pressable, StyleSheet, Text, View, type TextInput } from 'react-native';
-import { ApiError } from '../api/client';
 import { useAuth } from '../auth/AuthProvider';
 import { useTheme } from '../theme/ThemeProvider';
 import { AppTextInput, ErrorText, PrimaryButton, Screen, Subtitle, Title } from '../components/ui';
+import { useI18n } from '../i18n';
+import { apiErrorMessage } from '../lib/password';
 
 export default function LoginScreen() {
   const { login } = useAuth();
   const { tokens } = useTheme();
+  const { t } = useI18n();
   const [email, setEmail] = useState('operator.one@karea.local');
   const [password, setPassword] = useState('changeme123');
   const [error, setError] = useState<string | null>(null);
@@ -24,7 +26,7 @@ export default function LoginScreen() {
     try {
       await login(email.trim(), password);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Giriş başarısız');
+      setError(apiErrorMessage(err, t));
     } finally {
       setBusy(false);
     }
@@ -33,9 +35,9 @@ export default function LoginScreen() {
   return (
     <Screen safe>
       <Pressable style={styles.center} onPress={Keyboard.dismiss} accessible={false}>
-        <Title>Karea</Title>
-        <Subtitle>Saha girişi</Subtitle>
-        <Text style={[styles.label, { color: tokens.textSecondary }]}>E-posta</Text>
+        <Title>{t('login.brand')}</Title>
+        <Subtitle>{t('login.fieldSubtitle')}</Subtitle>
+        <Text style={[styles.label, { color: tokens.textSecondary }]}>{t('login.email')}</Text>
         <AppTextInput
           value={email}
           onChangeText={setEmail}
@@ -57,7 +59,7 @@ export default function LoginScreen() {
             },
           ]}
         />
-        <Text style={[styles.label, { color: tokens.textSecondary }]}>Şifre</Text>
+        <Text style={[styles.label, { color: tokens.textSecondary }]}>{t('login.password')}</Text>
         <AppTextInput
           ref={passwordRef}
           value={password}
@@ -83,7 +85,11 @@ export default function LoginScreen() {
         />
         {error ? <ErrorText>{error}</ErrorText> : null}
         <View style={{ marginTop: 20 }}>
-          <PrimaryButton label={busy ? 'Giriş yapılıyor…' : 'Giriş yap'} onPress={onSubmit} disabled={busy} />
+          <PrimaryButton
+            label={busy ? t('login.submitting') : t('login.submit')}
+            onPress={onSubmit}
+            disabled={busy}
+          />
         </View>
       </Pressable>
     </Screen>

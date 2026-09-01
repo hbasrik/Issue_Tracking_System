@@ -28,10 +28,11 @@ import {
   Title,
 } from '../components/ui';
 import { useTheme } from '../theme/ThemeProvider';
+import { useI18n } from '../i18n';
 import { statusColors } from '../theme/tokens';
 import {
   countHomeIssueStat,
-  HOME_ISSUE_STAT_LABELS,
+  homeIssueStatLabel,
   type HomeIssueStatKey,
 } from '../lib/homeIssueStats';
 import type { MainDrawerParamList, RootStackParamList } from '../navigation/types';
@@ -72,6 +73,7 @@ export default function HomeScreen() {
   const navigation = useNavigation<HomeNavigation>();
   const { user, token, has } = useAuth();
   const { tokens } = useTheme();
+  const { t } = useI18n();
   const [counts, setCounts] = useState<Record<HomeIssueStatKey, number>>({
     open: 0,
     in_progress: 0,
@@ -149,19 +151,17 @@ export default function HomeScreen() {
         }
       >
         <View>
-          <Title>Karea</Title>
-          <Subtitle>{user?.FullName ?? 'Operatör'}</Subtitle>
+          <Title>{t('login.brand')}</Title>
+          <Subtitle>{user?.FullName ?? t('home.roleOperator')}</Subtitle>
         </View>
 
         {has(Perm.IssueCreate) ? (
         <View style={{ marginTop: 20 }}>
           <PrimaryButton
-            label="Issue Bildir"
+            label={t('home.reportIssue')}
             onPress={() => navigation.navigate('ManualIssueReport')}
           />
-          <Subtitle>
-            Bağımsız issue bildirimi — istasyon adımına bağlı değil
-          </Subtitle>
+          <Subtitle>{t('home.reportIssueHint')}</Subtitle>
         </View>
         ) : null}
 
@@ -175,7 +175,7 @@ export default function HomeScreen() {
               marginBottom: 4,
             }}
           >
-            Araç ara
+            {t('home.searchVehicles')}
           </Text>
           <VehicleSearchPanel onSelect={openVehicle} />
         </View>
@@ -198,7 +198,7 @@ export default function HomeScreen() {
                 onPress={() => openStat(s.key)}
                 style={{ width: '31%', flexGrow: 1, minWidth: 100 }}
                 accessibilityRole="button"
-                accessibilityLabel={`${HOME_ISSUE_STAT_LABELS[s.key]}: ${counts[s.key]}`}
+                accessibilityLabel={`${homeIssueStatLabel(s.key, t)}: ${counts[s.key]}`}
               >
                 <Card>
                   <View style={{ alignItems: 'center', paddingVertical: 4 }}>
@@ -217,7 +217,7 @@ export default function HomeScreen() {
                         marginTop: 4,
                       }}
                     >
-                      {HOME_ISSUE_STAT_LABELS[s.key]}
+                      {homeIssueStatLabel(s.key, t)}
                     </Text>
                   </View>
                 </Card>

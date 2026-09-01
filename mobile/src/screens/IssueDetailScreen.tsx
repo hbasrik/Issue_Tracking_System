@@ -10,7 +10,6 @@ import * as ImagePicker from 'expo-image-picker';
 import { useFocusEffect, useRoute, type RouteProp } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  ApiError,
   api,
   mediaFileUrl,
   type Issue,
@@ -42,7 +41,11 @@ import {
   DismissKeyboardScrollView,
   iosDoneAccessoryProps,
 } from '../components/keyboard';
-import { issueDetailCopy, issueStationLabel } from '../lib/issueDetailCopy';
+import { formatActionAt } from '../lib/actionStamp';
+import { issueStationLabel, reporterFallback } from '../lib/issueDetailCopy';
+import { apiErrorMessage } from '../lib/password';
+import { useI18n } from '../i18n';
+import type { Locale } from '../../../shared/i18n';
 import type { RootStackParamList } from '../navigation/types';
 
 function nextOperatorStatus(status: Issue['Status']): Issue['Status'] | null {
@@ -51,11 +54,8 @@ function nextOperatorStatus(status: Issue['Status']): Issue['Status'] | null {
   return null;
 }
 
-function formatDate(iso?: string): string {
-  if (!iso || iso.startsWith('0001')) return '—';
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleString('tr-TR');
+function formatDate(iso: string | undefined, locale: Locale): string {
+  return formatActionAt(iso, locale) ?? '—';
 }
 
 function InfoRow({ label, value }: { label: string; value: string }) {
@@ -82,6 +82,7 @@ export default function IssueDetailScreen() {
   const insets = useSafeAreaInsets();
   const { tokens } = useTheme();
   const { has } = useAuth();
+  const { t, locale } = useI18n();
   const [issue, setIssue] = useState<Issue | null>(null);
   const [history, setHistory] = useState<IssueStatusHistoryEntry[]>([]);
   const [reportPhotos, setReportPhotos] = useState<MediaAttachment[]>([]);
@@ -113,9 +114,9 @@ export default function IssueDetailScreen() {
         setResolutionUploaded(true);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Issue yüklenemedi');
+      setError(apiErrorMessage(err, t));
     }
-  }, [route.params.id]);
+  }, [route.params.id, t]);
 
   useFocusEffect(
     useCallback(() => {
@@ -127,7 +128,7 @@ export default function IssueDetailScreen() {
     if (from === 'library') {
       const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!perm.granted) {
-        setError('Galeri izni reddedildi');
+        setError(t('issueDetail.galleryDenied'));
         return;
       }
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -140,16 +141,14 @@ export default function IssueDetailScreen() {
           setResolutionPhoto(await prepareUploadImage(asset));
           setResolutionUploaded(false);
         } catch (err) {
-          setError(
-            err instanceof Error ? err.message : 'Fotoğraf dönüştürülemedi',
-          );
+          setError(apiErrorMessage(err, t));
         }
       }
       return;
     }
     const perm = await ImagePicker.requestCameraPermissionsAsync();
     if (!perm.granted) {
-      setError('Kamera izni reddedildi');
+      setError(t('issueDetail.cameraDenied'));
       return;
     }
     const result = await ImagePicker.launchCameraAsync({
@@ -162,16 +161,14 @@ export default function IssueDetailScreen() {
         setResolutionPhoto(await prepareUploadImage(asset));
         setResolutionUploaded(false);
       } catch (err) {
-        setError(
-          err instanceof Error ? err.message : 'Fotoğraf dönüştürülemedi',
-        );
+        setError(apiErrorMessage(err, t));
       }
     }
   }
 
   async function uploadResolutionPhoto(issueId: number): Promise<boolean> {
     if (!resolutionPhoto) {
-      setError('Çözüm fotoğrafı zorunlu');
+      setError(t('issueDetail.solutionPhotoRequired'));
       return false;
     }
     try {
@@ -180,9 +177,9 @@ export default function IssueDetailScreen() {
       return true;
     } catch (err) {
       setError(
-        `Çözüm fotoğrafı yüklenemedi: ${
-          err instanceof Error ? err.message : 'yükleme başarısız'
-        }`,
+        t('issueDetail.resolutionUploadFailed', {
+          msg: apiErrorMessage(err, t),
+        }),
       );
       setResolutionUploaded(false);
       return false;
@@ -198,7 +195,7 @@ export default function IssueDetailScreen() {
       setShowDoneForm(false);
       await load();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : String(err));
+      setError(apiErrorMessage(err, t));
     } finally {
       setBusy(false);
     }
@@ -208,11 +205,11 @@ export default function IssueDetailScreen() {
     if (!issue) return;
     const desc = solutionText.trim();
     if (!resolutionPhoto && !resolutionUploaded) {
-      setError('Çözüm fotoğrafı zorunlu — kamera veya galeriden ekleyin');
+      setError(t('issueDetail.solutionPhotoRequiredHint'));
       return;
     }
     if (!desc) {
-      setError('Açıklama (solution_description) zorunlu');
+      setError(t('issueDetail.solutionDescRequired'));
       return;
     }
 
@@ -229,7 +226,7 @@ export default function IssueDetailScreen() {
       setResolutionPhoto(null);
       await load();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : String(err));
+      setError(apiErrorMessage(err, t));
     } finally {
       setBusy(false);
     }
@@ -245,7 +242,7 @@ export default function IssueDetailScreen() {
       await api.updateIssueStatus(issue.ID, status);
       await load();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : String(err));
+      setError(apiErrorMessage(err, t));
     } finally {
       setBusy(false);
     }
@@ -274,7 +271,7 @@ export default function IssueDetailScreen() {
               >
                 <SeverityIndicator severity={issue.Severity} size="md" />
                 <Badge
-                  label={issueStatusLabel(issue.Status)}
+                  label={issueStatusLabel(issue.Status, t)}
                   color={issueStatusColor(issue.Status)}
                 />
               </View>
@@ -290,24 +287,24 @@ export default function IssueDetailScreen() {
                 {issue.Description}
               </Text>
               <InfoRow
-                label={issueDetailCopy.reporter}
-                value={issue.ReporterName || `kullanıcı #${issue.IssueReporterID}`}
+                label={t('issueDetail.reporter')}
+                value={issue.ReporterName || reporterFallback(t, issue.IssueReporterID)}
               />
               <InfoRow
-                label={issueDetailCopy.issueType}
-                value={issue.IssueTypeName || '—'}
+                label={t('issueDetail.issueType')}
+                value={issue.IssueTypeName || t('common.emDash')}
               />
               <InfoRow
-                label={issueDetailCopy.station}
+                label={t('issueDetail.station')}
                 value={issueStationLabel(issue)}
               />
               <InfoRow
-                label={issueDetailCopy.reportedAt}
-                value={formatDate(issue.IssueDate || issue.CreatedAt)}
+                label={t('issueDetail.reportedAt')}
+                value={formatDate(issue.IssueDate || issue.CreatedAt, locale)}
               />
               {issue.SolutionDescription?.trim() ? (
                 <InfoRow
-                  label={issueDetailCopy.solution}
+                  label={t('issueDetail.solution')}
                   value={issue.SolutionDescription.trim()}
                 />
               ) : null}
@@ -315,7 +312,7 @@ export default function IssueDetailScreen() {
               {next === 'IN_PROGRESS' && has(Perm.IssueTransitionProgress) ? (
                 <View style={{ marginTop: space[5] }}>
                   <PrimaryButton
-                    label={busy ? 'Güncelleniyor…' : 'İşlemde'}
+                    label={busy ? t('common.updating') : t('status.issue.inProgress')}
                     onPress={() => void advanceToInProgress()}
                     disabled={busy}
                   />
@@ -325,7 +322,7 @@ export default function IssueDetailScreen() {
               {canMarkDone && !showDoneForm ? (
                 <View style={{ marginTop: space[5] }}>
                   <PrimaryButton
-                    label="Tamamlandı"
+                    label={t('status.issue.done')}
                     onPress={() => {
                       setShowDoneForm(true);
                       setError(null);
@@ -345,10 +342,10 @@ export default function IssueDetailScreen() {
                       marginBottom: 8,
                     }}
                   >
-                    Tamamlama kanıtı *
+                    {t('issueDetail.completionProof')}
                   </Text>
                   <Subtitle>
-                    Önce çözüm fotoğrafını yükleyin, sonra durumu Tamamlandı yapın
+                    {t('issueDetail.completionHint')}
                   </Subtitle>
 
                   <Text
@@ -359,18 +356,18 @@ export default function IssueDetailScreen() {
                       marginTop: 12,
                     }}
                   >
-                    Çözüm fotoğrafı *
+                    {t('issueDetail.solutionPhoto')}
                   </Text>
                   <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
                     <View style={{ flex: 1 }}>
                       <OutlineButton
-                        label="Kamera"
+                        label={t('common.camera')}
                         onPress={() => void pickResolution('camera')}
                       />
                     </View>
                     <View style={{ flex: 1 }}>
                       <OutlineButton
-                        label="Galeri"
+                        label={t('common.gallery')}
                         onPress={() => void pickResolution('library')}
                       />
                     </View>
@@ -389,8 +386,8 @@ export default function IssueDetailScreen() {
                       />
                       <Text style={{ color: tokens.textSecondary, marginTop: 4, fontSize: 12 }}>
                         {resolutionUploaded
-                          ? 'Fotoğraf yüklendi — durumu kaydedebilirsiniz'
-                          : 'Fotoğraf seçildi — henüz yüklenmedi'}
+                          ? t('issueDetail.photoUploaded')
+                          : t('issueDetail.photoPicked')}
                       </Text>
                     </View>
                   ) : null}
@@ -403,12 +400,12 @@ export default function IssueDetailScreen() {
                       marginTop: 16,
                     }}
                   >
-                    Açıklama *
+                    {t('issueDetail.descriptionStar')}
                   </Text>
                   <AppTextInput
                     value={solutionText}
                     onChangeText={setSolutionText}
-                    placeholder="Yapılan tamir / çözüm"
+                    placeholder={t('issueDetail.repairNote')}
                     placeholderTextColor={tokens.textSecondary}
                     multiline
                     {...iosDoneAccessoryProps}
@@ -429,10 +426,10 @@ export default function IssueDetailScreen() {
                     <PrimaryButton
                       label={
                         busy
-                          ? 'Kaydediliyor…'
+                          ? t('common.saving')
                           : resolutionUploaded
-                            ? 'Tamamlandı olarak kaydet'
-                            : 'Fotoğrafı yükle ve Tamamlandı yap'
+                            ? t('issueDetail.saveDone')
+                            : t('issueDetail.uploadAndDone')
                       }
                       onPress={() => void completeDone()}
                       disabled={
@@ -445,7 +442,7 @@ export default function IssueDetailScreen() {
                   {resolutionPhoto && !resolutionUploaded ? (
                     <View style={{ marginTop: 8 }}>
                       <OutlineButton
-                        label="Fotoğrafı Tekrar Dene"
+                        label={t('issueDetail.retryPhoto')}
                         onPress={() => void uploadResolutionPhoto(issue.ID)}
                       />
                     </View>
@@ -455,7 +452,7 @@ export default function IssueDetailScreen() {
                     style={{ marginTop: 12, minHeight: 44, justifyContent: 'center' }}
                   >
                     <Text style={{ color: tokens.textSecondary, textAlign: 'center' }}>
-                      İptal
+                      {t('common.cancel')}
                     </Text>
                   </Pressable>
                 </View>
@@ -465,14 +462,14 @@ export default function IssueDetailScreen() {
                 <View style={{ marginTop: space[5], gap: 8 }}>
                   {canApprove ? (
                     <PrimaryButton
-                      label={busy ? 'Güncelleniyor…' : 'Kalite Onay'}
+                      label={busy ? t('common.updating') : t('status.issue.approved')}
                       onPress={() => void applyStatus('APPROVED')}
                       disabled={busy}
                     />
                   ) : null}
                   {canConditional ? (
                     <OutlineButton
-                      label={busy ? 'Güncelleniyor…' : 'Şartlı Onay'}
+                      label={busy ? t('common.updating') : t('status.issue.conditionalApproved')}
                       onPress={() => {
                         if (!busy) void applyStatus('CONDITIONAL_APPROVED');
                       }}
@@ -485,29 +482,29 @@ export default function IssueDetailScreen() {
               !has(Perm.IssueTransitionApprove) &&
               !has(Perm.IssueTransitionConditionalApprove) ? (
                 <View style={{ marginTop: space[5] }}>
-                  <Subtitle>Bu issue için yetkili bir işlem yok</Subtitle>
+                  <Subtitle>{t('issueDetail.noAction')}</Subtitle>
                 </View>
               ) : issue.Status === 'DONE' && !canApprove && !canConditional ? (
                 <View style={{ marginTop: space[5] }}>
-                  <Subtitle>Kalite Onay / Şartlı Onay bekleniyor</Subtitle>
+                  <Subtitle>{t('issueDetail.awaitingQuality')}</Subtitle>
                 </View>
               ) : !next && !canMarkDone && !canApprove && !canConditional ? (
                 <View style={{ marginTop: space[5] }}>
-                  <Subtitle>Bu issue için başka geçiş yok</Subtitle>
+                  <Subtitle>{t('issueDetail.noTransition')}</Subtitle>
                 </View>
               ) : null}
             </Card>
 
             <Card style={{ marginTop: 0 }}>
-              <SectionHeading>{issueDetailCopy.history}</SectionHeading>
+              <SectionHeading>{t('issueDetail.history')}</SectionHeading>
               {history.length === 0 ? (
-                <Subtitle>Henüz durum değişikliği yok</Subtitle>
+                <Subtitle>{t('vehicles.historyEmpty')}</Subtitle>
               ) : (
                 history.map((row) => (
                   <View key={row.ID} style={{ marginTop: space[2] }}>
                     <Text style={{ color: tokens.textPrimary, fontWeight: '600', fontSize: 14 }}>
-                      {issueStatusLabel(row.FromStatus || '')} → {issueStatusLabel(row.ToStatus || '')}:{' '}
-                      {row.ActorName || '—'}, {formatDate(row.EventAt)}
+                      {issueStatusLabel(row.FromStatus || '', t)} → {issueStatusLabel(row.ToStatus || '', t)}:{' '}
+                      {row.ActorName || t('common.emDash')}, {formatDate(row.EventAt, locale)}
                     </Text>
                   </View>
                 ))
@@ -515,7 +512,7 @@ export default function IssueDetailScreen() {
             </Card>
 
             <Card style={{ marginTop: 0 }}>
-              <SectionHeading>{issueDetailCopy.photos}</SectionHeading>
+              <SectionHeading>{t('issueDetail.photos')}</SectionHeading>
               <Text
                 style={{
                   color: tokens.textSecondary,
@@ -524,10 +521,10 @@ export default function IssueDetailScreen() {
                   marginTop: space[3],
                 }}
               >
-                {issueDetailCopy.reportPhotos}
+                {t('issueDetail.reportPhotos')}
               </Text>
               {reportPhotos.length === 0 ? (
-                <Subtitle>{issueDetailCopy.photosEmpty}</Subtitle>
+                <Subtitle>{t('issueDetail.photosEmpty')}</Subtitle>
               ) : (
                 reportPhotos.map((p) => {
                   const uri = mediaFileUrl(p.storage_path);
@@ -537,7 +534,7 @@ export default function IssueDetailScreen() {
                       onPress={() => setViewerUri(uri)}
                       style={{ marginTop: space[3] }}
                       accessibilityRole="imagebutton"
-                      accessibilityLabel={`Büyüt: ${p.file_name}`}
+                      accessibilityLabel={t('issueDetail.enlarge', { name: p.file_name })}
                     >
                       <Image
                         source={{ uri }}
@@ -564,10 +561,10 @@ export default function IssueDetailScreen() {
                   marginTop: space[5],
                 }}
               >
-                {issueDetailCopy.resolutionPhotos}
+                {t('issueDetail.resolutionPhotos')}
               </Text>
               {resolutionPhotos.length === 0 ? (
-                <Subtitle>{issueDetailCopy.photosEmpty}</Subtitle>
+                <Subtitle>{t('issueDetail.photosEmpty')}</Subtitle>
               ) : (
                 resolutionPhotos.map((p) => {
                   const uri = mediaFileUrl(p.storage_path);
@@ -577,7 +574,7 @@ export default function IssueDetailScreen() {
                       onPress={() => setViewerUri(uri)}
                       style={{ marginTop: space[3] }}
                       accessibilityRole="imagebutton"
-                      accessibilityLabel={`Büyüt: ${p.file_name}`}
+                      accessibilityLabel={t('issueDetail.enlarge', { name: p.file_name })}
                     >
                       <Image
                         source={{ uri }}
@@ -627,9 +624,9 @@ export default function IssueDetailScreen() {
               minHeight: 44,
             }}
             accessibilityRole="button"
-            accessibilityLabel="Fotoğrafı kapat"
+            accessibilityLabel={t('issueDetail.closePhoto')}
           >
-            <Text style={{ color: '#fff', fontSize: 16, fontWeight: '600' }}>Kapat</Text>
+            <Text style={{ color: '#fff', fontSize: 16, fontWeight: '600' }}>{t('common.close')}</Text>
           </Pressable>
           {viewerUri ? (
             <Image

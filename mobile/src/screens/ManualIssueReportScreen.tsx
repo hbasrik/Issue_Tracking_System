@@ -11,7 +11,6 @@ import * as ImagePicker from 'expo-image-picker';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
-  ApiError,
   api,
   type IssueType,
   type LocalFile,
@@ -38,16 +37,15 @@ import {
 import {
   SeverityIndicator,
   severityFillColor,
+  severityLabel,
   type SeverityLevel,
 } from '../components/SeverityIndicator';
 import { useTheme } from '../theme/ThemeProvider';
+import { apiErrorMessage } from '../lib/password';
+import { useI18n } from '../i18n';
 import type { RootStackParamList } from '../navigation/types';
 
-const SEVERITIES: { value: SeverityLevel; label: string }[] = [
-  { value: 'CRITICAL', label: 'Critical' },
-  { value: 'MEDIUM', label: 'Medium' },
-  { value: 'LOW', label: 'Low' },
-];
+const SEVERITIES: SeverityLevel[] = ['CRITICAL', 'MEDIUM', 'LOW'];
 
 /**
  * Standalone Issue Bildir — MANUAL source, not tied to a station step or
@@ -57,6 +55,7 @@ export default function ManualIssueReportScreen() {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { tokens } = useTheme();
+  const { t } = useI18n();
 
   const [issueTypes, setIssueTypes] = useState<IssueType[]>([]);
   const [stations, setStations] = useState<Station[]>([]);
@@ -89,17 +88,17 @@ export default function ManualIssueReportScreen() {
         );
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Form yüklenemedi');
+          setError(apiErrorMessage(err, t));
         }
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [t]);
 
   const selectedStation = stations.find((s) => s.ID === stationId) ?? null;
-  const selectedType = issueTypes.find((t) => t.ID === issueTypeId) ?? null;
+  const selectedType = issueTypes.find((it) => it.ID === issueTypeId) ?? null;
 
   const canSubmit =
     issueTypeId != null &&
@@ -111,19 +110,19 @@ export default function ManualIssueReportScreen() {
     !busy;
 
   const validationMessage = useCallback((): string | null => {
-    if (issueTypeId == null) return 'Tür seçimi zorunlu (Hata / Tamir Gerekiyor)';
-    if (severity == null) return 'Severity seçimi zorunlu';
-    if (stationId == null) return 'İstasyon seçimi zorunlu';
-    if (vehicle == null) return 'VIN seçimi zorunlu — listeden bir araç seçin';
-    if (!description.trim()) return 'Açıklama zorunlu';
-    if (photo == null) return 'Fotoğraf zorunlu — kamera veya galeriden ekleyin';
+    if (issueTypeId == null) return t('report.typeRequired');
+    if (severity == null) return t('report.severityRequired');
+    if (stationId == null) return t('report.stationRequired');
+    if (vehicle == null) return t('report.vinRequired');
+    if (!description.trim()) return t('report.descRequired');
+    if (photo == null) return t('report.photoRequired');
     return null;
-  }, [issueTypeId, severity, stationId, vehicle, description, photo]);
+  }, [issueTypeId, severity, stationId, vehicle, description, photo, t]);
 
   async function pickFromLibrary() {
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!perm.granted) {
-      setError('Galeri izni reddedildi');
+      setError(t('issueDetail.galleryDenied'));
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -135,9 +134,7 @@ export default function ManualIssueReportScreen() {
       try {
         setPhoto(await prepareUploadImage(asset));
       } catch (err) {
-        setError(
-          err instanceof Error ? err.message : 'Fotoğraf dönüştürülemedi',
-        );
+        setError(apiErrorMessage(err, t));
       }
     }
   }
@@ -145,7 +142,7 @@ export default function ManualIssueReportScreen() {
   async function pickFromCamera() {
     const perm = await ImagePicker.requestCameraPermissionsAsync();
     if (!perm.granted) {
-      setError('Kamera izni reddedildi');
+      setError(t('issueDetail.cameraDenied'));
       return;
     }
     const result = await ImagePicker.launchCameraAsync({
@@ -157,16 +154,14 @@ export default function ManualIssueReportScreen() {
       try {
         setPhoto(await prepareUploadImage(asset));
       } catch (err) {
-        setError(
-          err instanceof Error ? err.message : 'Fotoğraf dönüştürülemedi',
-        );
+        setError(apiErrorMessage(err, t));
       }
     }
   }
 
   async function uploadPhoto(issueId: number): Promise<boolean> {
     if (!photo) {
-      setError(`Issue #${issueId} kaydedildi, fotoğraf eksik`);
+      setError(t('report.savedMissingPhoto', { id: issueId }));
       return false;
     }
     try {
@@ -174,9 +169,10 @@ export default function ManualIssueReportScreen() {
       return true;
     } catch (err) {
       setError(
-        `Issue #${issueId} kaydedildi, fotoğraf yüklenemedi: ${
-          err instanceof Error ? err.message : 'upload failed'
-        }`,
+        t('report.savedPhotoFailed', {
+          id: issueId,
+          msg: apiErrorMessage(err, t),
+        }),
       );
       return false;
     }
@@ -212,7 +208,7 @@ export default function ManualIssueReportScreen() {
         navigation.goBack();
       }
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Issue oluşturulamadı');
+      setError(apiErrorMessage(err, t));
     } finally {
       setBusy(false);
     }
@@ -221,17 +217,17 @@ export default function ManualIssueReportScreen() {
   return (
     <Screen padded={false}>
       <DismissKeyboardScrollView contentContainerStyle={{ padding: 16, paddingBottom: 48 }}>
-        <Title>Issue Bildir</Title>
-        <Subtitle>Bağımsız bildirim — istasyon adımı veya checklist’e bağlı değil</Subtitle>
+        <Title>{t('nav.reportIssue')}</Title>
+        <Subtitle>{t('report.manualSubtitle')}</Subtitle>
 
-        <Text style={labelStyle(tokens)}>Tür *</Text>
+        <Text style={labelStyle(tokens)}>{t('issue.type')} *</Text>
         <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
-          {issueTypes.map((t) => {
-            const selected = issueTypeId === t.ID;
+          {issueTypes.map((it) => {
+            const selected = issueTypeId === it.ID;
             return (
               <Pressable
-                key={t.ID}
-                onPress={() => setIssueTypeId(t.ID)}
+                key={it.ID}
+                onPress={() => setIssueTypeId(it.ID)}
                 style={{
                   flex: 1,
                   minHeight: 44,
@@ -254,25 +250,25 @@ export default function ManualIssueReportScreen() {
                     textAlign: 'center',
                   }}
                 >
-                  {t.Name}
+                  {it.Name}
                 </Text>
               </Pressable>
             );
           })}
         </View>
         {issueTypes.length === 0 ? (
-          <Subtitle>Türler yükleniyor…</Subtitle>
+          <Subtitle>{t('report.typesLoading')}</Subtitle>
         ) : null}
 
-        <Text style={labelStyle(tokens)}>Severity *</Text>
+        <Text style={labelStyle(tokens)}>{t('severity.label')} *</Text>
         <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
           {SEVERITIES.map((s) => {
-            const selected = severity === s.value;
-            const color = severityFillColor(s.value);
+            const selected = severity === s;
+            const color = severityFillColor(s);
             return (
               <Pressable
-                key={s.value}
-                onPress={() => setSeverity(s.value)}
+                key={s}
+                onPress={() => setSeverity(s)}
                 style={{
                   flex: 1,
                   minHeight: 44,
@@ -285,7 +281,7 @@ export default function ManualIssueReportScreen() {
                   gap: 4,
                 }}
               >
-                <SeverityIndicator severity={s.value} />
+                <SeverityIndicator severity={s} />
                 <Text
                   style={{
                     color: selected ? color : tokens.textSecondary,
@@ -293,14 +289,14 @@ export default function ManualIssueReportScreen() {
                     fontSize: 11,
                   }}
                 >
-                  {s.label}
+                  {severityLabel(s, t)}
                 </Text>
               </Pressable>
             );
           })}
         </View>
 
-        <Text style={labelStyle(tokens)}>İstasyon *</Text>
+        <Text style={labelStyle(tokens)}>{t('issueDetail.station')} *</Text>
         <Pressable
           onPress={() => setStationPickerOpen(true)}
           style={{
@@ -317,11 +313,11 @@ export default function ManualIssueReportScreen() {
           <Text style={{ color: selectedStation ? tokens.textPrimary : tokens.textSecondary }}>
             {selectedStation
               ? `${selectedStation.SequenceNo}. ${selectedStation.Name}`
-              : 'İstasyon seçin'}
+              : t('report.pickStation')}
           </Text>
         </Pressable>
 
-        <Text style={labelStyle(tokens)}>VIN *</Text>
+        <Text style={labelStyle(tokens)}>{t('issue.vin')} *</Text>
         <Pressable
           onPress={() => setVinPickerOpen(true)}
           style={{
@@ -343,17 +339,17 @@ export default function ManualIssueReportScreen() {
               </Text>
             </View>
           ) : (
-            <Text style={{ color: tokens.textSecondary }}>Araç ara / seç</Text>
+            <Text style={{ color: tokens.textSecondary }}>{t('report.pickVehicle')}</Text>
           )}
         </Pressable>
 
-        <Text style={labelStyle(tokens)}>Açıklama *</Text>
+        <Text style={labelStyle(tokens)}>{t('issueDetail.descriptionStar')}</Text>
         <AppTextInput
           value={description}
           onChangeText={setDescription}
           multiline
           numberOfLines={4}
-          placeholder="Sorunu açıklayın"
+          placeholder={t('report.descPlaceholder')}
           placeholderTextColor={tokens.textSecondary}
           {...iosDoneAccessoryProps}
           style={{
@@ -370,14 +366,14 @@ export default function ManualIssueReportScreen() {
           }}
         />
 
-        <Text style={labelStyle(tokens)}>Fotoğraf *</Text>
+        <Text style={labelStyle(tokens)}>{t('checklist.photo')} *</Text>
         <View style={{ marginTop: 8, gap: 8 }}>
           <OutlineButton
-            label={photo ? `Seçildi: ${photo.name} (galeriden değiştir)` : 'Galeriden fotoğraf seç'}
+            label={photo ? t('report.pickedGallery', { name: photo.name }) : t('report.pickGallery')}
             onPress={() => void pickFromLibrary()}
           />
           <OutlineButton
-            label="Kamerayla çek"
+            label={t('report.takePhoto')}
             onPress={() => void pickFromCamera()}
           />
         </View>
@@ -385,9 +381,12 @@ export default function ManualIssueReportScreen() {
         {selectedType || selectedStation || vehicle ? (
           <Card>
             <Text style={{ color: tokens.textSecondary, fontSize: 12 }}>
-              Özet: {selectedType?.Name ?? '—'} · {severity ?? '—'} ·{' '}
-              {selectedStation?.Name ?? '—'} ·{' '}
-              {vehicle ? `…${vehicle.VIN.slice(-5)}` : '—'}
+              {t('report.summary', {
+                type: selectedType?.Name ?? t('common.emDash'),
+                severity: severity ? severityLabel(severity, t) : t('common.emDash'),
+                station: selectedStation?.Name ?? t('common.emDash'),
+                vin: vehicle ? `…${vehicle.VIN.slice(-5)}` : t('common.emDash'),
+              })}
             </Text>
           </Card>
         ) : null}
@@ -398,10 +397,10 @@ export default function ManualIssueReportScreen() {
           <PrimaryButton
             label={
               busy
-                ? 'Kaydediliyor…'
+                ? t('common.saving')
                 : createdIssueId != null
-                  ? 'Fotoğrafı Tekrar Yükle'
-                  : 'Issue’ı Kaydet'
+                  ? t('report.retryUpload')
+                  : t('report.save')
             }
             onPress={() => void submit()}
             disabled={
@@ -427,7 +426,7 @@ export default function ManualIssueReportScreen() {
             }}
           >
             <Text style={{ color: tokens.textPrimary, fontWeight: '600', fontSize: 17, marginBottom: 12 }}>
-              İstasyon seç
+              {t('report.pickStation')}
             </Text>
             <ScrollView>
               {stations.map((s) => (
@@ -474,7 +473,7 @@ export default function ManualIssueReportScreen() {
               }}
             >
               <Text style={{ color: tokens.textPrimary, fontWeight: '600', fontSize: 17 }}>
-                VIN seç
+                {t('report.pickVin')}
               </Text>
               <Pressable
                 onPress={() => {
@@ -483,7 +482,7 @@ export default function ManualIssueReportScreen() {
                 }}
                 style={{ minHeight: 44, justifyContent: 'center' }}
               >
-                <Text style={{ color: tokens.accent, fontWeight: '600' }}>Kapat</Text>
+                <Text style={{ color: tokens.accent, fontWeight: '600' }}>{t('common.close')}</Text>
               </Pressable>
             </View>
             <DismissKeyboardScrollView>

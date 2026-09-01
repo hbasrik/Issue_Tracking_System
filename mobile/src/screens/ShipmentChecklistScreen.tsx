@@ -5,7 +5,7 @@ import {
   useRoute,
   type RouteProp,
 } from '@react-navigation/native';
-import { ApiError, api, type ChecklistItem } from '../api/client';
+import { api, type ChecklistItem } from '../api/client';
 import {
   Card,
   ErrorText,
@@ -17,17 +17,20 @@ import {
 } from '../components/ui';
 import { ActionStamp } from '../components/ActionStamp';
 import { checklistActorLines } from '../lib/actionStamp';
+import { apiErrorMessage } from '../lib/password';
+import { useI18n } from '../i18n';
 import { useTheme } from '../theme/ThemeProvider';
 import { statusColors } from '../theme/tokens';
 import type { RootStackParamList } from '../navigation/types';
+import type { MessageKey } from '../../../shared/i18n';
 
-const SECTIONS: { title: string; from: number; to: number }[] = [
-  { title: 'Kimlik & Doküman', from: 1, to: 6 },
-  { title: 'Dış Görünüm', from: 7, to: 16 },
-  { title: 'Kilit & Kapı', from: 17, to: 20 },
-  { title: 'Aydınlatma & Kontroller', from: 21, to: 27 },
-  { title: 'İç Donanım', from: 28, to: 35 },
-  { title: 'Şarj & Final', from: 36, to: 43 },
+const SECTIONS: { titleKey: MessageKey; from: number; to: number }[] = [
+  { titleKey: 'checklist.section.identity', from: 1, to: 6 },
+  { titleKey: 'checklist.section.exterior', from: 7, to: 16 },
+  { titleKey: 'checklist.section.locks', from: 17, to: 20 },
+  { titleKey: 'checklist.section.lighting', from: 21, to: 27 },
+  { titleKey: 'checklist.section.interior', from: 28, to: 35 },
+  { titleKey: 'checklist.section.charge', from: 36, to: 43 },
 ];
 
 function isDone(s: ChecklistItem['Status']): boolean {
@@ -38,6 +41,7 @@ function isDone(s: ChecklistItem['Status']): boolean {
 export default function ShipmentChecklistScreen() {
   const route = useRoute<RouteProp<RootStackParamList, 'ShipmentChecklist'>>();
   const { tokens } = useTheme();
+  const { t, locale } = useI18n();
   const vin = route.params.vin;
 
   const [items, setItems] = useState<ChecklistItem[]>([]);
@@ -50,9 +54,9 @@ export default function ShipmentChecklistScreen() {
       const res = await api.getChecklist(vin, 'shipment');
       setItems(res.items ?? []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Sevk listesi yüklenemedi');
+      setError(apiErrorMessage(err, t));
     }
-  }, [vin]);
+  }, [vin, t]);
 
   useFocusEffect(
     useCallback(() => {
@@ -66,7 +70,6 @@ export default function ShipmentChecklistScreen() {
   const allDone = total > 0 && completed === total;
 
   async function toggle(item: ChecklistItem) {
-    // Only allow marking OK (checkbox on). Unchecking is not required.
     if (isDone(item.Status)) return;
     setBusyId(item.ItemID);
     setError(null);
@@ -74,7 +77,7 @@ export default function ShipmentChecklistScreen() {
       await api.recordChecklist(vin, 'shipment', item.ItemID, { status: 'OK' });
       await load();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Güncellenemedi');
+      setError(apiErrorMessage(err, t));
     } finally {
       setBusyId(null);
     }
@@ -92,9 +95,9 @@ export default function ShipmentChecklistScreen() {
   return (
     <Screen padded={false}>
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 120 }}>
-        <Title>Sevk Öncesi Kontrol</Title>
+        <Title>{t('nav.shipmentChecklist')}</Title>
         <Subtitle>
-          {completed} / {total} tamamlandı
+          {t('checklist.progress', { done: completed, total })}
         </Subtitle>
 
         <View
@@ -118,9 +121,9 @@ export default function ShipmentChecklistScreen() {
         {error ? <ErrorText>{error}</ErrorText> : null}
 
         {grouped.map((g) => (
-          <View key={g.title} style={{ marginTop: 16 }}>
+          <View key={g.titleKey} style={{ marginTop: 16 }}>
             <Text style={{ color: tokens.textSecondary, fontWeight: '600', fontSize: 13 }}>
-              {g.title}
+              {t(g.titleKey)}
             </Text>
             {g.items.map((item) => {
               const checked = isDone(item.Status);
@@ -142,7 +145,7 @@ export default function ShipmentChecklistScreen() {
                         {item.ItemNo}. {item.ItemText}
                       </Text>
                     </View>
-                    <ActionStamp lines={checklistActorLines(item)} />
+                    <ActionStamp lines={checklistActorLines(item, t, locale)} />
                   </Card>
                 </Pressable>
               );
@@ -171,17 +174,15 @@ export default function ShipmentChecklistScreen() {
             fontSize: 13,
           }}
         >
-          {allDone ? 'Sevke Hazır' : `${remaining} madde eksik`}
+          {allDone ? t('checklist.readyToShip') : t('checklist.itemsRemaining', { n: remaining })}
         </Text>
         <PrimaryButton
-          label="Sevk Onayına Gönder"
+          label={t('checklist.sendShipment')}
           onPress={() => {
             if (!allDone) {
-              setError(`${remaining} madde kaldı — göndermeden önce tüm maddeleri tamamlayın`);
+              setError(t('checklist.shipmentRemaining', { n: remaining }));
             } else {
-              setError(
-                'Operatör yalnızca maddeleri işaretler; WITH_CUSTOMER/SHIPPED durumunu yönetici web panelinden verir',
-              );
+              setError(t('checklist.operatorHint'));
             }
           }}
           disabled={!allDone}

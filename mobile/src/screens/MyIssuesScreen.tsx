@@ -27,21 +27,19 @@ import {
   Title,
   AppTextInput,
 } from '../components/ui';
-import {
-  SeverityIndicator,
-  severityFillColor,
-  type SeverityLevel,
-} from '../components/SeverityIndicator';
+import { SeverityIndicator, severityFillColor, severityLabel, type SeverityLevel } from '../components/SeverityIndicator';
 import { useTheme } from '../theme/ThemeProvider';
+import { useI18n } from '../i18n';
 import { inkOn, mixColors, readableOn } from '../theme/tokens';
-import { issueStatusColor } from '../lib/issueStatus';
+import { issueStatusColor, issueStatusLabel } from '../lib/issueStatus';
 import {
-  HOME_ISSUE_STAT_LABELS,
+  homeIssueStatLabel,
   matchesHomeIssueStat,
   type HomeIssueStatKey,
 } from '../lib/homeIssueStats';
 import { issueMatchesListQuery } from '../lib/issueVinFilter';
 import { issueTypeChipLabel } from '../lib/issueTypeLabel';
+import { apiErrorMessage } from '../lib/password';
 import type { MainDrawerParamList, RootStackParamList } from '../navigation/types';
 
 type IssueStatus = Issue['Status'];
@@ -53,18 +51,12 @@ type MyIssuesNavigation = CompositeNavigationProp<
 
 const SEVERITIES: SeverityLevel[] = ['CRITICAL', 'MEDIUM', 'LOW'];
 
-const SEVERITY_LABELS: Record<SeverityLevel, string> = {
-  CRITICAL: 'Kritik',
-  MEDIUM: 'Orta',
-  LOW: 'Düşük',
-};
-
-const STATUSES: { value: IssueStatus; label: string }[] = [
-  { value: 'OPEN', label: 'Açık' },
-  { value: 'IN_PROGRESS', label: 'İşlemde' },
-  { value: 'DONE', label: 'Tamamlandı' },
-  { value: 'CONDITIONAL_APPROVED', label: 'Şartlı Onay' },
-  { value: 'APPROVED', label: 'Kalite Onay' },
+const STATUSES: IssueStatus[] = [
+  'OPEN',
+  'IN_PROGRESS',
+  'DONE',
+  'CONDITIONAL_APPROVED',
+  'APPROVED',
 ];
 
 function issueCreatedMs(issue: Issue): number {
@@ -73,6 +65,7 @@ function issueCreatedMs(issue: Issue): number {
 
 export default function MyIssuesScreen() {
   const { tokens } = useTheme();
+  const { t } = useI18n();
   const navigation = useNavigation<MyIssuesNavigation>();
   const route = useRoute<RouteProp<MainDrawerParamList, 'MyIssues'>>();
   const [items, setItems] = useState<Issue[]>([]);
@@ -106,11 +99,11 @@ export default function MyIssuesScreen() {
       setItems(list);
       setIssueTypes(typesRes.items ?? []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Issue listesi yüklenemedi');
+      setError(apiErrorMessage(err, t));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useFocusEffect(
     useCallback(() => {
@@ -195,8 +188,8 @@ export default function MyIssuesScreen() {
         contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
         ListHeaderComponent={
           <Pressable onPress={Keyboard.dismiss} accessible={false} style={{ marginBottom: 12 }}>
-            <Title>Issues</Title>
-            <Subtitle>Tüm issue’lar — VIN veya bildiren adıyla süz</Subtitle>
+            <Title>{t('nav.issues')}</Title>
+            <Subtitle>{t('issue.listSubtitle')}</Subtitle>
 
             {homeStat ? (
               <View
@@ -209,9 +202,12 @@ export default function MyIssuesScreen() {
                 }}
               >
                 <Text style={{ color: tokens.textPrimary, flex: 1, fontSize: 13 }}>
-                  Home filtre: {HOME_ISSUE_STAT_LABELS[homeStat]} · {filtered.length} kayıt
+                  {t('issue.homeFilter', {
+                    label: homeIssueStatLabel(homeStat, t),
+                    n: filtered.length,
+                  })}
                 </Text>
-                <OutlineButton label="Temizle" onPress={clearHomeStat} />
+                <OutlineButton label={t('common.clear')} onPress={clearHomeStat} />
               </View>
             ) : null}
 
@@ -223,7 +219,7 @@ export default function MyIssuesScreen() {
                 marginTop: 16,
               }}
             >
-              VIN / bildiren
+              {t('issue.searchLabel')}
             </Text>
             <AppTextInput
               value={listQuery}
@@ -231,7 +227,7 @@ export default function MyIssuesScreen() {
                 if (homeStat) clearHomeStat();
                 setListQuery(q);
               }}
-              placeholder="VIN veya bildiren adı"
+              placeholder={t('issue.searchPlaceholder')}
               placeholderTextColor={tokens.textSecondary}
               autoCorrect={false}
               autoCapitalize="none"
@@ -264,15 +260,15 @@ export default function MyIssuesScreen() {
                 marginBottom: 8,
               }}
             >
-              Tür
+              {t('issue.type')}
             </Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-              {issueTypes.map((t) => {
-                const selected = !homeStat && typeIds.has(t.ID);
+              {issueTypes.map((it) => {
+                const selected = !homeStat && typeIds.has(it.ID);
                 return (
                   <Pressable
-                    key={t.ID}
-                    onPress={() => toggleType(t.ID)}
+                    key={it.ID}
+                    onPress={() => toggleType(it.ID)}
                     accessibilityRole="button"
                     accessibilityState={{ selected }}
                     style={{
@@ -294,7 +290,7 @@ export default function MyIssuesScreen() {
                         fontWeight: '600',
                       }}
                     >
-                      {issueTypeChipLabel(t.Name)}
+                      {issueTypeChipLabel(it.Name)}
                     </Text>
                   </Pressable>
                 );
@@ -310,13 +306,13 @@ export default function MyIssuesScreen() {
                 marginBottom: 8,
               }}
             >
-              Severity
+              {t('severity.label')}
             </Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               {SEVERITIES.map((s) => {
                 const selected = !homeStat && severities.has(s);
                 const color = severityFillColor(s);
-                const name = SEVERITY_LABELS[s];
+                const name = severityLabel(s, t);
                 return (
                   <Pressable
                     key={s}
@@ -351,18 +347,18 @@ export default function MyIssuesScreen() {
                 marginBottom: 8,
               }}
             >
-              Durum
+              {t('issue.status')}
             </Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-              {STATUSES.map((s) => {
-                const selected = !homeStat && statuses.has(s.value);
-                const color = issueStatusColor(s.value);
+              {STATUSES.map((status) => {
+                const selected = !homeStat && statuses.has(status);
+                const color = issueStatusColor(status);
                 const fill = selected ? color : tokens.bgPage;
                 const ink = selected ? inkOn(color) : readableOn(color, tokens.bgPage);
                 return (
                   <Pressable
-                    key={s.value}
-                    onPress={() => toggleStatus(s.value)}
+                    key={status}
+                    onPress={() => toggleStatus(status)}
                     accessibilityRole="button"
                     accessibilityState={{ selected }}
                     style={{
@@ -382,7 +378,7 @@ export default function MyIssuesScreen() {
                         fontWeight: '600',
                       }}
                     >
-                      {s.label}
+                      {issueStatusLabel(status, t)}
                     </Text>
                   </Pressable>
                 );
@@ -394,7 +390,7 @@ export default function MyIssuesScreen() {
           </Pressable>
         }
         ListEmptyComponent={
-          loading ? null : <Subtitle>Filtreye uyan issue yok</Subtitle>
+          loading ? null : <Subtitle>{t('issue.noMatch')}</Subtitle>
         }
         renderItem={({ item }) => (
           <IssueCard

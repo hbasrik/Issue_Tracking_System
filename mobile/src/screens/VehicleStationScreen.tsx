@@ -40,6 +40,8 @@ import { useAuth } from '../auth/AuthProvider';
 import { Perm } from '../auth/permissions';
 import { statusColors } from '../theme/tokens';
 import { ActionStamp } from '../components/ActionStamp';
+import { useI18n } from '../i18n';
+import { apiErrorMessage } from '../lib/password';
 import type { RootStackParamList } from '../navigation/types';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -111,6 +113,7 @@ export default function VehicleStationScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { tokens } = useTheme();
   const { has } = useAuth();
+  const { t } = useI18n();
   const vin = route.params.vin;
 
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
@@ -145,9 +148,9 @@ export default function VehicleStationScreen() {
       setStatusHistory(historyRes.items ?? []);
       setExpandedStation((prev) => prev ?? v.CurrentStationID);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Araç yüklenemedi');
+      setError(apiErrorMessage(err, t));
     }
-  }, [vin, has]);
+  }, [vin, has, t]);
 
   useFocusEffect(
     useCallback(() => {
@@ -177,8 +180,8 @@ export default function VehicleStationScreen() {
 
   const currentStationName = useMemo(() => {
     const current = stations.find((s) => s.id === vehicle?.CurrentStationID);
-    return current?.name ?? '—';
-  }, [stations, vehicle]);
+    return current?.name ?? t('common.emDash');
+  }, [stations, vehicle, t]);
 
   async function setStatus(step: StationStepItem, status: 'OK' | 'NOT_OK') {
     setBusyId(step.ID);
@@ -187,7 +190,7 @@ export default function VehicleStationScreen() {
       await api.recordStationStep(vin, step.ID, status);
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'İstasyon adımı güncellenemedi');
+      setError(apiErrorMessage(err, t));
     } finally {
       setBusyId(null);
     }
@@ -205,7 +208,7 @@ export default function VehicleStationScreen() {
   return (
     <Screen padded={false}>
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
-        <Title>İstasyon İlerleme</Title>
+        <Title>{t('nav.stationProgress')}</Title>
         <Subtitle>
           {vin}
         </Subtitle>
@@ -214,7 +217,7 @@ export default function VehicleStationScreen() {
           <ProgressRing percent={vehicle?.TotalProgressPercentage ?? 0} />
           <Text style={{ color: tokens.textSecondary, marginTop: 8, fontSize: 13 }}>
             …{vinTail(vin)}
-            {currentStationName !== '—' ? ` · ${currentStationName}` : ''}
+            {currentStationName !== t('common.emDash') ? ` · ${currentStationName}` : ''}
           </Text>
           {vehicle?.CurrentGlobalStatus ? (
             <Text style={{ color: tokens.textSecondary, marginTop: 4, fontSize: 13 }}>
@@ -230,7 +233,7 @@ export default function VehicleStationScreen() {
           {readiness && !readiness.ready && readiness.warnings.length > 0 ? (
             <Card>
               <Text style={{ color: statusColors.conditionalOk, fontWeight: '600', fontSize: 15 }}>
-                Sevk öncesi uyarı
+                {t('vehicles.readinessTitle')}
               </Text>
               {readiness.warnings.map((w, i) => (
                 <Text
@@ -244,19 +247,19 @@ export default function VehicleStationScreen() {
           ) : null}
           {has(Perm.ChecklistShipmentView) ? (
             <OutlineButton
-              label="Shipment Checklist"
+              label={t('checklist.shipmentLink')}
               onPress={() => navigation.navigate('ShipmentChecklist', { vin })}
             />
           ) : null}
           {has(Perm.ChecklistTestView) ? (
             <OutlineButton
-              label="Test Checklist"
+              label={t('checklist.testLink')}
               onPress={() => navigation.navigate('TestChecklist', { vin })}
             />
           ) : null}
           {has(Perm.ChecklistEOLView) ? (
             <OutlineButton
-              label="EoL Checklist"
+              label={t('checklist.eolLink')}
               onPress={() => navigation.navigate('EOLChecklist', { vin })}
             />
           ) : null}
@@ -274,11 +277,11 @@ export default function VehicleStationScreen() {
               marginBottom: 4,
             }}
           >
-            Issues
+            {t('nav.issues')}
           </Text>
-          <Subtitle>Bu araca ait tüm issue’lar — karta dokunarak detayı açın</Subtitle>
+          <Subtitle>{t('vehicles.issueListHint')}</Subtitle>
           {issues.length === 0 ? (
-            <Subtitle>Bu araç için issue yok</Subtitle>
+            <Subtitle>{t('vehicles.noIssues')}</Subtitle>
           ) : (
             issues.map((issue) => (
               <IssueCard
@@ -321,7 +324,7 @@ export default function VehicleStationScreen() {
                   </Text>
                   {/* Soft-warning: open issue badge — informational only, never blocks */}
                   {openCount > 0 ? (
-                    <Badge label={`${openCount} open`} color={statusColors.notOk} />
+                    <Badge label={t('home.openCount', { n: openCount })} color={statusColors.notOk} />
                   ) : null}
                 </View>
               </Pressable>
@@ -341,21 +344,30 @@ export default function VehicleStationScreen() {
                         <Text style={{ color: tokens.textPrimary, flex: 1, fontSize: 15 }}>
                           {step.Name}
                         </Text>
-                        <Badge label={step.Status} color={stepColor(step.Status)} />
+                        <Badge
+                          label={
+                            step.Status === 'OK'
+                              ? t('status.eol.ok')
+                              : step.Status === 'NOT_OK'
+                                ? t('status.eol.notOk')
+                                : t('status.station.pending')
+                          }
+                          color={stepColor(step.Status)}
+                        />
                       </View>
                       {step.Status !== 'PENDING' ? (
                         <ActionStamp name={step.CheckedByName} at={step.CheckedAt} />
                       ) : null}
                       <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
                         <StatusChoiceButton
-                          label="OK"
+                          label={t('status.eol.ok')}
                           selected={step.Status === 'OK'}
                           color={statusColors.ok}
                           onPress={() => void setStatus(step, 'OK')}
                           disabled={busyId === step.ID || !has(Perm.StationStepEdit)}
                         />
                         <StatusChoiceButton
-                          label="NOT OK"
+                          label={t('status.eol.notOk')}
                           selected={step.Status === 'NOT_OK'}
                           color={statusColors.notOk}
                           onPress={() => void setStatus(step, 'NOT_OK')}
@@ -365,7 +377,7 @@ export default function VehicleStationScreen() {
                       {step.Status === 'NOT_OK' && has(Perm.IssueCreate) ? (
                         <View style={{ marginTop: 10 }}>
                           <OutlineButton
-                            label="Issue Bildir"
+                            label={t('nav.reportIssue')}
                             danger
                             onPress={() =>
                               navigation.navigate('IssueReport', {

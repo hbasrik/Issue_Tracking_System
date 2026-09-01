@@ -22,21 +22,24 @@ import {
   Title,
 } from '../components/ui';
 import { useTheme } from '../theme/ThemeProvider';
+import { useI18n } from '../i18n';
+import { apiErrorMessage } from '../lib/password';
 import type { RootStackParamList } from '../navigation/types';
+import type { MessageKey } from '../../../shared/i18n';
 
 type VehicleStatus =
   | 'IN_PRODUCTION'
   | 'IN_WAREHOUSE'
-  | 'WITH_CUSTOMER'
+  | 'DELIVERED'
   | 'SHIPPED'
   | 'ON_HOLD';
 
-const STATUSES: { value: VehicleStatus; label: string }[] = [
-  { value: 'IN_PRODUCTION', label: 'IN_PRODUCTION' },
-  { value: 'IN_WAREHOUSE', label: 'IN_WAREHOUSE' },
-  { value: 'WITH_CUSTOMER', label: 'WITH_CUSTOMER' },
-  { value: 'SHIPPED', label: 'SHIPPED' },
-  { value: 'ON_HOLD', label: 'ON_HOLD' },
+const STATUSES: { value: VehicleStatus; key: MessageKey }[] = [
+  { value: 'IN_PRODUCTION', key: 'status.vehicle.inProduction' },
+  { value: 'IN_WAREHOUSE', key: 'status.vehicle.inWarehouse' },
+  { value: 'DELIVERED', key: 'status.vehicle.delivered' },
+  { value: 'SHIPPED', key: 'status.vehicle.shipped' },
+  { value: 'ON_HOLD', key: 'status.vehicle.onHold' },
 ];
 
 function vehicleMatchesVinQuery(vehicle: Vehicle, query: string): boolean {
@@ -55,6 +58,7 @@ function compareVinDesc(a: Vehicle, b: Vehicle): number {
  */
 export default function VehiclesScreen() {
   const { tokens } = useTheme();
+  const { t } = useI18n();
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
@@ -72,12 +76,12 @@ export default function VehiclesScreen() {
       const items = (res.Items ?? []).slice().sort(compareVinDesc);
       setVehicles(items);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Araçlar yüklenemedi');
+      setError(apiErrorMessage(err, t));
       setVehicles([]);
     } finally {
       setLoading(false);
     }
-  }, [statuses]);
+  }, [statuses, t]);
 
   useFocusEffect(
     useCallback(() => {
@@ -126,8 +130,8 @@ export default function VehiclesScreen() {
         }
         ListHeaderComponent={
           <Pressable onPress={Keyboard.dismiss} accessible={false} style={{ marginBottom: 12 }}>
-            <Title>Araçlar</Title>
-            <Subtitle>Tüm araçlar — istasyon kuyruğundan bağımsız</Subtitle>
+            <Title>{t('vehicles.title')}</Title>
+            <Subtitle>{t('vehicles.listSubtitle')}</Subtitle>
             <View style={{ marginTop: 12 }}>
               <VehicleSearchPanel
                 onSelect={openVehicle}
@@ -144,7 +148,7 @@ export default function VehiclesScreen() {
                 marginBottom: 8,
               }}
             >
-              Durum
+              {t('issue.status')}
             </Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               {STATUSES.map((s) => {
@@ -172,7 +176,7 @@ export default function VehiclesScreen() {
                         fontWeight: '600',
                       }}
                     >
-                      {s.label}
+                      {t(s.key)}
                     </Text>
                   </Pressable>
                 );
@@ -190,12 +194,12 @@ export default function VehiclesScreen() {
                 marginBottom: 4,
               }}
             >
-              Araç listesi
+              {t('vehicles.listTitle')}
             </Text>
           </Pressable>
         }
         ListEmptyComponent={
-          loading ? null : <Subtitle>No vehicles found</Subtitle>
+          loading ? null : <Subtitle>{t('vehicles.none')}</Subtitle>
         }
         renderItem={({ item }) => (
           <Pressable

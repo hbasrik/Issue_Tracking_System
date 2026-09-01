@@ -9,7 +9,7 @@ import {
   Text,
   View,
 } from 'react-native';
-import { ApiError, api } from '../api/client';
+import { api } from '../api/client';
 import { useAuth } from '../auth/AuthProvider';
 import {
   AppTextInput,
@@ -20,7 +20,8 @@ import {
   Subtitle,
   Title,
 } from '../components/ui';
-import { PASSWORD_RULE_HINT, passwordErrorMessage } from '../lib/password';
+import { useI18n } from '../i18n';
+import { passwordErrorMessage, passwordRuleHint } from '../lib/password';
 import { useTheme } from '../theme/ThemeProvider';
 
 export default function ChangePasswordScreen({
@@ -30,6 +31,7 @@ export default function ChangePasswordScreen({
 }) {
   const { markPasswordChanged, logout } = useAuth();
   const { tokens } = useTheme();
+  const { t } = useI18n();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -42,7 +44,7 @@ export default function ChangePasswordScreen({
     setError(null);
     setSaved(false);
     if (newPassword !== confirmPassword) {
-      setError('Yeni şifre ve tekrarı eşleşmiyor.');
+      setError(t('password.mismatch'));
       return;
     }
     setBusy(true);
@@ -61,9 +63,7 @@ export default function ChangePasswordScreen({
         setSaved(true);
       }
     } catch (err) {
-      setError(
-        err instanceof ApiError ? passwordErrorMessage(err) : 'Şifre değiştirilemedi',
-      );
+      setError(passwordErrorMessage(err, t));
     } finally {
       setBusy(false);
     }
@@ -88,17 +88,15 @@ export default function ChangePasswordScreen({
         contentContainerStyle={forced ? styles.forcedPad : undefined}
       >
         <Pressable onPress={Keyboard.dismiss} accessible={false}>
-          <Title>{forced ? 'Şifrenizi değiştirin' : 'Şifre'}</Title>
+          <Title>{forced ? t('password.changeTitle') : t('settings.password')}</Title>
           <Subtitle>
-            {forced
-              ? 'İlk girişte veya yönetici sıfırlamasından sonra yeni bir şifre belirlemeniz gerekir.'
-              : 'Mevcut şifrenizi doğrulayıp yeni şifre belirleyin.'}
+            {forced ? t('password.forcedHint') : t('password.optionalHint')}
           </Subtitle>
           <Text style={[styles.hint, { color: tokens.textSecondary }]}>
-            {PASSWORD_RULE_HINT}
+            {passwordRuleHint(t)}
           </Text>
           <Text style={[styles.label, { color: tokens.textSecondary }]}>
-            Mevcut şifre
+            {t('password.current')}
           </Text>
           <AppTextInput
             value={currentPassword}
@@ -108,7 +106,7 @@ export default function ChangePasswordScreen({
             style={inputStyle}
           />
           <Text style={[styles.label, { color: tokens.textSecondary }]}>
-            Yeni şifre
+            {t('password.new')}
           </Text>
           <AppTextInput
             value={newPassword}
@@ -118,7 +116,7 @@ export default function ChangePasswordScreen({
             style={inputStyle}
           />
           <Text style={[styles.label, { color: tokens.textSecondary }]}>
-            Yeni şifre (tekrar)
+            {t('password.confirm')}
           </Text>
           <AppTextInput
             value={confirmPassword}
@@ -130,19 +128,19 @@ export default function ChangePasswordScreen({
           {error ? <ErrorText>{error}</ErrorText> : null}
           {saved ? (
             <Text style={[styles.saved, { color: tokens.accent }]}>
-              Şifre güncellendi.
+              {t('settings.passwordSaved')}
             </Text>
           ) : null}
           <View style={{ marginTop: 20 }}>
             <PrimaryButton
-              label={busy ? 'Kaydediliyor…' : 'Şifreyi değiştir'}
+              label={busy ? t('common.saving') : t('password.submit')}
               onPress={() => void onSubmit()}
               disabled={busy}
             />
           </View>
           {forced ? (
             <View style={{ marginTop: 12 }}>
-              <OutlineButton label="Çıkış" onPress={logout} />
+              <OutlineButton label={t('common.logout')} onPress={logout} />
             </View>
           ) : null}
         </Pressable>
