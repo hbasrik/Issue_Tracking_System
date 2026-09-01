@@ -148,13 +148,38 @@ type BlockingIssue struct {
 	Severity IssueSeverity `json:"severity"`
 }
 
+// EOLChecklistBlocker names one checklist that still has incomplete items
+// before branch shipment or depot release.
+type EOLChecklistBlocker struct {
+	ChecklistType ChecklistType   `json:"checklist_type"`
+	EolPhase      *EOLItemPhase   `json:"eol_phase,omitempty"`
+	Remaining     int             `json:"remaining"`
+}
+
+// EOLBranchShipBlockedError is returned when branch shipment is attempted
+// while any of the three required checklists still has non-passing items.
+type EOLBranchShipBlockedError struct {
+	VIN      string
+	Blockers []EOLChecklistBlocker
+}
+
+// Error implements the error interface.
+func (e *EOLBranchShipBlockedError) Error() string {
+	return fmt.Sprintf(
+		"branch ship blocked for %s: %d checklist(s) incomplete",
+		e.VIN, len(e.Blockers),
+	)
+}
+
 // DepotReleaseBlockedError is returned when depot release is attempted while
-// open issues remain (Karar 2, EOL stage 2 hard-block gate). It carries the
-// offending issues so the UI can list exactly what blocks the release, the
-// same way GateBlockedError does for checklist items.
+// open issues remain or depot-phase EoL items are incomplete (Karar 2, EOL
+// stage 2 hard-block gate). It carries the offending issues so the UI can list
+// exactly what blocks the release, the same way GateBlockedError does for
+// checklist items.
 type DepotReleaseBlockedError struct {
-	VIN            string
-	BlockingIssues []BlockingIssue
+	VIN                 string
+	BlockingIssues      []BlockingIssue
+	DepotItemsRemaining int `json:"depot_items_remaining,omitempty"`
 }
 
 // Error implements the error interface.

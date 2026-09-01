@@ -49,6 +49,7 @@ const (
 	PermissionEOLBranchShip                     = "eol.branch_ship"
 	PermissionEOLDepotRelease                   = "eol.depot_release"
 	PermissionEOLDocumentApprove                = "eol.document_approve"
+	PermissionEOLDeliver                        = "eol.deliver"
 	PermissionIssueView                         = "issue.view"
 	PermissionIssueCreate                       = "issue.create"
 	PermissionIssueTransitionProgress           = "issue.transition.progress"

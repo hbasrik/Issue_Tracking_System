@@ -9,7 +9,7 @@ const (
 	VehicleStatusPlanned      VehicleStatus = "PLANNED"
 	VehicleStatusInProduction VehicleStatus = "IN_PRODUCTION"
 	VehicleStatusInWarehouse  VehicleStatus = "IN_WAREHOUSE"
-	VehicleStatusWithCustomer VehicleStatus = "WITH_CUSTOMER"
+	VehicleStatusDelivered VehicleStatus = "DELIVERED"
 	VehicleStatusShipped      VehicleStatus = "SHIPPED"
 	VehicleStatusOnHold       VehicleStatus = "ON_HOLD"
 )
@@ -18,7 +18,7 @@ const (
 func (s VehicleStatus) Valid() bool {
 	switch s {
 	case VehicleStatusPlanned, VehicleStatusInProduction, VehicleStatusInWarehouse,
-		VehicleStatusWithCustomer, VehicleStatusShipped, VehicleStatusOnHold:
+		VehicleStatusDelivered, VehicleStatusShipped, VehicleStatusOnHold:
 		return true
 	default:
 		return false

@@ -43,6 +43,9 @@ type EOLWorkflow struct {
 	DocumentApprovedAt *time.Time
 	DocumentApprovedBy *int
 
+	DeliveredAt *time.Time
+	DeliveredBy *int
+
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
@@ -63,6 +66,7 @@ type EOLWorkflowView struct {
 	BranchShip      EOLStageRecord `json:"branch_ship"`
 	DepotRelease    EOLStageRecord `json:"depot_release"`
 	DocumentApprove EOLStageRecord `json:"document_approve"`
+	Deliver         EOLStageRecord `json:"deliver"`
 
 	// BranchOpenIssueCountAtShipment lets the UI keep showing the
 	// soft-warning banner after the fact.
