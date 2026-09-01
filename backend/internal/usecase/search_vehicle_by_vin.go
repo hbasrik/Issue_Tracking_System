@@ -104,7 +104,7 @@ func (s *VehicleService) ChangeStatus(ctx context.Context, vin string, target do
 	}
 
 	shipmentGateOpen := true
-	if target == domain.VehicleStatusWithCustomer || target == domain.VehicleStatusShipped {
+	if target == domain.VehicleStatusDelivered || target == domain.VehicleStatusShipped {
 		items, err := s.checklist.ListByVINAndType(ctx, vin, domain.ChecklistTypeShipment)
 		if err != nil {
 			return nil, err

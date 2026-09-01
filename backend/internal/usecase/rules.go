@@ -104,34 +104,28 @@ func EnforceEOLDepotSequencing(items []domain.ChecklistItemView, itemID int) err
 	return nil
 }
 
-// GateTargetStatus returns the vehicle status a passing checklist gate
-// unlocks: EoL opens the move to IN_WAREHOUSE and Shipment opens the move to
-// WITH_CUSTOMER. The Test checklist (Karar 4) has no gate, so ok is false and
-// no transition may be derived from it.
+// GateTargetStatus returns the vehicle status a passing checklist gate used to
+// unlock. Explicit EoL workflow actions now own every transition, so no
+// checklist type may derive a status change from RequestGateExit.
 func GateTargetStatus(checklistType domain.ChecklistType) (target domain.VehicleStatus, ok bool) {
-	switch checklistType {
-	case domain.ChecklistTypeShipment:
-		return domain.VehicleStatusWithCustomer, true
-	case domain.ChecklistTypeEOL:
-		return domain.VehicleStatusInWarehouse, true
-	default:
-		return "", false
-	}
+	_ = checklistType
+	return "", false
 }
 
 // AuthorizeStatusTransition enforces, in the application layer, the same
 // hard-block guard as the fn_enforce_manual_status_change trigger: a vehicle
-// may only move to WITH_CUSTOMER or SHIPPED when its shipment gate is open.
-// This runs even for manual/admin transitions so the UI can never be trusted
-// to bypass it (FR-3.6/FR-4.3).
+// may only move to DELIVERED when the workflow deliver stamp exists. SHIPPED
+// remains a legacy enum value and is not produced by the live flow.
 func AuthorizeStatusTransition(target domain.VehicleStatus, shipmentGateOpen bool) error {
+	_ = shipmentGateOpen
 	if !target.Valid() {
 		return domain.ErrInvalidEnumValue
 	}
-	if target == domain.VehicleStatusWithCustomer || target == domain.VehicleStatusShipped {
-		if !shipmentGateOpen {
-			return domain.ErrInvalidStatusTransition
-		}
+	if target == domain.VehicleStatusDelivered {
+		return domain.ErrInvalidStatusTransition
+	}
+	if target == domain.VehicleStatusShipped {
+		return domain.ErrInvalidStatusTransition
 	}
 	return nil
 }
