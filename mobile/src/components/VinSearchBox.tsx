@@ -8,6 +8,8 @@ import {
 } from 'react-native';
 import { api, type Vehicle } from '../api/client';
 import { useTheme } from '../theme/ThemeProvider';
+import { useI18n } from '../i18n';
+import { apiErrorMessage } from '../lib/password';
 import { Badge, Card, ErrorText, Subtitle, AppTextInput } from './ui';
 
 function vinTail(vin: string): string {
@@ -34,6 +36,7 @@ export function VinSearchBox({
   onResults?: (vehicles: Vehicle[]) => void;
 }) {
   const { tokens } = useTheme();
+  const { t } = useI18n();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<Vehicle[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -56,13 +59,13 @@ export function VinSearchBox({
       setResults(items);
       onResultsRef.current?.(items);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Arama başarısız');
+      setError(apiErrorMessage(err, t));
       setResults([]);
       onResultsRef.current?.([]);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     if (timer.current) clearTimeout(timer.current);
@@ -82,8 +85,9 @@ export function VinSearchBox({
           setQuery(text);
           onQueryChange?.(text);
         }}
-        placeholder="Son 5 haneyi girin (örn. 00057)"
+        placeholder={t('search.placeholder')}
         placeholderTextColor={tokens.textSecondary}
+        accessibilityLabel={t('search.aria')}
         autoCapitalize="characters"
         autoCorrect={false}
         multiline={false}
@@ -104,13 +108,13 @@ export function VinSearchBox({
         ]}
       />
       {loading ? (
-        <Subtitle>Searching…</Subtitle>
+        <Subtitle>{t('common.searching')}</Subtitle>
       ) : null}
       {error ? <ErrorText>{error}</ErrorText> : null}
       {results.length >= 2 ? (
         <View style={[styles.banner, { backgroundColor: tokens.bgSurface2 }]}>
           <Text style={{ color: tokens.textSecondary, fontSize: 13 }}>
-            {results.length} araç eşleşti, doğrusunu seçin
+            {t('search.matches', { n: results.length })}
           </Text>
         </View>
       ) : null}

@@ -10,6 +10,7 @@ import {
   type ScrollViewProps,
 } from 'react-native';
 import { useTheme } from '../theme/ThemeProvider';
+import { useI18n } from '../i18n';
 
 /** Shared by every multiline TextInput so one iOS toolbar serves the app. */
 export const KEYBOARD_DONE_NATIVE_ID = 'karea.keyboard.done';
@@ -36,6 +37,7 @@ export const listKeyboardDismissProps = {
  */
 export function KeyboardDoneAccessory() {
   const { tokens } = useTheme();
+  const { t } = useI18n();
   if (Platform.OS !== 'ios') return null;
   return (
     <InputAccessoryView nativeID={KEYBOARD_DONE_NATIVE_ID}>
@@ -53,9 +55,9 @@ export function KeyboardDoneAccessory() {
           hitSlop={8}
           style={styles.doneHit}
           accessibilityRole="button"
-          accessibilityLabel="Klavye kapat"
+          accessibilityLabel={t('common.dismissKeyboard')}
         >
-          <Text style={[styles.doneText, { color: tokens.accent }]}>Bitti</Text>
+          <Text style={[styles.doneText, { color: tokens.accent }]}>{t('common.done')}</Text>
         </Pressable>
       </View>
     </InputAccessoryView>

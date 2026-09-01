@@ -2,6 +2,7 @@ import { NavigationContainer, DarkTheme, DefaultTheme } from '@react-navigation/
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { useAuth } from '../auth/AuthProvider';
+import { useI18n } from '../i18n';
 import { useTheme } from '../theme/ThemeProvider';
 import { Perm } from '../auth/permissions';
 import type { MainDrawerParamList, RootStackParamList } from './types';
@@ -29,6 +30,7 @@ const Drawer = createDrawerNavigator<MainDrawerParamList>();
 function MainDrawer() {
   const { tokens } = useTheme();
   const { has } = useAuth();
+  const { t } = useI18n();
   return (
     <Drawer.Navigator
       drawerContent={(props) => <AppDrawer {...props} />}
@@ -51,26 +53,35 @@ function MainDrawer() {
       <Drawer.Screen
         name="Home"
         component={HomeScreen}
-        options={{ title: 'Ana sayfa', drawerLabel: 'Ana sayfa' }}
+        options={() => ({ title: t('nav.home'), drawerLabel: t('nav.home') })}
       />
       {has(Perm.VehicleView) ? (
         <Drawer.Screen
           name="Vehicles"
           component={VehiclesScreen}
-          options={{ title: 'Araçlar', drawerLabel: 'Araçlar' }}
+          options={() => ({
+            title: t('nav.vehicles'),
+            drawerLabel: t('nav.vehicles'),
+          })}
         />
       ) : null}
       {has(Perm.IssueView) ? (
         <Drawer.Screen
           name="MyIssues"
           component={MyIssuesScreen}
-          options={{ title: 'Issues', drawerLabel: 'Issues' }}
+          options={() => ({
+            title: t('nav.issues'),
+            drawerLabel: t('nav.issues'),
+          })}
         />
       ) : null}
       <Drawer.Screen
         name="Profile"
         component={ProfileScreen}
-        options={{ title: 'Profil', drawerLabel: 'Profil' }}
+        options={() => ({
+          title: t('nav.profile'),
+          drawerLabel: t('nav.profile'),
+        })}
       />
     </Drawer.Navigator>
   );
@@ -79,6 +90,7 @@ function MainDrawer() {
 export function RootNavigator() {
   const { isAuthenticated, has, user } = useAuth();
   const { mode, tokens } = useTheme();
+  const { t } = useI18n();
 
   const navTheme = {
     ...(mode === 'dark' ? DarkTheme : DefaultTheme),
@@ -118,7 +130,7 @@ export function RootNavigator() {
           <Stack.Screen
             name="Unauthorized"
             component={UnauthorizedScreen}
-            options={{ title: 'Yetkisiz' }}
+            options={() => ({ title: t('nav.unauthorized') })}
           />
         ) : (
           <>
@@ -130,37 +142,37 @@ export function RootNavigator() {
             <Stack.Screen
               name="VehicleStation"
               component={VehicleStationScreen}
-              options={{ title: 'İstasyon ilerlemesi' }}
+              options={() => ({ title: t('nav.stationProgress') })}
             />
             <Stack.Screen
               name="IssueReport"
               component={IssueReportScreen}
-              options={{ title: 'Issue Bildir' }}
+              options={() => ({ title: t('nav.reportIssue') })}
             />
             <Stack.Screen
               name="ManualIssueReport"
               component={ManualIssueReportScreen}
-              options={{ title: 'Issue Bildir' }}
+              options={() => ({ title: t('nav.reportIssue') })}
             />
             <Stack.Screen
               name="EOLChecklist"
               component={EOLChecklistScreen}
-              options={{ title: 'EoL Kontrolü' }}
+              options={() => ({ title: t('nav.eolChecklist') })}
             />
             <Stack.Screen
               name="ShipmentChecklist"
               component={ShipmentChecklistScreen}
-              options={{ title: 'Sevk öncesi kontrol' }}
+              options={() => ({ title: t('nav.shipmentChecklist') })}
             />
             <Stack.Screen
               name="TestChecklist"
               component={TestChecklistScreen}
-              options={{ title: 'Test Kontrolü' }}
+              options={() => ({ title: t('nav.testChecklist') })}
             />
             <Stack.Screen
               name="IssueDetail"
               component={IssueDetailScreen}
-              options={{ title: 'Issue Detayı' }}
+              options={() => ({ title: t('nav.issueDetail') })}
             />
           </>
         )}

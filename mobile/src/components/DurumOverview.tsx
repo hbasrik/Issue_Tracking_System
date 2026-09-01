@@ -11,6 +11,8 @@ import { useAuth } from '../auth/AuthProvider';
 import { Badge, Card, ErrorText, Loading, Subtitle } from './ui';
 import { SeverityIndicator } from './SeverityIndicator';
 import { useTheme } from '../theme/ThemeProvider';
+import { useI18n } from '../i18n';
+import { apiErrorMessage } from '../lib/password';
 import { statusColors } from '../theme/tokens';
 import type { RootStackParamList } from '../navigation/types';
 
@@ -20,6 +22,7 @@ import type { RootStackParamList } from '../navigation/types';
  */
 export function DurumOverview() {
   const { tokens } = useTheme();
+  const { t } = useI18n();
   const { token } = useAuth();
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -42,11 +45,11 @@ export function DurumOverview() {
       setVehicles(rows);
       setStations(def.items ?? []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Durum yüklenemedi');
+      setError(apiErrorMessage(err, t));
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [token, t]);
 
   useFocusEffect(
     useCallback(() => {
@@ -69,9 +72,9 @@ export function DurumOverview() {
           marginTop: 8,
         }}
       >
-        Durum özeti
+        {t('home.snapshot')}
       </Text>
-      <Subtitle>Açık issue’lar — anlık görünüm</Subtitle>
+      <Subtitle>{t('home.durumTitle')}</Subtitle>
       {error ? <ErrorText>{error}</ErrorText> : null}
 
       <Text
@@ -83,10 +86,10 @@ export function DurumOverview() {
           marginBottom: 4,
         }}
       >
-        İstasyon özeti
+        {t('home.stationSummary')}
       </Text>
       {stations.length === 0 ? (
-        <Subtitle>No station defect rows</Subtitle>
+        <Subtitle>{t('home.noStationDefects')}</Subtitle>
       ) : (
         stations.map((s) => (
           <Card key={s.StationID}>
@@ -94,10 +97,10 @@ export function DurumOverview() {
               <Text style={{ color: tokens.textPrimary, flex: 1, fontSize: 15 }}>
                 {s.StationName}
               </Text>
-              <Badge label={`${s.IssueCount} issues`} color={statusColors.notOk} />
+              <Badge label={t('home.issuesCount', { n: s.IssueCount })} color={statusColors.notOk} />
             </View>
             <Text style={{ color: tokens.textSecondary, marginTop: 4, fontSize: 12 }}>
-              {s.VehiclesWithIssue} vehicles with issues
+              {t('home.vehiclesWithIssues', { n: s.VehiclesWithIssue })}
             </Text>
           </Card>
         ))
@@ -112,10 +115,10 @@ export function DurumOverview() {
           marginBottom: 4,
         }}
       >
-        Araçlar (açık issue’lar)
+        {t('home.vehiclesOpen')}
       </Text>
       {vehicles.length === 0 ? (
-        <Subtitle>No vehicles with open issues</Subtitle>
+        <Subtitle>{t('home.noOpenVehicles')}</Subtitle>
       ) : (
         vehicles.map((item) => (
           <Pressable
@@ -134,7 +137,7 @@ export function DurumOverview() {
                   …{item.VIN.slice(-5)}
                 </Text>
                 <Badge
-                  label={`${item.TotalOpenIssues} open`}
+                  label={t('home.openCount', { n: item.TotalOpenIssues })}
                   color={statusColors.issueOpen}
                 />
               </View>

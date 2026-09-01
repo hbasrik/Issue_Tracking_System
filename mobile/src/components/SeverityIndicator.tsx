@@ -1,5 +1,7 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { statusColors } from '../theme/tokens';
+import { useI18n } from '../i18n';
+import type { Translate } from '../../../shared/i18n';
 
 export type SeverityLevel = 'CRITICAL' | 'MEDIUM' | 'LOW';
 
@@ -33,6 +35,17 @@ export function severityFillColor(level: SeverityLevel): string {
   return FILL_COLOR[level];
 }
 
+export function severityLabel(level: SeverityLevel, t: Translate): string {
+  switch (level) {
+    case 'CRITICAL':
+      return t('severity.critical');
+    case 'MEDIUM':
+      return t('severity.medium');
+    case 'LOW':
+      return t('severity.low');
+  }
+}
+
 interface SeverityIndicatorProps {
   severity: string;
   /** Optional count shown after the bars (breakdown lists). */
@@ -50,17 +63,19 @@ export function SeverityIndicator({
   count,
   size = 'sm',
 }: SeverityIndicatorProps) {
+  const { t } = useI18n();
   const level = normalizeSeverity(severity);
   const filled = level ? FILLED[level] : 0;
   const fill = level ? FILL_COLOR[level] : statusColors.severityEmpty;
   const empty = statusColors.severityEmpty;
   const scale = size === 'md' ? 1.35 : 1;
+  const a11y = level ? severityLabel(level, t) : severity;
 
   return (
     <View
       style={styles.row}
       accessibilityRole="image"
-      accessibilityLabel={level ?? severity}
+      accessibilityLabel={a11y}
     >
       {SEVERITY_BAR.heights.map((h, i) => (
         <View

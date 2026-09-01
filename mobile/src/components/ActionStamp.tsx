@@ -2,6 +2,7 @@ import { Text, View } from 'react-native';
 import { useTheme } from '../theme/ThemeProvider';
 import { space } from '../theme/tokens';
 import { formatActionStamp } from '../lib/actionStamp';
+import { useI18n } from '../i18n';
 
 /** Quiet actor line under a completed action. Renders nothing when empty. */
 export function ActionStamp({
@@ -14,7 +15,9 @@ export function ActionStamp({
   lines?: string[];
 }) {
   const { tokens } = useTheme();
-  const text = lines ?? (formatActionStamp(name, at) ? [formatActionStamp(name, at)!] : []);
+  const { locale } = useI18n();
+  const stamp = formatActionStamp(name, at, locale);
+  const text = lines ?? (stamp ? [stamp] : []);
   if (text.length === 0) return null;
   return (
     <View style={{ marginTop: space[1] }}>

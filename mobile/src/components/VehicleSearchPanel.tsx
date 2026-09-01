@@ -2,6 +2,7 @@ import { View } from 'react-native';
 import type { Vehicle } from '../api/client';
 import { VinSearchBox } from './VinSearchBox';
 import { Subtitle } from './ui';
+import { useI18n } from '../i18n';
 
 /**
  * VIN-suffix search (former Ara tab). Shared by Home and Vehicles.
@@ -17,9 +18,10 @@ export function VehicleSearchPanel({
   onQueryChange?: (query: string) => void;
   onResults?: (vehicles: Vehicle[]) => void;
 }) {
+  const { t } = useI18n();
   return (
     <View>
-      <Subtitle>VIN son 5 hane akıllı arama</Subtitle>
+      <Subtitle>{t('search.hint')}</Subtitle>
       <View style={{ marginTop: 12 }}>
         <VinSearchBox
           onSelect={onSelect}

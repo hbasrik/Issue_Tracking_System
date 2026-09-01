@@ -3,14 +3,10 @@ import { mediaThumbUrl, type Issue } from '../api/client';
 import { Card, Badge } from './ui';
 import { SeverityIndicator } from './SeverityIndicator';
 import { useTheme } from '../theme/ThemeProvider';
+import { useI18n } from '../i18n';
+import { formatDateTimeShort } from '../../../shared/i18n';
 import { issueStatusColor, issueStatusLabel } from '../lib/issueStatus';
-
-function formatCreatedAt(iso?: string): string {
-  if (!iso || iso.startsWith('0001')) return '—';
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleString();
-}
+import { reporterFallback } from '../lib/issueDetailCopy';
 
 export function IssueCard({
   issue,
@@ -22,6 +18,7 @@ export function IssueCard({
   hideVin?: boolean;
 }) {
   const { tokens } = useTheme();
+  const { t, locale } = useI18n();
 
   return (
     <Pressable onPress={onPress} accessibilityRole="button">
@@ -49,7 +46,7 @@ export function IssueCard({
                 justifyContent: 'center',
               }}
             >
-              <Text style={{ color: tokens.textSecondary, fontSize: 11 }}>—</Text>
+              <Text style={{ color: tokens.textSecondary, fontSize: 11 }}>{t('common.emDash')}</Text>
             </View>
           )}
           <View style={{ flex: 1, minWidth: 0 }}>
@@ -82,7 +79,7 @@ export function IssueCard({
                   #{issue.ID}
                 </Text>
                 <Badge
-                  label={issueStatusLabel(issue.Status)}
+                  label={issueStatusLabel(issue.Status, t)}
                   color={issueStatusColor(issue.Status)}
                 />
               </View>
@@ -96,13 +93,13 @@ export function IssueCard({
             <Text
               style={{ color: tokens.textSecondary, marginTop: 2, fontSize: 12 }}
             >
-              {formatCreatedAt(issue.CreatedAt || issue.IssueDate)}
+              {formatDateTimeShort(issue.CreatedAt || issue.IssueDate, locale)}
             </Text>
             <Text
               style={{ color: tokens.textSecondary, marginTop: 4, fontSize: 13 }}
               numberOfLines={1}
             >
-              {issue.ReporterName || `kullanıcı #${issue.IssueReporterID}`}
+              {issue.ReporterName || reporterFallback(t, issue.IssueReporterID)}
             </Text>
             <Text
               style={{ color: tokens.textSecondary, marginTop: 4, fontSize: 13 }}
