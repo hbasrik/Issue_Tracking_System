@@ -32,12 +32,14 @@ func (r *EOLWorkflowRepo) Get(ctx context.Context, vin string) (*domain.EOLWorkf
 		        branch_shipped_at, branch_shipped_by, branch_open_issue_count_at_shipment,
 		        depot_released_at, depot_released_by,
 		        document_approved_at, document_approved_by,
+		        delivered_at, delivered_by,
 		        created_at, updated_at
 		 FROM vehicle_eol_workflow WHERE vin = $1`, vin).Scan(
 		&w.VIN, &stage,
 		&w.BranchShippedAt, &w.BranchShippedBy, &w.BranchOpenIssueCountAtShipment,
 		&w.DepotReleasedAt, &w.DepotReleasedBy,
 		&w.DocumentApprovedAt, &w.DocumentApprovedBy,
+		&w.DeliveredAt, &w.DeliveredBy,
 		&w.CreatedAt, &w.UpdatedAt,
 	)
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -55,21 +57,24 @@ func (r *EOLWorkflowRepo) Get(ctx context.Context, vin string) (*domain.EOLWorkf
 func (r *EOLWorkflowRepo) GetView(ctx context.Context, vin string) (*domain.EOLWorkflowView, error) {
 	var v domain.EOLWorkflowView
 	var stage string
-	var branchName, depotName, documentName *string
+	var branchName, depotName, documentName, deliverName *string
 	err := r.pool.QueryRow(ctx,
 		`SELECT w.vin, w.current_stage, w.branch_open_issue_count_at_shipment,
 		        w.branch_shipped_at, w.branch_shipped_by, bu.full_name,
 		        w.depot_released_at, w.depot_released_by, du.full_name,
-		        w.document_approved_at, w.document_approved_by, au.full_name
+		        w.document_approved_at, w.document_approved_by, au.full_name,
+		        w.delivered_at, w.delivered_by, lv.full_name
 		 FROM vehicle_eol_workflow w
 		 LEFT JOIN users bu ON bu.id = w.branch_shipped_by
 		 LEFT JOIN users du ON du.id = w.depot_released_by
 		 LEFT JOIN users au ON au.id = w.document_approved_by
+		 LEFT JOIN users lv ON lv.id = w.delivered_by
 		 WHERE w.vin = $1`, vin).Scan(
 		&v.VIN, &stage, &v.BranchOpenIssueCountAtShipment,
 		&v.BranchShip.At, &v.BranchShip.ByUserID, &branchName,
 		&v.DepotRelease.At, &v.DepotRelease.ByUserID, &depotName,
 		&v.DocumentApprove.At, &v.DocumentApprove.ByUserID, &documentName,
+		&v.Deliver.At, &v.Deliver.ByUserID, &deliverName,
 	)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, domain.ErrNotFound
@@ -81,6 +86,7 @@ func (r *EOLWorkflowRepo) GetView(ctx context.Context, vin string) (*domain.EOLW
 	v.BranchShip.ByName = derefString(branchName)
 	v.DepotRelease.ByName = derefString(depotName)
 	v.DocumentApprove.ByName = derefString(documentName)
+	v.Deliver.ByName = derefString(deliverName)
 	return &v, nil
 }
 
@@ -118,9 +124,20 @@ func (r *EOLWorkflowRepo) ResetToBranch(ctx context.Context, vin string) error {
 		     branch_shipped_at = NULL, branch_shipped_by = NULL,
 		     branch_open_issue_count_at_shipment = NULL,
 		     depot_released_at = NULL, depot_released_by = NULL,
-		     document_approved_at = NULL, document_approved_by = NULL
+		     document_approved_at = NULL, document_approved_by = NULL,
+		     delivered_at = NULL, delivered_by = NULL
 		 WHERE vin = $1`,
 		vin)
+}
+
+// MarkDelivered records the one-time deliver stamp. fn_enforce_eol_deliver
+// rejects the write when depot release has not been recorded.
+func (r *EOLWorkflowRepo) MarkDelivered(ctx context.Context, vin string, actorID int) error {
+	return r.mark(ctx,
+		`UPDATE vehicle_eol_workflow
+		 SET delivered_at = now(), delivered_by = $2
+		 WHERE vin = $1 AND delivered_at IS NULL AND depot_released_at IS NOT NULL`,
+		vin, actorID)
 }
 
 // MarkDocumentApproved writes the unused document columns. Live flow does

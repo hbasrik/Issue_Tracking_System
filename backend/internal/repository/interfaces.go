@@ -180,6 +180,8 @@ type EOLWorkflowRepository interface {
 	// or if open issues remain, so this fails even when the caller skipped
 	// the gate check.
 	MarkDepotReleased(ctx context.Context, vin string, actorID int) error
+	// MarkDelivered records the one-time deliver stamp after depot release.
+	MarkDelivered(ctx context.Context, vin string, actorID int) error
 	// MarkDocumentApproved writes the unused document_approved_* columns.
 	// The live flow does not call this; depot release is what completes
 	// and ships.
