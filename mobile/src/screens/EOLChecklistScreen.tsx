@@ -12,7 +12,6 @@ import {
   type RouteProp,
 } from '@react-navigation/native';
 import {
-  ApiError,
   api,
   type ChecklistItem,
   type EOLStage,
@@ -34,23 +33,31 @@ import {
 } from '../components/keyboard';
 import { ActionStamp } from '../components/ActionStamp';
 import { checklistActorLines } from '../lib/actionStamp';
+import { useAuth } from '../auth/AuthProvider';
+import { Perm } from '../auth/permissions';
 import { useTheme } from '../theme/ThemeProvider';
+import { useI18n } from '../i18n';
+import { apiErrorMessage } from '../lib/password';
 import { statusColors } from '../theme/tokens';
 import type { RootStackParamList } from '../navigation/types';
+import type { MessageKey, Translate } from '../../../shared/i18n';
 
-const STATUSES = [
-  { value: 'OK', label: 'OK', color: statusColors.ok },
-  { value: 'NOT_OK', label: 'NOT OK', color: statusColors.notOk },
-  { value: 'REWORK', label: 'REWORK', color: statusColors.rework },
-  { value: 'CONDITIONAL_OK', label: 'COND.', color: statusColors.conditionalOk },
-] as const;
+const STATUS_KEYS = [
+  { value: 'OK', key: 'status.eol.ok' as const, color: statusColors.ok },
+  { value: 'NOT_OK', key: 'status.eol.notOk' as const, color: statusColors.notOk },
+  { value: 'REWORK', key: 'status.eol.rework' as const, color: statusColors.rework },
+  { value: 'CONDITIONAL_OK', key: 'checklist.conditionalShort' as const, color: statusColors.conditionalOk },
+];
 
-const STAGE_LABELS: Record<EOLStage, string> = {
-  BRANCH: 'Şube (Branch)',
-  DEPOT: 'Depo (Depot)',
-  DOCUMENT: 'Evrak (Document)',
-  COMPLETED: 'Tamamlandı',
-};
+function stageLabel(stage: EOLStage, t: Translate): string {
+  const keys: Record<EOLStage, MessageKey> = {
+    BRANCH: 'status.eolStage.branch',
+    DEPOT: 'status.eolStage.depot',
+    DOCUMENT: 'checklist.documentShort',
+    COMPLETED: 'status.eolStage.completed',
+  };
+  return t(keys[stage]);
+}
 
 function isPassing(s: ChecklistItem['Status']): boolean {
   return s === 'OK' || s === 'CONDITIONAL_OK';
@@ -60,20 +67,25 @@ function needsDesc(s: ChecklistItem['Status']): boolean {
   return s === 'NOT_OK' || s === 'REWORK' || s === 'CONDITIONAL_OK';
 }
 
+function countRemaining(items: ChecklistItem[]): number {
+  return items.filter((item) => !isPassing(item.Status)).length;
+}
+
 /**
- * EoL checklist — the operator's slice of Şube → Depo.
- *
- * Only the items belonging to the vehicle's current stage are shown: BRANCH
- * items while it sits at the branch, DEPOT items once it has been shipped.
- * Advancing the stage itself is Manager/Admin work on the web dashboard.
+ * EoL checklist — operator marks items; managers run Şube → Depo → Teslim
+ * actions when every gate checklist is complete.
  */
 export default function EOLChecklistScreen() {
   const route = useRoute<RouteProp<RootStackParamList, 'EOLChecklist'>>();
   const { tokens } = useTheme();
+  const { t, locale } = useI18n();
+  const { has } = useAuth();
   const vin = route.params.vin;
 
   const [workflow, setWorkflow] = useState<EOLWorkflowView | null>(null);
   const [items, setItems] = useState<ChecklistItem[]>([]);
+  const [testItems, setTestItems] = useState<ChecklistItem[]>([]);
+  const [shipmentItems, setShipmentItems] = useState<ChecklistItem[]>([]);
   const [drafts, setDrafts] = useState<Record<number, { status: string; desc: string }>>({});
   const [error, setError] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -83,13 +95,17 @@ export default function EOLChecklistScreen() {
   const load = useCallback(async () => {
     setError(null);
     try {
-      const [view, res] = await Promise.all([
+      const [view, res, test, shipment] = await Promise.all([
         api.getEOLWorkflow(vin),
         api.getChecklist(vin, 'eol'),
+        api.getChecklist(vin, 'test'),
+        api.getChecklist(vin, 'shipment'),
       ]);
       const list = res.items ?? [];
       setWorkflow(view);
       setItems(list);
+      setTestItems(test.items ?? []);
+      setShipmentItems(shipment.items ?? []);
       const next: Record<number, { status: string; desc: string }> = {};
       for (const it of list) {
         next[it.ItemID] = {
@@ -99,11 +115,11 @@ export default function EOLChecklistScreen() {
       }
       setDrafts(next);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'EoL listesi yüklenemedi');
+      setError(apiErrorMessage(err, t));
     } finally {
       setLoaded(true);
     }
-  }, [vin]);
+  }, [vin, t]);
 
   useFocusEffect(
     useCallback(() => {
@@ -114,9 +130,6 @@ export default function EOLChecklistScreen() {
   const stage = workflow?.current_stage ?? 'BRANCH';
   const operatorStage = stage === 'BRANCH' || stage === 'DEPOT';
 
-  // Items carry the stage they belong to. An untagged item is shown in every
-  // operator stage rather than dropped, so a mis-seeded template can never
-  // hide work from the shop floor.
   const stageItems = useMemo(
     () =>
       operatorStage
@@ -124,6 +137,20 @@ export default function EOLChecklistScreen() {
         : [],
     [items, stage, operatorStage],
   );
+
+  const branchItems = useMemo(
+    () => items.filter((it) => it.EolPhase === 'BRANCH'),
+    [items],
+  );
+  const depotItems = useMemo(
+    () => items.filter((it) => it.EolPhase === 'DEPOT'),
+    [items],
+  );
+
+  const branchRemaining = countRemaining(branchItems);
+  const testRemaining = countRemaining(testItems);
+  const shipmentRemaining = countRemaining(shipmentItems);
+  const depotRemaining = countRemaining(depotItems);
 
   const blocking = useMemo(
     () =>
@@ -140,14 +167,61 @@ export default function EOLChecklistScreen() {
     return s && s !== 'PENDING';
   }).length;
 
+  const canShip =
+    has(Perm.EOLBranchShip) &&
+    workflow?.current_stage === 'BRANCH' &&
+    !workflow?.branch_ship?.at &&
+    branchRemaining === 0 &&
+    testRemaining === 0 &&
+    shipmentRemaining === 0;
+
+  const shipReasons: string[] = [];
+  if (!has(Perm.EOLBranchShip)) {
+    shipReasons.push(t('eol.forbidden'));
+  } else if (!workflow?.branch_ship?.at) {
+    if (branchRemaining > 0) shipReasons.push(t('eol.branchRemaining', { n: branchRemaining }));
+    if (testRemaining > 0) shipReasons.push(t('eol.branchBlockerTest', { n: testRemaining }));
+    if (shipmentRemaining > 0) {
+      shipReasons.push(t('eol.branchBlockerShipment', { n: shipmentRemaining }));
+    }
+  }
+
+  const canRelease =
+    has(Perm.EOLDepotRelease) &&
+    Boolean(workflow?.branch_ship?.at) &&
+    workflow?.current_stage === 'DEPOT' &&
+    !workflow?.depot_release?.at &&
+    depotRemaining === 0;
+
+  const releaseReasons: string[] = [];
+  if (!has(Perm.EOLDepotRelease)) {
+    releaseReasons.push(t('eol.forbidden'));
+  } else if (!workflow?.branch_ship?.at) {
+    releaseReasons.push(t('eol.needBranchShip'));
+  } else if (depotRemaining > 0) {
+    releaseReasons.push(t('eol.depotRemaining', { n: depotRemaining }));
+  }
+
+  const canDeliver =
+    has(Perm.EOLDeliver) &&
+    Boolean(workflow?.depot_release?.at) &&
+    !workflow?.deliver?.at;
+
+  const deliverReasons: string[] = [];
+  if (!has(Perm.EOLDeliver)) {
+    deliverReasons.push(t('eol.forbidden'));
+  } else if (!workflow?.depot_release?.at) {
+    deliverReasons.push(t('eol.needDepotRelease'));
+  }
+
   async function saveItem(item: ChecklistItem) {
     const d = drafts[item.ItemID];
     if (!d?.status) {
-      setError('Durum seçin');
+      setError(t('checklist.pickStatusShort'));
       return;
     }
     if (needsDesc(d.status as ChecklistItem['Status']) && !d.desc.trim()) {
-      setError('Bu durum için açıklama gerekli');
+      setError(t('checklist.descRequired'));
       return;
     }
     setBusy(true);
@@ -165,7 +239,46 @@ export default function EOLChecklistScreen() {
       await api.recordChecklist(vin, 'eol', item.ItemID, body);
       await load();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Kaydedilemedi');
+      setError(apiErrorMessage(err, t));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function runShip() {
+    setBusy(true);
+    setError(null);
+    try {
+      await api.eolBranchShip(vin);
+      await load();
+    } catch (err) {
+      setError(apiErrorMessage(err, t));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function runRelease() {
+    setBusy(true);
+    setError(null);
+    try {
+      await api.eolDepotRelease(vin);
+      await load();
+    } catch (err) {
+      setError(apiErrorMessage(err, t));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function runDeliver() {
+    setBusy(true);
+    setError(null);
+    try {
+      await api.eolDeliver(vin);
+      await load();
+    } catch (err) {
+      setError(apiErrorMessage(err, t));
     } finally {
       setBusy(false);
     }
@@ -175,33 +288,77 @@ export default function EOLChecklistScreen() {
 
   const workflowStages = [
     {
-      title: 'Şubeden sevk',
+      title: t('checklist.shipFromBranch'),
       record: workflow?.branch_ship,
+      showAction: !workflow?.branch_ship?.at,
+      actionLabel: t('eol.shipBranch'),
+      enabled: canShip,
+      reasons: shipReasons,
+      onAction: runShip,
     },
     {
-      title: 'Depodan serbest bırakma',
+      title: t('checklist.releaseFromDepot'),
       record: workflow?.depot_release,
+      showAction: !workflow?.depot_release?.at,
+      actionLabel: t('eol.releaseDepot'),
+      enabled: canRelease,
+      reasons: releaseReasons,
+      onAction: runRelease,
+    },
+    {
+      title: t('eol.deliver'),
+      record: workflow?.deliver,
+      showAction: Boolean(workflow?.depot_release?.at) && !workflow?.deliver?.at,
+      actionLabel: t('eol.deliver'),
+      enabled: canDeliver,
+      reasons: deliverReasons,
+      onAction: runDeliver,
     },
   ] as const;
+
+  function renderStageActions() {
+    return workflowStages.map((row) => (
+      <Card key={row.title}>
+        <Text style={{ color: tokens.textPrimary, fontWeight: '600', fontSize: 15 }}>
+          {row.title}
+        </Text>
+        <ActionStamp name={row.record?.by_name} at={row.record?.at} />
+        {row.showAction ? (
+          <View style={{ marginTop: 10 }}>
+            <PrimaryButton
+              label={row.actionLabel}
+              onPress={() => void row.onAction()}
+              disabled={busy || !row.enabled}
+            />
+            {!row.enabled && row.reasons.length > 0 ? (
+              <View style={{ marginTop: 6 }}>
+                {row.reasons.map((reason) => (
+                  <Text
+                    key={reason}
+                    style={{ color: tokens.textSecondary, fontSize: 12, marginTop: 2 }}
+                  >
+                    {reason}
+                  </Text>
+                ))}
+              </View>
+            ) : null}
+          </View>
+        ) : null}
+      </Card>
+    ));
+  }
 
   if (!operatorStage) {
     return (
       <Screen>
-        <Title>EoL Kontrolü</Title>
-        <Subtitle>{STAGE_LABELS[stage]}</Subtitle>
+        <Title>{t('nav.eolChecklist')}</Title>
+        <Subtitle>{stageLabel(stage, t)}</Subtitle>
         <Card>
           <Text style={{ color: tokens.textPrimary, fontSize: 15 }}>
-            EoL süreci tamamlandı.
+            {t('eol.completed')}
           </Text>
         </Card>
-        {workflowStages.map((row) => (
-          <Card key={row.title}>
-            <Text style={{ color: tokens.textPrimary, fontWeight: '600', fontSize: 15 }}>
-              {row.title}
-            </Text>
-            <ActionStamp name={row.record?.by_name} at={row.record?.at} />
-          </Card>
-        ))}
+        {renderStageActions()}
         {error ? <ErrorText>{error}</ErrorText> : null}
       </Screen>
     );
@@ -210,18 +367,11 @@ export default function EOLChecklistScreen() {
   return (
     <Screen padded={false}>
       <DismissKeyboardScrollView contentContainerStyle={{ padding: 16, paddingBottom: 120 }}>
-        <Title>EoL Kontrolü</Title>
+        <Title>{t('nav.eolChecklist')}</Title>
         <Subtitle>
-          {STAGE_LABELS[stage]} · {evaluated}/{stageItems.length} değerlendirildi
+          {stageLabel(stage, t)} · {t('checklist.evaluated', { done: evaluated, total: stageItems.length })}
         </Subtitle>
-        {workflowStages.map((row) => (
-          <Card key={row.title}>
-            <Text style={{ color: tokens.textPrimary, fontWeight: '600', fontSize: 15 }}>
-              {row.title}
-            </Text>
-            <ActionStamp name={row.record?.by_name} at={row.record?.at} />
-          </Card>
-        ))}
+        {renderStageActions()}
         {error ? <ErrorText>{error}</ErrorText> : null}
 
         {stageItems.map((item) => {
@@ -231,9 +381,9 @@ export default function EOLChecklistScreen() {
               <Text style={{ color: tokens.textPrimary, fontSize: 15 }}>
                 {item.ItemNo}. {item.ItemText}
               </Text>
-              <ActionStamp lines={checklistActorLines(item)} />
+              <ActionStamp lines={checklistActorLines(item, t, locale)} />
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
-                {STATUSES.map((s) => {
+                {STATUS_KEYS.map((s) => {
                   const selected = d.status === s.value;
                   return (
                     <Pressable
@@ -255,7 +405,7 @@ export default function EOLChecklistScreen() {
                       }}
                     >
                       <Text style={{ color: selected ? s.color : tokens.textSecondary, fontSize: 11, fontWeight: '600' }}>
-                        {s.label}
+                        {t(s.key)}
                       </Text>
                     </Pressable>
                   );
@@ -270,7 +420,7 @@ export default function EOLChecklistScreen() {
                       [item.ItemID]: { ...d, desc: text },
                     }))
                   }
-                  placeholder="Açıklama zorunlu *"
+                  placeholder={t('checklist.descRequiredStar')}
                   placeholderTextColor={tokens.textSecondary}
                   multiline
                   numberOfLines={3}
@@ -290,7 +440,7 @@ export default function EOLChecklistScreen() {
               ) : null}
               <View style={{ marginTop: 10 }}>
                 <PrimaryButton
-                  label={busy ? 'Kaydediliyor…' : 'Kaydet'}
+                  label={busy ? t('common.saving') : t('common.save')}
                   onPress={() => saveItem(item)}
                   disabled={busy}
                 />
@@ -321,13 +471,10 @@ export default function EOLChecklistScreen() {
             }}
           >
             {blocking.length
-              ? `${blocking.length} madde eksik`
-              : 'Bu aşamanın tüm maddeleri tamam'}
+              ? t('checklist.itemsMissing', { n: blocking.length })
+              : t('checklist.stageComplete')}
           </Text>
         </Pressable>
-        <Text style={{ color: tokens.textSecondary, marginTop: 6, fontSize: 12 }}>
-          Aşama geçişi (sevk / depo çıkışı) web panelinden yapılır.
-        </Text>
       </View>
 
       <Modal visible={sheetOpen} animationType="slide" transparent>
@@ -345,7 +492,7 @@ export default function EOLChecklistScreen() {
             }}
           >
             <Text style={{ color: tokens.textPrimary, fontSize: 18, fontWeight: '600' }}>
-              Eksik maddeler
+              {t('checklist.missingItems')}
             </Text>
             <ScrollView style={{ marginTop: 12 }}>
               {blocking.map((b) => (
@@ -357,7 +504,7 @@ export default function EOLChecklistScreen() {
                 </Text>
               ))}
             </ScrollView>
-            <PrimaryButton label="Kapat" onPress={() => setSheetOpen(false)} />
+            <PrimaryButton label={t('common.close')} onPress={() => setSheetOpen(false)} />
           </View>
         </Pressable>
       </Modal>
