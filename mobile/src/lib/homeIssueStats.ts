@@ -1,4 +1,5 @@
 import type { Issue } from '../api/client';
+import type { MessageKey, Translate } from '../../../shared/i18n';
 
 /**
  * Home day-stat cards and Issues deep-links share this matcher so the
@@ -65,10 +66,13 @@ export function countHomeIssueStat(
   return n;
 }
 
-export const HOME_ISSUE_STAT_LABELS: Record<HomeIssueStatKey, string> = {
-  open: 'Açık',
-  in_progress: 'Devam eden',
-  closed_today: 'Kapanan (bugün)',
-  approved_today: 'Kalite Onay (bugün)',
-  conditional_approved_today: 'Şartlı Onay (bugün)',
-};
+export function homeIssueStatLabel(key: HomeIssueStatKey, t: Translate): string {
+  const keys: Record<HomeIssueStatKey, MessageKey> = {
+    open: 'home.mobile.open',
+    in_progress: 'home.mobile.inProgress',
+    closed_today: 'home.mobile.closedToday',
+    approved_today: 'home.mobile.approvedToday',
+    conditional_approved_today: 'home.mobile.conditionalToday',
+  };
+  return t(keys[key]);
+}

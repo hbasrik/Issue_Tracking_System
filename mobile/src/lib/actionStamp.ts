@@ -1,24 +1,19 @@
-/** Shared “who · when” stamp under shop-floor actions. */
+import type { Locale, Translate } from '../../../shared/i18n';
+import { formatActionAt as formatActionAtLocale } from '../../../shared/i18n';
 
-export function formatActionAt(iso?: string | null): string | null {
-  if (!iso || iso.startsWith('0001')) return null;
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return null;
-  return d.toLocaleString('tr-TR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  });
+export function formatActionAt(
+  iso?: string | null,
+  locale: Locale = 'tr',
+): string | null {
+  return formatActionAtLocale(iso, locale);
 }
 
 export function formatActionStamp(
   name: string | undefined,
   iso?: string | null,
+  locale: Locale = 'tr',
 ): string | null {
-  const when = formatActionAt(iso);
+  const when = formatActionAt(iso, locale);
   if (!when) return null;
   const who = name?.trim() ? name.trim() : '—';
   return `${who} · ${when}`;
@@ -34,23 +29,34 @@ export type ChecklistActorFields = {
   ApprovedAt?: string | null;
 };
 
-/** Checker first; Onay only while passing, Red only while NOT_OK. */
-export function checklistActorLines(item: ChecklistActorFields): string[] {
+export function checklistActorLines(
+  item: ChecklistActorFields,
+  t: Translate,
+  locale: Locale,
+): string[] {
   if (item.Status === 'PENDING') return [];
   const lines: string[] = [];
-  const checker = formatActionStamp(item.CheckerName, item.CheckDate);
+  const checker = formatActionStamp(item.CheckerName, item.CheckDate, locale);
   if (checker) lines.push(checker);
   if (item.Status === 'NOT_OK') {
-    const rejected = formatActionStamp(item.RejectedByName, item.RejectedAt);
+    const rejected = formatActionStamp(
+      item.RejectedByName,
+      item.RejectedAt,
+      locale,
+    );
     if (rejected && rejected !== checker) {
-      lines.push(`Red · ${rejected}`);
+      lines.push(`${t('stamp.reject')} · ${rejected}`);
     }
     return lines;
   }
   if (item.Status === 'OK' || item.Status === 'CONDITIONAL_OK') {
-    const approved = formatActionStamp(item.ApprovedByName, item.ApprovedAt);
+    const approved = formatActionStamp(
+      item.ApprovedByName,
+      item.ApprovedAt,
+      locale,
+    );
     if (approved && approved !== checker) {
-      lines.push(`Onay · ${approved}`);
+      lines.push(`${t('stamp.approve')} · ${approved}`);
     }
   }
   return lines;
