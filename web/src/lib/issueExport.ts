@@ -4,6 +4,7 @@ import {
   type MediaAttachment,
 } from './api';
 import { issueStatusLabel } from './issueStatus';
+import type { Translate } from '../../../shared/i18n';
 
 const CSV_HEADERS = [
   'id',
@@ -62,6 +63,7 @@ function approverOf(issue: Issue): { name: string; at: string } {
 export function issueCsvRow(
   issue: Issue,
   photoUrls: string[],
+  t: Translate,
 ): string[] {
   const approver = approverOf(issue);
   return [
@@ -69,7 +71,7 @@ export function issueCsvRow(
     issue.VIN ?? '',
     issue.IssueTypeName ?? '',
     issue.Severity ?? '',
-    issueStatusLabel(issue.Status),
+    issueStatusLabel(issue.Status, t),
     issue.Description ?? '',
     issue.ReporterName ?? '',
     formatExportInstant(issue.CreatedAt || issue.IssueDate),
@@ -86,11 +88,12 @@ export function issueCsvRow(
 export function buildIssuesCsv(
   issues: Issue[],
   photosByIssue: Map<number, string[]>,
+  t: Translate,
 ): string {
   const lines = [
     CSV_HEADERS.join(','),
     ...issues.map((issue) =>
-      issueCsvRow(issue, photosByIssue.get(issue.ID) ?? []).map(csvEscape).join(','),
+      issueCsvRow(issue, photosByIssue.get(issue.ID) ?? [], t).map(csvEscape).join(','),
     ),
   ];
   return `\uFEFF${lines.join('\r\n')}\r\n`;

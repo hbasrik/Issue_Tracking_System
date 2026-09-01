@@ -1,12 +1,20 @@
 import type { Issue } from './api';
+import type { MessageKey, Translate } from '../../../shared/i18n';
 
 /** Analysis KPI card drill-down on the Issues list. */
 export type AnalysisIssueStatKey = 'open_active' | 'completed';
 
-export const ANALYSIS_ISSUE_STAT_LABELS: Record<AnalysisIssueStatKey, string> = {
-  open_active: 'Açık hatalar',
-  completed: 'Biten işler',
+const ANALYSIS_ISSUE_STAT_KEYS: Record<AnalysisIssueStatKey, MessageKey> = {
+  open_active: 'analysis.stat.openActive',
+  completed: 'analysis.stat.completed',
 };
+
+export function analysisIssueStatLabel(
+  key: AnalysisIssueStatKey,
+  t: Translate,
+): string {
+  return t(ANALYSIS_ISSUE_STAT_KEYS[key]);
+}
 
 export function isAnalysisIssueStatKey(
   value: string | null,

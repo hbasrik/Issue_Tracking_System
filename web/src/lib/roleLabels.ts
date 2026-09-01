@@ -1,17 +1,21 @@
-/** Readable role names — never show the raw catalogue code in chrome. */
-const FALLBACK: Record<string, string> = {
-  MANAGER_ADMIN: 'Yönetici/Admin',
-  OPERATOR: 'Operatör',
-  QUALITY: 'Kalite',
-  ASSEMBLY: 'Montaj',
-};
+import type { Translate } from '../../../shared/i18n';
 
+const FALLBACK_KEYS = {
+  MANAGER_ADMIN: 'role.MANAGER_ADMIN',
+  OPERATOR: 'role.OPERATOR',
+  QUALITY: 'role.QUALITY',
+  ASSEMBLY: 'role.ASSEMBLY',
+} as const;
+
+/** Readable role names — never show the raw catalogue code in chrome. */
 export function roleDisplayName(
   code: string | undefined | null,
+  t: Translate,
   catalogue?: { code: string; name: string }[],
 ): string {
   if (!code) return '—';
-  if (FALLBACK[code]) return FALLBACK[code];
+  const key = FALLBACK_KEYS[code as keyof typeof FALLBACK_KEYS];
+  if (key) return t(key);
   const fromCat = catalogue?.find((r) => r.code === code)?.name;
   if (fromCat && fromCat !== code) return fromCat;
   return code.replace(/_/g, ' ');

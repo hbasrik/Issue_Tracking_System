@@ -1,6 +1,7 @@
 import type { Issue, Station, VehicleSeverityBreakdown } from './api';
 import { brandColors, statusColors } from '../theme/tokens';
 import type { SeverityLevel } from '../components/SeverityIndicator';
+import type { Translate } from '../../../shared/i18n';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const OPEN_STATUSES = new Set(['OPEN', 'IN_PROGRESS', 'DONE']);
@@ -179,8 +180,8 @@ export function countConditionalOnDay(issues: Issue[], day: Date): number {
   }).length;
 }
 
-function shortDayLabel(d: Date, withWeekday: boolean): string {
-  return d.toLocaleDateString('tr-TR', {
+function shortDayLabel(d: Date, withWeekday: boolean, locale = 'tr-TR'): string {
+  return d.toLocaleDateString(locale, {
     weekday: withWeekday ? 'short' : undefined,
     day: 'numeric',
     month: 'short',
@@ -191,6 +192,7 @@ export function reportedPerDay(
   issues: Issue[],
   now: Date,
   days = WEEK_DAYS,
+  locale = 'tr-TR',
 ): DayCount[] {
   const start = addLocalDays(now, -(days - 1));
   const buckets = new Map<string, { date: Date; count: number }>();
@@ -207,7 +209,7 @@ export function reportedPerDay(
   }
   return [...buckets.values()].map(({ date, count }) => ({
     day: localDayKey(date),
-    label: shortDayLabel(date, true),
+    label: shortDayLabel(date, true, locale),
     count,
   }));
 }
@@ -216,6 +218,7 @@ export function openBacklogByDay(
   issues: Issue[],
   now: Date,
   maxDays = BACKLOG_DAYS,
+  locale = 'tr-TR',
 ): BacklogPoint[] {
   if (issues.length === 0) return [];
   let earliest = Infinity;
@@ -239,7 +242,7 @@ export function openBacklogByDay(
     }
     out.push({
       day: localDayKey(d),
-      label: shortDayLabel(d, false),
+      label: shortDayLabel(d, false, locale),
       open,
     });
   }
@@ -343,8 +346,8 @@ export function openIssuesByStation(
     if (!OPEN_STATUSES.has(issue.Status)) continue;
     const name =
       issue.StationID != null
-        ? (names.get(issue.StationID) ?? `İstasyon ${issue.StationID}`)
-        : 'Belirsiz';
+        ? (names.get(issue.StationID) ?? `Station ${issue.StationID}`)
+        : 'Unknown';
     counts.set(name, (counts.get(name) ?? 0) + 1);
   }
   return [...counts.entries()]
@@ -369,10 +372,10 @@ export function meanResolutionHours(issues: Issue[]): {
   return { hours: avgMs / 3_600_000, sample: durations.length };
 }
 
-export function formatMttr(hours: number): string {
-  if (hours < 1) return `${Math.round(hours * 60)} dk`;
-  if (hours < 48) return `${hours.toFixed(1)} saat`;
-  return `${(hours / 24).toFixed(1)} gün`;
+export function formatMttr(hours: number, t: Translate): string {
+  if (hours < 1) return t('home.mttrMinutes', { n: Math.round(hours * 60) });
+  if (hours < 48) return t('home.mttrHours', { n: hours.toFixed(1) });
+  return t('home.mttrDays', { n: (hours / 24).toFixed(1) });
 }
 
 export function buildHomeDashboard(
@@ -380,6 +383,7 @@ export function buildHomeDashboard(
   vehicles: VehicleSeverityBreakdown[],
   stations: Station[] = [],
   now: Date = new Date(),
+  locale = 'tr-TR',
 ): HomeDashboardMetrics {
   const today = startOfLocalDay(now);
   const yesterday = addLocalDays(today, -1);
@@ -401,8 +405,8 @@ export function buildHomeDashboard(
     approvedPrevDay: countApprovedOnDay(issues, yesterday),
     conditionalToday: countConditionalOnDay(issues, today),
     conditionalPrevDay: countConditionalOnDay(issues, yesterday),
-    weekly: reportedPerDay(issues, now),
-    backlog: openBacklogByDay(issues, now),
+    weekly: reportedPerDay(issues, now, WEEK_DAYS, locale),
+    backlog: openBacklogByDay(issues, now, BACKLOG_DAYS, locale),
     resolvedCount,
     totalCount,
     resolutionRate: totalCount === 0 ? 0 : resolvedCount / totalCount,

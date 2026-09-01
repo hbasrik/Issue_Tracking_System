@@ -1,18 +1,19 @@
 import { statusColors } from '../theme/tokens';
+import type { Translate } from '../../../shared/i18n';
 
-/** Display names for issue lifecycle statuses (web + mobile share this set). */
-export function issueStatusLabel(status: string): string {
+/** Display names for issue lifecycle statuses. */
+export function issueStatusLabel(status: string, t: Translate): string {
   switch (status) {
     case 'OPEN':
-      return 'Açık';
+      return t('status.issue.open');
     case 'IN_PROGRESS':
-      return 'İşlemde';
+      return t('status.issue.inProgress');
     case 'DONE':
-      return 'Tamamlandı';
+      return t('status.issue.done');
     case 'APPROVED':
-      return 'Kalite Onay';
+      return t('status.issue.approved');
     case 'CONDITIONAL_APPROVED':
-      return 'Şartlı Onay';
+      return t('status.issue.conditionalApproved');
     default:
       return status;
   }

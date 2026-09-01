@@ -1,4 +1,5 @@
 import type { Issue } from './api';
+import type { MessageKey, Translate } from '../../../shared/i18n';
 import {
   isOpenIssueStatus,
   isQualityClosedStatus,
@@ -20,13 +21,17 @@ export type HomeIssueStatKey =
   | 'approved_today'
   | 'conditional_approved_today';
 
-export const HOME_ISSUE_STAT_LABELS: Record<HomeIssueStatKey, string> = {
-  open: 'Toplam Açık Hata',
-  in_progress: 'İşlemde',
-  closed_today: 'Bugün Kapanan',
-  approved_today: 'Kalite Onay (Bugün)',
-  conditional_approved_today: 'Şartlı Onay (Bugün)',
+const HOME_ISSUE_STAT_KEYS: Record<HomeIssueStatKey, MessageKey> = {
+  open: 'home.stat.open',
+  in_progress: 'home.stat.inProgress',
+  closed_today: 'home.stat.closedToday',
+  approved_today: 'home.stat.approvedToday',
+  conditional_approved_today: 'home.stat.conditionalToday',
 };
+
+export function homeIssueStatLabel(key: HomeIssueStatKey, t: Translate): string {
+  return t(HOME_ISSUE_STAT_KEYS[key]);
+}
 
 export function isHomeIssueStatKey(value: string | null): value is HomeIssueStatKey {
   return (

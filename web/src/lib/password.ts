@@ -1,14 +1,17 @@
+import type { Translate } from '../../../shared/i18n';
+import { translatePasswordError } from '../../../shared/i18n';
 import { apiErrorMessage } from './apiErrors';
 
 /** User-facing copy of the backend password rule (domain.PasswordRuleHint). */
-export const PASSWORD_RULE_HINT =
-  'En az 8 karakter, en az bir harf ve bir rakam.';
+export function passwordRuleHint(t: Translate): string {
+  return t('password.ruleHint');
+}
 
-/** Maps known API password/user errors to Turkish copy. */
-export function passwordErrorMessage(err: unknown): string {
-  const msg = err instanceof Error ? err.message : 'İşlem başarısız';
+/** Maps known API password/user errors to the active locale. */
+export function passwordErrorMessage(err: unknown, t: Translate): string {
+  const msg = err instanceof Error ? err.message : '';
   if (msg === 'invalid credentials') {
-    return 'Mevcut şifre yanlış.';
+    return translatePasswordError(t, err);
   }
-  return apiErrorMessage(err);
+  return apiErrorMessage(err, t);
 }

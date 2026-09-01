@@ -1,84 +1,101 @@
 import { Perm } from '../auth/permissions';
 import type { PermissionRow } from './api';
+import type { MessageKey, Translate } from '../../../shared/i18n';
 
 export type PermissionLabel = {
   code: string;
-  label: string;
+  labelKey: MessageKey;
+};
+
+export type PermissionGroupDef = {
+  id: string;
+  labelKey: MessageKey;
+  items: PermissionLabel[];
 };
 
 export type PermissionGroup = {
   id: string;
   label: string;
-  items: PermissionLabel[];
+  items: { code: string; label: string }[];
 };
 
-/** Display order and Turkish names for the Roles matrix. */
-export const PERMISSION_CATALOG: PermissionGroup[] = [
+/** Display order for the Roles matrix — labels resolved via i18n. */
+export const PERMISSION_CATALOG: PermissionGroupDef[] = [
   {
     id: 'access',
-    label: 'Erişim',
+    labelKey: 'perm.group.access',
     items: [
-      { code: Perm.MobileAccess, label: 'Mobil uygulamaya giriş' },
-      { code: Perm.WebAccess, label: 'Web uygulamasına giriş' },
+      { code: Perm.MobileAccess, labelKey: 'perm.mobile.access' },
+      { code: Perm.WebAccess, labelKey: 'perm.web.access' },
     ],
   },
   {
     id: 'vehicles',
-    label: 'Araçlar',
+    labelKey: 'perm.group.vehicles',
     items: [
-      { code: Perm.VehicleView, label: 'Araçları görüntüle' },
-      { code: Perm.StationStepEdit, label: 'İstasyon adımı işaretle' },
+      { code: Perm.VehicleView, labelKey: 'perm.vehicle.view' },
+      { code: Perm.StationStepEdit, labelKey: 'perm.station.step.edit' },
     ],
   },
   {
     id: 'checklists',
-    label: 'Checklistler',
+    labelKey: 'perm.group.checklists',
     items: [
-      { code: Perm.ChecklistTestView, label: 'Test checklist: görüntüle' },
-      { code: Perm.ChecklistTestEdit, label: 'Test checklist: düzenle' },
-      { code: Perm.ChecklistShipmentView, label: 'Shipment checklist: görüntüle' },
-      { code: Perm.ChecklistShipmentEdit, label: 'Shipment checklist: düzenle' },
-      { code: Perm.ChecklistEOLView, label: 'EOL checklist: görüntüle' },
-      { code: Perm.ChecklistEOLEdit, label: 'EOL checklist: düzenle' },
+      { code: Perm.ChecklistTestView, labelKey: 'perm.checklist.test.view' },
+      { code: Perm.ChecklistTestEdit, labelKey: 'perm.checklist.test.edit' },
+      { code: Perm.ChecklistShipmentView, labelKey: 'perm.checklist.shipment.view' },
+      { code: Perm.ChecklistShipmentEdit, labelKey: 'perm.checklist.shipment.edit' },
+      { code: Perm.ChecklistEOLView, labelKey: 'perm.checklist.eol.view' },
+      { code: Perm.ChecklistEOLEdit, labelKey: 'perm.checklist.eol.edit' },
     ],
   },
   {
     id: 'eol',
-    label: 'EOL akışı',
+    labelKey: 'perm.group.eol',
     items: [
-      { code: Perm.EOLBranchShip, label: 'Şubeden depoya sevk' },
-      { code: Perm.EOLDepotRelease, label: 'Depodan serbest bırakma' },
-      { code: Perm.EOLDocumentApprove, label: 'Evrak onayı' },
+      { code: Perm.EOLBranchShip, labelKey: 'perm.eol.branch.ship' },
+      { code: Perm.EOLDepotRelease, labelKey: 'perm.eol.depot.release' },
+      { code: Perm.EOLDeliver, labelKey: 'perm.eol.deliver' },
+      { code: Perm.EOLDocumentApprove, labelKey: 'perm.eol.document.approve' },
     ],
   },
   {
     id: 'issues',
-    label: 'Hatalar',
+    labelKey: 'perm.group.issues',
     items: [
-      { code: Perm.IssueView, label: 'Hataları görüntüle' },
-      { code: Perm.IssueCreate, label: 'Hata bildir' },
-      { code: Perm.IssueTransitionProgress, label: 'İşleme al / tamamla' },
-      { code: Perm.IssueTransitionApprove, label: 'Kalite onayı ver' },
-      { code: Perm.IssueTransitionConditionalApprove, label: 'Şartlı onay ver' },
+      { code: Perm.IssueView, labelKey: 'perm.issue.view' },
+      { code: Perm.IssueCreate, labelKey: 'perm.issue.create' },
+      { code: Perm.IssueTransitionProgress, labelKey: 'perm.issue.transition.progress' },
+      { code: Perm.IssueTransitionApprove, labelKey: 'perm.issue.transition.approve' },
+      {
+        code: Perm.IssueTransitionConditionalApprove,
+        labelKey: 'perm.issue.transition.conditional_approve',
+      },
     ],
   },
   {
     id: 'admin',
-    label: 'Analiz ve Yönetim',
+    labelKey: 'perm.group.admin',
     items: [
-      { code: Perm.AnalysisView, label: 'Analiz sayfası' },
-      { code: Perm.AdminManageUsers, label: 'Kullanıcı ve rol yönetimi' },
-      { code: Perm.AdminManageMasters, label: 'Ana veri yönetimi' },
+      { code: Perm.AnalysisView, labelKey: 'perm.analysis.view' },
+      { code: Perm.AdminManageUsers, labelKey: 'perm.admin.manage_users' },
+      { code: Perm.AdminManageMasters, labelKey: 'perm.admin.manage_masters' },
     ],
   },
 ];
 
 /** Catalogue groups that exist in the live API, plus any unknown codes. */
-export function groupPermissions(fromApi: PermissionRow[]): PermissionGroup[] {
+export function groupPermissions(
+  fromApi: PermissionRow[],
+  t: Translate,
+): PermissionGroup[] {
   const apiByCode = new Map(fromApi.map((p) => [p.code, p]));
   const groups = PERMISSION_CATALOG.map((group) => ({
-    ...group,
-    items: group.items.filter((item) => apiByCode.has(item.code)),
+    id: group.id,
+    label: t(group.labelKey),
+    items: group.items
+      .filter((item) => apiByCode.has(item.code))
+      .map((item) => ({ code: item.code, label: t(item.labelKey) })),
   })).filter((group) => group.items.length > 0);
 
   const known = new Set(PERMISSION_CATALOG.flatMap((g) => g.items.map((i) => i.code)));
@@ -86,7 +103,7 @@ export function groupPermissions(fromApi: PermissionRow[]): PermissionGroup[] {
   if (extras.length > 0) {
     groups.push({
       id: 'other',
-      label: 'Diğer',
+      label: t('perm.group.other'),
       items: extras.map((p) => ({
         code: p.code,
         label: p.description || p.code,

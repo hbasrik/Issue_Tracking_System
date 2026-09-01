@@ -1,20 +1,4 @@
-/** Shared issue-detail labels — keep in lockstep with mobile `issueDetailCopy`. */
-export const issueDetailCopy = {
-  panelTitle: 'Issue Detayı',
-  empty: 'Listeden bir issue seçin',
-  reporter: 'Bildiren',
-  issueType: 'Issue türü',
-  station: 'İstasyon',
-  reportedAt: 'Bildirim tarihi',
-  history: 'Durum Geçmişi',
-  photos: 'Fotoğraflar',
-  photosEmpty: 'Henüz fotoğraf yok',
-  upload: 'Yükle',
-  uploading: 'Yükleniyor…',
-  reportPhotos: 'Bildirim',
-  resolutionPhotos: 'Çözüm',
-  solution: 'Çözüm açıklaması',
-} as const;
+import type { Translate } from '../../../shared/i18n';
 
 export function issueStationLabel(issue: {
   StationName?: string;
@@ -23,4 +7,8 @@ export function issueStationLabel(issue: {
   if (issue.StationName) return issue.StationName;
   if (issue.StationID != null) return String(issue.StationID);
   return '—';
+}
+
+export function reporterFallback(t: Translate, id: number | undefined): string {
+  return t('common.userFallback', { id: id ?? 0 });
 }
