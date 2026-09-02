@@ -1,7 +1,10 @@
 import { useState, type FormEvent } from 'react';
+import { Eye, EyeOff, Lock, User } from 'lucide-react';
 import { Navigate } from 'react-router-dom';
+import { BRAND_NAME } from '../../../shared/brand';
 import { useAuth } from '../auth/AuthProvider';
 import { Perm } from '../auth/permissions';
+import { Logo } from '../components/Logo';
 import { useI18n } from '../i18n';
 import { ApiError } from '../lib/api';
 import { apiErrorMessage } from '../lib/apiErrors';
@@ -9,8 +12,11 @@ import { apiErrorMessage } from '../lib/apiErrors';
 export default function LoginPage() {
   const { t } = useI18n();
   const { login, isAuthenticated, has, user } = useAuth();
-  const [email, setEmail] = useState('manager@karea.local');
-  const [password, setPassword] = useState('changeme123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [forgotHint, setForgotHint] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -29,7 +35,7 @@ export default function LoginPage() {
     setError(null);
     setBusy(true);
     try {
-      await login(email, password);
+      await login(email.trim(), password, rememberMe);
     } catch (err) {
       setError(err instanceof ApiError ? apiErrorMessage(err, t) : t('login.failed'));
     } finally {
@@ -38,53 +44,125 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[var(--bg-page)] px-4">
-      <form
-        onSubmit={onSubmit}
-        className="w-full max-w-sm rounded-xl border bg-[var(--bg-surface-1)] p-6"
-        style={{ borderColor: 'var(--border)' }}
-      >
-        <h1 className="text-2xl font-semibold text-[var(--text-primary)]">
-          {t('login.brand')}
-        </h1>
-        <p className="mt-1 text-[13px] text-[var(--text-secondary)]">
-          {t('login.webSubtitle')}
-        </p>
-        <label className="mt-6 block text-[13px] text-[var(--text-secondary)]">
-          {t('login.email')}
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            className="mt-1 w-full rounded-lg border bg-[var(--bg-page)] px-3 py-2 text-[15px] text-[var(--text-primary)]"
-            style={{ borderColor: 'var(--border)' }}
-          />
-        </label>
-        <label className="mt-4 block text-[13px] text-[var(--text-secondary)]">
-          {t('login.password')}
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            className="mt-1 w-full rounded-lg border bg-[var(--bg-page)] px-3 py-2 text-[15px] text-[var(--text-primary)]"
-            style={{ borderColor: 'var(--border)' }}
-          />
-        </label>
-        {error && (
-          <p className="mt-3 text-[13px]" style={{ color: 'var(--status-not-ok)' }}>
-            {error}
+    <div className="login-page">
+      <div className="login-panel">
+        <div className="login-card">
+          <div className="login-brand">
+            <Logo height={56} alt={BRAND_NAME} className="mx-auto" />
+            <p className="login-brand-name">{BRAND_NAME}</p>
+            <p className="login-brand-sub">{t('login.productSubtitle')}</p>
+          </div>
+
+          <div className="login-intro">
+            <h1 className="login-welcome">{t('login.welcome')}</h1>
+            <p className="login-welcome-hint">{t('login.welcomeHint')}</p>
+          </div>
+
+          <form onSubmit={onSubmit} className="login-form">
+            {error && (
+              <p className="login-error" role="alert">
+                {error}
+              </p>
+            )}
+
+            <label className="login-field">
+              <span className="login-field-inner">
+                <User
+                  className="login-field-icon"
+                  size={18}
+                  strokeWidth={2}
+                  aria-hidden
+                />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder={t('login.emailPlaceholder')}
+                  autoComplete="email"
+                  required
+                  className="login-input"
+                />
+              </span>
+            </label>
+
+            <label className="login-field">
+              <span className="login-field-inner">
+                <Lock
+                  className="login-field-icon"
+                  size={18}
+                  strokeWidth={2}
+                  aria-hidden
+                />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder={t('login.passwordPlaceholder')}
+                  autoComplete="current-password"
+                  required
+                  className="login-input login-input-password"
+                />
+                <button
+                  type="button"
+                  className="login-password-toggle"
+                  onClick={() => setShowPassword((v) => !v)}
+                  aria-label={
+                    showPassword ? t('login.hidePassword') : t('login.showPassword')
+                  }
+                >
+                  {showPassword ? (
+                    <EyeOff size={18} strokeWidth={2} aria-hidden />
+                  ) : (
+                    <Eye size={18} strokeWidth={2} aria-hidden />
+                  )}
+                </button>
+              </span>
+            </label>
+
+            <div className="login-options">
+              <label className="login-remember">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="login-checkbox"
+                />
+                <span>{t('login.rememberMe')}</span>
+              </label>
+              <button
+                type="button"
+                className="login-forgot"
+                onClick={() => setForgotHint(true)}
+              >
+                {t('login.forgotPassword')}
+              </button>
+            </div>
+
+            {forgotHint && (
+              <p className="login-forgot-hint" role="status">
+                {t('login.forgotPasswordHint')}
+              </p>
+            )}
+
+            <button type="submit" disabled={busy} className="login-submit">
+              {busy ? t('login.submitting') : t('login.submit')}
+            </button>
+          </form>
+
+          <p className="login-copyright">
+            {t('login.copyright', { year: 2026, brand: BRAND_NAME })}
           </p>
-        )}
-        <button
-          type="submit"
-          disabled={busy}
-          className="mt-6 w-full rounded-lg bg-[var(--accent)] py-2.5 text-[15px] font-medium text-white disabled:opacity-60"
-        >
-          {busy ? t('login.submitting') : t('login.submit')}
-        </button>
-      </form>
+        </div>
+      </div>
+
+      <div className="login-wallpaper-pane" aria-hidden>
+        <img
+          src="/karea_wallpaper.png"
+          alt=""
+          className="login-wallpaper-img"
+          decoding="async"
+        />
+      </div>
     </div>
   );
 }
