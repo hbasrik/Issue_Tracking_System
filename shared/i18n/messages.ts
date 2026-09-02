@@ -107,7 +107,7 @@ export const tr = {
   'login.brand': 'Karea',
   'login.webSubtitle': 'Web girişi',
   'login.fieldSubtitle': 'Saha girişi',
-  'login.productSubtitle': 'Kalite Takip Sistemi',
+  'login.productSubtitle': 'Karea 360',
   'login.welcome': 'Hoş geldiniz',
   'login.welcomeHint': 'Devam etmek için giriş yapın.',
   'login.email': 'E-posta',
