@@ -10,7 +10,7 @@
 -- SECTION 0: EXTENSIONS
 -- =====================================================================
 
-CREATE EXTENSION IF NOT EXISTS pg_trgm;      -- trigram search for partial VIN lookup
+CREATE EXTENSION IF NOT EXISTS pg_trgm;      -- trigram search for partial VIN / vehicle_number lookup
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";  -- reserved for future UUID-based entities
 
 -- =====================================================================
@@ -24,8 +24,10 @@ CREATE TYPE vehicle_status_enum AS ENUM (
     'PLANNED',        -- Karar 10: VIN kayitli ama henuz hatta girmedi (bulk-imported future vehicle)
     'IN_PRODUCTION',  -- Hatta
     'IN_WAREHOUSE',   -- Depoda
-    'WITH_CUSTOMER',  -- Musteride
-    'SHIPPED',        -- Sevk edildi (final logistics state, after EOL document approval)
+    'DELIVERED',      -- Teslim edildi (2026-08-31 migration 0013: WITH_CUSTOMER'dan yeniden adlandirildi;
+                      -- arac musteriye, bayiye veya satis ofisine gidebiliyor, "musteride" yanilticiydi)
+    'SHIPPED',        -- TARIHSEL: migration 0013 sonrasi hicbir gecis bu degeri uretmiyor,
+                      -- sadece eski kayitlar icin duruyor
     'ON_HOLD'         -- manual exception state
 );
 
@@ -219,11 +221,14 @@ CREATE TABLE vehicles (
 );
 
 COMMENT ON COLUMN vehicles.current_global_status IS
-    'Auto-transitioned by triggers. PLANNED -> IN_PRODUCTION when the first station-step is processed (leaves PENDING) '
-    '(Karar 10). IN_PRODUCTION -> IN_WAREHOUSE when EOL branch phase ships '
-    '(soft-warning on open issues). IN_WAREHOUSE -> WITH_CUSTOMER when the shipment/customer '
-    'checklist is fully OK/CONDITIONAL_OK (independent track from the EOL branch/depot/document '
-    'workflow). Final -> SHIPPED when the EOL document phase is approved. '
+    'Auto-transitioned by triggers (Karar 2, migration 0013). '
+    'PLANNED -> IN_PRODUCTION on first station-step progress row (Karar 10). '
+    'IN_PRODUCTION -> IN_WAREHOUSE on branch ship, which requires EOL BRANCH + TEST + SHIPMENT '
+    'checklists to be fully OK/CONDITIONAL_OK (open issues are only a warning here). '
+    'Depot release does NOT change this column — the vehicle stays IN_WAREHOUSE, only the '
+    'workflow stage becomes COMPLETED. '
+    'IN_WAREHOUSE -> DELIVERED on the explicit deliver action, which requires depot release first. '
+    'SHIPPED is historical only: no transition produces it after migration 0013. '
     'Manual override is allowed for MANAGER_ADMIN via the web dashboard, subject to the same gates.';
 
 -- =====================================================================
@@ -384,8 +389,14 @@ CREATE TABLE vehicle_eol_workflow (
     depot_released_at         TIMESTAMPTZ,  -- hard-block gate: open issues must be zero
     depot_released_by         INT REFERENCES users(id),
 
+    -- TARIHSEL: evrak asamasi migration 0011'de akistan cikarildi.
+    -- Kolonlar silinmedi, ileride geri acilabilsin diye duruyor.
     document_approved_at      TIMESTAMPTZ,
     document_approved_by      INT REFERENCES users(id),
+
+    -- Karar 2, stage 3 (migration 0013): teslim adimi
+    delivered_at              TIMESTAMPTZ,
+    delivered_by              INT REFERENCES users(id),
 
     created_at                TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at                TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -416,19 +427,24 @@ CREATE TABLE audit_logs (
 );
 
 -- =====================================================================
--- SECTION 7b: media_attachments (NEW — Karar 8)
+-- SECTION 7b: media_attachments (NEW — Karar 8; vin column added Karar 11)
 -- Polymorphic attachment table. entity_id is TEXT to support both the
 -- VARCHAR vin (VEHICLE) and numeric ids (ISSUE, CHECKLIST_ITEM_PROGRESS)
 -- without three separate FK columns. Referential integrity for the
--- polymorphic link is enforced at the application layer. Karar 11 adds a
--- real vin FK so a vehicle's full photo set can be listed directly.
+-- polymorphic link itself is still enforced at the application layer.
+-- Karar 11 (2026-08-19): a real, indexed `vin` column is added alongside
+-- the polymorphic pair — pure denormalization for the single most common
+-- query ("show every photo for this vehicle"), which would otherwise
+-- require a 4-way conditional join across issue_list, checklist_item_
+-- progress, vehicle_station_step_progress, and entity_type='VEHICLE'.
+-- This column DOES get a real FK + ON DELETE CASCADE, unlike entity_id.
 -- =====================================================================
 
 CREATE TABLE media_attachments (
     id             BIGSERIAL PRIMARY KEY,
-    entity_type    VARCHAR(50) NOT NULL,   -- 'VEHICLE' | 'ISSUE' | 'ISSUE_RESOLUTION' | 'CHECKLIST_ITEM_PROGRESS' | 'STATION_STEP_PROGRESS'
-    entity_id      TEXT NOT NULL,
     vin            VARCHAR(17) NOT NULL REFERENCES vehicles(vin) ON DELETE CASCADE,  -- Karar 11
+    entity_type    VARCHAR(50) NOT NULL,   -- 'VEHICLE' | 'ISSUE' | 'CHECKLIST_ITEM_PROGRESS' | 'STATION_STEP_PROGRESS'
+    entity_id      TEXT NOT NULL,
     file_name      VARCHAR(255) NOT NULL,
     storage_path   TEXT NOT NULL,
     mime_type      VARCHAR(100),
@@ -437,8 +453,7 @@ CREATE TABLE media_attachments (
     uploaded_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-COMMENT ON COLUMN media_attachments.vin IS
-    'Karar 11: denormalized vehicle key so a vehicle''s full photo set can be listed without resolving entity_id.';
+CREATE INDEX idx_media_attachments_vin ON media_attachments (vin);
 
 -- =====================================================================
 -- SECTION 8: INDEXING STRATEGY
@@ -504,7 +519,6 @@ CREATE INDEX idx_eol_workflow_stage ON vehicle_eol_workflow (current_stage);
 
 -- --- media_attachments ------------------------------------------------------
 CREATE INDEX idx_media_attachments_entity ON media_attachments (entity_type, entity_id);
-CREATE INDEX idx_media_attachments_vin ON media_attachments (vin);
 
 -- --- role_permissions lookups ---------------------------------------------
 CREATE INDEX idx_role_permissions_permission ON role_permissions (permission_id);
@@ -591,9 +605,7 @@ BEGIN
     NEW.eol_template_id := v_eol_template_id;
     NEW.shipment_template_id := v_shipment_template_id;
     NEW.test_template_id := v_test_template_id;
-    IF NEW.current_global_status::text IS DISTINCT FROM 'PLANNED' THEN
-        NEW.current_station_id := v_first_station_id;
-    END IF;
+    NEW.current_station_id := v_first_station_id;
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -603,55 +615,36 @@ CREATE TRIGGER trg_assign_checklist_templates
     FOR EACH ROW EXECUTE FUNCTION fn_assign_checklist_templates();
 
 -- --- Materialize station-step / checklist / EOL-workflow rows for a ----
--- new vehicle, including PLANNED (Karar 10). PLANNED is a visibility
--- label; shop-floor rows must exist so the first processed station step
--- can flip PLANNED -> IN_PRODUCTION. PENDING inserts do not enter the line.
-CREATE OR REPLACE FUNCTION fn_materialize_vehicle_progress(
-    p_vin VARCHAR(17),
-    p_eol_template_id INT,
-    p_shipment_template_id INT,
-    p_test_template_id INT
-) RETURNS void AS $$
-BEGIN
-    INSERT INTO vehicle_station_step_progress (vin, station_id, station_step_id, status)
-    SELECT p_vin, ss.station_id, ss.id, 'PENDING'
-    FROM station_steps ss
-    WHERE ss.is_active = TRUE
-    ON CONFLICT (vin, station_step_id) DO NOTHING;
-
-    INSERT INTO checklist_item_progress (vin, checklist_type, check_item_id, check_status)
-    SELECT p_vin, 'EOL', cti.id, 'PENDING'
-    FROM checklist_template_items cti
-    WHERE cti.template_id = p_eol_template_id AND cti.is_active = TRUE
-    ON CONFLICT (vin, check_item_id) DO NOTHING;
-
-    INSERT INTO checklist_item_progress (vin, checklist_type, check_item_id, check_status)
-    SELECT p_vin, 'SHIPMENT', cti.id, 'PENDING'
-    FROM checklist_template_items cti
-    WHERE cti.template_id = p_shipment_template_id AND cti.is_active = TRUE
-    ON CONFLICT (vin, check_item_id) DO NOTHING;
-
-    INSERT INTO checklist_item_progress (vin, checklist_type, check_item_id, check_status)
-    SELECT p_vin, 'TEST', cti.id, 'PENDING'
-    FROM checklist_template_items cti
-    WHERE cti.template_id = p_test_template_id AND cti.is_active = TRUE
-    ON CONFLICT (vin, check_item_id) DO NOTHING;
-
-    INSERT INTO vehicle_eol_workflow (vin, current_stage)
-    VALUES (p_vin, 'BRANCH')
-    ON CONFLICT (vin) DO NOTHING;
-END;
-$$ LANGUAGE plpgsql;
-
+-- new vehicle. Copies the active station_steps catalogue and the three
+-- assigned templates into vehicle-scoped progress rows so the mobile app
+-- always has a concrete row to tick against (status = PENDING), and
+-- opens the EOL workflow at stage BRANCH.
 CREATE OR REPLACE FUNCTION fn_initialize_vehicle_progress()
 RETURNS TRIGGER AS $$
 BEGIN
-    PERFORM fn_materialize_vehicle_progress(
-        NEW.vin,
-        NEW.eol_template_id,
-        NEW.shipment_template_id,
-        NEW.test_template_id
-    );
+    INSERT INTO vehicle_station_step_progress (vin, station_id, station_step_id, status)
+    SELECT NEW.vin, ss.station_id, ss.id, 'PENDING'
+    FROM station_steps ss
+    WHERE ss.is_active = TRUE;
+
+    INSERT INTO checklist_item_progress (vin, checklist_type, check_item_id, check_status)
+    SELECT NEW.vin, 'EOL', cti.id, 'PENDING'
+    FROM checklist_template_items cti
+    WHERE cti.template_id = NEW.eol_template_id AND cti.is_active = TRUE;
+
+    INSERT INTO checklist_item_progress (vin, checklist_type, check_item_id, check_status)
+    SELECT NEW.vin, 'SHIPMENT', cti.id, 'PENDING'
+    FROM checklist_template_items cti
+    WHERE cti.template_id = NEW.shipment_template_id AND cti.is_active = TRUE;
+
+    INSERT INTO checklist_item_progress (vin, checklist_type, check_item_id, check_status)
+    SELECT NEW.vin, 'TEST', cti.id, 'PENDING'
+    FROM checklist_template_items cti
+    WHERE cti.template_id = NEW.test_template_id AND cti.is_active = TRUE;
+
+    INSERT INTO vehicle_eol_workflow (vin, current_stage)
+    VALUES (NEW.vin, 'BRANCH');
+
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -674,7 +667,6 @@ DECLARE
     v_done INT;
     v_new_percentage NUMERIC(5,2);
     v_new_station_id INT;
-    v_enter_line BOOLEAN;
 BEGIN
     SELECT count(*), count(*) FILTER (WHERE status = 'OK')
     INTO v_total, v_done
@@ -693,20 +685,9 @@ BEGIN
         (SELECT MAX(sequence_no) FROM stations WHERE is_active = TRUE)
     ) INTO v_new_station_id;
 
-    -- Karar 10: PENDING catalogue copies must not enter the line. The first
-    -- processed (non-PENDING) station step flips PLANNED -> IN_PRODUCTION.
-    v_enter_line := TG_OP = 'UPDATE' AND NEW.status::text IS DISTINCT FROM 'PENDING';
-
     UPDATE vehicles
     SET total_progress_percentage = v_new_percentage,
-        current_station_id = CASE
-            WHEN current_global_status::text = 'PLANNED' AND NOT v_enter_line THEN current_station_id
-            ELSE (SELECT id FROM stations WHERE sequence_no = v_new_station_id)
-        END,
-        current_global_status = CASE
-            WHEN current_global_status::text = 'PLANNED' AND v_enter_line THEN 'IN_PRODUCTION'::vehicle_status_enum
-            ELSE current_global_status
-        END
+        current_station_id = (SELECT id FROM stations WHERE sequence_no = v_new_station_id)
     WHERE vin = NEW.vin;
 
     RETURN NEW;
@@ -717,17 +698,34 @@ CREATE TRIGGER trg_recalculate_vehicle_progress
     AFTER INSERT OR UPDATE OF status ON vehicle_station_step_progress
     FOR EACH ROW EXECUTE FUNCTION fn_recalculate_vehicle_progress();
 
--- --- Karar 2, stage 1: Branch shipment (soft-warning, never blocks) ----
--- Fires when branch_shipped_at transitions from NULL to a value. Snapshots
--- the open-issue count for audit purposes, logs a warning event if any
--- exist, but always proceeds — moves the vehicle to IN_WAREHOUSE and the
--- workflow to stage DEPOT.
+-- --- Karar 2, stage 1: Branch shipment -----------------------------------
+-- 2026-08-31 (migration 0013): artik UC checklist'in tamami tamamlanmadan
+-- subeden depoya sevk YAPILAMAZ — EOL BRANCH + TEST + SHIPMENT maddelerinin
+-- hepsi OK/CONDITIONAL_OK olmali (Karar 4'te ertelenen sorunun cevabi).
+-- Acik issue kurali degismedi: hala sadece UYARI (soft-warning), sevki
+-- bloklamiyor, sayisi audit icin kaydediliyor.
 CREATE OR REPLACE FUNCTION fn_enforce_branch_shipment()
 RETURNS TRIGGER AS $$
 DECLARE
     v_open_issue_count INT;
+    v_incomplete_count INT;
 BEGIN
     IF NEW.branch_shipped_at IS NOT NULL AND OLD.branch_shipped_at IS NULL THEN
+        -- Hard-block: EOL BRANCH + TEST + SHIPMENT maddelerinin tamami bitmeli
+        SELECT count(*) INTO v_incomplete_count
+        FROM checklist_item_progress cip
+        JOIN checklist_template_items cti ON cti.id = cip.check_item_id
+        WHERE cip.vin = NEW.vin
+          AND cip.check_status NOT IN ('OK', 'CONDITIONAL_OK')
+          AND (
+                cip.checklist_type IN ('TEST', 'SHIPMENT')
+             OR (cip.checklist_type = 'EOL' AND cti.eol_phase = 'BRANCH')
+          );
+
+        IF v_incomplete_count > 0 THEN
+            RAISE EXCEPTION 'Cannot ship vehicle % to depot — % checklist item(s) still incomplete (EOL branch / test / shipment)', NEW.vin, v_incomplete_count;
+        END IF;
+
         SELECT count(*) INTO v_open_issue_count
         FROM issue_list
         WHERE vin = NEW.vin AND status IN ('OPEN', 'IN_PROGRESS', 'DONE');
@@ -797,12 +795,29 @@ CREATE TRIGGER trg_enforce_depot_item_sequence
 -- Fires when depot_released_at transitions from NULL to a value. Rejects
 -- the change outright — at the database layer, not just the UI — if any
 -- open issues (OPEN/IN_PROGRESS/DONE) remain for the vehicle.
+-- 2026-08-31 (migration 0013): depo serbest birakma artik EOL DEPOT
+-- maddelerinin tamamini da sart kosuyor (acik issue kuralina ek olarak),
+-- ve arac durumunu DEGISTIRMIYOR — arac IN_WAREHOUSE kaliyor. Sadece
+-- akisi COMPLETED yapiyor. Sevk (DELIVERED) ayri bir aksiyon.
 CREATE OR REPLACE FUNCTION fn_enforce_depot_release()
 RETURNS TRIGGER AS $$
 DECLARE
     v_open_issue_count INT;
+    v_depot_items_remaining INT;
 BEGIN
     IF NEW.depot_released_at IS NOT NULL AND OLD.depot_released_at IS NULL THEN
+        SELECT count(*) INTO v_depot_items_remaining
+        FROM checklist_item_progress cip
+        JOIN checklist_template_items cti ON cti.id = cip.check_item_id
+        WHERE cip.vin = NEW.vin
+          AND cip.checklist_type = 'EOL'
+          AND cti.eol_phase = 'DEPOT'
+          AND cip.check_status NOT IN ('OK', 'CONDITIONAL_OK');
+
+        IF v_depot_items_remaining > 0 THEN
+            RAISE EXCEPTION 'Cannot release vehicle % from depot — % depot EOL item(s) still incomplete', NEW.vin, v_depot_items_remaining;
+        END IF;
+
         SELECT count(*) INTO v_open_issue_count
         FROM issue_list
         WHERE vin = NEW.vin AND status IN ('OPEN', 'IN_PROGRESS', 'DONE');
@@ -811,10 +826,11 @@ BEGIN
             RAISE EXCEPTION 'Cannot release vehicle % from depot — % open issue(s) remain', NEW.vin, v_open_issue_count;
         END IF;
 
-        NEW.current_stage := 'DOCUMENT';
+        NEW.current_stage := 'COMPLETED';
+        -- Arac durumu DEGISMEZ, IN_WAREHOUSE kalir.
 
         INSERT INTO audit_logs (vin, event_type, old_value, new_value, performed_by, metadata)
-        VALUES (NEW.vin, 'EOL_WORKFLOW_STAGE_CHANGE', 'DEPOT', 'DOCUMENT', NEW.depot_released_by,
+        VALUES (NEW.vin, 'EOL_WORKFLOW_STAGE_CHANGE', 'DEPOT', 'COMPLETED', NEW.depot_released_by,
                 jsonb_build_object('open_issue_count', 0, 'blocked', FALSE));
     END IF;
 
@@ -826,111 +842,63 @@ CREATE TRIGGER trg_enforce_depot_release
     BEFORE UPDATE OF depot_released_at ON vehicle_eol_workflow
     FOR EACH ROW EXECUTE FUNCTION fn_enforce_depot_release();
 
--- --- Karar 2, stage 3: Document approval (final EOL sign-off) -----------
--- Fixed 2026-08-17 (see migration 0003 in the real codebase): this must be
--- an AFTER UPDATE trigger, not BEFORE. A BEFORE UPDATE trigger fires before
--- this row's own document_approved_at write is visible to other queries in
--- the same transaction — the nested fn_enforce_manual_status_change check
--- on vehicles (which SELECTs vehicle_eol_workflow.document_approved_at)
--- would still see NULL and reject the status change with a false-positive
--- "document phase is not approved" error. AFTER UPDATE avoids this, at the
--- cost of no longer being able to set NEW.current_stage directly (AFTER
--- triggers can't mutate the row via NEW) — so current_stage is now set via
--- an explicit UPDATE instead.
-CREATE OR REPLACE FUNCTION fn_enforce_document_approval()
+-- --- Karar 2, stage 3: Teslim (DELIVERED) --------------------------------
+-- 2026-08-31 (migration 0013): evrak onayinin yerini alan son adim.
+-- Depodan serbest birakilmis (current_stage = COMPLETED) bir arac teslim
+-- edilebilir; teslim araci DELIVERED yapar. eol.deliver izni gerekir.
+-- NOT: eski fn_enforce_document_approval() migration 0011'de kaldirilmisti.
+CREATE OR REPLACE FUNCTION fn_enforce_eol_deliver()
 RETURNS TRIGGER AS $$
 BEGIN
-    IF NEW.document_approved_at IS NOT NULL AND OLD.document_approved_at IS NULL THEN
-        UPDATE vehicle_eol_workflow SET current_stage = 'COMPLETED' WHERE vin = NEW.vin;
+    IF NEW.delivered_at IS NOT NULL AND OLD.delivered_at IS NULL THEN
+        IF NEW.depot_released_at IS NULL THEN
+            RAISE EXCEPTION 'Cannot deliver vehicle % — it has not been released from the depot', NEW.vin;
+        END IF;
 
-        UPDATE vehicles SET current_global_status = 'SHIPPED' WHERE vin = NEW.vin;
+        UPDATE vehicles SET current_global_status = 'DELIVERED' WHERE vin = NEW.vin;
 
         INSERT INTO audit_logs (vin, event_type, old_value, new_value, performed_by, metadata)
-        VALUES (NEW.vin, 'EOL_WORKFLOW_STAGE_CHANGE', 'DOCUMENT', 'COMPLETED', NEW.document_approved_by, '{}'::jsonb);
+        VALUES (NEW.vin, 'STATUS_CHANGE', 'IN_WAREHOUSE', 'DELIVERED', NEW.delivered_by,
+                jsonb_build_object('trigger', 'eol_deliver'));
     END IF;
 
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER trg_enforce_document_approval
-    AFTER UPDATE OF document_approved_at ON vehicle_eol_workflow
-    FOR EACH ROW EXECUTE FUNCTION fn_enforce_document_approval();
+CREATE TRIGGER trg_enforce_eol_deliver
+    BEFORE UPDATE OF delivered_at ON vehicle_eol_workflow
+    FOR EACH ROW EXECUTE FUNCTION fn_enforce_eol_deliver();
 
--- --- Auto status transition: IN_WAREHOUSE -> WITH_CUSTOMER --------------
--- Hard-block rule (v1 Decision Log #4/#5, PRD FR-4.3, unchanged): ALL
--- shipment/customer checklist items for the vehicle must be OK or
--- CONDITIONAL_OK. This track runs independently of the EOL branch/depot/
--- document workflow above.
-CREATE OR REPLACE FUNCTION fn_check_shipment_completion()
-RETURNS TRIGGER AS $$
-DECLARE
-    v_all_passed BOOLEAN;
-BEGIN
-    IF NEW.checklist_type <> 'SHIPMENT' THEN
-        RETURN NEW;
-    END IF;
-
-    SELECT NOT EXISTS (
-        SELECT 1 FROM checklist_item_progress
-        WHERE vin = NEW.vin AND checklist_type = 'SHIPMENT'
-          AND check_status NOT IN ('OK', 'CONDITIONAL_OK')
-    ) INTO v_all_passed;
-
-    IF v_all_passed THEN
-        UPDATE vehicles
-        SET current_global_status = 'WITH_CUSTOMER'
-        WHERE vin = NEW.vin AND current_global_status = 'IN_WAREHOUSE';
-
-        IF FOUND THEN
-            INSERT INTO audit_logs (vin, event_type, old_value, new_value, metadata)
-            VALUES (NEW.vin, 'STATUS_CHANGE', 'IN_WAREHOUSE', 'WITH_CUSTOMER',
-                    jsonb_build_object('trigger', 'shipment_checklist_complete'));
-        END IF;
-    END IF;
-
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER trg_check_shipment_completion
-    AFTER INSERT OR UPDATE OF check_status ON checklist_item_progress
-    FOR EACH ROW EXECUTE FUNCTION fn_check_shipment_completion();
+-- --- fn_check_shipment_completion — KALDIRILDI ---------------------------
+-- 2026-08-31 (migration 0013): sevk/musteri checklist'i artik otomatik
+-- durum degistiren bir tetikleyici degil. Yerine, SUBEDEN DEPOYA SEVK'i
+-- bloklayan bir on kosul oldu (bkz. fn_enforce_branch_shipment). Bu
+-- fonksiyon ve trg_check_shipment_completion silindi.
 
 -- --- Defense-in-depth: reject manual/API status changes that bypass ----
 -- the hard-block rules above, even if attempted directly (PRD FR-3.6 /
--- FR-4.3 "even a direct API call must be rejected"). Extended for Karar 2:
--- SHIPPED additionally requires the EOL document phase to be approved.
+-- FR-4.3 "even a direct API call must be rejected").
+-- 2026-08-31 (migration 0013): DELIVERED artik depodan serbest
+-- birakilmis olmayi sart kosuyor. SHIPPED akistan cikti (tarihsel deger),
+-- WITH_CUSTOMER ise DELIVERED olarak yeniden adlandirildi.
 CREATE OR REPLACE FUNCTION fn_enforce_manual_status_change()
 RETURNS TRIGGER AS $$
 DECLARE
-    v_shipment_incomplete BOOLEAN;
-    v_document_not_approved BOOLEAN;
+    v_depot_not_released BOOLEAN;
 BEGIN
     IF NEW.current_global_status = OLD.current_global_status THEN
         RETURN NEW;
     END IF;
 
-    IF NEW.current_global_status = 'WITH_CUSTOMER' THEN
-        SELECT EXISTS (
-            SELECT 1 FROM checklist_item_progress
-            WHERE vin = NEW.vin AND checklist_type = 'SHIPMENT'
-              AND check_status NOT IN ('OK', 'CONDITIONAL_OK')
-        ) INTO v_shipment_incomplete;
-
-        IF v_shipment_incomplete THEN
-            RAISE EXCEPTION 'Cannot move vehicle % to WITH_CUSTOMER — shipment checklist is not fully OK/CONDITIONAL_OK', NEW.vin;
-        END IF;
-    END IF;
-
-    IF NEW.current_global_status = 'SHIPPED' THEN
+    IF NEW.current_global_status = 'DELIVERED' THEN
         SELECT NOT EXISTS (
             SELECT 1 FROM vehicle_eol_workflow
-            WHERE vin = NEW.vin AND document_approved_at IS NOT NULL
-        ) INTO v_document_not_approved;
+            WHERE vin = NEW.vin AND depot_released_at IS NOT NULL
+        ) INTO v_depot_not_released;
 
-        IF v_document_not_approved THEN
-            RAISE EXCEPTION 'Cannot move vehicle % to SHIPPED — EOL document phase is not approved', NEW.vin;
+        IF v_depot_not_released THEN
+            RAISE EXCEPTION 'Cannot move vehicle % to DELIVERED — vehicle has not been released from the depot', NEW.vin;
         END IF;
     END IF;
 
@@ -1053,6 +1021,7 @@ GROUP BY current_stage;
 CREATE OR REPLACE VIEW vw_vehicle_full_overview AS
 SELECT
     v.vin,
+    v.vehicle_number,
     v.vehicle_model_id,
     v.current_global_status,
     s.name AS current_station_name,

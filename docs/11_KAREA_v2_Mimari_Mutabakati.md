@@ -1,3 +1,4 @@
+
 # KAREA — v2 Mimari Mutabakat Dokümanı
 
 **Durum:** Onay bekliyor bekliyor değil — sorularınıza cevap alamadan ("ok lets go") ilerlememi istediniz, bu yüzden aşağıdaki her karar **önerilen/varsayılan yönde alınmıştır**. Yanlış bulduğunuz herhangi bir kararı söylerseniz sadece o kararı ve ona bağlı DDL/prompt kısmını değiştiririm, baştan yazmaya gerek kalmaz.
@@ -27,6 +28,24 @@
 
 **Etki:** Yeni `vehicle_eol_workflow` tablosu (araç başına 1 satır: branch/depot/document onay durumları + kim + ne zaman), `checklist_template_items`'a `eol_phase` (BRANCH/DEPOT, sadece EOL tipinde) kolonu eklenir.
 
+**Güncelleme 1 (2026-08-25, migration 0011): Evrak aşaması akıştan çıkarıldı.** Gerekçe: kullanıcı kararı, "şimdilik şube ve depo yeterli". `fn_enforce_document_approval` trigger'ı kaldırıldı; `document_approved_at` / `document_approved_by` kolonları silinmedi (ileride geri açılabilsin diye duruyor). `eol.document_approve` izni katalogda duruyor ama kullanılmıyor.
+
+**Güncelleme 2 (2026-08-31, migration 0013): Nihai akış — Şube → Depo → Teslim.** Aşağıdaki hâli geçerlidir:
+
+| Adım | Ön koşullar | Sonuç |
+|---|---|---|
+| **Şubeden Depoya Sevk** | EOL BRANCH + **TEST** + **SHIPMENT** checklist'lerinin tamamı OK/CONDITIONAL_OK | Araç `IN_WAREHOUSE`, aşama `DEPOT` |
+| **Depodan Serbest Bırak** | EOL DEPOT maddelerinin tamamı OK/CONDITIONAL_OK **ve** açık issue olmaması (hard-block) | Aşama `COMPLETED`. **Araç durumu değişmez, `IN_WAREHOUSE` kalır.** |
+| **Teslim Edildi** | Depodan serbest bırakılmış olması | Araç `DELIVERED`, `delivered_at`/`delivered_by` dolar |
+
+Diğer sonuçlar:
+- **`WITH_CUSTOMER` → `DELIVERED` olarak yeniden adlandırıldı** (enum rename, veri korundu). Gerekçe: araç müşteriye, bayiye veya satış ofisine gidebiliyor; "müşteride" ifadesi yanıltıcıydı.
+- **`SHIPPED` akıştan çıktı.** Enum'da geçmiş kayıtlar için duruyor ama hiçbir geçiş onu üretmiyor.
+- **`fn_check_shipment_completion` kaldırıldı** — Sevk checklist'i artık otomatik durum değiştiren bir tetikleyici değil, depoya sevki bloklayan bir ön koşul.
+- Yeni izin: `eol.deliver` (şimdilik MANAGER_ADMIN'de, matristen genişletilebilir).
+- Tüm kapılar hem DB trigger'ında hem Go usecase katmanında zorlanıyor (defense-in-depth). Hata cevapları yapılandırılmış: branch ship için `checklist_blockers[]`, depot release için `depot_items_remaining`.
+- Butonlar UI'da her zaman görünür, koşul sağlanmadan pasif ve pasiflik gerekçesi yazılı (hangi checklist'te kaç madde kaldığı, "önce şubeden sevk", "N açık issue engelliyor", "yetkiniz yok").
+
 ## Karar 3 — RBAC: 2 Rol mü, 8 Rol mü?
 
 **Çelişki:** Mevcut sistem 2 rol (Operator, Manager/Admin) üzerine kurulu — tüm backend RBAC middleware, web route gate, mobil route gate bunun üstünde. Yeni spec 8 rol tanımlıyor (Operator, Issue Processor, Quality, Branch Operator, Depot Operator, Documentation, Admin, Manager).
@@ -41,7 +60,7 @@
 
 **Karar:** Gerçekten yeni, bağımsız üçüncü bir modül olarak okunmuştur. Mevcut multi-template mimarimiz (`checklist_templates`/`checklist_template_items`) zaten tam da bunun için tasarlanmıştı — `checklist_type_enum`'a üçüncü değer olarak `TEST` eklenir, sıfırdan tablo kurmaya gerek yoktur.
 
-**Ertelenen alt-karar (2026-08-14):** Test checklist'inin bir maddesi NOT_OK/PENDING kaldığında (issue açılmamış olsa bile) herhangi bir geçişi (Depot Release, Shipment vb.) bloklayıp bloklamayacağı henüz karara bağlanmadı — "diğerleri (Shipment, Depot Release) zaten bloklama yapıyorsa şimdilik yeterli, Test'e sonra bakarız" dendi. Mevcut Prompt 10 tasarımı Test'i **sadece görünürlük/raporlama amaçlı, hiçbir geçişi bloklamayan** bir modül olarak uyguluyor. Test'ten kaynaklanan bir issue açılırsa (NOT_OK madde raporlanırsa) o issue genel açık-issue kurallarına tabi olur ve Depot Release'i zaten bloklar — yani tam bloksuz değil, sadece "madde işaretlenmeden issue açılmadan da bloklasın mı" sorusu açık kaldı.
+**Ertelenen alt-karar (2026-08-14) — ÇÖZÜLDÜ (2026-08-31, migration 0013):** Test checklist'inin bir geçişi bloklayıp bloklamayacağı sorusu açık bırakılmıştı. **Cevap: evet, blokluyor.** Karar 2'nin 2. güncellemesiyle birlikte, **Şubeden Depoya Sevk** adımı üç checklist'in birden tamamlanmasını şart koşuyor: EOL BRANCH + **TEST** + **SHIPMENT**. Yani Test maddesi PENDING/NOT_OK kaldığı sürece (issue açılmamış olsa bile) araç depoya sevk edilemez. Aynı şey Sevk/müşteri checklist'i için de geçerli — o da artık otomatik durum değiştiren bir tetikleyici değil, sevki bloklayan bir ön koşul.
 
 ## Karar 5 — VIN / Vehicle Number
 
@@ -69,8 +88,6 @@
 
 **Karar:** Kabul edildi — `media_attachments` (id, entity_type, entity_id, file_name, storage_path, mime_type, file_size, uploaded_by, uploaded_at) eklenir. `issue_list.picture_url`, `issue_list.issue_picture_done_url`, `eol...check_image` gibi alanlar zamanla bu tabloya taşınır (polymorphic ilişki, DB seviyesinde FK zorlanamaz ama uygulama seviyesinde entity_type+entity_id ile doğrulanır).
 
-**Karar 8 üzerine güncelleme (Karar 11, 2026-08-24):** polymorphic `entity_id` aynı kaldı; araç kimliği artık ayrıca gerçek bir `vin` kolonu (FK) olarak tutulur — bkz. Karar 11.
-
 ## Karar 9 — Araç 360 (Tam Görünüm) Analiz Görünümü (NEW — 2026-08-14)
 
 **Gerekçe:** Mevcut Analysis view'ları (severity breakdown, defect rate per station, MTTR) parçalı — belirli bir aracın station ilerlemesi + EoL aşaması + Test sonuçları + Shipment checklist durumu + issue geçmişini tek bir yerde gösteren bir görünüm yoktu. Kullanıcı ilgili aracın bütün verisine Analiz tarafından bakabilmeyi istedi.
@@ -82,17 +99,19 @@
 **Gerekçe:** Hata girme ekranında operatörün aracı kısa bir numarayla (VIN yerine) bulabilmesi isteniyordu, ama bu ihtiyaç aslında henüz üretime girmemiş (fabrikaya gelecek ~500 araçlık) bir aracın da hata-girişi için aranabilir olmasını gerektiriyordu. `vehicles` tablosu şu an sadece fiilen üretimde olan araçları (örn. 150 adet) tutuyor — 500'lük tam planı buraya baştan yüklemek Vehicles listesini anlamsız şekilde şişirirdi.
 
 **Karar (2 parça):**
-1. `vehicle_status_enum`'a `PLANNED` eklenir — VIN kayıtlı ama araç henüz hatta girmemiş. Bu 500'lük plan, `vehicles` tablosuna VIN'leriyle (bulk import ile) baştan yüklenir, `current_station_id = NULL`, `current_global_status = 'PLANNED'`. Vehicles listesi (web+mobil) varsayılan olarak `PLANNED` olanları gizler; hata girme ekranındaki arama ise PLANNED dahil tüm araçlara bakar. İstasyon-adımı / checklist / EOL workflow satırları INSERT'te PLANNED araçlar için de üretilir (görünürlük etiketi veri hazırlığını engellemez). Bir aracın ilk istasyon-adımı işlendiğinde (PENDING dışı) mevcut trigger `PLANNED` → `IN_PRODUCTION` otomatik çevirir.
+1. `vehicle_status_enum`'a `PLANNED` eklenir — VIN kayıtlı ama araç henüz hatta girmemiş. Bu 500'lük plan, `vehicles` tablosuna VIN'leriyle (bulk import ile) baştan yüklenir, `current_station_id = NULL`, `current_global_status = 'PLANNED'`. Vehicles listesi (web+mobil) varsayılan olarak `PLANNED` olanları gizler; hata girme ekranındaki arama ise PLANNED dahil tüm araçlara bakar. Bir aracın ilk istasyon-adımı işlendiğinde mevcut trigger genişletilip `PLANNED` → `IN_PRODUCTION` otomatik çevrilir.
 2. **`vehicle_number` kolonu tamamen kaldırılır** (Karar 5'in tersine çevrilmesi). Gerekçe: gerçek VIN'ler OEM tarafından rastgele atanır, ayrı bir kısa-numara sistemi ek karmaşıklık + tekrarlayan bug kaynağı oldu (Issues arama kutusunda hiç çalışmıyordu). VIN (tam ya da son-5-hane trigram araması) tek kimlik alanı olarak yeterli kabul edildi — kullanıcının açık kararı.
 3. `vehicle_model_id` NOT NULL kısıtı kaldırılır (nullable) — bulk import sırasında model bilgisi her zaman bilinmeyebilir, sonradan doldurulabilir.
 
 **Etki:** Yeni migration (`vehicle_number` kolonu + index + `GET /api/v1/vehicles/resolve?vehicle_number=` endpoint'i kaldırılır), bulk VIN import endpoint'i eklenir, Vehicles listesi filtre mantığı güncellenir, hata girme ekranı arama VIN tabanlı hale getirilir.
 
-## Karar 11 — media_attachments.vin Kolonu (NEW — 2026-08-24)
+## Karar 11 — media_attachments'a Gerçek `vin` Kolonu (NEW — 2026-08-19)
 
-**Gerekçe:** `media_attachments` polymorphic (`entity_type` + `entity_id`) olduğu için bir aracın tüm fotoğraflarını listelemek issue / checklist / station-step satırlarına ayrı ayrı join gerektiriyordu. Vehicle Detail "bu araca ait tüm fotoğraflar" görünümü için VIN her satırda hazır olmalı.
+**Gerekçe:** `media_attachments` polymorphic (`entity_type`+`entity_id`, uygulama seviyesinde doğrulanan) bir tablo (Karar 8). "Bu araca ait tüm fotoğrafları göster" gibi en sık ihtiyaç duyulacak sorgu, `entity_type`'a göre 4 farklı tabloya (issue_list, checklist_item_progress, vehicle_station_step_progress, VEHICLE) dallanan bir join gerektiriyordu — tablo büyüdükçe hem performans hem kod karmaşıklığı sorunu.
 
-**Karar:** `media_attachments`'a `vin VARCHAR(17) NOT NULL REFERENCES vehicles(vin) ON DELETE CASCADE` eklenir (`idx_media_attachments_vin`). Kolon önce nullable eklenir, mevcut satırlar `entity_type`/`entity_id` üzerinden parent tabloya join edilerek doldurulur, sonra NOT NULL yapılır. Yeni yüklemeler insert sırasında parent entity'nin zaten bilinen VIN'ini yazar; ekstra sorgu yok. Okuma yolu: `GET /api/v1/vehicles/:vin/media`.
+**Karar:** `media_attachments`'a gerçek, indeksli bir `vin` kolonu eklendi (`REFERENCES vehicles(vin) ON DELETE CASCADE`). Polymorphic `entity_type`+`entity_id` çifti aynen kalıyor (spesifik bağlantı için hâlâ o kullanılıyor), `vin` sadece en sık sorgulanan boyutu bilinçli olarak denormalize ediyor. Yazma sırasında (media upload endpoint'i) `vin`, ilgili entity'nin (issue/checklist item/station step) zaten bilinen vin'inden set edilir — ekstra bir lookup değil, mevcut context'ten geliyor.
+
+**Etki:** Migration ile kolon eklenir, mevcut satırlar `entity_type`+`entity_id` üzerinden ilgili tablo join'iyle backfill edilir. Upload endpoint'leri `vin`'i de yazacak şekilde güncellenir.
 
 ## Değişmeyen / Yeniden Kullanılacaklar
 
