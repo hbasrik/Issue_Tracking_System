@@ -121,6 +121,11 @@ const statusColorBase = {
    * Same hex everywhere (chip, badge, home) — not mixed per theme.
    */
   issueConditionalApproved: brandColors.neutralOlive,
+  vehicleInProduction: brandColors.secondary,
+  vehicleInWarehouse: brandColors.neutralGray,
+  vehicleWithCustomer: '#F59E0B',
+  vehicleShipped: '#22C55E',
+  vehicleOnHold: brandColors.critical,
 };
 
 export const statusColors = {

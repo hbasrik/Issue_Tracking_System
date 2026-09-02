@@ -11,6 +11,7 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { api, type Vehicle } from '../api/client';
 import { VehicleSearchPanel } from '../components/VehicleSearchPanel';
+import { VehicleStatusBadge } from '../components/VehicleStatusBadge';
 import { listKeyboardDismissProps } from '../components/keyboard';
 import {
   Badge,
@@ -24,23 +25,15 @@ import {
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n';
 import { apiErrorMessage } from '../lib/password';
+import {
+  EOL_STAGE_FILTER_VALUES,
+  VEHICLE_STATUS_FILTER_VALUES,
+  eolStageLabel,
+  vehicleStatusLabel,
+  type EolStageFilterValue,
+  type VehicleStatusFilterValue,
+} from '../lib/vehicleStatus';
 import type { RootStackParamList } from '../navigation/types';
-import type { MessageKey } from '../../../shared/i18n';
-
-type VehicleStatus =
-  | 'IN_PRODUCTION'
-  | 'IN_WAREHOUSE'
-  | 'DELIVERED'
-  | 'SHIPPED'
-  | 'ON_HOLD';
-
-const STATUSES: { value: VehicleStatus; key: MessageKey }[] = [
-  { value: 'IN_PRODUCTION', key: 'status.vehicle.inProduction' },
-  { value: 'IN_WAREHOUSE', key: 'status.vehicle.inWarehouse' },
-  { value: 'DELIVERED', key: 'status.vehicle.delivered' },
-  { value: 'SHIPPED', key: 'status.vehicle.shipped' },
-  { value: 'ON_HOLD', key: 'status.vehicle.onHold' },
-];
 
 function vehicleMatchesVinQuery(vehicle: Vehicle, query: string): boolean {
   const q = query.trim().toUpperCase();
@@ -65,14 +58,19 @@ export default function VehiclesScreen() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [vinQuery, setVinQuery] = useState('');
-  const [statuses, setStatuses] = useState<Set<VehicleStatus>>(new Set());
+  const [statuses, setStatuses] = useState<Set<VehicleStatusFilterValue>>(new Set());
+  const [eolStages, setEolStages] = useState<Set<EolStageFilterValue>>(new Set());
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const statusParam = statuses.size === 1 ? [...statuses][0] : undefined;
-      const res = await api.listVehicles({ status: statusParam });
+      const eolStageParam = eolStages.size === 1 ? [...eolStages][0] : undefined;
+      const res = await api.listVehicles({
+        status: statusParam,
+        eol_stage: eolStageParam,
+      });
       const items = (res.Items ?? []).slice().sort(compareVinDesc);
       setVehicles(items);
     } catch (err) {
@@ -81,7 +79,7 @@ export default function VehiclesScreen() {
     } finally {
       setLoading(false);
     }
-  }, [statuses, t]);
+  }, [statuses, eolStages, t]);
 
   useFocusEffect(
     useCallback(() => {
@@ -93,8 +91,17 @@ export default function VehiclesScreen() {
     navigation.navigate('VehicleStation', { vin: v.VIN });
   }
 
-  function toggleStatus(s: VehicleStatus) {
+  function toggleStatus(s: VehicleStatusFilterValue) {
     setStatuses((prev) => {
+      const next = new Set(prev);
+      if (next.has(s)) next.delete(s);
+      else next.add(s);
+      return next;
+    });
+  }
+
+  function toggleEolStage(s: EolStageFilterValue) {
+    setEolStages((prev) => {
       const next = new Set(prev);
       if (next.has(s)) next.delete(s);
       else next.add(s);
@@ -105,14 +112,24 @@ export default function VehiclesScreen() {
   const filtered = useMemo(() => {
     return vehicles
       .filter((v) => {
-        if (statuses.size > 0 && !statuses.has(v.CurrentGlobalStatus as VehicleStatus)) {
+        if (
+          statuses.size > 0 &&
+          !statuses.has(v.CurrentGlobalStatus as VehicleStatusFilterValue)
+        ) {
           return false;
+        }
+        if (eolStages.size > 0) {
+          const stage = v.CurrentEOLStage;
+          if (!stage) return false;
+          const normalized =
+            stage === 'DOCUMENT' ? 'DEPOT' : (stage as EolStageFilterValue);
+          if (!eolStages.has(normalized)) return false;
         }
         if (!vehicleMatchesVinQuery(v, vinQuery)) return false;
         return true;
       })
       .sort(compareVinDesc);
-  }, [vehicles, statuses, vinQuery]);
+  }, [vehicles, statuses, eolStages, vinQuery]);
 
   return (
     <Screen padded={false}>
@@ -151,12 +168,12 @@ export default function VehiclesScreen() {
               {t('issue.status')}
             </Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-              {STATUSES.map((s) => {
-                const selected = statuses.has(s.value);
+              {VEHICLE_STATUS_FILTER_VALUES.map((value) => {
+                const selected = statuses.has(value);
                 return (
                   <Pressable
-                    key={s.value}
-                    onPress={() => toggleStatus(s.value)}
+                    key={value}
+                    onPress={() => toggleStatus(value)}
                     style={{
                       paddingHorizontal: 12,
                       minHeight: 36,
@@ -176,7 +193,51 @@ export default function VehiclesScreen() {
                         fontWeight: '600',
                       }}
                     >
-                      {t(s.key)}
+                      {vehicleStatusLabel(value, t)}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            <Text
+              style={{
+                color: tokens.textSecondary,
+                fontWeight: '600',
+                fontSize: 13,
+                marginTop: 16,
+                marginBottom: 8,
+              }}
+            >
+              {t('print.eolStage')}
+            </Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+              {EOL_STAGE_FILTER_VALUES.map((value) => {
+                const selected = eolStages.has(value);
+                return (
+                  <Pressable
+                    key={value}
+                    onPress={() => toggleEolStage(value)}
+                    style={{
+                      paddingHorizontal: 12,
+                      minHeight: 36,
+                      borderRadius: 999,
+                      borderWidth: 1,
+                      borderColor: selected ? tokens.accent : tokens.border,
+                      backgroundColor: selected
+                        ? tokens.bgSurface2
+                        : tokens.bgSurface1,
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: selected ? tokens.accent : tokens.textSecondary,
+                        fontSize: 12,
+                        fontWeight: '600',
+                      }}
+                    >
+                      {eolStageLabel(value, t)}
                     </Text>
                   </Pressable>
                 );
@@ -223,9 +284,12 @@ export default function VehiclesScreen() {
               <Text style={{ color: tokens.textSecondary, marginTop: 4, fontSize: 13 }}>
                 {item.VIN}
               </Text>
-              <Text style={{ color: tokens.textSecondary, marginTop: 2, fontSize: 12 }}>
-                {item.CurrentGlobalStatus}
-              </Text>
+              <View style={{ marginTop: 6 }}>
+                <VehicleStatusBadge
+                  status={item.CurrentGlobalStatus}
+                  eolStage={item.CurrentEOLStage}
+                />
+              </View>
             </Card>
           </Pressable>
         )}

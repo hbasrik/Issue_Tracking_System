@@ -9,5 +9,5 @@
       "@karea/i18n": ["../shared/i18n/index.ts"]
     }
   },
-  "include": ["**/*.ts", "**/*.tsx", "../shared/i18n/**/*.ts"]
+  "include": ["**/*.ts", "**/*.tsx", "../shared/i18n/**/*.ts", "../shared/vehicleStatus.ts"]
 }

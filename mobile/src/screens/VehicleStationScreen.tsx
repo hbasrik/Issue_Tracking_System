@@ -24,6 +24,7 @@ import {
   type VehicleStatusHistoryEntry,
 } from '../api/client';
 import { ProgressRing } from '../components/ProgressRing';
+import { VehicleStatusBadge } from '../components/VehicleStatusBadge';
 import { IssueCard } from '../components/IssueCard';
 import {
   Badge,
@@ -220,9 +221,9 @@ export default function VehicleStationScreen() {
             {currentStationName !== t('common.emDash') ? ` · ${currentStationName}` : ''}
           </Text>
           {vehicle?.CurrentGlobalStatus ? (
-            <Text style={{ color: tokens.textSecondary, marginTop: 4, fontSize: 13 }}>
-              {vehicle.CurrentGlobalStatus}
-            </Text>
+            <View style={{ marginTop: 4 }}>
+              <VehicleStatusBadge status={vehicle.CurrentGlobalStatus} />
+            </View>
           ) : null}
           {lastStatusChange ? (
             <ActionStamp name={lastStatusChange.ActorName} at={lastStatusChange.EventAt} />
