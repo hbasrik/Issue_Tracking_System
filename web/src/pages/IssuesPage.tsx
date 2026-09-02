@@ -34,6 +34,7 @@ import {
   type IssueExportPhoto,
 } from '../lib/issueExport';
 import { useI18n, type Translate } from '../i18n';
+import { IssueListPrint } from '../components/print/IssuePrint';
 
 type IssueStatus = Issue['Status'];
 
@@ -278,11 +279,55 @@ export default function IssuesPage() {
         })
     : null;
 
+  const printFilters: string[] = [];
+  if (homeStat) {
+    printFilters.push(t('print.filterHome', { label: homeIssueStatLabel(homeStat, t) }));
+  }
+  if (analysisStat) {
+    printFilters.push(
+      t('print.filterAnalysis', { label: analysisIssueStatLabel(analysisStat, t) }),
+    );
+    if (analysisFrom || analysisTo) {
+      printFilters.push(
+        t('print.filterRange', {
+          from: analysisFrom || '…',
+          to: analysisTo || '…',
+        }),
+      );
+    }
+  }
+  if (!homeStat && !analysisStat) {
+    if (listQuery.trim()) {
+      printFilters.push(t('print.filterSearch', { q: listQuery.trim() }));
+    }
+    if (typeIds.size > 0) {
+      const names = issueTypes
+        .filter((it) => typeIds.has(it.ID))
+        .map((it) => issueTypeChipLabel(it.Name));
+      if (names.length) printFilters.push(t('print.filterTypes', { list: names.join(', ') }));
+    }
+    if (severities.size > 0) {
+      printFilters.push(
+        t('print.filterSeverities', {
+          list: [...severities].map((s) => severityLabel(s, t)).join(', '),
+        }),
+      );
+    }
+    if (statuses.size > 0) {
+      printFilters.push(
+        t('print.filterStatuses', {
+          list: [...statuses].map((s) => issueStatusLabel(s, t)).join(', '),
+        }),
+      );
+    }
+  }
+
   return (
     <section>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl font-semibold sm:text-2xl">{t('nav.issues')}</h1>
         <div className="flex flex-wrap gap-2">
+          <IssueListPrint issues={visible} filters={printFilters} />
           <button
             type="button"
             disabled={exporting !== null || visible.length === 0}

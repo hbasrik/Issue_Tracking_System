@@ -19,6 +19,7 @@ import { DataCard, DataCardField } from './DataCard';
 import { IssueStatusHistory } from './IssueStatusHistory';
 import { SectionHeading } from './SectionHeading';
 import { issueStationLabel, reporterFallback } from '../lib/issueDetailCopy';
+import { IssueDetailPrint } from './print/IssuePrint';
 
 function IssueThumb({ path }: { path?: string }) {
   const { t } = useI18n();
@@ -162,6 +163,9 @@ export function IssueDetailPanel({
         border: '1px solid var(--border)',
       }}
     >
+      <div className="flex justify-end">
+        <IssueDetailPrint issue={issue} />
+      </div>
       {error && (
         <p className="text-[13px]" style={{ color: 'var(--status-not-ok)' }}>
           {error}
