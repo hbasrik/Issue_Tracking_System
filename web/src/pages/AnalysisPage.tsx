@@ -397,9 +397,9 @@ export default function AnalysisPage() {
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           <ChartCard title={t('analysis.doneVsOpen')}>
-            <div className="analysis-pie h-[220px] w-full min-w-0 sm:h-[260px]">
+            <div className="chart-inert h-[220px] w-full min-w-0 sm:h-[260px]">
               <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
+                <PieChart tabIndex={-1}>
                   <Pie
                     data={pieData}
                     dataKey="value"
@@ -432,9 +432,9 @@ export default function AnalysisPage() {
           </ChartCard>
 
           <ChartCard title={t('analysis.statusDist')}>
-            <div className="analysis-pie h-[220px] w-full min-w-0 sm:h-[260px]">
+            <div className="chart-inert h-[220px] w-full min-w-0 sm:h-[260px]">
               <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
+                <PieChart tabIndex={-1}>
                   <Pie
                     data={statusPie}
                     dataKey="value"
@@ -469,9 +469,10 @@ export default function AnalysisPage() {
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           <ChartCard title={t('analysis.stationMttr')}>
-            <div className="h-[220px] w-full min-w-0 sm:h-[260px]">
+            <div className="chart-inert h-[220px] w-full min-w-0 sm:h-[260px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
+                  tabIndex={-1}
                   data={mttrBars}
                   margin={{ top: 8, right: 8, left: 0, bottom: 8 }}
                 >
@@ -547,9 +548,10 @@ export default function AnalysisPage() {
         </div>
 
         <ChartCard title={t('analysis.pareto')}>
-          <div className="h-[220px] w-full min-w-0 sm:h-[240px]">
+          <div className="chart-inert h-[220px] w-full min-w-0 sm:h-[240px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
+                tabIndex={-1}
                 data={defectBars}
                 margin={{ top: 8, right: 8, left: 0, bottom: 48 }}
               >
@@ -584,9 +586,10 @@ export default function AnalysisPage() {
             {t('analysis.vehicleBreakdownHint')}
           </p>
 
-          <div className="mt-4 h-48 w-full min-w-0 sm:h-56">
+          <div className="chart-inert mt-4 h-48 w-full min-w-0 sm:h-56">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
+                tabIndex={-1}
                 data={stackedSeverity}
                 margin={{ top: 8, right: 8, left: 0, bottom: 8 }}
               >

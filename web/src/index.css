@@ -68,22 +68,40 @@ body {
   min-width: 44px;
 }
 
-/* Analysis pies are not interactive — hide the SVG focus ring Recharts adds. */
-.analysis-pie .recharts-wrapper,
-.analysis-pie .recharts-surface,
-.analysis-pie .recharts-pie,
-.analysis-pie .recharts-pie-sector,
-.analysis-pie .recharts-sector,
-.analysis-pie .recharts-layer {
+/* Inert charts — decorative only; no click/focus rings from Recharts or :focus-visible. */
+.chart-inert .recharts-wrapper,
+.chart-inert .recharts-surface,
+.chart-inert .recharts-layer,
+.chart-inert .recharts-sector,
+.chart-inert .recharts-pie-sector,
+.chart-inert .recharts-bar-rectangle,
+.chart-inert .recharts-area-area,
+.chart-inert .recharts-curve,
+.chart-inert .recharts-dot,
+.chart-inert svg {
   outline: none !important;
 }
-.analysis-pie .recharts-pie-sector:focus,
-.analysis-pie .recharts-sector:focus,
-.analysis-pie .recharts-layer:focus {
-  outline: none;
-  stroke: none;
+
+.chart-inert .recharts-wrapper:focus,
+.chart-inert .recharts-wrapper:focus-visible,
+.chart-inert .recharts-surface:focus,
+.chart-inert .recharts-surface:focus-visible,
+.chart-inert .recharts-sector:focus,
+.chart-inert .recharts-sector:focus-visible,
+.chart-inert .recharts-pie-sector:focus,
+.chart-inert .recharts-pie-sector:focus-visible,
+.chart-inert .recharts-bar-rectangle:focus,
+.chart-inert .recharts-bar-rectangle:focus-visible,
+.chart-inert .recharts-layer:focus,
+.chart-inert .recharts-layer:focus-visible,
+.chart-inert svg:focus,
+.chart-inert svg:focus-visible {
+  outline: none !important;
 }
-.analysis-pie .recharts-pie-sector {
+
+.chart-inert .recharts-sector,
+.chart-inert .recharts-pie-sector,
+.chart-inert .recharts-bar-rectangle {
   cursor: default;
 }
 

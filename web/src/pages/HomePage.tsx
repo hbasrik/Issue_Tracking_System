@@ -267,14 +267,14 @@ export default function HomePage() {
           title={t('home.severityDist')}
           subtitle={t('home.severityHint')}
         >
-          <div className="h-[220px] w-full min-w-0 sm:h-[240px]">
+          <div className="chart-inert h-[220px] w-full min-w-0 sm:h-[240px]">
             {metrics.openNow === 0 ? (
               <p className="flex h-full items-center text-[13px]" style={mutedCaption}>
                 {t('home.noOpenIssues')}
               </p>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
+                <PieChart tabIndex={-1}>
                   <Pie
                     data={openSeverity}
                     dataKey="value"
@@ -285,9 +285,16 @@ export default function HomePage() {
                     outerRadius="72%"
                     paddingAngle={2}
                     stroke="none"
+                    isAnimationActive={false}
+                    rootTabIndex={-1}
+                    style={{ outline: 'none', cursor: 'default' }}
                   >
                     {openSeverity.map((entry) => (
-                      <Cell key={entry.name} fill={entry.color} />
+                      <Cell
+                        key={entry.name}
+                        fill={entry.color}
+                        style={{ outline: 'none', cursor: 'default' }}
+                      />
                     ))}
                   </Pie>
                   <Tooltip
@@ -305,7 +312,7 @@ export default function HomePage() {
           title={t('home.openByStation')}
           subtitle={t('home.openByStationHint')}
         >
-          <div className="h-[220px] w-full min-w-0 sm:h-[240px]">
+          <div className="chart-inert h-[220px] w-full min-w-0 sm:h-[240px]">
             {openByStation.length === 0 ? (
               <p className="flex h-full items-center text-[13px]" style={mutedCaption}>
                 {t('home.noStationDefects')}
@@ -313,6 +320,7 @@ export default function HomePage() {
             ) : (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
+                  tabIndex={-1}
                   data={openByStation}
                   layout="vertical"
                   margin={{ top: 4, right: 12, left: 4, bottom: 4 }}
@@ -366,9 +374,10 @@ export default function HomePage() {
           title={t('home.weekly')}
           subtitle={t('home.weeklyHint')}
         >
-          <div className="h-[220px] w-full min-w-0 sm:h-[260px]">
+          <div className="chart-inert h-[220px] w-full min-w-0 sm:h-[260px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
+                tabIndex={-1}
                 data={metrics.weekly}
                 margin={{ top: 8, right: 8, left: 0, bottom: 8 }}
               >
@@ -403,7 +412,7 @@ export default function HomePage() {
           title={t('home.backlog')}
           subtitle={t('home.backlogHint')}
         >
-          <div className="h-[220px] w-full min-w-0 sm:h-[260px]">
+          <div className="chart-inert h-[220px] w-full min-w-0 sm:h-[260px]">
             {metrics.backlog.length === 0 ? (
               <p className="flex h-full items-center text-[13px]" style={mutedCaption}>
                 {t('home.noRecords')}
@@ -411,6 +420,7 @@ export default function HomePage() {
             ) : (
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart
+                  tabIndex={-1}
                   data={metrics.backlog}
                   margin={{ top: 8, right: 8, left: 0, bottom: 8 }}
                 >
@@ -579,8 +589,13 @@ function ResolutionGauge({
   const track = Math.PI * r;
   const dash = rate * track;
   return (
-    <div className="flex flex-col items-center">
-      <svg viewBox="0 0 200 120" className="w-full max-w-[280px]" aria-hidden>
+    <div className="chart-inert flex flex-col items-center">
+      <svg
+        viewBox="0 0 200 120"
+        className="w-full max-w-[280px]"
+        aria-hidden
+        focusable="false"
+      >
         <path
           d={`M ${cx - r} ${cy} A ${r} ${r} 0 0 1 ${cx + r} ${cy}`}
           fill="none"
