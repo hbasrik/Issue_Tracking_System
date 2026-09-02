@@ -24,6 +24,17 @@ func (s EOLWorkflowStage) Valid() bool {
 	}
 }
 
+// FilterValid reports whether the stage may be used as a vehicle-list filter
+// (user-facing BRANCH / DEPOT / COMPLETED only).
+func (s EOLWorkflowStage) FilterValid() bool {
+	switch s {
+	case EOLStageBranch, EOLStageDepot, EOLStageCompleted:
+		return true
+	default:
+		return false
+	}
+}
+
 // EOLWorkflow mirrors the vehicle_eol_workflow table. One row is created per
 // vehicle by the fn_initialize_vehicle_progress trigger.
 type EOLWorkflow struct {

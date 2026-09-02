@@ -42,6 +42,14 @@ func (s *server) handleVehicleList(w http.ResponseWriter, r *http.Request) {
 		}
 		filter.StationID = &stationID
 	}
+	if raw := q.Get("eol_stage"); raw != "" {
+		stage := domain.EOLWorkflowStage(raw)
+		if !stage.FilterValid() {
+			badRequest(w, "invalid eol_stage filter")
+			return
+		}
+		filter.EOLStage = &stage
+	}
 
 	page := 1
 	if raw := q.Get("page"); raw != "" {

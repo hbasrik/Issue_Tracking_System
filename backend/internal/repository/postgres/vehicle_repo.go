@@ -29,6 +29,11 @@ const vehicleColumns = `vin, vehicle_model_id,
 	current_global_status, current_station_id, total_progress_percentage,
 	eol_template_id, shipment_template_id, test_template_id, created_at, updated_at`
 
+const vehicleListSelect = `vehicles.vin, vehicles.vehicle_model_id,
+	vehicles.current_global_status, vehicles.current_station_id, vehicles.total_progress_percentage,
+	vehicles.eol_template_id, vehicles.shipment_template_id, vehicles.test_template_id,
+	vehicles.created_at, vehicles.updated_at, w.current_stage`
+
 func scanVehicle(row pgx.Row) (*domain.Vehicle, error) {
 	var v domain.Vehicle
 	var status string
@@ -40,6 +45,25 @@ func scanVehicle(row pgx.Row) (*domain.Vehicle, error) {
 		return nil, err
 	}
 	v.CurrentGlobalStatus = domain.VehicleStatus(status)
+	return &v, nil
+}
+
+func scanVehicleListRow(row pgx.Row) (*domain.Vehicle, error) {
+	var v domain.Vehicle
+	var status string
+	var eolStage *string
+	if err := row.Scan(
+		&v.VIN, &v.VehicleModelID, &status, &v.CurrentStationID,
+		&v.TotalProgressPercentage, &v.EOLTemplateID, &v.ShipmentTemplateID,
+		&v.TestTemplateID, &v.CreatedAt, &v.UpdatedAt, &eolStage,
+	); err != nil {
+		return nil, err
+	}
+	v.CurrentGlobalStatus = domain.VehicleStatus(status)
+	if eolStage != nil && *eolStage != "" {
+		stage := domain.EOLWorkflowStage(*eolStage)
+		v.CurrentEOLStage = &stage
+	}
 	return &v, nil
 }
 
@@ -60,26 +84,43 @@ func vehicleFilterClause(f domain.VehicleListFilter) (string, []any) {
 	var args []any
 
 	if f.AnalysisStat == domain.VehicleAnalysisStatOnLine {
-		conds = append(conds, "current_global_status = 'IN_PRODUCTION'")
+		conds = append(conds, "vehicles.current_global_status = 'IN_PRODUCTION'")
 	} else {
-		conds = append(conds, "current_global_status <> 'PLANNED'")
+		conds = append(conds, "vehicles.current_global_status <> 'PLANNED'")
 	}
 
 	if f.VINContains != "" {
 		args = append(args, f.VINContains)
-		conds = append(conds, fmt.Sprintf("vin ILIKE '%%' || $%d || '%%'", len(args)))
+		conds = append(conds, fmt.Sprintf("vehicles.vin ILIKE '%%' || $%d || '%%'", len(args)))
 	}
 	if f.Status != nil {
 		args = append(args, string(*f.Status))
-		conds = append(conds, fmt.Sprintf("current_global_status = $%d", len(args)))
+		conds = append(conds, fmt.Sprintf("vehicles.current_global_status = $%d", len(args)))
 	}
 	if f.ModelID != nil {
 		args = append(args, *f.ModelID)
-		conds = append(conds, fmt.Sprintf("vehicle_model_id = $%d", len(args)))
+		conds = append(conds, fmt.Sprintf("vehicles.vehicle_model_id = $%d", len(args)))
 	}
 	if f.StationID != nil {
 		args = append(args, *f.StationID)
-		conds = append(conds, fmt.Sprintf("current_station_id = $%d", len(args)))
+		conds = append(conds, fmt.Sprintf("vehicles.current_station_id = $%d", len(args)))
+	}
+	if f.EOLStage != nil {
+		switch *f.EOLStage {
+		case domain.EOLStageDepot:
+			conds = append(conds, `EXISTS (
+				SELECT 1 FROM vehicle_eol_workflow w
+				WHERE w.vin = vehicles.vin
+				  AND w.current_stage IN ('DEPOT', 'DOCUMENT')
+			)`)
+		default:
+			args = append(args, string(*f.EOLStage))
+			conds = append(conds, fmt.Sprintf(`EXISTS (
+				SELECT 1 FROM vehicle_eol_workflow w
+				WHERE w.vin = vehicles.vin
+				  AND w.current_stage = $%d
+			)`, len(args)))
+		}
 	}
 
 	switch f.AnalysisStat {
@@ -119,8 +160,11 @@ func vehicleFilterClause(f domain.VehicleListFilter) (string, []any) {
 func (r *VehicleRepo) List(ctx context.Context, f domain.VehicleListFilter) ([]domain.Vehicle, error) {
 	where, args := vehicleFilterClause(f)
 	args = append(args, f.Limit, f.Offset)
-	query := `SELECT ` + vehicleColumns + ` FROM vehicles` + where +
-		fmt.Sprintf(" ORDER BY vin DESC LIMIT $%d OFFSET $%d", len(args)-1, len(args))
+	query := `SELECT ` + vehicleListSelect +
+		` FROM vehicles` +
+		` LEFT JOIN vehicle_eol_workflow w ON w.vin = vehicles.vin` +
+		where +
+		fmt.Sprintf(" ORDER BY vehicles.vin DESC LIMIT $%d OFFSET $%d", len(args)-1, len(args))
 
 	rows, err := r.pool.Query(ctx, query, args...)
 	if err != nil {
@@ -130,7 +174,7 @@ func (r *VehicleRepo) List(ctx context.Context, f domain.VehicleListFilter) ([]d
 
 	var out []domain.Vehicle
 	for rows.Next() {
-		v, err := scanVehicle(rows)
+		v, err := scanVehicleListRow(rows)
 		if err != nil {
 			return nil, err
 		}

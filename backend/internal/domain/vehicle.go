@@ -55,6 +55,7 @@ func (s VehicleAnalysisStat) Valid() bool {
 type VehicleListFilter struct {
 	VINContains  string
 	Status       *VehicleStatus
+	EOLStage     *EOLWorkflowStage
 	ModelID      *int
 	StationID    *int
 	AnalysisStat VehicleAnalysisStat
@@ -73,6 +74,7 @@ type Vehicle struct {
 	VIN                     string
 	VehicleModelID          *int
 	CurrentGlobalStatus     VehicleStatus
+	CurrentEOLStage         *EOLWorkflowStage
 	CurrentStationID        *int
 	TotalProgressPercentage float64
 	EOLTemplateID           *int
