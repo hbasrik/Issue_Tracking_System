@@ -7,9 +7,11 @@ const SRC = '/logo.png';
 export function Logo({
   height = 40,
   alt = 'Karea',
+  className,
 }: {
   height?: number;
   alt?: string;
+  className?: string;
 }) {
   const width = Math.round((height * SRC_W) / SRC_H);
   return (
@@ -18,7 +20,7 @@ export function Logo({
       alt={alt}
       width={width}
       height={height}
-      className="block object-contain"
+      className={['block object-contain', className].filter(Boolean).join(' ')}
       style={{ width, height }}
       decoding="async"
     />

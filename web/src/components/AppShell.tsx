@@ -50,7 +50,7 @@ export function AppShell() {
     <div className="flex h-screen max-h-dvh overflow-hidden bg-[var(--bg-page)] text-[var(--text-primary)]">
       {/* Desktop sidebar */}
       <aside
-        className="hidden h-full w-60 shrink-0 flex-col overflow-hidden lg:flex"
+        className="hidden h-full w-60 shrink-0 flex-col overflow-hidden lg:flex print:hidden"
         style={{ backgroundColor: 'var(--sidebar-bg)' }}
         aria-label={t('nav.mainMenu')}
       >
@@ -71,7 +71,7 @@ export function AppShell() {
       )}
       <aside
         id={drawerId}
-        className={`fixed inset-y-0 left-0 z-50 flex w-[min(18rem,88vw)] flex-col overflow-hidden shadow-xl transition-transform duration-200 ease-out lg:hidden ${
+        className={`fixed inset-y-0 left-0 z-50 flex w-[min(18rem,88vw)] flex-col overflow-hidden shadow-xl transition-transform duration-200 ease-out lg:hidden print:hidden ${
           navOpen ? 'translate-x-0' : '-translate-x-full pointer-events-none'
         }`}
         style={{ backgroundColor: 'var(--sidebar-bg)' }}
@@ -94,7 +94,7 @@ export function AppShell() {
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <header
-          className="flex w-full shrink-0 flex-wrap items-center gap-2 rounded-b-xl border-b bg-[var(--bg-surface-1)] px-3 py-1.5 sm:px-4"
+          className="flex w-full shrink-0 flex-wrap items-center gap-2 rounded-b-xl border-b bg-[var(--bg-surface-1)] px-3 py-1.5 sm:px-4 print:hidden"
           style={{ borderColor: 'var(--border)' }}
         >
           <button
