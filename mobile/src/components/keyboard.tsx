@@ -1,5 +1,5 @@
+import { useEffect, useState } from 'react';
 import {
-  InputAccessoryView,
   Keyboard,
   Platform,
   Pressable,
@@ -8,22 +8,49 @@ import {
   Text,
   View,
   type ScrollViewProps,
+  type TextInputProps,
 } from 'react-native';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n';
 
-/** Shared by every multiline TextInput so one iOS toolbar serves the app. */
-export const KEYBOARD_DONE_NATIVE_ID = 'karea.keyboard.done';
+let multilineFocused = false;
+const focusListeners = new Set<() => void>();
+
+function setMultilineFocused(next: boolean) {
+  if (multilineFocused === next) return;
+  multilineFocused = next;
+  focusListeners.forEach((l) => l());
+}
+
+function subscribeMultilineFocus(listener: () => void) {
+  focusListeners.add(listener);
+  return () => {
+    focusListeners.delete(listener);
+  };
+}
+
+/** Merge into multiline TextInput onFocus/onBlur (also applied by AppTextInput). */
+export function multilineDoneInputProps(
+  onFocus?: TextInputProps['onFocus'],
+  onBlur?: TextInputProps['onBlur'],
+): Pick<TextInputProps, 'onFocus' | 'onBlur'> {
+  return {
+    onFocus: (e) => {
+      setMultilineFocused(true);
+      onFocus?.(e);
+    },
+    onBlur: (e) => {
+      setMultilineFocused(false);
+      onBlur?.(e);
+    },
+  };
+}
 
 /**
- * Spread onto multiline TextInput. iOS shows the "Bitti" bar; Android ignores
- * inputAccessoryViewID. Do not set returnKeyType=done here — Enter must insert
- * a newline.
+ * @deprecated Use AppTextInput with multiline — focus tracking is automatic.
+ * Kept so existing spreads are harmless no-ops.
  */
-export const iosDoneAccessoryProps =
-  Platform.OS === 'ios'
-    ? { inputAccessoryViewID: KEYBOARD_DONE_NATIVE_ID }
-    : {};
+export const iosDoneAccessoryProps = {};
 
 /** FlatList / ScrollView: unhandled taps dismiss; drag also dismisses. */
 export const listKeyboardDismissProps = {
@@ -32,19 +59,44 @@ export const listKeyboardDismissProps = {
 };
 
 /**
- * iOS toolbar above the keyboard. Android: hardware/back (and the keyboard's
- * own hide control) already dismisses — no extra chrome.
+ * Floating "Bitti" bar above the keyboard for multiline fields.
+ * InputAccessoryView does not work reliably with multiline TextInput on
+ * current React Native / Expo (shared nativeID breaks; multiline unsupported).
  */
 export function KeyboardDoneAccessory() {
   const { tokens } = useTheme();
   const { t } = useI18n();
-  if (Platform.OS !== 'ios') return null;
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [focused, setFocused] = useState(multilineFocused);
+
+  useEffect(() => subscribeMultilineFocus(() => setFocused(multilineFocused)), []);
+
+  useEffect(() => {
+    const showEvent =
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent =
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+    const show = Keyboard.addListener(showEvent, (e) => {
+      setKeyboardHeight(e.endCoordinates.height);
+    });
+    const hide = Keyboard.addListener(hideEvent, () => {
+      setKeyboardHeight(0);
+    });
+    return () => {
+      show.remove();
+      hide.remove();
+    };
+  }, []);
+
+  if (!focused || keyboardHeight <= 0) return null;
+
   return (
-    <InputAccessoryView nativeID={KEYBOARD_DONE_NATIVE_ID}>
+    <View pointerEvents="box-none" style={styles.overlay}>
       <View
         style={[
           styles.bar,
           {
+            bottom: keyboardHeight,
             backgroundColor: tokens.bgSurface1,
             borderTopColor: tokens.border,
           },
@@ -57,10 +109,12 @@ export function KeyboardDoneAccessory() {
           accessibilityRole="button"
           accessibilityLabel={t('common.dismissKeyboard')}
         >
-          <Text style={[styles.doneText, { color: tokens.accent }]}>{t('common.done')}</Text>
+          <Text style={[styles.doneText, { color: tokens.accent }]}>
+            {t('common.done')}
+          </Text>
         </Pressable>
       </View>
-    </InputAccessoryView>
+    </View>
   );
 }
 
@@ -92,7 +146,14 @@ export function DismissKeyboardScrollView({
 }
 
 const styles = StyleSheet.create({
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 9999,
+  },
   bar: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
     flexDirection: 'row',
     justifyContent: 'flex-end',
     alignItems: 'center',

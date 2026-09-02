@@ -1,4 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
+import { View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider } from './src/auth/AuthProvider';
 import { KeyboardDoneAccessory } from './src/components/keyboard';
@@ -13,11 +14,11 @@ if (__DEV__) {
 function AppShell() {
   const { mode } = useTheme();
   return (
-    <>
+    <View style={{ flex: 1 }}>
       <StatusBar style={mode === 'dark' ? 'light' : 'dark'} />
-      <KeyboardDoneAccessory />
       <RootNavigator />
-    </>
+      <KeyboardDoneAccessory />
+    </View>
   );
 }
 

@@ -39,7 +39,6 @@ import { issueStatusColor, issueStatusLabel } from '../lib/issueStatus';
 import { prepareUploadImage } from '../lib/prepareUploadImage';
 import {
   DismissKeyboardScrollView,
-  iosDoneAccessoryProps,
 } from '../components/keyboard';
 import { formatActionAt } from '../lib/actionStamp';
 import { issueStationLabel, reporterFallback } from '../lib/issueDetailCopy';
@@ -408,7 +407,6 @@ export default function IssueDetailScreen() {
                     placeholder={t('issueDetail.repairNote')}
                     placeholderTextColor={tokens.textSecondary}
                     multiline
-                    {...iosDoneAccessoryProps}
                     style={{
                       marginTop: 8,
                       minHeight: 100,

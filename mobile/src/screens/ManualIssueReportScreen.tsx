@@ -20,7 +20,6 @@ import {
 import { VinSearchBox } from '../components/VinSearchBox';
 import {
   DismissKeyboardScrollView,
-  iosDoneAccessoryProps,
 } from '../components/keyboard';
 import { prepareUploadImage } from '../lib/prepareUploadImage';
 import {
@@ -351,7 +350,6 @@ export default function ManualIssueReportScreen() {
           numberOfLines={4}
           placeholder={t('report.descPlaceholder')}
           placeholderTextColor={tokens.textSecondary}
-          {...iosDoneAccessoryProps}
           style={{
             marginTop: 6,
             minHeight: 100,

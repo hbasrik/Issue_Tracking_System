@@ -33,7 +33,6 @@ import { statusColors } from '../theme/tokens';
 import type { RootStackParamList } from '../navigation/types';
 import {
   DismissKeyboardScrollView,
-  iosDoneAccessoryProps,
 } from '../components/keyboard';
 import { prepareUploadImage } from '../lib/prepareUploadImage';
 import { apiErrorMessage } from '../lib/password';
@@ -156,7 +155,6 @@ export default function IssueReportScreen() {
           onChangeText={setDescription}
           multiline
           numberOfLines={4}
-          {...iosDoneAccessoryProps}
           style={{
             marginTop: 6,
             minHeight: 100,

@@ -29,7 +29,6 @@ import {
 } from '../components/ui';
 import {
   DismissKeyboardScrollView,
-  iosDoneAccessoryProps,
 } from '../components/keyboard';
 import { ActionStamp } from '../components/ActionStamp';
 import { checklistActorLines } from '../lib/actionStamp';
@@ -424,7 +423,6 @@ export default function EOLChecklistScreen() {
                   placeholderTextColor={tokens.textSecondary}
                   multiline
                   numberOfLines={3}
-                  {...iosDoneAccessoryProps}
                   style={{
                     marginTop: 10,
                     borderWidth: 1,

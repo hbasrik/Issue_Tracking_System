@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { forwardRef, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { multilineDoneInputProps } from './keyboard';
 import { useTheme } from '../theme/ThemeProvider';
 import { inkOn, statusColors } from '../theme/tokens';
 
@@ -45,24 +46,49 @@ export function Screen({
 /** Text field whose focus border uses the brand accent (Satsuma). */
 export const AppTextInput = forwardRef<TextInput, TextInputProps>(
   function AppTextInput(
-    { style, onFocus, onBlur, selectionColor, cursorColor, ...rest },
+    {
+      style,
+      onFocus,
+      onBlur,
+      selectionColor,
+      cursorColor,
+      multiline,
+      ...rest
+    },
     ref,
   ) {
     const { tokens } = useTheme();
     const [focused, setFocused] = useState(false);
+    const doneProps = multiline
+      ? multilineDoneInputProps(
+          (e) => {
+            setFocused(true);
+            onFocus?.(e);
+          },
+          (e) => {
+            setFocused(false);
+            onBlur?.(e);
+          },
+        )
+      : {};
     return (
       <TextInput
         ref={ref}
         underlineColorAndroid="transparent"
+        multiline={multiline}
         {...rest}
-        onFocus={(e) => {
-          setFocused(true);
-          onFocus?.(e);
-        }}
-        onBlur={(e) => {
-          setFocused(false);
-          onBlur?.(e);
-        }}
+        {...(multiline
+          ? doneProps
+          : {
+              onFocus: (e) => {
+                setFocused(true);
+                onFocus?.(e);
+              },
+              onBlur: (e) => {
+                setFocused(false);
+                onBlur?.(e);
+              },
+            })}
         selectionColor={selectionColor ?? tokens.accent}
         cursorColor={cursorColor ?? tokens.accent}
         style={[style, focused ? { borderColor: tokens.accent } : null]}
