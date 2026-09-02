@@ -15,6 +15,7 @@ import { ChecklistPanel } from './ChecklistPanel';
 import { SeverityIndicator } from './SeverityIndicator';
 import { StatusBadge } from './StatusBadge';
 import { ActionStamp } from './ActionStamp';
+import { ChecklistPrint } from './print/ChecklistPrint';
 
 const STAGE_IDS: { id: Exclude<EOLStage, 'COMPLETED' | 'DOCUMENT'> }[] = [
   { id: 'BRANCH' },
@@ -257,7 +258,10 @@ export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
         className="rounded-xl border bg-[var(--bg-surface-1)] p-4 sm:p-5"
         style={{ borderColor: 'var(--border)' }}
       >
-        <h2 className="text-lg font-semibold">{t('eol.title')}</h2>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-lg font-semibold">{t('eol.title')}</h2>
+          <ChecklistPrint vin={vin} type="eol" items={eolItems} />
+        </div>
         {import.meta.env.DEV && (
           <div className="mt-3 rounded-lg border px-3 py-2" style={{ borderColor: 'var(--status-conditional-ok)' }}>
             <p className="text-[13px]" style={{ color: 'var(--status-conditional-ok)' }}>

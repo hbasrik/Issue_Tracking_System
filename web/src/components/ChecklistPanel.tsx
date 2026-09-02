@@ -13,6 +13,7 @@ import { checklistActorLines } from '../lib/actionStamp';
 import { statusColors } from '../theme/tokens';
 import { useAuth } from '../auth/AuthProvider';
 import { Perm } from '../auth/permissions';
+import { ChecklistPrint } from './print/ChecklistPrint';
 
 interface ChecklistPanelProps {
   vin: string;
@@ -131,11 +132,14 @@ export function ChecklistPanel({
     >
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-lg font-semibold">{title}</h2>
-        <p className="text-[13px] text-[var(--text-secondary)]">
-          {visible.length === 0
-            ? t('checklist.none')
-            : t('checklist.passing', { done, total: visible.length })}
-        </p>
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="text-[13px] text-[var(--text-secondary)]">
+            {visible.length === 0
+              ? t('checklist.none')
+              : t('checklist.passing', { done, total: visible.length })}
+          </p>
+          {!eolPhase ? <ChecklistPrint vin={vin} type={type} items={visible} /> : null}
+        </div>
       </div>
       {hint && (
         <p className="mt-1 text-[13px] text-[var(--text-secondary)]">{hint}</p>
