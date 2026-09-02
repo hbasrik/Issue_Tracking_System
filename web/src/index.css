@@ -140,6 +140,14 @@ select:focus-visible {
   border-color: var(--accent) !important;
 }
 
+.login-field-inner .login-input:focus,
+.login-field-inner .login-input:focus-visible {
+  outline: none !important;
+  outline-offset: 0;
+  border-color: transparent !important;
+  box-shadow: none;
+}
+
 .logo-home-link:focus-visible {
   outline: 2px solid var(--sidebar-text);
   outline-offset: 2px;
@@ -502,7 +510,6 @@ tr.cursor-pointer:focus-visible {
 }
 
 .login-field-inner:focus-within {
-  border-color: var(--accent);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
