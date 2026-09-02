@@ -21,5 +21,5 @@
       "@karea/i18n": ["../shared/i18n/index.ts"]
     }
   },
-  "include": ["src", "../shared/i18n"]
+  "include": ["src", "../shared/i18n", "../shared/vehicleStatus.ts"]
 }

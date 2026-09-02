@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { api, type Station, type Vehicle } from '../lib/api';
-import { StatusBadge } from '../components/StatusBadge';
+import { VehicleStatusDisplay } from '../components/VehicleStatusDisplay';
 import { VinSearchBox } from '../components/VinSearchBox';
 import { VehicleIdentity } from '../components/VehicleIdentity';
 import {
@@ -12,18 +12,16 @@ import {
 } from '../components/DataCard';
 import { brandColors } from '../theme/tokens';
 import { useI18n, type MessageKey } from '../i18n';
-import { isOpenIssueStatus, vehicleStatusLabel } from '../lib/vehicleStatus';
+import {
+  EOL_STAGE_FILTER_VALUES,
+  VEHICLE_STATUS_FILTER_VALUES,
+  eolStageLabel,
+  isOpenIssueStatus,
+  vehicleStatusLabel,
+} from '../lib/vehicleStatus';
 import { VehicleListPrint } from '../components/print/VehicleListPrint';
 
-const STATUSES = [
-  '',
-  'PLANNED',
-  'IN_PRODUCTION',
-  'IN_WAREHOUSE',
-  'DELIVERED',
-  'SHIPPED',
-  'ON_HOLD',
-] as const;
+const STATUSES = ['', ...VEHICLE_STATUS_FILTER_VALUES] as const;
 
 const ANALYSIS_STAT_KEYS: Record<string, MessageKey> = {
   on_line: 'vehicles.inProductionNow',
@@ -43,6 +41,7 @@ export default function VehiclesPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const vin = searchParams.get('vin') ?? '';
   const status = searchParams.get('status') ?? '';
+  const eolStage = searchParams.get('eol_stage') ?? '';
   const analysisStat = searchParams.get('analysisStat') ?? '';
   const from = searchParams.get('from') ?? '';
   const to = searchParams.get('to') ?? '';
@@ -82,6 +81,7 @@ export default function VehiclesPage() {
         const res = await api.listVehicles({
           vin: vin || undefined,
           status: analysisStat ? undefined : status || undefined,
+          eol_stage: analysisStat ? undefined : eolStage || undefined,
           page,
           analysis_stat: analysisStat || undefined,
           from: analysisStat && analysisStat !== 'on_line' ? from || undefined : undefined,
@@ -102,7 +102,7 @@ export default function VehiclesPage() {
     return () => {
       cancelled = true;
     };
-  }, [vin, status, page, analysisStat, from, to, t]);
+  }, [vin, status, eolStage, page, analysisStat, from, to, t]);
 
   const analysisKey = ANALYSIS_STAT_KEYS[analysisStat];
   const analysisLabel = analysisKey ? t(analysisKey) : undefined;
@@ -115,6 +115,7 @@ export default function VehiclesPage() {
       const res = await api.listVehicles({
         vin: vin || undefined,
         status: analysisStat ? undefined : status || undefined,
+        eol_stage: analysisStat ? undefined : eolStage || undefined,
         page: p,
         analysis_stat: analysisStat || undefined,
         from: analysisStat && analysisStat !== 'on_line' ? from || undefined : undefined,
@@ -142,6 +143,9 @@ export default function VehiclesPage() {
     if (vin) filters.push(t('print.filterVin', { vin }));
     if (!analysisStat && status) {
       filters.push(t('print.filterStatus', { status: vehicleStatusLabel(status, t) }));
+    }
+    if (!analysisStat && eolStage) {
+      filters.push(t('print.filterEolStage', { stage: eolStageLabel(eolStage, t) }));
     }
     if (analysisLabel) {
       const range =
@@ -247,6 +251,34 @@ export default function VehiclesPage() {
             ))}
           </select>
         </div>
+        <div className="w-full sm:w-auto">
+          <label className="text-[13px] text-[var(--text-secondary)]">
+            {t('print.eolStage')}
+          </label>
+          <select
+            value={eolStage}
+            onChange={(e) => {
+              const nextStage = e.target.value;
+              patchParams((next) => {
+                next.delete('analysisStat');
+                next.delete('from');
+                next.delete('to');
+                if (nextStage) next.set('eol_stage', nextStage);
+                else next.delete('eol_stage');
+                next.delete('page');
+              });
+            }}
+            className="mt-1 block min-h-touch w-full rounded-lg border bg-[var(--bg-surface-1)] px-3 py-2 text-[15px] sm:w-auto"
+            style={{ borderColor: 'var(--border)' }}
+          >
+            <option value="">{t('status.vehicle.all')}</option>
+            {EOL_STAGE_FILTER_VALUES.map((s) => (
+              <option key={s} value={s}>
+                {eolStageLabel(s, t)}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {error && (
@@ -280,7 +312,10 @@ export default function VehiclesPage() {
                   {v.VehicleModelID != null ? `#${v.VehicleModelID}` : t('common.emDash')}
                 </DataCardField>
                 <DataCardField label={t('issue.status')}>
-                  <StatusBadge kind="vehicle" value={v.CurrentGlobalStatus} />
+                  <VehicleStatusDisplay
+                    status={v.CurrentGlobalStatus}
+                    eolStage={v.CurrentEOLStage}
+                  />
                 </DataCardField>
                 <DataCardField label={t('vehicles.station')}>
                   {v.CurrentStationID ?? t('common.emDash')}
@@ -350,7 +385,10 @@ export default function VehiclesPage() {
                     {v.VehicleModelID != null ? `#${v.VehicleModelID}` : t('common.emDash')}
                   </td>
                   <td className="px-4 py-3">
-                    <StatusBadge kind="vehicle" value={v.CurrentGlobalStatus} />
+                    <VehicleStatusDisplay
+                      status={v.CurrentGlobalStatus}
+                      eolStage={v.CurrentEOLStage}
+                    />
                   </td>
                   <td className="px-4 py-3">{v.CurrentStationID ?? t('common.emDash')}</td>
                   <td className="px-4 py-3">

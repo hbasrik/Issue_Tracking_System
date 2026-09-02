@@ -5,7 +5,7 @@ import { useAuth } from '../../auth/AuthProvider';
 import { useI18n } from '../../i18n';
 import type { Vehicle } from '../../lib/api';
 import { printSection } from '../../lib/print';
-import { vehicleStatusLabel } from '../../lib/vehicleStatus';
+import { vehicleListStatusLine } from '../../lib/vehicleStatus';
 import { PrintButton, PrintHeader, PrintRoot } from './PrintRoot';
 
 export type VehiclePrintBundle = {
@@ -81,7 +81,13 @@ export function VehicleListPrint({
               vehicles.map((v) => (
                 <tr key={v.VIN}>
                   <td>{v.VIN}</td>
-                  <td>{vehicleStatusLabel(v.CurrentGlobalStatus, t)}</td>
+                  <td>
+                    {vehicleListStatusLine(
+                      v.CurrentGlobalStatus,
+                      v.CurrentEOLStage,
+                      t,
+                    )}
+                  </td>
                   <td>{bundle?.stationName(v.CurrentStationID) ?? t('common.emDash')}</td>
                   <td>{Number(v.TotalProgressPercentage).toFixed(1)}%</td>
                   <td>{bundle?.openIssueCount(v.VIN) ?? 0}</td>

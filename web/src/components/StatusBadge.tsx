@@ -1,6 +1,7 @@
 import { inkOn, statusColors } from '../theme/tokens';
 import { useI18n, type Translate } from '../i18n';
 import { issueStatusColor, issueStatusLabel } from '../lib/issueStatus';
+import { vehicleStatusLabel } from '../lib/vehicleStatus';
 
 type BadgeKind =
   | 'stationStep'
@@ -87,7 +88,7 @@ function resolve(
       if (v === 'ON_HOLD') {
         return { color: statusColors.vehicleOnHold, label: t('status.vehicle.onHold') };
       }
-      return { color: statusColors.pending, label: v };
+      return { color: statusColors.pending, label: vehicleStatusLabel(value, t) };
 
     case 'issue':
       return { color: issueStatusColor(v), label: issueStatusLabel(v, t) };

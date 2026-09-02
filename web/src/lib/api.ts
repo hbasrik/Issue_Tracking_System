@@ -189,6 +189,7 @@ export const api = {
   listVehicles(params: {
     vin?: string;
     status?: string;
+    eol_stage?: string;
     model?: string;
     station?: string;
     page?: number;
@@ -199,6 +200,7 @@ export const api = {
     const q = new URLSearchParams();
     if (params.vin) q.set('vin', params.vin);
     if (params.status) q.set('status', params.status);
+    if (params.eol_stage) q.set('eol_stage', params.eol_stage);
     if (params.model) q.set('model', params.model);
     if (params.station) q.set('station', params.station);
     if (params.page) q.set('page', String(params.page));
@@ -467,6 +469,7 @@ export interface Vehicle {
   VIN: string;
   VehicleModelID: number | null;
   CurrentGlobalStatus: string;
+  CurrentEOLStage?: string | null;
   CurrentStationID: number | null;
   TotalProgressPercentage: number;
   EOLTemplateID?: number | null;

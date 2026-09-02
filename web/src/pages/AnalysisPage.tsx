@@ -29,16 +29,9 @@ import { issueStatusColor, issueStatusLabel } from '../lib/issueStatus';
 import { muteColor, rankTopVehicles } from '../lib/homeDashboard';
 import { statusColors } from '../theme/tokens';
 import { useI18n } from '../i18n';
+import { VEHICLE_STATUS_FILTER_VALUES, vehicleStatusLabel } from '../lib/vehicleStatus';
 
-const VEHICLE_STATUSES = [
-  '',
-  'PLANNED',
-  'IN_PRODUCTION',
-  'IN_WAREHOUSE',
-  'DELIVERED',
-  'SHIPPED',
-  'ON_HOLD',
-] as const;
+const VEHICLE_STATUSES = ['', ...VEHICLE_STATUS_FILTER_VALUES] as const;
 
 /**
  * Analysis tab — §4.4: filter bar, pie + bar charts, VIN severity breakdown,
@@ -301,7 +294,7 @@ export default function AnalysisPage() {
           >
             {VEHICLE_STATUSES.map((s) => (
               <option key={s || 'all'} value={s}>
-                {s || t('common.all')}
+                {vehicleStatusLabel(s, t)}
               </option>
             ))}
           </select>

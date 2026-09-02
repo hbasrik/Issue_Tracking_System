@@ -23,6 +23,7 @@ import { useAuth } from '../auth/AuthProvider';
 import { Perm } from '../auth/permissions';
 import { useI18n } from '../i18n';
 import { formatActionStamp } from '../lib/actionStamp';
+import { VEHICLE_STATUS_EDITOR_VALUES } from '../lib/vehicleStatus';
 import type { MessageKey } from '../../../shared/i18n';
 
 type Tab = 'overview' | 'eol' | 'shipment' | 'test' | 'issues' | 'audit';
@@ -47,13 +48,7 @@ const TAB_DEFS: { id: Tab; labelKey: MessageKey; perm?: string }[] = [
   { id: 'audit', labelKey: 'vehicles.tab.audit' },
 ];
 
-const STATUS_OPTIONS = [
-  'IN_PRODUCTION',
-  'IN_WAREHOUSE',
-  'DELIVERED',
-  'SHIPPED',
-  'ON_HOLD',
-] as const;
+const STATUS_OPTIONS = VEHICLE_STATUS_EDITOR_VALUES;
 
 /** Vehicle detail with Overview / EoL / Shipment / Test / Issues / Audit Log tabs. */
 export default function VehicleDetailPage() {

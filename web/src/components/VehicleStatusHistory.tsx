@@ -1,4 +1,5 @@
 import { useI18n } from '../i18n';
+import { vehicleStatusLabel } from '../lib/vehicleStatus';
 import { ActionStamp } from './ActionStamp';
 import type { VehicleStatusHistoryEntry } from '../lib/api';
 
@@ -32,7 +33,13 @@ export function VehicleStatusHistory({
           {items.map((row) => (
             <li key={row.ID}>
               <p className="text-[15px] font-medium">
-                {row.FromStatus || t('common.emDash')} → {row.ToStatus || t('common.emDash')}
+                {row.FromStatus
+                  ? vehicleStatusLabel(row.FromStatus, t)
+                  : t('common.emDash')}{' '}
+                →{' '}
+                {row.ToStatus
+                  ? vehicleStatusLabel(row.ToStatus, t)
+                  : t('common.emDash')}
               </p>
               <ActionStamp name={row.ActorName} at={row.EventAt} />
             </li>
