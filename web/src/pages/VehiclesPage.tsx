@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { api, type Vehicle } from '../lib/api';
+import { api, type Station, type Vehicle } from '../lib/api';
 import { StatusBadge } from '../components/StatusBadge';
 import { VinSearchBox } from '../components/VinSearchBox';
 import { VehicleIdentity } from '../components/VehicleIdentity';
@@ -11,7 +11,9 @@ import {
   MobileCardStack,
 } from '../components/DataCard';
 import { brandColors } from '../theme/tokens';
-import { useI18n, type MessageKey, type Translate } from '../i18n';
+import { useI18n, type MessageKey } from '../i18n';
+import { isOpenIssueStatus, vehicleStatusLabel } from '../lib/vehicleStatus';
+import { VehicleListPrint } from '../components/print/VehicleListPrint';
 
 const STATUSES = [
   '',
@@ -32,26 +34,6 @@ const ANALYSIS_STAT_KEYS: Record<string, MessageKey> = {
 
 function compareVinDesc(a: Vehicle, b: Vehicle): number {
   return b.VIN.localeCompare(a.VIN);
-}
-
-function vehicleStatusLabel(status: string, t: Translate): string {
-  switch (status) {
-    case 'PLANNED':
-      return t('status.vehicle.planned');
-    case 'IN_PRODUCTION':
-      return t('status.vehicle.inProduction');
-    case 'IN_WAREHOUSE':
-      return t('status.vehicle.inWarehouse');
-    case 'DELIVERED':
-    case 'WITH_CUSTOMER':
-      return t('status.vehicle.delivered');
-    case 'SHIPPED':
-      return t('status.vehicle.shipped');
-    case 'ON_HOLD':
-      return t('status.vehicle.onHold');
-    default:
-      return status;
-  }
 }
 
 /** Vehicle list — §4.3 filterable table; stacked cards below tablet. */
@@ -125,12 +107,73 @@ export default function VehiclesPage() {
   const analysisKey = ANALYSIS_STAT_KEYS[analysisStat];
   const analysisLabel = analysisKey ? t(analysisKey) : undefined;
 
+  async function collectPrint() {
+    const all: Vehicle[] = [];
+    let p = 1;
+    let totalCount = Infinity;
+    while (all.length < totalCount) {
+      const res = await api.listVehicles({
+        vin: vin || undefined,
+        status: analysisStat ? undefined : status || undefined,
+        page: p,
+        analysis_stat: analysisStat || undefined,
+        from: analysisStat && analysisStat !== 'on_line' ? from || undefined : undefined,
+        to: analysisStat && analysisStat !== 'on_line' ? to || undefined : undefined,
+      });
+      const batch = res.Items ?? [];
+      totalCount = res.Total ?? batch.length;
+      all.push(...batch);
+      if (batch.length === 0) break;
+      p += 1;
+    }
+    const [stationRes, issueRes] = await Promise.all([
+      api.listStations().catch(() => ({ items: [] as Station[] })),
+      api.listIssues().catch(() => ({ items: [] })),
+    ]);
+    const stations = stationRes.items ?? [];
+    const byStation = new Map(stations.map((s) => [s.ID, s.Name]));
+    const openByVin: Record<string, number> = {};
+    for (const issue of issueRes.items ?? []) {
+      if (isOpenIssueStatus(issue.Status)) {
+        openByVin[issue.VIN] = (openByVin[issue.VIN] ?? 0) + 1;
+      }
+    }
+    const filters: string[] = [];
+    if (vin) filters.push(t('print.filterVin', { vin }));
+    if (!analysisStat && status) {
+      filters.push(t('print.filterStatus', { status: vehicleStatusLabel(status, t) }));
+    }
+    if (analysisLabel) {
+      const range =
+        analysisStat !== 'on_line' && (from || to)
+          ? t('print.filterRange', { from: from || '…', to: to || '…' })
+          : '';
+      filters.push(
+        range
+          ? `${t('print.filterAnalysis', { label: analysisLabel })} (${range})`
+          : t('print.filterAnalysis', { label: analysisLabel }),
+      );
+    }
+    return {
+      vehicles: all.slice().sort(compareVinDesc),
+      filters,
+      stationName: (id: number | null) =>
+        id == null ? t('common.emDash') : byStation.get(id) ?? String(id),
+      openIssueCount: (v: string) => openByVin[v] ?? 0,
+    };
+  }
+
   return (
     <section>
-      <h1 className="text-xl font-semibold sm:text-2xl">{t('vehicles.title')}</h1>
-      <p className="mt-1 text-[13px] text-[var(--text-secondary)]">
-        {t('vehicles.subtitle')}
-      </p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-semibold sm:text-2xl">{t('vehicles.title')}</h1>
+          <p className="mt-1 text-[13px] text-[var(--text-secondary)]">
+            {t('vehicles.subtitle')}
+          </p>
+        </div>
+        <VehicleListPrint disabled={loading} onCollect={collectPrint} />
+      </div>
 
       {analysisLabel && (
         <div
