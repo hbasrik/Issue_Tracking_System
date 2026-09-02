@@ -154,15 +154,6 @@ export default function LoginPage() {
           </p>
         </div>
       </div>
-
-      <div className="login-wallpaper-pane" aria-hidden>
-        <img
-          src="/karea_wallpaper.png"
-          alt=""
-          className="login-wallpaper-img"
-          decoding="async"
-        />
-      </div>
     </div>
   );
 }
