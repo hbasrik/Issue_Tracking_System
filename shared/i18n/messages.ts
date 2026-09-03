@@ -352,12 +352,12 @@ export const tr = {
   'vehicles.tab.issues': 'Issues',
   'vehicles.tab.audit': 'Denetim kaydı',
   'vehicles.statusEditor': 'Durum düzenleyici',
-  'vehicles.statusEditorHint': 'Küresel araç durumunu güncelleyin.',
+  'vehicles.statusEditorHint': 'Aracın genel durumunu elle güncelleyin.',
   'vehicles.applyStatus': 'Durumu uygula',
   'vehicles.stationStepper': 'İstasyon adımları',
   'vehicles.shipmentTitle': 'Sevk kontrol listesi',
   'vehicles.shipmentHint':
-    'Evet/Hayır kutusu — hemen kaydedilir. Eksik maddeler WITH_CUSTOMER / SHIPPED geçişini engeller.',
+    'Evet/Hayır kutusu — hemen kaydedilir. Eksik maddeler Teslim Edildi / Sevk edildi geçişini engeller.',
   'vehicles.testTitle': 'Test kontrol listesi',
   'vehicles.testHint':
     'Evet/Hayır kutusu — hemen kaydedilir. Kalite kaydıdır, araç durumunu değiştirmez.',
@@ -378,7 +378,7 @@ export const tr = {
   'vehicles.completionPct': 'Tamamlanma %',
   'vehicles.pagination': '{total} toplam · sayfa {page}',
   'vehicles.plannedHint':
-    'PLANNED duruma elle geçilemez; hatta ilk istasyon adımı işlenince otomatik IN_PRODUCTION olur.',
+    'Planlandı durumu elle seçilemez; hatta ilk istasyon adımı tamamlanınca durum otomatik olarak Hatta olur.',
   'vehicles.listSubtitle': 'Tüm araçlar — istasyon kuyruğundan bağımsız',
   'vehicles.listTitle': 'Araç listesi',
   'vehicles.none': 'Araç bulunamadı',
@@ -1058,12 +1058,12 @@ export const en: Record<MessageKey, string> = {
   'vehicles.tab.issues': 'Issues',
   'vehicles.tab.audit': 'Audit log',
   'vehicles.statusEditor': 'Status editor',
-  'vehicles.statusEditorHint': 'Update the vehicle global status.',
+  'vehicles.statusEditorHint': 'Manually update the vehicle overall status.',
   'vehicles.applyStatus': 'Apply status',
   'vehicles.stationStepper': 'Station stepper',
   'vehicles.shipmentTitle': 'Shipment checklist',
   'vehicles.shipmentHint':
-    'Yes/No checkbox — saves immediately. Incomplete items block WITH_CUSTOMER / SHIPPED.',
+    'Yes/No checkbox — saves immediately. Incomplete items block delivery / shipped transitions.',
   'vehicles.testTitle': 'Test checklist',
   'vehicles.testHint':
     'Yes/No checkbox — saves immediately. Informational quality tracking; no vehicle-status gate.',
@@ -1537,7 +1537,8 @@ export const en: Record<MessageKey, string> = {
   'vehicles.notFound': 'No vehicles found',
   'vehicles.pageInfo': '{total} total · page {page}',
   'vehicles.pagination': '{total} total · page {page}',
-  'vehicles.plannedHint': 'PLANNED cannot be set by hand; the first station step on the line sets IN_PRODUCTION automatically.',
+  'vehicles.plannedHint':
+    'Planned status cannot be selected manually; the first station step on the line sets the status to On line automatically.',
   'vehicles.readinessHint': 'Complete the items below before shipping. Depot Release hard-block rules are unchanged.',
   'vehicles.stepsFailed': 'Could not load station steps',
   'vehicles.subtitle': 'Filterable vehicle table',
