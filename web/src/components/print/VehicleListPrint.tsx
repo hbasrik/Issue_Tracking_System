@@ -1,3 +1,4 @@
+import { Printer } from 'lucide-react';
 import { useState } from 'react';
 import { flushSync } from 'react-dom';
 import { formatDateTime } from '../../../../shared/i18n';
@@ -47,6 +48,7 @@ export function VehicleListPrint({
     <>
       <PrintButton
         label={t('common.print')}
+        icon={<Printer size={15} aria-hidden />}
         disabled={disabled}
         onClick={() => void onPrint()}
       />

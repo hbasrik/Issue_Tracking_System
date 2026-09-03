@@ -1,3 +1,4 @@
+import { Printer } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { useAuth } from '../../auth/AuthProvider';
@@ -83,7 +84,7 @@ export function ChecklistPrint({
 
   return (
     <>
-      <PrintButton label={t('common.print')} onClick={() => void onPrint()} />
+      <PrintButton label={t('common.print')} icon={<Printer size={15} aria-hidden />} onClick={() => void onPrint()} />
       <PrintRoot id={printId}>
         <PrintHeader
           title={t(checklistTitleKey(type))}

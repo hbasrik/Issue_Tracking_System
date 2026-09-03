@@ -47,19 +47,29 @@ export function PrintButton({
   onClick,
   disabled,
   label,
+  icon,
+  variant = 'secondary',
 }: {
   onClick: () => void;
   disabled?: boolean;
   label: string;
+  icon?: ReactNode;
+  variant?: 'secondary' | 'primary';
 }) {
+  const primary = variant === 'primary';
   return (
     <button
       type="button"
       disabled={disabled}
       onClick={onClick}
-      className="min-h-touch rounded-lg border px-3 py-1.5 text-[13px] hover:bg-[var(--bg-surface-2)] disabled:opacity-40"
-      style={{ borderColor: 'var(--border)' }}
+      className={`inline-flex min-h-touch items-center gap-1.5 rounded-lg px-3 py-1.5 text-[13px] font-medium disabled:opacity-40 ${
+        primary
+          ? 'bg-[var(--accent)] text-white hover:brightness-110'
+          : 'border hover:bg-[var(--bg-surface-2)]'
+      }`}
+      style={primary ? undefined : { borderColor: 'var(--border)' }}
     >
+      {icon}
       {label}
     </button>
   );

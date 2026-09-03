@@ -1,3 +1,4 @@
+import { Printer } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { formatDateTime } from '../../../../shared/i18n';
@@ -40,6 +41,7 @@ export function IssueListPrint({
     <>
       <PrintButton
         label={t('common.print')}
+        icon={<Printer size={15} aria-hidden />}
         disabled={issues.length === 0}
         onClick={() => {
           flushSync(() => setPrintedAt(formatDateTime(new Date().toISOString(), locale)));
@@ -126,7 +128,7 @@ export function IssueDetailPrint({ issue }: { issue: Issue }) {
 
   return (
     <>
-      <PrintButton label={t('common.print')} onClick={() => void onPrint()} />
+      <PrintButton label={t('common.print')} icon={<Printer size={15} aria-hidden />} onClick={() => void onPrint()} />
       <PrintRoot id="issues-detail">
         <PrintHeader
           title={t('print.issueDetail')}

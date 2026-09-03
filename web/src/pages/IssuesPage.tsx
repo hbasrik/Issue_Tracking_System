@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { Archive, FileSpreadsheet } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { api, mediaFileUrl, type Issue, type IssueType, type MediaAttachment } from '../lib/api';
 import { IssueList } from '../components/IssueList';
@@ -332,9 +333,10 @@ export default function IssuesPage() {
             type="button"
             disabled={exporting !== null || visible.length === 0}
             onClick={() => void exportCsv()}
-            className="min-h-touch rounded-lg border px-3 py-1.5 text-[13px] hover:bg-[var(--bg-surface-2)] disabled:opacity-40"
+            className="inline-flex min-h-touch items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[13px] font-medium hover:bg-[var(--bg-surface-2)] disabled:opacity-40"
             style={{ borderColor: 'var(--border)' }}
           >
+            <FileSpreadsheet size={15} aria-hidden />
             {exporting === 'csv'
               ? t('issue.exportingCsv')
               : t('issue.csvN', { n: visible.length })}
@@ -343,8 +345,9 @@ export default function IssuesPage() {
             type="button"
             disabled={exporting !== null || visible.length === 0}
             onClick={() => void exportZip()}
-            className="min-h-touch rounded-lg bg-[var(--accent)] px-3 py-1.5 text-[13px] text-white hover:brightness-110 disabled:opacity-40"
+            className="inline-flex min-h-touch items-center gap-1.5 rounded-lg bg-[var(--accent)] px-3 py-1.5 text-[13px] font-medium text-white hover:brightness-110 disabled:opacity-40"
           >
+            <Archive size={15} aria-hidden />
             {exporting === 'zip'
               ? t('issue.exportingZip')
               : t('issue.zipN', { n: visible.length })}
