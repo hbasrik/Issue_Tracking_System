@@ -55,6 +55,7 @@ export interface ApiErrorBody {
   blocking_issues?: BlockingIssue[];
   checklist_blockers?: EOLChecklistBlocker[];
   depot_items_remaining?: number;
+  station_steps_remaining?: number;
 }
 
 export interface EOLChecklistBlocker {

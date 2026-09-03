@@ -11,16 +11,17 @@ import (
 // EOLBranchShipper performs stage 1 of the EOL workflow (Karar 2): shipping a
 // vehicle from the branch to the depot.
 //
-// Branch shipment is a hard-block gate on three checklists (EOL BRANCH, TEST,
-// SHIPMENT). Open issues are counted and reported back as a soft warning but
-// never block the transition.
+// Branch shipment hard-blocks on EOL BRANCH + TEST + SHIPMENT checklists and
+// on incomplete station steps. Open issues are counted and reported back as a
+// soft warning but never block the transition.
 type EOLBranchShipper struct {
-	vehicles   repository.VehicleRepository
-	issues     repository.IssueRepository
-	workflow   repository.EOLWorkflowRepository
-	checklists *ChecklistResultRecorder
-	progress   repository.ChecklistProgressRepository
-	uow        repository.TransactionManager
+	vehicles     repository.VehicleRepository
+	issues       repository.IssueRepository
+	workflow     repository.EOLWorkflowRepository
+	checklists   *ChecklistResultRecorder
+	progress     repository.ChecklistProgressRepository
+	stationSteps repository.StationStepProgressRepository
+	uow          repository.TransactionManager
 }
 
 // NewEOLBranchShipper wires the usecase with its repositories.
@@ -30,15 +31,17 @@ func NewEOLBranchShipper(
 	workflow repository.EOLWorkflowRepository,
 	checklists *ChecklistResultRecorder,
 	progress repository.ChecklistProgressRepository,
+	stationSteps repository.StationStepProgressRepository,
 	uow repository.TransactionManager,
 ) *EOLBranchShipper {
 	return &EOLBranchShipper{
-		vehicles:   vehicles,
-		issues:     issues,
-		workflow:   workflow,
-		checklists: checklists,
-		progress:   progress,
-		uow:        uow,
+		vehicles:     vehicles,
+		issues:       issues,
+		workflow:     workflow,
+		checklists:   checklists,
+		progress:     progress,
+		stationSteps: stationSteps,
+		uow:          uow,
 	}
 }
 
@@ -71,8 +74,16 @@ func (s *EOLBranchShipper) Ship(ctx context.Context, vin string, actorID int) (*
 	if err != nil {
 		return nil, err
 	}
-	if len(blockers) > 0 {
-		return nil, &domain.EOLBranchShipBlockedError{VIN: vin, Blockers: blockers}
+	stepsLeft, err := IncompleteStationSteps(ctx, vin, s.stationSteps)
+	if err != nil {
+		return nil, err
+	}
+	if len(blockers) > 0 || stepsLeft > 0 {
+		return nil, &domain.EOLBranchShipBlockedError{
+			VIN:                   vin,
+			Blockers:              blockers,
+			StationStepsRemaining: stepsLeft,
+		}
 	}
 
 	openIssues, err := s.issues.ListOpenByVIN(ctx, vin)

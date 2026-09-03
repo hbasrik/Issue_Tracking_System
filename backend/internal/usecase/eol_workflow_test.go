@@ -46,7 +46,7 @@ func newEOLFixture(t *testing.T) *eolFixture {
 		issues:          issues,
 		workflow:        workflow,
 		audit:           audit,
-		branchShip:      usecase.NewEOLBranchShipper(vehicles, issues, workflow, checklists, checklist, uow),
+		branchShip:      usecase.NewEOLBranchShipper(vehicles, issues, workflow, checklists, checklist, newFakeStationStepRepo(), uow),
 		depotRelease:    usecase.NewEOLDepotReleaser(vehicles, issues, workflow, checklists, uow),
 		deliver:         usecase.NewEOLDeliverer(vehicles, workflow, uow),
 		documentApprove: usecase.NewEOLDocumentApprover(vehicles, workflow, uow),
@@ -66,6 +66,43 @@ func (f *eolFixture) openIssue(t *testing.T, status domain.IssueStatus, severity
 		t.Fatalf("seed issue: %v", err)
 	}
 	return id
+}
+
+// TestEOLBranchShip_BlockedByIncompleteStationSteps proves incomplete
+// station steps hard-block branch shipment (conscious override of Karar 1).
+func TestEOLBranchShip_BlockedByIncompleteStationSteps(t *testing.T) {
+	vehicles := newFakeVehicleRepo()
+	vehicles.vehicles[eolTestVIN] = &domain.Vehicle{
+		VIN:                 eolTestVIN,
+		CurrentGlobalStatus: domain.VehicleStatusInProduction,
+	}
+	issues := newFakeIssueRepo()
+	workflow := newFakeEOLWorkflowRepo()
+	workflow.seed(eolTestVIN)
+	audit := newFakeAuditRepo()
+	checklist := newFakeChecklistRepo()
+	steps := newFakeStationStepRepo()
+	steps.rows[eolTestVIN] = []domain.VehicleStationStepProgress{
+		{VIN: eolTestVIN, StationStepID: 1, Status: domain.StationStepStatusPending},
+		{VIN: eolTestVIN, StationStepID: 2, Status: domain.StationStepStatusPending},
+	}
+	uow := &passthroughFakeUoW{}
+	checklists := usecase.NewChecklistResultRecorder(vehicles, checklist, audit, uow)
+	shipper := usecase.NewEOLBranchShipper(vehicles, issues, workflow, checklists, checklist, steps, uow)
+
+	_, err := shipper.Ship(context.Background(), eolTestVIN, 7)
+
+	var blocked *domain.EOLBranchShipBlockedError
+	if !errors.As(err, &blocked) {
+		t.Fatalf("expected *domain.EOLBranchShipBlockedError, got %v", err)
+	}
+	if blocked.StationStepsRemaining != 2 {
+		t.Errorf("StationStepsRemaining = %d, want 2", blocked.StationStepsRemaining)
+	}
+	wf, _ := workflow.Get(context.Background(), eolTestVIN)
+	if wf.BranchShippedAt != nil {
+		t.Error("branch_shipped_at must not be written when station steps remain")
+	}
 }
 
 // TestEOLBranchShip_SucceedsWithOpenIssuesAndWarns proves stage 1 is a

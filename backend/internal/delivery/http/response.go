@@ -18,8 +18,9 @@ type errorResponse struct {
 	Error               string                      `json:"error"`
 	BlockingItemIDs     []int                       `json:"blocking_item_ids,omitempty"`
 	BlockingIssues      []domain.BlockingIssue      `json:"blocking_issues,omitempty"`
-	ChecklistBlockers   []domain.EOLChecklistBlocker `json:"checklist_blockers,omitempty"`
-	DepotItemsRemaining int                         `json:"depot_items_remaining,omitempty"`
+	ChecklistBlockers       []domain.EOLChecklistBlocker `json:"checklist_blockers,omitempty"`
+	DepotItemsRemaining     int                          `json:"depot_items_remaining,omitempty"`
+	StationStepsRemaining   int                          `json:"station_steps_remaining,omitempty"`
 }
 
 // writeJSON serializes v as JSON with the given status code.
@@ -52,8 +53,9 @@ func writeError(w http.ResponseWriter, err error) {
 		})
 	case errors.As(err, &branchShip):
 		writeJSON(w, http.StatusConflict, errorResponse{
-			Error:             branchShip.Error(),
-			ChecklistBlockers: branchShip.Blockers,
+			Error:                 branchShip.Error(),
+			ChecklistBlockers:     branchShip.Blockers,
+			StationStepsRemaining: branchShip.StationStepsRemaining,
 		})
 	case errors.As(err, &depot):
 		writeJSON(w, http.StatusConflict, errorResponse{

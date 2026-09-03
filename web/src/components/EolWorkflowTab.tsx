@@ -52,6 +52,7 @@ export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
   const [eolItems, setEolItems] = useState<ChecklistItem[]>([]);
   const [testItems, setTestItems] = useState<ChecklistItem[]>([]);
   const [shipmentItems, setShipmentItems] = useState<ChecklistItem[]>([]);
+  const [stationStepsRemaining, setStationStepsRemaining] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [warning, setWarning] = useState<string | null>(null);
   const [blocking, setBlocking] = useState<BlockingIssue[] | null>(null);
@@ -79,16 +80,23 @@ export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
   const load = useCallback(async () => {
     setError(null);
     try {
-      const [view, eol, test, shipment] = await Promise.all([
+      const [view, eol, test, shipment, steps] = await Promise.all([
         api.getEOLWorkflow(vin),
         api.getVehicleChecklist(vin, 'eol'),
         api.getVehicleChecklist(vin, 'test'),
         api.getVehicleChecklist(vin, 'shipment'),
+        api.getStationSteps(vin).catch(() => ({
+          Items: [] as { Status: string }[],
+          OpenIssuesByStation: {},
+        })),
       ]);
       setWorkflow(view);
       setEolItems(eol.items ?? []);
       setTestItems(test.items ?? []);
       setShipmentItems(shipment.items ?? []);
+      setStationStepsRemaining(
+        (steps.Items ?? []).filter((s) => s.Status !== 'OK').length,
+      );
       if (
         view.branch_open_issue_count_at_shipment &&
         view.branch_open_issue_count_at_shipment > 0 &&
@@ -189,7 +197,8 @@ export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
     workflow.current_stage === 'BRANCH' &&
     branchRemaining === 0 &&
     testRemaining === 0 &&
-    shipmentRemaining === 0;
+    shipmentRemaining === 0 &&
+    stationStepsRemaining === 0;
   const shipDisabledReasons: string[] = [];
   if (!has(Perm.EOLBranchShip)) {
     shipDisabledReasons.push(t('eol.forbidden'));
@@ -204,6 +213,11 @@ export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
     }
     if (shipmentRemaining > 0) {
       shipDisabledReasons.push(t('eol.branchBlockerShipment', { n: shipmentRemaining }));
+    }
+    if (stationStepsRemaining > 0) {
+      shipDisabledReasons.push(
+        t('eol.branchBlockerStationSteps', { n: stationStepsRemaining }),
+      );
     }
   }
 

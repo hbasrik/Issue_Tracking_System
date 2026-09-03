@@ -85,6 +85,7 @@ export default function EOLChecklistScreen() {
   const [items, setItems] = useState<ChecklistItem[]>([]);
   const [testItems, setTestItems] = useState<ChecklistItem[]>([]);
   const [shipmentItems, setShipmentItems] = useState<ChecklistItem[]>([]);
+  const [stationStepsRemaining, setStationStepsRemaining] = useState(0);
   const [drafts, setDrafts] = useState<Record<number, { status: string; desc: string }>>({});
   const [error, setError] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -94,17 +95,24 @@ export default function EOLChecklistScreen() {
   const load = useCallback(async () => {
     setError(null);
     try {
-      const [view, res, test, shipment] = await Promise.all([
+      const [view, res, test, shipment, steps] = await Promise.all([
         api.getEOLWorkflow(vin),
         api.getChecklist(vin, 'eol'),
         api.getChecklist(vin, 'test'),
         api.getChecklist(vin, 'shipment'),
+        api.getStationSteps(vin).catch(() => ({
+          Items: [] as { Status: string }[],
+          OpenIssuesByStation: {},
+        })),
       ]);
       const list = res.items ?? [];
       setWorkflow(view);
       setItems(list);
       setTestItems(test.items ?? []);
       setShipmentItems(shipment.items ?? []);
+      setStationStepsRemaining(
+        (steps.Items ?? []).filter((s) => s.Status !== 'OK').length,
+      );
       const next: Record<number, { status: string; desc: string }> = {};
       for (const it of list) {
         next[it.ItemID] = {
@@ -172,7 +180,8 @@ export default function EOLChecklistScreen() {
     !workflow?.branch_ship?.at &&
     branchRemaining === 0 &&
     testRemaining === 0 &&
-    shipmentRemaining === 0;
+    shipmentRemaining === 0 &&
+    stationStepsRemaining === 0;
 
   const shipReasons: string[] = [];
   if (!has(Perm.EOLBranchShip)) {
@@ -182,6 +191,9 @@ export default function EOLChecklistScreen() {
     if (testRemaining > 0) shipReasons.push(t('eol.branchBlockerTest', { n: testRemaining }));
     if (shipmentRemaining > 0) {
       shipReasons.push(t('eol.branchBlockerShipment', { n: shipmentRemaining }));
+    }
+    if (stationStepsRemaining > 0) {
+      shipReasons.push(t('eol.branchBlockerStationSteps', { n: stationStepsRemaining }));
     }
   }
 

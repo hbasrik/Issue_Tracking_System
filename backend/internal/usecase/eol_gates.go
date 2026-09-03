@@ -32,6 +32,7 @@ func countNonPassingEOLPhase(items []domain.ChecklistItemView, phase domain.EOLI
 }
 
 // BranchShipBlockers returns every checklist that still blocks branch shipment.
+// Station-step incompleteness is counted separately via IncompleteStationSteps.
 func BranchShipBlockers(
 	ctx context.Context,
 	vin string,
@@ -67,6 +68,28 @@ func BranchShipBlockers(
 	}
 
 	return blockers, nil
+}
+
+// IncompleteStationSteps counts station steps that are not OK for a VIN.
+func IncompleteStationSteps(
+	ctx context.Context,
+	vin string,
+	steps repository.StationStepProgressRepository,
+) (int, error) {
+	if steps == nil {
+		return 0, nil
+	}
+	rows, err := steps.ListByVIN(ctx, vin)
+	if err != nil {
+		return 0, err
+	}
+	n := 0
+	for _, row := range rows {
+		if row.Status != domain.StationStepStatusOK {
+			n++
+		}
+	}
+	return n, nil
 }
 
 // DepotEOLItemsRemaining counts depot-phase EoL items that are not passing.

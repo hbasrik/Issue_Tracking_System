@@ -157,17 +157,25 @@ type EOLChecklistBlocker struct {
 }
 
 // EOLBranchShipBlockedError is returned when branch shipment is attempted
-// while any of the three required checklists still has non-passing items.
+// while any required checklist or station step is still incomplete.
 type EOLBranchShipBlockedError struct {
-	VIN      string
-	Blockers []EOLChecklistBlocker
+	VIN                   string
+	Blockers              []EOLChecklistBlocker
+	StationStepsRemaining int `json:"station_steps_remaining,omitempty"`
 }
 
 // Error implements the error interface.
 func (e *EOLBranchShipBlockedError) Error() string {
+	parts := 0
+	if len(e.Blockers) > 0 {
+		parts += len(e.Blockers)
+	}
+	if e.StationStepsRemaining > 0 {
+		parts++
+	}
 	return fmt.Sprintf(
-		"branch ship blocked for %s: %d checklist(s) incomplete",
-		e.VIN, len(e.Blockers),
+		"branch ship blocked for %s: %d gate(s) incomplete",
+		e.VIN, parts,
 	)
 }
 

@@ -59,7 +59,7 @@ func main() {
 		Home:               usecase.NewHomeOverviewReader(analysisRepo, auditRepo),
 		Activity:           usecase.NewActivityReader(auditRepo),
 		EOLWorkflow:        usecase.NewEOLWorkflowReader(eolRepo),
-		EOLBranchShip:      usecase.NewEOLBranchShipper(vehicleRepo, issueRepo, eolRepo, checklists, checklistRepo, uow),
+		EOLBranchShip:      usecase.NewEOLBranchShipper(vehicleRepo, issueRepo, eolRepo, checklists, checklistRepo, stationStepRepo, uow),
 		EOLDepotRelease:    usecase.NewEOLDepotReleaser(vehicleRepo, issueRepo, eolRepo, checklists, uow),
 		EOLDeliver:         usecase.NewEOLDeliverer(vehicleRepo, eolRepo, uow),
 		EOLDocumentApprove: usecase.NewEOLDocumentApprover(vehicleRepo, eolRepo, uow),
