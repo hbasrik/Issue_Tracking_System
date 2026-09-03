@@ -308,9 +308,6 @@ export default function VehiclesPage() {
             >
               <DataCard className="cursor-pointer transition-colors hover:bg-[var(--bg-surface-2)]">
                 <VehicleIdentity vin={v.VIN} variant="compact" />
-                <DataCardField label={t('templates.model')}>
-                  {v.VehicleModelID != null ? `#${v.VehicleModelID}` : t('common.emDash')}
-                </DataCardField>
                 <DataCardField label={t('issue.status')}>
                   <VehicleStatusDisplay
                     status={v.CurrentGlobalStatus}
@@ -336,7 +333,6 @@ export default function VehiclesPage() {
                 style={{ borderColor: 'var(--border)' }}
               >
                 <th className="px-4 py-3 font-medium">{t('issue.vin')}</th>
-                <th className="px-4 py-3 font-medium">{t('templates.model')}</th>
                 <th className="px-4 py-3 font-medium">{t('issue.status')}</th>
                 <th className="px-4 py-3 font-medium">{t('vehicles.station')}</th>
                 <th className="px-4 py-3 font-medium">{t('vehicles.completionPct')}</th>
@@ -345,14 +341,14 @@ export default function VehiclesPage() {
             <tbody>
               {loading && (
                 <tr>
-                  <td colSpan={5} className="px-4 py-6 text-[var(--text-secondary)]">
+                  <td colSpan={4} className="px-4 py-6 text-[var(--text-secondary)]">
                     {t('common.loading')}
                   </td>
                 </tr>
               )}
               {!loading && items.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-4 py-6 text-[var(--text-secondary)]">
+                  <td colSpan={4} className="px-4 py-6 text-[var(--text-secondary)]">
                     {t('vehicles.notFound')}
                   </td>
                 </tr>
@@ -380,9 +376,6 @@ export default function VehiclesPage() {
                 >
                   <td className="px-4 py-3">
                     <VehicleIdentity vin={v.VIN} variant="compact" />
-                  </td>
-                  <td className="px-4 py-3">
-                    {v.VehicleModelID != null ? `#${v.VehicleModelID}` : t('common.emDash')}
                   </td>
                   <td className="px-4 py-3">
                     <VehicleStatusDisplay

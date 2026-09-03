@@ -13,7 +13,6 @@ import {
   Gauge,
   History,
   Layers,
-  MapPin,
   RefreshCw,
   Timer,
   TrendingDown,
@@ -65,6 +64,7 @@ import { useAuth } from '../auth/AuthProvider';
 import { Perm } from '../auth/permissions';
 import { useI18n } from '../i18n';
 import { localeTag } from '../../../shared/i18n';
+import { activityDetailLine } from '../lib/activityDetail';
 import { eolStageLabel } from '../lib/vehicleStatus';
 
 const CHART_TOOLTIP = {
@@ -99,6 +99,7 @@ export default function HomePage() {
   const { has } = useAuth();
   const canIssues = has(Perm.IssueView);
   const canVehicles = has(Perm.VehicleView);
+  const canAnalysis = has(Perm.AnalysisView);
   const navigate = useNavigate();
   const [issues, setIssues] = useState<Issue[]>([]);
   const [vehicles, setVehicles] = useState<VehicleSeverityBreakdown[]>([]);
@@ -166,34 +167,22 @@ export default function HomePage() {
     return addLocalDays(new Date(), -(days - 1)).getTime();
   }, [stationRange, updatedAt]);
 
+  function labelStationKey(key: string): string {
+    if (key === 'Unknown') return t('home.unknownStation');
+    const seq = /^seq:(\d+)$/.exec(key);
+    if (seq) return t('analysis.stationN', { id: seq[1] });
+    const fallback = /^Station (\d+)$/.exec(key);
+    if (fallback) return t('analysis.stationN', { id: fallback[1] });
+    return key;
+  }
+
   const rangedStationOpen = useMemo(
     () =>
-      openIssuesByStation(issues, stations, stationSince).map((row) => {
-        if (row.station === 'Unknown') {
-          return { ...row, station: t('home.unknownStation') };
-        }
-        const fallback = /^Station (\d+)$/.exec(row.station);
-        if (fallback) {
-          return { ...row, station: t('analysis.stationN', { id: fallback[1] }) };
-        }
-        return row;
-      }),
+      openIssuesByStation(issues, stations, stationSince).map((row) => ({
+        ...row,
+        station: labelStationKey(row.station),
+      })),
     [issues, stations, stationSince, t],
-  );
-
-  const openByStation = useMemo(
-    () =>
-      metrics.openByStation.map((row) => {
-        if (row.station === 'Unknown') {
-          return { ...row, station: t('home.unknownStation') };
-        }
-        const fallback = /^Station (\d+)$/.exec(row.station);
-        if (fallback) {
-          return { ...row, station: t('analysis.stationN', { id: fallback[1] }) };
-        }
-        return row;
-      }),
-    [metrics.openByStation, t],
   );
 
   const openSeverity = useMemo(
@@ -486,11 +475,21 @@ export default function HomePage() {
                         row.Total === 0 ? 0 : Math.round((row.Done / row.Total) * 100);
                       const color =
                         row.Phase === 'DEPOT' ? statusColors.ok : statusColors.info;
+                      const vehicles = row.VehicleCount ?? 0;
+                      const perVehicle = row.ItemsPerVehicle ?? 0;
                       return (
                         <tr
                           key={row.Phase}
                           className="border-b"
                           style={{ borderColor: 'var(--border)' }}
+                          title={
+                            vehicles > 0 && perVehicle > 0
+                              ? t('home.eolCompose', {
+                                  vehicles,
+                                  items: perVehicle,
+                                })
+                              : undefined
+                          }
                         >
                           <td className="py-2 pr-2">
                             <span className="inline-flex items-center gap-2 font-medium">
@@ -501,8 +500,18 @@ export default function HomePage() {
                               {eolStageLabel(row.Phase, t)}
                             </span>
                           </td>
-                          <td className="py-2 pr-2 text-right tabular-nums font-semibold">
-                            {t('home.eolItemsOf', { done: row.Done, total: row.Total })}
+                          <td className="py-2 pr-2 text-right">
+                            <div className="font-semibold tabular-nums">
+                              {t('home.eolItemsOf', { done: row.Done, total: row.Total })}
+                            </div>
+                            {vehicles > 0 && perVehicle > 0 ? (
+                              <div className="text-[11px] font-normal" style={mutedCaption}>
+                                {t('home.eolCompose', {
+                                  vehicles,
+                                  items: perVehicle,
+                                })}
+                              </div>
+                            ) : null}
                           </td>
                           <td className="py-2 text-right tabular-nums font-semibold">
                             {pct}%
@@ -664,9 +673,9 @@ export default function HomePage() {
           subtitle={t('home.activityHint')}
           icon={<History size={18} />}
           action={
-            canIssues ? (
+            canIssues || canAnalysis ? (
               <Link
-                to="/issues"
+                to="/activity"
                 className="text-[12px] font-medium text-[var(--accent)] hover:underline"
               >
                 {t('home.activitySeeAll')}
@@ -696,10 +705,7 @@ export default function HomePage() {
                 <tbody>
                   {overview?.Activity.map((row, i) => {
                     const meta = activityMeta(row.EventType, row.NewValue, t);
-                    const detail =
-                      row.OldValue && row.NewValue
-                        ? `${row.OldValue} → ${row.NewValue}`
-                        : row.NewValue || row.OldValue;
+                    const detail = activityDetailLine(row, t);
                     return (
                       <tr
                         key={`${row.EventAt}-${i}`}
@@ -726,15 +732,20 @@ export default function HomePage() {
                           </span>
                         </td>
                         <td className="py-2 pr-2 align-middle font-medium">{meta.label}</td>
-                        <td className="py-2 pr-2 align-middle font-mono text-[var(--accent)]">
-                          …{row.VIN.slice(-6)}
+                        <td className="py-2 pr-2 align-middle">
+                          <Link
+                            to={`/vehicles/${encodeURIComponent(row.VIN)}`}
+                            className="font-mono text-[var(--accent)] hover:underline"
+                          >
+                            …{row.VIN.slice(-6)}
+                          </Link>
                         </td>
                         <td
-                          className="max-w-[14rem] truncate py-2 pr-2 align-middle"
+                          className="max-w-[16rem] truncate py-2 pr-2 align-middle"
                           style={mutedCaption}
                           title={detail}
                         >
-                          {detail || t('common.emDash')}
+                          {detail}
                         </td>
                         <td className="whitespace-nowrap py-2 align-middle" style={mutedCaption}>
                           {row.ActorName || t('common.emDash')}
@@ -750,7 +761,7 @@ export default function HomePage() {
       )}
       {canIssues && (
         <>
-      <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-3">
+      <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-2">
         <ChartCard
           title={t('home.severityDist')}
           subtitle={t('home.severityHint')}
@@ -778,6 +789,8 @@ export default function HomePage() {
                     stroke="none"
                     isAnimationActive={false}
                     rootTabIndex={-1}
+                    label={false}
+                    labelLine={false}
                     style={{ outline: 'none', cursor: 'default' }}
                   >
                     {openSeverity.map((entry) => (
@@ -792,55 +805,14 @@ export default function HomePage() {
                     contentStyle={CHART_TOOLTIP}
                     formatter={(value: number, name: string) => [value, name]}
                   />
-                  <Legend wrapperStyle={{ fontSize: 12 }} />
+                  <Legend
+                    wrapperStyle={{ fontSize: 12 }}
+                    formatter={(value, entry) => {
+                      const n = (entry as { payload?: { value?: number } })?.payload?.value;
+                      return n == null ? String(value) : `${value} (${n})`;
+                    }}
+                  />
                 </PieChart>
-              </ResponsiveContainer>
-            )}
-          </div>
-        </ChartCard>
-
-        <ChartCard
-          title={t('home.openByStation')}
-          subtitle={t('home.openByStationHint')}
-          icon={<MapPin size={18} />}
-        >
-          <div className="chart-inert h-[160px] w-full min-w-0 sm:h-[180px]">
-            {openByStation.length === 0 ? (
-              <p className="flex h-full items-center text-[13px]" style={mutedCaption}>
-                {t('home.noStationDefects')}
-              </p>
-            ) : (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  tabIndex={-1}
-                  data={openByStation}
-                  layout="vertical"
-                  margin={{ top: 4, right: 12, left: 4, bottom: 4 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                  <XAxis
-                    type="number"
-                    allowDecimals={false}
-                    tick={{ fill: 'var(--text-secondary)', fontSize: 10 }}
-                  />
-                  <YAxis
-                    type="category"
-                    dataKey="station"
-                    width={88}
-                    tick={{ fill: 'var(--text-secondary)', fontSize: 10 }}
-                  />
-                  <Tooltip
-                    contentStyle={CHART_TOOLTIP}
-                    formatter={(value: number) => [value, t('home.openIssue')]}
-                  />
-                  <Bar
-                    dataKey="count"
-                    fill={brandColors.secondary}
-                    fillOpacity={0.78}
-                    name={t('home.openIssue')}
-                    radius={[0, 6, 6, 0]}
-                  />
-                </BarChart>
               </ResponsiveContainer>
             )}
           </div>

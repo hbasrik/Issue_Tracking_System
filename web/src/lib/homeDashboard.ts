@@ -282,7 +282,7 @@ export function reportedPerDay(
   }
   return [...buckets.values()].map(({ date, count }) => ({
     day: localDayKey(date),
-    label: shortDayLabel(date, true, locale),
+    label: shortDayLabel(date, false, locale),
     count,
   }));
 }
@@ -414,7 +414,7 @@ export function openIssuesByStation(
   stations: Station[],
   reportedSinceMs?: number,
 ): StationOpenCount[] {
-  const names = new Map(stations.map((s) => [s.ID, s.Name]));
+  const seqByID = new Map(stations.map((s) => [s.ID, s.SequenceNo]));
   const counts = new Map<string, number>();
   for (const issue of issues) {
     if (!OPEN_STATUSES.has(issue.Status)) continue;
@@ -422,15 +422,21 @@ export function openIssuesByStation(
       const reported = reportedAt(issue);
       if (reported == null || reported < reportedSinceMs) continue;
     }
-    const name =
-      issue.StationID != null
-        ? (names.get(issue.StationID) ?? `Station ${issue.StationID}`)
-        : 'Unknown';
-    counts.set(name, (counts.get(name) ?? 0) + 1);
+    let key = 'Unknown';
+    if (issue.StationID != null) {
+      const seq = seqByID.get(issue.StationID);
+      key = seq != null ? `seq:${seq}` : `Station ${issue.StationID}`;
+    }
+    counts.set(key, (counts.get(key) ?? 0) + 1);
   }
   return [...counts.entries()]
     .map(([station, count]) => ({ station, count }))
-    .sort((a, b) => b.count - a.count);
+    .sort((a, b) => {
+      const as = /^seq:(\d+)$/.exec(a.station);
+      const bs = /^seq:(\d+)$/.exec(b.station);
+      if (as && bs) return Number(as[1]) - Number(bs[1]);
+      return b.count - a.count;
+    });
 }
 
 export function meanResolutionHours(issues: Issue[]): {
