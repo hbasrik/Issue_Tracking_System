@@ -44,9 +44,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     initial ? 'local' : 'none',
   );
 
-  useEffect(() => {
-    setTokenGetter(() => token);
-  }, [token]);
+  // Sync before child effects (e.g. HomePage load) so the first API call
+  // does not race an unset token getter after a hard reload.
+  setTokenGetter(() => token);
 
   useEffect(() => {
     if (persistence !== 'local' || !token || !user) return;

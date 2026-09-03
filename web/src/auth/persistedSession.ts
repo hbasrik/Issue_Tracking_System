@@ -16,7 +16,7 @@ export function loadPersistedAuth(): PersistedAuth | null {
     if (
       typeof parsed.token !== 'string' ||
       !parsed.user ||
-      typeof parsed.user.ID !== 'string' ||
+      (typeof parsed.user.ID !== 'number' && typeof parsed.user.ID !== 'string') ||
       !Array.isArray(parsed.permissions)
     ) {
       localStorage.removeItem(STORAGE_KEY);
