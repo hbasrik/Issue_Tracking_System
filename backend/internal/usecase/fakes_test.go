@@ -496,6 +496,24 @@ func (f *fakeAuditRepo) ListVehicleStatusHistory(_ context.Context, vin string) 
 	return out, nil
 }
 
+func (f *fakeAuditRepo) ListRecent(_ context.Context, limit int) ([]domain.HomeActivityEntry, error) {
+	out := make([]domain.HomeActivityEntry, 0, len(f.entries))
+	for i := len(f.entries) - 1; i >= 0; i-- {
+		e := f.entries[i]
+		out = append(out, domain.HomeActivityEntry{
+			EventAt:   e.EventAt,
+			EventType: string(e.EventType),
+			VIN:       e.VIN,
+			OldValue:  e.OldValue,
+			NewValue:  e.NewValue,
+		})
+		if limit > 0 && len(out) >= limit {
+			break
+		}
+	}
+	return out, nil
+}
+
 func metadataIssueID(meta map[string]any) (int64, bool) {
 	if meta == nil {
 		return 0, false

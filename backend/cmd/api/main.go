@@ -56,6 +56,7 @@ func main() {
 		Issues:             usecase.NewIssueManager(issueRepo, auditRepo, uow),
 		Stations:           usecase.NewStationService(stationRepo),
 		Analysis:           usecase.NewAnalysisMetricsReader(analysisRepo),
+		Home:               usecase.NewHomeOverviewReader(analysisRepo, auditRepo),
 		EOLWorkflow:        usecase.NewEOLWorkflowReader(eolRepo),
 		EOLBranchShip:      usecase.NewEOLBranchShipper(vehicleRepo, issueRepo, eolRepo, checklists, checklistRepo, uow),
 		EOLDepotRelease:    usecase.NewEOLDepotReleaser(vehicleRepo, issueRepo, eolRepo, checklists, uow),

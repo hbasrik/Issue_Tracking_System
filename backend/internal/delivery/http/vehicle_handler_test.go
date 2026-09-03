@@ -123,6 +123,10 @@ func (a namedStatusAudit) ListVehicleStatusHistory(context.Context, string) ([]d
 	return a.items, nil
 }
 
+func (namedStatusAudit) ListRecent(context.Context, int) ([]domain.HomeActivityEntry, error) {
+	return nil, nil
+}
+
 func TestVehicleStatusHistory_JSONIncludesActorName(t *testing.T) {
 	const vin = "1KTSKRC2XSB010057"
 	at := time.Date(2026, 8, 25, 14, 5, 0, 0, time.UTC)

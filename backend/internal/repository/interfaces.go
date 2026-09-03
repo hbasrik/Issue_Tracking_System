@@ -131,6 +131,13 @@ type AnalysisRepository interface {
 	Dashboard(ctx context.Context, f domain.AnalysisFilter) (*domain.AnalysisDashboard, error)
 }
 
+// HomeRepository reads live dashboard slices that are not issue-list derived.
+type HomeRepository interface {
+	EOLStageCounts(ctx context.Context) ([]domain.HomeEOLStageCount, error)
+	EOLChecklistCounts(ctx context.Context) ([]domain.HomeEOLChecklistCount, error)
+	CriticalVehicles(ctx context.Context, limit int) ([]domain.HomeCriticalVehicle, error)
+}
+
 // UserRepository persists and queries users (used by auth and the Users &
 // Roles admin screen).
 type UserRepository interface {
@@ -236,4 +243,6 @@ type AuditRepository interface {
 	// ListVehicleStatusHistory returns STATUS_CHANGE events for one VIN,
 	// oldest first, with the acting user's display name.
 	ListVehicleStatusHistory(ctx context.Context, vin string) ([]domain.VehicleStatusHistoryEntry, error)
+	// ListRecent returns the newest audit rows (any event type) with actor names.
+	ListRecent(ctx context.Context, limit int) ([]domain.HomeActivityEntry, error)
 }

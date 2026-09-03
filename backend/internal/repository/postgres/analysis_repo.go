@@ -452,3 +452,125 @@ func (r *AnalysisRepo) countOnLine(ctx context.Context, f domain.AnalysisFilter)
 	).Scan(&n)
 	return n, err
 }
+
+var _ repository.HomeRepository = (*AnalysisRepo)(nil)
+
+// EOLStageCounts returns non-PLANNED vehicles grouped by live EOL stage.
+// Legacy DOCUMENT rows are counted as DEPOT. Vehicles without a workflow
+// row are omitted (they have not entered the EOL path).
+func (r *AnalysisRepo) EOLStageCounts(ctx context.Context) ([]domain.HomeEOLStageCount, error) {
+	rows, err := r.pool.Query(ctx, `
+		SELECT CASE
+		         WHEN w.current_stage = 'DOCUMENT' THEN 'DEPOT'
+		         ELSE w.current_stage::text
+		       END AS stage,
+		       count(*)::bigint
+		  FROM vehicle_eol_workflow w
+		  JOIN vehicles v ON v.vin = w.vin
+		 WHERE v.current_global_status <> 'PLANNED'
+		 GROUP BY 1`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	found := map[string]int64{}
+	for rows.Next() {
+		var stage string
+		var n int64
+		if err := rows.Scan(&stage, &n); err != nil {
+			return nil, err
+		}
+		found[stage] += n
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	order := []string{"BRANCH", "DEPOT", "COMPLETED"}
+	out := make([]domain.HomeEOLStageCount, 0, len(order))
+	for _, stage := range order {
+		out = append(out, domain.HomeEOLStageCount{Stage: stage, Count: found[stage]})
+	}
+	return out, nil
+}
+
+// EOLChecklistCounts returns passing vs total EOL progress rows per phase
+// for vehicles that are not PLANNED.
+func (r *AnalysisRepo) EOLChecklistCounts(ctx context.Context) ([]domain.HomeEOLChecklistCount, error) {
+	rows, err := r.pool.Query(ctx, `
+		SELECT cti.eol_phase::text,
+		       count(*) FILTER (WHERE p.check_status IN ('OK', 'CONDITIONAL_OK'))::bigint,
+		       count(*)::bigint
+		  FROM checklist_item_progress p
+		  JOIN checklist_template_items cti ON cti.id = p.check_item_id
+		  JOIN vehicles v ON v.vin = p.vin
+		 WHERE p.checklist_type = 'EOL'
+		   AND v.current_global_status <> 'PLANNED'
+		   AND cti.eol_phase IN ('BRANCH', 'DEPOT')
+		 GROUP BY cti.eol_phase`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	found := map[string]domain.HomeEOLChecklistCount{}
+	for rows.Next() {
+		var row domain.HomeEOLChecklistCount
+		if err := rows.Scan(&row.Phase, &row.Done, &row.Total); err != nil {
+			return nil, err
+		}
+		found[row.Phase] = row
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	out := make([]domain.HomeEOLChecklistCount, 0, 2)
+	for _, phase := range []string{"BRANCH", "DEPOT"} {
+		row := found[phase]
+		row.Phase = phase
+		out = append(out, row)
+	}
+	return out, nil
+}
+
+// CriticalVehicles ranks VINs by open CRITICAL issue count.
+func (r *AnalysisRepo) CriticalVehicles(ctx context.Context, limit int) ([]domain.HomeCriticalVehicle, error) {
+	if limit <= 0 {
+		limit = 8
+	}
+	rows, err := r.pool.Query(ctx, `
+		SELECT i.vin,
+		       count(*) FILTER (WHERE i.severity = 'CRITICAL')::bigint,
+		       CASE
+		         WHEN count(*) FILTER (WHERE i.severity = 'CRITICAL') > 0 THEN 'CRITICAL'
+		         WHEN count(*) FILTER (WHERE i.severity = 'MEDIUM') > 0 THEN 'MEDIUM'
+		         ELSE 'LOW'
+		       END,
+		       v.current_global_status::text,
+		       COALESCE(
+		         CASE WHEN w.current_stage = 'DOCUMENT' THEN 'DEPOT' ELSE w.current_stage::text END,
+		         ''
+		       )
+		  FROM issue_list i
+		  JOIN vehicles v ON v.vin = i.vin
+		  LEFT JOIN vehicle_eol_workflow w ON w.vin = i.vin
+		 WHERE i.status IN ('OPEN', 'IN_PROGRESS')
+		 GROUP BY i.vin, v.current_global_status, w.current_stage
+		HAVING count(*) FILTER (WHERE i.severity = 'CRITICAL') > 0
+		 ORDER BY 2 DESC, i.vin
+		 LIMIT $1`, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []domain.HomeCriticalVehicle
+	for rows.Next() {
+		var row domain.HomeCriticalVehicle
+		if err := rows.Scan(&row.VIN, &row.CriticalCount, &row.WorstSeverity, &row.Status, &row.EOLStage); err != nil {
+			return nil, err
+		}
+		out = append(out, row)
+	}
+	if out == nil {
+		out = []domain.HomeCriticalVehicle{}
+	}
+	return out, rows.Err()
+}

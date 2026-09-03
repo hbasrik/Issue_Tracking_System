@@ -90,3 +90,45 @@ func (r *AuditRepo) ListVehicleStatusHistory(ctx context.Context, vin string) ([
 	}
 	return out, rows.Err()
 }
+
+// ListRecent returns the newest audit rows with the acting user's name/email.
+func (r *AuditRepo) ListRecent(ctx context.Context, limit int) ([]domain.HomeActivityEntry, error) {
+	if limit <= 0 {
+		limit = 8
+	}
+	rows, err := r.pool.Query(ctx,
+		`SELECT a.event_at,
+		        a.event_type::text,
+		        a.vin,
+		        COALESCE(a.old_value, ''),
+		        COALESCE(a.new_value, ''),
+		        COALESCE(u.full_name, ''),
+		        COALESCE(u.email, '')
+		   FROM audit_logs a
+		   LEFT JOIN users u ON u.id = a.performed_by
+		  WHERE a.event_type IN (
+		          'ISSUE_STATUS_CHANGE',
+		          'STATUS_CHANGE',
+		          'EOL_WORKFLOW_STAGE_CHANGE',
+		          'CHECKLIST_ITEM_UPDATE',
+		          'MEDIA_UPLOADED'
+		        )
+		  ORDER BY a.event_at DESC, a.id DESC
+		  LIMIT $1`, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []domain.HomeActivityEntry
+	for rows.Next() {
+		var e domain.HomeActivityEntry
+		if err := rows.Scan(&e.EventAt, &e.EventType, &e.VIN, &e.OldValue, &e.NewValue, &e.ActorName, &e.ActorEmail); err != nil {
+			return nil, err
+		}
+		out = append(out, e)
+	}
+	if out == nil {
+		out = []domain.HomeActivityEntry{}
+	}
+	return out, rows.Err()
+}

@@ -167,6 +167,9 @@ func (nopAudit) ListIssueStatusHistory(context.Context, int64) ([]domain.IssueSt
 func (nopAudit) ListVehicleStatusHistory(context.Context, string) ([]domain.VehicleStatusHistoryEntry, error) {
 	return nil, nil
 }
+func (nopAudit) ListRecent(context.Context, int) ([]domain.HomeActivityEntry, error) {
+	return nil, nil
+}
 
 type nopUOW struct{}
 

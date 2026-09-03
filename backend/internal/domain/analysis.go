@@ -145,6 +145,48 @@ func InclusiveDateBounds(from, to *time.Time) (fromTS, untilTS *time.Time) {
 	return fromTS, untilTS
 }
 
+// HomeEOLStageCount is non-PLANNED vehicles in one live EOL workflow stage.
+type HomeEOLStageCount struct {
+	Stage string
+	Count int64
+}
+
+// HomeEOLChecklistCount is passing vs total EOL checklist rows for one phase.
+type HomeEOLChecklistCount struct {
+	Phase string
+	Done  int64
+	Total int64
+}
+
+// HomeCriticalVehicle is a VIN ranked by open CRITICAL issue count.
+type HomeCriticalVehicle struct {
+	VIN            string
+	CriticalCount  int64
+	WorstSeverity  string
+	Status         string
+	EOLStage       string
+}
+
+// HomeActivityEntry is one recent audit_logs row with the acting user.
+type HomeActivityEntry struct {
+	EventAt    time.Time
+	EventType  string
+	VIN        string
+	OldValue   string
+	NewValue   string
+	ActorName  string
+	ActorEmail string
+}
+
+// HomeOverview is the dashboard payload that cannot be derived from the
+// issue list alone (EOL funnel, checklist completion, activity feed).
+type HomeOverview struct {
+	EOLStages         []HomeEOLStageCount
+	EOLChecklist      []HomeEOLChecklistCount
+	CriticalVehicles  []HomeCriticalVehicle
+	Activity          []HomeActivityEntry
+}
+
 // AnalysisDashboard is the Analysis page payload. Date-series honor the
 // shared filter; snapshot KPIs (OnLineCount) ignore From/To.
 type AnalysisDashboard struct {

@@ -35,6 +35,7 @@ type Deps struct {
 	Issues             *usecase.IssueManager
 	Stations           *usecase.StationService
 	Analysis           *usecase.AnalysisMetricsReader
+	Home               *usecase.HomeOverviewReader
 	EOLWorkflow        *usecase.EOLWorkflowReader
 	EOLBranchShip      *usecase.EOLBranchShipper
 	EOLDepotRelease    *usecase.EOLDepotReleaser
@@ -133,6 +134,7 @@ func NewRouter(deps Deps) http.Handler {
 				r.Get("/vehicles/{vin}/media", s.handleVehicleMediaList)
 				r.Get("/vehicles/{vin}/shipment-readiness", s.handleShipmentReadiness)
 				r.Get("/stations", s.handleStationList)
+				r.Get("/home/overview", s.handleHomeOverview)
 				// Current-state analysis reads stay on vehicle.view so a
 				// shop-floor role with that grant keeps the visibility it had
 				// before the Analysis tool was split out (Decision Log #9).

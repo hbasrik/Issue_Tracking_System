@@ -113,6 +113,10 @@ func (httpNoopAudit) ListVehicleStatusHistory(context.Context, string) ([]domain
 	return []domain.VehicleStatusHistoryEntry{}, nil
 }
 
+func (httpNoopAudit) ListRecent(context.Context, int) ([]domain.HomeActivityEntry, error) {
+	return []domain.HomeActivityEntry{}, nil
+}
+
 type httpNoopUoW struct{}
 
 func (httpNoopUoW) WithinTx(ctx context.Context, fn func(context.Context) error) error {
