@@ -499,7 +499,9 @@ func (r *AnalysisRepo) EOLChecklistCounts(ctx context.Context) ([]domain.HomeEOL
 	rows, err := r.pool.Query(ctx, `
 		SELECT cti.eol_phase::text,
 		       count(*) FILTER (WHERE p.check_status IN ('OK', 'CONDITIONAL_OK'))::bigint,
-		       count(*)::bigint
+		       count(*)::bigint,
+		       count(DISTINCT p.vin)::bigint,
+		       count(DISTINCT p.check_item_id)::bigint
 		  FROM checklist_item_progress p
 		  JOIN checklist_template_items cti ON cti.id = p.check_item_id
 		  JOIN vehicles v ON v.vin = p.vin
@@ -514,7 +516,7 @@ func (r *AnalysisRepo) EOLChecklistCounts(ctx context.Context) ([]domain.HomeEOL
 	found := map[string]domain.HomeEOLChecklistCount{}
 	for rows.Next() {
 		var row domain.HomeEOLChecklistCount
-		if err := rows.Scan(&row.Phase, &row.Done, &row.Total); err != nil {
+		if err := rows.Scan(&row.Phase, &row.Done, &row.Total, &row.VehicleCount, &row.ItemsPerVehicle); err != nil {
 			return nil, err
 		}
 		found[row.Phase] = row

@@ -729,7 +729,13 @@ export interface StationMTTR {
 
 export interface HomeOverview {
   EOLStages: { Stage: string; Count: number }[];
-  EOLChecklist: { Phase: string; Done: number; Total: number }[];
+  EOLChecklist: {
+    Phase: string;
+    Done: number;
+    Total: number;
+    VehicleCount: number;
+    ItemsPerVehicle: number;
+  }[];
   CriticalVehicles: {
     VIN: string;
     CriticalCount: number;
