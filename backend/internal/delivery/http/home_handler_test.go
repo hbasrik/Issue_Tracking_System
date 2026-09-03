@@ -44,6 +44,9 @@ func (fakeHomeAudit) ListVehicleStatusHistory(context.Context, string) ([]domain
 func (f fakeHomeAudit) ListRecent(context.Context, int) ([]domain.HomeActivityEntry, error) {
 	return f.items, nil
 }
+func (f fakeHomeAudit) ListActivity(context.Context, domain.AuditActivityFilter) (*domain.AuditActivityPage, error) {
+	return &domain.AuditActivityPage{Items: f.items, Total: int64(len(f.items))}, nil
+}
 
 func TestHomeOverview_ReturnsPayload(t *testing.T) {
 	at := time.Date(2026, 9, 3, 8, 0, 0, 0, time.UTC)

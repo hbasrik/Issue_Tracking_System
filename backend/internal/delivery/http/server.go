@@ -36,6 +36,7 @@ type Deps struct {
 	Stations           *usecase.StationService
 	Analysis           *usecase.AnalysisMetricsReader
 	Home               *usecase.HomeOverviewReader
+	Activity           *usecase.ActivityReader
 	EOLWorkflow        *usecase.EOLWorkflowReader
 	EOLBranchShip      *usecase.EOLBranchShipper
 	EOLDepotRelease    *usecase.EOLDepotReleaser
@@ -167,6 +168,7 @@ func NewRouter(deps Deps) http.Handler {
 				r.Get("/analysis/dashboard", s.handleAnalysisDashboard)
 				r.Get("/analysis/daily-pending-issues", s.handleDailyPendingIssues)
 				r.Get("/analysis/mttr", s.handleMTTR)
+				r.Get("/audit/activity", s.handleAuditActivity)
 			})
 
 			// Manual override of a vehicle's global status and template

@@ -155,11 +155,11 @@ type HomeEOLStageCount struct {
 // VehicleCount is distinct VINs contributing rows; ItemsPerVehicle is the
 // distinct template-item count (so Total ≈ VehicleCount × ItemsPerVehicle).
 type HomeEOLChecklistCount struct {
-	Phase           string
-	Done            int64
-	Total           int64
-	VehicleCount    int64
-	ItemsPerVehicle int64
+	Phase            string
+	Done             int64
+	Total            int64
+	VehicleCount     int64
+	ItemsPerVehicle  int64
 }
 
 // HomeCriticalVehicle is a VIN ranked by open CRITICAL issue count.
@@ -171,15 +171,37 @@ type HomeCriticalVehicle struct {
 	EOLStage       string
 }
 
-// HomeActivityEntry is one recent audit_logs row with the acting user.
+// HomeActivityEntry is one recent audit_logs row with the acting user and
+// optional checklist item context for readable detail lines.
 type HomeActivityEntry struct {
-	EventAt    time.Time
+	EventAt         time.Time
+	EventType       string
+	VIN             string
+	OldValue        string
+	NewValue        string
+	ActorName       string
+	ActorEmail      string
+	ChecklistType   string
+	ItemNo          *int
+	ItemText        string
+}
+
+// AuditActivityFilter scopes the paginated plant-wide activity list.
+type AuditActivityFilter struct {
+	From       *time.Time
+	To         *time.Time
 	EventType  string
-	VIN        string
-	OldValue   string
-	NewValue   string
-	ActorName  string
-	ActorEmail string
+	ActorID    *int
+	ActorQuery string // matches actor full_name or email (case-insensitive)
+	VINSuffix  string
+	Limit      int
+	Offset     int
+}
+
+// AuditActivityPage is one page of audit activity rows.
+type AuditActivityPage struct {
+	Items []HomeActivityEntry
+	Total int64
 }
 
 // HomeOverview is the dashboard payload that cannot be derived from the

@@ -126,6 +126,9 @@ func (a namedStatusAudit) ListVehicleStatusHistory(context.Context, string) ([]d
 func (namedStatusAudit) ListRecent(context.Context, int) ([]domain.HomeActivityEntry, error) {
 	return nil, nil
 }
+func (namedStatusAudit) ListActivity(context.Context, domain.AuditActivityFilter) (*domain.AuditActivityPage, error) {
+	return &domain.AuditActivityPage{Items: []domain.HomeActivityEntry{}}, nil
+}
 
 func TestVehicleStatusHistory_JSONIncludesActorName(t *testing.T) {
 	const vin = "1KTSKRC2XSB010057"

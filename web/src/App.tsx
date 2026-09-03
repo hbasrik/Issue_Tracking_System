@@ -3,6 +3,7 @@ import { RequirePermission, RequireWebAccess } from './auth/RequirePermission';
 import { Perm } from './auth/permissions';
 import { AppShell } from './components/AppShell';
 import AnalysisPage from './pages/AnalysisPage';
+import ActivityPage from './pages/ActivityPage';
 import ChangePasswordPage from './pages/ChangePasswordPage';
 import HomePage from './pages/HomePage';
 import IssuesPage from './pages/IssuesPage';
@@ -34,6 +35,7 @@ export default function App() {
           </Route>
           <Route element={<RequirePermission code={Perm.AnalysisView} />}>
             <Route path="/analysis" element={<AnalysisPage />} />
+            <Route path="/activity" element={<ActivityPage />} />
           </Route>
           <Route element={<RequirePermission code={Perm.AdminManageMasters} />}>
             <Route path="/templates" element={<TemplatesPage />} />

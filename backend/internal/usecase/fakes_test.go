@@ -514,6 +514,14 @@ func (f *fakeAuditRepo) ListRecent(_ context.Context, limit int) ([]domain.HomeA
 	return out, nil
 }
 
+func (f *fakeAuditRepo) ListActivity(_ context.Context, filter domain.AuditActivityFilter) (*domain.AuditActivityPage, error) {
+	items, err := f.ListRecent(context.Background(), filter.Limit)
+	if err != nil {
+		return nil, err
+	}
+	return &domain.AuditActivityPage{Items: items, Total: int64(len(items))}, nil
+}
+
 func metadataIssueID(meta map[string]any) (int64, bool) {
 	if meta == nil {
 		return 0, false

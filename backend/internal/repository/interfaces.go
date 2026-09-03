@@ -245,4 +245,6 @@ type AuditRepository interface {
 	ListVehicleStatusHistory(ctx context.Context, vin string) ([]domain.VehicleStatusHistoryEntry, error)
 	// ListRecent returns the newest audit rows (any event type) with actor names.
 	ListRecent(ctx context.Context, limit int) ([]domain.HomeActivityEntry, error)
+	// ListActivity returns a filtered, newest-first page of audit rows.
+	ListActivity(ctx context.Context, f domain.AuditActivityFilter) (*domain.AuditActivityPage, error)
 }

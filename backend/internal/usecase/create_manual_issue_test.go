@@ -170,6 +170,9 @@ func (nopAudit) ListVehicleStatusHistory(context.Context, string) ([]domain.Vehi
 func (nopAudit) ListRecent(context.Context, int) ([]domain.HomeActivityEntry, error) {
 	return nil, nil
 }
+func (nopAudit) ListActivity(context.Context, domain.AuditActivityFilter) (*domain.AuditActivityPage, error) {
+	return &domain.AuditActivityPage{Items: []domain.HomeActivityEntry{}}, nil
+}
 
 type nopUOW struct{}
 

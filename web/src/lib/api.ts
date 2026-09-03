@@ -444,6 +444,29 @@ export const api = {
     return request<HomeOverview>('/home/overview');
   },
 
+  auditActivity(params: {
+    from?: string;
+    to?: string;
+    event_type?: string;
+    actor_id?: number;
+    actor?: string;
+    vin_suffix?: string;
+    limit?: number;
+    offset?: number;
+  } = {}) {
+    const q = new URLSearchParams();
+    if (params.from) q.set('from', params.from);
+    if (params.to) q.set('to', params.to);
+    if (params.event_type) q.set('event_type', params.event_type);
+    if (params.actor_id != null) q.set('actor_id', String(params.actor_id));
+    if (params.actor) q.set('actor', params.actor);
+    if (params.vin_suffix) q.set('vin_suffix', params.vin_suffix);
+    if (params.limit != null) q.set('limit', String(params.limit));
+    if (params.offset != null) q.set('offset', String(params.offset));
+    const qs = q.toString();
+    return request<AuditActivityPage>(`/audit/activity${qs ? `?${qs}` : ''}`);
+  },
+
   shipmentReadiness(vin: string) {
     return request<ShipmentReadiness>(
       `/vehicles/${encodeURIComponent(vin)}/shipment-readiness`,
@@ -743,15 +766,25 @@ export interface HomeOverview {
     Status: string;
     EOLStage: string;
   }[];
-  Activity: {
-    EventAt: string;
-    EventType: string;
-    VIN: string;
-    OldValue: string;
-    NewValue: string;
-    ActorName: string;
-    ActorEmail: string;
-  }[];
+  Activity: HomeActivityEntry[];
+}
+
+export interface HomeActivityEntry {
+  EventAt: string;
+  EventType: string;
+  VIN: string;
+  OldValue: string;
+  NewValue: string;
+  ActorName: string;
+  ActorEmail: string;
+  ChecklistType?: string;
+  ItemNo?: number | null;
+  ItemText?: string;
+}
+
+export interface AuditActivityPage {
+  Items: HomeActivityEntry[];
+  Total: number;
 }
 
 export interface AnalysisDashboard {

@@ -116,6 +116,9 @@ func (httpNoopAudit) ListVehicleStatusHistory(context.Context, string) ([]domain
 func (httpNoopAudit) ListRecent(context.Context, int) ([]domain.HomeActivityEntry, error) {
 	return []domain.HomeActivityEntry{}, nil
 }
+func (httpNoopAudit) ListActivity(context.Context, domain.AuditActivityFilter) (*domain.AuditActivityPage, error) {
+	return &domain.AuditActivityPage{Items: []domain.HomeActivityEntry{}}, nil
+}
 
 type httpNoopUoW struct{}
 
