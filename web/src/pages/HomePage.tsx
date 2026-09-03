@@ -674,43 +674,72 @@ export default function HomePage() {
               {t('home.activityEmpty')}
             </p>
           ) : (
-            <ul className="divide-y" style={{ borderColor: 'var(--border)' }}>
-              {overview?.Activity.map((row, i) => {
-                const meta = activityMeta(row.EventType, row.NewValue, t);
-                return (
-                  <li
-                    key={`${row.EventAt}-${i}`}
-                    className="flex flex-wrap items-center gap-3 py-2 text-[13px]"
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[40rem] text-left text-[13px]">
+                <thead>
+                  <tr
+                    className="border-b text-[11px] font-semibold uppercase tracking-wide"
+                    style={{ borderColor: 'var(--border)', color: 'var(--text-secondary)' }}
                   >
-                    <span
-                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
-                      style={{
-                        color: meta.color,
-                        backgroundColor: `color-mix(in srgb, ${meta.color} 16%, transparent)`,
-                      }}
-                    >
-                      {meta.icon}
-                    </span>
-                    <span className="w-14 tabular-nums" style={mutedCaption}>
-                      {new Date(row.EventAt).toLocaleTimeString(localeTag(locale), {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </span>
-                    <span className="min-w-[7rem] font-medium">{meta.label}</span>
-                    <span className="font-mono text-[var(--accent)]">…{row.VIN.slice(-6)}</span>
-                    <span className="min-w-0 flex-1 truncate" style={mutedCaption}>
-                      {row.OldValue && row.NewValue
+                    <th className="pb-2 pr-2 font-semibold">{t('home.colTime')}</th>
+                    <th className="pb-2 pr-2 font-semibold">{t('home.colAction')}</th>
+                    <th className="pb-2 pr-2 font-semibold">{t('home.colVehicle')}</th>
+                    <th className="pb-2 pr-2 font-semibold">{t('home.colDetail')}</th>
+                    <th className="pb-2 font-semibold">{t('home.colUser')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {overview?.Activity.map((row, i) => {
+                    const meta = activityMeta(row.EventType, row.NewValue, t);
+                    const detail =
+                      row.OldValue && row.NewValue
                         ? `${row.OldValue} → ${row.NewValue}`
-                        : row.NewValue || row.OldValue}
-                    </span>
-                    <span className="truncate" style={mutedCaption}>
-                      {row.ActorEmail || row.ActorName || t('common.emDash')}
-                    </span>
-                  </li>
-                );
-              })}
-            </ul>
+                        : row.NewValue || row.OldValue;
+                    return (
+                      <tr
+                        key={`${row.EventAt}-${i}`}
+                        className="border-b last:border-b-0"
+                        style={{ borderColor: 'var(--border)' }}
+                      >
+                        <td className="whitespace-nowrap py-2 pr-2 align-middle">
+                          <span className="inline-flex items-center gap-2">
+                            <span
+                              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
+                              style={{
+                                color: meta.color,
+                                backgroundColor: `color-mix(in srgb, ${meta.color} 16%, transparent)`,
+                              }}
+                            >
+                              {meta.icon}
+                            </span>
+                            <span className="tabular-nums" style={mutedCaption}>
+                              {new Date(row.EventAt).toLocaleTimeString(localeTag(locale), {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                            </span>
+                          </span>
+                        </td>
+                        <td className="py-2 pr-2 align-middle font-medium">{meta.label}</td>
+                        <td className="py-2 pr-2 align-middle font-mono text-[var(--accent)]">
+                          …{row.VIN.slice(-6)}
+                        </td>
+                        <td
+                          className="max-w-[14rem] truncate py-2 pr-2 align-middle"
+                          style={mutedCaption}
+                          title={detail}
+                        >
+                          {detail || t('common.emDash')}
+                        </td>
+                        <td className="whitespace-nowrap py-2 align-middle" style={mutedCaption}>
+                          {row.ActorName || t('common.emDash')}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           )}
         </ChartCard>
       )}
