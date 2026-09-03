@@ -77,6 +77,9 @@ const CHART_TOOLTIP = {
 
 const mutedCaption = { color: 'var(--text-secondary)' } as const;
 
+/** Recharts: 90° = 12 o'clock; negative end = clockwise. */
+const DONUT_START_ANGLE = 90;
+const DONUT_END_ANGLE = -270;
 
 const STAGE_ICONS = {
   BRANCH: Building2,
@@ -440,6 +443,8 @@ export default function HomePage() {
                       cy="50%"
                       innerRadius="62%"
                       outerRadius="82%"
+                      startAngle={DONUT_START_ANGLE}
+                      endAngle={DONUT_END_ANGLE}
                       stroke="none"
                       isAnimationActive={false}
                       rootTabIndex={-1}
@@ -767,6 +772,8 @@ export default function HomePage() {
                     cy="50%"
                     innerRadius="48%"
                     outerRadius="72%"
+                    startAngle={DONUT_START_ANGLE}
+                    endAngle={DONUT_END_ANGLE}
                     paddingAngle={2}
                     stroke="none"
                     isAnimationActive={false}
