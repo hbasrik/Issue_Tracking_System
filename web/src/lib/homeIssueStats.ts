@@ -1,7 +1,6 @@
 import type { Issue } from './api';
 import type { MessageKey, Translate } from '../../../shared/i18n';
 import {
-  isOpenIssueStatus,
   isQualityClosedStatus,
   parseInstant,
   qualityClosedAt,
@@ -11,7 +10,7 @@ import {
 /**
  * Home stat-card keys. Same idea as mobile `homeIssueStats.ts`, extended so
  * web cards and the Issues list share one matcher:
- *   open = OPEN / IN_PROGRESS / DONE (depot-release "still open" set)
+ *   open = OPEN / IN_PROGRESS (excludes DONE — those are pending_quality)
  *   closed_today = quality-closed today (APPROVED | CONDITIONAL_APPROVED)
  */
 export type HomeIssueStatKey =
@@ -19,7 +18,9 @@ export type HomeIssueStatKey =
   | 'in_progress'
   | 'closed_today'
   | 'approved_today'
-  | 'conditional_approved_today';
+  | 'conditional_approved_today'
+  | 'pending_quality'
+  | 'critical';
 
 const HOME_ISSUE_STAT_KEYS: Record<HomeIssueStatKey, MessageKey> = {
   open: 'home.stat.open',
@@ -27,6 +28,8 @@ const HOME_ISSUE_STAT_KEYS: Record<HomeIssueStatKey, MessageKey> = {
   closed_today: 'home.stat.closedToday',
   approved_today: 'home.stat.approvedToday',
   conditional_approved_today: 'home.stat.conditionalToday',
+  pending_quality: 'home.stat.pendingQuality',
+  critical: 'home.stat.critical',
 };
 
 export function homeIssueStatLabel(key: HomeIssueStatKey, t: Translate): string {
@@ -39,7 +42,9 @@ export function isHomeIssueStatKey(value: string | null): value is HomeIssueStat
     value === 'in_progress' ||
     value === 'closed_today' ||
     value === 'approved_today' ||
-    value === 'conditional_approved_today'
+    value === 'conditional_approved_today' ||
+    value === 'pending_quality' ||
+    value === 'critical'
   );
 }
 
@@ -62,9 +67,16 @@ export function matchesHomeIssueStat(
 ): boolean {
   switch (key) {
     case 'open':
-      return isOpenIssueStatus(issue.Status);
+      return issue.Status === 'OPEN' || issue.Status === 'IN_PROGRESS';
     case 'in_progress':
       return issue.Status === 'IN_PROGRESS';
+    case 'pending_quality':
+      return issue.Status === 'DONE';
+    case 'critical':
+      return (
+        (issue.Status === 'OPEN' || issue.Status === 'IN_PROGRESS') &&
+        issue.Severity.toUpperCase() === 'CRITICAL'
+      );
     case 'closed_today':
       return (
         isQualityClosedStatus(issue.Status) &&

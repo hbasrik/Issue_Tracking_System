@@ -1,5 +1,16 @@
 import { useEffect, useId, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import {
+  BarChart3,
+  Car,
+  ChevronsLeft,
+  ChevronsRight,
+  ClipboardList,
+  Home,
+  LayoutGrid,
+  Shield,
+  Users,
+} from 'lucide-react';
 import { useAuth } from '../auth/AuthProvider';
 import { Perm } from '../auth/permissions';
 import { useI18n, type MessageKey } from '../i18n';
@@ -7,15 +18,31 @@ import { LogoHomeLink } from './LogoHomeLink';
 import { ProfileMenu } from './ProfileMenu';
 import { VinSearchBox } from './VinSearchBox';
 
-const NAV: { to: string; labelKey: MessageKey; end?: boolean; perm?: string }[] = [
-  { to: '/', labelKey: 'nav.home', end: true },
-  { to: '/vehicles', labelKey: 'nav.vehicles', perm: Perm.VehicleView },
-  { to: '/issues', labelKey: 'nav.issues', perm: Perm.IssueView },
-  { to: '/analysis', labelKey: 'nav.analysis', perm: Perm.AnalysisView },
-  { to: '/templates', labelKey: 'nav.templates', perm: Perm.AdminManageMasters },
-  { to: '/users', labelKey: 'nav.users', perm: Perm.AdminManageUsers },
-  { to: '/roles', labelKey: 'nav.roles', perm: Perm.AdminManageUsers },
+const NAV_COLLAPSE_KEY = 'karea-nav-collapsed';
+
+const NAV: {
+  to: string;
+  labelKey: MessageKey;
+  end?: boolean;
+  perm?: string;
+  icon: typeof Home;
+}[] = [
+  { to: '/', labelKey: 'nav.home', end: true, icon: Home },
+  { to: '/vehicles', labelKey: 'nav.vehicles', perm: Perm.VehicleView, icon: Car },
+  { to: '/issues', labelKey: 'nav.issues', perm: Perm.IssueView, icon: ClipboardList },
+  { to: '/analysis', labelKey: 'nav.analysis', perm: Perm.AnalysisView, icon: BarChart3 },
+  { to: '/templates', labelKey: 'nav.templates', perm: Perm.AdminManageMasters, icon: LayoutGrid },
+  { to: '/users', labelKey: 'nav.users', perm: Perm.AdminManageUsers, icon: Users },
+  { to: '/roles', labelKey: 'nav.roles', perm: Perm.AdminManageUsers, icon: Shield },
 ];
+
+function readCollapsed(): boolean {
+  try {
+    return localStorage.getItem(NAV_COLLAPSE_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
 
 /**
  * Web dashboard shell — permanent sidebar on desktop (≥1024px);
@@ -26,6 +53,7 @@ export function AppShell() {
   const { t } = useI18n();
   const location = useLocation();
   const [navOpen, setNavOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(readCollapsed);
   const drawerId = useId();
 
   useEffect(() => {
@@ -46,21 +74,51 @@ export function AppShell() {
     };
   }, [navOpen]);
 
+  function toggleCollapsed() {
+    setCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(NAV_COLLAPSE_KEY, next ? '1' : '0');
+      } catch {
+        /* quota / private mode */
+      }
+      return next;
+    });
+  }
+
   return (
     <div className="flex h-screen max-h-dvh overflow-hidden bg-[var(--bg-page)] text-[var(--text-primary)]">
-      {/* Desktop sidebar */}
       <aside
-        className="hidden h-full w-60 shrink-0 flex-col overflow-hidden lg:flex print:hidden"
+        className={`hidden h-full shrink-0 flex-col overflow-hidden lg:flex print:hidden ${
+          collapsed ? 'w-[4.5rem]' : 'w-60'
+        }`}
         style={{ backgroundColor: 'var(--sidebar-bg)' }}
         aria-label={t('nav.mainMenu')}
       >
-        <div className="shrink-0 px-[var(--space-5)] py-[var(--space-5)]">
-          <LogoHomeLink />
+        <div className={`shrink-0 py-[var(--space-5)] ${collapsed ? 'px-2' : 'px-[var(--space-5)]'}`}>
+          {collapsed ? (
+            <div className="flex justify-center">
+              <LogoHomeLink compact />
+            </div>
+          ) : (
+            <LogoHomeLink />
+          )}
         </div>
-        <NavLinks />
+        <NavLinks collapsed={collapsed} />
+        <div className="mt-auto shrink-0 p-2">
+          <button
+            type="button"
+            onClick={toggleCollapsed}
+            title={collapsed ? t('nav.expand') : t('nav.collapse')}
+            aria-label={collapsed ? t('nav.expand') : t('nav.collapse')}
+            className="flex min-h-touch w-full items-center gap-2 rounded-lg px-3 text-[14px] font-semibold text-[color-mix(in_srgb,var(--sidebar-text)_88%,transparent)] hover:bg-[color-mix(in_srgb,var(--sidebar-text)_12%,transparent)] hover:text-[var(--sidebar-text)]"
+          >
+            {collapsed ? <ChevronsRight size={18} /> : <ChevronsLeft size={18} />}
+            {!collapsed && <span>{t('nav.collapse')}</span>}
+          </button>
+        </div>
       </aside>
 
-      {/* Mobile/tablet drawer */}
       {navOpen && (
         <button
           type="button"
@@ -128,28 +186,43 @@ export function AppShell() {
   );
 }
 
-function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
+function NavLinks({
+  onNavigate,
+  collapsed = false,
+}: {
+  onNavigate?: () => void;
+  collapsed?: boolean;
+}) {
   const { has } = useAuth();
   const { t } = useI18n();
   return (
-    <nav className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto overscroll-contain px-[var(--space-3)] pb-[var(--space-4)]">
-      {NAV.filter((item) => !item.perm || has(item.perm)).map((item) => (
-        <NavLink
-          key={item.to}
-          to={item.to}
-          end={item.end}
-          onClick={onNavigate}
-          className={({ isActive }) =>
-            `flex min-h-touch items-center rounded-lg px-[var(--space-3)] text-[15px] font-semibold transition-colors ${
-              isActive
-                ? 'bg-[color-mix(in_srgb,var(--sidebar-text)_20%,transparent)] text-[var(--sidebar-text)]'
-                : 'text-[color-mix(in_srgb,var(--sidebar-text)_88%,transparent)] hover:bg-[color-mix(in_srgb,var(--sidebar-text)_12%,transparent)] hover:text-[var(--sidebar-text)]'
-            }`
-          }
-        >
-          {t(item.labelKey)}
-        </NavLink>
-      ))}
+    <nav className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto overscroll-contain px-2 pb-[var(--space-4)]">
+      {NAV.filter((item) => !item.perm || has(item.perm)).map((item) => {
+        const Icon = item.icon;
+        const label = t(item.labelKey);
+        return (
+          <NavLink
+            key={item.to}
+            to={item.to}
+            end={item.end}
+            onClick={onNavigate}
+            title={collapsed ? label : undefined}
+            className={({ isActive }) =>
+              `flex min-h-touch items-center gap-3 rounded-lg text-[15px] font-semibold transition-colors ${
+                collapsed ? 'justify-center px-0' : 'px-[var(--space-3)]'
+              } ${
+                isActive
+                  ? 'bg-[color-mix(in_srgb,var(--sidebar-text)_20%,transparent)] text-[var(--sidebar-text)]'
+                  : 'text-[color-mix(in_srgb,var(--sidebar-text)_88%,transparent)] hover:bg-[color-mix(in_srgb,var(--sidebar-text)_12%,transparent)] hover:text-[var(--sidebar-text)]'
+              }`
+            }
+          >
+            <Icon size={18} strokeWidth={2} aria-hidden className="shrink-0" />
+            {!collapsed && <span className="truncate">{label}</span>}
+            {collapsed && <span className="sr-only">{label}</span>}
+          </NavLink>
+        );
+      })}
     </nav>
   );
 }

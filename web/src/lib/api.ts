@@ -440,6 +440,10 @@ export const api = {
     return request<AnalysisDashboard>(`/analysis/dashboard?${toQuery(params)}`);
   },
 
+  homeOverview() {
+    return request<HomeOverview>('/home/overview');
+  },
+
   shipmentReadiness(vin: string) {
     return request<ShipmentReadiness>(
       `/vehicles/${encodeURIComponent(vin)}/shipment-readiness`,
@@ -721,6 +725,27 @@ export interface StationMTTR {
   StationName?: string;
   MeanTimeToResolve: number; // nanoseconds from Go time.Duration JSON
   Hours?: number;
+}
+
+export interface HomeOverview {
+  EOLStages: { Stage: string; Count: number }[];
+  EOLChecklist: { Phase: string; Done: number; Total: number }[];
+  CriticalVehicles: {
+    VIN: string;
+    CriticalCount: number;
+    WorstSeverity: string;
+    Status: string;
+    EOLStage: string;
+  }[];
+  Activity: {
+    EventAt: string;
+    EventType: string;
+    VIN: string;
+    OldValue: string;
+    NewValue: string;
+    ActorName: string;
+    ActorEmail: string;
+  }[];
 }
 
 export interface AnalysisDashboard {

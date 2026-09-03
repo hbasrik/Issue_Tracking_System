@@ -64,6 +64,14 @@ export type HomeDashboardMetrics = {
   openByStation: StationOpenCount[];
   mttrHours: number | null;
   mttrSample: number;
+  pendingQualityNow: number;
+  pendingQualityPrev: number;
+  criticalNow: number;
+  criticalPrev: number;
+  sparkOpen: DayCount[];
+  sparkInProgress: DayCount[];
+  sparkPending: DayCount[];
+  sparkCritical: DayCount[];
 };
 
 export function startOfLocalDay(d: Date): Date {
@@ -139,12 +147,77 @@ function fallsOnLocalDay(atMs: number | null, day: Date): boolean {
   );
 }
 
+/** OPEN + IN_PROGRESS — excludes DONE (pending quality). */
 export function countOpenNow(issues: Issue[]): number {
-  return issues.filter((i) => OPEN_STATUSES.has(i.Status)).length;
+  return issues.filter(
+    (i) => i.Status === 'OPEN' || i.Status === 'IN_PROGRESS',
+  ).length;
+}
+
+/** Snapshot of OPEN + IN_PROGRESS at an instant (not pending quality). */
+export function isActiveOpenAt(issue: Issue, atMs: number): boolean {
+  return isOpenAt(issue, atMs) && !isPendingQualityAt(issue, atMs);
 }
 
 export function countInProgressNow(issues: Issue[]): number {
   return issues.filter((i) => i.Status === 'IN_PROGRESS').length;
+}
+
+export function isPendingQualityAt(issue: Issue, atMs: number): boolean {
+  const finish = parseInstant(issue.FinishDate);
+  if (finish == null || finish > atMs) return false;
+  const closed = qualityClosedAt(issue);
+  if (closed != null && closed <= atMs) return false;
+  return true;
+}
+
+export function isCriticalOpenAt(issue: Issue, atMs: number): boolean {
+  return (
+    isActiveOpenAt(issue, atMs) && issue.Severity.toUpperCase() === 'CRITICAL'
+  );
+}
+
+export function countPendingQualityNow(issues: Issue[]): number {
+  return issues.filter((i) => i.Status === 'DONE').length;
+}
+
+export function countCriticalNow(issues: Issue[]): number {
+  return issues.filter(
+    (i) =>
+      (i.Status === 'OPEN' || i.Status === 'IN_PROGRESS') &&
+      i.Severity.toUpperCase() === 'CRITICAL',
+  ).length;
+}
+
+export function snapshotPerDay(
+  issues: Issue[],
+  now: Date,
+  days: number,
+  atEndOfDay: (issue: Issue, atMs: number) => boolean,
+  locale = 'tr-TR',
+): DayCount[] {
+  const start = addLocalDays(now, -(days - 1));
+  const out: DayCount[] = [];
+  for (let i = 0; i < days; i++) {
+    const date = addLocalDays(start, i);
+    const end = endOfLocalDay(date);
+    let count = 0;
+    for (const issue of issues) {
+      if (atEndOfDay(issue, end.getTime())) count += 1;
+    }
+    out.push({
+      day: localDayKey(date),
+      label: shortDayLabel(date, false, locale),
+      count,
+    });
+  }
+  return out;
+}
+
+export function formatAbsDelta(current: number, previous: number): string {
+  const diff = current - previous;
+  if (diff === 0) return '0';
+  return diff > 0 ? `+${diff}` : String(diff);
 }
 
 export function isOpenIssueStatus(status: string): boolean {
@@ -339,11 +412,16 @@ export function openSeveritySplit(issues: Issue[]): NamedCount[] {
 export function openIssuesByStation(
   issues: Issue[],
   stations: Station[],
+  reportedSinceMs?: number,
 ): StationOpenCount[] {
   const names = new Map(stations.map((s) => [s.ID, s.Name]));
   const counts = new Map<string, number>();
   for (const issue of issues) {
     if (!OPEN_STATUSES.has(issue.Status)) continue;
+    if (reportedSinceMs != null) {
+      const reported = reportedAt(issue);
+      if (reported == null || reported < reportedSinceMs) continue;
+    }
     const name =
       issue.StationID != null
         ? (names.get(issue.StationID) ?? `Station ${issue.StationID}`)
@@ -361,9 +439,8 @@ export function meanResolutionHours(issues: Issue[]): {
 } {
   const durations: number[] = [];
   for (const issue of issues) {
-    if (!isQualityClosedStatus(issue.Status)) continue;
-    const start = reportedAt(issue);
-    const end = qualityClosedAt(issue);
+    const start = parseInstant(issue.ProcessDate);
+    const end = parseInstant(issue.FinishDate);
     if (start == null || end == null || end <= start) continue;
     durations.push(end - start);
   }
@@ -396,7 +473,7 @@ export function buildHomeDashboard(
 
   return {
     openNow: countOpenNow(issues),
-    openPrev: issues.filter((i) => isOpenAt(i, ago24h)).length,
+    openPrev: issues.filter((i) => isActiveOpenAt(i, ago24h)).length,
     closedToday: countClosedOnDay(issues, today),
     closedPrevDay: countClosedOnDay(issues, yesterday),
     inProgressNow: countInProgressNow(issues),
@@ -415,5 +492,25 @@ export function buildHomeDashboard(
     openByStation: openIssuesByStation(issues, stations),
     mttrHours: mttr.hours,
     mttrSample: mttr.sample,
+    pendingQualityNow: countPendingQualityNow(issues),
+    pendingQualityPrev: issues.filter((i) => isPendingQualityAt(i, ago24h)).length,
+    criticalNow: countCriticalNow(issues),
+    criticalPrev: issues.filter((i) => isCriticalOpenAt(i, ago24h)).length,
+    sparkOpen: snapshotPerDay(issues, now, WEEK_DAYS, isActiveOpenAt, locale),
+    sparkInProgress: snapshotPerDay(issues, now, WEEK_DAYS, isInProgressAt, locale),
+    sparkPending: snapshotPerDay(
+      issues,
+      now,
+      WEEK_DAYS,
+      isPendingQualityAt,
+      locale,
+    ),
+    sparkCritical: snapshotPerDay(
+      issues,
+      now,
+      WEEK_DAYS,
+      isCriticalOpenAt,
+      locale,
+    ),
   };
 }
