@@ -23,7 +23,10 @@ import { useAuth } from '../auth/AuthProvider';
 import { Perm } from '../auth/permissions';
 import { useI18n } from '../i18n';
 import { formatActionStamp } from '../lib/actionStamp';
-import { VEHICLE_STATUS_EDITOR_VALUES } from '../lib/vehicleStatus';
+import {
+  VEHICLE_STATUS_EDITOR_VALUES,
+  vehicleStatusLabel,
+} from '../lib/vehicleStatus';
 import type { MessageKey } from '../../../shared/i18n';
 
 type Tab = 'overview' | 'eol' | 'shipment' | 'test' | 'issues' | 'audit';
@@ -49,6 +52,10 @@ const TAB_DEFS: { id: Tab; labelKey: MessageKey; perm?: string }[] = [
 ];
 
 const STATUS_OPTIONS = VEHICLE_STATUS_EDITOR_VALUES;
+
+function isStatusEditorValue(status: string): boolean {
+  return (VEHICLE_STATUS_EDITOR_VALUES as readonly string[]).includes(status);
+}
 
 /** Vehicle detail with Overview / EoL / Shipment / Test / Issues / Audit Log tabs. */
 export default function VehicleDetailPage() {
@@ -253,14 +260,24 @@ export default function VehicleDetailPage() {
                   className="min-h-touch w-full rounded-lg border bg-[var(--bg-page)] px-3 text-[15px] sm:w-auto disabled:opacity-60"
                   style={{ borderColor: 'var(--border)' }}
                 >
-                  {vehicle.CurrentGlobalStatus === 'PLANNED' && (
-                    <option value="PLANNED">PLANNED</option>
-                  )}
-                  {STATUS_OPTIONS.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
+                  {vehicle.CurrentGlobalStatus === 'PLANNED' ? (
+                    <option value="PLANNED">
+                      {vehicleStatusLabel('PLANNED', t)}
                     </option>
-                  ))}
+                  ) : (
+                    <>
+                      {!isStatusEditorValue(vehicle.CurrentGlobalStatus) && (
+                        <option value={vehicle.CurrentGlobalStatus}>
+                          {vehicleStatusLabel(vehicle.CurrentGlobalStatus, t)}
+                        </option>
+                      )}
+                      {STATUS_OPTIONS.map((s) => (
+                        <option key={s} value={s}>
+                          {vehicleStatusLabel(s, t)}
+                        </option>
+                      ))}
+                    </>
+                  )}
                 </select>
                 <button
                   type="button"
