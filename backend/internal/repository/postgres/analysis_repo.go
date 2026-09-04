@@ -110,10 +110,18 @@ func intersectWindow(f domain.AnalysisFilter, winFrom, winUntil time.Time) (from
 	return domain.IntersectWindow(f.From, f.To, winFrom, winUntil)
 }
 
-// DailyPendingIssues returns rows of vw_daily_pending_issues, sliced by day.
+// DailyPendingIssues returns per-day counts of issues reported that day that
+// are still open (OPEN/IN_PROGRESS/DONE). Honors the full AnalysisFilter —
+// not the unfiltered vw_daily_pending_issues view.
 func (r *AnalysisRepo) DailyPendingIssues(ctx context.Context, f domain.AnalysisFilter) ([]domain.DailyPendingIssue, error) {
-	where, args := dayRangeClause("day", f)
-	rows, err := r.pool.Query(ctx, `SELECT day, pending_count FROM vw_daily_pending_issues`+where+` ORDER BY day`, args...)
+	b := bounds(f)
+	rows, err := r.pool.Query(ctx,
+		`SELECT date_trunc('day', i.issue_date AT TIME ZONE 'UTC')::date AS day,
+		        count(*) FILTER (WHERE i.status IN ('OPEN','IN_PROGRESS','DONE'))::bigint
+		 `+issueJoin+issueWhere("i.issue_date")+`
+		 GROUP BY 1
+		 HAVING count(*) FILTER (WHERE i.status IN ('OPEN','IN_PROGRESS','DONE')) > 0
+		 ORDER BY 1`, b.slice()...)
 	if err != nil {
 		return nil, err
 	}
@@ -128,23 +136,6 @@ func (r *AnalysisRepo) DailyPendingIssues(ctx context.Context, f domain.Analysis
 		out = append(out, d)
 	}
 	return out, rows.Err()
-}
-
-func dayRangeClause(column string, f domain.AnalysisFilter) (string, []any) {
-	var conds []string
-	var args []any
-	if f.From != nil {
-		args = append(args, domain.StartOfUTCDay(*f.From))
-		conds = append(conds, fmt.Sprintf("%s >= $%d::date", column, len(args)))
-	}
-	if f.To != nil {
-		args = append(args, domain.StartOfUTCDay(*f.To))
-		conds = append(conds, fmt.Sprintf("%s <= $%d::date", column, len(args)))
-	}
-	if len(conds) == 0 {
-		return "", args
-	}
-	return " WHERE " + strings.Join(conds, " AND "), args
 }
 
 // CompletedIssuesDaily returns finish_date buckets inside the filter window.
@@ -527,23 +518,17 @@ func (r *AnalysisRepo) countShipped(ctx context.Context, f domain.AnalysisFilter
 	if until != nil {
 		b.until = *until
 	}
+	// Post-0013 "sevk" = branch shipment stamp. document_approved_at and
+	// STATUS_CHANGE→SHIPPED are legacy and no longer written in the live flow.
 	var n int64
 	err := r.pool.QueryRow(ctx,
-		`SELECT count(DISTINCT s.vin)
-		 FROM (
-		     SELECT vin, COALESCE(document_approved_at, depot_released_at) AS at
-		     FROM vehicle_eol_workflow
-		     WHERE document_approved_at IS NOT NULL OR depot_released_at IS NOT NULL
-		     UNION ALL
-		     SELECT vin, event_at
-		     FROM audit_logs
-		     WHERE event_type = 'STATUS_CHANGE' AND new_value = 'SHIPPED'
-		 ) s
-		 JOIN vehicles v ON v.vin = s.vin
-		 `+vehicleEOLJoin+`
-		 WHERE ($1::timestamptz IS NULL OR s.at >= $1)
-		   AND ($2::timestamptz IS NULL OR s.at < $2)
-		   AND ($3 = '' OR s.vin ILIKE '%' || $3 || '%')
+		`SELECT count(*)
+		 FROM vehicle_eol_workflow w
+		 JOIN vehicles v ON v.vin = w.vin
+		 WHERE w.branch_shipped_at IS NOT NULL
+		   AND ($1::timestamptz IS NULL OR w.branch_shipped_at >= $1)
+		   AND ($2::timestamptz IS NULL OR w.branch_shipped_at < $2)
+		   AND ($3 = '' OR w.vin ILIKE '%' || $3 || '%')
 		   AND ($4 = '' OR v.current_global_status::text = $4)
 		   `+eolStageWhere(5),
 		b.from, b.until, b.suffix, b.status, b.eolStage,
@@ -919,17 +904,19 @@ func (r *AnalysisRepo) openAgeBuckets(ctx context.Context, f domain.AnalysisFilt
 func (r *AnalysisRepo) conditionalMix(ctx context.Context, f domain.AnalysisFilter) (domain.ConditionalApprovalMix, error) {
 	b := bounds(f)
 	var mix domain.ConditionalApprovalMix
+	// Windowed: quality stamp (approve / conditional_approve) falls in range.
+	// No window: all currently APPROVED / CONDITIONAL_APPROVED issues.
 	err := r.pool.QueryRow(ctx, `
 		SELECT count(*) FILTER (WHERE i.status = 'APPROVED')::bigint,
 		       count(*) FILTER (WHERE i.status = 'CONDITIONAL_APPROVED')::bigint
 		 `+issueJoin+`
 		 WHERE i.status IN ('APPROVED','CONDITIONAL_APPROVED')
 		   AND (
-		         (i.approve_date IS NOT NULL AND ($1::timestamptz IS NULL OR i.approve_date >= $1)
+		         ($1::timestamptz IS NULL AND $2::timestamptz IS NULL)
+		      OR (i.approve_date IS NOT NULL AND ($1::timestamptz IS NULL OR i.approve_date >= $1)
 		           AND ($2::timestamptz IS NULL OR i.approve_date < $2))
 		      OR (i.conditional_approve_date IS NOT NULL AND ($1::timestamptz IS NULL OR i.conditional_approve_date >= $1)
 		           AND ($2::timestamptz IS NULL OR i.conditional_approve_date < $2))
-		      OR (($1::timestamptz IS NULL AND $2::timestamptz IS NULL))
 		       )
 		   AND ($3 = '' OR i.vin ILIKE '%' || $3 || '%')
 		   AND ($4::int IS NULL OR i.station_id = $4)

@@ -128,18 +128,11 @@ func vehicleFilterClause(f domain.VehicleListFilter) (string, []any) {
 		args = append(args, f.WindowFrom, f.WindowUntil)
 		fromN, untilN := len(args)-1, len(args)
 		conds = append(conds, fmt.Sprintf(`EXISTS (
-			SELECT 1 FROM (
-				SELECT vin, COALESCE(document_approved_at, depot_released_at) AS at
-				FROM vehicle_eol_workflow
-				WHERE document_approved_at IS NOT NULL OR depot_released_at IS NOT NULL
-				UNION ALL
-				SELECT vin, event_at
-				FROM audit_logs
-				WHERE event_type = 'STATUS_CHANGE' AND new_value = 'SHIPPED'
-			) s
-			WHERE s.vin = vehicles.vin
-			  AND ($%d::timestamptz IS NULL OR s.at >= $%d)
-			  AND ($%d::timestamptz IS NULL OR s.at < $%d)
+			SELECT 1 FROM vehicle_eol_workflow w
+			WHERE w.vin = vehicles.vin
+			  AND w.branch_shipped_at IS NOT NULL
+			  AND ($%d::timestamptz IS NULL OR w.branch_shipped_at >= $%d)
+			  AND ($%d::timestamptz IS NULL OR w.branch_shipped_at < $%d)
 		)`, fromN, fromN, untilN, untilN))
 	case domain.VehicleAnalysisStatDepotReleased:
 		args = append(args, f.WindowFrom, f.WindowUntil)
