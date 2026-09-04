@@ -1,0 +1,70 @@
+{
+  "compare": {
+    "from": "2026-08-22T00:00:00Z",
+    "to": "2026-08-28T00:00:00Z"
+  },
+  "labels": [
+    "22–28 Ağu dönemine göre0(0%)",
+    "22–28 Ağu dönemine göre+3(+60%)",
+    "22–28 Ağu dönemine göre+2(+200%)",
+    "22–28 Ağu dönemine göre+3(+150%)",
+    "22–28 Ağu dönemine göre0(0%)",
+    "VIN × severity — toplam açık hataya göre sıralı"
+  ],
+  "info": {
+    "htmlLen": 61891,
+    "textLen": 1197,
+    "svgCount": 13,
+    "sizes": [
+      {
+        "w": "640",
+        "h": "220",
+        "cw": 0,
+        "ch": 0
+      },
+      {
+        "w": "14",
+        "h": "14",
+        "cw": 0,
+        "ch": 0
+      },
+      {
+        "w": "14",
+        "h": "14",
+        "cw": 0,
+        "ch": 0
+      },
+      {
+        "w": "200",
+        "h": "200",
+        "cw": 0,
+        "ch": 0
+      },
+      {
+        "w": "200",
+        "h": "200",
+        "cw": 0,
+        "ch": 0
+      },
+      {
+        "w": "640",
+        "h": "220",
+        "cw": 0,
+        "ch": 0
+      },
+      {
+        "w": "640",
+        "h": "220",
+        "cw": 0,
+        "ch": 0
+      },
+      {
+        "w": "640",
+        "h": "220",
+        "cw": 0,
+        "ch": 0
+      }
+    ],
+    "sample": "Analiz & KPITarih aralığı29.08.2026 – 04.09.2026Karşılaştırma dönemi22–28 Ağu (22.08.2026 – 28.08.2026)Uygulanan filtrelerFiltre yok (tüm veriler)Yazdırma tarihi04.09.2026 15:56YazdıranBasriKPI özetiToplam üretim4Açık hatalar8Kritik açık3Kapanan hatalar5EOL tamamlanma39.1%Aşama performansıŞubeDepoTamamlandı051015200%25%50%75%100%1871BitenTamamlanmaHata durum dağılımıAçık: 5İşlemde: 2Tamamlandı: 1Kalite Onay: 3Şartlı Onay: 2Severity dağılımıKritik: 4Orta: 6Düşük: 3İstasyon Bazlı MTTR (saat)1. İst"
+  }
+}
