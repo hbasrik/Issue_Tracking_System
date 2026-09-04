@@ -49,6 +49,7 @@ import {
   deltaColor,
   deltaPolarity,
   formatAbsDelta,
+  formatPercentDelta,
   rankTopVehicles,
   type DayCount,
   type DeltaPolarity,
@@ -1088,7 +1089,17 @@ function AnalysisKpiCard({
       polarity === 'up' ? 'down' : polarity === 'down' ? 'up' : 'neutral';
   }
   const color = deltaColor(polarity);
-  const delta = formatAbsDelta(cur, prev);
+  const diff = cur - prev;
+  const delta =
+    format != null
+      ? diff === 0
+        ? '0'
+        : `${diff > 0 ? '+' : ''}${diff.toFixed(2)}`
+      : formatAbsDelta(cur, prev);
+  const pct =
+    format != null && prev === 0
+      ? null
+      : formatPercentDelta(cur, prev);
 
   return (
     <div
@@ -1126,9 +1137,14 @@ function AnalysisKpiCard({
         {display}
       </p>
       {previous != null && (
-        <p className="mt-1.5 inline-flex items-center gap-1 text-[11px]" style={mutedCaption}>
+        <p className="mt-1.5 inline-flex flex-wrap items-center gap-1 text-[11px]" style={mutedCaption}>
           {t('analysis.compare.vs', { period: compareHint })}
           <DeltaBadge polarity={polarity} color={color} label={delta} />
+          {pct != null && (
+            <span className="tabular-nums" style={{ color }}>
+              ({pct})
+            </span>
+          )}
         </p>
       )}
     </div>
