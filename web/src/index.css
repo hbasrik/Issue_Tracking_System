@@ -339,12 +339,62 @@ tr.cursor-pointer:focus-visible {
   body[data-print='checklist-test'] .print-root[data-print-id='checklist-test'],
   body[data-print='vehicles'] .print-root[data-print-id='vehicles'],
   body[data-print='issues-list'] .print-root[data-print-id='issues-list'],
-  body[data-print='issues-detail'] .print-root[data-print-id='issues-detail'] {
+  body[data-print='issues-detail'] .print-root[data-print-id='issues-detail'],
+  body[data-print='analysis'] .print-root[data-print-id='analysis'] {
     display: block !important;
     color: #111111;
     background: #ffffff;
     font-size: 11pt;
     line-height: 1.4;
+  }
+
+  /* Recharts: fixed boxes so ResponsiveContainer does not collapse to 0×0. */
+  body[data-print='analysis'] .print-chart-box {
+    width: 170mm !important;
+    height: 58mm !important;
+    min-width: 170mm !important;
+    min-height: 58mm !important;
+    max-width: 170mm !important;
+    overflow: visible !important;
+  }
+
+  body[data-print='analysis'] .print-chart-box .recharts-responsive-container,
+  body[data-print='analysis'] .print-chart-box .recharts-wrapper {
+    width: 170mm !important;
+    height: 58mm !important;
+    min-width: 170mm !important;
+    min-height: 58mm !important;
+  }
+
+  body[data-print='analysis'] .print-chart-box svg {
+    width: 170mm !important;
+    height: 58mm !important;
+    overflow: visible !important;
+  }
+
+  body[data-print='analysis'] .print-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6pt;
+    margin-bottom: 10pt;
+  }
+
+  body[data-print='analysis'] .print-kpi-card {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    border: 0.5pt solid #111111;
+    padding: 6pt;
+  }
+
+  body[data-print='analysis'] .print-chart-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8pt;
+  }
+
+  body[data-print='analysis'] .print-section {
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
 
   @page {
@@ -512,12 +562,8 @@ tr.cursor-pointer:focus-visible {
   }
 
   :root:not([data-theme='dark']) .login-page::before {
-    background: linear-gradient(
-      90deg,
-      color-mix(in srgb, var(--bg-page) 82%, transparent) 0%,
-      color-mix(in srgb, var(--bg-page) 28%, transparent) 48%,
-      transparent 72%
-    );
+    /* Light theme: no veil — wallpaper stays at full brightness. */
+    display: none;
   }
 
   :root[data-theme='dark'] .login-page::before {
