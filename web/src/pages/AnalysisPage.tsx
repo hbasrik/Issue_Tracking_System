@@ -17,6 +17,7 @@ import {
   TrendingDown,
   TrendingUp,
   TriangleAlert,
+  Truck,
 } from 'lucide-react';
 import {
   Area,
@@ -65,6 +66,8 @@ import {
   eolStageLabel,
   vehicleStatusLabel,
 } from '../lib/vehicleStatus';
+import { AnalysisPrint } from '../components/print/AnalysisPrint';
+import { formatDateRangeFull, formatDateRangeShort, formatDateTime } from '../../../shared/i18n';
 
 const VEHICLE_STATUSES = ['', ...VEHICLE_STATUS_FILTER_VALUES] as const;
 const SEVERITIES = ['', 'CRITICAL', 'MEDIUM', 'LOW'] as const;
@@ -302,7 +305,22 @@ export default function AnalysisPage() {
     setSearchParams(new URLSearchParams());
   }
 
-  const compareHint = compareVsLabel(dash?.CompareMode ?? applied.compare, t);
+  const compareHint = useMemo(() => {
+    const short = formatDateRangeShort(dash?.CompareFrom, dash?.CompareTo, locale);
+    const full = formatDateRangeFull(dash?.CompareFrom, dash?.CompareTo, locale);
+    if (short) {
+      return {
+        text: t('analysis.compare.vsRange', { range: short }),
+        title: full
+          ? t('analysis.compare.rangeFull', { range: full })
+          : t('analysis.compare.rangeFull', { range: short }),
+      };
+    }
+    return {
+      text: compareVsLabel(dash?.CompareMode ?? applied.compare, t),
+      title: compareVsLabel(dash?.CompareMode ?? applied.compare, t),
+    };
+  }, [dash, locale, t, applied.compare]);
 
   const filterSummary = [
     applied.from && t('analysis.fromFilter', { from: applied.from }),
@@ -584,6 +602,12 @@ export default function AnalysisPage() {
           >
             <RefreshCw size={16} className={loading ? 'animate-spin' : undefined} />
           </button>
+          <AnalysisPrint
+            dash={dash}
+            stations={stations}
+            filterSummary={filterSummary}
+            disabled={loading || !dash}
+          />
           <button
             type="button"
             onClick={exportCsv}
@@ -619,7 +643,8 @@ export default function AnalysisPage() {
             accent={def.accent}
             value={kpiNumber(dash?.Cards, def.key)}
             previous={kpiNumber(dash?.CompareCards, def.key)}
-            compareHint={compareHint}
+            compareHint={compareHint.text}
+            compareHintTitle={compareHint.title}
             spark={def.spark ? sparkSeries(dash, def.spark, locale) : undefined}
             format={def.format}
             invertDelta={def.invertDelta}
@@ -1078,6 +1103,66 @@ export default function AnalysisPage() {
 
       <ChartCard
         className="mt-3"
+        title={t('analysis.branchShippedList')}
+        subtitle={t('analysis.branchShippedListHint')}
+        icon={<Truck size={16} />}
+        filterNote={vehicleFilterNote}
+      >
+        {(dash?.BranchShippedList ?? []).length === 0 ? (
+          <EmptyChart />
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[28rem] text-left text-[12px]">
+              <thead>
+                <tr
+                  className="border-b text-[10px] font-semibold uppercase tracking-wide"
+                  style={{ borderColor: 'var(--border)', ...mutedCaption }}
+                >
+                  <th className="pb-1.5 pr-2">{t('issue.vin')}</th>
+                  <th className="pb-1.5 pr-2">{t('analysis.shippedAt')}</th>
+                  <th className="pb-1.5 pr-2">{t('analysis.shippedBy')}</th>
+                  <th className="pb-1.5 pr-2">{t('issue.status')}</th>
+                  <th className="pb-1.5">{t('print.eolStage')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(dash?.BranchShippedList ?? []).map((row) => (
+                  <tr
+                    key={`${row.VIN}-${row.ShippedAt}`}
+                    className="cursor-pointer border-b hover:bg-[var(--bg-surface-2)]"
+                    style={{ borderColor: 'var(--border)' }}
+                    onClick={() => {
+                      window.location.assign(`/vehicles/${encodeURIComponent(row.VIN)}`);
+                    }}
+                  >
+                    <td className="py-1.5 pr-2">
+                      <Link
+                        to={`/vehicles/${encodeURIComponent(row.VIN)}`}
+                        className="font-mono text-[12px] font-semibold text-[var(--accent)] hover:underline"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        …{row.VIN.slice(-5)}
+                      </Link>
+                      <span className="ml-1.5 text-[10px]" style={mutedCaption}>
+                        {row.VIN}
+                      </span>
+                    </td>
+                    <td className="py-1.5 pr-2 tabular-nums whitespace-nowrap">
+                      {formatDateTime(row.ShippedAt, locale)}
+                    </td>
+                    <td className="py-1.5 pr-2">{row.ShippedByName || t('common.emDash')}</td>
+                    <td className="py-1.5 pr-2">{vehicleStatusLabel(row.CurrentStatus, t)}</td>
+                    <td className="py-1.5">{eolStageLabel(row.EOLStage, t)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </ChartCard>
+
+      <ChartCard
+        className="mt-3"
         title={t('analysis.vehicleBreakdown')}
         subtitle={t('analysis.vehicleBreakdownHint')}
         icon={<BarChart3 size={16} />}
@@ -1328,6 +1413,7 @@ function AnalysisKpiCard({
   value,
   previous,
   compareHint,
+  compareHintTitle,
   spark,
   format,
   invertDelta,
@@ -1340,6 +1426,7 @@ function AnalysisKpiCard({
   value: number | null;
   previous: number | null;
   compareHint: string;
+  compareHintTitle?: string;
   spark?: DayCount[];
   format?: (v: number | null) => string;
   invertDelta?: boolean;
@@ -1410,7 +1497,11 @@ function AnalysisKpiCard({
         ) : null}
       </div>
       {previous != null && (
-        <p className="mt-2 inline-flex flex-wrap items-center gap-1 pl-9 text-[10px]" style={mutedCaption}>
+        <p
+          className="mt-2 inline-flex flex-wrap items-center gap-1 pl-9 text-[10px]"
+          style={mutedCaption}
+          title={compareHintTitle ?? compareHint}
+        >
           <span>{compareHint}</span>
           <DeltaBadge polarity={polarity} color={color} label={delta} />
           {pct != null && (
