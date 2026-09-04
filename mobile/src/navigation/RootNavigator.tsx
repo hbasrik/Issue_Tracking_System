@@ -1,12 +1,14 @@
 import { NavigationContainer, DarkTheme, DefaultTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createDrawerNavigator } from '@react-navigation/drawer';
+import { Car, ClipboardList, Home, User } from 'lucide-react-native';
 import { useAuth } from '../auth/AuthProvider';
 import { useI18n } from '../i18n';
 import { useTheme } from '../theme/ThemeProvider';
 import { Perm } from '../auth/permissions';
 import type { MainDrawerParamList, RootStackParamList } from './types';
 import { AppDrawer } from '../components/AppDrawer';
+import { Loading } from '../components/ui';
 import { sidebarTokens } from '../theme/tokens';
 
 import LoginScreen from '../screens/LoginScreen';
@@ -27,6 +29,7 @@ import IssueDetailScreen from '../screens/IssueDetailScreen';
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Drawer = createDrawerNavigator<MainDrawerParamList>();
 
+/** Lucide icons — same family/mapping as web AppShell (Home/Car/ClipboardList; User for Profile). */
 function MainDrawer() {
   const { tokens } = useTheme();
   const { has } = useAuth();
@@ -53,7 +56,11 @@ function MainDrawer() {
       <Drawer.Screen
         name="Home"
         component={HomeScreen}
-        options={() => ({ title: t('nav.home'), drawerLabel: t('nav.home') })}
+        options={() => ({
+          title: t('nav.home'),
+          drawerLabel: t('nav.home'),
+          drawerIcon: ({ color, size }) => <Home color={color} size={size} />,
+        })}
       />
       {has(Perm.VehicleView) ? (
         <Drawer.Screen
@@ -62,6 +69,7 @@ function MainDrawer() {
           options={() => ({
             title: t('nav.vehicles'),
             drawerLabel: t('nav.vehicles'),
+            drawerIcon: ({ color, size }) => <Car color={color} size={size} />,
           })}
         />
       ) : null}
@@ -72,6 +80,9 @@ function MainDrawer() {
           options={() => ({
             title: t('nav.issues'),
             drawerLabel: t('nav.issues'),
+            drawerIcon: ({ color, size }) => (
+              <ClipboardList color={color} size={size} />
+            ),
           })}
         />
       ) : null}
@@ -81,6 +92,7 @@ function MainDrawer() {
         options={() => ({
           title: t('nav.profile'),
           drawerLabel: t('nav.profile'),
+          drawerIcon: ({ color, size }) => <User color={color} size={size} />,
         })}
       />
     </Drawer.Navigator>
@@ -88,7 +100,7 @@ function MainDrawer() {
 }
 
 export function RootNavigator() {
-  const { isAuthenticated, has, user } = useAuth();
+  const { isAuthenticated, has, user, ready } = useAuth();
   const { mode, tokens } = useTheme();
   const { t } = useI18n();
 
@@ -103,6 +115,10 @@ export function RootNavigator() {
       primary: tokens.accent,
     },
   };
+
+  if (!ready) {
+    return <Loading />;
+  }
 
   return (
     <NavigationContainer theme={navTheme}>

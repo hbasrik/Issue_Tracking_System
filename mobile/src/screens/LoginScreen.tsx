@@ -25,6 +25,7 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [keepSignedIn, setKeepSignedIn] = useState(false);
   const [forgotHint, setForgotHint] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -38,7 +39,7 @@ export default function LoginScreen() {
     setError(null);
     setBusy(true);
     try {
-      await login(email.trim(), password);
+      await login(email.trim(), password, keepSignedIn);
     } catch (err) {
       setError(apiErrorMessage(err, t));
     } finally {
@@ -150,11 +151,37 @@ export default function LoginScreen() {
               </Pressable>
             </View>
 
-            <Pressable onPress={() => setForgotHint(true)} style={styles.forgotRow}>
-              <Text style={[styles.forgotLink, { color: tokens.accent }]}>
-                {t('login.forgotPassword')}
-              </Text>
-            </Pressable>
+            <View style={styles.optionsRow}>
+              <Pressable
+                onPress={() => setKeepSignedIn((v) => !v)}
+                style={styles.keepRow}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: keepSignedIn }}
+                hitSlop={6}
+              >
+                <View
+                  style={[
+                    styles.checkbox,
+                    {
+                      borderColor: keepSignedIn ? tokens.accent : tokens.border,
+                      backgroundColor: keepSignedIn ? tokens.accent : 'transparent',
+                    },
+                  ]}
+                >
+                  {keepSignedIn ? (
+                    <Text style={styles.checkboxMark}>✓</Text>
+                  ) : null}
+                </View>
+                <Text style={[styles.keepLabel, { color: tokens.textPrimary }]}>
+                  {t('login.keepSignedIn')}
+                </Text>
+              </Pressable>
+              <Pressable onPress={() => setForgotHint(true)} hitSlop={6}>
+                <Text style={[styles.forgotLink, { color: tokens.accent }]}>
+                  {t('login.forgotPassword')}
+                </Text>
+              </Pressable>
+            </View>
 
             {forgotHint ? (
               <Text style={[styles.forgotHint, { color: tokens.textSecondary }]}>
@@ -247,9 +274,36 @@ const styles = StyleSheet.create({
     minHeight: 44,
     backgroundColor: 'transparent',
   },
-  forgotRow: {
-    alignSelf: 'flex-end',
-    marginTop: 12,
+  optionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    marginTop: 14,
+  },
+  keepRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flexShrink: 1,
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 5,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkboxMark: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '700',
+    lineHeight: 14,
+  },
+  keepLabel: {
+    fontSize: 13,
+    fontWeight: '500',
   },
   forgotLink: {
     fontSize: 13,

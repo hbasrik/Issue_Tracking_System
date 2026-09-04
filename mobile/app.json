@@ -27,7 +27,8 @@
         {
           "photosPermission": "Attach optional photos when reporting issues."
         }
-      ]
+      ],
+      "expo-secure-store"
     ]
   }
 }
