@@ -74,6 +74,7 @@ const CHART_TOOLTIP = {
   backgroundColor: 'var(--bg-surface-2)',
   border: '1px solid var(--border)',
   borderRadius: 8,
+  color: 'var(--text-primary)',
   fontSize: 12,
 } as const;
 const mutedCaption = { color: 'var(--text-secondary)' } as const;

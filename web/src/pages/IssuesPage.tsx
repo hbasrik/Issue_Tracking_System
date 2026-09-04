@@ -528,8 +528,8 @@ function typeChipStyle(selected: boolean): CSSProperties {
   return {
     border: 'none',
     backgroundColor: selected
-      ? 'color-mix(in srgb, var(--text-primary) 14%, var(--bg-surface-1))'
-      : 'color-mix(in srgb, var(--text-primary) 6%, var(--bg-surface-1))',
+      ? 'color-mix(in srgb, var(--text-primary) 18%, var(--bg-surface-1))'
+      : 'color-mix(in srgb, var(--text-primary) 8%, var(--bg-surface-1))',
     color: selected ? 'var(--text-primary)' : 'var(--text-secondary)',
   };
 }

@@ -302,7 +302,7 @@ export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
                   className="flex min-h-touch min-w-9 items-center justify-center rounded-full px-2 text-[12px] font-medium sm:px-3 sm:text-[13px]"
                   style={{
                     backgroundColor: done || active ? 'var(--accent)' : 'transparent',
-                    color: done || active ? '#fff' : 'var(--text-secondary)',
+                    color: done || active ? 'var(--sidebar-text)' : 'var(--text-secondary)',
                     outline: active
                       ? '2px solid var(--accent)'
                       : '1px solid var(--border)',

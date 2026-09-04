@@ -322,7 +322,7 @@ export default function VehicleDetailPage() {
                           style={{
                             backgroundColor:
                               past || active ? 'var(--accent)' : 'transparent',
-                            color: past || active ? '#fff' : 'var(--text-secondary)',
+                            color: past || active ? 'var(--sidebar-text)' : 'var(--text-secondary)',
                             outline: active
                               ? '2px solid var(--accent)'
                               : '1px solid var(--border)',

@@ -125,8 +125,8 @@ export function VinSearchBox({
         placeholder={placeholder ?? t('search.placeholder')}
         className={
           onChrome
-            ? 'w-full rounded-lg border px-3 py-2 text-[15px] placeholder:text-[#5B6672]'
-            : 'w-full rounded-lg border bg-[var(--bg-surface-1)] px-3 py-2 text-[15px] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]'
+            ? 'vin-search-on-chrome w-full rounded-lg border px-3 py-2 text-[15px]'
+            : 'w-full rounded-lg border bg-[var(--bg-page)] px-3 py-2 text-[15px] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]'
         }
         style={
           onChrome
@@ -134,6 +134,8 @@ export function VinSearchBox({
                 backgroundColor: lightTokens['bg-surface-1'],
                 color: lightTokens['text-primary'],
                 borderColor: lightTokens.border,
+                // Always-light field on orange chrome — pin light secondary for placeholder.
+                ['--chrome-placeholder' as string]: lightTokens['text-secondary'],
               }
             : { borderColor: 'var(--border)' }
         }
