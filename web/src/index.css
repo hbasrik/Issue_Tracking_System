@@ -30,17 +30,28 @@
   --status-severity-critical: #c62222;
   --status-severity-medium: #eab308;
   --status-severity-low: #327cb2;
+  /* Interaction overlays — JS applyThemeVars keeps dark mixes stronger. */
+  --hover-overlay: color-mix(in srgb, var(--text-primary) 7%, transparent);
+  --hover-overlay-strong: color-mix(in srgb, var(--text-primary) 11%, transparent);
+  --active-overlay: color-mix(in srgb, var(--text-primary) 14%, transparent);
+  --accent-hover-filter: brightness(0.92);
+  --icon-btn-hover-filter: brightness(0.97);
   accent-color: var(--accent);
 }
 
 :root[data-theme='dark'] {
   --bg-page: #0b0f14;
   --bg-surface-1: #131920;
-  --bg-surface-2: #1b232c;
-  --border: #26313c;
+  --bg-surface-2: rgb(57, 62, 68);
+  --border: rgb(86, 94, 103);
   --text-primary: #f5f7fa;
-  --text-secondary: #8b98a5;
+  --text-secondary: rgb(155, 166, 178);
   --accent: #ff3b1e;
+  --hover-overlay: color-mix(in srgb, var(--text-primary) 14%, transparent);
+  --hover-overlay-strong: color-mix(in srgb, var(--text-primary) 20%, transparent);
+  --active-overlay: color-mix(in srgb, var(--text-primary) 24%, transparent);
+  --accent-hover-filter: brightness(1.12);
+  --icon-btn-hover-filter: brightness(1.18);
   accent-color: var(--accent);
 }
 
@@ -66,6 +77,11 @@ body {
 }
 .min-w-touch {
   min-width: 44px;
+}
+
+/* Header VIN search stays light-ink on orange chrome in both themes. */
+.vin-search-on-chrome::placeholder {
+  color: var(--chrome-placeholder);
 }
 
 /* Inert charts — decorative only; no click/focus rings from Recharts or :focus-visible. */
@@ -105,27 +121,95 @@ body {
   cursor: default;
 }
 
-/* Quiet hover / focus for clickable controls. Inert cards stay still. */
+/* Quiet hover / focus for clickable controls. Inert cards stay still.
+   Overlays use --hover-overlay: darkens on light, lightens on dark. */
 button:not(:disabled),
 [role='button'] {
   transition:
     background-color 120ms ease,
+    background-image 120ms ease,
     box-shadow 120ms ease,
     transform 120ms ease,
-    filter 120ms ease;
+    filter 120ms ease,
+    color 120ms ease,
+    border-color 120ms ease,
+    opacity 120ms ease;
 }
 
-button:not(:disabled):not(.rounded-full):hover,
-[role='button']:hover {
-  background-image: linear-gradient(
-    color-mix(in srgb, var(--text-primary) 7%, transparent),
-    color-mix(in srgb, var(--text-primary) 7%, transparent)
-  );
+button:not(:disabled):not(.rounded-full):not(.login-submit):hover,
+[role='button']:not(.rounded-full):hover {
+  background-image: linear-gradient(var(--hover-overlay), var(--hover-overlay));
+}
+
+button:not(:disabled):not(.rounded-full):not(.login-submit):active,
+[role='button']:not(.rounded-full):active {
+  background-image: linear-gradient(var(--active-overlay), var(--active-overlay));
 }
 
 button.rounded-full:hover {
   background-image: none;
-  filter: brightness(0.97);
+  filter: var(--icon-btn-hover-filter);
+}
+
+button.rounded-full:active {
+  background-image: none;
+  filter: var(--accent-hover-filter);
+}
+
+/* Primary / accent fill — light darkens, dark brightens (not the inverse). */
+.login-submit:hover:not(:disabled),
+button[class*='bg-[var(--accent)]']:hover:not(:disabled),
+a[class*='bg-[var(--accent)]']:hover {
+  background-image: none !important;
+  filter: var(--accent-hover-filter);
+}
+
+.login-submit:active:not(:disabled),
+button[class*='bg-[var(--accent)]']:active:not(:disabled),
+a[class*='bg-[var(--accent)]']:active {
+  background-image: none !important;
+  filter: brightness(0.88);
+}
+
+:root[data-theme='dark'] .login-submit:active:not(:disabled),
+:root[data-theme='dark'] button[class*='bg-[var(--accent)]']:active:not(:disabled),
+:root[data-theme='dark'] a[class*='bg-[var(--accent)]']:active {
+  filter: brightness(1.2);
+}
+
+/* Text / ghost buttons — stronger lift on dark. */
+button.border:not(:disabled):hover,
+[role='button'].border:hover {
+  background-image: linear-gradient(
+    var(--hover-overlay-strong),
+    var(--hover-overlay-strong)
+  );
+  border-color: color-mix(in srgb, var(--text-primary) 28%, var(--border));
+}
+
+/* Filter chips & pill toggles */
+button.rounded-full[aria-pressed]:hover:not(:disabled),
+button[class*='rounded-full'][class*='border']:hover:not(:disabled) {
+  background-image: linear-gradient(
+    var(--hover-overlay-strong),
+    var(--hover-overlay-strong)
+  );
+  filter: none;
+}
+
+/* Menu / list rows that use surface-2 hover already; reinforce active. */
+a[class*='hover:bg-[var(--bg-surface-2)]']:hover,
+button[class*='hover:bg-[var(--bg-surface-2)]']:hover {
+  background-color: var(--bg-surface-2);
+}
+
+/* Inline text links */
+a[href]:not([class*='bg-']):not(.logo-home-link):hover {
+  color: color-mix(in srgb, var(--accent) 88%, var(--text-primary));
+}
+
+a[href]:not([class*='bg-']):not(.logo-home-link):active {
+  color: var(--accent);
 }
 
 /* Satsuma focus — replace the UA blue ring everywhere we can control. */
@@ -176,8 +260,12 @@ a.rounded-xl {
 }
 
 a.rounded-xl:hover {
-  box-shadow: 0 4px 14px color-mix(in srgb, var(--text-primary) 10%, transparent);
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--text-primary) 14%, transparent);
   transform: translateY(-1px);
+}
+
+:root[data-theme='dark'] a.rounded-xl:hover {
+  box-shadow: 0 4px 18px color-mix(in srgb, var(--text-primary) 18%, transparent);
 }
 
 tr.cursor-pointer {
@@ -186,6 +274,10 @@ tr.cursor-pointer {
 
 tr.cursor-pointer:hover {
   background-color: var(--bg-surface-2);
+}
+
+tr.cursor-pointer:active {
+  background-color: color-mix(in srgb, var(--text-primary) 8%, var(--bg-surface-2));
 }
 
 tr.cursor-pointer:focus-visible {
@@ -380,7 +472,7 @@ tr.cursor-pointer:focus-visible {
 
 /* —— Login page —— */
 .login-page {
-  --login-bg: #eef1f4;
+  --login-bg: var(--bg-page);
   position: relative;
   min-height: 100vh;
   background-color: var(--login-bg);
@@ -394,33 +486,70 @@ tr.cursor-pointer:focus-visible {
   justify-content: center;
   padding: 2.5rem 1.5rem;
   min-height: 100vh;
-  background: linear-gradient(155deg, #e8ecf1 0%, #f7f9fb 42%, #eef2f6 100%);
+  background: linear-gradient(
+    155deg,
+    color-mix(in srgb, var(--bg-surface-2) 55%, var(--bg-page)) 0%,
+    var(--bg-page) 42%,
+    color-mix(in srgb, var(--bg-surface-2) 40%, var(--bg-page)) 100%
+  );
 }
 
+/* Desktop: wallpaper in both themes; dark uses a deliberate veil, not hide. */
 @media (min-width: 1024px) {
-  :root:not([data-theme='dark']) .login-page {
-    background-color: var(--login-bg);
+  .login-page {
     background-image: url('/karea_wallpaper.png');
     background-size: cover;
     background-position: 78% center;
     background-repeat: no-repeat;
   }
 
-  :root:not([data-theme='dark']) .login-panel {
+  .login-page::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  :root:not([data-theme='dark']) .login-page::before {
+    background: linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--bg-page) 82%, transparent) 0%,
+      color-mix(in srgb, var(--bg-page) 28%, transparent) 48%,
+      transparent 72%
+    );
+  }
+
+  :root[data-theme='dark'] .login-page::before {
+    background:
+      linear-gradient(
+        105deg,
+        color-mix(in srgb, var(--bg-page) 86%, transparent) 0%,
+        color-mix(in srgb, var(--bg-page) 52%, transparent) 40%,
+        color-mix(in srgb, var(--bg-page) 34%, transparent) 100%
+      ),
+      color-mix(in srgb, var(--bg-page) 18%, transparent);
+  }
+
+  .login-panel {
     justify-content: flex-start;
     padding-left: clamp(2.5rem, 6vw, 5rem);
     padding-right: clamp(1.5rem, 4vw, 3rem);
     background: transparent;
   }
-}
 
-:root[data-theme='dark'] .login-page {
-  --login-bg: #0b0f14;
-  background-image: none;
-}
+  .login-card {
+    box-shadow:
+      0 2px 6px color-mix(in srgb, var(--text-primary) 8%, transparent),
+      0 24px 56px -16px color-mix(in srgb, var(--text-primary) 22%, transparent);
+  }
 
-:root[data-theme='dark'] .login-panel {
-  background: linear-gradient(155deg, #101820 0%, #0b0f14 45%, #151c24 100%);
+  :root[data-theme='dark'] .login-card {
+    box-shadow:
+      0 2px 8px rgb(0 0 0 / 0.35),
+      0 28px 64px -16px rgb(0 0 0 / 0.65),
+      0 0 0 1px color-mix(in srgb, var(--border) 80%, transparent);
+  }
 }
 
 .login-card {
@@ -430,24 +559,15 @@ tr.cursor-pointer:focus-visible {
   border-radius: 20px;
   padding: 2.5rem 2rem 2rem;
   box-shadow:
-    0 2px 4px rgb(0 0 0 / 0.03),
-    0 16px 48px -12px rgb(0 0 0 / 0.1);
-  border: 1px solid rgb(0 0 0 / 0.05);
-}
-
-@media (min-width: 1024px) {
-  :root:not([data-theme='dark']) .login-card {
-    box-shadow:
-      0 2px 6px rgb(0 0 0 / 0.05),
-      0 24px 56px -16px rgb(0 0 0 / 0.16);
-  }
+    0 2px 4px color-mix(in srgb, var(--text-primary) 4%, transparent),
+    0 16px 48px -12px color-mix(in srgb, var(--text-primary) 12%, transparent);
+  border: 1px solid var(--border);
 }
 
 :root[data-theme='dark'] .login-card {
   box-shadow:
     0 2px 4px rgb(0 0 0 / 0.2),
     0 16px 48px -12px rgb(0 0 0 / 0.55);
-  border-color: var(--border);
 }
 
 .login-brand {
@@ -630,7 +750,7 @@ tr.cursor-pointer:focus-visible {
   border: none;
   border-radius: 12px;
   background: var(--accent);
-  color: #fff;
+  color: var(--sidebar-text);
   font-size: 0.9375rem;
   font-weight: 600;
   cursor: pointer;
@@ -638,7 +758,7 @@ tr.cursor-pointer:focus-visible {
 }
 
 .login-submit:hover:not(:disabled) {
-  filter: brightness(0.92);
+  filter: var(--accent-hover-filter);
 }
 
 .login-submit:disabled {
