@@ -16,6 +16,29 @@ function section(title: string, lines: string[]): string[] {
   return [title, ...lines, ''];
 }
 
+function mergeSparkDays(
+  sparks: AnalysisDashboard['Sparklines'] | undefined,
+): string[] {
+  const byDay = new Map<string, { opened: number; closed: number }>();
+  for (const r of sparks?.Opened ?? []) {
+    byDay.set(r.Day, { opened: r.CompletedCount, closed: 0 });
+  }
+  for (const r of sparks?.Closed ?? []) {
+    const prev = byDay.get(r.Day);
+    if (prev) prev.closed = r.CompletedCount;
+    else byDay.set(r.Day, { opened: 0, closed: r.CompletedCount });
+  }
+  let o = 0;
+  let c = 0;
+  return [...byDay.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([day, v]) => {
+      o += v.opened;
+      c += v.closed;
+      return row([day, o, c]);
+    });
+}
+
 export function buildAnalysisCsv(
   dash: AnalysisDashboard,
   filters: AnalysisQuery,
@@ -37,6 +60,7 @@ export function buildAnalysisCsv(
     filters.status && `status=${filters.status}`,
     filters.issue_type && `issue_type=${filters.issue_type}`,
     filters.vin_suffix && `vin_suffix=${filters.vin_suffix}`,
+    filters.vins && `vins=${filters.vins}`,
     filters.severity && `severity=${filters.severity}`,
     filters.eol_stage && `eol_stage=${filters.eol_stage}`,
     filters.compare && `compare=${filters.compare}`,
@@ -150,6 +174,56 @@ export function buildAnalysisCsv(
             v.LowCount,
           ]),
         ),
+      ]),
+    );
+  }
+
+  if (dash.FPYByStation?.length) {
+    lines.push(
+      ...section(t('analysis.fpyByStation'), [
+        row([t('vehicles.station'), t('analysis.kpi.fpy'), 'ok', 'total']),
+        ...dash.FPYByStation.map((s) =>
+          row([s.StationID, s.Percent ?? '', s.OkCount, s.TotalCount]),
+        ),
+      ]),
+    );
+  }
+
+  if (dash.OpenedByReporter?.length) {
+    lines.push(
+      ...section(t('analysis.openedByReporter'), [
+        row([t('issueDetail.reporter'), t('analysis.total')]),
+        ...dash.OpenedByReporter.map((r) => row([r.ReporterName, r.Count])),
+      ]),
+    );
+  }
+
+  if (dash.TypeSeverity?.length) {
+    lines.push(
+      ...section(t('analysis.typeSeverity'), [
+        row([t('analysis.issueType'), t('severity.label'), t('analysis.total')]),
+        ...dash.TypeSeverity.map((r) => row([r.TypeName, r.Severity, r.Count])),
+      ]),
+    );
+  }
+
+  if (dash.Sparklines?.Opened?.length || dash.Sparklines?.Closed?.length) {
+    lines.push(
+      ...section(t('analysis.cumulativeFlow'), [
+        row(['day', t('analysis.kpi.opened'), t('analysis.kpi.closed')]),
+        ...mergeSparkDays(dash.Sparklines),
+      ]),
+    );
+  }
+
+  if (dash.AvgHoursToBranchShip != null || dash.EOLStageWait?.length) {
+    lines.push(
+      ...section(t('analysis.branchShipHours'), [
+        row([
+          t('analysis.branchShipHoursHint'),
+          dash.AvgHoursToBranchShip ?? '',
+        ]),
+        ...((dash.EOLStageWait ?? []).map((s) => row([s.Stage, s.AvgHours]))),
       ]),
     );
   }

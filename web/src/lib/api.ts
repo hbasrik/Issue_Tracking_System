@@ -719,6 +719,8 @@ export interface AnalysisQuery {
   from?: string;
   to?: string;
   vin_suffix?: string;
+  /** Exact VINs (comma-separated on the wire). Overrides vin_suffix when set. */
+  vins?: string;
   station?: string;
   status?: string;
   issue_type?: string;
@@ -826,6 +828,17 @@ export interface AnalysisDashboard {
     Closed: { Day: string; CompletedCount: number }[];
     OpenStock: DailyPendingIssue[];
   };
+  FPYByStation: {
+    StationID: number;
+    StationName: string;
+    Percent: number | null;
+    OkCount: number;
+    TotalCount: number;
+  }[];
+  OpenedByReporter: { ReporterName: string; Count: number }[];
+  TypeSeverity: { TypeName: string; Severity: string; Count: number }[];
+  AvgHoursToBranchShip: number | null;
+  EOLStageWait: { Stage: string; AvgHours: number }[];
 }
 
 export interface AnalysisKPICards {
@@ -847,6 +860,7 @@ function toQuery(params: AnalysisQuery): string {
   if (params.from) q.set('from', params.from);
   if (params.to) q.set('to', params.to);
   if (params.vin_suffix) q.set('vin_suffix', params.vin_suffix);
+  if (params.vins) q.set('vins', params.vins);
   if (params.station) q.set('station', params.station);
   if (params.status) q.set('status', params.status);
   if (params.issue_type) q.set('issue_type', params.issue_type);

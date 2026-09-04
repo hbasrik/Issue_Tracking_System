@@ -25,6 +25,8 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
+  ComposedChart,
+  LabelList,
   Legend,
   Line,
   LineChart,
@@ -39,10 +41,11 @@ import {
   api,
   type AnalysisDashboard,
   type AnalysisKPICards,
+  type IssueType,
   type Station,
 } from '../lib/api';
 import { buildAnalysisCsv } from '../lib/analysisExport';
-import { VinSearchBox } from '../components/VinSearchBox';
+import { AnalysisVinMultiSelect, type VinChip } from '../components/AnalysisVinMultiSelect';
 import { SeverityIndicator, severityFillColor } from '../components/SeverityIndicator';
 import { issueStatusColor, issueStatusLabel } from '../lib/issueStatus';
 import {
@@ -65,7 +68,13 @@ import {
 
 const VEHICLE_STATUSES = ['', ...VEHICLE_STATUS_FILTER_VALUES] as const;
 const SEVERITIES = ['', 'CRITICAL', 'MEDIUM', 'LOW'] as const;
-const COMPARE_MODES = ['', 'previous_period', 'previous_week', 'previous_month'] as const;
+const COMPARE_MODES = [
+  '',
+  'previous_day',
+  'previous_period',
+  'previous_week',
+  'previous_month',
+] as const;
 
 const DONUT_START_ANGLE = 90;
 const CHART_TOOLTIP = {
@@ -192,14 +201,18 @@ export default function AnalysisPage() {
   const [draftIssueType, setDraftIssueType] = useState(
     searchParams.get('issue_type') ?? '',
   );
-  const [draftVin, setDraftVin] = useState(searchParams.get('vin_suffix') ?? '');
+  const [draftVins, setDraftVins] = useState<VinChip[]>(() =>
+    parseVinsParam(searchParams.get('vins')),
+  );
   const [draftSeverity, setDraftSeverity] = useState(searchParams.get('severity') ?? '');
   const [draftCompare, setDraftCompare] = useState(searchParams.get('compare') ?? '');
+  const [issueTypes, setIssueTypes] = useState<IssueType[]>([]);
 
   const applied = useMemo(
     () => ({
       from: searchParams.get('from') ?? undefined,
       to: searchParams.get('to') ?? undefined,
+      vins: searchParams.get('vins') ?? undefined,
       vin_suffix: searchParams.get('vin_suffix') ?? undefined,
       station: searchParams.get('station') ?? searchParams.get('phase') ?? undefined,
       status: searchParams.get('status') ?? undefined,
@@ -233,12 +246,14 @@ export default function AnalysisPage() {
     setLoading(true);
     setError(null);
     try {
-      const [d, stationRes] = await Promise.all([
+      const [d, stationRes, typesRes] = await Promise.all([
         api.analysisDashboard(applied),
         api.listStations().catch(() => ({ items: [] as Station[] })),
+        api.listIssueTypes().catch(() => ({ items: [] as IssueType[] })),
       ]);
       setDash(d);
       setStations(stationRes.items ?? []);
+      setIssueTypes(typesRes.items ?? []);
     } catch (err) {
       setError(err instanceof Error ? err.message : t('analysis.loadFailed'));
     } finally {
@@ -250,6 +265,16 @@ export default function AnalysisPage() {
     void load();
   }, [load]);
 
+  // Keep chip list in sync when URL vins change (e.g. back/forward).
+  useEffect(() => {
+    const fromUrl = parseVinsParam(searchParams.get('vins'));
+    setDraftVins((prev) => {
+      const prevKey = prev.map((v) => v.VIN).join(',');
+      const nextKey = fromUrl.map((v) => v.VIN).join(',');
+      return prevKey === nextKey ? prev : fromUrl;
+    });
+  }, [searchParams]);
+
   function applyFilters() {
     const next = new URLSearchParams();
     if (draftFrom) next.set('from', draftFrom);
@@ -257,7 +282,9 @@ export default function AnalysisPage() {
     if (draftStation) next.set('station', draftStation);
     if (draftStatus) next.set('status', draftStatus);
     if (draftIssueType) next.set('issue_type', draftIssueType);
-    if (draftVin.trim()) next.set('vin_suffix', draftVin.trim());
+    if (draftVins.length > 0) {
+      next.set('vins', draftVins.map((v) => v.VIN).join(','));
+    }
     if (draftSeverity) next.set('severity', draftSeverity);
     if (draftCompare) next.set('compare', draftCompare);
     setSearchParams(next);
@@ -269,20 +296,25 @@ export default function AnalysisPage() {
     setDraftStation('');
     setDraftStatus('');
     setDraftIssueType('');
-    setDraftVin('');
+    setDraftVins([]);
     setDraftSeverity('');
     setDraftCompare('');
     setSearchParams(new URLSearchParams());
   }
 
-  const compareHint = compareLabel(dash?.CompareMode ?? applied.compare, t);
+  const compareHint = compareVsLabel(dash?.CompareMode ?? applied.compare, t);
 
   const filterSummary = [
     applied.from && t('analysis.fromFilter', { from: applied.from }),
     applied.to && t('analysis.toFilter', { to: applied.to }),
-    applied.station && t('analysis.stationFilter', { id: applied.station }),
+    applied.station &&
+      t('analysis.stationFilter', {
+        id: stationNumber(Number(applied.station), stations),
+      }),
     applied.status && t('analysis.statusFilter', { status: applied.status }),
     applied.issue_type && t('analysis.typeFilter', { type: applied.issue_type }),
+    applied.vins &&
+      t('analysis.vinMultiFilter', { n: applied.vins.split(',').filter(Boolean).length }),
     applied.vin_suffix && t('analysis.vinFilter', { suffix: applied.vin_suffix }),
     applied.severity && t('analysis.severityFilter', { severity: applied.severity }),
     applied.compare && compareLabel(applied.compare, t),
@@ -362,10 +394,7 @@ export default function AnalysisPage() {
   const openStationBars = useMemo(
     () =>
       (dash?.OpenByStation ?? []).map((r) => ({
-        station:
-          r.StationName ||
-          stations.find((s) => s.ID === r.StationID)?.Name ||
-          t('analysis.stationN', { id: r.StationID }),
+        station: numberedStation(r.StationID, stations, t),
         issues: r.IssueCount,
       })),
     [dash, stations, t],
@@ -374,10 +403,7 @@ export default function AnalysisPage() {
   const mttrBars = useMemo(
     () =>
       (dash?.MTTR ?? []).map((r) => ({
-        station:
-          r.StationName ||
-          stations.find((s) => s.ID === r.StationID)?.Name ||
-          t('analysis.stationN', { id: r.StationID }),
+        station: numberedStation(r.StationID, stations, t),
         hours: r.Hours ?? Number((r.MeanTimeToResolve / 1e9 / 3600).toFixed(2)),
       })),
     [dash, stations, t],
@@ -420,11 +446,100 @@ export default function AnalysisPage() {
 
   const stageBars = useMemo(
     () =>
-      (dash?.StagePerformance ?? []).map((row) => ({
-        stage: eolStageLabel(row.Stage, t),
-        completed: row.Completed,
-        remaining: Math.max(row.Total - row.Completed, 0),
-        total: row.Total,
+      (dash?.StagePerformance ?? []).map((row) => {
+        const pct =
+          row.Total === 0 ? 0 : Math.round((row.Completed / row.Total) * 1000) / 10;
+        return {
+          stage: eolStageLabel(row.Stage, t),
+          completed: row.Completed,
+          remaining: Math.max(row.Total - row.Completed, 0),
+          total: row.Total,
+          pct,
+          fraction: `${row.Completed} / ${row.Total}`,
+        };
+      }),
+    [dash, t],
+  );
+
+  const fpyStationBars = useMemo(
+    () =>
+      (dash?.FPYByStation ?? [])
+        .filter((r) => r.TotalCount > 0)
+        .map((r) => ({
+          station: numberedStation(r.StationID, stations, t),
+          pct: r.Percent ?? 0,
+        })),
+    [dash, stations, t],
+  );
+
+  const reporterBars = useMemo(
+    () =>
+      (dash?.OpenedByReporter ?? []).map((r) => ({
+        name: r.ReporterName || '—',
+        count: r.Count,
+      })),
+    [dash],
+  );
+
+  const typeSeverityStacked = useMemo(() => {
+    const byType = new Map<
+      string,
+      { type: string; CRITICAL: number; MEDIUM: number; LOW: number }
+    >();
+    for (const row of dash?.TypeSeverity ?? []) {
+      const cur = byType.get(row.TypeName) ?? {
+        type: row.TypeName,
+        CRITICAL: 0,
+        MEDIUM: 0,
+        LOW: 0,
+      };
+      if (row.Severity === 'CRITICAL') cur.CRITICAL = row.Count;
+      else if (row.Severity === 'MEDIUM') cur.MEDIUM = row.Count;
+      else if (row.Severity === 'LOW') cur.LOW = row.Count;
+      byType.set(row.TypeName, cur);
+    }
+    return [...byType.values()];
+  }, [dash]);
+
+  const cumulativeFlow = useMemo(() => {
+    const byDay = new Map<string, { label: string; opened: number; closed: number }>();
+    for (const row of dash?.Sparklines?.Opened ?? []) {
+      byDay.set(row.Day, {
+        label: formatChartDay(row.Day, locale),
+        opened: row.CompletedCount,
+        closed: 0,
+      });
+    }
+    for (const row of dash?.Sparklines?.Closed ?? []) {
+      const prev = byDay.get(row.Day);
+      if (prev) prev.closed = row.CompletedCount;
+      else {
+        byDay.set(row.Day, {
+          label: formatChartDay(row.Day, locale),
+          opened: 0,
+          closed: row.CompletedCount,
+        });
+      }
+    }
+    let o = 0;
+    let c = 0;
+    return [...byDay.entries()]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([, v]) => {
+        o += v.opened;
+        c += v.closed;
+        return { label: v.label, openedCum: o, closedCum: c, balance: o - c };
+      });
+  }, [dash, locale]);
+
+  const eolWaitBars = useMemo(
+    () =>
+      (dash?.EOLStageWait ?? []).map((row) => ({
+        stage:
+          row.Stage === 'DELIVERY'
+            ? t('analysis.wait.delivery')
+            : eolStageLabel(row.Stage, t),
+        hours: Number(row.AvgHours.toFixed(1)),
       })),
     [dash, t],
   );
@@ -432,6 +547,7 @@ export default function AnalysisPage() {
   const eolFunnelRows = dash?.EOLFunnel ?? [];
   const fpyValue = dash?.Cards?.FirstTimeRightPercent ?? null;
   const mttrValue = dash?.Cards?.AvgResolutionHours ?? null;
+  const branchShipHours = dash?.AvgHoursToBranchShip ?? null;
 
   function exportCsv() {
     if (!dash) return;
@@ -553,7 +669,7 @@ export default function AnalysisPage() {
               .sort((a, b) => a.SequenceNo - b.SequenceNo)
               .map((s) => (
                 <option key={s.ID} value={String(s.ID)}>
-                  {s.Name}
+                  {t('analysis.stationN', { id: s.SequenceNo })}
                 </option>
               ))}
           </select>
@@ -572,15 +688,20 @@ export default function AnalysisPage() {
             ))}
           </select>
         </FilterField>
-        <FilterField label={t('analysis.issueType')} className="w-[6.5rem] shrink-0">
-          <input
-            type="text"
+        <FilterField label={t('analysis.issueType')} className="w-[7.5rem] shrink-0">
+          <select
             value={draftIssueType}
             onChange={(e) => setDraftIssueType(e.target.value)}
-            placeholder={t('analysis.issueTypePlaceholder')}
             className="min-h-9 w-full rounded-lg border bg-[var(--bg-page)] px-1.5 text-[12px]"
             style={{ borderColor: 'var(--border)' }}
-          />
+          >
+            <option value="">{t('common.all')}</option>
+            {issueTypes.map((it) => (
+              <option key={it.ID} value={it.Name}>
+                {it.Name}
+              </option>
+            ))}
+          </select>
         </FilterField>
         <FilterField label={t('analysis.severity')} className="w-[6.25rem] shrink-0">
           <select
@@ -600,14 +721,12 @@ export default function AnalysisPage() {
         <FilterField
           label={t('analysis.vinSuffix')}
           hint={t('analysis.vinSuffixHint')}
-          className="min-w-[7.5rem] max-w-[9.5rem] shrink grow basis-[7.5rem]"
+          className="min-w-[9rem] max-w-[12rem] shrink grow basis-[9rem]"
         >
-          <VinSearchBox
-            value={draftVin}
-            onChange={setDraftVin}
-            showResults={false}
+          <AnalysisVinMultiSelect
+            selected={draftVins}
+            onChange={setDraftVins}
             placeholder={t('analysis.vinSuffixPlaceholder')}
-            className="w-full [&_input]:min-h-9 [&_input]:px-1.5 [&_input]:py-1.5 [&_input]:text-[12px]"
           />
         </FilterField>
         <FilterField label={t('analysis.compare')} className="w-[8rem] shrink-0">
@@ -657,18 +776,7 @@ export default function AnalysisPage() {
           {stageBars.every((r) => r.total === 0) ? (
             <EmptyChart />
           ) : (
-            <div className={`chart-inert ${CHART_H} w-full min-w-0`}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={stageBars} tabIndex={-1} margin={{ top: 4, right: 8, left: 0, bottom: 4 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                  <XAxis dataKey="stage" tick={{ fill: 'var(--text-secondary)', fontSize: 10 }} />
-                  <YAxis allowDecimals={false} width={28} tick={{ fill: 'var(--text-secondary)', fontSize: 10 }} />
-                  <Tooltip contentStyle={CHART_TOOLTIP} />
-                  <Bar dataKey="completed" stackId="a" fill={statusColors.ok} name={t('analysis.doneShort')} isAnimationActive={false} />
-                  <Bar dataKey="remaining" stackId="a" fill={statusColors.pending} name={t('analysis.inProgress')} isAnimationActive={false} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+            <StageComboChart data={stageBars} completedLabel={t('analysis.doneShort')} pctLabel={t('home.colCompletion')} />
           )}
         </ChartCard>
 
@@ -858,6 +966,114 @@ export default function AnalysisPage() {
             </div>
           )}
         </ChartCard>
+
+        <ChartCard title={t('analysis.fpyByStation')} icon={<Layers size={16} />}>
+          {fpyStationBars.length === 0 ? (
+            <EmptyChart />
+          ) : (
+            <div className={`chart-inert ${CHART_H} w-full min-w-0`}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  layout="vertical"
+                  data={fpyStationBars}
+                  tabIndex={-1}
+                  margin={{ top: 4, right: 16, left: 4, bottom: 4 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
+                  <XAxis type="number" domain={[0, 100]} tick={{ fill: 'var(--text-secondary)', fontSize: 10 }} unit="%" />
+                  <YAxis type="category" dataKey="station" width={72} tick={{ fill: 'var(--text-secondary)', fontSize: 10 }} />
+                  <Tooltip contentStyle={CHART_TOOLTIP} />
+                  <Bar dataKey="pct" fill={statusColors.ok} name={t('analysis.kpi.fpy')} isAnimationActive={false} radius={[0, 4, 4, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </ChartCard>
+
+        <ChartCard title={t('analysis.openedByReporter')} icon={<ClipboardList size={16} />}>
+          {reporterBars.length === 0 ? (
+            <EmptyChart />
+          ) : (
+            <HorizontalTypeChart
+              data={reporterBars.map((r) => ({ type: r.name, count: r.count }))}
+              color={statusColors.issueInProgress}
+            />
+          )}
+        </ChartCard>
+
+        <ChartCard title={t('analysis.cumulativeFlow')} subtitle={t('analysis.cumulativeFlowHint')} icon={<CalendarDays size={16} />}>
+          {cumulativeFlow.length === 0 ? (
+            <EmptyChart />
+          ) : (
+            <div className={`chart-inert ${CHART_H} w-full min-w-0`}>
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={cumulativeFlow} tabIndex={-1} margin={{ top: 8, right: 8, left: 0, bottom: 4 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                  <XAxis dataKey="label" tick={{ fill: 'var(--text-secondary)', fontSize: 10 }} interval="preserveStartEnd" />
+                  <YAxis allowDecimals={false} width={28} tick={{ fill: 'var(--text-secondary)', fontSize: 10 }} />
+                  <Tooltip contentStyle={CHART_TOOLTIP} />
+                  <Area type="monotone" dataKey="openedCum" name={t('analysis.kpi.opened')} stroke={statusColors.issueOpen} fill={statusColors.issueOpen} fillOpacity={0.12} strokeWidth={2} isAnimationActive={false} />
+                  <Area type="monotone" dataKey="closedCum" name={t('analysis.kpi.closed')} stroke={statusColors.ok} fill={statusColors.ok} fillOpacity={0.1} strokeWidth={2} isAnimationActive={false} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </ChartCard>
+
+        <ChartCard title={t('analysis.typeSeverity')} icon={<TriangleAlert size={16} />}>
+          {typeSeverityStacked.length === 0 ? (
+            <EmptyChart />
+          ) : (
+            <div className={`chart-inert ${CHART_H} w-full min-w-0`}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={typeSeverityStacked} tabIndex={-1} margin={{ top: 4, right: 8, left: 0, bottom: 28 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                  <XAxis dataKey="type" tick={{ fill: 'var(--text-secondary)', fontSize: 10 }} interval={0} />
+                  <YAxis allowDecimals={false} width={28} tick={{ fill: 'var(--text-secondary)', fontSize: 10 }} />
+                  <Tooltip contentStyle={CHART_TOOLTIP} />
+                  <Legend wrapperStyle={{ fontSize: 11 }} />
+                  <Bar dataKey="CRITICAL" stackId="a" fill={statusColors.severityCritical} name={t('severity.critical')} isAnimationActive={false} />
+                  <Bar dataKey="MEDIUM" stackId="a" fill={statusColors.severityMedium} name={t('severity.medium')} isAnimationActive={false} />
+                  <Bar dataKey="LOW" stackId="a" fill={statusColors.severityLow} name={t('severity.low')} isAnimationActive={false} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </ChartCard>
+
+        <ChartCard
+          title={t('analysis.branchShipHours')}
+          icon={<Timer size={16} />}
+          filterNote={vehicleFilterNote}
+        >
+          {branchShipHours == null && eolWaitBars.length === 0 ? (
+            <EmptyChart />
+          ) : (
+            <div className="space-y-3 py-1">
+              {branchShipHours != null && (
+                <p className="text-[13px]">
+                  <span style={mutedCaption}>{t('analysis.branchShipHoursHint')}: </span>
+                  <strong className="tabular-nums text-[var(--text-primary)]">
+                    {branchShipHours.toFixed(1)} {t('analysis.unit.hours')}
+                  </strong>
+                </p>
+              )}
+              {eolWaitBars.length > 0 && (
+                <div className={`chart-inert ${CHART_H} w-full min-w-0`}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={eolWaitBars} tabIndex={-1} margin={{ top: 4, right: 8, left: 0, bottom: 4 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                      <XAxis dataKey="stage" tick={{ fill: 'var(--text-secondary)', fontSize: 10 }} />
+                      <YAxis width={32} tick={{ fill: 'var(--text-secondary)', fontSize: 10 }} />
+                      <Tooltip contentStyle={CHART_TOOLTIP} />
+                      <Bar dataKey="hours" fill={statusColors.info} name={t('analysis.unit.hours')} isAnimationActive={false} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+            </div>
+          )}
+        </ChartCard>
       </div>
 
       <ChartCard
@@ -1026,6 +1242,8 @@ function formatChartDay(iso: string, locale: string): string {
 
 function compareLabel(mode: string | undefined, t: ReturnType<typeof useI18n>['t']): string {
   switch (mode) {
+    case 'previous_day':
+      return t('analysis.compare.previousDay');
     case 'previous_week':
       return t('analysis.compare.previousWeek');
     case 'previous_month':
@@ -1035,6 +1253,45 @@ function compareLabel(mode: string | undefined, t: ReturnType<typeof useI18n>['t
     default:
       return t('analysis.compare.previousPeriod');
   }
+}
+
+/** Full “vs …” phrase for KPI footers — tracks the active compare mode. */
+function compareVsLabel(mode: string | undefined, t: ReturnType<typeof useI18n>['t']): string {
+  switch (mode) {
+    case 'previous_day':
+      return t('analysis.compare.vsDay');
+    case 'previous_week':
+      return t('analysis.compare.vsWeek');
+    case 'previous_month':
+      return t('analysis.compare.vsMonth');
+    case 'previous_period':
+    case '':
+    case undefined:
+      return t('analysis.compare.vsPeriod');
+    default:
+      return t('analysis.compare.vsPeriod');
+  }
+}
+
+function parseVinsParam(raw: string | null): VinChip[] {
+  if (!raw?.trim()) return [];
+  return raw
+    .split(',')
+    .map((v) => v.trim())
+    .filter(Boolean)
+    .map((VIN) => ({ VIN }));
+}
+
+function stationNumber(stationId: number, stations: Station[]): number {
+  return stations.find((s) => s.ID === stationId)?.SequenceNo ?? stationId;
+}
+
+function numberedStation(
+  stationId: number,
+  stations: Station[],
+  t: ReturnType<typeof useI18n>['t'],
+): string {
+  return t('analysis.stationN', { id: stationNumber(stationId, stations) });
 }
 
 function FilterField({
@@ -1088,7 +1345,6 @@ function AnalysisKpiCard({
   invertDelta?: boolean;
   filterNote?: string | null;
 }) {
-  const { t } = useI18n();
   const display =
     format?.(value) ??
     (value == null ? '—' : String(value));
@@ -1155,7 +1411,7 @@ function AnalysisKpiCard({
       </div>
       {previous != null && (
         <p className="mt-2 inline-flex flex-wrap items-center gap-1 pl-9 text-[10px]" style={mutedCaption}>
-          {t('analysis.compare.vs', { period: compareHint })}
+          <span>{compareHint}</span>
           <DeltaBadge polarity={polarity} color={color} label={delta} />
           {pct != null && (
             <span className="tabular-nums" style={{ color }}>
@@ -1403,6 +1659,89 @@ function SplitBars({
           </div>
         );
       })}
+    </div>
+  );
+}
+
+function StageComboChart({
+  data,
+  completedLabel,
+  pctLabel,
+}: {
+  data: {
+    stage: string;
+    completed: number;
+    total: number;
+    pct: number;
+    fraction: string;
+  }[];
+  completedLabel: string;
+  pctLabel: string;
+}) {
+  return (
+    <div className="chart-inert h-[200px] w-full min-w-0">
+      <ResponsiveContainer width="100%" height="100%">
+        <ComposedChart data={data} tabIndex={-1} margin={{ top: 18, right: 28, left: 0, bottom: 36 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+          <XAxis
+            dataKey="stage"
+            interval={0}
+            height={52}
+            tick={(props: { x?: number; y?: number; index?: number; payload?: { value?: string } }) => {
+              const row = data[props.index ?? 0];
+              return (
+                <g transform={`translate(${props.x ?? 0},${props.y ?? 0})`}>
+                  <text dy={12} textAnchor="middle" fill="var(--text-primary)" fontSize={10} fontWeight={600}>
+                    {props.payload?.value}
+                  </text>
+                  <text dy={24} textAnchor="middle" fill="var(--text-secondary)" fontSize={9}>
+                    {row?.fraction ?? ''}
+                  </text>
+                  <text dy={36} textAnchor="middle" fill={statusColors.ok} fontSize={9} fontWeight={700}>
+                    {row != null ? `${row.pct}%` : ''}
+                  </text>
+                </g>
+              );
+            }}
+          />
+          <YAxis
+            yAxisId="left"
+            allowDecimals={false}
+            width={28}
+            tick={{ fill: 'var(--text-secondary)', fontSize: 10 }}
+          />
+          <YAxis
+            yAxisId="right"
+            orientation="right"
+            domain={[0, 100]}
+            width={32}
+            tick={{ fill: 'var(--text-secondary)', fontSize: 10 }}
+            tickFormatter={(v: number) => `${v}%`}
+          />
+          <Tooltip contentStyle={CHART_TOOLTIP} />
+          <Legend wrapperStyle={{ fontSize: 11 }} />
+          <Bar
+            yAxisId="left"
+            dataKey="completed"
+            name={completedLabel}
+            fill={statusColors.ok}
+            isAnimationActive={false}
+            radius={[4, 4, 0, 0]}
+          >
+            <LabelList dataKey="completed" position="top" style={{ fill: 'var(--text-primary)', fontSize: 10 }} />
+          </Bar>
+          <Line
+            yAxisId="right"
+            type="monotone"
+            dataKey="pct"
+            name={pctLabel}
+            stroke="var(--text-secondary)"
+            strokeWidth={2}
+            dot={{ r: 3, fill: 'var(--text-secondary)' }}
+            isAnimationActive={false}
+          />
+        </ComposedChart>
+      </ResponsiveContainer>
     </div>
   );
 }
