@@ -174,10 +174,13 @@ export function readableOn(fg: string, bg: string): string {
 export const darkTokens = {
   'bg-page': '#0B0F14',
   'bg-surface-1': '#131920',
-  'bg-surface-2': '#1B232C',
-  border: '#26313C',
+  /** Lifted further from surface-1 so hover:bg-surface-2 reads on dark chrome. */
+  'bg-surface-2': mixTowardWhite('#131920', 16),
+  /** Stronger edge against page/surface than raw #26313C. */
+  border: mixTowardWhite('#26313C', 22),
   'text-primary': '#F5F7FA',
-  'text-secondary': '#8B98A5',
+  /** Slightly brighter labels/axes for charts and captions. */
+  'text-secondary': mixTowardWhite('#8B98A5', 14),
   accent: brandColors.primary,
 } as const;
 
@@ -241,6 +244,44 @@ export function tokensFor(mode: ThemeMode) {
   return mode === 'dark' ? darkTokens : lightTokens;
 }
 
+/**
+ * Interaction overlays — light theme darkens with text-primary; dark theme
+ * lightens with the same formula but stronger mixes so hover is equally clear.
+ */
+function applyInteractionVars(mode: ThemeMode, root: HTMLElement): void {
+  if (mode === 'dark') {
+    root.style.setProperty(
+      '--hover-overlay',
+      'color-mix(in srgb, var(--text-primary) 14%, transparent)',
+    );
+    root.style.setProperty(
+      '--hover-overlay-strong',
+      'color-mix(in srgb, var(--text-primary) 20%, transparent)',
+    );
+    root.style.setProperty(
+      '--active-overlay',
+      'color-mix(in srgb, var(--text-primary) 24%, transparent)',
+    );
+    root.style.setProperty('--accent-hover-filter', 'brightness(1.12)');
+    root.style.setProperty('--icon-btn-hover-filter', 'brightness(1.18)');
+  } else {
+    root.style.setProperty(
+      '--hover-overlay',
+      'color-mix(in srgb, var(--text-primary) 7%, transparent)',
+    );
+    root.style.setProperty(
+      '--hover-overlay-strong',
+      'color-mix(in srgb, var(--text-primary) 11%, transparent)',
+    );
+    root.style.setProperty(
+      '--active-overlay',
+      'color-mix(in srgb, var(--text-primary) 14%, transparent)',
+    );
+    root.style.setProperty('--accent-hover-filter', 'brightness(0.92)');
+    root.style.setProperty('--icon-btn-hover-filter', 'brightness(0.97)');
+  }
+}
+
 /** Apply CSS custom properties to :root for the active theme. */
 export function applyThemeVars(mode: ThemeMode): void {
   bindThemeMode(mode);
@@ -261,6 +302,7 @@ export function applyThemeVars(mode: ThemeMode): void {
   for (const [key, value] of Object.entries(space)) {
     root.style.setProperty(`--space-${key}`, `${value}px`);
   }
+  applyInteractionVars(mode, root);
 }
 
 function kebab(s: string): string {
