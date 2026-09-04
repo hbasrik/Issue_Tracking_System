@@ -807,6 +807,10 @@ export interface AnalysisDashboard {
   Cards: AnalysisKPICards;
   CompareCards: AnalysisKPICards;
   CompareMode: string;
+  PrimaryFrom?: string | null;
+  PrimaryTo?: string | null;
+  CompareFrom?: string | null;
+  CompareTo?: string | null;
   WorkSplit: { Completed: number; Ongoing: number };
   IssueStatus: { Status: string; Count: number }[];
   SeverityMix: { Severity: string; Count: number }[];
@@ -839,6 +843,13 @@ export interface AnalysisDashboard {
   TypeSeverity: { TypeName: string; Severity: string; Count: number }[];
   AvgHoursToBranchShip: number | null;
   EOLStageWait: { Stage: string; AvgHours: number }[];
+  BranchShippedList: {
+    VIN: string;
+    ShippedAt: string;
+    ShippedByName: string;
+    CurrentStatus: string;
+    EOLStage: string;
+  }[];
 }
 
 export interface AnalysisKPICards {

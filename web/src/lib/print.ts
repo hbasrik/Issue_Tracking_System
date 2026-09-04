@@ -16,8 +16,12 @@ export async function printSection(id: string): Promise<void> {
       ),
     );
   }
+  // Two frames + short settle so Recharts SVGs layout at fixed print sizes.
   await new Promise<void>((resolve) => {
     requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+  });
+  await new Promise<void>((resolve) => {
+    window.setTimeout(() => resolve(), 350);
   });
   const cleanup = () => {
     delete document.body.dataset.print;

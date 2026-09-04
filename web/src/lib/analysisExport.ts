@@ -228,5 +228,22 @@ export function buildAnalysisCsv(
     );
   }
 
+  if (dash.BranchShippedList?.length) {
+    lines.push(
+      ...section(t('analysis.branchShippedList'), [
+        row([
+          t('issue.vin'),
+          t('analysis.shippedAt'),
+          t('analysis.shippedBy'),
+          t('issue.status'),
+          t('print.eolStage'),
+        ]),
+        ...dash.BranchShippedList.map((r) =>
+          row([r.VIN, r.ShippedAt, r.ShippedByName, r.CurrentStatus, r.EOLStage]),
+        ),
+      ]),
+    );
+  }
+
   return lines.join('\n');
 }
