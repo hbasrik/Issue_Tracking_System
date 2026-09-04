@@ -244,6 +244,15 @@ type StageWaitHours struct {
 	AvgHours float64
 }
 
+// BranchShippedVehicle is one vehicle shipped branch→depot in the filter window.
+type BranchShippedVehicle struct {
+	VIN             string
+	ShippedAt       time.Time
+	ShippedByName   string
+	CurrentStatus   string
+	EOLStage        string
+}
+
 // AnalysisDashboard is the Analysis page payload. Date-series honor the
 // shared filter; snapshot KPIs (OnLineCount) ignore From/To.
 type AnalysisDashboard struct {
@@ -251,6 +260,12 @@ type AnalysisDashboard struct {
 	Cards                AnalysisKPICards
 	CompareCards         AnalysisKPICards
 	CompareMode          string
+	// Inclusive calendar days (YYYY-MM-DD via JSON time) for the effective
+	// primary window and the comparison window used for KPI deltas.
+	PrimaryFrom          *time.Time
+	PrimaryTo            *time.Time
+	CompareFrom          *time.Time
+	CompareTo            *time.Time
 	WorkSplit            WorkSplit
 	IssueStatus          []IssueStatusCount
 	SeverityMix          []SeverityCount
@@ -272,6 +287,7 @@ type AnalysisDashboard struct {
 	TypeSeverity         []TypeSeverityCount
 	AvgHoursToBranchShip *float64
 	EOLStageWait         []StageWaitHours
+	BranchShippedList    []BranchShippedVehicle
 }
 
 // AnalysisKPICards is the redesigned Analysis headline strip (real counts only).

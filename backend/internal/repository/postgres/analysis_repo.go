@@ -293,8 +293,9 @@ func (r *AnalysisRepo) Dashboard(ctx context.Context, f domain.AnalysisFilter) (
 		FPYByStation:     []domain.StationFPY{},
 		OpenedByReporter: []domain.ReporterIssueCount{},
 		TypeSeverity:     []domain.TypeSeverityCount{},
-		EOLStageWait:     []domain.StageWaitHours{},
-		CompareMode:      f.CompareMode,
+		EOLStageWait:      []domain.StageWaitHours{},
+		BranchShippedList: []domain.BranchShippedVehicle{},
+		CompareMode:       f.CompareMode,
 	}
 
 	kpis, err := r.kpis(ctx, f)
@@ -309,8 +310,17 @@ func (r *AnalysisRepo) Dashboard(ctx context.Context, f domain.AnalysisFilter) (
 	}
 	dash.Cards = cards
 
-	cmpFilter, err := compareFilter(f)
+	primaryFrom, primaryTo, cmpFilter, err := compareWindows(f)
 	if err == nil {
+		dash.PrimaryFrom = &primaryFrom
+		dash.PrimaryTo = &primaryTo
+		dash.CompareFrom = cmpFilter.From
+		dash.CompareTo = cmpFilter.To
+		if f.CompareMode == "" {
+			dash.CompareMode = "previous_period"
+		} else {
+			dash.CompareMode = f.CompareMode
+		}
 		cmp, err := r.kpiCards(ctx, cmpFilter)
 		if err != nil {
 			return nil, err
@@ -425,6 +435,12 @@ func (r *AnalysisRepo) Dashboard(ctx context.Context, f domain.AnalysisFilter) (
 	}
 	dash.EOLStageWait = stageWait
 
+	shipped, err := r.branchShippedList(ctx, f)
+	if err != nil {
+		return nil, err
+	}
+	dash.BranchShippedList = shipped
+
 	return dash, nil
 }
 
@@ -435,13 +451,15 @@ func topNStations(rows []domain.StationDefectRate, n int) []domain.StationDefect
 	return rows[:n]
 }
 
-func compareFilter(f domain.AnalysisFilter) (domain.AnalysisFilter, error) {
-	out := f
+// compareWindows returns inclusive calendar PrimaryFrom/PrimaryTo and a
+// compareFilter whose From/To are inclusive days for the prior window.
+func compareWindows(f domain.AnalysisFilter) (primaryFrom, primaryTo time.Time, cmp domain.AnalysisFilter, err error) {
+	cmp = f
 	mode := f.CompareMode
 	if mode == "" {
 		mode = "previous_period"
 	}
-	out.CompareMode = mode
+	cmp.CompareMode = mode
 
 	from, until := domain.InclusiveDateBounds(f.From, f.To)
 	now := time.Now().UTC()
@@ -450,14 +468,19 @@ func compareFilter(f domain.AnalysisFilter) (domain.AnalysisFilter, error) {
 		until = &u
 	}
 	if from == nil {
-		// default primary window = last 7 days ending at until
 		fr := until.AddDate(0, 0, -7)
 		from = &fr
 	}
 	dur := until.Sub(*from)
 	if dur <= 0 {
-		return out, fmt.Errorf("empty primary window")
+		return primaryFrom, primaryTo, cmp, fmt.Errorf("empty primary window")
 	}
+
+	// Inclusive calendar ends: until is exclusive → last day is until-1ns day.
+	primaryFrom = domain.StartOfUTCDay(*from)
+	lastPrimary := until.Add(-time.Hour)
+	y, m, d := lastPrimary.UTC().Date()
+	primaryTo = time.Date(y, m, d, 0, 0, 0, 0, time.UTC)
 
 	var cFrom, cUntil time.Time
 	switch mode {
@@ -470,17 +493,21 @@ func compareFilter(f domain.AnalysisFilter) (domain.AnalysisFilter, error) {
 	case "previous_month":
 		cUntil = *from
 		cFrom = cUntil.AddDate(0, -1, 0)
-	default: // previous_period — same duration immediately before
+	default: // previous_period
 		cUntil = *from
 		cFrom = cUntil.Add(-dur)
 	}
-	out.From = &cFrom
-	// InclusiveDateBounds expects inclusive calendar To; store day before cUntil
-	toDay := cUntil.Add(-time.Hour) // land in previous calendar day
-	y, m, d := toDay.UTC().Date()
-	toInclusive := time.Date(y, m, d, 0, 0, 0, 0, time.UTC)
-	out.To = &toInclusive
-	return out, nil
+	cmp.From = &cFrom
+	toDay := cUntil.Add(-time.Hour)
+	cy, cm, cd := toDay.UTC().Date()
+	toInclusive := time.Date(cy, cm, cd, 0, 0, 0, 0, time.UTC)
+	cmp.To = &toInclusive
+	return primaryFrom, primaryTo, cmp, nil
+}
+
+func compareFilter(f domain.AnalysisFilter) (domain.AnalysisFilter, error) {
+	_, _, cmp, err := compareWindows(f)
+	return cmp, err
 }
 
 func (r *AnalysisRepo) scanWorkAndStatus(ctx context.Context, f domain.AnalysisFilter, dash *domain.AnalysisDashboard) error {
@@ -1232,6 +1259,41 @@ func (r *AnalysisRepo) eolStageWait(ctx context.Context, f domain.AnalysisFilter
 		out = append(out, domain.StageWaitHours{Stage: q.stage, AvgHours: hours})
 	}
 	return out, nil
+}
+
+func (r *AnalysisRepo) branchShippedList(ctx context.Context, f domain.AnalysisFilter) ([]domain.BranchShippedVehicle, error) {
+	b := bounds(f)
+	rows, err := r.pool.Query(ctx,
+		`SELECT v.vin,
+		        w.branch_shipped_at,
+		        coalesce(u.full_name, ''),
+		        v.current_global_status::text,
+		        `+eolStageExpr+`
+		 FROM vehicle_eol_workflow w
+		 JOIN vehicles v ON v.vin = w.vin
+		 LEFT JOIN users u ON u.id = w.branch_shipped_by
+		 WHERE w.branch_shipped_at IS NOT NULL
+		   AND ($1::timestamptz IS NULL OR w.branch_shipped_at >= $1)
+		   AND ($2::timestamptz IS NULL OR w.branch_shipped_at < $2)
+		   `+vinClause("v.vin", 3, 6)+`
+		   AND ($4 = '' OR v.current_global_status::text = $4)
+		   `+eolStageWhere(5)+`
+		 ORDER BY w.branch_shipped_at DESC`,
+		b.from, b.until, b.suffix, b.status, b.eolStage, b.vins,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := []domain.BranchShippedVehicle{}
+	for rows.Next() {
+		var row domain.BranchShippedVehicle
+		if err := rows.Scan(&row.VIN, &row.ShippedAt, &row.ShippedByName, &row.CurrentStatus, &row.EOLStage); err != nil {
+			return nil, err
+		}
+		out = append(out, row)
+	}
+	return out, rows.Err()
 }
 
 // countOnLine is a snapshot: IN_PRODUCTION vehicles right now. Date filters
