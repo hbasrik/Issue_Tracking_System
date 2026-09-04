@@ -13,8 +13,9 @@ type AnalysisFilter struct {
 	Severity      *IssueSeverity
 	EOLStage      string // BRANCH | DEPOT | COMPLETED (DOCUMENT maps to DEPOT)
 	VINSuffix     string
+	VINs          []string // exact VIN list; when non-empty, VINSuffix is ignored
 	IssueType     string
-	CompareMode   string // previous_period | previous_week | previous_month
+	CompareMode   string // previous_period | previous_week | previous_month | previous_day
 }
 
 // DailyPendingIssue is one row of vw_daily_pending_issues.
@@ -215,29 +216,62 @@ type HomeOverview struct {
 	Activity          []HomeActivityEntry
 }
 
+// StationFPY is first-pass yield for one station (non-PENDING step checks).
+type StationFPY struct {
+	StationID   int
+	StationName string
+	Percent     *float64
+	OkCount     int64
+	TotalCount  int64
+}
+
+// ReporterIssueCount is issues opened by one reporter in the filter window.
+type ReporterIssueCount struct {
+	ReporterName string
+	Count        int64
+}
+
+// TypeSeverityCount is issue volume for one type × severity pair.
+type TypeSeverityCount struct {
+	TypeName string
+	Severity string
+	Count    int64
+}
+
+// StageWaitHours is average hours spent in one EOL logistics stage.
+type StageWaitHours struct {
+	Stage    string // BRANCH | DEPOT | DELIVERY
+	AvgHours float64
+}
+
 // AnalysisDashboard is the Analysis page payload. Date-series honor the
 // shared filter; snapshot KPIs (OnLineCount) ignore From/To.
 type AnalysisDashboard struct {
-	KPIs              AnalysisKPIs
-	Cards             AnalysisKPICards
-	CompareCards      AnalysisKPICards
-	CompareMode       string
-	WorkSplit         WorkSplit
-	IssueStatus       []IssueStatusCount
-	SeverityMix       []SeverityCount
-	DefectRate        []StationDefectRate
-	OpenByStation     []StationDefectRate // top open issues by station
-	TotalByStation    []StationDefectRate // all issues by station (open+closed)
-	MTTR              []StationMTTR
-	Severity          []VehicleSeverityBreakdown
-	EOLFunnel         []EOLStageCount
-	StagePerformance  []StagePerformance
-	TopIssueTypes     []IssueTypeCount
-	CompletedDaily    []CompletedIssuesDaily
-	DailyOpenTrend    []DailyPendingIssue
-	OpenAgeBuckets    []OpenAgeBucket
-	ConditionalMix    ConditionalApprovalMix
-	Sparklines        AnalysisSparklines
+	KPIs                 AnalysisKPIs
+	Cards                AnalysisKPICards
+	CompareCards         AnalysisKPICards
+	CompareMode          string
+	WorkSplit            WorkSplit
+	IssueStatus          []IssueStatusCount
+	SeverityMix          []SeverityCount
+	DefectRate           []StationDefectRate
+	OpenByStation        []StationDefectRate // top open issues by station
+	TotalByStation       []StationDefectRate // all issues by station (open+closed)
+	MTTR                 []StationMTTR
+	Severity             []VehicleSeverityBreakdown
+	EOLFunnel            []EOLStageCount
+	StagePerformance     []StagePerformance
+	TopIssueTypes        []IssueTypeCount
+	CompletedDaily       []CompletedIssuesDaily
+	DailyOpenTrend       []DailyPendingIssue
+	OpenAgeBuckets       []OpenAgeBucket
+	ConditionalMix       ConditionalApprovalMix
+	Sparklines           AnalysisSparklines
+	FPYByStation         []StationFPY
+	OpenedByReporter     []ReporterIssueCount
+	TypeSeverity         []TypeSeverityCount
+	AvgHoursToBranchShip *float64
+	EOLStageWait         []StageWaitHours
 }
 
 // AnalysisKPICards is the redesigned Analysis headline strip (real counts only).

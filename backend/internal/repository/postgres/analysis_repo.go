@@ -35,19 +35,34 @@ LEFT JOIN vehicle_eol_workflow w ON w.vin = v.vin`
 
 const vehicleEOLJoin = `LEFT JOIN vehicle_eol_workflow w ON w.vin = v.vin`
 
+// vinClause applies exact VIN list when vinsParam (text[]) is non-empty;
+// otherwise keeps the ILIKE suffix on $suffixParam. col is the VIN column.
+// Use CAST($n AS text[]) — `$n::text[]` is parsed as `($n::text)[]` and errors.
+func vinClause(col string, suffixParam, vinsParam int) string {
+	return fmt.Sprintf(
+		`AND (cardinality(CAST($%d AS text[])) = 0 OR %s = ANY(CAST($%d AS text[])))
+  AND (cardinality(CAST($%d AS text[])) > 0 OR $%d = '' OR %s ILIKE '%%' || $%d || '%%')`,
+		vinsParam, col, vinsParam,
+		vinsParam, suffixParam, col, suffixParam,
+	)
+}
+
 // issueWhere binds $1 from, $2 until (exclusive), $3 vin suffix, $4 station,
-// $5 vehicle status, $6 issue type name, $7 severity, $8 EOL stage. tsColumn
-// is the timestamptz compared to the date window (issue_date, finish_date, …).
+// $5 vehicle status, $6 issue type name, $7 severity, $8 EOL stage,
+// $9 vins (exact list; empty array = no VIN-list filter). tsColumn is the
+// timestamptz compared to the date window (issue_date, finish_date, …).
+// vinClause is concatenated outside Sprintf so its literal '%' are not
+// re-interpreted as format verbs.
 func issueWhere(tsColumn string) string {
 	return fmt.Sprintf(`
 WHERE ($1::timestamptz IS NULL OR %s >= $1)
   AND ($2::timestamptz IS NULL OR %s < $2)
-  AND ($3 = '' OR i.vin ILIKE '%%' || $3 || '%%')
+`, tsColumn, tsColumn) + vinClause("i.vin", 3, 9) + fmt.Sprintf(`
   AND ($4::int IS NULL OR i.station_id = $4)
   AND ($5 = '' OR v.current_global_status::text = $5)
   AND ($6 = '' OR it.name ILIKE '%%' || $6 || '%%')
   AND ($7 = '' OR i.severity::text = $7)
-  AND ($8 = '' OR %s = $8)`, tsColumn, tsColumn, eolStageExpr)
+  AND ($8 = '' OR %s = $8)`, eolStageExpr)
 }
 
 func eolStageWhere(param int) string {
@@ -63,6 +78,7 @@ type boundArgs struct {
 	itype    string
 	severity string
 	eolStage string
+	vins     []string
 }
 
 func normalizeEOLStage(raw string) string {
@@ -78,6 +94,7 @@ func bounds(f domain.AnalysisFilter) boundArgs {
 		suffix:   strings.TrimSpace(f.VINSuffix),
 		itype:    strings.TrimSpace(f.IssueType),
 		eolStage: normalizeEOLStage(f.EOLStage),
+		vins:     []string{},
 	}
 	from, until := domain.InclusiveDateBounds(f.From, f.To)
 	if from != nil {
@@ -95,15 +112,23 @@ func bounds(f domain.AnalysisFilter) boundArgs {
 	if f.Severity != nil {
 		b.severity = string(*f.Severity)
 	}
+	if len(f.VINs) > 0 {
+		b.suffix = "" // exact VIN list supersedes suffix
+		for _, v := range f.VINs {
+			if t := strings.TrimSpace(v); t != "" {
+				b.vins = append(b.vins, t)
+			}
+		}
+	}
 	return b
 }
 
 func (b boundArgs) slice() []any {
-	return []any{b.from, b.until, b.suffix, b.station, b.status, b.itype, b.severity, b.eolStage}
+	return []any{b.from, b.until, b.suffix, b.station, b.status, b.itype, b.severity, b.eolStage, b.vins}
 }
 
 func (b boundArgs) vehicleEOLArgs() []any {
-	return []any{b.from, b.until, b.suffix, b.status, b.eolStage}
+	return []any{b.from, b.until, b.suffix, b.status, b.eolStage, b.vins}
 }
 
 func intersectWindow(f domain.AnalysisFilter, winFrom, winUntil time.Time) (from, until time.Time, empty bool) {
@@ -265,6 +290,10 @@ func (r *AnalysisRepo) Dashboard(ctx context.Context, f domain.AnalysisFilter) (
 		CompletedDaily:   []domain.CompletedIssuesDaily{},
 		DailyOpenTrend:   []domain.DailyPendingIssue{},
 		OpenAgeBuckets:   []domain.OpenAgeBucket{},
+		FPYByStation:     []domain.StationFPY{},
+		OpenedByReporter: []domain.ReporterIssueCount{},
+		TypeSeverity:     []domain.TypeSeverityCount{},
+		EOLStageWait:     []domain.StageWaitHours{},
 		CompareMode:      f.CompareMode,
 	}
 
@@ -366,6 +395,36 @@ func (r *AnalysisRepo) Dashboard(ctx context.Context, f domain.AnalysisFilter) (
 	}
 	dash.Sparklines = sparks
 
+	fpy, err := r.fpyByStation(ctx, f)
+	if err != nil {
+		return nil, err
+	}
+	dash.FPYByStation = fpy
+
+	reporters, err := r.openedByReporter(ctx, f)
+	if err != nil {
+		return nil, err
+	}
+	dash.OpenedByReporter = reporters
+
+	typeSev, err := r.typeSeverity(ctx, f)
+	if err != nil {
+		return nil, err
+	}
+	dash.TypeSeverity = typeSev
+
+	avgShip, err := r.avgHoursToBranchShip(ctx, f)
+	if err != nil {
+		return nil, err
+	}
+	dash.AvgHoursToBranchShip = avgShip
+
+	stageWait, err := r.eolStageWait(ctx, f)
+	if err != nil {
+		return nil, err
+	}
+	dash.EOLStageWait = stageWait
+
 	return dash, nil
 }
 
@@ -402,6 +461,9 @@ func compareFilter(f domain.AnalysisFilter) (domain.AnalysisFilter, error) {
 
 	var cFrom, cUntil time.Time
 	switch mode {
+	case "previous_day":
+		cUntil = *from
+		cFrom = cUntil.AddDate(0, 0, -1)
 	case "previous_week":
 		cUntil = *from
 		cFrom = cUntil.AddDate(0, 0, -7)
@@ -528,10 +590,10 @@ func (r *AnalysisRepo) countShipped(ctx context.Context, f domain.AnalysisFilter
 		 WHERE w.branch_shipped_at IS NOT NULL
 		   AND ($1::timestamptz IS NULL OR w.branch_shipped_at >= $1)
 		   AND ($2::timestamptz IS NULL OR w.branch_shipped_at < $2)
-		   AND ($3 = '' OR w.vin ILIKE '%' || $3 || '%')
+		   `+vinClause("w.vin", 3, 6)+`
 		   AND ($4 = '' OR v.current_global_status::text = $4)
 		   `+eolStageWhere(5),
-		b.from, b.until, b.suffix, b.status, b.eolStage,
+		b.from, b.until, b.suffix, b.status, b.eolStage, b.vins,
 	).Scan(&n)
 	return n, err
 }
@@ -546,10 +608,10 @@ func (r *AnalysisRepo) countDepotReleased(ctx context.Context, f domain.Analysis
 		 WHERE w.depot_released_at IS NOT NULL
 		   AND ($1::timestamptz IS NULL OR w.depot_released_at >= $1)
 		   AND ($2::timestamptz IS NULL OR w.depot_released_at < $2)
-		   AND ($3 = '' OR w.vin ILIKE '%' || $3 || '%')
+		   `+vinClause("w.vin", 3, 6)+`
 		   AND ($4 = '' OR v.current_global_status::text = $4)
 		   `+eolStageWhere(5),
-		b.from, b.until, b.suffix, b.status, b.eolStage,
+		b.from, b.until, b.suffix, b.status, b.eolStage, b.vins,
 	).Scan(&n)
 	return n, err
 }
@@ -579,11 +641,11 @@ func (r *AnalysisRepo) firstTimeRight(ctx context.Context, f domain.AnalysisFilt
 		 WHERE p.status <> 'PENDING'
 		   AND ($1::timestamptz IS NULL OR p.checked_at >= $1)
 		   AND ($2::timestamptz IS NULL OR p.checked_at < $2)
-		   AND ($3 = '' OR p.vin ILIKE '%' || $3 || '%')
+		   `+vinClause("p.vin", 3, 7)+`
 		   AND ($4::int IS NULL OR p.station_id = $4)
 		   AND ($5 = '' OR v.current_global_status::text = $5)
 		   `+eolStageWhere(6),
-		b.from, b.until, b.suffix, b.station, b.status, b.eolStage,
+		b.from, b.until, b.suffix, b.station, b.status, b.eolStage, b.vins,
 	).Scan(&pct)
 	return pct, err
 }
@@ -598,11 +660,11 @@ func (r *AnalysisRepo) kpiCards(ctx context.Context, f domain.AnalysisFilter) (d
 		 `+vehicleEOLJoin+`
 		 WHERE ($1::timestamptz IS NULL OR v.created_at >= $1)
 		   AND ($2::timestamptz IS NULL OR v.created_at < $2)
-		   AND ($3 = '' OR v.vin ILIKE '%' || $3 || '%')
+		   `+vinClause("v.vin", 3, 6)+`
 		   AND ($4 = '' OR v.current_global_status::text = $4)
 		   AND v.current_global_status <> 'PLANNED'
 		   `+eolStageWhere(5),
-		b.from, b.until, b.suffix, b.status, b.eolStage,
+		b.from, b.until, b.suffix, b.status, b.eolStage, b.vins,
 	).Scan(&c.TotalProduction); err != nil {
 		return c, err
 	}
@@ -637,7 +699,7 @@ func (r *AnalysisRepo) kpiCards(ctx context.Context, f domain.AnalysisFilter) (d
 		           AND ($1::timestamptz IS NULL OR i.finish_date >= $1)
 		           AND ($2::timestamptz IS NULL OR i.finish_date < $2))
 		       )
-		   AND ($3 = '' OR i.vin ILIKE '%' || $3 || '%')
+		   `+vinClause("i.vin", 3, 9)+`
 		   AND ($4::int IS NULL OR i.station_id = $4)
 		   AND ($5 = '' OR v.current_global_status::text = $5)
 		   AND ($6 = '' OR it.name ILIKE '%' || $6 || '%')
@@ -655,10 +717,10 @@ func (r *AnalysisRepo) kpiCards(ctx context.Context, f domain.AnalysisFilter) (d
 		 WHERE w.branch_shipped_at IS NOT NULL
 		   AND ($1::timestamptz IS NULL OR w.branch_shipped_at >= $1)
 		   AND ($2::timestamptz IS NULL OR w.branch_shipped_at < $2)
-		   AND ($3 = '' OR w.vin ILIKE '%' || $3 || '%')
+		   `+vinClause("w.vin", 3, 6)+`
 		   AND ($4 = '' OR v.current_global_status::text = $4)
 		   `+eolStageWhere(5),
-		b.from, b.until, b.suffix, b.status, b.eolStage,
+		b.from, b.until, b.suffix, b.status, b.eolStage, b.vins,
 	).Scan(&c.BranchShipped); err != nil {
 		return c, err
 	}
@@ -670,10 +732,10 @@ func (r *AnalysisRepo) kpiCards(ctx context.Context, f domain.AnalysisFilter) (d
 		 WHERE w.delivered_at IS NOT NULL
 		   AND ($1::timestamptz IS NULL OR w.delivered_at >= $1)
 		   AND ($2::timestamptz IS NULL OR w.delivered_at < $2)
-		   AND ($3 = '' OR w.vin ILIKE '%' || $3 || '%')
+		   `+vinClause("w.vin", 3, 6)+`
 		   AND ($4 = '' OR v.current_global_status::text = $4)
 		   `+eolStageWhere(5),
-		b.from, b.until, b.suffix, b.status, b.eolStage,
+		b.from, b.until, b.suffix, b.status, b.eolStage, b.vins,
 	).Scan(&c.Delivered); err != nil {
 		return c, err
 	}
@@ -701,10 +763,10 @@ func (r *AnalysisRepo) kpiCards(ctx context.Context, f domain.AnalysisFilter) (d
 		 WHERE p.checklist_type = 'EOL'
 		   AND v.current_global_status <> 'PLANNED'
 		   AND cti.eol_phase IN ('BRANCH','DEPOT')
-		   AND ($1 = '' OR p.vin ILIKE '%' || $1 || '%')
+		   `+vinClause("p.vin", 1, 4)+`
 		   AND ($2 = '' OR v.current_global_status::text = $2)
 		   `+eolStageWhere(3),
-		b.suffix, b.status, b.eolStage,
+		b.suffix, b.status, b.eolStage, b.vins,
 	).Scan(&done, &total); err != nil {
 		return c, err
 	}
@@ -781,10 +843,10 @@ func (r *AnalysisRepo) eolFunnel(ctx context.Context, f domain.AnalysisFilter) (
 		  FROM vehicle_eol_workflow w
 		  JOIN vehicles v ON v.vin = w.vin
 		 WHERE v.current_global_status <> 'PLANNED'
-		   AND ($1 = '' OR w.vin ILIKE '%' || $1 || '%')
+		   `+vinClause("w.vin", 1, 4)+`
 		   AND ($2 = '' OR v.current_global_status::text = $2)
 		   `+eolStageWhere(3)+`
-		 GROUP BY 1`, b.suffix, b.status, b.eolStage)
+		 GROUP BY 1`, b.suffix, b.status, b.eolStage, b.vins)
 	if err != nil {
 		return nil, err
 	}
@@ -821,10 +883,10 @@ func (r *AnalysisRepo) stagePerformance(ctx context.Context, f domain.AnalysisFi
 		 WHERE p.checklist_type = 'EOL'
 		   AND v.current_global_status <> 'PLANNED'
 		   AND cti.eol_phase IN ('BRANCH','DEPOT')
-		   AND ($1 = '' OR p.vin ILIKE '%' || $1 || '%')
+		   `+vinClause("p.vin", 1, 4)+`
 		   AND ($2 = '' OR v.current_global_status::text = $2)
 		   `+eolStageWhere(3)+`
-		 GROUP BY cti.eol_phase`, b.suffix, b.status, b.eolStage)
+		 GROUP BY cti.eol_phase`, b.suffix, b.status, b.eolStage, b.vins)
 	if err != nil {
 		return nil, err
 	}
@@ -853,10 +915,10 @@ func (r *AnalysisRepo) stagePerformance(ctx context.Context, f domain.AnalysisFi
 		  FROM vehicle_eol_workflow w
 		  JOIN vehicles v ON v.vin = w.vin
 		 WHERE v.current_global_status <> 'PLANNED'
-		   AND ($1 = '' OR w.vin ILIKE '%' || $1 || '%')
+		   `+vinClause("w.vin", 1, 4)+`
 		   AND ($2 = '' OR v.current_global_status::text = $2)
 		   `+eolStageWhere(3),
-		b.suffix, b.status, b.eolStage,
+		b.suffix, b.status, b.eolStage, b.vins,
 	).Scan(&completedN, &funnelN)
 	out = append(out, domain.StagePerformance{
 		Stage: "COMPLETED", Completed: completedN, Total: funnelN,
@@ -918,7 +980,7 @@ func (r *AnalysisRepo) conditionalMix(ctx context.Context, f domain.AnalysisFilt
 		      OR (i.conditional_approve_date IS NOT NULL AND ($1::timestamptz IS NULL OR i.conditional_approve_date >= $1)
 		           AND ($2::timestamptz IS NULL OR i.conditional_approve_date < $2))
 		       )
-		   AND ($3 = '' OR i.vin ILIKE '%' || $3 || '%')
+		   `+vinClause("i.vin", 3, 9)+`
 		   AND ($4::int IS NULL OR i.station_id = $4)
 		   AND ($5 = '' OR v.current_global_status::text = $5)
 		   AND ($6 = '' OR it.name ILIKE '%' || $6 || '%')
@@ -969,10 +1031,10 @@ func (r *AnalysisRepo) sparklines(ctx context.Context, f domain.AnalysisFilter) 
 		 WHERE v.current_global_status <> 'PLANNED'
 		   AND ($1::timestamptz IS NULL OR v.created_at >= $1)
 		   AND ($2::timestamptz IS NULL OR v.created_at < $2)
-		   AND ($3 = '' OR v.vin ILIKE '%' || $3 || '%')
+		   `+vinClause("v.vin", 3, 6)+`
 		   AND ($4 = '' OR v.current_global_status::text = $4)
 		   `+eolStageWhere(5)+`
-		 GROUP BY 1 ORDER BY 1`, b.from, b.until, b.suffix, b.status, b.eolStage)
+		 GROUP BY 1 ORDER BY 1`, b.from, b.until, b.suffix, b.status, b.eolStage, b.vins)
 	if err != nil {
 		return s, err
 	}
@@ -1010,6 +1072,168 @@ func (r *AnalysisRepo) topIssueTypes(ctx context.Context, f domain.AnalysisFilte
 	return out, rows.Err()
 }
 
+func (r *AnalysisRepo) fpyByStation(ctx context.Context, f domain.AnalysisFilter) ([]domain.StationFPY, error) {
+	b := bounds(f)
+	rows, err := r.pool.Query(ctx,
+		`SELECT s.id, s.name,
+		        CASE WHEN count(*) = 0 THEN NULL
+		             ELSE round(100.0 * count(*) FILTER (WHERE p.status = 'OK') / count(*), 1)
+		        END,
+		        count(*) FILTER (WHERE p.status = 'OK')::bigint,
+		        count(*)::bigint
+		 FROM vehicle_station_step_progress p
+		 JOIN vehicles v ON v.vin = p.vin
+		 JOIN stations s ON s.id = p.station_id
+		 `+vehicleEOLJoin+`
+		 WHERE p.status <> 'PENDING'
+		   AND ($1::timestamptz IS NULL OR p.checked_at >= $1)
+		   AND ($2::timestamptz IS NULL OR p.checked_at < $2)
+		   `+vinClause("p.vin", 3, 7)+`
+		   AND ($4::int IS NULL OR p.station_id = $4)
+		   AND ($5 = '' OR v.current_global_status::text = $5)
+		   `+eolStageWhere(6)+`
+		 GROUP BY s.id, s.name
+		 ORDER BY s.sequence_no`,
+		b.from, b.until, b.suffix, b.station, b.status, b.eolStage, b.vins,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := []domain.StationFPY{}
+	for rows.Next() {
+		var row domain.StationFPY
+		if err := rows.Scan(&row.StationID, &row.StationName, &row.Percent, &row.OkCount, &row.TotalCount); err != nil {
+			return nil, err
+		}
+		out = append(out, row)
+	}
+	return out, rows.Err()
+}
+
+func (r *AnalysisRepo) openedByReporter(ctx context.Context, f domain.AnalysisFilter) ([]domain.ReporterIssueCount, error) {
+	b := bounds(f)
+	rows, err := r.pool.Query(ctx,
+		`SELECT coalesce(u.full_name, '(unknown)'), count(*)::bigint
+		 `+issueJoin+`
+		 LEFT JOIN users u ON u.id = i.issue_reporter_id
+		 `+issueWhere("i.issue_date")+`
+		 GROUP BY u.full_name
+		 ORDER BY count(*) DESC
+		 LIMIT 8`, b.slice()...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := []domain.ReporterIssueCount{}
+	for rows.Next() {
+		var row domain.ReporterIssueCount
+		if err := rows.Scan(&row.ReporterName, &row.Count); err != nil {
+			return nil, err
+		}
+		out = append(out, row)
+	}
+	return out, rows.Err()
+}
+
+func (r *AnalysisRepo) typeSeverity(ctx context.Context, f domain.AnalysisFilter) ([]domain.TypeSeverityCount, error) {
+	b := bounds(f)
+	rows, err := r.pool.Query(ctx,
+		`SELECT coalesce(it.name, '(unknown)'), i.severity::text, count(*)::bigint
+		 `+issueJoin+issueWhere("i.issue_date")+`
+		 GROUP BY coalesce(it.name, '(unknown)'), i.severity
+		 ORDER BY count(*) DESC`, b.slice()...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := []domain.TypeSeverityCount{}
+	for rows.Next() {
+		var row domain.TypeSeverityCount
+		if err := rows.Scan(&row.TypeName, &row.Severity, &row.Count); err != nil {
+			return nil, err
+		}
+		out = append(out, row)
+	}
+	return out, rows.Err()
+}
+
+func (r *AnalysisRepo) avgHoursToBranchShip(ctx context.Context, f domain.AnalysisFilter) (*float64, error) {
+	b := bounds(f)
+	var hours *float64
+	err := r.pool.QueryRow(ctx,
+		`SELECT EXTRACT(EPOCH FROM avg(w.branch_shipped_at - v.created_at)) / 3600
+		 FROM vehicles v
+		 JOIN vehicle_eol_workflow w ON w.vin = v.vin
+		 WHERE w.branch_shipped_at IS NOT NULL
+		   AND ($1::timestamptz IS NULL OR w.branch_shipped_at >= $1)
+		   AND ($2::timestamptz IS NULL OR w.branch_shipped_at < $2)
+		   `+vinClause("v.vin", 3, 6)+`
+		   AND ($4 = '' OR v.current_global_status::text = $4)
+		   `+eolStageWhere(5),
+		b.from, b.until, b.suffix, b.status, b.eolStage, b.vins,
+	).Scan(&hours)
+	return hours, err
+}
+
+func (r *AnalysisRepo) eolStageWait(ctx context.Context, f domain.AnalysisFilter) ([]domain.StageWaitHours, error) {
+	b := bounds(f)
+	out := make([]domain.StageWaitHours, 0, 3)
+
+	type stageQ struct {
+		stage string
+		sql   string
+	}
+	queries := []stageQ{
+		{
+			stage: "BRANCH",
+			sql: `SELECT COALESCE(EXTRACT(EPOCH FROM avg(w.branch_shipped_at - v.created_at)) / 3600, 0)
+			 FROM vehicles v
+			 JOIN vehicle_eol_workflow w ON w.vin = v.vin
+			 WHERE w.branch_shipped_at IS NOT NULL
+			   AND ($1::timestamptz IS NULL OR w.branch_shipped_at >= $1)
+			   AND ($2::timestamptz IS NULL OR w.branch_shipped_at < $2)
+			   ` + vinClause("v.vin", 3, 6) + `
+			   AND ($4 = '' OR v.current_global_status::text = $4)
+			   ` + eolStageWhere(5),
+		},
+		{
+			stage: "DEPOT",
+			sql: `SELECT COALESCE(EXTRACT(EPOCH FROM avg(w.depot_released_at - w.branch_shipped_at)) / 3600, 0)
+			 FROM vehicles v
+			 JOIN vehicle_eol_workflow w ON w.vin = v.vin
+			 WHERE w.branch_shipped_at IS NOT NULL AND w.depot_released_at IS NOT NULL
+			   AND ($1::timestamptz IS NULL OR w.depot_released_at >= $1)
+			   AND ($2::timestamptz IS NULL OR w.depot_released_at < $2)
+			   ` + vinClause("v.vin", 3, 6) + `
+			   AND ($4 = '' OR v.current_global_status::text = $4)
+			   ` + eolStageWhere(5),
+		},
+		{
+			stage: "DELIVERY",
+			sql: `SELECT COALESCE(EXTRACT(EPOCH FROM avg(w.delivered_at - w.depot_released_at)) / 3600, 0)
+			 FROM vehicles v
+			 JOIN vehicle_eol_workflow w ON w.vin = v.vin
+			 WHERE w.depot_released_at IS NOT NULL AND w.delivered_at IS NOT NULL
+			   AND ($1::timestamptz IS NULL OR w.delivered_at >= $1)
+			   AND ($2::timestamptz IS NULL OR w.delivered_at < $2)
+			   ` + vinClause("v.vin", 3, 6) + `
+			   AND ($4 = '' OR v.current_global_status::text = $4)
+			   ` + eolStageWhere(5),
+		},
+	}
+	for _, q := range queries {
+		var hours float64
+		if err := r.pool.QueryRow(ctx, q.sql,
+			b.from, b.until, b.suffix, b.status, b.eolStage, b.vins,
+		).Scan(&hours); err != nil {
+			return nil, err
+		}
+		out = append(out, domain.StageWaitHours{Stage: q.stage, AvgHours: hours})
+	}
+	return out, nil
+}
+
 // countOnLine is a snapshot: IN_PRODUCTION vehicles right now. Date filters
 // are ignored; VIN suffix and station still apply.
 func (r *AnalysisRepo) countOnLine(ctx context.Context, f domain.AnalysisFilter) (int64, error) {
@@ -1020,10 +1244,10 @@ func (r *AnalysisRepo) countOnLine(ctx context.Context, f domain.AnalysisFilter)
 		 FROM vehicles v
 		 `+vehicleEOLJoin+`
 		 WHERE v.current_global_status = 'IN_PRODUCTION'
-		   AND ($1 = '' OR v.vin ILIKE '%' || $1 || '%')
+		   `+vinClause("v.vin", 1, 4)+`
 		   AND ($2::int IS NULL OR v.current_station_id = $2)
 		   `+eolStageWhere(3),
-		b.suffix, b.station, b.eolStage,
+		b.suffix, b.station, b.eolStage, b.vins,
 	).Scan(&n)
 	return n, err
 }

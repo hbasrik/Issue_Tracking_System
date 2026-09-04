@@ -28,6 +28,13 @@ func parseAnalysisFilter(r *http.Request) (domain.AnalysisFilter, error) {
 	f.To = to
 	f.VINSuffix = q.Get("vin_suffix")
 	f.IssueType = q.Get("issue_type")
+	if raw := q.Get("vins"); raw != "" {
+		for _, part := range strings.Split(raw, ",") {
+			if v := strings.TrimSpace(part); v != "" {
+				f.VINs = append(f.VINs, v)
+			}
+		}
+	}
 
 	if raw := q.Get("station"); raw != "" {
 		id, err := strconv.Atoi(raw)
@@ -64,7 +71,7 @@ func parseAnalysisFilter(r *http.Request) (domain.AnalysisFilter, error) {
 	}
 	if raw := q.Get("compare"); raw != "" {
 		switch raw {
-		case "previous_period", "previous_week", "previous_month":
+		case "previous_period", "previous_week", "previous_month", "previous_day":
 			f.CompareMode = raw
 		default:
 			return f, domain.ErrInvalidEnumValue
