@@ -1,0 +1,5 @@
+login light wallpaper: yes
+login dark wallpaper: yes
+login dark overlay: yes
+hover tokens (light): {"hover":"color-mix(in srgb, #101418 7%, transparent)","strong":"color-mix(in srgb, #101418 11%, transparent)","surface1":"#FFFFFF","surface2":"#F1F5F9","accentFilter":"brightness(0.92)"}
+hover tokens (dark): {"hover":"color-mix(in srgb, #F5F7FA 14%, transparent)","strong":"color-mix(in srgb, #F5F7FA 20%, transparent)","surface1":"#131920","surface2":"rgb(57, 62, 68)","accentFilter":"brightness(1.12)"}
