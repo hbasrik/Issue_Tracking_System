@@ -10,6 +10,7 @@ import {
   Download,
   Factory,
   Gauge,
+  Info,
   Layers,
   RefreshCw,
   Timer,
@@ -92,6 +93,9 @@ const AGE_BUCKET_KEYS = {
 
 type SparkKey = 'Production' | 'Opened' | 'Closed' | 'OpenStock';
 
+/** Issue-level filters that some vehicle/workflow metrics intentionally ignore. */
+type IssueFilterKind = 'severity' | 'issue_type' | 'station';
+
 type AnalysisKpiTitleKey =
   | 'analysis.kpi.production'
   | 'analysis.kpi.open'
@@ -113,7 +117,16 @@ type KpiDef = {
   spark?: SparkKey;
   format?: (v: number | null) => string;
   invertDelta?: boolean;
+  /** When set, show a note if any of these issue filters are active. */
+  ignoresIssueFilters?: IssueFilterKind[];
 };
+
+/** Vehicle / EOL metrics — not scoped by issue severity, type, or station. */
+const VEHICLE_METRIC_IGNORES: IssueFilterKind[] = [
+  'severity',
+  'issue_type',
+  'station',
+];
 
 const KPI_DEFS: KpiDef[] = [
   {
@@ -122,6 +135,7 @@ const KPI_DEFS: KpiDef[] = [
     accent: statusColors.vehicleInProduction,
     icon: <Factory size={16} />,
     spark: 'Production',
+    ignoresIssueFilters: VEHICLE_METRIC_IGNORES,
   },
   {
     key: 'OpenIssues',
@@ -164,12 +178,14 @@ const KPI_DEFS: KpiDef[] = [
     titleKey: 'analysis.kpi.branchShipped',
     accent: statusColors.vehicleShipped,
     icon: <Truck size={16} />,
+    ignoresIssueFilters: VEHICLE_METRIC_IGNORES,
   },
   {
     key: 'Delivered',
     titleKey: 'analysis.kpi.delivered',
     accent: statusColors.vehicleWithCustomer,
     icon: <Building2 size={16} />,
+    ignoresIssueFilters: VEHICLE_METRIC_IGNORES,
   },
   {
     key: 'AvgResolutionHours',
@@ -184,6 +200,8 @@ const KPI_DEFS: KpiDef[] = [
     accent: statusColors.issueDone,
     icon: <Layers size={16} />,
     format: (v) => (v == null ? '—' : `${v}%`),
+    // Station applies; severity / issue type do not.
+    ignoresIssueFilters: ['severity', 'issue_type'],
   },
   {
     key: 'CompletionPercent',
@@ -191,6 +209,7 @@ const KPI_DEFS: KpiDef[] = [
     accent: statusColors.info,
     icon: <BarChart3 size={16} />,
     format: (v) => (v == null ? '—' : `${v}%`),
+    ignoresIssueFilters: VEHICLE_METRIC_IGNORES,
   },
 ];
 
@@ -225,6 +244,19 @@ export default function AnalysisPage() {
       compare: searchParams.get('compare') ?? undefined,
     }),
     [searchParams],
+  );
+
+  const activeIssueFilters = useMemo(() => {
+    const out: IssueFilterKind[] = [];
+    if (applied.severity) out.push('severity');
+    if (applied.issue_type) out.push('issue_type');
+    if (applied.station) out.push('station');
+    return out;
+  }, [applied]);
+
+  const vehicleFilterNote = useMemo(
+    () => filterUnaffectedNote(VEHICLE_METRIC_IGNORES, activeIssueFilters, t),
+    [activeIssueFilters, t],
   );
 
   const [dash, setDash] = useState<AnalysisDashboard | null>(null);
@@ -646,6 +678,11 @@ export default function AnalysisPage() {
             spark={def.spark ? sparkSeries(dash, def.spark, locale) : undefined}
             format={def.format}
             invertDelta={def.invertDelta}
+            filterNote={filterUnaffectedNote(
+              def.ignoresIssueFilters,
+              activeIssueFilters,
+              t,
+            )}
           />
         ))}
       </div>
@@ -781,7 +818,11 @@ export default function AnalysisPage() {
       </div>
 
       <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <ChartCard title={t('analysis.eolFunnel')} icon={<Factory size={18} />}>
+        <ChartCard
+          title={t('analysis.eolFunnel')}
+          icon={<Factory size={18} />}
+          filterNote={vehicleFilterNote}
+        >
           {eolFunnelRows.every((r) => r.Count === 0) ? (
             <EmptyChart />
           ) : (
@@ -807,7 +848,11 @@ export default function AnalysisPage() {
             </div>
           )}
         </ChartCard>
-        <ChartCard title={t('analysis.stagePerformance')} icon={<Building2 size={18} />}>
+        <ChartCard
+          title={t('analysis.stagePerformance')}
+          icon={<Building2 size={18} />}
+          filterNote={vehicleFilterNote}
+        >
           {stagePerf.every((r) => r.Total === 0) ? (
             <EmptyChart />
           ) : (
@@ -990,6 +1035,46 @@ function ageBucketLabel(bucket: string): (typeof AGE_BUCKET_KEYS)[keyof typeof A
   return 'analysis.age.7plus';
 }
 
+function issueFilterLabel(
+  kind: IssueFilterKind,
+  t: ReturnType<typeof useI18n>['t'],
+): string {
+  switch (kind) {
+    case 'severity':
+      return t('analysis.filterNote.severity');
+    case 'issue_type':
+      return t('analysis.filterNote.issueType');
+    case 'station':
+      return t('analysis.filterNote.station');
+  }
+}
+
+/** Returns a tooltip note only when at least one ignored filter is currently active. */
+function filterUnaffectedNote(
+  ignores: IssueFilterKind[] | undefined,
+  active: IssueFilterKind[],
+  t: ReturnType<typeof useI18n>['t'],
+): string | null {
+  if (!ignores?.length || active.length === 0) return null;
+  const hit = ignores.filter((k) => active.includes(k));
+  if (hit.length === 0) return null;
+  return t('analysis.filterNote.unaffected', {
+    filters: hit.map((k) => issueFilterLabel(k, t)).join(', '),
+  });
+}
+
+function FilterScopeHint({ note }: { note: string }) {
+  return (
+    <span
+      className="inline-flex shrink-0 text-[var(--text-secondary)]"
+      title={note}
+      aria-label={note}
+    >
+      <Info size={13} strokeWidth={2.25} />
+    </span>
+  );
+}
+
 function kpiNumber(
   cards: AnalysisKPICards | undefined,
   key: keyof AnalysisKPICards,
@@ -1066,6 +1151,7 @@ function AnalysisKpiCard({
   spark,
   format,
   invertDelta,
+  filterNote,
 }: {
   title: string;
   icon: ReactNode;
@@ -1076,6 +1162,7 @@ function AnalysisKpiCard({
   spark?: DayCount[];
   format?: (v: number | null) => string;
   invertDelta?: boolean;
+  filterNote?: string | null;
 }) {
   const { t } = useI18n();
   const display =
@@ -1108,7 +1195,10 @@ function AnalysisKpiCard({
     >
       <div className="flex items-start justify-between gap-2">
         <p className="min-w-0 text-[12px] font-medium leading-snug" style={mutedCaption}>
-          {title}
+          <span className="inline-flex items-center gap-1">
+            <span>{title}</span>
+            {filterNote ? <FilterScopeHint note={filterNote} /> : null}
+          </span>
         </p>
         <div className="flex shrink-0 items-center gap-2">
           <div
@@ -1176,12 +1266,14 @@ function ChartCard({
   children,
   className = '',
   icon,
+  filterNote,
 }: {
   title: string;
   subtitle?: string;
   children: ReactNode;
   className?: string;
   icon?: ReactNode;
+  filterNote?: string | null;
 }) {
   return (
     <div
@@ -1196,7 +1288,10 @@ function ChartCard({
                 {icon}
               </span>
             ) : null}
-            <span className="min-w-0">{title}</span>
+            <span className="min-w-0 inline-flex items-center gap-1.5">
+              <span>{title}</span>
+              {filterNote ? <FilterScopeHint note={filterNote} /> : null}
+            </span>
           </h2>
           {subtitle && (
             <p className="mt-0.5 text-[12px] leading-snug" style={mutedCaption}>

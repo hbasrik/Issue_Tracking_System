@@ -684,6 +684,11 @@ export const tr = {
   'analysis.noData': 'Veri yok',
   'analysis.ageBucket': 'Yaş aralığı',
   'analysis.subtitle': 'Filtreler, KPI karşılaştırması ve grafikler',
+  'analysis.filterNote.severity': 'severity',
+  'analysis.filterNote.issueType': 'issue türü',
+  'analysis.filterNote.station': 'istasyon',
+  'analysis.filterNote.unaffected':
+    'Bu metrik seçili hata filtrelerinden etkilenmez: {filters}',
 
   'templates.title': 'Checklist şablonları',
   'templates.subtitle': 'Madde metinleri, sıra ve aktif/pasif.',
@@ -1578,6 +1583,11 @@ export const en: Record<MessageKey, string> = {
   'analysis.noData': 'No data',
   'analysis.ageBucket': 'Age bucket',
   'analysis.subtitle': 'Filters, KPI comparison, and charts',
+  'analysis.filterNote.severity': 'severity',
+  'analysis.filterNote.issueType': 'issue type',
+  'analysis.filterNote.station': 'station',
+  'analysis.filterNote.unaffected':
+    'This metric is not affected by the selected defect filters: {filters}',
   'checklist.conditionalShort': 'COND.',
   'checklist.eolComplete': 'EoL workflow is complete.',
   'checklist.evaluated': '{done}/{total} evaluated',
