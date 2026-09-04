@@ -13,6 +13,8 @@ export {
   formatActionAt,
   formatDateTime,
   formatDateTimeShort,
+  formatDateRangeFull,
+  formatDateRangeShort,
   formatShortDay,
 } from './dates';
 export { translateApiError, translatePasswordError } from './errors';
