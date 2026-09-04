@@ -722,6 +722,9 @@ export interface AnalysisQuery {
   station?: string;
   status?: string;
   issue_type?: string;
+  severity?: string;
+  eol_stage?: string;
+  compare?: string;
 }
 
 export interface DailyPendingIssue {
@@ -799,14 +802,44 @@ export interface AnalysisDashboard {
     OpenIssuesInRange: number;
     OnLineCount: number;
   };
+  Cards: AnalysisKPICards;
+  CompareCards: AnalysisKPICards;
+  CompareMode: string;
   WorkSplit: { Completed: number; Ongoing: number };
   IssueStatus: { Status: string; Count: number }[];
+  SeverityMix: { Severity: string; Count: number }[];
   DefectRate: StationDefectRate[];
+  OpenByStation: StationDefectRate[];
+  TotalByStation: StationDefectRate[];
   MTTR: StationMTTR[];
   Severity: VehicleSeverityBreakdown[];
   EOLFunnel: { Stage: string; Count: number }[];
+  StagePerformance: { Stage: string; Completed: number; Total: number }[];
   TopIssueTypes: { Name: string; Count: number }[];
   CompletedDaily: { Day: string; CompletedCount: number }[];
+  DailyOpenTrend: DailyPendingIssue[];
+  OpenAgeBuckets: { Bucket: string; Count: number }[];
+  ConditionalMix: { Approved: number; Conditional: number };
+  Sparklines: {
+    Production: DailyPendingIssue[];
+    Opened: { Day: string; CompletedCount: number }[];
+    Closed: { Day: string; CompletedCount: number }[];
+    OpenStock: DailyPendingIssue[];
+  };
+}
+
+export interface AnalysisKPICards {
+  TotalProduction: number;
+  OpenIssues: number;
+  CriticalOpen: number;
+  PendingQuality: number;
+  CompletionPercent: number | null;
+  BranchShipped: number;
+  Delivered: number;
+  OpenedIssues: number;
+  ClosedIssues: number;
+  AvgResolutionHours: number | null;
+  FirstTimeRightPercent: number | null;
 }
 
 function toQuery(params: AnalysisQuery): string {
@@ -817,6 +850,9 @@ function toQuery(params: AnalysisQuery): string {
   if (params.station) q.set('station', params.station);
   if (params.status) q.set('status', params.status);
   if (params.issue_type) q.set('issue_type', params.issue_type);
+  if (params.severity) q.set('severity', params.severity);
+  if (params.eol_stage) q.set('eol_stage', params.eol_stage);
+  if (params.compare) q.set('compare', params.compare);
   return q.toString();
 }
 

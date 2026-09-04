@@ -1,11 +1,33 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
+  AlertCircle,
+  BadgeCheck,
+  BarChart3,
+  Building2,
+  CalendarDays,
+  ClipboardList,
+  Download,
+  Factory,
+  Gauge,
+  Layers,
+  RefreshCw,
+  Timer,
+  TrendingDown,
+  TrendingUp,
+  TriangleAlert,
+  Truck,
+} from 'lucide-react';
+import {
+  Area,
+  AreaChart,
   Bar,
   BarChart,
   CartesianGrid,
   Cell,
   Legend,
+  Line,
+  LineChart,
   Pie,
   PieChart,
   ResponsiveContainer,
@@ -13,44 +35,181 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import html2canvas from 'html2canvas';
-import { jsPDF } from 'jspdf';
 import {
   api,
   type AnalysisDashboard,
+  type AnalysisKPICards,
   type Station,
-  type StationDefectRate,
-  type StationMTTR,
-  type VehicleSeverityBreakdown,
 } from '../lib/api';
+import { buildAnalysisCsv } from '../lib/analysisExport';
 import { VinSearchBox } from '../components/VinSearchBox';
 import { SeverityIndicator, severityFillColor } from '../components/SeverityIndicator';
 import { issueStatusColor, issueStatusLabel } from '../lib/issueStatus';
-import { muteColor, rankTopVehicles } from '../lib/homeDashboard';
+import {
+  deltaColor,
+  deltaPolarity,
+  formatAbsDelta,
+  rankTopVehicles,
+  type DayCount,
+  type DeltaPolarity,
+} from '../lib/homeDashboard';
+import { downloadBlob } from '../lib/issueExport';
 import { statusColors } from '../theme/tokens';
 import { useI18n } from '../i18n';
-import { VEHICLE_STATUS_FILTER_VALUES, vehicleStatusLabel } from '../lib/vehicleStatus';
+import {
+  VEHICLE_STATUS_FILTER_VALUES,
+  eolStageLabel,
+  vehicleStatusLabel,
+} from '../lib/vehicleStatus';
 
 const VEHICLE_STATUSES = ['', ...VEHICLE_STATUS_FILTER_VALUES] as const;
+const SEVERITIES = ['', 'CRITICAL', 'MEDIUM', 'LOW'] as const;
+const EOL_STAGES = ['', 'BRANCH', 'DEPOT', 'COMPLETED'] as const;
+const COMPARE_MODES = ['', 'previous_period', 'previous_week', 'previous_month'] as const;
 
-/**
- * Analysis tab — §4.4: filter bar, pie + bar charts, VIN severity breakdown,
- * Export/Print to A4 PDF via jspdf + html2canvas.
- */
+const DONUT_START_ANGLE = 90;
+const CHART_TOOLTIP = {
+  backgroundColor: 'var(--bg-surface-2)',
+  border: '1px solid var(--border)',
+  borderRadius: 8,
+  fontSize: 12,
+} as const;
+const mutedCaption = { color: 'var(--text-secondary)' } as const;
+
+const STAGE_COLORS: Record<string, string> = {
+  BRANCH: statusColors.info,
+  DEPOT: statusColors.issueInProgress,
+  COMPLETED: statusColors.ok,
+};
+
+const AGE_BUCKET_KEYS = {
+  '0-1': 'analysis.age.0_1',
+  '1-3': 'analysis.age.1_3',
+  '3-7': 'analysis.age.3_7',
+  '7+': 'analysis.age.7plus',
+} as const satisfies Record<string, 'analysis.age.0_1' | 'analysis.age.1_3' | 'analysis.age.3_7' | 'analysis.age.7plus'>;
+
+type SparkKey = 'Production' | 'Opened' | 'Closed' | 'OpenStock';
+
+type AnalysisKpiTitleKey =
+  | 'analysis.kpi.production'
+  | 'analysis.kpi.open'
+  | 'analysis.kpi.criticalOpen'
+  | 'analysis.kpi.pendingQuality'
+  | 'analysis.kpi.opened'
+  | 'analysis.kpi.closed'
+  | 'analysis.kpi.branchShipped'
+  | 'analysis.kpi.delivered'
+  | 'analysis.kpi.mttr'
+  | 'analysis.kpi.fpy'
+  | 'analysis.kpi.completion';
+
+type KpiDef = {
+  key: keyof AnalysisKPICards;
+  titleKey: AnalysisKpiTitleKey;
+  accent: string;
+  icon: ReactNode;
+  spark?: SparkKey;
+  format?: (v: number | null) => string;
+  invertDelta?: boolean;
+};
+
+const KPI_DEFS: KpiDef[] = [
+  {
+    key: 'TotalProduction',
+    titleKey: 'analysis.kpi.production',
+    accent: statusColors.vehicleInProduction,
+    icon: <Factory size={16} />,
+    spark: 'Production',
+  },
+  {
+    key: 'OpenIssues',
+    titleKey: 'analysis.kpi.open',
+    accent: statusColors.issueOpen,
+    icon: <AlertCircle size={16} />,
+    spark: 'OpenStock',
+    invertDelta: true,
+  },
+  {
+    key: 'CriticalOpen',
+    titleKey: 'analysis.kpi.criticalOpen',
+    accent: statusColors.severityCritical,
+    icon: <TriangleAlert size={16} />,
+    invertDelta: true,
+  },
+  {
+    key: 'PendingQuality',
+    titleKey: 'analysis.kpi.pendingQuality',
+    accent: statusColors.issueDone,
+    icon: <BadgeCheck size={16} />,
+    invertDelta: true,
+  },
+  {
+    key: 'OpenedIssues',
+    titleKey: 'analysis.kpi.opened',
+    accent: statusColors.notOk,
+    icon: <ClipboardList size={16} />,
+    spark: 'Opened',
+  },
+  {
+    key: 'ClosedIssues',
+    titleKey: 'analysis.kpi.closed',
+    accent: statusColors.ok,
+    icon: <Gauge size={16} />,
+    spark: 'Closed',
+  },
+  {
+    key: 'BranchShipped',
+    titleKey: 'analysis.kpi.branchShipped',
+    accent: statusColors.vehicleShipped,
+    icon: <Truck size={16} />,
+  },
+  {
+    key: 'Delivered',
+    titleKey: 'analysis.kpi.delivered',
+    accent: statusColors.vehicleWithCustomer,
+    icon: <Building2 size={16} />,
+  },
+  {
+    key: 'AvgResolutionHours',
+    titleKey: 'analysis.kpi.mttr',
+    accent: statusColors.issueInProgress,
+    icon: <Timer size={16} />,
+    format: (v) => (v == null ? '—' : v.toFixed(2)),
+  },
+  {
+    key: 'FirstTimeRightPercent',
+    titleKey: 'analysis.kpi.fpy',
+    accent: statusColors.issueDone,
+    icon: <Layers size={16} />,
+    format: (v) => (v == null ? '—' : `${v}%`),
+  },
+  {
+    key: 'CompletionPercent',
+    titleKey: 'analysis.kpi.completion',
+    accent: statusColors.info,
+    icon: <BarChart3 size={16} />,
+    format: (v) => (v == null ? '—' : `${v}%`),
+  },
+];
+
 export default function AnalysisPage() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [searchParams, setSearchParams] = useSearchParams();
-  const exportRef = useRef<HTMLDivElement>(null);
 
-  // Draft filters (applied on "Uygula")
   const [draftFrom, setDraftFrom] = useState(searchParams.get('from') ?? '');
   const [draftTo, setDraftTo] = useState(searchParams.get('to') ?? '');
-  const [draftStation, setDraftStation] = useState(searchParams.get('station') ?? searchParams.get('phase') ?? '');
+  const [draftStation, setDraftStation] = useState(
+    searchParams.get('station') ?? searchParams.get('phase') ?? '',
+  );
   const [draftStatus, setDraftStatus] = useState(searchParams.get('status') ?? '');
   const [draftIssueType, setDraftIssueType] = useState(
     searchParams.get('issue_type') ?? '',
   );
   const [draftVin, setDraftVin] = useState(searchParams.get('vin_suffix') ?? '');
+  const [draftSeverity, setDraftSeverity] = useState(searchParams.get('severity') ?? '');
+  const [draftEolStage, setDraftEolStage] = useState(searchParams.get('eol_stage') ?? '');
+  const [draftCompare, setDraftCompare] = useState(searchParams.get('compare') ?? '');
 
   const applied = useMemo(
     () => ({
@@ -60,19 +219,21 @@ export default function AnalysisPage() {
       station: searchParams.get('station') ?? searchParams.get('phase') ?? undefined,
       status: searchParams.get('status') ?? undefined,
       issue_type: searchParams.get('issue_type') ?? undefined,
+      severity: searchParams.get('severity') ?? undefined,
+      eol_stage: searchParams.get('eol_stage') ?? undefined,
+      compare: searchParams.get('compare') ?? undefined,
     }),
     [searchParams],
   );
 
   const [dash, setDash] = useState<AnalysisDashboard | null>(null);
-  const [severity, setSeverity] = useState<VehicleSeverityBreakdown[]>([]);
-  const [mttr, setMttr] = useState<StationMTTR[]>([]);
-  const [defects, setDefects] = useState<StationDefectRate[]>([]);
   const [stations, setStations] = useState<Station[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
 
   const load = useCallback(async () => {
+    setLoading(true);
     setError(null);
     try {
       const [d, stationRes] = await Promise.all([
@@ -80,12 +241,11 @@ export default function AnalysisPage() {
         api.listStations().catch(() => ({ items: [] as Station[] })),
       ]);
       setDash(d);
-      setSeverity(d.Severity ?? []);
-      setMttr(d.MTTR ?? []);
-      setDefects(d.DefectRate ?? []);
       setStations(stationRes.items ?? []);
     } catch (err) {
       setError(err instanceof Error ? err.message : t('analysis.loadFailed'));
+    } finally {
+      setLoading(false);
     }
   }, [applied, t]);
 
@@ -101,118 +261,26 @@ export default function AnalysisPage() {
     if (draftStatus) next.set('status', draftStatus);
     if (draftIssueType) next.set('issue_type', draftIssueType);
     if (draftVin.trim()) next.set('vin_suffix', draftVin.trim());
+    if (draftSeverity) next.set('severity', draftSeverity);
+    if (draftEolStage) next.set('eol_stage', draftEolStage);
+    if (draftCompare) next.set('compare', draftCompare);
     setSearchParams(next);
   }
 
-  const pieData = useMemo(() => {
-    const completed = dash?.WorkSplit.Completed ?? 0;
-    const ongoing = dash?.WorkSplit.Ongoing ?? 0;
-    return [
-      { name: t('analysis.completedSlice'), value: completed, color: statusColors.ok },
-      { name: t('analysis.inProgress'), value: ongoing, color: statusColors.issueInProgress },
-    ];
-  }, [dash, t]);
-
-  const statusPie = useMemo(
-    () =>
-      (dash?.IssueStatus ?? []).map((row) => ({
-        name: issueStatusLabel(row.Status, t),
-        value: row.Count,
-        color: issueStatusColor(row.Status),
-      })),
-    [dash, t],
-  );
-
-  const mttrBars = useMemo(
-    () =>
-      mttr.map((r) => ({
-        station: r.StationName || stations.find((s) => s.ID === r.StationID)?.Name || t('analysis.stationN', { id: r.StationID }),
-        hours: r.Hours ?? Number((r.MeanTimeToResolve / 1e9 / 3600).toFixed(2)),
-      })),
-    [mttr, stations, t],
-  );
-
-  const defectBars = useMemo(
-    () =>
-      [...defects]
-        .sort((a, b) => b.IssueCount - a.IssueCount)
-        .map((r) => ({
-          station: r.StationName || t('analysis.stationN', { id: r.StationID }),
-          issues: r.IssueCount,
-        })),
-    [defects, t],
-  );
-
-  const stackedSeverity = useMemo(
-    () =>
-      severity.map((r) => ({
-        vin: `…${r.VIN.slice(-5)}`,
-        fullVin: r.VIN,
-        critical: r.CriticalCount,
-        medium: r.MediumCount,
-        low: r.LowCount,
-        total: r.TotalOpenIssues,
-      })),
-    [severity],
-  );
-
-  const topVehicles = useMemo(() => rankTopVehicles(severity, 5), [severity]);
-
-  function vehicleStatLink(stat: string, includeDates: boolean) {
-    const q = new URLSearchParams();
-    q.set('analysisStat', stat);
-    if (includeDates) {
-      if (applied.from) q.set('from', applied.from);
-      if (applied.to) q.set('to', applied.to);
-    }
-    return `/vehicles?${q.toString()}`;
+  function clearFilters() {
+    setDraftFrom('');
+    setDraftTo('');
+    setDraftStation('');
+    setDraftStatus('');
+    setDraftIssueType('');
+    setDraftVin('');
+    setDraftSeverity('');
+    setDraftEolStage('');
+    setDraftCompare('');
+    setSearchParams(new URLSearchParams());
   }
 
-  function issueStatLink(stat: string) {
-    const q = new URLSearchParams();
-    q.set('analysisStat', stat);
-    if (applied.from) q.set('from', applied.from);
-    if (applied.to) q.set('to', applied.to);
-    return `/issues?${q.toString()}`;
-  }
-
-  async function exportPdf() {
-    if (!exportRef.current) return;
-    setExporting(true);
-    try {
-      const canvas = await html2canvas(exportRef.current, {
-        scale: 2,
-        backgroundColor: getComputedStyle(document.documentElement)
-          .getPropertyValue('--bg-page')
-          .trim() || '#0B0F14',
-      });
-      const img = canvas.toDataURL('image/png');
-      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      const margin = 10;
-      const usableWidth = pageWidth - margin * 2;
-      const imgHeight = (canvas.height * usableWidth) / canvas.width;
-
-      let heightLeft = imgHeight;
-      let position = margin;
-      pdf.addImage(img, 'PNG', margin, position, usableWidth, imgHeight);
-      heightLeft -= pageHeight - margin * 2;
-
-      while (heightLeft > 0) {
-        position = margin - (imgHeight - heightLeft);
-        pdf.addPage();
-        pdf.addImage(img, 'PNG', margin, position, usableWidth, imgHeight);
-        heightLeft -= pageHeight - margin * 2;
-      }
-
-      pdf.save(`karea-analysis-${new Date().toISOString().slice(0, 10)}.pdf`);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('analysis.pdfFailed'));
-    } finally {
-      setExporting(false);
-    }
-  }
+  const compareHint = compareLabel(dash?.CompareMode ?? applied.compare, t);
 
   const filterSummary = [
     applied.from && t('analysis.fromFilter', { from: applied.from }),
@@ -221,57 +289,225 @@ export default function AnalysisPage() {
     applied.status && t('analysis.statusFilter', { status: applied.status }),
     applied.issue_type && t('analysis.typeFilter', { type: applied.issue_type }),
     applied.vin_suffix && t('analysis.vinFilter', { suffix: applied.vin_suffix }),
+    applied.severity && t('analysis.severityFilter', { severity: applied.severity }),
+    applied.eol_stage &&
+      t('analysis.eolStageFilter', {
+        stage: eolStageLabel(applied.eol_stage, t),
+      }),
+    applied.compare && compareLabel(applied.compare, t),
   ]
     .filter(Boolean)
     .join(' · ') || t('analysis.noFilters');
+
+  const severity = dash?.Severity ?? [];
+  const topVehicles = useMemo(() => rankTopVehicles(severity, 5), [severity]);
+
+  const statusPie = useMemo(
+    () =>
+      (dash?.IssueStatus ?? [])
+        .filter((row) => row.Count > 0)
+        .map((row) => ({
+          name: issueStatusLabel(row.Status, t),
+          value: row.Count,
+          color: issueStatusColor(row.Status),
+        })),
+    [dash, t],
+  );
+
+  const severityPie = useMemo(
+    () =>
+      (dash?.SeverityMix ?? [])
+        .filter((row) => row.Count > 0)
+        .map((row) => ({
+          name: t(`severity.${row.Severity.toLowerCase()}` as 'severity.critical'),
+          value: row.Count,
+          color:
+            row.Severity === 'CRITICAL'
+              ? statusColors.severityCritical
+              : row.Severity === 'MEDIUM'
+                ? statusColors.severityMedium
+                : statusColors.severityLow,
+        })),
+    [dash, t],
+  );
+
+  const workPie = useMemo(() => {
+    const completed = dash?.WorkSplit.Completed ?? 0;
+    const ongoing = dash?.WorkSplit.Ongoing ?? 0;
+    if (completed === 0 && ongoing === 0) return [];
+    return [
+      { name: t('analysis.completedSlice'), value: completed, color: statusColors.ok },
+      { name: t('analysis.inProgress'), value: ongoing, color: statusColors.issueInProgress },
+    ];
+  }, [dash, t]);
+
+  const conditionalPie = useMemo(() => {
+    const approved = dash?.ConditionalMix.Approved ?? 0;
+    const conditional = dash?.ConditionalMix.Conditional ?? 0;
+    if (approved === 0 && conditional === 0) return [];
+    return [
+      {
+        name: t('analysis.qualityApproved'),
+        value: approved,
+        color: statusColors.ok,
+      },
+      {
+        name: t('analysis.conditionalApproved'),
+        value: conditional,
+        color: statusColors.issueInProgress,
+      },
+    ];
+  }, [dash, t]);
+
+  const openAgeBars = useMemo(
+    () =>
+      (dash?.OpenAgeBuckets ?? []).map((row) => ({
+        bucket: t(ageBucketLabel(row.Bucket)),
+        count: row.Count,
+      })),
+    [dash, t],
+  );
+
+  const openTrend = useMemo(
+    () =>
+      (dash?.DailyOpenTrend ?? []).map((row) => ({
+        label: formatChartDay(row.Day, locale),
+        open: row.PendingCount,
+      })),
+    [dash, locale],
+  );
+
+  const completedTrend = useMemo(
+    () =>
+      (dash?.CompletedDaily ?? []).map((row) => ({
+        label: formatChartDay(row.Day, locale),
+        closed: row.CompletedCount,
+      })),
+    [dash, locale],
+  );
+
+  const openStationBars = useMemo(
+    () =>
+      (dash?.OpenByStation ?? []).map((r) => ({
+        station:
+          r.StationName ||
+          stations.find((s) => s.ID === r.StationID)?.Name ||
+          t('analysis.stationN', { id: r.StationID }),
+        issues: r.IssueCount,
+      })),
+    [dash, stations, t],
+  );
+
+  const totalStationBars = useMemo(
+    () =>
+      (dash?.TotalByStation ?? []).map((r) => ({
+        station:
+          r.StationName ||
+          stations.find((s) => s.ID === r.StationID)?.Name ||
+          t('analysis.stationN', { id: r.StationID }),
+        issues: r.IssueCount,
+      })),
+    [dash, stations, t],
+  );
+
+  const mttrBars = useMemo(
+    () =>
+      (dash?.MTTR ?? []).map((r) => ({
+        station:
+          r.StationName ||
+          stations.find((s) => s.ID === r.StationID)?.Name ||
+          t('analysis.stationN', { id: r.StationID }),
+        hours: r.Hours ?? Number((r.MeanTimeToResolve / 1e9 / 3600).toFixed(2)),
+      })),
+    [dash, stations, t],
+  );
+
+  const issueTypeBars = useMemo(
+    () =>
+      (dash?.TopIssueTypes ?? []).map((r) => ({
+        type: r.Name,
+        count: r.Count,
+      })),
+    [dash],
+  );
+
+  const eolFunnelRows = dash?.EOLFunnel ?? [];
+  const stagePerf = dash?.StagePerformance ?? [];
+
+  function exportCsv() {
+    if (!dash) return;
+    setExporting(true);
+    try {
+      const csv = buildAnalysisCsv(dash, applied, t);
+      downloadBlob(
+        new Blob([csv], { type: 'text/csv;charset=utf-8' }),
+        `karea-analysis-${new Date().toISOString().slice(0, 10)}.csv`,
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('analysis.exportCsvFailed'));
+    } finally {
+      setExporting(false);
+    }
+  }
 
   return (
     <section>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold sm:text-2xl">{t('analysis.title')}</h1>
-          <p className="mt-1 text-[13px] text-[var(--text-secondary)]">
+          <p className="mt-1 text-[13px]" style={mutedCaption}>
             {t('analysis.subtitle')}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={exportPdf}
-          disabled={exporting}
-          className="min-h-touch w-full rounded-lg bg-[var(--accent)] px-4 text-[15px] font-medium text-white disabled:opacity-60 sm:w-auto"
-        >
-          {exporting ? t('analysis.exporting') : t('analysis.exportPrint')}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => void load()}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full text-[var(--status-ok)] hover:bg-[var(--bg-surface-2)]"
+            aria-label={t('home.refresh')}
+            title={t('home.refresh')}
+          >
+            <RefreshCw size={16} className={loading ? 'animate-spin' : undefined} />
+          </button>
+          <button
+            type="button"
+            onClick={exportCsv}
+            disabled={exporting || !dash}
+            className="inline-flex min-h-touch items-center gap-2 rounded-lg bg-[var(--accent)] px-4 text-[15px] font-medium text-white disabled:opacity-60"
+          >
+            <Download size={16} />
+            {exporting ? t('analysis.exporting') : t('analysis.exportCsv')}
+          </button>
+        </div>
       </div>
 
-      {/* Filter bar — §4.4 */}
       <div
-        className="mt-6 grid grid-cols-1 gap-3 rounded-xl border bg-[var(--bg-surface-1)] p-4 sm:flex sm:flex-wrap sm:items-end"
+        className="mt-6 grid grid-cols-1 gap-3 rounded-xl border bg-[var(--bg-surface-1)] p-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
         style={{ borderColor: 'var(--border)' }}
       >
-        <Field label={t('analysis.fromLabel')}>
+        <FilterField label={t('analysis.fromLabel')}>
           <input
             type="date"
             value={draftFrom}
             onChange={(e) => setDraftFrom(e.target.value)}
-            className="min-h-touch w-full rounded-lg border bg-[var(--bg-page)] px-3 text-[15px] sm:w-auto"
+            className="min-h-touch w-full rounded-lg border bg-[var(--bg-page)] px-3 text-[15px]"
             style={{ borderColor: 'var(--border)' }}
           />
-        </Field>
-        <Field label={t('analysis.toLabel')}>
+        </FilterField>
+        <FilterField label={t('analysis.toLabel')}>
           <input
             type="date"
             value={draftTo}
             onChange={(e) => setDraftTo(e.target.value)}
-            className="min-h-touch w-full rounded-lg border bg-[var(--bg-page)] px-3 text-[15px] sm:w-auto"
+            className="min-h-touch w-full rounded-lg border bg-[var(--bg-page)] px-3 text-[15px]"
             style={{ borderColor: 'var(--border)' }}
           />
-        </Field>
-        <Field label={t('vehicles.station')}>
+        </FilterField>
+        <FilterField label={t('vehicles.station')}>
           <select
             value={draftStation}
             onChange={(e) => setDraftStation(e.target.value)}
-            className="min-h-touch w-full rounded-lg border bg-[var(--bg-page)] px-3 text-[15px] sm:w-auto"
+            className="min-h-touch w-full rounded-lg border bg-[var(--bg-page)] px-3 text-[15px]"
             style={{ borderColor: 'var(--border)' }}
           >
             <option value="">{t('common.all')}</option>
@@ -284,12 +520,12 @@ export default function AnalysisPage() {
                 </option>
               ))}
           </select>
-        </Field>
-        <Field label={t('analysis.vehicleStatus')}>
+        </FilterField>
+        <FilterField label={t('analysis.vehicleStatus')}>
           <select
             value={draftStatus}
             onChange={(e) => setDraftStatus(e.target.value)}
-            className="min-h-touch w-full rounded-lg border bg-[var(--bg-page)] px-3 text-[15px] sm:w-auto"
+            className="min-h-touch w-full rounded-lg border bg-[var(--bg-page)] px-3 text-[15px]"
             style={{ borderColor: 'var(--border)' }}
           >
             {VEHICLE_STATUSES.map((s) => (
@@ -298,32 +534,86 @@ export default function AnalysisPage() {
               </option>
             ))}
           </select>
-        </Field>
-        <Field label={t('analysis.issueType')}>
+        </FilterField>
+        <FilterField label={t('analysis.severity')}>
+          <select
+            value={draftSeverity}
+            onChange={(e) => setDraftSeverity(e.target.value)}
+            className="min-h-touch w-full rounded-lg border bg-[var(--bg-page)] px-3 text-[15px]"
+            style={{ borderColor: 'var(--border)' }}
+          >
+            <option value="">{t('common.all')}</option>
+            {SEVERITIES.filter(Boolean).map((s) => (
+              <option key={s} value={s}>
+                {t(`severity.${s.toLowerCase()}` as 'severity.critical')}
+              </option>
+            ))}
+          </select>
+        </FilterField>
+        <FilterField label={t('analysis.eolStage')}>
+          <select
+            value={draftEolStage}
+            onChange={(e) => setDraftEolStage(e.target.value)}
+            className="min-h-touch w-full rounded-lg border bg-[var(--bg-page)] px-3 text-[15px]"
+            style={{ borderColor: 'var(--border)' }}
+          >
+            {EOL_STAGES.map((s) => (
+              <option key={s || 'all'} value={s}>
+                {s ? eolStageLabel(s, t) : t('common.all')}
+              </option>
+            ))}
+          </select>
+        </FilterField>
+        <FilterField label={t('analysis.issueType')}>
           <input
             type="text"
             value={draftIssueType}
             onChange={(e) => setDraftIssueType(e.target.value)}
             placeholder={t('analysis.issueTypePlaceholder')}
-            className="min-h-touch w-full rounded-lg border bg-[var(--bg-page)] px-3 text-[15px] sm:w-40"
+            className="min-h-touch w-full rounded-lg border bg-[var(--bg-page)] px-3 text-[15px]"
             style={{ borderColor: 'var(--border)' }}
           />
-        </Field>
-        <Field label={t('analysis.vinSuffix')}>
+        </FilterField>
+        <FilterField label={t('analysis.vinSuffix')}>
           <VinSearchBox
             value={draftVin}
             onChange={setDraftVin}
             showResults={false}
-            className="w-full sm:w-48"
+            className="w-full"
           />
-        </Field>
-        <button
-          type="button"
-          onClick={applyFilters}
-          className="min-h-touch w-full rounded-lg bg-[var(--accent)] px-4 text-[15px] text-white sm:w-auto"
-        >
-          {t('analysis.apply')}
-        </button>
+        </FilterField>
+        <FilterField label={t('analysis.compare')}>
+          <select
+            value={draftCompare}
+            onChange={(e) => setDraftCompare(e.target.value)}
+            className="min-h-touch w-full rounded-lg border bg-[var(--bg-page)] px-3 text-[15px]"
+            style={{ borderColor: 'var(--border)' }}
+          >
+            <option value="">{t('analysis.compare.none')}</option>
+            {COMPARE_MODES.filter(Boolean).map((mode) => (
+              <option key={mode} value={mode}>
+                {compareLabel(mode, t)}
+              </option>
+            ))}
+          </select>
+        </FilterField>
+        <div className="flex flex-wrap items-end gap-2 sm:col-span-2 lg:col-span-3 xl:col-span-4">
+          <button
+            type="button"
+            onClick={applyFilters}
+            className="min-h-touch rounded-lg bg-[var(--accent)] px-4 text-[15px] text-white"
+          >
+            {t('analysis.apply')}
+          </button>
+          <button
+            type="button"
+            onClick={clearFilters}
+            className="min-h-touch rounded-lg border px-4 text-[15px]"
+            style={{ borderColor: 'var(--border)' }}
+          >
+            {t('analysis.clearFilters')}
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -332,397 +622,649 @@ export default function AnalysisPage() {
         </p>
       )}
 
-      <div ref={exportRef} className="mt-6 space-y-6 bg-[var(--bg-page)] p-1">
-        <p className="text-[13px] text-[var(--text-secondary)]">
-          {t('analysis.activeFilters', { summary: filterSummary })}
+      <p className="mt-4 text-[13px]" style={mutedCaption}>
+        {t('analysis.activeFilters', { summary: filterSummary })}
+      </p>
+
+      {loading && !dash && !error && (
+        <p className="mt-2 text-[13px]" style={mutedCaption}>
+          {t('home.metricsLoading')}
         </p>
+      )}
 
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <KpiCard
-            title={t('analysis.kpi.shippedToday')}
-            value={dash?.KPIs.ShippedToday ?? 0}
-            accent={statusColors.vehicleShipped}
-            to={vehicleStatLink('shipped_today', true)}
+      <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {KPI_DEFS.map((def) => (
+          <AnalysisKpiCard
+            key={def.key}
+            title={t(def.titleKey)}
+            icon={def.icon}
+            accent={def.accent}
+            value={kpiNumber(dash?.Cards, def.key)}
+            previous={kpiNumber(dash?.CompareCards, def.key)}
+            compareHint={compareHint}
+            spark={def.spark ? sparkSeries(dash, def.spark, locale) : undefined}
+            format={def.format}
+            invertDelta={def.invertDelta}
           />
-          <KpiCard
-            title={t('analysis.kpi.shippedWeek')}
-            value={dash?.KPIs.ShippedWeek ?? 0}
-            accent={statusColors.ok}
-            to={vehicleStatLink('shipped_week', true)}
-          />
-          <KpiCard
-            title={t('analysis.kpi.depot')}
-            value={dash?.KPIs.DepotReleasedInRange ?? 0}
-            accent={statusColors.info}
-            to={vehicleStatLink('depot_released', true)}
-          />
-          <KpiCard
-            title={t('analysis.kpi.inProd')}
-            value={dash?.KPIs.OnLineCount ?? 0}
-            accent={statusColors.vehicleInProduction}
-            snapshot
-            to={vehicleStatLink('on_line', false)}
-          />
-          <KpiCard
-            title={t('analysis.kpi.open')}
-            value={dash?.KPIs.OpenIssuesInRange ?? 0}
-            accent={statusColors.issueOpen}
-            to={issueStatLink('open_active')}
-          />
-          <KpiCard
-            title={t('analysis.kpi.done')}
-            value={dash?.WorkSplit.Completed ?? 0}
-            accent={statusColors.issueResolved}
-            to={issueStatLink('completed')}
-          />
-          <KpiCard
-            title={t('analysis.kpi.mttr')}
-            value={
-              dash?.KPIs.AvgResolutionHours == null
-                ? t('common.emDash')
-                : dash.KPIs.AvgResolutionHours.toFixed(2)
-            }
-            accent={statusColors.issueInProgress}
-          />
-          <KpiCard
-            title={t('analysis.kpi.fpy')}
-            value={
-              dash?.KPIs.FirstTimeRightPercent == null
-                ? t('common.emDash')
-                : `${dash.KPIs.FirstTimeRightPercent}%`
-            }
-            accent={statusColors.issueDone}
-          />
-        </div>
+        ))}
+      </div>
 
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          <ChartCard title={t('analysis.doneVsOpen')}>
-            <div className="chart-inert h-[220px] w-full min-w-0 sm:h-[260px]">
+      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <ChartCard title={t('analysis.doneVsOpen')} icon={<Gauge size={18} />}>
+          {workPie.length === 0 ? (
+            <EmptyChart />
+          ) : (
+            <DonutChart data={workPie} />
+          )}
+        </ChartCard>
+        <ChartCard title={t('analysis.statusDist')} icon={<Layers size={18} />}>
+          {statusPie.length === 0 ? (
+            <EmptyChart />
+          ) : (
+            <DonutChart data={statusPie} />
+          )}
+        </ChartCard>
+        <ChartCard title={t('analysis.severityMix')} icon={<TriangleAlert size={18} />}>
+          {severityPie.length === 0 ? (
+            <EmptyChart />
+          ) : (
+            <DonutChart data={severityPie} />
+          )}
+        </ChartCard>
+        <ChartCard title={t('analysis.conditionalMix')} icon={<BadgeCheck size={18} />}>
+          {conditionalPie.length === 0 ? (
+            <EmptyChart />
+          ) : (
+            <DonutChart data={conditionalPie} />
+          )}
+        </ChartCard>
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <ChartCard
+          title={t('analysis.dailyOpenTrend')}
+          subtitle={t('analysis.dailyOpenTrendHint')}
+          icon={<CalendarDays size={18} />}
+        >
+          {openTrend.length === 0 ? (
+            <EmptyChart />
+          ) : (
+            <div className="chart-inert h-[220px] w-full min-w-0">
               <ResponsiveContainer width="100%" height="100%">
-                <PieChart tabIndex={-1}>
-                  <Pie
-                    data={pieData}
-                    dataKey="value"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius="70%"
-                    isAnimationActive={false}
-                    label={pieSliceLabel}
-                    labelLine={false}
-                    style={{ outline: 'none', cursor: 'default' }}
-                    rootTabIndex={-1}
-                  >
-                    {pieData.map((entry) => (
-                      <Cell
-                        key={entry.name}
-                        fill={entry.color}
-                        style={{ outline: 'none', cursor: 'default' }}
-                      />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                  <Legend
-                    wrapperStyle={{ fontSize: 12 }}
-                    formatter={pieLegendFormatter}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </ChartCard>
-
-          <ChartCard title={t('analysis.statusDist')}>
-            <div className="chart-inert h-[220px] w-full min-w-0 sm:h-[260px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart tabIndex={-1}>
-                  <Pie
-                    data={statusPie}
-                    dataKey="value"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius="70%"
-                    isAnimationActive={false}
-                    label={pieSliceLabel}
-                    labelLine={false}
-                    style={{ outline: 'none', cursor: 'default' }}
-                    rootTabIndex={-1}
-                  >
-                    {statusPie.map((entry) => (
-                      <Cell
-                        key={entry.name}
-                        fill={entry.color}
-                        style={{ outline: 'none', cursor: 'default' }}
-                      />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                  <Legend
-                    wrapperStyle={{ fontSize: 12 }}
-                    formatter={pieLegendFormatter}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </ChartCard>
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          <ChartCard title={t('analysis.stationMttr')}>
-            <div className="chart-inert h-[220px] w-full min-w-0 sm:h-[260px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  tabIndex={-1}
-                  data={mttrBars}
-                  margin={{ top: 8, right: 8, left: 0, bottom: 8 }}
-                >
+                <AreaChart data={openTrend} tabIndex={-1} margin={{ top: 8, right: 8, left: 0, bottom: 8 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                  <XAxis
-                    dataKey="station"
-                    tick={{ fill: 'var(--text-secondary)', fontSize: 10 }}
-                    interval="preserveStartEnd"
-                  />
-                  <YAxis
-                    width={36}
-                    tick={{ fill: 'var(--text-secondary)', fontSize: 10 }}
-                  />
-                  <Tooltip />
-                  <Bar dataKey="hours" fill={statusColors.info} name={t('analysis.mttrH')} />
+                  <XAxis dataKey="label" tick={{ fill: 'var(--text-secondary)', fontSize: 10 }} interval="preserveStartEnd" />
+                  <YAxis allowDecimals={false} width={32} tick={{ fill: 'var(--text-secondary)', fontSize: 10 }} />
+                  <Tooltip contentStyle={CHART_TOOLTIP} />
+                  <Area type="monotone" dataKey="open" stroke={statusColors.issueOpen} fill={statusColors.issueOpen} fillOpacity={0.15} strokeWidth={2} isAnimationActive={false} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </ChartCard>
+        <ChartCard
+          title={t('analysis.completedDaily')}
+          subtitle={t('analysis.completedDailyHint')}
+          icon={<CalendarDays size={18} />}
+        >
+          {completedTrend.length === 0 ? (
+            <EmptyChart />
+          ) : (
+            <div className="chart-inert h-[220px] w-full min-w-0">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={completedTrend} tabIndex={-1} margin={{ top: 8, right: 8, left: 0, bottom: 8 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                  <XAxis dataKey="label" tick={{ fill: 'var(--text-secondary)', fontSize: 10 }} interval="preserveStartEnd" />
+                  <YAxis allowDecimals={false} width={32} tick={{ fill: 'var(--text-secondary)', fontSize: 10 }} />
+                  <Tooltip contentStyle={CHART_TOOLTIP} />
+                  <Area type="monotone" dataKey="closed" stroke={statusColors.ok} fill={statusColors.ok} fillOpacity={0.15} strokeWidth={2} isAnimationActive={false} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </ChartCard>
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <ChartCard title={t('analysis.openByStation')} icon={<BarChart3 size={18} />}>
+          {openStationBars.length === 0 ? (
+            <EmptyChart />
+          ) : (
+            <StationBarChart data={openStationBars} color={statusColors.issueOpen} name={t('nav.issues')} />
+          )}
+        </ChartCard>
+        <ChartCard title={t('analysis.totalByStation')} icon={<BarChart3 size={18} />}>
+          {totalStationBars.length === 0 ? (
+            <EmptyChart />
+          ) : (
+            <StationBarChart data={totalStationBars} color={statusColors.notOk} name={t('nav.issues')} />
+          )}
+        </ChartCard>
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <ChartCard title={t('analysis.openAge')} icon={<Timer size={18} />}>
+          {openAgeBars.every((r) => r.count === 0) ? (
+            <EmptyChart />
+          ) : (
+            <div className="chart-inert h-[220px] w-full min-w-0">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={openAgeBars} tabIndex={-1} margin={{ top: 8, right: 8, left: 0, bottom: 8 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                  <XAxis dataKey="bucket" tick={{ fill: 'var(--text-secondary)', fontSize: 10 }} />
+                  <YAxis allowDecimals={false} width={32} tick={{ fill: 'var(--text-secondary)', fontSize: 10 }} />
+                  <Tooltip contentStyle={CHART_TOOLTIP} />
+                  <Bar dataKey="count" fill={statusColors.issueInProgress} name={t('nav.issues')} isAnimationActive={false} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
-          </ChartCard>
-
-          <ChartCard title={t('analysis.top5')}>
-            {topVehicles.length === 0 ? (
-              <p className="py-8 text-[13px] text-[var(--text-secondary)]">
-                {t('home.noOpenVehicles')}
-              </p>
-            ) : (
-              <ol className="space-y-3">
-                {topVehicles.map((row) => {
-                  const raw = severityFillColor(row.worstSeverity);
-                  const color =
-                    row.worstSeverity === 'LOW' ? raw : muteColor(raw, 38);
-                  return (
-                    <li key={row.vin} className="flex items-center gap-3">
-                      <span
-                        className="w-5 shrink-0 text-right text-[13px] tabular-nums text-[var(--text-secondary)]"
-                      >
-                        {row.rank}
-                      </span>
-                      <Link
-                        to={`/vehicles/${encodeURIComponent(row.vin)}?tab=issues`}
-                        className="w-16 shrink-0 font-mono text-[13px] font-medium text-[var(--accent)] hover:underline"
-                        title={row.vin}
-                      >
-                        …{row.vinTail}
-                      </Link>
-                      <div
-                        className="h-2.5 min-w-0 flex-1 overflow-hidden rounded-full"
-                        style={{ backgroundColor: 'var(--bg-surface-2)' }}
-                      >
-                        <div
-                          className="h-full rounded-full"
-                          style={{
-                            width: `${Math.max(row.barPct, 4)}%`,
-                            backgroundColor: color,
-                          }}
-                        />
-                      </div>
-                      <span
-                        className="min-w-[2.25rem] rounded-full px-2 py-0.5 text-center text-[12px] font-semibold tabular-nums"
-                        style={{
-                          color,
-                          backgroundColor: `color-mix(in srgb, ${color} 16%, transparent)`,
-                        }}
-                      >
-                        {row.openCount}
-                      </span>
-                    </li>
-                  );
-                })}
-              </ol>
-            )}
-          </ChartCard>
-        </div>
-
-        <ChartCard title={t('analysis.pareto')}>
-          <div className="chart-inert h-[220px] w-full min-w-0 sm:h-[240px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                tabIndex={-1}
-                data={defectBars}
-                margin={{ top: 8, right: 8, left: 0, bottom: 48 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                <XAxis
-                  dataKey="station"
-                  tick={{ fill: 'var(--text-secondary)', fontSize: 10 }}
-                  angle={-35}
-                  textAnchor="end"
-                  height={60}
-                  interval={0}
-                />
-                <YAxis
-                  width={36}
-                  tick={{ fill: 'var(--text-secondary)', fontSize: 10 }}
-                />
-                <Tooltip />
-                <Bar dataKey="issues" fill={statusColors.notOk} name={t('nav.issues')} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          )}
         </ChartCard>
-
-        <div
-          className="rounded-xl border bg-[var(--bg-surface-1)] p-4 sm:p-5"
-          style={{ borderColor: 'var(--border)' }}
-        >
-          <h2 className="text-lg font-semibold">
-            {t('analysis.vehicleBreakdown')}
-          </h2>
-          <p className="mt-1 text-[13px] text-[var(--text-secondary)]">
-            {t('analysis.vehicleBreakdownHint')}
-          </p>
-
-          <div className="chart-inert mt-4 h-48 w-full min-w-0 sm:h-56">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                tabIndex={-1}
-                data={stackedSeverity}
-                margin={{ top: 8, right: 8, left: 0, bottom: 8 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                <XAxis
-                  dataKey="vin"
-                  tick={{ fill: 'var(--text-secondary)', fontSize: 10 }}
-                  interval="preserveStartEnd"
-                />
-                <YAxis
-                  width={28}
-                  tick={{ fill: 'var(--text-secondary)', fontSize: 10 }}
-                />
-                <Tooltip />
-                <Legend wrapperStyle={{ fontSize: 12 }} />
-                <Bar dataKey="critical" stackId="a" fill={statusColors.severityCritical} name={t('severity.critical')} />
-                <Bar dataKey="medium" stackId="a" fill={statusColors.severityMedium} name={t('severity.medium')} />
-                <Bar dataKey="low" stackId="a" fill={statusColors.severityLow} name={t('severity.low')} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-
-          <div className="mt-4 space-y-3 sm:hidden">
-            {severity.length === 0 && (
-              <p className="text-[var(--text-secondary)]">
-                {t('analysis.noOpenRows')}
-              </p>
-            )}
-            {severity.map((row) => (
-              <div
-                key={row.VIN}
-                className="space-y-2 rounded-lg border p-3"
-                style={{ borderColor: 'var(--border)' }}
-              >
-                <Link
-                  to={`/vehicles/${row.VIN}`}
-                  className="font-medium text-[var(--accent)] hover:underline"
-                >
-                  …{row.VIN.slice(-5)}
-                </Link>
-                <p className="break-all text-[12px] text-[var(--text-secondary)]">
-                  {row.VIN}
-                </p>
-                <div className="flex items-center justify-between text-[15px]">
-                  <span className="text-[13px] text-[var(--text-secondary)]">{t('analysis.total')}</span>
-                  <span>{row.TotalOpenIssues}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-[13px] text-[var(--text-secondary)]">{t('severity.critical')}</span>
-                  <SeverityIndicator severity="CRITICAL" count={row.CriticalCount} />
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-[13px] text-[var(--text-secondary)]">{t('severity.medium')}</span>
-                  <SeverityIndicator severity="MEDIUM" count={row.MediumCount} />
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-[13px] text-[var(--text-secondary)]">{t('severity.low')}</span>
-                  <SeverityIndicator severity="LOW" count={row.LowCount} />
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <table className="mt-4 hidden w-full text-left text-[15px] sm:table">
-            <thead>
-              <tr className="text-[13px] text-[var(--text-secondary)]">
-                <th className="pb-2 font-medium">{t('issue.vin')}</th>
-                <th className="pb-2 font-medium">{t('analysis.total')}</th>
-                <th className="pb-2 font-medium">{t('severity.critical')}</th>
-                <th className="pb-2 font-medium">{t('severity.medium')}</th>
-                <th className="pb-2 font-medium">{t('severity.low')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {severity.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="py-4 text-[var(--text-secondary)]">
-                    {t('analysis.noOpenRows')}
-                  </td>
-                </tr>
-              )}
-              {severity.map((row) => (
-                <tr
-                  key={row.VIN}
-                  className="border-t"
-                  style={{ borderColor: 'var(--border)' }}
-                >
-                  <td className="py-2.5">
-                    <Link
-                      to={`/vehicles/${row.VIN}`}
-                      className="font-medium text-[var(--accent)] hover:underline"
-                    >
-                      …{row.VIN.slice(-5)}
-                    </Link>
-                    <span className="ml-2 break-all text-[13px] text-[var(--text-secondary)]">
-                      {row.VIN}
-                    </span>
-                    <div className="text-[12px] text-[var(--text-secondary)]">
-                      {t('analysis.openBreakdown', {
-                        open: row.TotalOpenIssues,
-                        critical: row.CriticalCount,
-                        medium: row.MediumCount,
-                        low: row.LowCount,
-                      })}
-                    </div>
-                  </td>
-                  <td className="py-2.5">{row.TotalOpenIssues}</td>
-                  <td className="py-2.5">
-                    <SeverityIndicator severity="CRITICAL" count={row.CriticalCount} />
-                  </td>
-                  <td className="py-2.5">
-                    <SeverityIndicator severity="MEDIUM" count={row.MediumCount} />
-                  </td>
-                  <td className="py-2.5">
-                    <SeverityIndicator severity="LOW" count={row.LowCount} />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <ChartCard title={t('analysis.topIssueTypes')} icon={<ClipboardList size={18} />}>
+          {issueTypeBars.length === 0 ? (
+            <EmptyChart />
+          ) : (
+            <div className="chart-inert h-[220px] w-full min-w-0">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={issueTypeBars} tabIndex={-1} margin={{ top: 8, right: 8, left: 0, bottom: 48 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                  <XAxis dataKey="type" tick={{ fill: 'var(--text-secondary)', fontSize: 10 }} angle={-25} textAnchor="end" height={56} interval={0} />
+                  <YAxis allowDecimals={false} width={32} tick={{ fill: 'var(--text-secondary)', fontSize: 10 }} />
+                  <Tooltip contentStyle={CHART_TOOLTIP} />
+                  <Bar dataKey="count" fill={statusColors.info} name={t('nav.issues')} isAnimationActive={false} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </ChartCard>
       </div>
+
+      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <ChartCard title={t('analysis.eolFunnel')} icon={<Factory size={18} />}>
+          {eolFunnelRows.every((r) => r.Count === 0) ? (
+            <EmptyChart />
+          ) : (
+            <div className="space-y-3">
+              {eolFunnelRows.map((row) => {
+                const total = eolFunnelRows.reduce((s, r) => s + r.Count, 0);
+                const pct = total === 0 ? 0 : Math.round((row.Count / total) * 100);
+                const color = STAGE_COLORS[row.Stage] ?? statusColors.info;
+                return (
+                  <div key={row.Stage}>
+                    <div className="mb-1 flex items-center justify-between text-[13px]">
+                      <span>{eolStageLabel(row.Stage, t)}</span>
+                      <span className="tabular-nums" style={mutedCaption}>
+                        {row.Count} ({pct}%)
+                      </span>
+                    </div>
+                    <div className="h-2 overflow-hidden rounded-full" style={{ backgroundColor: 'var(--bg-surface-2)' }}>
+                      <div className="h-full rounded-full" style={{ width: `${Math.max(pct, row.Count > 0 ? 4 : 0)}%`, backgroundColor: color }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </ChartCard>
+        <ChartCard title={t('analysis.stagePerformance')} icon={<Building2 size={18} />}>
+          {stagePerf.every((r) => r.Total === 0) ? (
+            <EmptyChart />
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[16rem] text-left text-[13px]">
+                <thead>
+                  <tr className="border-b text-[11px] font-semibold uppercase tracking-wide" style={{ borderColor: 'var(--border)', ...mutedCaption }}>
+                    <th className="pb-2 pr-3">{t('home.colStage')}</th>
+                    <th className="pb-2 pr-3 text-right">{t('analysis.doneShort')}</th>
+                    <th className="pb-2 pr-3 text-right">{t('analysis.total')}</th>
+                    <th className="pb-2">{t('home.colCompletion')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {stagePerf.map((row) => {
+                    const pct = row.Total === 0 ? 0 : Math.round((row.Completed / row.Total) * 100);
+                    const color = STAGE_COLORS[row.Stage] ?? statusColors.info;
+                    return (
+                      <tr key={row.Stage} className="border-b" style={{ borderColor: 'var(--border)' }}>
+                        <td className="py-2.5 pr-3 font-medium">{eolStageLabel(row.Stage, t)}</td>
+                        <td className="py-2.5 pr-3 text-right tabular-nums">{row.Completed}</td>
+                        <td className="py-2.5 pr-3 text-right tabular-nums">{row.Total}</td>
+                        <td className="py-2.5">
+                          <div className="flex items-center gap-2">
+                            <div className="h-2 min-w-[5rem] flex-1 overflow-hidden rounded-full" style={{ backgroundColor: 'var(--bg-surface-2)' }}>
+                              <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: color }} />
+                            </div>
+                            <span className="w-10 text-right tabular-nums text-[12px]" style={mutedCaption}>
+                              {pct}%
+                            </span>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </ChartCard>
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <ChartCard title={t('analysis.stationMttr')} icon={<Timer size={18} />}>
+          {mttrBars.length === 0 ? (
+            <EmptyChart />
+          ) : (
+            <div className="chart-inert h-[220px] w-full min-w-0">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={mttrBars} tabIndex={-1} margin={{ top: 8, right: 8, left: 0, bottom: 48 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                  <XAxis dataKey="station" tick={{ fill: 'var(--text-secondary)', fontSize: 10 }} angle={-35} textAnchor="end" height={60} interval={0} />
+                  <YAxis width={36} tick={{ fill: 'var(--text-secondary)', fontSize: 10 }} />
+                  <Tooltip contentStyle={CHART_TOOLTIP} />
+                  <Bar dataKey="hours" fill={statusColors.info} name={t('analysis.mttrH')} isAnimationActive={false} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </ChartCard>
+        <ChartCard title={t('analysis.top5')} icon={<AlertCircle size={18} />}>
+          {topVehicles.length === 0 ? (
+            <EmptyChart />
+          ) : (
+            <ol className="space-y-3">
+              {topVehicles.map((row) => {
+                const raw = severityFillColor(row.worstSeverity);
+                const color = row.worstSeverity === 'LOW' ? raw : raw;
+                return (
+                  <li key={row.vin} className="flex items-center gap-3">
+                    <span className="w-5 shrink-0 text-right text-[13px] tabular-nums" style={mutedCaption}>
+                      {row.rank}
+                    </span>
+                    <Link
+                      to={`/vehicles/${encodeURIComponent(row.vin)}?tab=issues`}
+                      className="w-16 shrink-0 font-mono text-[13px] font-medium text-[var(--accent)] hover:underline"
+                      title={row.vin}
+                    >
+                      …{row.vinTail}
+                    </Link>
+                    <div className="h-2.5 min-w-0 flex-1 overflow-hidden rounded-full" style={{ backgroundColor: 'var(--bg-surface-2)' }}>
+                      <div className="h-full rounded-full" style={{ width: `${Math.max(row.barPct, 4)}%`, backgroundColor: color }} />
+                    </div>
+                    <span
+                      className="min-w-[2.25rem] rounded-full px-2 py-0.5 text-center text-[12px] font-semibold tabular-nums"
+                      style={{
+                        color,
+                        backgroundColor: `color-mix(in srgb, ${color} 16%, transparent)`,
+                      }}
+                    >
+                      {row.openCount}
+                    </span>
+                  </li>
+                );
+              })}
+            </ol>
+          )}
+        </ChartCard>
+      </div>
+
+      <ChartCard
+        className="mt-4"
+        title={t('analysis.vehicleBreakdown')}
+        subtitle={t('analysis.vehicleBreakdownHint')}
+        icon={<BarChart3 size={18} />}
+      >
+        {severity.length === 0 ? (
+          <EmptyChart />
+        ) : (
+          <>
+            <div className="chart-inert mt-2 h-48 w-full min-w-0 sm:h-56">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={severity.map((r) => ({
+                    vin: `…${r.VIN.slice(-5)}`,
+                    critical: r.CriticalCount,
+                    medium: r.MediumCount,
+                    low: r.LowCount,
+                  }))}
+                  tabIndex={-1}
+                  margin={{ top: 8, right: 8, left: 0, bottom: 8 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                  <XAxis dataKey="vin" tick={{ fill: 'var(--text-secondary)', fontSize: 10 }} interval="preserveStartEnd" />
+                  <YAxis width={28} tick={{ fill: 'var(--text-secondary)', fontSize: 10 }} />
+                  <Tooltip contentStyle={CHART_TOOLTIP} />
+                  <Legend wrapperStyle={{ fontSize: 12 }} />
+                  <Bar dataKey="critical" stackId="a" fill={statusColors.severityCritical} name={t('severity.critical')} isAnimationActive={false} />
+                  <Bar dataKey="medium" stackId="a" fill={statusColors.severityMedium} name={t('severity.medium')} isAnimationActive={false} />
+                  <Bar dataKey="low" stackId="a" fill={statusColors.severityLow} name={t('severity.low')} isAnimationActive={false} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            <table className="mt-4 hidden w-full text-left text-[15px] sm:table">
+              <thead>
+                <tr className="text-[13px]" style={mutedCaption}>
+                  <th className="pb-2 font-medium">{t('issue.vin')}</th>
+                  <th className="pb-2 font-medium">{t('analysis.total')}</th>
+                  <th className="pb-2 font-medium">{t('severity.critical')}</th>
+                  <th className="pb-2 font-medium">{t('severity.medium')}</th>
+                  <th className="pb-2 font-medium">{t('severity.low')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {severity.map((row) => (
+                  <tr key={row.VIN} className="border-t" style={{ borderColor: 'var(--border)' }}>
+                    <td className="py-2.5">
+                      <Link to={`/vehicles/${row.VIN}`} className="font-medium text-[var(--accent)] hover:underline">
+                        …{row.VIN.slice(-5)}
+                      </Link>
+                      <span className="ml-2 break-all text-[13px]" style={mutedCaption}>
+                        {row.VIN}
+                      </span>
+                    </td>
+                    <td className="py-2.5 tabular-nums">{row.TotalOpenIssues}</td>
+                    <td className="py-2.5">
+                      <SeverityIndicator severity="CRITICAL" count={row.CriticalCount} />
+                    </td>
+                    <td className="py-2.5">
+                      <SeverityIndicator severity="MEDIUM" count={row.MediumCount} />
+                    </td>
+                    <td className="py-2.5">
+                      <SeverityIndicator severity="LOW" count={row.LowCount} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </>
+        )}
+      </ChartCard>
     </section>
   );
 }
 
-function pieSliceLabel({
-  name,
+function ageBucketLabel(bucket: string): (typeof AGE_BUCKET_KEYS)[keyof typeof AGE_BUCKET_KEYS] {
+  if (bucket in AGE_BUCKET_KEYS) {
+    return AGE_BUCKET_KEYS[bucket as keyof typeof AGE_BUCKET_KEYS];
+  }
+  return 'analysis.age.7plus';
+}
+
+function kpiNumber(
+  cards: AnalysisKPICards | undefined,
+  key: keyof AnalysisKPICards,
+): number | null {
+  if (!cards) return null;
+  const v = cards[key];
+  return typeof v === 'number' ? v : null;
+}
+
+function sparkSeries(
+  dash: AnalysisDashboard | null,
+  key: SparkKey,
+  locale: string,
+): DayCount[] {
+  if (!dash) return [];
+  const sparks = dash.Sparklines;
+  if (key === 'Production') {
+    return (sparks.Production ?? []).map((row) => ({
+      day: row.Day,
+      label: formatChartDay(row.Day, locale),
+      count: row.PendingCount,
+    }));
+  }
+  if (key === 'OpenStock') {
+    return (sparks.OpenStock ?? []).map((row) => ({
+      day: row.Day,
+      label: formatChartDay(row.Day, locale),
+      count: row.PendingCount,
+    }));
+  }
+  const field = key === 'Opened' ? sparks.Opened : sparks.Closed;
+  return (field ?? []).map((row) => ({
+    day: row.Day,
+    label: formatChartDay(row.Day, locale),
+    count: row.CompletedCount,
+  }));
+}
+
+function formatChartDay(iso: string, locale: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso.slice(5, 10);
+  return d.toLocaleDateString(locale, { day: '2-digit', month: '2-digit' });
+}
+
+function compareLabel(mode: string | undefined, t: ReturnType<typeof useI18n>['t']): string {
+  switch (mode) {
+    case 'previous_week':
+      return t('analysis.compare.previousWeek');
+    case 'previous_month':
+      return t('analysis.compare.previousMonth');
+    case 'previous_period':
+      return t('analysis.compare.previousPeriod');
+    default:
+      return t('analysis.compare.previousPeriod');
+  }
+}
+
+function FilterField({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <label className="block text-[13px]" style={mutedCaption}>
+      {label}
+      <div className="mt-1">{children}</div>
+    </label>
+  );
+}
+
+function AnalysisKpiCard({
+  title,
+  icon,
+  accent,
   value,
+  previous,
+  compareHint,
+  spark,
+  format,
+  invertDelta,
 }: {
-  name?: string;
-  value?: number;
-}): string {
+  title: string;
+  icon: ReactNode;
+  accent: string;
+  value: number | null;
+  previous: number | null;
+  compareHint: string;
+  spark?: DayCount[];
+  format?: (v: number | null) => string;
+  invertDelta?: boolean;
+}) {
+  const { t } = useI18n();
+  const display =
+    format?.(value) ??
+    (value == null ? '—' : String(value));
+  const cur = value ?? 0;
+  const prev = previous ?? 0;
+  let polarity = deltaPolarity(cur, prev);
+  if (invertDelta) {
+    polarity =
+      polarity === 'up' ? 'down' : polarity === 'down' ? 'up' : 'neutral';
+  }
+  const color = deltaColor(polarity);
+  const delta = formatAbsDelta(cur, prev);
+
+  return (
+    <div
+      className="rounded-xl border bg-[var(--bg-surface-1)] px-3.5 py-3"
+      style={{ borderColor: 'var(--border)' }}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <p className="min-w-0 text-[12px] font-medium leading-snug" style={mutedCaption}>
+          {title}
+        </p>
+        <div className="flex shrink-0 items-center gap-2">
+          <div
+            className="flex h-8 w-8 items-center justify-center rounded-full"
+            style={{
+              color: accent,
+              backgroundColor: `color-mix(in srgb, ${accent} 16%, transparent)`,
+            }}
+          >
+            {icon}
+          </div>
+          {spark && spark.length > 1 && (
+            <div className="h-8 w-16">
+              <div className="chart-inert h-full w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={spark} tabIndex={-1} margin={{ top: 2, right: 0, left: 0, bottom: 2 }}>
+                    <Line type="monotone" dataKey="count" stroke={accent} strokeWidth={2} dot={false} isAnimationActive={false} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+      <p className="mt-1.5 text-2xl font-semibold tabular-nums leading-none text-[var(--text-primary)]">
+        {display}
+      </p>
+      {previous != null && (
+        <p className="mt-1.5 inline-flex items-center gap-1 text-[11px]" style={mutedCaption}>
+          {t('analysis.compare.vs', { period: compareHint })}
+          <DeltaBadge polarity={polarity} color={color} label={delta} />
+        </p>
+      )}
+    </div>
+  );
+}
+
+function DeltaBadge({
+  polarity,
+  color,
+  label,
+}: {
+  polarity: DeltaPolarity;
+  color: string;
+  label: string;
+}) {
+  const Icon =
+    polarity === 'up' ? TrendingUp : polarity === 'down' ? TrendingDown : null;
+  return (
+    <span className="inline-flex items-center gap-0.5 text-[12px] font-semibold tabular-nums" style={{ color }}>
+      {Icon && <Icon size={12} strokeWidth={2.5} />}
+      {label}
+    </span>
+  );
+}
+
+function ChartCard({
+  title,
+  subtitle,
+  children,
+  className = '',
+  icon,
+}: {
+  title: string;
+  subtitle?: string;
+  children: ReactNode;
+  className?: string;
+  icon?: ReactNode;
+}) {
+  return (
+    <div
+      className={`min-w-0 overflow-hidden rounded-xl border bg-[var(--bg-surface-1)] p-3 sm:p-3.5 ${className}`}
+      style={{ borderColor: 'var(--border)' }}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <h2 className="flex items-center gap-2 text-[15px] font-semibold leading-tight sm:text-base">
+            {icon ? (
+              <span className="inline-flex shrink-0 text-[var(--accent)]" aria-hidden>
+                {icon}
+              </span>
+            ) : null}
+            <span className="min-w-0">{title}</span>
+          </h2>
+          {subtitle && (
+            <p className="mt-0.5 text-[12px] leading-snug" style={mutedCaption}>
+              {subtitle}
+            </p>
+          )}
+        </div>
+      </div>
+      <div className="mt-2.5">{children}</div>
+    </div>
+  );
+}
+
+function EmptyChart() {
+  const { t } = useI18n();
+  return (
+    <p className="py-8 text-center text-[13px]" style={mutedCaption}>
+      {t('analysis.noData')}
+    </p>
+  );
+}
+
+function DonutChart({
+  data,
+}: {
+  data: { name: string; value: number; color: string }[];
+}) {
+  return (
+    <div className="chart-inert h-[220px] w-full min-w-0 sm:h-[260px]">
+      <ResponsiveContainer width="100%" height="100%">
+        <PieChart tabIndex={-1}>
+          <Pie
+            data={data}
+            dataKey="value"
+            nameKey="name"
+            cx="50%"
+            cy="50%"
+            innerRadius="52%"
+            outerRadius="70%"
+            startAngle={DONUT_START_ANGLE}
+            endAngle={DONUT_START_ANGLE - 360}
+            isAnimationActive={false}
+            label={pieSliceLabel}
+            labelLine={false}
+            style={{ outline: 'none', cursor: 'default' }}
+            rootTabIndex={-1}
+          >
+            {data.map((entry) => (
+              <Cell key={entry.name} fill={entry.color} style={{ outline: 'none', cursor: 'default' }} />
+            ))}
+          </Pie>
+          <Tooltip contentStyle={CHART_TOOLTIP} />
+          <Legend wrapperStyle={{ fontSize: 12 }} formatter={pieLegendFormatter} />
+        </PieChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+function StationBarChart({
+  data,
+  color,
+  name,
+}: {
+  data: { station: string; issues: number }[];
+  color: string;
+  name: string;
+}) {
+  return (
+    <div className="chart-inert h-[220px] w-full min-w-0 sm:h-[240px]">
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={data} tabIndex={-1} margin={{ top: 8, right: 8, left: 0, bottom: 48 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+          <XAxis dataKey="station" tick={{ fill: 'var(--text-secondary)', fontSize: 10 }} angle={-35} textAnchor="end" height={60} interval={0} />
+          <YAxis width={36} tick={{ fill: 'var(--text-secondary)', fontSize: 10 }} />
+          <Tooltip contentStyle={CHART_TOOLTIP} />
+          <Bar dataKey="issues" fill={color} name={name} isAnimationActive={false} />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+function pieSliceLabel({ name, value }: { name?: string; value?: number }): string {
   if (!value) return '';
   return `${name} ${value}`;
 }
@@ -730,97 +1272,4 @@ function pieSliceLabel({
 function pieLegendFormatter(value: string, entry: { payload?: { value?: number } }) {
   const n = entry.payload?.value ?? 0;
   return `${value} (${n})`;
-}
-
-function Field({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <label className="block text-[13px] text-[var(--text-secondary)]">
-      {label}
-      <div className="mt-1">{children}</div>
-    </label>
-  );
-}
-
-function KpiCard({
-  title,
-  value,
-  accent,
-  to,
-  snapshot,
-}: {
-  title: string;
-  value: number | string;
-  accent: string;
-  to?: string;
-  snapshot?: boolean;
-}) {
-  const { t } = useI18n();
-  const body = (
-    <>
-      <div className="flex items-start justify-between gap-2">
-        <p className="text-[13px] font-medium text-[var(--text-primary)]">{title}</p>
-        {snapshot && (
-          <span
-            className="shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
-            style={{
-              color: accent,
-              backgroundColor: `color-mix(in srgb, ${accent} 16%, transparent)`,
-            }}
-          >
-            {t('analysis.snapshot')}
-          </span>
-        )}
-      </div>
-      <p
-        className="mt-2 text-2xl font-semibold tabular-nums"
-        style={{ color: accent }}
-      >
-        {value}
-      </p>
-    </>
-  );
-  const style = {
-    borderColor: `color-mix(in srgb, ${accent} 32%, var(--border))`,
-    backgroundColor: `color-mix(in srgb, ${accent} 9%, var(--bg-surface-1))`,
-  };
-  if (to) {
-    return (
-      <Link
-        to={to}
-        className="rounded-xl border p-4 transition-colors hover:bg-[var(--bg-surface-2)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
-        style={style}
-      >
-        {body}
-      </Link>
-    );
-  }
-  return (
-    <div className="rounded-xl border p-4" style={style}>
-      {body}
-    </div>
-  );
-}
-
-function ChartCard({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div
-      className="min-w-0 overflow-hidden rounded-xl border bg-[var(--bg-surface-1)] p-4 sm:p-5"
-      style={{ borderColor: 'var(--border)' }}
-    >
-      <h2 className="mb-3 text-base font-semibold sm:text-lg">{title}</h2>
-      {children}
-    </div>
-  );
 }
