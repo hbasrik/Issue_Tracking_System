@@ -3,6 +3,7 @@ package http
 import (
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/karea/backend/internal/domain"
@@ -41,6 +42,33 @@ func parseAnalysisFilter(r *http.Request) (domain.AnalysisFilter, error) {
 			return f, domain.ErrInvalidEnumValue
 		}
 		f.VehicleStatus = &st
+	}
+	if raw := q.Get("severity"); raw != "" {
+		sev := domain.IssueSeverity(raw)
+		if !sev.Valid() {
+			return f, domain.ErrInvalidEnumValue
+		}
+		f.Severity = &sev
+	}
+	if raw := q.Get("eol_stage"); raw != "" {
+		stage := strings.ToUpper(strings.TrimSpace(raw))
+		if stage == "DOCUMENT" {
+			stage = "DEPOT"
+		}
+		switch stage {
+		case "BRANCH", "DEPOT", "COMPLETED":
+			f.EOLStage = stage
+		default:
+			return f, domain.ErrInvalidEnumValue
+		}
+	}
+	if raw := q.Get("compare"); raw != "" {
+		switch raw {
+		case "previous_period", "previous_week", "previous_month":
+			f.CompareMode = raw
+		default:
+			return f, domain.ErrInvalidEnumValue
+		}
 	}
 	return f, nil
 }

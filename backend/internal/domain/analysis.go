@@ -11,8 +11,10 @@ type AnalysisFilter struct {
 	StationID     *int
 	VehicleStatus *VehicleStatus
 	Severity      *IssueSeverity
+	EOLStage      string // BRANCH | DEPOT | COMPLETED (DOCUMENT maps to DEPOT)
 	VINSuffix     string
 	IssueType     string
+	CompareMode   string // previous_period | previous_week | previous_month
 }
 
 // DailyPendingIssue is one row of vw_daily_pending_issues.
@@ -216,13 +218,72 @@ type HomeOverview struct {
 // AnalysisDashboard is the Analysis page payload. Date-series honor the
 // shared filter; snapshot KPIs (OnLineCount) ignore From/To.
 type AnalysisDashboard struct {
-	KPIs           AnalysisKPIs
-	WorkSplit      WorkSplit
-	IssueStatus    []IssueStatusCount
-	DefectRate     []StationDefectRate
-	MTTR           []StationMTTR
-	Severity       []VehicleSeverityBreakdown
-	EOLFunnel      []EOLStageCount
-	TopIssueTypes  []IssueTypeCount
-	CompletedDaily []CompletedIssuesDaily
+	KPIs              AnalysisKPIs
+	Cards             AnalysisKPICards
+	CompareCards      AnalysisKPICards
+	CompareMode       string
+	WorkSplit         WorkSplit
+	IssueStatus       []IssueStatusCount
+	SeverityMix       []SeverityCount
+	DefectRate        []StationDefectRate
+	OpenByStation     []StationDefectRate // top open issues by station
+	TotalByStation    []StationDefectRate // all issues by station (open+closed)
+	MTTR              []StationMTTR
+	Severity          []VehicleSeverityBreakdown
+	EOLFunnel         []EOLStageCount
+	StagePerformance  []StagePerformance
+	TopIssueTypes     []IssueTypeCount
+	CompletedDaily    []CompletedIssuesDaily
+	DailyOpenTrend    []DailyPendingIssue
+	OpenAgeBuckets    []OpenAgeBucket
+	ConditionalMix    ConditionalApprovalMix
+	Sparklines        AnalysisSparklines
+}
+
+// AnalysisKPICards is the redesigned Analysis headline strip (real counts only).
+type AnalysisKPICards struct {
+	TotalProduction       int64
+	OpenIssues            int64
+	CriticalOpen          int64
+	PendingQuality        int64
+	CompletionPercent     *float64
+	BranchShipped         int64
+	Delivered             int64
+	OpenedIssues          int64
+	ClosedIssues          int64
+	AvgResolutionHours    *float64
+	FirstTimeRightPercent *float64
+}
+
+// SeverityCount is one slice of the issue-severity donut.
+type SeverityCount struct {
+	Severity IssueSeverity
+	Count    int64
+}
+
+// StagePerformance is completed/total for one EOL stage (no Evrak/DOCUMENT).
+type StagePerformance struct {
+	Stage     string
+	Completed int64
+	Total     int64
+}
+
+// OpenAgeBucket is how long currently-open issues have been open.
+type OpenAgeBucket struct {
+	Bucket string // "0-1" | "1-3" | "3-7" | "7+"
+	Count  int64
+}
+
+// ConditionalApprovalMix is quality vs conditional closes in the window.
+type ConditionalApprovalMix struct {
+	Approved    int64
+	Conditional int64
+}
+
+// AnalysisSparklines holds short daily series for KPI mini-charts.
+type AnalysisSparklines struct {
+	Production []DailyPendingIssue // reuse Day + count fields
+	Opened     []CompletedIssuesDaily
+	Closed     []CompletedIssuesDaily
+	OpenStock  []DailyPendingIssue
 }
