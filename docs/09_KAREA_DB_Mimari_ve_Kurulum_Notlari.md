@@ -40,7 +40,25 @@ Talebiniz: *"43 maddelik sevk checklist'i bitince otomatik 'Müşteride' olur."*
 Birebir uygulandı: `fn_check_shipment_completion` fonksiyonu, sevk checklist'inin **tüm** maddeleri `OK` veya `CONDITIONAL_OK` olduğunda tetiklenir (`NOT_OK`/`REWORK`/boş varsa geçiş olmaz).
 
 ### 2.3 Savunma Katmanı (Defense-in-Depth)
-`fn_enforce_manual_status_change` trigger'ı, bir yönetici web'den manuel olarak (veya biri doğrudan API/DB'ye yazarak) checklist tamamlanmadan `WITH_CUSTOMER`/`SHIPPED` statüsüne geçmeye çalışırsa işlemi **veritabanı seviyesinde** reddeder (`RAISE EXCEPTION`). Bu, PRD FR-4.3'teki "UI bypass edilse dahi geçerli" gereksinimini garanti eder.
+`fn_enforce_manual_status_change` trigger'ı araç durumunu **tek yönlü** tutar
+(`PLANNED → IN_PRODUCTION → IN_WAREHOUSE → DELIVERED`; `ON_HOLD` park/geri
+yükleme ayrı kural). Serbest API/UI durum düzenlemesi yoktur; geçişler EoL
+aksiyonları ve yönetici bekleme uçlarıyla yapılır. Checklist tamamlanmadan
+veya damga olmadan atlama / geriye dönüş `RAISE EXCEPTION` ile reddedilir
+(PRD FR-4.3 — UI bypass edilse dahi geçerli).
+
+#### `karea.allow_status_rewind` (oturum GUC — yalnızca elle DB)
+- **Ne:** Trigger'ın tek yön kontrolünü o transaction için kapatan isteğe
+  bağlı bayrak.
+- **Ne zaman:** Damga ile `current_global_status` uyuşmayan satırları
+  onarmak gibi nadir DBA müdahalelerinde, `psql` içinde:
+  `SELECT set_config('karea.allow_status_rewind', 'true', true);` ardından
+  `UPDATE` / `COMMIT`.
+- **Neden:** Trigger'ı `DROP` etmeden kontrollü düzeltme imkânı.
+- **Uygulama yasak:** Backend/API bu GUC'yu **asla** set etmez (`allow_status_rewind`
+  için uygulama ağacında eşleşme olmamalı). Geliştirme ortamındaki EoL
+  sıfırlama (`POST .../eol/reset`) gerekirse `fn_ops_set_vehicle_status`
+  DB fonksiyonunu çağırır; bayrağı HTTP katmanına taşımaz.
 
 ### 2.4 Operatör Takibi Görünürlüğü
 `production_phase_progress.checked_by` ve `eol_and_shipment_checklist_progress.checker_id`, tam olarak istediğiniz "X Operatörü tarafından onaylandı" arayüz metnini besler — uygulama katmanı bu kolonu `users.full_name` ile JOIN edip madde altında gösterir.
