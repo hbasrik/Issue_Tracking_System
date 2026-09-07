@@ -189,6 +189,7 @@ export const api = {
 
   listVehicles(params: {
     vin?: string;
+    lifecycle?: string;
     status?: string;
     eol_stage?: string;
     model?: string;
@@ -200,6 +201,7 @@ export const api = {
   }) {
     const q = new URLSearchParams();
     if (params.vin) q.set('vin', params.vin);
+    if (params.lifecycle) q.set('lifecycle', params.lifecycle);
     if (params.status) q.set('status', params.status);
     if (params.eol_stage) q.set('eol_stage', params.eol_stage);
     if (params.model) q.set('model', params.model);
@@ -421,10 +423,16 @@ export const api = {
     return request<MediaAttachment>('/media', { method: 'POST', body });
   },
 
-  updateVehicleStatus(vin: string, status: string) {
-    return request<Vehicle>(`/vehicles/${encodeURIComponent(vin)}/status`, {
-      method: 'PATCH',
-      body: JSON.stringify({ status }),
+  placeOnHold(vin: string, reason: string) {
+    return request<Vehicle>(`/vehicles/${encodeURIComponent(vin)}/hold`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    });
+  },
+
+  releaseFromHold(vin: string) {
+    return request<Vehicle>(`/vehicles/${encodeURIComponent(vin)}/unhold`, {
+      method: 'POST',
     });
   },
 
@@ -513,6 +521,8 @@ export interface Vehicle {
   VehicleModelID: number | null;
   CurrentGlobalStatus: string;
   CurrentEOLStage?: string | null;
+  StatusBeforeHold?: string | null;
+  HoldReason?: string | null;
   CurrentStationID: number | null;
   TotalProgressPercentage: number;
   EOLTemplateID?: number | null;
@@ -743,6 +753,7 @@ export interface AnalysisQuery {
   /** Exact VINs (comma-separated on the wire). Overrides vin_suffix when set. */
   vins?: string;
   station?: string;
+  lifecycle?: string;
   status?: string;
   issue_type?: string;
   severity?: string;
@@ -894,6 +905,7 @@ function toQuery(params: AnalysisQuery): string {
   if (params.vin_suffix) q.set('vin_suffix', params.vin_suffix);
   if (params.vins) q.set('vins', params.vins);
   if (params.station) q.set('station', params.station);
+  if (params.lifecycle) q.set('lifecycle', params.lifecycle);
   if (params.status) q.set('status', params.status);
   if (params.issue_type) q.set('issue_type', params.issue_type);
   if (params.severity) q.set('severity', params.severity);

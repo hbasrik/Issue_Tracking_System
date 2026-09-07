@@ -13,15 +13,13 @@ import {
 import { brandColors } from '../theme/tokens';
 import { useI18n, type MessageKey } from '../i18n';
 import {
-  EOL_STAGE_FILTER_VALUES,
-  VEHICLE_STATUS_FILTER_VALUES,
-  eolStageLabel,
+  VEHICLE_LIFECYCLE_FILTER_VALUES,
   isOpenIssueStatus,
-  vehicleStatusLabel,
+  vehicleLifecycleLabel,
 } from '../lib/vehicleStatus';
 import { VehicleListPrint } from '../components/print/VehicleListPrint';
 
-const STATUSES = ['', ...VEHICLE_STATUS_FILTER_VALUES] as const;
+const LIFECYCLES = ['', ...VEHICLE_LIFECYCLE_FILTER_VALUES] as const;
 
 const ANALYSIS_STAT_KEYS: Record<string, MessageKey> = {
   on_line: 'vehicles.inProductionNow',
@@ -40,8 +38,7 @@ export default function VehiclesPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const vin = searchParams.get('vin') ?? '';
-  const status = searchParams.get('status') ?? '';
-  const eolStage = searchParams.get('eol_stage') ?? '';
+  const lifecycle = searchParams.get('lifecycle') ?? '';
   const analysisStat = searchParams.get('analysisStat') ?? '';
   const from = searchParams.get('from') ?? '';
   const to = searchParams.get('to') ?? '';
@@ -80,8 +77,7 @@ export default function VehiclesPage() {
       try {
         const res = await api.listVehicles({
           vin: vin || undefined,
-          status: analysisStat ? undefined : status || undefined,
-          eol_stage: analysisStat ? undefined : eolStage || undefined,
+          lifecycle: analysisStat ? undefined : lifecycle || undefined,
           page,
           analysis_stat: analysisStat || undefined,
           from: analysisStat && analysisStat !== 'on_line' ? from || undefined : undefined,
@@ -102,7 +98,7 @@ export default function VehiclesPage() {
     return () => {
       cancelled = true;
     };
-  }, [vin, status, eolStage, page, analysisStat, from, to, t]);
+  }, [vin, lifecycle, page, analysisStat, from, to, t]);
 
   const analysisKey = ANALYSIS_STAT_KEYS[analysisStat];
   const analysisLabel = analysisKey ? t(analysisKey) : undefined;
@@ -114,8 +110,7 @@ export default function VehiclesPage() {
     while (all.length < totalCount) {
       const res = await api.listVehicles({
         vin: vin || undefined,
-        status: analysisStat ? undefined : status || undefined,
-        eol_stage: analysisStat ? undefined : eolStage || undefined,
+        lifecycle: analysisStat ? undefined : lifecycle || undefined,
         page: p,
         analysis_stat: analysisStat || undefined,
         from: analysisStat && analysisStat !== 'on_line' ? from || undefined : undefined,
@@ -141,11 +136,10 @@ export default function VehiclesPage() {
     }
     const filters: string[] = [];
     if (vin) filters.push(t('print.filterVin', { vin }));
-    if (!analysisStat && status) {
-      filters.push(t('print.filterStatus', { status: vehicleStatusLabel(status, t) }));
-    }
-    if (!analysisStat && eolStage) {
-      filters.push(t('print.filterEolStage', { stage: eolStageLabel(eolStage, t) }));
+    if (!analysisStat && lifecycle) {
+      filters.push(
+        t('print.filterLifecycle', { lifecycle: vehicleLifecycleLabel(lifecycle, t) }),
+      );
     }
     if (analysisLabel) {
       const range =
@@ -226,55 +220,29 @@ export default function VehiclesPage() {
         </div>
         <div className="w-full sm:w-auto">
           <label className="text-[13px] text-[var(--text-secondary)]">
-            {t('issue.status')}
+            {t('vehicles.lifecycle')}
           </label>
           <select
-            value={status}
+            value={lifecycle}
             onChange={(e) => {
-              const nextStatus = e.target.value;
+              const nextLifecycle = e.target.value;
               patchParams((next) => {
                 next.delete('analysisStat');
                 next.delete('from');
                 next.delete('to');
-                if (nextStatus) next.set('status', nextStatus);
-                else next.delete('status');
+                next.delete('status');
+                next.delete('eol_stage');
+                if (nextLifecycle) next.set('lifecycle', nextLifecycle);
+                else next.delete('lifecycle');
                 next.delete('page');
               });
             }}
             className="mt-1 block min-h-touch w-full rounded-lg border bg-[var(--bg-surface-1)] px-3 py-2 text-[15px] sm:w-auto"
             style={{ borderColor: 'var(--border)' }}
           >
-            {STATUSES.map((s) => (
+            {LIFECYCLES.map((s) => (
               <option key={s || 'all'} value={s}>
-                {vehicleStatusLabel(s, t)}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="w-full sm:w-auto">
-          <label className="text-[13px] text-[var(--text-secondary)]">
-            {t('print.eolStage')}
-          </label>
-          <select
-            value={eolStage}
-            onChange={(e) => {
-              const nextStage = e.target.value;
-              patchParams((next) => {
-                next.delete('analysisStat');
-                next.delete('from');
-                next.delete('to');
-                if (nextStage) next.set('eol_stage', nextStage);
-                else next.delete('eol_stage');
-                next.delete('page');
-              });
-            }}
-            className="mt-1 block min-h-touch w-full rounded-lg border bg-[var(--bg-surface-1)] px-3 py-2 text-[15px] sm:w-auto"
-            style={{ borderColor: 'var(--border)' }}
-          >
-            <option value="">{t('status.vehicle.all')}</option>
-            {EOL_STAGE_FILTER_VALUES.map((s) => (
-              <option key={s} value={s}>
-                {eolStageLabel(s, t)}
+                {vehicleLifecycleLabel(s, t)}
               </option>
             ))}
           </select>
@@ -308,7 +276,7 @@ export default function VehiclesPage() {
             >
               <DataCard className="cursor-pointer transition-colors hover:bg-[var(--bg-surface-2)]">
                 <VehicleIdentity vin={v.VIN} variant="compact" />
-                <DataCardField label={t('issue.status')}>
+                <DataCardField label={t('vehicles.lifecycle')}>
                   <VehicleStatusDisplay
                     status={v.CurrentGlobalStatus}
                     eolStage={v.CurrentEOLStage}
@@ -333,7 +301,7 @@ export default function VehiclesPage() {
                 style={{ borderColor: 'var(--border)' }}
               >
                 <th className="px-4 py-3 font-medium">{t('issue.vin')}</th>
-                <th className="px-4 py-3 font-medium">{t('issue.status')}</th>
+                <th className="px-4 py-3 font-medium">{t('vehicles.lifecycle')}</th>
                 <th className="px-4 py-3 font-medium">{t('vehicles.station')}</th>
                 <th className="px-4 py-3 font-medium">{t('vehicles.completionPct')}</th>
               </tr>

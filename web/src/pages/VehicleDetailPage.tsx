@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
-import { StatusBadge } from '../components/StatusBadge';
 import { VehicleIdentity } from '../components/VehicleIdentity';
 import { ChecklistPanel } from '../components/ChecklistPanel';
 import { EolWorkflowTab } from '../components/EolWorkflowTab';
@@ -10,10 +9,10 @@ import { ShipmentReadinessBanner } from '../components/ShipmentReadinessBanner';
 import { StationStepsPanel } from '../components/StationStepsPanel';
 import { VehicleStatusHistory } from '../components/VehicleStatusHistory';
 import { ActionStamp } from '../components/ActionStamp';
+import { VehicleStatusDisplay } from '../components/VehicleStatusDisplay';
 import { useConfirm } from '../components/ConfirmDialog';
 import {
   api,
-  ApiError,
   type ShipmentReadiness,
   type Station,
   type Vehicle,
@@ -24,10 +23,6 @@ import { useAuth } from '../auth/AuthProvider';
 import { Perm } from '../auth/permissions';
 import { useI18n } from '../i18n';
 import { formatActionStamp } from '../lib/actionStamp';
-import {
-  VEHICLE_STATUS_EDITOR_VALUES,
-  vehicleStatusLabel,
-} from '../lib/vehicleStatus';
 import type { MessageKey } from '../../../shared/i18n';
 
 type Tab = 'overview' | 'eol' | 'shipment' | 'test' | 'issues' | 'audit';
@@ -52,10 +47,8 @@ const TAB_DEFS: { id: Tab; labelKey: MessageKey; perm?: string }[] = [
   { id: 'audit', labelKey: 'vehicles.tab.audit' },
 ];
 
-const STATUS_OPTIONS = VEHICLE_STATUS_EDITOR_VALUES;
-
-function isStatusEditorValue(status: string): boolean {
-  return (VEHICLE_STATUS_EDITOR_VALUES as readonly string[]).includes(status);
+function canPlaceOnHold(status: string): boolean {
+  return status === 'IN_PRODUCTION' || status === 'IN_WAREHOUSE';
 }
 
 /** Vehicle detail with Overview / EoL / Shipment / Test / Issues / Audit Log tabs. */
@@ -72,7 +65,7 @@ export default function VehicleDetailPage() {
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
   const [stations, setStations] = useState<Station[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [statusDraft, setStatusDraft] = useState('');
+  const [holdReason, setHoldReason] = useState('');
   const [busy, setBusy] = useState(false);
   const [readiness, setReadiness] = useState<ShipmentReadiness | null>(null);
   const [statusHistory, setStatusHistory] = useState<VehicleStatusHistoryEntry[]>([]);
@@ -81,7 +74,6 @@ export default function VehicleDetailPage() {
   const loadVehicle = useCallback(async () => {
     const v = await api.getVehicle(vin);
     setVehicle(v);
-    setStatusDraft(v.CurrentGlobalStatus);
     const [ready, historyRes] = await Promise.all([
       has(Perm.ChecklistShipmentView)
         ? api.shipmentReadiness(vin).catch(() => null)
@@ -116,7 +108,6 @@ export default function VehicleDetailPage() {
         ]);
         if (cancelled) return;
         setVehicle(v);
-        setStatusDraft(v.CurrentGlobalStatus);
         setStations(stationRes.items ?? []);
         setReadiness(ready);
         setStatusHistory(historyRes.items ?? []);
@@ -132,32 +123,47 @@ export default function VehicleDetailPage() {
     };
   }, [vin, has, t]);
 
-  async function saveStatus() {
+  async function placeOnHold() {
     if (!vehicle) return;
+    const reason = holdReason.trim();
+    if (!reason) {
+      setError(t('vehicles.holdReasonRequired'));
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
-      const updated = await api.updateVehicleStatus(vehicle.VIN, statusDraft);
+      const updated = await api.placeOnHold(vehicle.VIN, reason);
+      setVehicle(updated);
+      setHoldReason('');
+      const historyRes = await api.getVehicleStatusHistory(vehicle.VIN);
+      setStatusHistory(historyRes.items ?? []);
+      setHistoryError(null);
+    } catch (err) {
+      setError(err instanceof Error ? apiErrorMessage(err, t) : t('vehicles.holdFailed'));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function releaseFromHold() {
+    if (!vehicle) return;
+    const ok = await confirm({
+      title: t('vehicles.releaseFromHold'),
+      message: t('vehicles.holdHint'),
+      confirmLabel: t('vehicles.releaseFromHold'),
+    });
+    if (!ok) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const updated = await api.releaseFromHold(vehicle.VIN);
       setVehicle(updated);
       const historyRes = await api.getVehicleStatusHistory(vehicle.VIN);
       setStatusHistory(historyRes.items ?? []);
       setHistoryError(null);
     } catch (err) {
-      if (err instanceof ApiError && err.status === 409) {
-        const ids = err.body.blocking_item_ids ?? [];
-        setError(err.message);
-        const lines = ids.map((id: number) => t('vehicles.itemN', { id })).join('\n');
-        await confirm({
-          mode: 'alert',
-          title: t('vehicles.gateBlocked'),
-          message: lines
-            ? `${t('vehicles.gateBlockedHint')}\n\n${lines}`
-            : t('vehicles.gateBlockedHint'),
-          tone: 'danger',
-        });
-      } else {
-        setError(err instanceof Error ? apiErrorMessage(err, t) : t('vehicles.statusFailed'));
-      }
+      setError(err instanceof Error ? apiErrorMessage(err, t) : t('vehicles.holdFailed'));
     } finally {
       setBusy(false);
     }
@@ -165,6 +171,7 @@ export default function VehicleDetailPage() {
 
   const visibleTabs = TAB_DEFS.filter((tabItem) => !tabItem.perm || has(tabItem.perm));
   const activeTab = visibleTabs.some((tabItem) => tabItem.id === tab) ? tab : 'overview';
+  const manageHold = has(Perm.AdminManageMasters);
 
   if (error && !vehicle) {
     return (
@@ -189,6 +196,7 @@ export default function VehicleDetailPage() {
   const lastStamp = lastStatusChange
     ? formatActionStamp(lastStatusChange.ActorName, lastStatusChange.EventAt, locale)
     : null;
+  const onHold = vehicle.CurrentGlobalStatus === 'ON_HOLD';
 
   return (
     <section>
@@ -203,7 +211,10 @@ export default function VehicleDetailPage() {
         <div className="min-w-0 flex-1">
           <VehicleIdentity vin={vehicle.VIN} />
           <div className="mt-2 flex flex-wrap items-center gap-2">
-            <StatusBadge kind="vehicle" value={vehicle.CurrentGlobalStatus} />
+            <VehicleStatusDisplay
+              status={vehicle.CurrentGlobalStatus}
+              eolStage={vehicle.CurrentEOLStage}
+            />
             <span className="text-[13px] text-[var(--text-secondary)]">
               {currentStation
                 ? t('vehicles.seq', { name: currentStation.Name, n: currentStation.SequenceNo })
@@ -254,58 +265,55 @@ export default function VehicleDetailPage() {
               className="rounded-xl border bg-[var(--bg-surface-1)] p-5"
               style={{ borderColor: 'var(--border)' }}
             >
-              <h2 className="text-lg font-semibold">{t('vehicles.statusEditor')}</h2>
+              <h2 className="text-lg font-semibold">{t('vehicles.holdTitle')}</h2>
               <p className="mt-1 text-[13px] text-[var(--text-secondary)]">
                 {t('vehicles.statusEditorHint')}
               </p>
-              <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
-                <select
-                  value={statusDraft}
-                  onChange={(e) => setStatusDraft(e.target.value)}
-                  disabled={
-                    !has(Perm.AdminManageMasters) ||
-                    vehicle.CurrentGlobalStatus === 'PLANNED'
-                  }
-                  className="min-h-touch w-full rounded-lg border bg-[var(--bg-page)] px-3 text-[15px] sm:w-auto disabled:opacity-60"
-                  style={{ borderColor: 'var(--border)' }}
-                >
-                  {vehicle.CurrentGlobalStatus === 'PLANNED' ? (
-                    <option value="PLANNED">
-                      {vehicleStatusLabel('PLANNED', t)}
-                    </option>
-                  ) : (
-                    <>
-                      {!isStatusEditorValue(vehicle.CurrentGlobalStatus) && (
-                        <option value={vehicle.CurrentGlobalStatus}>
-                          {vehicleStatusLabel(vehicle.CurrentGlobalStatus, t)}
-                        </option>
-                      )}
-                      {STATUS_OPTIONS.map((s) => (
-                        <option key={s} value={s}>
-                          {vehicleStatusLabel(s, t)}
-                        </option>
-                      ))}
-                    </>
-                  )}
-                </select>
-                <button
-                  type="button"
-                  disabled={
-                    busy ||
-                    !has(Perm.AdminManageMasters) ||
-                    vehicle.CurrentGlobalStatus === 'PLANNED'
-                  }
-                  onClick={saveStatus}
-                  className="min-h-touch rounded-lg bg-[var(--accent)] px-4 text-[15px] text-white disabled:opacity-60"
-                >
-                  {t('common.save')}
-                </button>
-              </div>
-              {vehicle.CurrentGlobalStatus === 'PLANNED' && (
-                <p className="mt-2 text-[13px] text-[var(--text-secondary)]">
-                  {t('vehicles.plannedHint')}
+              <p className="mt-1 text-[13px] text-[var(--text-secondary)]">
+                {t('vehicles.holdHint')}
+              </p>
+              {onHold && vehicle.HoldReason ? (
+                <p className="mt-3 text-[13px] text-[var(--text-primary)]">
+                  {t('vehicles.holdReason')}: {vehicle.HoldReason}
                 </p>
-              )}
+              ) : null}
+              {manageHold && onHold ? (
+                <div className="mt-4">
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => void releaseFromHold()}
+                    className="min-h-touch rounded-lg bg-[var(--accent)] px-4 text-[15px] text-white disabled:opacity-60"
+                  >
+                    {t('vehicles.releaseFromHold')}
+                  </button>
+                </div>
+              ) : null}
+              {manageHold && !onHold && canPlaceOnHold(vehicle.CurrentGlobalStatus) ? (
+                <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
+                  <div className="min-w-0 flex-1 sm:max-w-md">
+                    <label className="text-[13px] text-[var(--text-secondary)]">
+                      {t('vehicles.holdReason')}
+                    </label>
+                    <input
+                      type="text"
+                      value={holdReason}
+                      onChange={(e) => setHoldReason(e.target.value)}
+                      className="mt-1 min-h-touch w-full rounded-lg border bg-[var(--bg-page)] px-3 text-[15px]"
+                      style={{ borderColor: 'var(--border)' }}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    disabled={busy || !holdReason.trim()}
+                    onClick={() => void placeOnHold()}
+                    className="min-h-touch rounded-lg border px-4 text-[15px] disabled:opacity-60"
+                    style={{ borderColor: 'var(--border)' }}
+                  >
+                    {t('vehicles.placeOnHold')}
+                  </button>
+                </div>
+              ) : null}
               {error && (
                 <p className="mt-3 text-[13px]" style={{ color: 'var(--status-not-ok)' }}>
                   {error}

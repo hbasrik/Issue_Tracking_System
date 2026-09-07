@@ -1,13 +1,17 @@
 export {
   EOL_STAGE_FILTER_VALUES,
+  VEHICLE_LIFECYCLE_FILTER_VALUES,
   VEHICLE_STATUS_EDITOR_VALUES,
   VEHICLE_STATUS_FILTER_VALUES,
   checklistStatusLabel,
+  deriveVehicleLifecycle,
   eolStageLabel,
   isOpenIssueStatus,
+  vehicleLifecycleLabel,
   vehicleListStatusLine,
   vehicleStatusLabel,
   type EolStageFilterValue,
+  type VehicleLifecycleFilterValue,
   type VehicleStatusEditorValue,
   type VehicleStatusFilterValue,
 } from '../../../shared/vehicleStatus';

@@ -62,14 +62,15 @@ import { downloadBlob } from '../lib/issueExport';
 import { statusColors } from '../theme/tokens';
 import { useI18n } from '../i18n';
 import {
-  VEHICLE_STATUS_FILTER_VALUES,
+  VEHICLE_LIFECYCLE_FILTER_VALUES,
   eolStageLabel,
+  vehicleLifecycleLabel,
   vehicleStatusLabel,
 } from '../lib/vehicleStatus';
 import { AnalysisPrint } from '../components/print/AnalysisPrint';
 import { formatDateRangeFull, formatDateRangeShort, formatDateTime } from '../../../shared/i18n';
 
-const VEHICLE_STATUSES = ['', ...VEHICLE_STATUS_FILTER_VALUES] as const;
+const VEHICLE_LIFECYCLES = ['', ...VEHICLE_LIFECYCLE_FILTER_VALUES] as const;
 const SEVERITIES = ['', 'CRITICAL', 'MEDIUM', 'LOW'] as const;
 const COMPARE_MODES = [
   '',
@@ -200,7 +201,9 @@ export default function AnalysisPage() {
   const [draftStation, setDraftStation] = useState(
     searchParams.get('station') ?? searchParams.get('phase') ?? '',
   );
-  const [draftStatus, setDraftStatus] = useState(searchParams.get('status') ?? '');
+  const [draftLifecycle, setDraftLifecycle] = useState(
+    searchParams.get('lifecycle') ?? searchParams.get('status') ?? '',
+  );
   const [draftIssueType, setDraftIssueType] = useState(
     searchParams.get('issue_type') ?? '',
   );
@@ -218,6 +221,7 @@ export default function AnalysisPage() {
       vins: searchParams.get('vins') ?? undefined,
       vin_suffix: searchParams.get('vin_suffix') ?? undefined,
       station: searchParams.get('station') ?? searchParams.get('phase') ?? undefined,
+      lifecycle: searchParams.get('lifecycle') ?? undefined,
       status: searchParams.get('status') ?? undefined,
       issue_type: searchParams.get('issue_type') ?? undefined,
       severity: searchParams.get('severity') ?? undefined,
@@ -283,7 +287,7 @@ export default function AnalysisPage() {
     if (draftFrom) next.set('from', draftFrom);
     if (draftTo) next.set('to', draftTo);
     if (draftStation) next.set('station', draftStation);
-    if (draftStatus) next.set('status', draftStatus);
+    if (draftLifecycle) next.set('lifecycle', draftLifecycle);
     if (draftIssueType) next.set('issue_type', draftIssueType);
     if (draftVins.length > 0) {
       next.set('vins', draftVins.map((v) => v.VIN).join(','));
@@ -297,7 +301,7 @@ export default function AnalysisPage() {
     setDraftFrom('');
     setDraftTo('');
     setDraftStation('');
-    setDraftStatus('');
+    setDraftLifecycle('');
     setDraftIssueType('');
     setDraftVins([]);
     setDraftSeverity('');
@@ -329,7 +333,13 @@ export default function AnalysisPage() {
       t('analysis.stationFilter', {
         id: stationNumber(Number(applied.station), stations),
       }),
-    applied.status && t('analysis.statusFilter', { status: applied.status }),
+    applied.lifecycle &&
+      t('analysis.statusFilter', {
+        status: vehicleLifecycleLabel(applied.lifecycle, t),
+      }),
+    !applied.lifecycle &&
+      applied.status &&
+      t('analysis.statusFilter', { status: vehicleLifecycleLabel(applied.status, t) }),
     applied.issue_type && t('analysis.typeFilter', { type: applied.issue_type }),
     applied.vins &&
       t('analysis.vinMultiFilter', { n: applied.vins.split(',').filter(Boolean).length }),
@@ -701,14 +711,14 @@ export default function AnalysisPage() {
         </FilterField>
         <FilterField label={t('analysis.vehicleStatus')} className="w-[7.25rem] shrink-0">
           <select
-            value={draftStatus}
-            onChange={(e) => setDraftStatus(e.target.value)}
+            value={draftLifecycle}
+            onChange={(e) => setDraftLifecycle(e.target.value)}
             className="min-h-9 w-full rounded-lg border bg-[var(--bg-page)] px-1.5 text-[12px]"
             style={{ borderColor: 'var(--border)' }}
           >
-            {VEHICLE_STATUSES.map((s) => (
+            {VEHICLE_LIFECYCLES.map((s) => (
               <option key={s || 'all'} value={s}>
-                {vehicleStatusLabel(s, t)}
+                {vehicleLifecycleLabel(s, t)}
               </option>
             ))}
           </select>
