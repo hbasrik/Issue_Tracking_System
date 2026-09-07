@@ -119,6 +119,14 @@ export default function TemplatesPage() {
     setBusy(true);
     setError(null);
     try {
+      const impact = await api.previewChecklistTemplateItemImpact(selected.ID, 'create');
+      const ok = window.confirm(
+        t('templates.confirmCreate', {
+          affected: impact.Affected,
+          protected: impact.Protected,
+        }),
+      );
+      if (!ok) return;
       await api.createChecklistTemplateItem(selected.ID, {
         ItemText: newText.trim(),
         EolPhase: selected.Type === 'EOL' ? newPhase : null,
@@ -158,6 +166,22 @@ export default function TemplatesPage() {
     setBusy(true);
     setError(null);
     try {
+      const action = isActive ? 'activate' : 'deactivate';
+      const impact = await api.previewChecklistTemplateItemImpact(
+        selected.ID,
+        action,
+        item.ID,
+      );
+      const msg = isActive
+        ? t('templates.confirmActivate', {
+            affected: impact.Affected,
+            protected: impact.Protected,
+          })
+        : t('templates.confirmDeactivate', {
+            affected: impact.Affected,
+            protected: impact.Protected,
+          });
+      if (!window.confirm(msg)) return;
       await api.updateChecklistTemplateItem(selected.ID, item.ID, {
         IsActive: isActive,
       });
@@ -174,6 +198,23 @@ export default function TemplatesPage() {
     setBusy(true);
     setError(null);
     try {
+      const impact = await api.previewChecklistTemplateItemImpact(
+        selected.ID,
+        'delete',
+        item.ID,
+      );
+      if (impact.Protected > 0) {
+        setError(
+          t('templates.deleteBlocked', {
+            protected: impact.Protected,
+          }),
+        );
+        return;
+      }
+      const ok = window.confirm(
+        t('templates.confirmDelete', { affected: impact.Affected }),
+      );
+      if (!ok) return;
       await api.deleteChecklistTemplateItem(selected.ID, item.ID);
       await refreshSelected(selected.ID);
     } catch (err) {

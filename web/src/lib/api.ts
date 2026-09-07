@@ -263,6 +263,21 @@ export const api = {
     );
   },
 
+  previewChecklistTemplateItemImpact(
+    templateId: number,
+    action: 'create' | 'deactivate' | 'activate' | 'delete',
+    itemId?: number,
+  ) {
+    if (action === 'create') {
+      return request<TemplateItemPropagationImpact>(
+        `/checklist-templates/${templateId}/items/impact?action=create`,
+      );
+    }
+    return request<TemplateItemPropagationImpact>(
+      `/checklist-templates/${templateId}/items/${itemId}/impact?action=${action}`,
+    );
+  },
+
   updateChecklistTemplateItem(
     templateId: number,
     itemId: number,
@@ -545,6 +560,12 @@ export interface ChecklistTemplateItem {
   StationID: number | null;
   EolPhase: 'BRANCH' | 'DEPOT' | null;
   IsActive: boolean;
+}
+
+export interface TemplateItemPropagationImpact {
+  Affected: number;
+  Protected: number;
+  Action: string;
 }
 
 export type ChecklistType = 'eol' | 'shipment' | 'test';

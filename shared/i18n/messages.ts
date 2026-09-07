@@ -748,9 +748,19 @@ export const tr = {
   'templates.branch': 'BRANCH',
   'templates.depot': 'DEPOT',
   'templates.hint':
-    'Multi-template admin — model × EOL / SHIPMENT / TEST. Yeni madde yalnızca bundan sonra eklenen araçlarda çıkar; silmek yerine pasife çekin.',
+    'Şablon değişiklikleri henüz başlamamış checklist\'lere yansır; değerlendirilmiş geçmiş korunur. Silmek yerine pasife çekin.',
   'templates.hideInactive': 'Pasif maddeleri gizle',
   'templates.activeCount': '{n} aktif madde',
+  'templates.confirmDeactivate':
+    'Bu madde {affected} araçtan kaldırılacak, {protected} araçta geçmiş kaydı olduğu için korunacak. Onaylıyor musunuz?',
+  'templates.confirmActivate':
+    'Bu madde {affected} başlamamış araca eklenecek, {protected} araç çalışmaya başladığı için etkilenmeyecek. Onaylıyor musunuz?',
+  'templates.confirmCreate':
+    'Yeni madde {affected} başlamamış araca PENDING olarak eklenecek, {protected} araç çalışmaya başladığı için etkilenmeyecek. Onaylıyor musunuz?',
+  'templates.confirmDelete':
+    'Bu madde kalıcı silinecek ({affected} PENDING kayıt temizlenecek). Bu işlem geri alınamaz. Onaylıyor musunuz?',
+  'templates.deleteBlocked':
+    'Bu madde {protected} araçta değerlendirilmiş veya issue\'ya bağlı — silinemez. Pasife çekin.',
 
   'users.title': 'Kullanıcılar',
   'users.loadFailed': 'Kullanıcılar yüklenemedi',
@@ -1866,8 +1876,18 @@ export const en: Record<MessageKey, string> = {
   'vehicles.subtitle': 'Filterable vehicle table',
   'vehicles.vinSearch': 'VIN search',
   'templates.hint':
-    'Multi-template admin — model × EOL / SHIPMENT / TEST. New items apply only to vehicles added after this; deactivate instead of deleting.',
+    'Template changes apply to checklists not yet started; evaluated history is preserved. Prefer deactivate over delete.',
   'templates.hideInactive': 'Hide inactive items',
   'templates.activeCount': '{n} active items',
+  'templates.confirmDeactivate':
+    'This item will be removed from {affected} vehicles; {protected} vehicles keep history. Continue?',
+  'templates.confirmActivate':
+    'This item will be added to {affected} not-started vehicles; {protected} vehicles already started and stay unchanged. Continue?',
+  'templates.confirmCreate':
+    'The new item will be added as PENDING on {affected} not-started vehicles; {protected} vehicles already started and stay unchanged. Continue?',
+  'templates.confirmDelete':
+    'This item will be permanently deleted ({affected} PENDING rows cleaned up). This cannot be undone. Continue?',
+  'templates.deleteBlocked':
+    'This item is evaluated or issue-linked on {protected} vehicles — cannot delete. Deactivate instead.',
 
 };
