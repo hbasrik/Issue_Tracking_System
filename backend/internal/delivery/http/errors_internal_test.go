@@ -158,7 +158,7 @@ func TestWriteErrorTemplateItemInUse(t *testing.T) {
 	if err := json.NewDecoder(rec.Body).Decode(&body); err != nil {
 		t.Fatalf("decode body: %v", err)
 	}
-	want := "bu madde 5 araçta kullanılmış, silinemez — pasife çekebilirsiniz"
+	want := "bu madde 5 araçta değerlendirilmiş veya issue'ya bağlı, silinemez — pasife çekebilirsiniz"
 	if body.Error != want {
 		t.Errorf("error = %q, want %q", body.Error, want)
 	}

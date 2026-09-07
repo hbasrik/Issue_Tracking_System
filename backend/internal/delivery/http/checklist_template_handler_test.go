@@ -24,7 +24,8 @@ type httpFakeChecklistRepo struct {
 	templates []domain.ChecklistTemplateSummary
 	items     map[int][]domain.ChecklistTemplateItem
 	nextID    int
-	progress  map[int]int
+	evaluated map[int]int
+	pending   map[int]int
 }
 
 var _ repository.ChecklistProgressRepository = (*httpFakeChecklistRepo)(nil)
@@ -42,8 +43,9 @@ func newHTTPFakeChecklistRepo() *httpFakeChecklistRepo {
 				EolPhase: eolBranchPtr(), IsActive: true,
 			}},
 		},
-		nextID:   50,
-		progress: map[int]int{1: 2},
+		nextID:    50,
+		evaluated: map[int]int{1: 2},
+		pending:   map[int]int{1: 10},
 	}
 }
 
@@ -166,8 +168,25 @@ func (f *httpFakeChecklistRepo) ReorderTemplateItems(_ context.Context, template
 	return nil
 }
 
-func (f *httpFakeChecklistRepo) CountProgressVINs(_ context.Context, itemID int) (int, error) {
-	return f.progress[itemID], nil
+func (f *httpFakeChecklistRepo) CountEvaluatedProgressVINs(_ context.Context, itemID int) (int, error) {
+	return f.evaluated[itemID], nil
+}
+func (f *httpFakeChecklistRepo) CountIssueLinkedVINs(_ context.Context, _ int) (int, error) {
+	return 0, nil
+}
+func (f *httpFakeChecklistRepo) DeactivateImpact(_ context.Context, itemID int) (int, int, error) {
+	return f.pending[itemID], f.evaluated[itemID], nil
+}
+func (f *httpFakeChecklistRepo) CreateImpact(_ context.Context, _ int, _ domain.ChecklistType) (int, int, error) {
+	return 4, 1, nil
+}
+func (f *httpFakeChecklistRepo) DeletePendingProgressForItem(_ context.Context, itemID int) (int64, error) {
+	n := int64(f.pending[itemID])
+	f.pending[itemID] = 0
+	return n, nil
+}
+func (f *httpFakeChecklistRepo) InsertPendingForNotStartedVehicles(_ context.Context, _, _ int, _ domain.ChecklistType) (int64, error) {
+	return 4, nil
 }
 
 func newChecklistTemplateRouter(checklists repository.ChecklistProgressRepository) (http.Handler, *auth.Issuer) {
@@ -330,7 +349,7 @@ func TestChecklistTemplateItemDelete_InUse(t *testing.T) {
 	if rec.Code != http.StatusConflict {
 		t.Fatalf("status = %d, want %d (body: %s)", rec.Code, http.StatusConflict, rec.Body.String())
 	}
-	if !bytes.Contains(rec.Body.Bytes(), []byte("2 araçta kullanılmış")) {
+	if !bytes.Contains(rec.Body.Bytes(), []byte("2 araçta değerlendirilmiş")) {
 		t.Errorf("body = %s", rec.Body.String())
 	}
 }
@@ -379,5 +398,51 @@ func TestChecklistTemplateItemPatch_Deactivate(t *testing.T) {
 	}
 	if item.IsActive {
 		t.Fatal("expected inactive")
+	}
+}
+
+func TestChecklistTemplateItemImpact_Deactivate(t *testing.T) {
+	router, issuer := newChecklistTemplateRouter(newHTTPFakeChecklistRepo())
+	token, err := issuer.Issue(managerUserID, domain.RoleCodeManagerAdmin)
+	if err != nil {
+		t.Fatalf("issue token: %v", err)
+	}
+	req := httptest.NewRequest(http.MethodGet,
+		"/api/v1/checklist-templates/1/items/1/impact?action=deactivate", nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d (body: %s)", rec.Code, http.StatusOK, rec.Body.String())
+	}
+	var impact domain.TemplateItemPropagationImpact
+	if err := json.Unmarshal(rec.Body.Bytes(), &impact); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if impact.Affected != 10 || impact.Protected != 2 || impact.Action != "deactivate" {
+		t.Fatalf("impact = %+v", impact)
+	}
+}
+
+func TestChecklistTemplateItemCreateImpact(t *testing.T) {
+	router, issuer := newChecklistTemplateRouter(newHTTPFakeChecklistRepo())
+	token, err := issuer.Issue(managerUserID, domain.RoleCodeManagerAdmin)
+	if err != nil {
+		t.Fatalf("issue token: %v", err)
+	}
+	req := httptest.NewRequest(http.MethodGet,
+		"/api/v1/checklist-templates/1/items/impact?action=create", nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d (body: %s)", rec.Code, http.StatusOK, rec.Body.String())
+	}
+	var impact domain.TemplateItemPropagationImpact
+	if err := json.Unmarshal(rec.Body.Bytes(), &impact); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if impact.Affected != 4 || impact.Protected != 1 || impact.Action != "create" {
+		t.Fatalf("impact = %+v", impact)
 	}
 }

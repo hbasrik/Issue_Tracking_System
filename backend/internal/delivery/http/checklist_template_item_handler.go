@@ -142,6 +142,58 @@ func (s *server) handleChecklistTemplateItemReorder(w http.ResponseWriter, r *ht
 	writeJSON(w, http.StatusOK, map[string]any{"items": items})
 }
 
+// handleChecklistTemplateItemCreateImpact previews create backfill scope.
+func (s *server) handleChecklistTemplateItemCreateImpact(w http.ResponseWriter, r *http.Request) {
+	if s.deps.Checklists == nil {
+		writeError(w, domain.ErrNotFound)
+		return
+	}
+	templateID, err := strconv.Atoi(chi.URLParam(r, "id"))
+	if err != nil || templateID < 1 {
+		badRequest(w, "id must be a positive integer")
+		return
+	}
+	action := strings.TrimSpace(r.URL.Query().Get("action"))
+	if action == "" {
+		action = "create"
+	}
+	if action != "create" {
+		badRequest(w, "action must be create")
+		return
+	}
+	impact, err := s.deps.Checklists.PreviewTemplateItemImpact(r.Context(), templateID, 0, action)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, impact)
+}
+
+// handleChecklistTemplateItemImpact previews deactivate/activate/delete scope.
+func (s *server) handleChecklistTemplateItemImpact(w http.ResponseWriter, r *http.Request) {
+	if s.deps.Checklists == nil {
+		writeError(w, domain.ErrNotFound)
+		return
+	}
+	templateID, itemID, ok := parseTemplateItemIDs(w, r)
+	if !ok {
+		return
+	}
+	action := strings.TrimSpace(strings.ToLower(r.URL.Query().Get("action")))
+	switch action {
+	case "deactivate", "activate", "delete":
+	default:
+		badRequest(w, "action must be deactivate, activate or delete")
+		return
+	}
+	impact, err := s.deps.Checklists.PreviewTemplateItemImpact(r.Context(), templateID, itemID, action)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, impact)
+}
+
 func parseTemplateItemIDs(w http.ResponseWriter, r *http.Request) (templateID, itemID int, ok bool) {
 	var err error
 	templateID, err = strconv.Atoi(chi.URLParam(r, "id"))
