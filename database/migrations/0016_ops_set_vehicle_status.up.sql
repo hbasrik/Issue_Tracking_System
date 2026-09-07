@@ -1,8 +1,8 @@
--- Privileged status write for the development EoL reset endpoint only.
 -- Application Go code must NEVER call set_config('karea.allow_status_rewind', …).
 -- That GUC remains a DBA-only escape hatch (see migration 0015 comments).
--- This function keeps the bypass inside the database so EOL reset can rewind
--- without teaching the API how to flip the session flag.
+-- This function keeps the bypass inside the database for the development
+-- EoL reset endpoint. Migration 0017 additionally requires
+-- karea.app_env=development (stamped by the API pool from APP_ENV).
 
 CREATE OR REPLACE FUNCTION fn_ops_set_vehicle_status(
     p_vin TEXT,
@@ -24,5 +24,5 @@ $$ LANGUAGE plpgsql;
 
 COMMENT ON FUNCTION fn_ops_set_vehicle_status(TEXT, vehicle_status_enum) IS
     'Development / ops helper: set vehicle status allowing one-way rewind. '
-    'Not a public API; called only by the APP_ENV=development EOL reset path. '
+    'Hardened in 0017 to require karea.app_env=development. '
     'Manual data repairs should use SET LOCAL karea.allow_status_rewind in psql instead.';
