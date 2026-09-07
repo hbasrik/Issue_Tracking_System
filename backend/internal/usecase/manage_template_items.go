@@ -24,9 +24,8 @@ type UpdateTemplateItemInput struct {
 	IsActive   *bool
 }
 
-// CreateTemplateItem appends an active item. It is not backfilled onto
-// vehicles that already exist — only INSERT-time materialization copies
-// is_active catalogue rows onto a VIN.
+// CreateTemplateItem appends an active item and backfills PENDING onto
+// vehicles assigned to the template that have not started that checklist.
 func (r *ChecklistResultRecorder) CreateTemplateItem(ctx context.Context, in CreateTemplateItemInput) (*domain.ChecklistTemplateItem, error) {
 	tmpl, err := r.checklist.GetTemplate(ctx, in.TemplateID)
 	if err != nil {
@@ -36,16 +35,24 @@ func (r *ChecklistResultRecorder) CreateTemplateItem(ctx context.Context, in Cre
 	if err := domain.ValidateTemplateItemFields(tmpl.Type, text, in.EolPhase); err != nil {
 		return nil, err
 	}
-	return r.checklist.CreateTemplateItem(ctx, &domain.ChecklistTemplateItem{
+	item, err := r.checklist.CreateTemplateItem(ctx, &domain.ChecklistTemplateItem{
 		TemplateID: in.TemplateID,
 		ItemText:   text,
 		EolPhase:   in.EolPhase,
 		IsActive:   true,
 	})
+	if err != nil {
+		return nil, err
+	}
+	if _, err := r.checklist.InsertPendingForNotStartedVehicles(ctx, item.ID, tmpl.ID, tmpl.Type); err != nil {
+		return nil, err
+	}
+	return item, nil
 }
 
-// UpdateTemplateItem edits a catalogue item. Deactivate (is_active=false) is
-// the default way to retire an item that already has progress.
+// UpdateTemplateItem edits a catalogue item. Deactivate removes PENDING
+// progress on not-started history; reactivate backfills not-started VINs.
+// Text/phase edits do not move progress rows.
 func (r *ChecklistResultRecorder) UpdateTemplateItem(ctx context.Context, in UpdateTemplateItemInput) (*domain.ChecklistTemplateItem, error) {
 	tmpl, err := r.checklist.GetTemplate(ctx, in.TemplateID)
 	if err != nil {
@@ -58,6 +65,7 @@ func (r *ChecklistResultRecorder) UpdateTemplateItem(ctx context.Context, in Upd
 	if item.TemplateID != in.TemplateID {
 		return nil, domain.ErrNotFound
 	}
+	prevActive := item.IsActive
 	if in.ItemText != nil {
 		item.ItemText = strings.TrimSpace(*in.ItemText)
 	}
@@ -75,10 +83,21 @@ func (r *ChecklistResultRecorder) UpdateTemplateItem(ctx context.Context, in Upd
 	if err := r.checklist.UpdateTemplateItem(ctx, item); err != nil {
 		return nil, err
 	}
+	if in.IsActive != nil && prevActive && !item.IsActive {
+		if _, err := r.checklist.DeletePendingProgressForItem(ctx, item.ID); err != nil {
+			return nil, err
+		}
+	}
+	if in.IsActive != nil && !prevActive && item.IsActive {
+		if _, err := r.checklist.InsertPendingForNotStartedVehicles(ctx, item.ID, tmpl.ID, tmpl.Type); err != nil {
+			return nil, err
+		}
+	}
 	return item, nil
 }
 
-// DeleteTemplateItem hard-deletes only when no vehicle has progress for it.
+// DeleteTemplateItem hard-deletes only when nothing was evaluated and no
+// issue is linked. PENDING-only materialization is cleared first.
 func (r *ChecklistResultRecorder) DeleteTemplateItem(ctx context.Context, templateID, itemID int) error {
 	item, err := r.checklist.GetTemplateItem(ctx, itemID)
 	if err != nil {
@@ -87,14 +106,82 @@ func (r *ChecklistResultRecorder) DeleteTemplateItem(ctx context.Context, templa
 	if item.TemplateID != templateID {
 		return domain.ErrNotFound
 	}
-	n, err := r.checklist.CountProgressVINs(ctx, itemID)
+	evaluated, err := r.checklist.CountEvaluatedProgressVINs(ctx, itemID)
 	if err != nil {
 		return err
 	}
-	if n > 0 {
-		return &domain.TemplateItemInUseError{VehicleCount: n}
+	linked, err := r.checklist.CountIssueLinkedVINs(ctx, itemID)
+	if err != nil {
+		return err
+	}
+	if evaluated > 0 || linked > 0 {
+		_, protected, derr := r.checklist.DeactivateImpact(ctx, itemID)
+		if derr != nil {
+			return derr
+		}
+		if protected < 1 {
+			protected = evaluated + linked
+		}
+		return &domain.TemplateItemInUseError{VehicleCount: protected}
+	}
+	if _, err := r.checklist.DeletePendingProgressForItem(ctx, itemID); err != nil {
+		return err
 	}
 	return r.checklist.DeleteTemplateItem(ctx, itemID)
+}
+
+// PreviewTemplateItemImpact returns how many vehicles a catalogue change
+// would touch versus leave alone (history preserved).
+func (r *ChecklistResultRecorder) PreviewTemplateItemImpact(
+	ctx context.Context, templateID, itemID int, action string,
+) (*domain.TemplateItemPropagationImpact, error) {
+	tmpl, err := r.checklist.GetTemplate(ctx, templateID)
+	if err != nil {
+		return nil, err
+	}
+	out := &domain.TemplateItemPropagationImpact{Action: action}
+	switch action {
+	case "create":
+		out.Affected, out.Protected, err = r.checklist.CreateImpact(ctx, templateID, tmpl.Type)
+	case "activate":
+		out.Affected, out.Protected, err = r.checklist.CreateImpact(ctx, templateID, tmpl.Type)
+	case "deactivate":
+		if itemID < 1 {
+			return nil, domain.ErrNotFound
+		}
+		item, gerr := r.checklist.GetTemplateItem(ctx, itemID)
+		if gerr != nil {
+			return nil, gerr
+		}
+		if item.TemplateID != templateID {
+			return nil, domain.ErrNotFound
+		}
+		out.Affected, out.Protected, err = r.checklist.DeactivateImpact(ctx, itemID)
+	case "delete":
+		if itemID < 1 {
+			return nil, domain.ErrNotFound
+		}
+		item, gerr := r.checklist.GetTemplateItem(ctx, itemID)
+		if gerr != nil {
+			return nil, gerr
+		}
+		if item.TemplateID != templateID {
+			return nil, domain.ErrNotFound
+		}
+		affected, protected, derr := r.checklist.DeactivateImpact(ctx, itemID)
+		if derr != nil {
+			return nil, derr
+		}
+		// For delete, "affected" is PENDING cleanup; "protected" blocks delete.
+		out.Affected = affected
+		out.Protected = protected
+	default:
+		return nil, domain.ErrInvalidEnumValue
+	}
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 // ReorderTemplateItems sets item_no from the given id order.

@@ -10,10 +10,16 @@ import (
 )
 
 type templateCatalogueFake struct {
-	templates map[int]domain.ChecklistTemplate
-	items     map[int][]domain.ChecklistTemplateItem
-	nextID    int
-	progress  map[int]int
+	templates  map[int]domain.ChecklistTemplate
+	items      map[int][]domain.ChecklistTemplateItem
+	nextID     int
+	evaluated  map[int]int
+	issueLinked map[int]int
+	pendingVINs map[int]int
+	createAff  int
+	createProt int
+	deletedPending map[int]int64
+	insertedPending map[int]int64
 }
 
 var _ repository.ChecklistProgressRepository = (*templateCatalogueFake)(nil)
@@ -34,8 +40,14 @@ func newTemplateCatalogueFake() *templateCatalogueFake {
 				{ID: 20, TemplateID: 2, ItemNo: 1, ItemText: "Dyno", IsActive: true},
 			},
 		},
-		nextID:   100,
-		progress: map[int]int{10: 3},
+		nextID:      100,
+		evaluated:   map[int]int{10: 3},
+		issueLinked: map[int]int{},
+		pendingVINs: map[int]int{10: 5, 11: 2},
+		createAff:   7,
+		createProt:  3,
+		deletedPending:  map[int]int64{},
+		insertedPending: map[int]int64{},
 	}
 }
 
@@ -133,8 +145,28 @@ func (f *templateCatalogueFake) ReorderTemplateItems(_ context.Context, template
 	return nil
 }
 
-func (f *templateCatalogueFake) CountProgressVINs(_ context.Context, itemID int) (int, error) {
-	return f.progress[itemID], nil
+func (f *templateCatalogueFake) CountEvaluatedProgressVINs(_ context.Context, itemID int) (int, error) {
+	return f.evaluated[itemID], nil
+}
+func (f *templateCatalogueFake) CountIssueLinkedVINs(_ context.Context, itemID int) (int, error) {
+	return f.issueLinked[itemID], nil
+}
+func (f *templateCatalogueFake) DeactivateImpact(_ context.Context, itemID int) (int, int, error) {
+	return f.pendingVINs[itemID], f.evaluated[itemID] + f.issueLinked[itemID], nil
+}
+func (f *templateCatalogueFake) CreateImpact(_ context.Context, _ int, _ domain.ChecklistType) (int, int, error) {
+	return f.createAff, f.createProt, nil
+}
+func (f *templateCatalogueFake) DeletePendingProgressForItem(_ context.Context, itemID int) (int64, error) {
+	n := int64(f.pendingVINs[itemID])
+	f.deletedPending[itemID] = n
+	f.pendingVINs[itemID] = 0
+	return n, nil
+}
+func (f *templateCatalogueFake) InsertPendingForNotStartedVehicles(_ context.Context, itemID, _ int, _ domain.ChecklistType) (int64, error) {
+	n := int64(f.createAff)
+	f.insertedPending[itemID] = n
+	return n, nil
 }
 
 func TestCreateTemplateItem_AppendsActiveEOLItem(t *testing.T) {
@@ -155,6 +187,9 @@ func TestCreateTemplateItem_AppendsActiveEOLItem(t *testing.T) {
 	}
 	if got.EolPhase == nil || *got.EolPhase != domain.EOLItemPhaseDepot {
 		t.Fatalf("phase = %v", got.EolPhase)
+	}
+	if fake.insertedPending[got.ID] != 7 {
+		t.Fatalf("backfill = %d, want 7", fake.insertedPending[got.ID])
 	}
 }
 
@@ -187,6 +222,43 @@ func TestUpdateTemplateItem_Deactivates(t *testing.T) {
 	if got.IsActive {
 		t.Fatal("expected inactive")
 	}
+	if fake.deletedPending[11] != 2 {
+		t.Fatalf("pending cleared = %d, want 2", fake.deletedPending[11])
+	}
+}
+
+func TestUpdateTemplateItem_ReactivatesBackfill(t *testing.T) {
+	fake := newTemplateCatalogueFake()
+	svc := NewChecklistResultRecorder(nil, fake, nil, nil)
+	off := false
+	if _, err := svc.UpdateTemplateItem(context.Background(), UpdateTemplateItemInput{
+		TemplateID: 1, ItemID: 11, IsActive: &off,
+	}); err != nil {
+		t.Fatalf("deactivate: %v", err)
+	}
+	on := true
+	if _, err := svc.UpdateTemplateItem(context.Background(), UpdateTemplateItemInput{
+		TemplateID: 1, ItemID: 11, IsActive: &on,
+	}); err != nil {
+		t.Fatalf("activate: %v", err)
+	}
+	if fake.insertedPending[11] != 7 {
+		t.Fatalf("reactivate backfill = %d, want 7", fake.insertedPending[11])
+	}
+}
+
+func TestUpdateTemplateItem_TextOnlyNoPropagation(t *testing.T) {
+	fake := newTemplateCatalogueFake()
+	svc := NewChecklistResultRecorder(nil, fake, nil, nil)
+	text := "Paint updated"
+	if _, err := svc.UpdateTemplateItem(context.Background(), UpdateTemplateItemInput{
+		TemplateID: 1, ItemID: 10, ItemText: &text,
+	}); err != nil {
+		t.Fatalf("update: %v", err)
+	}
+	if len(fake.deletedPending) != 0 || len(fake.insertedPending) != 0 {
+		t.Fatalf("text edit must not propagate progress")
+	}
 }
 
 func TestDeleteTemplateItem_InUse(t *testing.T) {
@@ -210,6 +282,21 @@ func TestDeleteTemplateItem_Unused(t *testing.T) {
 	}
 	if _, err := fake.GetTemplateItem(context.Background(), 11); !errors.Is(err, domain.ErrNotFound) {
 		t.Fatalf("err = %v, want not found", err)
+	}
+	if fake.deletedPending[11] != 2 {
+		t.Fatalf("pending cleanup = %d, want 2", fake.deletedPending[11])
+	}
+}
+
+func TestPreviewTemplateItemImpact_Deactivate(t *testing.T) {
+	fake := newTemplateCatalogueFake()
+	svc := NewChecklistResultRecorder(nil, fake, nil, nil)
+	got, err := svc.PreviewTemplateItemImpact(context.Background(), 1, 10, "deactivate")
+	if err != nil {
+		t.Fatalf("impact: %v", err)
+	}
+	if got.Affected != 5 || got.Protected != 3 || got.Action != "deactivate" {
+		t.Fatalf("impact = %+v", got)
 	}
 }
 

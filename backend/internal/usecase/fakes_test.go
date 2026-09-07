@@ -275,7 +275,22 @@ func (f *fakeChecklistRepo) ReorderTemplateItems(_ context.Context, _ int, _ []i
 	return domain.ErrNotFound
 }
 
-func (f *fakeChecklistRepo) CountProgressVINs(_ context.Context, _ int) (int, error) {
+func (f *fakeChecklistRepo) CountEvaluatedProgressVINs(_ context.Context, _ int) (int, error) {
+	return 0, nil
+}
+func (f *fakeChecklistRepo) CountIssueLinkedVINs(_ context.Context, _ int) (int, error) {
+	return 0, nil
+}
+func (f *fakeChecklistRepo) DeactivateImpact(_ context.Context, _ int) (int, int, error) {
+	return 0, 0, nil
+}
+func (f *fakeChecklistRepo) CreateImpact(_ context.Context, _ int, _ domain.ChecklistType) (int, int, error) {
+	return 0, 0, nil
+}
+func (f *fakeChecklistRepo) DeletePendingProgressForItem(_ context.Context, _ int) (int64, error) {
+	return 0, nil
+}
+func (f *fakeChecklistRepo) InsertPendingForNotStartedVehicles(_ context.Context, _, _ int, _ domain.ChecklistType) (int64, error) {
 	return 0, nil
 }
 
