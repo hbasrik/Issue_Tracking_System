@@ -1,5 +1,23 @@
 -- One-way vehicle status machine + hold restore columns.
 -- Free manual status edits are rejected; ON_HOLD parks/restores prior status.
+--
+-- Session GUC: karea.allow_status_rewind
+-- ---------------------------------------
+-- What: optional escape hatch read by fn_enforce_manual_status_change. When
+--   true for the current transaction, the one-way rank check (and ON_HOLD
+--   restore-target check) is skipped so a status can move backward or skip.
+-- When: ONLY for interactive DBA / ops corrections in psql (or equivalent),
+--   e.g. repairing rows whose stamps and current_global_status disagree:
+--     BEGIN;
+--     SELECT set_config('karea.allow_status_rewind', 'true', true);
+--     UPDATE vehicles SET current_global_status = '…' WHERE vin = '…';
+--     COMMIT;
+-- Why: production paths (EoL branch-ship / depot-release / deliver, hold /
+--   unhold) must stay forward-only; a rare data-fix tool is needed without
+--   DROP TRIGGER. The application layer must never set this GUC — grep the
+--   Go/TS tree for allow_status_rewind and expect zero hits. Development EoL
+--   reset uses fn_ops_set_vehicle_status (migration 0016), which keeps any
+--   bypass inside the database rather than exposing this flag to the API.
 
 ALTER TABLE vehicles
     ADD COLUMN IF NOT EXISTS status_before_hold vehicle_status_enum,
@@ -26,7 +44,8 @@ END;
 $$ LANGUAGE plpgsql IMMUTABLE;
 
 -- Enforces forward-only status changes (and ON_HOLD park/restore).
--- Dev rewind may set LOCAL karea.allow_status_rewind = 'true' in-transaction.
+-- DBA-only: SET LOCAL / set_config('karea.allow_status_rewind','true',true)
+-- inside a transaction to allow a controlled rewind. Never set from the app.
 CREATE OR REPLACE FUNCTION fn_enforce_manual_status_change()
 RETURNS TRIGGER AS $$
 DECLARE
