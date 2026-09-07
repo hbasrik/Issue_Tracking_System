@@ -176,7 +176,8 @@ func NewRouter(deps Deps) http.Handler {
 			r.Group(func(r chi.Router) {
 				r.Use(permissions.RequirePermission(domain.PermissionAdminManageMasters))
 				r.Post("/vehicles/import", s.handleVehicleBulkImport)
-				r.Patch("/vehicles/{vin}/status", s.handleVehicleStatus)
+				r.Post("/vehicles/{vin}/hold", s.handleVehiclePlaceOnHold)
+				r.Post("/vehicles/{vin}/unhold", s.handleVehicleReleaseFromHold)
 				r.Get("/checklist-templates", s.handleChecklistTemplateList)
 				r.Get("/checklist-templates/{id}/items", s.handleChecklistTemplateItems)
 				r.Get("/checklist-templates/{id}/items/impact", s.handleChecklistTemplateItemCreateImpact)

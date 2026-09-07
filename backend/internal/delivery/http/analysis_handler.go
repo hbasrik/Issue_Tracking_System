@@ -43,7 +43,13 @@ func parseAnalysisFilter(r *http.Request) (domain.AnalysisFilter, error) {
 		}
 		f.StationID = &id
 	}
-	if raw := q.Get("status"); raw != "" {
+	if raw := q.Get("lifecycle"); raw != "" {
+		lc := domain.VehicleLifecycle(raw)
+		if !lc.Valid() {
+			return f, domain.ErrInvalidEnumValue
+		}
+		f.Lifecycle = &lc
+	} else if raw := q.Get("status"); raw != "" {
 		st := domain.VehicleStatus(raw)
 		if !st.Valid() {
 			return f, domain.ErrInvalidEnumValue
@@ -57,7 +63,7 @@ func parseAnalysisFilter(r *http.Request) (domain.AnalysisFilter, error) {
 		}
 		f.Severity = &sev
 	}
-	if raw := q.Get("eol_stage"); raw != "" {
+	if raw := q.Get("eol_stage"); raw != "" && f.Lifecycle == nil {
 		stage := strings.ToUpper(strings.TrimSpace(raw))
 		if stage == "DOCUMENT" {
 			stage = "DEPOT"

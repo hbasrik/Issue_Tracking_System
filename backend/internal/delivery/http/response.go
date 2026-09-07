@@ -73,6 +73,8 @@ func writeError(w http.ResponseWriter, err error) {
 		writeJSON(w, http.StatusBadRequest, errorResponse{Error: emailDomain.Error()})
 	case errors.Is(err, domain.ErrDepotChecklistLocked),
 		errors.Is(err, domain.ErrInvalidStatusTransition),
+		errors.Is(err, domain.ErrCannotHold),
+		errors.Is(err, domain.ErrNotOnHold),
 		errors.Is(err, domain.ErrLastActiveManager),
 		errors.Is(err, domain.ErrEmailTaken):
 		writeJSON(w, http.StatusConflict, errorResponse{Error: err.Error()})
@@ -106,6 +108,7 @@ func writeError(w http.ResponseWriter, err error) {
 		errors.Is(err, domain.ErrEOLPhaseRequired),
 		errors.Is(err, domain.ErrEOLPhaseNotAllowed),
 		errors.Is(err, domain.ErrTemplateItemReorderInvalid),
+		errors.Is(err, domain.ErrHoldReasonRequired),
 		errors.Is(err, domain.ErrFullNameRequired),
 		errors.Is(err, domain.ErrEmailRequired),
 		errors.Is(err, domain.ErrPasswordTooShort),

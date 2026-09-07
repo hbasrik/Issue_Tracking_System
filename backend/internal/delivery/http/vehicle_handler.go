@@ -18,7 +18,14 @@ func (s *server) handleVehicleList(w http.ResponseWriter, r *http.Request) {
 		VINContains: q.Get("vin"),
 	}
 
-	if raw := q.Get("status"); raw != "" {
+	if raw := q.Get("lifecycle"); raw != "" {
+		lc := domain.VehicleLifecycle(raw)
+		if !lc.Valid() {
+			badRequest(w, "invalid lifecycle filter")
+			return
+		}
+		filter.Lifecycle = &lc
+	} else if raw := q.Get("status"); raw != "" {
 		status := domain.VehicleStatus(raw)
 		if !status.Valid() {
 			badRequest(w, "invalid status filter")
@@ -42,7 +49,7 @@ func (s *server) handleVehicleList(w http.ResponseWriter, r *http.Request) {
 		}
 		filter.StationID = &stationID
 	}
-	if raw := q.Get("eol_stage"); raw != "" {
+	if raw := q.Get("eol_stage"); raw != "" && filter.Lifecycle == nil {
 		stage := domain.EOLWorkflowStage(raw)
 		if !stage.FilterValid() {
 			badRequest(w, "invalid eol_stage filter")
@@ -226,30 +233,32 @@ func (s *server) handleShipmentReadiness(w http.ResponseWriter, r *http.Request)
 	writeJSON(w, http.StatusOK, ready)
 }
 
-type vehicleStatusRequest struct {
-	Status string `json:"status"`
+type vehicleHoldRequest struct {
+	Reason string `json:"reason"`
 }
 
-// handleVehicleStatus performs a manual global status change
-// (admin.manage_masters). It delegates to the hard-block-aware usecase, so a
-// move to WITH_CUSTOMER/SHIPPED with an incomplete shipment checklist returns
-// 409 with the blocking item IDs.
-func (s *server) handleVehicleStatus(w http.ResponseWriter, r *http.Request) {
+// handleVehiclePlaceOnHold parks a vehicle on ON_HOLD (admin.manage_masters).
+func (s *server) handleVehiclePlaceOnHold(w http.ResponseWriter, r *http.Request) {
 	vin := chi.URLParam(r, "vin")
-
-	var req vehicleStatusRequest
+	var req vehicleHoldRequest
 	if err := decodeJSON(r, &req); err != nil {
 		badRequest(w, "invalid request body")
 		return
 	}
-	target := domain.VehicleStatus(req.Status)
-	if !target.Valid() {
-		badRequest(w, "invalid target status")
+	claims, _ := ClaimsFromContext(r.Context())
+	vehicle, err := s.deps.Vehicles.PlaceOnHold(r.Context(), vin, req.Reason, claims.UserID)
+	if err != nil {
+		writeError(w, err)
 		return
 	}
+	writeJSON(w, http.StatusOK, vehicle)
+}
 
+// handleVehicleReleaseFromHold restores the pre-hold status.
+func (s *server) handleVehicleReleaseFromHold(w http.ResponseWriter, r *http.Request) {
+	vin := chi.URLParam(r, "vin")
 	claims, _ := ClaimsFromContext(r.Context())
-	vehicle, err := s.deps.Vehicles.ChangeStatus(r.Context(), vin, target, claims.UserID)
+	vehicle, err := s.deps.Vehicles.ReleaseFromHold(r.Context(), vin, claims.UserID)
 	if err != nil {
 		writeError(w, err)
 		return

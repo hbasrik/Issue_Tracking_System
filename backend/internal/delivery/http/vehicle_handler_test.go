@@ -48,6 +48,15 @@ func (f *recordingVehicleRepo) UpdateProgress(context.Context, string, float64, 
 func (f *recordingVehicleRepo) UpdateStatus(context.Context, string, domain.VehicleStatus) error {
 	return nil
 }
+func (f *recordingVehicleRepo) PlaceOnHold(context.Context, string, string) error {
+	return nil
+}
+func (f *recordingVehicleRepo) ReleaseFromHold(context.Context, string) error {
+	return nil
+}
+func (f *recordingVehicleRepo) UpdateStatusAllowingRewind(context.Context, string, domain.VehicleStatus) error {
+	return nil
+}
 func (f *recordingVehicleRepo) BulkInsertPlanned(context.Context, []string) ([]string, error) {
 	return nil, nil
 }
