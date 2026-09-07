@@ -318,26 +318,14 @@ func (r *VehicleRepo) ReleaseFromHold(ctx context.Context, vin string) error {
 	return nil
 }
 
-// UpdateStatusAllowingRewind is used by development EOL reset only.
+// UpdateStatusAllowingRewind is for development EOL reset only. It calls
+// fn_ops_set_vehicle_status so the one-way trigger can be bypassed without the
+// application ever setting karea.allow_status_rewind (that GUC is DBA-only).
 func (r *VehicleRepo) UpdateStatusAllowingRewind(ctx context.Context, vin string, status domain.VehicleStatus) error {
-	ex := executor(ctx, r.pool)
-	if _, err := ex.Exec(ctx, `SELECT set_config('karea.allow_status_rewind', 'true', true)`); err != nil {
-		return err
-	}
-	tag, err := ex.Exec(ctx,
-		`UPDATE vehicles
-		 SET current_global_status = $2,
-		     status_before_hold = NULL,
-		     hold_reason = NULL
-		 WHERE vin = $1`,
+	_, err := executor(ctx, r.pool).Exec(ctx,
+		`SELECT fn_ops_set_vehicle_status($1, $2::vehicle_status_enum)`,
 		vin, string(status))
-	if err != nil {
-		return err
-	}
-	if tag.RowsAffected() == 0 {
-		return domain.ErrNotFound
-	}
-	return nil
+	return err
 }
 
 // BulkInsertPlanned inserts the given VINs as PLANNED. Conflicts are skipped.

@@ -29,8 +29,8 @@ type VehicleRepository interface {
 	PlaceOnHold(ctx context.Context, vin string, reason string) error
 	// ReleaseFromHold restores status_before_hold and clears hold fields.
 	ReleaseFromHold(ctx context.Context, vin string) error
-	// UpdateStatusAllowingRewind is for development EOL reset only; sets a
-	// transaction-local GUC so the one-way trigger permits backward moves.
+	// UpdateStatusAllowingRewind is for development EOL reset only. It must not
+	// set karea.allow_status_rewind from application SQL; use fn_ops_set_vehicle_status.
 	UpdateStatusAllowingRewind(ctx context.Context, vin string, status domain.VehicleStatus) error
 	// BulkInsertPlanned inserts VINs as PLANNED (model and station unset).
 	// Existing VINs are skipped. Returns the VINs that were actually inserted.
