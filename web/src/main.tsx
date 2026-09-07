@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from './auth/AuthProvider';
 import { I18nProvider } from './i18n';
 import { ThemeProvider } from './theme/ThemeProvider';
+import { ConfirmProvider } from './components/ConfirmDialog';
 import App from './App';
 import './index.css';
 
@@ -13,7 +14,9 @@ createRoot(document.getElementById('root')!).render(
       <I18nProvider>
         <ThemeProvider>
           <AuthProvider>
-            <App />
+            <ConfirmProvider>
+              <App />
+            </ConfirmProvider>
           </AuthProvider>
         </ThemeProvider>
       </I18nProvider>

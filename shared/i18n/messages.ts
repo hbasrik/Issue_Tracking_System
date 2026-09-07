@@ -28,6 +28,7 @@ export const tr = {
   'common.activate': 'Aktife al',
   'common.deactivate': 'Pasife çek',
   'common.copied': 'Kopyalandı',
+  'common.confirm': 'Onayla',
   'common.confirmDelete': 'Evet, sil',
   'common.noMatches': 'Eşleşme yok',
   'common.moveUp': 'Yukarı taşı',
@@ -555,6 +556,7 @@ export const tr = {
   'eol.loadFailed': 'EoL iş akışı yüklenemedi',
   'eol.resetConfirm':
     'Bu aracın EoL iş akışını Şube / IN_PRODUCTION durumuna sıfırla? Yalnızca geliştirme — production’da yok.',
+  'eol.resetConfirmTitle': 'EoL iş akışını sıfırla',
   'eol.resetFailed': 'EoL sıfırlanamadı',
   'eol.resetHint':
     'Yalnızca geliştirme — EoL’u Şube’ye ve araç durumunu IN_PRODUCTION’a sıfırlar. APP_ENV=development dışında gizli ve 404.',
@@ -759,6 +761,10 @@ export const tr = {
     'Yeni madde {affected} başlamamış araca PENDING olarak eklenecek, {protected} araç çalışmaya başladığı için etkilenmeyecek. Onaylıyor musunuz?',
   'templates.confirmDelete':
     'Bu madde kalıcı silinecek ({affected} PENDING kayıt temizlenecek). Bu işlem geri alınamaz. Onaylıyor musunuz?',
+  'templates.confirmCreateTitle': 'Madde ekle',
+  'templates.confirmActivateTitle': 'Maddeyi aktife al',
+  'templates.confirmDeactivateTitle': 'Maddeyi pasife çek',
+  'templates.confirmDeleteTitle': 'Maddeyi sil',
   'templates.deleteBlocked':
     'Bu madde {protected} araçta değerlendirilmiş veya issue\'ya bağlı — silinemez. Pasife çekin.',
 
@@ -798,6 +804,7 @@ export const tr = {
   'users.tempPasswordFor': '{name} için geçici şifre',
   'users.resetConfirm':
     '{name} için yeni geçici şifre üretilsin mi? Kullanıcı bir sonraki girişte şifre değiştirmek zorunda kalır.',
+  'users.resetConfirmTitle': 'Şifreyi sıfırla',
   'users.deleteBody':
     '{name} ({email}) kalıcı olarak silinsin mi? Yalnızca hiç işlem yapmamış hesaplar silinebilir. İşlem yapmış kullanıcıları pasife çekin.',
   'users.assignment': 'Atama',
@@ -986,6 +993,7 @@ export const en: Record<MessageKey, string> = {
   'common.activate': 'Activate',
   'common.deactivate': 'Deactivate',
   'common.copied': 'Copied',
+  'common.confirm': 'Confirm',
   'common.confirmDelete': 'Yes, delete',
   'common.noMatches': 'No matches',
   'common.moveUp': 'Move up',
@@ -1322,6 +1330,7 @@ export const en: Record<MessageKey, string> = {
   'eol.loadFailed': 'Could not load EoL workflow',
   'eol.resetConfirm':
     'Reset this vehicle’s EoL workflow to Branch / IN_PRODUCTION? Test-only — not available outside development.',
+  'eol.resetConfirmTitle': 'Reset EoL workflow',
   'eol.resetFailed': 'Could not reset EoL',
   'eol.resetHint':
     'Test-only — resets EoL to Branch and vehicle status to IN_PRODUCTION. Hidden and 404 outside APP_ENV=development.',
@@ -1853,6 +1862,7 @@ export const en: Record<MessageKey, string> = {
   'users.heading': 'Users and roles',
   'users.newUser': 'New user',
   'users.resetConfirm': 'Generate a new temporary password for {name}? They must change it at next sign-in.',
+  'users.resetConfirmTitle': 'Reset password',
   'users.subtitle': 'Assign any catalog role. Permissions are edited on the Roles matrix. At least one active administrator must remain. Closing an account uses the Active/Inactive switch: inactive users cannot sign in; historical records are kept. Delete is only for accounts with no recorded work.',
   'users.tempFor': 'Temporary password for {name}',
   'users.tempOnceHint': 'This password is shown only once. The user must change it on first sign-in.',
@@ -1887,6 +1897,10 @@ export const en: Record<MessageKey, string> = {
     'The new item will be added as PENDING on {affected} not-started vehicles; {protected} vehicles already started and stay unchanged. Continue?',
   'templates.confirmDelete':
     'This item will be permanently deleted ({affected} PENDING rows cleaned up). This cannot be undone. Continue?',
+  'templates.confirmCreateTitle': 'Add item',
+  'templates.confirmActivateTitle': 'Activate item',
+  'templates.confirmDeactivateTitle': 'Deactivate item',
+  'templates.confirmDeleteTitle': 'Delete item',
   'templates.deleteBlocked':
     'This item is evaluated or issue-linked on {protected} vehicles — cannot delete. Deactivate instead.',
 
