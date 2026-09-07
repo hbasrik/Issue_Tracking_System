@@ -27,39 +27,52 @@ var _ repository.VehicleRepository = (*VehicleRepo)(nil)
 
 const vehicleColumns = `vin, vehicle_model_id,
 	current_global_status, current_station_id, total_progress_percentage,
-	eol_template_id, shipment_template_id, test_template_id, created_at, updated_at`
+	eol_template_id, shipment_template_id, test_template_id,
+	status_before_hold, hold_reason, created_at, updated_at`
 
 const vehicleListSelect = `vehicles.vin, vehicles.vehicle_model_id,
 	vehicles.current_global_status, vehicles.current_station_id, vehicles.total_progress_percentage,
 	vehicles.eol_template_id, vehicles.shipment_template_id, vehicles.test_template_id,
+	vehicles.status_before_hold, vehicles.hold_reason,
 	vehicles.created_at, vehicles.updated_at, w.current_stage`
 
 func scanVehicle(row pgx.Row) (*domain.Vehicle, error) {
 	var v domain.Vehicle
 	var status string
+	var beforeHold *string
 	if err := row.Scan(
 		&v.VIN, &v.VehicleModelID, &status, &v.CurrentStationID,
 		&v.TotalProgressPercentage, &v.EOLTemplateID, &v.ShipmentTemplateID,
-		&v.TestTemplateID, &v.CreatedAt, &v.UpdatedAt,
+		&v.TestTemplateID, &beforeHold, &v.HoldReason, &v.CreatedAt, &v.UpdatedAt,
 	); err != nil {
 		return nil, err
 	}
 	v.CurrentGlobalStatus = domain.VehicleStatus(status)
+	if beforeHold != nil && *beforeHold != "" {
+		s := domain.VehicleStatus(*beforeHold)
+		v.StatusBeforeHold = &s
+	}
 	return &v, nil
 }
 
 func scanVehicleListRow(row pgx.Row) (*domain.Vehicle, error) {
 	var v domain.Vehicle
 	var status string
+	var beforeHold *string
 	var eolStage *string
 	if err := row.Scan(
 		&v.VIN, &v.VehicleModelID, &status, &v.CurrentStationID,
 		&v.TotalProgressPercentage, &v.EOLTemplateID, &v.ShipmentTemplateID,
-		&v.TestTemplateID, &v.CreatedAt, &v.UpdatedAt, &eolStage,
+		&v.TestTemplateID, &beforeHold, &v.HoldReason,
+		&v.CreatedAt, &v.UpdatedAt, &eolStage,
 	); err != nil {
 		return nil, err
 	}
 	v.CurrentGlobalStatus = domain.VehicleStatus(status)
+	if beforeHold != nil && *beforeHold != "" {
+		s := domain.VehicleStatus(*beforeHold)
+		v.StatusBeforeHold = &s
+	}
 	if eolStage != nil && *eolStage != "" {
 		stage := domain.EOLWorkflowStage(*eolStage)
 		v.CurrentEOLStage = &stage
@@ -67,10 +80,14 @@ func scanVehicleListRow(row pgx.Row) (*domain.Vehicle, error) {
 	return &v, nil
 }
 
-// GetByVIN returns the vehicle with the exact VIN.
+// GetByVIN returns the vehicle with the exact VIN (includes live EOL stage).
 func (r *VehicleRepo) GetByVIN(ctx context.Context, vin string) (*domain.Vehicle, error) {
-	row := executor(ctx, r.pool).QueryRow(ctx, `SELECT `+vehicleColumns+` FROM vehicles WHERE vin = $1`, vin)
-	v, err := scanVehicle(row)
+	row := executor(ctx, r.pool).QueryRow(ctx,
+		`SELECT `+vehicleListSelect+`
+		 FROM vehicles
+		 LEFT JOIN vehicle_eol_workflow w ON w.vin = vehicles.vin
+		 WHERE vehicles.vin = $1`, vin)
+	v, err := scanVehicleListRow(row)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, domain.ErrNotFound
 	}
@@ -78,14 +95,16 @@ func (r *VehicleRepo) GetByVIN(ctx context.Context, vin string) (*domain.Vehicle
 }
 
 // vehicleFilterClause builds a shared WHERE fragment for List and Count.
-// PLANNED VINs are always excluded from the Vehicles table (Karar 10).
+// PLANNED VINs are always excluded from the Vehicles table (Karar 10) unless
+// the unified lifecycle filter explicitly asks for PLANNED.
 func vehicleFilterClause(f domain.VehicleListFilter) (string, []any) {
 	var conds []string
 	var args []any
 
+	includePlanned := f.Lifecycle != nil && *f.Lifecycle == domain.LifecyclePlanned
 	if f.AnalysisStat == domain.VehicleAnalysisStatOnLine {
 		conds = append(conds, "vehicles.current_global_status = 'IN_PRODUCTION'")
-	} else {
+	} else if !includePlanned {
 		conds = append(conds, "vehicles.current_global_status <> 'PLANNED'")
 	}
 
@@ -93,7 +112,33 @@ func vehicleFilterClause(f domain.VehicleListFilter) (string, []any) {
 		args = append(args, f.VINContains)
 		conds = append(conds, fmt.Sprintf("vehicles.vin ILIKE '%%' || $%d || '%%'", len(args)))
 	}
-	if f.Status != nil {
+	if f.Lifecycle != nil {
+		switch *f.Lifecycle {
+		case domain.LifecyclePlanned:
+			conds = append(conds, "vehicles.current_global_status = 'PLANNED'")
+		case domain.LifecycleOnLine:
+			conds = append(conds, "vehicles.current_global_status = 'IN_PRODUCTION'")
+		case domain.LifecycleAtDepot:
+			conds = append(conds, `vehicles.current_global_status = 'IN_WAREHOUSE'
+				AND EXISTS (
+					SELECT 1 FROM vehicle_eol_workflow w
+					WHERE w.vin = vehicles.vin
+					  AND w.current_stage IS DISTINCT FROM 'COMPLETED'
+				)`)
+		case domain.LifecycleReadyToShip:
+			conds = append(conds, `vehicles.current_global_status = 'IN_WAREHOUSE'
+				AND EXISTS (
+					SELECT 1 FROM vehicle_eol_workflow w
+					WHERE w.vin = vehicles.vin
+					  AND w.current_stage = 'COMPLETED'
+					  AND w.delivered_at IS NULL
+				)`)
+		case domain.LifecycleDelivered:
+			conds = append(conds, "vehicles.current_global_status IN ('DELIVERED', 'SHIPPED')")
+		case domain.LifecycleOnHold:
+			conds = append(conds, "vehicles.current_global_status = 'ON_HOLD'")
+		}
+	} else if f.Status != nil {
 		args = append(args, string(*f.Status))
 		conds = append(conds, fmt.Sprintf("vehicles.current_global_status = $%d", len(args)))
 	}
@@ -105,7 +150,7 @@ func vehicleFilterClause(f domain.VehicleListFilter) (string, []any) {
 		args = append(args, *f.StationID)
 		conds = append(conds, fmt.Sprintf("vehicles.current_station_id = $%d", len(args)))
 	}
-	if f.EOLStage != nil {
+	if f.EOLStage != nil && f.Lifecycle == nil {
 		switch *f.EOLStage {
 		case domain.EOLStageDepot:
 			conds = append(conds, `EXISTS (
@@ -225,6 +270,66 @@ func (r *VehicleRepo) UpdateProgress(ctx context.Context, vin string, percentage
 func (r *VehicleRepo) UpdateStatus(ctx context.Context, vin string, status domain.VehicleStatus) error {
 	tag, err := executor(ctx, r.pool).Exec(ctx,
 		`UPDATE vehicles SET current_global_status = $2 WHERE vin = $1`,
+		vin, string(status))
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		return domain.ErrNotFound
+	}
+	return nil
+}
+
+// PlaceOnHold parks the vehicle on ON_HOLD with prior status + reason.
+func (r *VehicleRepo) PlaceOnHold(ctx context.Context, vin string, reason string) error {
+	tag, err := executor(ctx, r.pool).Exec(ctx, `
+		UPDATE vehicles
+		 SET status_before_hold = current_global_status,
+		     hold_reason = $2,
+		     current_global_status = 'ON_HOLD'
+		 WHERE vin = $1
+		   AND current_global_status NOT IN ('ON_HOLD', 'PLANNED', 'DELIVERED', 'SHIPPED')`,
+		vin, reason)
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		return domain.ErrCannotHold
+	}
+	return nil
+}
+
+// ReleaseFromHold restores status_before_hold.
+func (r *VehicleRepo) ReleaseFromHold(ctx context.Context, vin string) error {
+	tag, err := executor(ctx, r.pool).Exec(ctx, `
+		UPDATE vehicles
+		 SET current_global_status = status_before_hold,
+		     status_before_hold = NULL,
+		     hold_reason = NULL
+		 WHERE vin = $1
+		   AND current_global_status = 'ON_HOLD'
+		   AND status_before_hold IS NOT NULL`, vin)
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		return domain.ErrNotOnHold
+	}
+	return nil
+}
+
+// UpdateStatusAllowingRewind is used by development EOL reset only.
+func (r *VehicleRepo) UpdateStatusAllowingRewind(ctx context.Context, vin string, status domain.VehicleStatus) error {
+	ex := executor(ctx, r.pool)
+	if _, err := ex.Exec(ctx, `SELECT set_config('karea.allow_status_rewind', 'true', true)`); err != nil {
+		return err
+	}
+	tag, err := ex.Exec(ctx,
+		`UPDATE vehicles
+		 SET current_global_status = $2,
+		     status_before_hold = NULL,
+		     hold_reason = NULL
+		 WHERE vin = $1`,
 		vin, string(status))
 	if err != nil {
 		return err

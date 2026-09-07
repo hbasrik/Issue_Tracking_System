@@ -62,11 +62,14 @@ WHERE ($1::timestamptz IS NULL OR %s >= $1)
   AND ($5 = '' OR v.current_global_status::text = $5)
   AND ($6 = '' OR it.name ILIKE '%%' || $6 || '%%')
   AND ($7 = '' OR i.severity::text = $7)
-  AND ($8 = '' OR %s = $8)`, eolStageExpr)
+  AND ($8 = '' OR ($8 = 'AT_DEPOT' AND %s IS DISTINCT FROM 'COMPLETED') OR %s = $8)`, eolStageExpr, eolStageExpr)
 }
 
 func eolStageWhere(param int) string {
-	return fmt.Sprintf(`AND ($%d = '' OR %s = $%d)`, param, eolStageExpr, param)
+	return fmt.Sprintf(
+		`AND ($%d = '' OR ($%d = 'AT_DEPOT' AND %s IS DISTINCT FROM 'COMPLETED') OR %s = $%d)`,
+		param, param, eolStageExpr, eolStageExpr, param,
+	)
 }
 
 type boundArgs struct {
@@ -106,7 +109,24 @@ func bounds(f domain.AnalysisFilter) boundArgs {
 	if f.StationID != nil {
 		b.station = *f.StationID
 	}
-	if f.VehicleStatus != nil {
+	if f.Lifecycle != nil {
+		switch *f.Lifecycle {
+		case domain.LifecyclePlanned:
+			b.status = string(domain.VehicleStatusPlanned)
+		case domain.LifecycleOnLine:
+			b.status = string(domain.VehicleStatusInProduction)
+		case domain.LifecycleAtDepot:
+			b.status = string(domain.VehicleStatusInWarehouse)
+			b.eolStage = "AT_DEPOT"
+		case domain.LifecycleReadyToShip:
+			b.status = string(domain.VehicleStatusInWarehouse)
+			b.eolStage = "COMPLETED"
+		case domain.LifecycleDelivered:
+			b.status = string(domain.VehicleStatusDelivered)
+		case domain.LifecycleOnHold:
+			b.status = string(domain.VehicleStatusOnHold)
+		}
+	} else if f.VehicleStatus != nil {
 		b.status = string(*f.VehicleStatus)
 	}
 	if f.Severity != nil {
