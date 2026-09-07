@@ -55,10 +55,25 @@ veya damga olmadan atlama / geriye dönüş `RAISE EXCEPTION` ile reddedilir
   `SELECT set_config('karea.allow_status_rewind', 'true', true);` ardından
   `UPDATE` / `COMMIT`.
 - **Neden:** Trigger'ı `DROP` etmeden kontrollü düzeltme imkânı.
-- **Uygulama yasak:** Backend/API bu GUC'yu **asla** set etmez (`allow_status_rewind`
-  için uygulama ağacında eşleşme olmamalı). Geliştirme ortamındaki EoL
-  sıfırlama (`POST .../eol/reset`) gerekirse `fn_ops_set_vehicle_status`
-  DB fonksiyonunu çağırır; bayrağı HTTP katmanına taşımaz.
+- **Uygulama yasak:** Backend, bu GUC adını uygulama SQL'inde set etmez
+  (`set_config('karea.allow_status_rewind'…)` Go ağacında olmamalı).
+
+#### Geliştirme EoL reset (`POST /vehicles/{vin}/eol/reset`)
+Yerel yeniden deneme için iş akışını BRANCH'e ve aracı `IN_PRODUCTION`'a
+geri saran geliştirme aracıdır. Canlıda erişilemez:
+
+1. HTTP: `requireDevelopment` — `APP_ENV != development` ise **404**
+   (auth'tan önce).
+2. Yetki: `admin.manage_masters` + giriş yapmış kullanıcı.
+3. Wire: production/staging binary `EOLReset` usecase'ini **hiç oluşturmaz**.
+4. DB: `fn_ops_set_vehicle_status` tek yön trigger'ını içeride atlar ama
+   yalnızca oturumda `karea.app_env=development` iken çalışır (API havuzu
+   `APP_ENV`'i her bağlantıya yazar). Production bağlantısında fonksiyon
+   `RAISE EXCEPTION` eder.
+5. UI: buton yalnızca Vite `import.meta.env.DEV` iken görünür.
+
+Manuel veri onarımı için bu fonksiyon kullanılmaz; DBA `allow_status_rewind`
+GUC'unu kullanır.
 
 ### 2.4 Operatör Takibi Görünürlüğü
 `production_phase_progress.checked_by` ve `eol_and_shipment_checklist_progress.checker_id`, tam olarak istediğiniz "X Operatörü tarafından onaylandı" arayüz metnini besler — uygulama katmanı bu kolonu `users.full_name` ile JOIN edip madde altında gösterir.
