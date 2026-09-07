@@ -58,7 +58,7 @@ func (s *EOLWorkflowResetter) Reset(ctx context.Context, vin string, actorID int
 		if err := s.workflow.ResetToBranch(txCtx, vin); err != nil {
 			return err
 		}
-		if err := s.vehicles.UpdateStatus(txCtx, vin, domain.VehicleStatusInProduction); err != nil {
+		if err := s.vehicles.UpdateStatusAllowingRewind(txCtx, vin, domain.VehicleStatusInProduction); err != nil {
 			return err
 		}
 		return s.audit.Append(txCtx, domain.AuditLog{

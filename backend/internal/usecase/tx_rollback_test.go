@@ -9,9 +9,9 @@ import (
 	"github.com/karea/backend/internal/usecase"
 )
 
-// TestVehicleStatusChangeRollsBackOnAuditFailure proves atomicity: when the
+// TestVehiclePlaceOnHoldRollsBackOnAuditFailure proves atomicity: when the
 // audit insert fails inside WithinTx, the vehicle status must remain unchanged.
-func TestVehicleStatusChangeRollsBackOnAuditFailure(t *testing.T) {
+func TestVehiclePlaceOnHoldRollsBackOnAuditFailure(t *testing.T) {
 	const actorID = 7
 	vehicles := newFakeVehicleRepo()
 	vehicles.vehicles["VIN0000000000001"] = &domain.Vehicle{
@@ -23,7 +23,7 @@ func TestVehicleStatusChangeRollsBackOnAuditFailure(t *testing.T) {
 	uow := &snapshotFakeUoW{vehicles: vehicles, audit: audit}
 	svc := usecase.NewVehicleService(vehicles, newFakeChecklistRepo(), audit, uow)
 
-	_, err := svc.ChangeStatus(context.Background(), "VIN0000000000001", domain.VehicleStatusOnHold, actorID)
+	_, err := svc.PlaceOnHold(context.Background(), "VIN0000000000001", "parts delay", actorID)
 	if !errors.Is(err, errAuditInsertFailed) {
 		t.Fatalf("expected audit insert error, got %v", err)
 	}

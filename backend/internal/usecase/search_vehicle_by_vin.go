@@ -83,64 +83,92 @@ func (s *VehicleService) SearchByVINSuffix(ctx context.Context, suffix string, l
 	return s.vehicles.SearchByVINSuffix(ctx, suffix, limit)
 }
 
-// ChangeStatus performs a manual (Manager/Admin) global status transition,
-// enforcing the shipment hard-block gate independently of the database trigger
-// (defense in depth, FR-4.3). Moving a vehicle to WITH_CUSTOMER or SHIPPED is
-// rejected with a *domain.GateBlockedError when any shipment checklist item is
-// not OK/CONDITIONAL_OK. On success it records a STATUS_CHANGE audit entry
-// attributed to actorID so the change is traceable to the acting user (FR-1.2).
+// ChangeStatus is no longer used for free status edits. Vehicle status advances
+// only through EOL workflow actions; managers park/restore via PlaceOnHold /
+// ReleaseFromHold. Kept as a hard reject so stale clients get a clear error.
 func (s *VehicleService) ChangeStatus(ctx context.Context, vin string, target domain.VehicleStatus, actorID int) (*domain.Vehicle, error) {
-	if !target.Valid() {
-		return nil, domain.ErrInvalidEnumValue
-	}
+	_ = ctx
+	_ = vin
+	_ = target
+	_ = actorID
+	return nil, fmt.Errorf("%w: vehicle status changes only via EoL workflow or hold actions", domain.ErrInvalidStatusTransition)
+}
 
+// PlaceOnHold parks an in-progress vehicle on ON_HOLD with a required reason.
+func (s *VehicleService) PlaceOnHold(ctx context.Context, vin string, reason string, actorID int) (*domain.Vehicle, error) {
+	reason = strings.TrimSpace(reason)
+	if reason == "" {
+		return nil, domain.ErrHoldReasonRequired
+	}
 	vehicle, err := s.vehicles.GetByVIN(ctx, vin)
 	if err != nil {
 		return nil, err
 	}
-	previousStatus := vehicle.CurrentGlobalStatus
-	if previousStatus == domain.VehicleStatusPlanned || target == domain.VehicleStatusPlanned {
-		return nil, fmt.Errorf("%w: PLANNED status changes only when the first station step is processed", domain.ErrInvalidStatusTransition)
-	}
-
-	shipmentGateOpen := true
-	if target == domain.VehicleStatusDelivered || target == domain.VehicleStatusShipped {
-		items, err := s.checklist.ListByVINAndType(ctx, vin, domain.ChecklistTypeShipment)
-		if err != nil {
-			return nil, err
-		}
-		open, blocking := EvaluateChecklistGate(items)
-		if !open {
-			return nil, &domain.GateBlockedError{
-				ChecklistType:   domain.ChecklistTypeShipment,
-				BlockingItemIDs: blocking,
-			}
-		}
-		shipmentGateOpen = open
-	}
-
-	if err := AuthorizeStatusTransition(target, shipmentGateOpen); err != nil {
-		return nil, err
+	previous := vehicle.CurrentGlobalStatus
+	switch previous {
+	case domain.VehicleStatusInProduction, domain.VehicleStatusInWarehouse:
+		// ok
+	default:
+		return nil, domain.ErrCannotHold
 	}
 
 	performedBy := actorID
 	err = s.uow.WithinTx(ctx, func(txCtx context.Context) error {
-		if err := s.vehicles.UpdateStatus(txCtx, vin, target); err != nil {
+		if err := s.vehicles.PlaceOnHold(txCtx, vin, reason); err != nil {
 			return err
 		}
 		return s.audit.Append(txCtx, domain.AuditLog{
 			VIN:         vin,
 			EventType:   domain.AuditEventStatusChange,
-			OldValue:    string(previousStatus),
-			NewValue:    string(target),
+			OldValue:    string(previous),
+			NewValue:    string(domain.VehicleStatusOnHold),
 			PerformedBy: &performedBy,
+			Metadata: map[string]any{
+				"hold_reason": reason,
+				"action":      "place_on_hold",
+			},
 		})
 	})
 	if err != nil {
 		return nil, err
 	}
-	vehicle.CurrentGlobalStatus = target
-	return vehicle, nil
+	return s.vehicles.GetByVIN(ctx, vin)
+}
+
+// ReleaseFromHold restores the status captured when the vehicle entered hold.
+func (s *VehicleService) ReleaseFromHold(ctx context.Context, vin string, actorID int) (*domain.Vehicle, error) {
+	vehicle, err := s.vehicles.GetByVIN(ctx, vin)
+	if err != nil {
+		return nil, err
+	}
+	if vehicle.CurrentGlobalStatus != domain.VehicleStatusOnHold {
+		return nil, domain.ErrNotOnHold
+	}
+	restore := domain.VehicleStatusInProduction
+	if vehicle.StatusBeforeHold != nil {
+		restore = *vehicle.StatusBeforeHold
+	}
+
+	performedBy := actorID
+	err = s.uow.WithinTx(ctx, func(txCtx context.Context) error {
+		if err := s.vehicles.ReleaseFromHold(txCtx, vin); err != nil {
+			return err
+		}
+		return s.audit.Append(txCtx, domain.AuditLog{
+			VIN:         vin,
+			EventType:   domain.AuditEventStatusChange,
+			OldValue:    string(domain.VehicleStatusOnHold),
+			NewValue:    string(restore),
+			PerformedBy: &performedBy,
+			Metadata: map[string]any{
+				"action": "release_from_hold",
+			},
+		})
+	})
+	if err != nil {
+		return nil, err
+	}
+	return s.vehicles.GetByVIN(ctx, vin)
 }
 
 // ListStatusHistory returns chronological STATUS_CHANGE events for the VIN.

@@ -9,10 +9,9 @@ import (
 	"github.com/karea/backend/internal/usecase"
 )
 
-// TestVehicleStatusChangeRecordsPerformedBy proves that a successful manual
-// vehicle status change writes an audit_logs entry whose performed_by is
-// populated with the acting user's id (FR-1.2).
-func TestVehicleStatusChangeRecordsPerformedBy(t *testing.T) {
+// TestVehiclePlaceOnHoldRecordsPerformedBy proves that a successful hold
+// writes an audit_logs entry whose performed_by is the acting user's id.
+func TestVehiclePlaceOnHoldRecordsPerformedBy(t *testing.T) {
 	const actorID = 7
 	vehicles := newFakeVehicleRepo()
 	vehicles.vehicles["VIN0000000000001"] = &domain.Vehicle{
@@ -22,9 +21,9 @@ func TestVehicleStatusChangeRecordsPerformedBy(t *testing.T) {
 	audit := newFakeAuditRepo()
 	svc := usecase.NewVehicleService(vehicles, newFakeChecklistRepo(), audit, &passthroughFakeUoW{})
 
-	_, err := svc.ChangeStatus(context.Background(), "VIN0000000000001", domain.VehicleStatusOnHold, actorID)
+	_, err := svc.PlaceOnHold(context.Background(), "VIN0000000000001", "parts delay", actorID)
 	if err != nil {
-		t.Fatalf("ChangeStatus returned error: %v", err)
+		t.Fatalf("PlaceOnHold returned error: %v", err)
 	}
 
 	if len(audit.entries) != 1 {
@@ -42,6 +41,9 @@ func TestVehicleStatusChangeRecordsPerformedBy(t *testing.T) {
 	}
 	if entry.OldValue != string(domain.VehicleStatusInProduction) || entry.NewValue != string(domain.VehicleStatusOnHold) {
 		t.Errorf("unexpected old/new value: %q -> %q", entry.OldValue, entry.NewValue)
+	}
+	if entry.Metadata["hold_reason"] != "parts delay" {
+		t.Errorf("expected hold_reason in metadata, got %#v", entry.Metadata)
 	}
 }
 

@@ -10,7 +10,9 @@ import (
 	"github.com/karea/backend/internal/usecase"
 )
 
-func TestChangeStatus_RejectsPlanned(t *testing.T) {
+// TestChangeStatus_RejectsFreeEdits proves free PATCH-style status changes are
+// hard-rejected; status advances only via EoL workflow or hold actions.
+func TestChangeStatus_RejectsFreeEdits(t *testing.T) {
 	vehicles := newFakeVehicleRepo()
 	vehicles.vehicles["VIN0000000000001"] = &domain.Vehicle{
 		VIN:                 "VIN0000000000001",

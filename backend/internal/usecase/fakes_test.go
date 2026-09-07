@@ -144,6 +144,41 @@ func (f *fakeVehicleRepo) UpdateStatus(_ context.Context, vin string, status dom
 	return nil
 }
 
+func (f *fakeVehicleRepo) PlaceOnHold(_ context.Context, vin string, reason string) error {
+	v, ok := f.vehicles[vin]
+	if !ok {
+		return domain.ErrNotFound
+	}
+	switch v.CurrentGlobalStatus {
+	case domain.VehicleStatusInProduction, domain.VehicleStatusInWarehouse:
+		prev := v.CurrentGlobalStatus
+		v.StatusBeforeHold = &prev
+		v.HoldReason = &reason
+		v.CurrentGlobalStatus = domain.VehicleStatusOnHold
+		return nil
+	default:
+		return domain.ErrCannotHold
+	}
+}
+
+func (f *fakeVehicleRepo) ReleaseFromHold(_ context.Context, vin string) error {
+	v, ok := f.vehicles[vin]
+	if !ok {
+		return domain.ErrNotFound
+	}
+	if v.CurrentGlobalStatus != domain.VehicleStatusOnHold || v.StatusBeforeHold == nil {
+		return domain.ErrNotOnHold
+	}
+	v.CurrentGlobalStatus = *v.StatusBeforeHold
+	v.StatusBeforeHold = nil
+	v.HoldReason = nil
+	return nil
+}
+
+func (f *fakeVehicleRepo) UpdateStatusAllowingRewind(ctx context.Context, vin string, status domain.VehicleStatus) error {
+	return f.UpdateStatus(ctx, vin, status)
+}
+
 func (f *fakeVehicleRepo) BulkInsertPlanned(_ context.Context, vins []string) ([]string, error) {
 	var created []string
 	for _, vin := range vins {
