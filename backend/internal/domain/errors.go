@@ -40,6 +40,12 @@ var (
 	// ErrInvalidStatusTransition indicates a requested status change is not
 	// permitted from the current state or for the acting role.
 	ErrInvalidStatusTransition = errors.New("invalid status transition")
+	// ErrHoldReasonRequired indicates ON_HOLD was requested without a reason.
+	ErrHoldReasonRequired = errors.New("hold reason is required")
+	// ErrNotOnHold indicates unhold was requested for a vehicle that is not on hold.
+	ErrNotOnHold = errors.New("vehicle is not on hold")
+	// ErrCannotHold indicates the vehicle cannot enter ON_HOLD from its status.
+	ErrCannotHold = errors.New("vehicle cannot be placed on hold from its current status")
 	// ErrForbidden indicates the acting role may not perform the operation.
 	ErrForbidden = errors.New("operation not permitted for role")
 	// ErrInvalidCredentials indicates a failed authentication attempt. It is

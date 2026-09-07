@@ -9,9 +9,10 @@ type AnalysisFilter struct {
 	From          *time.Time
 	To            *time.Time
 	StationID     *int
-	VehicleStatus *VehicleStatus
+	VehicleStatus *VehicleStatus // legacy; prefer Lifecycle
+	Lifecycle     *VehicleLifecycle
 	Severity      *IssueSeverity
-	EOLStage      string // BRANCH | DEPOT | COMPLETED (DOCUMENT maps to DEPOT)
+	EOLStage      string // BRANCH | DEPOT | COMPLETED (DOCUMENT maps to DEPOT); ignored when Lifecycle set
 	VINSuffix     string
 	VINs          []string // exact VIN list; when non-empty, VINSuffix is ignored
 	IssueType     string

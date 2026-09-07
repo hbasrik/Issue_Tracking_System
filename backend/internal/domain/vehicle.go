@@ -47,15 +47,16 @@ func (s VehicleAnalysisStat) Valid() bool {
 }
 
 // VehicleListFilter carries the filters for the web vehicle-list table
-// (VIN fragment, status, model) plus pagination. Non-empty/non-nil fields are
+// (VIN fragment, lifecycle, model) plus pagination. Non-empty/non-nil fields are
 // combined with AND semantics. List/Count always hide PLANNED vehicles
-// (Karar 10); VIN typeahead is a separate query and includes them.
-// AnalysisStat, when set, is the Analysis KPI card drill-down (shipped in
-// window, depot-released in window, or live IN_PRODUCTION snapshot).
+// (Karar 10) unless Lifecycle is explicitly PLANNED. AnalysisStat, when set, is
+// the Analysis KPI card drill-down (shipped in window, depot-released in
+// window, or live IN_PRODUCTION snapshot).
 type VehicleListFilter struct {
 	VINContains  string
-	Status       *VehicleStatus
-	EOLStage     *EOLWorkflowStage
+	Status       *VehicleStatus // legacy; prefer Lifecycle
+	Lifecycle    *VehicleLifecycle
+	EOLStage     *EOLWorkflowStage // legacy; prefer Lifecycle
 	ModelID      *int
 	StationID    *int
 	AnalysisStat VehicleAnalysisStat
@@ -75,6 +76,8 @@ type Vehicle struct {
 	VehicleModelID          *int
 	CurrentGlobalStatus     VehicleStatus
 	CurrentEOLStage         *EOLWorkflowStage
+	StatusBeforeHold        *VehicleStatus
+	HoldReason              *string
 	CurrentStationID        *int
 	TotalProgressPercentage float64
 	EOLTemplateID           *int
