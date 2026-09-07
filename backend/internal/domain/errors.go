@@ -203,7 +203,8 @@ func (e *DepotReleaseBlockedError) Error() string {
 }
 
 // TemplateItemInUseError is returned when DELETE is attempted on a catalogue
-// item that already has checklist_item_progress rows. Soft-deactivate instead.
+// item that already has evaluated progress or linked issues. Soft-deactivate
+// instead. PENDING-only materialization does not count as "in use".
 type TemplateItemInUseError struct {
 	VehicleCount int
 }
@@ -214,7 +215,15 @@ func (e *TemplateItemInUseError) Error() string {
 	if e != nil {
 		n = e.VehicleCount
 	}
-	return fmt.Sprintf("bu madde %d araçta kullanılmış, silinemez — pasife çekebilirsiniz", n)
+	return fmt.Sprintf("bu madde %d araçta değerlendirilmiş veya issue'ya bağlı, silinemez — pasife çekebilirsiniz", n)
+}
+
+// TemplateItemPropagationImpact describes how many vehicles a catalogue
+// change will touch versus leave alone (history preserved).
+type TemplateItemPropagationImpact struct {
+	Affected  int    `json:"Affected"`
+	Protected int    `json:"Protected"`
+	Action    string `json:"Action"` // deactivate | activate | create | delete
 }
 
 // UserInUseError is returned when DELETE is attempted on a user who still

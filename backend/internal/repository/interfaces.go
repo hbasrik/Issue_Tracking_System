@@ -56,9 +56,8 @@ type ChecklistProgressRepository interface {
 	// IS NULL) for the given checklist type.
 	ResolveDefaultTemplateID(ctx context.Context, checklistType domain.ChecklistType) (int, error)
 	// ListItemsWithProgress returns the vehicle's materialized checklist
-	// rows joined to catalogue text. Items added to the template after the
-	// vehicle was created are omitted (no backfill); deactivated items that
-	// already have progress remain visible.
+	// rows joined to catalogue text. Not-started vehicles receive catalogue
+	// add/reactivate backfill; deactivated PENDING rows are removed.
 	ListItemsWithProgress(ctx context.Context, vin string, checklistType domain.ChecklistType, templateID int) ([]domain.ChecklistItemView, error)
 	// SaveResult updates a single pre-materialized checklist progress row.
 	SaveResult(ctx context.Context, result domain.ChecklistProgress) error
@@ -78,13 +77,30 @@ type ChecklistProgressRepository interface {
 	// UpdateTemplateItem persists item_text, eol_phase and is_active.
 	UpdateTemplateItem(ctx context.Context, item *domain.ChecklistTemplateItem) error
 	// DeleteTemplateItem removes a catalogue row. Callers must refuse when
-	// progress exists; this is a hard delete of an unused item only.
+	// evaluated progress or linked issues exist; PENDING-only rows may be
+	// cleared first. This is a hard delete of an unused item only.
 	DeleteTemplateItem(ctx context.Context, itemID int) error
 	// ReorderTemplateItems assigns item_no 1..n in the given id order.
 	ReorderTemplateItems(ctx context.Context, templateID int, itemIDs []int) error
-	// CountProgressVINs returns how many distinct vehicles have a progress
-	// row for this catalogue item (used to block DELETE).
-	CountProgressVINs(ctx context.Context, itemID int) (int, error)
+	// CountEvaluatedProgressVINs returns distinct vehicles with non-PENDING
+	// progress for this catalogue item (blocks hard DELETE).
+	CountEvaluatedProgressVINs(ctx context.Context, itemID int) (int, error)
+	// CountIssueLinkedVINs returns distinct vehicles with an issue whose
+	// source_check_item_id is this catalogue item.
+	CountIssueLinkedVINs(ctx context.Context, itemID int) (int, error)
+	// DeactivateImpact counts PENDING rows that would be removed vs vehicles
+	// that keep history (evaluated or issue-linked).
+	DeactivateImpact(ctx context.Context, itemID int) (affected, protected int, err error)
+	// CreateImpact counts vehicles assigned to the template that have not
+	// started the checklist type (affected) vs those that have (protected).
+	CreateImpact(ctx context.Context, templateID int, checklistType domain.ChecklistType) (affected, protected int, err error)
+	// DeletePendingProgressForItem removes PENDING progress rows for the item
+	// that are not issue-linked. Evaluated rows are left intact.
+	DeletePendingProgressForItem(ctx context.Context, itemID int) (int64, error)
+	// InsertPendingForNotStartedVehicles adds PENDING progress for the item
+	// onto vehicles assigned to the template that have no evaluated row of
+	// that checklist type yet (and do not already have this item).
+	InsertPendingForNotStartedVehicles(ctx context.Context, itemID, templateID int, checklistType domain.ChecklistType) (int64, error)
 }
 
 // IssueRepository persists and queries issues.

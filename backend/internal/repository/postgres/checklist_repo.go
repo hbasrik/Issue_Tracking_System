@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -352,11 +353,138 @@ func (r *ChecklistProgressRepo) ReorderTemplateItems(ctx context.Context, templa
 	return tx.Commit(ctx)
 }
 
-// CountProgressVINs returns distinct vehicles with progress for this item.
-func (r *ChecklistProgressRepo) CountProgressVINs(ctx context.Context, itemID int) (int, error) {
+// CountEvaluatedProgressVINs returns distinct vehicles with non-PENDING
+// progress for this catalogue item.
+func (r *ChecklistProgressRepo) CountEvaluatedProgressVINs(ctx context.Context, itemID int) (int, error) {
 	var n int
 	err := r.pool.QueryRow(ctx,
-		`SELECT COUNT(DISTINCT vin)::int FROM checklist_item_progress WHERE check_item_id = $1`,
+		`SELECT COUNT(DISTINCT vin)::int
+		 FROM checklist_item_progress
+		 WHERE check_item_id = $1 AND check_status <> 'PENDING'`,
 		itemID).Scan(&n)
 	return n, err
+}
+
+// CountIssueLinkedVINs returns distinct vehicles with an issue sourced from
+// this catalogue item.
+func (r *ChecklistProgressRepo) CountIssueLinkedVINs(ctx context.Context, itemID int) (int, error) {
+	var n int
+	err := r.pool.QueryRow(ctx,
+		`SELECT COUNT(DISTINCT vin)::int
+		 FROM issue_list
+		 WHERE source_check_item_id = $1`,
+		itemID).Scan(&n)
+	return n, err
+}
+
+// DeactivateImpact counts PENDING (removable) vs protected history VINs.
+func (r *ChecklistProgressRepo) DeactivateImpact(ctx context.Context, itemID int) (affected, protected int, err error) {
+	err = r.pool.QueryRow(ctx, `
+		WITH rows AS (
+		  SELECT vin, check_status, related_issue_id
+		  FROM checklist_item_progress
+		  WHERE check_item_id = $1
+		),
+		issue_vins AS (
+		  SELECT DISTINCT vin FROM issue_list WHERE source_check_item_id = $1
+		)
+		SELECT
+		  (SELECT COUNT(*)::int FROM rows
+		    WHERE check_status = 'PENDING'
+		      AND related_issue_id IS NULL
+		      AND vin NOT IN (SELECT vin FROM issue_vins)),
+		  (SELECT COUNT(DISTINCT vin)::int FROM (
+		     SELECT vin FROM rows
+		      WHERE check_status <> 'PENDING' OR related_issue_id IS NOT NULL
+		     UNION
+		     SELECT vin FROM issue_vins
+		   ) p)
+	`, itemID).Scan(&affected, &protected)
+	return affected, protected, err
+}
+
+// CreateImpact counts not-started vs started vehicles for a template.
+func (r *ChecklistProgressRepo) CreateImpact(ctx context.Context, templateID int, checklistType domain.ChecklistType) (affected, protected int, err error) {
+	col, err := vehicleTemplateColumn(checklistType)
+	if err != nil {
+		return 0, 0, err
+	}
+	q := fmt.Sprintf(`
+		WITH assigned AS (
+		  SELECT vin FROM vehicles WHERE %s = $1
+		),
+		started AS (
+		  SELECT DISTINCT p.vin
+		  FROM checklist_item_progress p
+		  JOIN assigned a ON a.vin = p.vin
+		  WHERE p.checklist_type = $2 AND p.check_status <> 'PENDING'
+		)
+		SELECT
+		  (SELECT COUNT(*)::int FROM assigned a
+		    WHERE NOT EXISTS (SELECT 1 FROM started s WHERE s.vin = a.vin)),
+		  (SELECT COUNT(*)::int FROM started)
+	`, col)
+	err = r.pool.QueryRow(ctx, q, templateID, string(checklistType)).Scan(&affected, &protected)
+	return affected, protected, err
+}
+
+// DeletePendingProgressForItem removes removable PENDING rows for the item.
+func (r *ChecklistProgressRepo) DeletePendingProgressForItem(ctx context.Context, itemID int) (int64, error) {
+	tag, err := r.pool.Exec(ctx, `
+		DELETE FROM checklist_item_progress p
+		WHERE p.check_item_id = $1
+		  AND p.check_status = 'PENDING'
+		  AND p.related_issue_id IS NULL
+		  AND NOT EXISTS (
+		    SELECT 1 FROM issue_list i
+		    WHERE i.source_check_item_id = $1 AND i.vin = p.vin
+		  )`, itemID)
+	if err != nil {
+		return 0, err
+	}
+	return tag.RowsAffected(), nil
+}
+
+// InsertPendingForNotStartedVehicles backfills PENDING onto not-started VINs.
+func (r *ChecklistProgressRepo) InsertPendingForNotStartedVehicles(
+	ctx context.Context, itemID, templateID int, checklistType domain.ChecklistType,
+) (int64, error) {
+	col, err := vehicleTemplateColumn(checklistType)
+	if err != nil {
+		return 0, err
+	}
+	q := fmt.Sprintf(`
+		INSERT INTO checklist_item_progress (vin, checklist_type, check_item_id, check_status)
+		SELECT v.vin, $2::checklist_type_enum, $3, 'PENDING'
+		FROM vehicles v
+		WHERE v.%s = $1
+		  AND NOT EXISTS (
+		    SELECT 1 FROM checklist_item_progress p
+		    WHERE p.vin = v.vin
+		      AND p.checklist_type = $2::checklist_type_enum
+		      AND p.check_status <> 'PENDING'
+		  )
+		  AND NOT EXISTS (
+		    SELECT 1 FROM checklist_item_progress p
+		    WHERE p.vin = v.vin AND p.check_item_id = $3
+		  )
+		ON CONFLICT (vin, check_item_id) DO NOTHING`, col)
+	tag, err := r.pool.Exec(ctx, q, templateID, string(checklistType), itemID)
+	if err != nil {
+		return 0, err
+	}
+	return tag.RowsAffected(), nil
+}
+
+func vehicleTemplateColumn(checklistType domain.ChecklistType) (string, error) {
+	switch checklistType {
+	case domain.ChecklistTypeEOL:
+		return "eol_template_id", nil
+	case domain.ChecklistTypeShipment:
+		return "shipment_template_id", nil
+	case domain.ChecklistTypeTest:
+		return "test_template_id", nil
+	default:
+		return "", domain.ErrInvalidEnumValue
+	}
 }
