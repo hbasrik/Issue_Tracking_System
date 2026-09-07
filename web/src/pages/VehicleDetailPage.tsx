@@ -10,6 +10,7 @@ import { ShipmentReadinessBanner } from '../components/ShipmentReadinessBanner';
 import { StationStepsPanel } from '../components/StationStepsPanel';
 import { VehicleStatusHistory } from '../components/VehicleStatusHistory';
 import { ActionStamp } from '../components/ActionStamp';
+import { useConfirm } from '../components/ConfirmDialog';
 import {
   api,
   ApiError,
@@ -60,6 +61,7 @@ function isStatusEditorValue(status: string): boolean {
 /** Vehicle detail with Overview / EoL / Shipment / Test / Issues / Audit Log tabs. */
 export default function VehicleDetailPage() {
   const { t, locale } = useI18n();
+  const confirm = useConfirm();
   const { vin = '' } = useParams();
   const { has } = useAuth();
   const [searchParams] = useSearchParams();
@@ -71,7 +73,6 @@ export default function VehicleDetailPage() {
   const [stations, setStations] = useState<Station[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [statusDraft, setStatusDraft] = useState('');
-  const [blockingModal, setBlockingModal] = useState<number[] | null>(null);
   const [busy, setBusy] = useState(false);
   const [readiness, setReadiness] = useState<ShipmentReadiness | null>(null);
   const [statusHistory, setStatusHistory] = useState<VehicleStatusHistoryEntry[]>([]);
@@ -135,7 +136,6 @@ export default function VehicleDetailPage() {
     if (!vehicle) return;
     setBusy(true);
     setError(null);
-    setBlockingModal(null);
     try {
       const updated = await api.updateVehicleStatus(vehicle.VIN, statusDraft);
       setVehicle(updated);
@@ -144,8 +144,17 @@ export default function VehicleDetailPage() {
       setHistoryError(null);
     } catch (err) {
       if (err instanceof ApiError && err.status === 409) {
-        setBlockingModal(err.body.blocking_item_ids ?? []);
+        const ids = err.body.blocking_item_ids ?? [];
         setError(err.message);
+        const lines = ids.map((id: number) => t('vehicles.itemN', { id })).join('\n');
+        await confirm({
+          mode: 'alert',
+          title: t('vehicles.gateBlocked'),
+          message: lines
+            ? `${t('vehicles.gateBlockedHint')}\n\n${lines}`
+            : t('vehicles.gateBlockedHint'),
+          tone: 'danger',
+        });
       } else {
         setError(err instanceof Error ? apiErrorMessage(err, t) : t('vehicles.statusFailed'));
       }
@@ -371,35 +380,6 @@ export default function VehicleDetailPage() {
           <VehicleStatusHistory items={statusHistory} error={historyError} />
         )}
       </div>
-
-      {blockingModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div
-            className="max-h-[80vh] w-full max-w-md overflow-auto rounded-xl border bg-[var(--bg-surface-1)] p-5"
-            style={{ borderColor: 'var(--border)' }}
-          >
-            <h3 className="text-lg font-semibold" style={{ color: 'var(--status-not-ok)' }}>
-              {t('vehicles.gateBlocked')}
-            </h3>
-            <p className="mt-2 text-[15px] text-[var(--text-secondary)]">
-              {t('vehicles.gateBlockedHint')}
-            </p>
-            <ul className="mt-3 list-inside list-disc text-[15px]">
-              {blockingModal.map((id) => (
-                <li key={id}>{t('vehicles.itemN', { id })}</li>
-              ))}
-            </ul>
-            <button
-              type="button"
-              className="mt-4 rounded-lg border px-4 py-2 text-[15px]"
-              style={{ borderColor: 'var(--border)' }}
-              onClick={() => setBlockingModal(null)}
-            >
-              {t('common.close')}
-            </button>
-          </div>
-        </div>
-      )}
     </section>
   );
 }

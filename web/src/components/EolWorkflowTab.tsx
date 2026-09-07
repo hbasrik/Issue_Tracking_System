@@ -12,6 +12,7 @@ import { useAuth } from '../auth/AuthProvider';
 import { Perm } from '../auth/permissions';
 import { useI18n } from '../i18n';
 import { ChecklistPanel } from './ChecklistPanel';
+import { useConfirm } from './ConfirmDialog';
 import { SeverityIndicator } from './SeverityIndicator';
 import { StatusBadge } from './StatusBadge';
 import { ActionStamp } from './ActionStamp';
@@ -48,6 +49,7 @@ interface EolWorkflowTabProps {
 export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
   const { has } = useAuth();
   const { t } = useI18n();
+  const confirm = useConfirm();
   const [workflow, setWorkflow] = useState<EOLWorkflowView | null>(null);
   const [eolItems, setEolItems] = useState<ChecklistItem[]>([]);
   const [testItems, setTestItems] = useState<ChecklistItem[]>([]);
@@ -59,9 +61,12 @@ export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
   const [busy, setBusy] = useState(false);
 
   async function resetWorkflow() {
-    if (!window.confirm(t('eol.resetConfirm'))) {
-      return;
-    }
+    const ok = await confirm({
+      title: t('eol.resetConfirmTitle'),
+      message: t('eol.resetConfirm'),
+      tone: 'warning',
+    });
+    if (!ok) return;
     setBusy(true);
     setError(null);
     setBlocking(null);

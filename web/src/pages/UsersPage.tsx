@@ -2,6 +2,7 @@ import { useCallback, useEffect, useId, useState, type FormEvent } from 'react';
 import { useAuth } from '../auth/AuthProvider';
 import { Perm } from '../auth/permissions';
 import { ActiveBadge } from '../components/ActiveBadge';
+import { useConfirm } from '../components/ConfirmDialog';
 import {
   DataCard,
   DataCardField,
@@ -369,13 +370,13 @@ function CreateUserForm({
 /** Users & Roles — assign catalogue roles without locking out the last admin. */
 export default function UsersPage() {
   const { t } = useI18n();
+  const confirm = useConfirm();
   const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [roles, setRoles] = useState<RoleGrant[]>([]);
   const [allowedEmailDomains, setAllowedEmailDomains] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<number | null>(null);
-  const [pendingDelete, setPendingDelete] = useState<User | null>(null);
   const [revealed, setRevealed] = useState<{
     label: string;
     password: string;
@@ -420,9 +421,12 @@ export default function UsersPage() {
   }
 
   async function resetPassword(u: User) {
-    if (!window.confirm(t('users.resetConfirm', { name: u.FullName }))) {
-      return;
-    }
+    const ok = await confirm({
+      title: t('users.resetConfirmTitle'),
+      message: t('users.resetConfirm', { name: u.FullName }),
+      tone: 'warning',
+    });
+    if (!ok) return;
     setBusyId(u.ID);
     setError(null);
     try {
@@ -440,25 +444,26 @@ export default function UsersPage() {
     }
   }
 
-  function requestDelete(u: User) {
-    setError(null);
-    setPendingDelete(u);
-  }
-
-  async function confirmDelete() {
-    const u = pendingDelete;
-    if (!u) return;
+  async function deleteUser(u: User) {
+    const ok = await confirm({
+      title: t('users.deleteTitle'),
+      message: t('users.deleteBody', {
+        name: u.FullName,
+        email: u.Email,
+      }),
+      confirmLabel: t('common.confirmDelete'),
+      tone: 'danger',
+    });
+    if (!ok) return;
     setBusyId(u.ID);
     setError(null);
     try {
       await api.deleteUser(u.ID);
       setUsers((prev) => prev.filter((x) => x.ID !== u.ID));
-      setPendingDelete(null);
     } catch (err) {
       setError(
         err instanceof ApiError ? apiErrorMessage(err, t) : t('users.deleteFailed'),
       );
-      setPendingDelete(null);
     } finally {
       setBusyId(null);
     }
@@ -479,41 +484,6 @@ export default function UsersPage() {
           <p className="text-[13px]" style={{ color: 'var(--status-not-ok)' }}>
             {error}
           </p>
-        </div>
-      )}
-      {pendingDelete && (
-        <div
-          className="mt-3 rounded-xl border bg-[var(--bg-surface-1)] p-4"
-          style={{ borderColor: 'var(--status-not-ok)' }}
-          role="status"
-        >
-          <p className="text-[15px] font-medium">{t('users.deleteAccount')}</p>
-          <p className="mt-1 text-[13px] text-[var(--text-secondary)]">
-            {t('users.deleteBody', {
-              name: pendingDelete.FullName,
-              email: pendingDelete.Email,
-            })}
-          </p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <button
-              type="button"
-              disabled={busyId === pendingDelete.ID}
-              onClick={() => void confirmDelete()}
-              className="min-h-touch rounded-lg px-4 text-[15px] font-medium text-white disabled:opacity-60"
-              style={{ backgroundColor: 'var(--status-not-ok)' }}
-            >
-              {busyId === pendingDelete.ID ? t('common.deleting') : t('common.confirmDelete')}
-            </button>
-            <button
-              type="button"
-              disabled={busyId === pendingDelete.ID}
-              onClick={() => setPendingDelete(null)}
-              className="min-h-touch rounded-lg border px-4 text-[15px]"
-              style={{ borderColor: 'var(--border)' }}
-            >
-              {t('common.cancel')}
-            </button>
-          </div>
         </div>
       )}
 
@@ -569,7 +539,7 @@ export default function UsersPage() {
                   onRole={(role) => void patch(u.ID, { role })}
                   onActive={(isActive) => void patch(u.ID, { is_active: isActive })}
                   onReset={() => void resetPassword(u)}
-                  onDelete={() => requestDelete(u)}
+                  onDelete={() => void deleteUser(u)}
                 />
               </DataCardField>
             </DataCard>
@@ -624,7 +594,7 @@ export default function UsersPage() {
                       onRole={(role) => void patch(u.ID, { role })}
                       onActive={(isActive) => void patch(u.ID, { is_active: isActive })}
                       onReset={() => void resetPassword(u)}
-                  onDelete={() => requestDelete(u)}
+                  onDelete={() => void deleteUser(u)}
                     />
                   </td>
                 </tr>

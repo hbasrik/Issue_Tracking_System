@@ -8,6 +8,7 @@ import {
 } from '../lib/api';
 import { apiErrorMessage } from '../lib/apiErrors';
 import { ActiveBadge } from '../components/ActiveBadge';
+import { useConfirm } from '../components/ConfirmDialog';
 import { StatusBadge } from '../components/StatusBadge';
 import {
   DataCard,
@@ -32,15 +33,20 @@ function activeCount(items: ChecklistTemplateItem[]): number {
 }
 
 const inputClass =
-  'min-h-touch w-full rounded-lg border bg-[var(--bg-page)] px-3 text-[15px]';
+  'min-h-touch w-full rounded-lg border bg-[var(--bg-page)] px-3 text-[15px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]';
 const btnPrimary =
-  'min-h-touch rounded-lg bg-[var(--accent)] px-3 text-[13px] font-medium text-white disabled:opacity-40';
+  'min-h-touch rounded-lg bg-[var(--accent)] px-3 text-[13px] font-medium text-white hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] disabled:opacity-40';
 const btnGhost =
-  'min-h-touch rounded-lg border px-3 text-[13px] disabled:opacity-40';
+  'min-h-touch rounded-lg border px-3 text-[13px] hover:bg-[var(--bg-surface-2)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] disabled:opacity-40';
+const btnActivate =
+  'min-h-touch rounded-lg px-3 text-[13px] font-semibold text-white hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--status-ok)] disabled:opacity-40';
+const btnDeactivate =
+  'min-h-touch rounded-lg border px-3 text-[13px] font-semibold hover:bg-[var(--bg-surface-2)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--status-conditional-ok)] disabled:opacity-40';
 
 /** Checklist Templates admin — live catalogue, editable with admin.manage_masters. */
 export default function TemplatesPage() {
   const { t } = useI18n();
+  const confirm = useConfirm();
   const [templates, setTemplates] = useState<ChecklistTemplate[]>([]);
   const [selected, setSelected] = useState<ChecklistTemplate | null>(null);
   const [items, setItems] = useState<ChecklistTemplateItem[]>([]);
@@ -120,12 +126,13 @@ export default function TemplatesPage() {
     setError(null);
     try {
       const impact = await api.previewChecklistTemplateItemImpact(selected.ID, 'create');
-      const ok = window.confirm(
-        t('templates.confirmCreate', {
+      const ok = await confirm({
+        title: t('templates.confirmCreateTitle'),
+        message: t('templates.confirmCreate', {
           affected: impact.Affected,
           protected: impact.Protected,
         }),
-      );
+      });
       if (!ok) return;
       await api.createChecklistTemplateItem(selected.ID, {
         ItemText: newText.trim(),
@@ -172,16 +179,22 @@ export default function TemplatesPage() {
         action,
         item.ID,
       );
-      const msg = isActive
-        ? t('templates.confirmActivate', {
-            affected: impact.Affected,
-            protected: impact.Protected,
-          })
-        : t('templates.confirmDeactivate', {
-            affected: impact.Affected,
-            protected: impact.Protected,
-          });
-      if (!window.confirm(msg)) return;
+      const ok = await confirm({
+        title: isActive
+          ? t('templates.confirmActivateTitle')
+          : t('templates.confirmDeactivateTitle'),
+        message: isActive
+          ? t('templates.confirmActivate', {
+              affected: impact.Affected,
+              protected: impact.Protected,
+            })
+          : t('templates.confirmDeactivate', {
+              affected: impact.Affected,
+              protected: impact.Protected,
+            }),
+        tone: isActive ? 'default' : 'warning',
+      });
+      if (!ok) return;
       await api.updateChecklistTemplateItem(selected.ID, item.ID, {
         IsActive: isActive,
       });
@@ -211,9 +224,12 @@ export default function TemplatesPage() {
         );
         return;
       }
-      const ok = window.confirm(
-        t('templates.confirmDelete', { affected: impact.Affected }),
-      );
+      const ok = await confirm({
+        title: t('templates.confirmDeleteTitle'),
+        message: t('templates.confirmDelete', { affected: impact.Affected }),
+        confirmLabel: t('common.confirmDelete'),
+        tone: 'danger',
+      });
       if (!ok) return;
       await api.deleteChecklistTemplateItem(selected.ID, item.ID);
       await refreshSelected(selected.ID);
@@ -420,52 +436,60 @@ export default function TemplatesPage() {
                     key={item.ID}
                     className="rounded-lg border px-3 py-3"
                     style={{
-                      borderColor: 'var(--border)',
-                      opacity: item.IsActive ? 1 : 0.55,
+                      borderColor: item.IsActive
+                        ? 'var(--border)'
+                        : 'color-mix(in srgb, var(--text-secondary) 45%, var(--border))',
+                      backgroundColor: item.IsActive
+                        ? undefined
+                        : 'color-mix(in srgb, var(--bg-surface-2) 70%, transparent)',
                     }}
                   >
                     <div className="flex items-start gap-2">
-                      <span className="mt-2 w-8 shrink-0 text-[13px] text-[var(--text-secondary)]">
+                      <span
+                        className="mt-2 w-8 shrink-0 text-[13px] text-[var(--text-secondary)]"
+                        style={{ opacity: item.IsActive ? 1 : 0.65 }}
+                      >
                         {item.ItemNo}.
                       </span>
                       <div className="min-w-0 flex-1 space-y-2">
-                        {!item.IsActive ? (
-                          <span className="text-[11px] font-semibold uppercase tracking-wide text-[var(--text-secondary)]">
-                            {t('common.inactive')}
-                          </span>
-                        ) : null}
-                        <textarea
-                          className={`${inputClass} py-2`}
-                          style={{ borderColor: 'var(--border)', minHeight: 64 }}
-                          value={draftText[item.ID] ?? item.ItemText}
-                          onChange={(e) =>
-                            setDraftText((prev) => ({
-                              ...prev,
-                              [item.ID]: e.target.value,
-                            }))
-                          }
-                          maxLength={250}
-                        />
-                        {selected.Type === 'EOL' ? (
-                          <select
-                            className={inputClass}
-                            style={{ borderColor: 'var(--border)' }}
-                            value={
-                              draftPhase[item.ID] ?? item.EolPhase ?? 'BRANCH'
-                            }
+                        <ActiveBadge active={item.IsActive} />
+                        <div
+                          className="space-y-2"
+                          style={{ opacity: item.IsActive ? 1 : 0.55 }}
+                        >
+                          <textarea
+                            className={`${inputClass} py-2`}
+                            style={{ borderColor: 'var(--border)', minHeight: 64 }}
+                            value={draftText[item.ID] ?? item.ItemText}
                             onChange={(e) =>
-                              setDraftPhase((prev) => ({
+                              setDraftText((prev) => ({
                                 ...prev,
-                                [item.ID]: e.target.value as 'BRANCH' | 'DEPOT',
+                                [item.ID]: e.target.value,
                               }))
                             }
-                            aria-label={t('templates.eolPhaseItem', { n: item.ItemNo })}
-                          >
-                            <option value="BRANCH">{t('templates.branch')}</option>
-                            <option value="DEPOT">{t('templates.depot')}</option>
-                          </select>
-                        ) : null}
-                        <div className="flex flex-wrap gap-2">
+                            maxLength={250}
+                          />
+                          {selected.Type === 'EOL' ? (
+                            <select
+                              className={inputClass}
+                              style={{ borderColor: 'var(--border)' }}
+                              value={
+                                draftPhase[item.ID] ?? item.EolPhase ?? 'BRANCH'
+                              }
+                              onChange={(e) =>
+                                setDraftPhase((prev) => ({
+                                  ...prev,
+                                  [item.ID]: e.target.value as 'BRANCH' | 'DEPOT',
+                                }))
+                              }
+                              aria-label={t('templates.eolPhaseItem', { n: item.ItemNo })}
+                            >
+                              <option value="BRANCH">{t('templates.branch')}</option>
+                              <option value="DEPOT">{t('templates.depot')}</option>
+                            </select>
+                          ) : null}
+                        </div>
+                        <div className="flex flex-wrap gap-2" style={{ opacity: 1 }}>
                           <button
                             type="button"
                             className={btnPrimary}
@@ -494,20 +518,35 @@ export default function TemplatesPage() {
                           >
                             <ChevronDown size={16} />
                           </button>
-                          <button
-                            type="button"
-                            className={btnGhost}
-                            style={{ borderColor: 'var(--border)' }}
-                            disabled={busy}
-                            onClick={() => void setActive(item, !item.IsActive)}
-                          >
-                            {item.IsActive ? t('common.deactivate') : t('common.activate')}
-                          </button>
+                          {item.IsActive ? (
+                            <button
+                              type="button"
+                              className={btnDeactivate}
+                              style={{
+                                borderColor: 'var(--status-conditional-ok)',
+                                color: 'var(--status-conditional-ok)',
+                              }}
+                              disabled={busy}
+                              onClick={() => void setActive(item, false)}
+                            >
+                              {t('common.deactivate')}
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              className={btnActivate}
+                              style={{ backgroundColor: 'var(--status-ok)' }}
+                              disabled={busy}
+                              onClick={() => void setActive(item, true)}
+                            >
+                              {t('common.activate')}
+                            </button>
+                          )}
                           <button
                             type="button"
                             className={btnGhost}
                             style={{
-                              borderColor: 'var(--border)',
+                              borderColor: 'var(--status-not-ok)',
                               color: 'var(--status-not-ok)',
                             }}
                             disabled={busy}
