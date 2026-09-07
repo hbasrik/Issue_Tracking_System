@@ -7,6 +7,7 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	deliveryhttp "github.com/karea/backend/internal/delivery/http"
@@ -21,7 +22,7 @@ func main() {
 	cfg := config.Load()
 
 	ctx := context.Background()
-	pool, err := postgres.NewPool(ctx, cfg.DatabaseURL)
+	pool, err := postgres.NewPool(ctx, cfg.DatabaseURL, cfg.AppEnv)
 	if err != nil {
 		log.Fatalf("failed to create database pool: %v", err)
 	}
@@ -44,6 +45,12 @@ func main() {
 	mediaStore := storage.NewLocalDisk(cfg.UploadDir)
 
 	checklists := usecase.NewChecklistResultRecorder(vehicleRepo, checklistRepo, auditRepo, uow)
+	var eolReset *usecase.EOLWorkflowResetter
+	if strings.EqualFold(strings.TrimSpace(cfg.AppEnv), "development") {
+		// Production/staging binaries never construct this usecase, so they
+		// cannot invoke fn_ops_set_vehicle_status through the API layer.
+		eolReset = usecase.NewEOLWorkflowResetter(vehicleRepo, eolRepo, auditRepo, uow)
+	}
 	router := deliveryhttp.NewRouter(deliveryhttp.Deps{
 		Issuer:             issuer,
 		Auth:               usecase.NewAuthenticator(userRepo),
@@ -63,7 +70,7 @@ func main() {
 		EOLDepotRelease:    usecase.NewEOLDepotReleaser(vehicleRepo, issueRepo, eolRepo, checklists, uow),
 		EOLDeliver:         usecase.NewEOLDeliverer(vehicleRepo, eolRepo, uow),
 		EOLDocumentApprove: usecase.NewEOLDocumentApprover(vehicleRepo, eolRepo, uow),
-		EOLReset:           usecase.NewEOLWorkflowResetter(vehicleRepo, eolRepo, auditRepo, uow),
+		EOLReset:           eolReset,
 		ShipmentReadiness:  usecase.NewShipmentReadinessReader(vehicleRepo, checklists, issueRepo),
 		Media:              usecase.NewMediaUploader(mediaRepo, mediaStore),
 		CORSAllowedOrigins: cfg.CORSAllowedOrigins,

@@ -10,12 +10,26 @@ package postgres
 
 import (
 	"context"
+	"strings"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // NewPool creates a pgx connection pool from a PostgreSQL DSN. The pool is
-// lazy: it does not open a connection until first use.
-func NewPool(ctx context.Context, dsn string) (*pgxpool.Pool, error) {
-	return pgxpool.New(ctx, dsn)
+// lazy: it does not open a connection until first use. appEnv is stamped onto
+// every session as karea.app_env so development-only DB helpers (e.g.
+// fn_ops_set_vehicle_status) can refuse to run outside APP_ENV=development.
+func NewPool(ctx context.Context, dsn string, appEnv string) (*pgxpool.Pool, error) {
+	cfg, err := pgxpool.ParseConfig(dsn)
+	if err != nil {
+		return nil, err
+	}
+	env := strings.TrimSpace(appEnv)
+	cfg.AfterConnect = func(ctx context.Context, conn *pgx.Conn) error {
+		_, err := conn.Exec(ctx,
+			`SELECT set_config('karea.app_env', $1, false)`, env)
+		return err
+	}
+	return pgxpool.NewWithConfig(ctx, cfg)
 }
