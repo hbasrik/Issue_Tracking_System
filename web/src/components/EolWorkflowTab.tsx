@@ -377,7 +377,7 @@ export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
         name={workflow.deliver?.by_name}
         at={workflow.deliver?.at ?? null}
         actionLabel={t('eol.deliver')}
-        showAction={Boolean(workflow.depot_release.at) && !workflow.deliver?.at}
+        showAction={!workflow.deliver?.at}
         actionEnabled={canDeliver}
         actionDisabledReasons={deliverDisabledReasons}
         busy={busy}

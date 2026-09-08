@@ -319,7 +319,7 @@ export default function EOLChecklistScreen() {
     {
       title: t('eol.deliver'),
       record: workflow?.deliver,
-      showAction: Boolean(workflow?.depot_release?.at) && !workflow?.deliver?.at,
+      showAction: !workflow?.deliver?.at,
       actionLabel: t('eol.deliver'),
       enabled: canDeliver,
       reasons: deliverReasons,
