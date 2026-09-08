@@ -1,5 +1,6 @@
 export {
   EOL_STAGE_FILTER_VALUES,
+  VEHICLE_LIFECYCLE_COLORS,
   VEHICLE_LIFECYCLE_FILTER_VALUES,
   VEHICLE_STATUS_EDITOR_VALUES,
   VEHICLE_STATUS_FILTER_VALUES,
@@ -7,6 +8,7 @@ export {
   deriveVehicleLifecycle,
   eolStageLabel,
   isOpenIssueStatus,
+  vehicleLifecycleColor,
   vehicleLifecycleLabel,
   vehicleListStatusLine,
   vehicleStatusLabel,

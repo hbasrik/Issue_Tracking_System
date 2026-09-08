@@ -1,7 +1,11 @@
 import { inkOn, statusColors } from '../theme/tokens';
 import { useI18n, type Translate } from '../i18n';
 import { issueStatusColor, issueStatusLabel } from '../lib/issueStatus';
-import { vehicleLifecycleLabel, vehicleStatusLabel } from '../lib/vehicleStatus';
+import {
+  vehicleLifecycleColor,
+  vehicleLifecycleLabel,
+  vehicleStatusLabel,
+} from '../lib/vehicleStatus';
 
 type BadgeKind =
   | 'stationStep'
@@ -92,40 +96,10 @@ function resolve(
       return { color: statusColors.pending, label: vehicleStatusLabel(value, t) };
 
     case 'lifecycle':
-      if (v === 'PLANNED') {
-        return { color: statusColors.pending, label: vehicleLifecycleLabel('PLANNED', t) };
-      }
-      if (v === 'ON_LINE') {
-        return {
-          color: statusColors.vehicleInProduction,
-          label: vehicleLifecycleLabel('ON_LINE', t),
-        };
-      }
-      if (v === 'AT_DEPOT') {
-        return {
-          color: statusColors.vehicleInWarehouse,
-          label: vehicleLifecycleLabel('AT_DEPOT', t),
-        };
-      }
-      if (v === 'READY_TO_SHIP') {
-        return {
-          color: statusColors.issueInProgress,
-          label: vehicleLifecycleLabel('READY_TO_SHIP', t),
-        };
-      }
-      if (v === 'DELIVERED') {
-        return {
-          color: statusColors.vehicleWithCustomer,
-          label: vehicleLifecycleLabel('DELIVERED', t),
-        };
-      }
-      if (v === 'ON_HOLD') {
-        return {
-          color: statusColors.vehicleOnHold,
-          label: vehicleLifecycleLabel('ON_HOLD', t),
-        };
-      }
-      return { color: statusColors.pending, label: vehicleLifecycleLabel(value, t) };
+      return {
+        color: vehicleLifecycleColor(v),
+        label: vehicleLifecycleLabel(v, t),
+      };
 
     case 'issue':
       return { color: issueStatusColor(v), label: issueStatusLabel(v, t) };
