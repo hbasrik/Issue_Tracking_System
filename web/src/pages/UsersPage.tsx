@@ -461,9 +461,15 @@ export default function UsersPage() {
       await api.deleteUser(u.ID);
       setUsers((prev) => prev.filter((x) => x.ID !== u.ID));
     } catch (err) {
-      setError(
-        err instanceof ApiError ? apiErrorMessage(err, t) : t('users.deleteFailed'),
-      );
+      const message =
+        err instanceof ApiError ? apiErrorMessage(err, t) : t('users.deleteFailed');
+      setError(message);
+      await confirm({
+        mode: 'alert',
+        title: t('users.deleteTitle'),
+        message,
+        tone: 'danger',
+      });
     } finally {
       setBusyId(null);
     }
