@@ -31,7 +31,7 @@ module.exports = function (api) {
     presets: ['babel-preset-expo'],
     // Do NOT add react-native-reanimated/plugin (or react-native-worklets/plugin)
     // here. babel-preset-expo already injects react-native-worklets/plugin when
-    // those packages are installed (Expo SDK 54). A second manual entry
+    // those packages are installed (Expo SDK 54–57). A second manual entry
     // double-applies the transform and surfaces WorkletsError: Failed to
     // create a worklet at app startup.
   };

@@ -5,9 +5,6 @@
     "version": "0.1.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
-    "splash": {
-      "backgroundColor": "#0B0F14"
-    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.karea.mobile",
@@ -28,7 +25,16 @@
           "photosPermission": "Attach optional photos when reporting issues."
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-status-bar",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#0B0F14",
+          "image": "./assets/logo.png",
+          "imageWidth": 160
+        }
+      ]
     ]
   }
 }
