@@ -43,7 +43,7 @@ func TestValidateTemplateItemFields(t *testing.T) {
 
 func TestTemplateItemInUseError(t *testing.T) {
 	err := &TemplateItemInUseError{VehicleCount: 4}
-	want := "bu madde 4 araçta kullanılmış, silinemez — pasife çekebilirsiniz"
+	want := "bu madde 4 araçta değerlendirilmiş veya issue'ya bağlı, silinemez — pasife çekebilirsiniz"
 	if err.Error() != want {
 		t.Fatalf("error = %q, want %q", err.Error(), want)
 	}

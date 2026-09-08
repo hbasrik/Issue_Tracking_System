@@ -476,18 +476,17 @@ export default function HomePage() {
                       const color =
                         row.Phase === 'DEPOT' ? statusColors.ok : statusColors.info;
                       const vehicles = row.VehicleCount ?? 0;
-                      const perVehicle = row.ItemsPerVehicle ?? 0;
                       return (
                         <tr
                           key={row.Phase}
                           className="border-b"
                           style={{ borderColor: 'var(--border)' }}
                           title={
-                            vehicles > 0 && perVehicle > 0
-                              ? t('home.eolCompose', {
+                            vehicles > 0 && row.Total > 0
+                              ? `${t('home.eolCompose', {
                                   vehicles,
-                                  items: perVehicle,
-                                })
+                                  total: row.Total,
+                                })} — ${t('home.eolComposeHint')}`
                               : undefined
                           }
                         >
@@ -504,11 +503,11 @@ export default function HomePage() {
                             <div className="font-semibold tabular-nums">
                               {t('home.eolItemsOf', { done: row.Done, total: row.Total })}
                             </div>
-                            {vehicles > 0 && perVehicle > 0 ? (
+                            {vehicles > 0 && row.Total > 0 ? (
                               <div className="text-[11px] font-normal" style={mutedCaption}>
                                 {t('home.eolCompose', {
                                   vehicles,
-                                  items: perVehicle,
+                                  total: row.Total,
                                 })}
                               </div>
                             ) : null}

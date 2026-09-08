@@ -155,15 +155,20 @@ type HomeEOLStageCount struct {
 	Count int64
 }
 
-// HomeEOLChecklistCount is passing vs total EOL checklist rows for one phase.
-// VehicleCount is distinct VINs contributing rows; ItemsPerVehicle is the
-// distinct template-item count (so Total ≈ VehicleCount × ItemsPerVehicle).
+// HomeEOLChecklistCount is passing vs total EOL checklist progress rows for
+// one phase. Total/Done are real checklist_item_progress row counts (not
+// vehicle×catalogue). VehicleCount is distinct VINs; UniqueItemCount is how
+// many distinct catalogue items appear in those rows (may exceed any single
+// vehicle's row count when inactive items linger on some VINs only).
 type HomeEOLChecklistCount struct {
-	Phase            string
-	Done             int64
-	Total            int64
-	VehicleCount     int64
-	ItemsPerVehicle  int64
+	Phase           string
+	Done            int64
+	Total           int64
+	VehicleCount    int64
+	UniqueItemCount int64 `json:"UniqueItemCount"`
+	// ItemsPerVehicle is retained for older clients; equals UniqueItemCount.
+	// Do not treat Total as VehicleCount × ItemsPerVehicle.
+	ItemsPerVehicle int64 `json:"ItemsPerVehicle"`
 }
 
 // HomeCriticalVehicle is a VIN ranked by open CRITICAL issue count.

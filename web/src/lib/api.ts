@@ -795,7 +795,8 @@ export interface HomeOverview {
     Done: number;
     Total: number;
     VehicleCount: number;
-    ItemsPerVehicle: number;
+    UniqueItemCount?: number;
+    ItemsPerVehicle?: number;
   }[];
   CriticalVehicles: {
     VIN: string;

@@ -806,7 +806,7 @@ export default function AnalysisPage() {
         <ChartCard
           title={t('analysis.stagePerformance')}
           icon={<Factory size={16} />}
-          filterNote={vehicleFilterNote}
+          filterNote={vehicleFilterNote ?? t('analysis.stagePerformanceHint')}
         >
           {stageBars.every((r) => r.total === 0) ? (
             <EmptyChart />
