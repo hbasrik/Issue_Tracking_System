@@ -124,6 +124,8 @@ export interface Vehicle {
   VehicleModelID: number | null;
   CurrentGlobalStatus: string;
   CurrentEOLStage?: string | null;
+  StatusBeforeHold?: string | null;
+  HoldReason?: string | null;
   CurrentStationID: number | null;
   TotalProgressPercentage: number;
   EOLTemplateID?: number | null;
@@ -304,6 +306,7 @@ export const api = {
   listVehicles(params: {
     station?: number;
     page?: number;
+    lifecycle?: string;
     status?: string;
     eol_stage?: string;
     vin?: string;
@@ -311,6 +314,7 @@ export const api = {
     const q = new URLSearchParams();
     if (params.station) q.set('station', String(params.station));
     if (params.page) q.set('page', String(params.page));
+    if (params.lifecycle) q.set('lifecycle', params.lifecycle);
     if (params.status) q.set('status', params.status);
     if (params.eol_stage) q.set('eol_stage', params.eol_stage);
     if (params.vin) q.set('vin', params.vin);
@@ -322,6 +326,19 @@ export const api = {
 
   getVehicle(vin: string) {
     return request<Vehicle>(`/vehicles/${encodeURIComponent(vin)}`);
+  },
+
+  placeOnHold(vin: string, reason: string) {
+    return request<Vehicle>(`/vehicles/${encodeURIComponent(vin)}/hold`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    });
+  },
+
+  releaseFromHold(vin: string) {
+    return request<Vehicle>(`/vehicles/${encodeURIComponent(vin)}/unhold`, {
+      method: 'POST',
+    });
   },
 
   getVehicleStatusHistory(vin: string) {

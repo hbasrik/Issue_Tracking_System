@@ -26,12 +26,10 @@ import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n';
 import { apiErrorMessage } from '../lib/password';
 import {
-  EOL_STAGE_FILTER_VALUES,
-  VEHICLE_STATUS_FILTER_VALUES,
-  eolStageLabel,
-  vehicleStatusLabel,
-  type EolStageFilterValue,
-  type VehicleStatusFilterValue,
+  VEHICLE_LIFECYCLE_FILTER_VALUES,
+  deriveVehicleLifecycle,
+  vehicleLifecycleLabel,
+  type VehicleLifecycleFilterValue,
 } from '../lib/vehicleStatus';
 import type { RootStackParamList } from '../navigation/types';
 
@@ -46,8 +44,8 @@ function compareVinDesc(a: Vehicle, b: Vehicle): number {
 }
 
 /**
- * Full vehicle list (replaces İstasyon queue). Same listVehicles API the
- * station screen used, without a station filter — tap opens VehicleStation.
+ * Full vehicle list. Badge + filters use the same derived lifecycle values
+ * as the web Vehicles page (status + EOL stage → one life-cycle key).
  */
 export default function VehiclesScreen() {
   const { tokens } = useTheme();
@@ -58,18 +56,18 @@ export default function VehiclesScreen() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [vinQuery, setVinQuery] = useState('');
-  const [statuses, setStatuses] = useState<Set<VehicleStatusFilterValue>>(new Set());
-  const [eolStages, setEolStages] = useState<Set<EolStageFilterValue>>(new Set());
+  const [lifecycles, setLifecycles] = useState<Set<VehicleLifecycleFilterValue>>(
+    new Set(),
+  );
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const statusParam = statuses.size === 1 ? [...statuses][0] : undefined;
-      const eolStageParam = eolStages.size === 1 ? [...eolStages][0] : undefined;
+      const lifecycleParam =
+        lifecycles.size === 1 ? [...lifecycles][0] : undefined;
       const res = await api.listVehicles({
-        status: statusParam,
-        eol_stage: eolStageParam,
+        lifecycle: lifecycleParam,
       });
       const items = (res.Items ?? []).slice().sort(compareVinDesc);
       setVehicles(items);
@@ -79,8 +77,10 @@ export default function VehiclesScreen() {
     } finally {
       setLoading(false);
     }
-  }, [statuses, eolStages, t]);
+  }, [lifecycles, t]);
 
+  // Refetch whenever this screen gains focus so depot-release / hold / deliver
+  // done on the detail screen show up in the list badge immediately.
   useFocusEffect(
     useCallback(() => {
       void load();
@@ -91,20 +91,11 @@ export default function VehiclesScreen() {
     navigation.navigate('VehicleStation', { vin: v.VIN });
   }
 
-  function toggleStatus(s: VehicleStatusFilterValue) {
-    setStatuses((prev) => {
+  function toggleLifecycle(value: VehicleLifecycleFilterValue) {
+    setLifecycles((prev) => {
       const next = new Set(prev);
-      if (next.has(s)) next.delete(s);
-      else next.add(s);
-      return next;
-    });
-  }
-
-  function toggleEolStage(s: EolStageFilterValue) {
-    setEolStages((prev) => {
-      const next = new Set(prev);
-      if (next.has(s)) next.delete(s);
-      else next.add(s);
+      if (next.has(value)) next.delete(value);
+      else next.add(value);
       return next;
     });
   }
@@ -112,24 +103,20 @@ export default function VehiclesScreen() {
   const filtered = useMemo(() => {
     return vehicles
       .filter((v) => {
-        if (
-          statuses.size > 0 &&
-          !statuses.has(v.CurrentGlobalStatus as VehicleStatusFilterValue)
-        ) {
-          return false;
-        }
-        if (eolStages.size > 0) {
-          const stage = v.CurrentEOLStage;
-          if (!stage) return false;
-          const normalized =
-            stage === 'DOCUMENT' ? 'DEPOT' : (stage as EolStageFilterValue);
-          if (!eolStages.has(normalized)) return false;
+        if (lifecycles.size > 0) {
+          const derived = deriveVehicleLifecycle(
+            v.CurrentGlobalStatus,
+            v.CurrentEOLStage,
+          );
+          if (!lifecycles.has(derived as VehicleLifecycleFilterValue)) {
+            return false;
+          }
         }
         if (!vehicleMatchesVinQuery(v, vinQuery)) return false;
         return true;
       })
       .sort(compareVinDesc);
-  }, [vehicles, statuses, eolStages, vinQuery]);
+  }, [vehicles, lifecycles, vinQuery]);
 
   return (
     <Screen padded={false}>
@@ -165,15 +152,15 @@ export default function VehiclesScreen() {
                 marginBottom: 8,
               }}
             >
-              {t('issue.status')}
+              {t('vehicles.lifecycle')}
             </Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-              {VEHICLE_STATUS_FILTER_VALUES.map((value) => {
-                const selected = statuses.has(value);
+              {VEHICLE_LIFECYCLE_FILTER_VALUES.map((value) => {
+                const selected = lifecycles.has(value);
                 return (
                   <Pressable
                     key={value}
-                    onPress={() => toggleStatus(value)}
+                    onPress={() => toggleLifecycle(value)}
                     style={{
                       paddingHorizontal: 12,
                       minHeight: 36,
@@ -193,51 +180,7 @@ export default function VehiclesScreen() {
                         fontWeight: '600',
                       }}
                     >
-                      {vehicleStatusLabel(value, t)}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-
-            <Text
-              style={{
-                color: tokens.textSecondary,
-                fontWeight: '600',
-                fontSize: 13,
-                marginTop: 16,
-                marginBottom: 8,
-              }}
-            >
-              {t('print.eolStage')}
-            </Text>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-              {EOL_STAGE_FILTER_VALUES.map((value) => {
-                const selected = eolStages.has(value);
-                return (
-                  <Pressable
-                    key={value}
-                    onPress={() => toggleEolStage(value)}
-                    style={{
-                      paddingHorizontal: 12,
-                      minHeight: 36,
-                      borderRadius: 999,
-                      borderWidth: 1,
-                      borderColor: selected ? tokens.accent : tokens.border,
-                      backgroundColor: selected
-                        ? tokens.bgSurface2
-                        : tokens.bgSurface1,
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <Text
-                      style={{
-                        color: selected ? tokens.accent : tokens.textSecondary,
-                        fontSize: 12,
-                        fontWeight: '600',
-                      }}
-                    >
-                      {eolStageLabel(value, t)}
+                      {vehicleLifecycleLabel(value, t)}
                     </Text>
                   </Pressable>
                 );
