@@ -3,6 +3,8 @@
  * All screens must call through this module — never hardcode the API origin.
  */
 
+import { File as ExpoFile } from 'expo-file-system';
+
 const API_BASE_URL =
   (process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:8080/api/v1').replace(
     /\/$/,
@@ -268,7 +270,7 @@ export interface MediaAttachment {
   uploaded_at: string;
 }
 
-/** A photo picked on the device, in the shape React Native's fetch uploads. */
+/** Local image produced by prepareUploadImage (file:// URI + JPEG metadata). */
 export interface LocalFile {
   uri: string;
   name: string;
@@ -476,14 +478,17 @@ export const api = {
   /**
    * Attaches a photo to an existing entity (Karar 8). The entity has to exist
    * already — for an issue that means uploading after the issue is created.
+   *
+   * Expo's winter fetch rejects React Native's legacy `{ uri, name, type }`
+   * FormData parts ("Unsupported FormDataPart implementation"). Append an
+   * expo-file-system File (Blob) so convertFormDataAsync can serialize it.
+   * Field names stay entity_type / entity_id / file for the existing API.
    */
   uploadMedia(entityType: MediaEntityType, entityId: string, file: LocalFile) {
     const body = new FormData();
     body.append('entity_type', entityType);
     body.append('entity_id', entityId);
-    // React Native's fetch accepts this file descriptor where the DOM would
-    // require a Blob.
-    body.append('file', file as unknown as Blob);
+    body.append('file', new ExpoFile(file.uri), file.name);
     return request<MediaAttachment>('/media', { method: 'POST', body });
   },
 
