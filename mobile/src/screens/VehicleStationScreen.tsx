@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import {
+  Alert,
   LayoutAnimation,
   Platform,
   Pressable,
@@ -27,11 +28,13 @@ import { ProgressRing } from '../components/ProgressRing';
 import { VehicleStatusBadge } from '../components/VehicleStatusBadge';
 import { IssueCard } from '../components/IssueCard';
 import {
+  AppTextInput,
   Badge,
   Card,
   ErrorText,
   Loading,
   OutlineButton,
+  PrimaryButton,
   Screen,
   Subtitle,
   Title,
@@ -47,6 +50,10 @@ import type { RootStackParamList } from '../navigation/types';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+
+function canPlaceOnHold(status: string): boolean {
+  return status === 'IN_PRODUCTION' || status === 'IN_WAREHOUSE';
 }
 
 interface StationGroup {
@@ -126,6 +133,8 @@ export default function VehicleStationScreen() {
   const [expandedStation, setExpandedStation] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<number | null>(null);
+  const [holdReason, setHoldReason] = useState('');
+  const [holdBusy, setHoldBusy] = useState(false);
 
   const load = useCallback(async () => {
     setError(null);
@@ -202,7 +211,53 @@ export default function VehicleStationScreen() {
     setExpandedStation((cur) => (cur === stationId ? null : stationId));
   }
 
+  async function placeOnHold() {
+    const reason = holdReason.trim();
+    if (!reason) {
+      setError(t('vehicles.holdReasonRequired'));
+      return;
+    }
+    setHoldBusy(true);
+    setError(null);
+    try {
+      await api.placeOnHold(vin, reason);
+      setHoldReason('');
+      await load();
+    } catch (err) {
+      setError(apiErrorMessage(err, t));
+    } finally {
+      setHoldBusy(false);
+    }
+  }
+
+  function confirmReleaseFromHold() {
+    Alert.alert(t('vehicles.releaseFromHold'), t('vehicles.holdHint'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('vehicles.releaseFromHold'),
+        onPress: () => {
+          void releaseFromHold();
+        },
+      },
+    ]);
+  }
+
+  async function releaseFromHold() {
+    setHoldBusy(true);
+    setError(null);
+    try {
+      await api.releaseFromHold(vin);
+      await load();
+    } catch (err) {
+      setError(apiErrorMessage(err, t));
+    } finally {
+      setHoldBusy(false);
+    }
+  }
+
   const lastStatusChange = statusHistory[statusHistory.length - 1];
+  const manageHold = has(Perm.AdminManageMasters);
+  const onHold = vehicle?.CurrentGlobalStatus === 'ON_HOLD';
 
   if (!vehicle && !error) return <Loading />;
 
@@ -222,7 +277,10 @@ export default function VehicleStationScreen() {
           </Text>
           {vehicle?.CurrentGlobalStatus ? (
             <View style={{ marginTop: 4 }}>
-              <VehicleStatusBadge status={vehicle.CurrentGlobalStatus} />
+              <VehicleStatusBadge
+                status={vehicle.CurrentGlobalStatus}
+                eolStage={vehicle.CurrentEOLStage}
+              />
             </View>
           ) : null}
           {lastStatusChange ? (
@@ -230,7 +288,48 @@ export default function VehicleStationScreen() {
           ) : null}
         </View>
 
-        <View style={{ gap: 8, marginBottom: 16 }}>
+        {manageHold && vehicle ? (
+          <Card>
+            <Text style={{ color: tokens.textPrimary, fontWeight: '600', fontSize: 15 }}>
+              {t('vehicles.holdTitle')}
+            </Text>
+            <Text style={{ color: tokens.textSecondary, fontSize: 13, marginTop: 4 }}>
+              {t('vehicles.holdHint')}
+            </Text>
+            {onHold && vehicle.HoldReason ? (
+              <Text style={{ color: tokens.textPrimary, fontSize: 13, marginTop: 8 }}>
+                {t('vehicles.holdReason')}: {vehicle.HoldReason}
+              </Text>
+            ) : null}
+            {onHold ? (
+              <View style={{ marginTop: 12 }}>
+                <PrimaryButton
+                  label={t('vehicles.releaseFromHold')}
+                  onPress={confirmReleaseFromHold}
+                  disabled={holdBusy}
+                />
+              </View>
+            ) : canPlaceOnHold(vehicle.CurrentGlobalStatus) ? (
+              <View style={{ marginTop: 12, gap: 10 }}>
+                <Text style={{ color: tokens.textSecondary, fontSize: 13 }}>
+                  {t('vehicles.holdReason')}
+                </Text>
+                <AppTextInput
+                  value={holdReason}
+                  onChangeText={setHoldReason}
+                  editable={!holdBusy}
+                />
+                <PrimaryButton
+                  label={t('vehicles.placeOnHold')}
+                  onPress={() => void placeOnHold()}
+                  disabled={holdBusy || !holdReason.trim()}
+                />
+              </View>
+            ) : null}
+          </Card>
+        ) : null}
+
+        <View style={{ gap: 8, marginBottom: 16, marginTop: manageHold ? 12 : 0 }}>
           {readiness && !readiness.ready && readiness.warnings.length > 0 ? (
             <Card>
               <Text style={{ color: statusColors.conditionalOk, fontWeight: '600', fontSize: 15 }}>

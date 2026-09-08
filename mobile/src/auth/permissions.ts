@@ -17,4 +17,5 @@ export const Perm = {
   EOLBranchShip: 'eol.branch_ship',
   EOLDepotRelease: 'eol.depot_release',
   EOLDeliver: 'eol.deliver',
+  AdminManageMasters: 'admin.manage_masters',
 } as const;
