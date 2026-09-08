@@ -13,6 +13,27 @@ export const VEHICLE_LIFECYCLE_FILTER_VALUES = [
 export type VehicleLifecycleFilterValue =
   (typeof VEHICLE_LIFECYCLE_FILTER_VALUES)[number];
 
+/**
+ * Lifecycle badge fills — single source for web, mobile, print, and exports.
+ * READY_TO_SHIP stays amber; DELIVERED is green.
+ */
+export const VEHICLE_LIFECYCLE_COLORS: Record<
+  VehicleLifecycleFilterValue,
+  string
+> = {
+  PLANNED: '#B5B2B2',
+  ON_LINE: '#327CB2',
+  AT_DEPOT: '#B5B2B2',
+  READY_TO_SHIP: '#F59E0B',
+  DELIVERED: '#22C55E',
+  ON_HOLD: '#C62222',
+};
+
+export function vehicleLifecycleColor(lifecycle: string): string {
+  const key = lifecycle.toUpperCase() as VehicleLifecycleFilterValue;
+  return VEHICLE_LIFECYCLE_COLORS[key] ?? VEHICLE_LIFECYCLE_COLORS.PLANNED;
+}
+
 /** @deprecated Prefer VEHICLE_LIFECYCLE_FILTER_VALUES */
 export const VEHICLE_STATUS_FILTER_VALUES = [
   'PLANNED',
