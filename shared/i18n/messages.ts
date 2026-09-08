@@ -345,10 +345,13 @@ export const tr = {
   'home.productionExcluded': 'Planlandı durumundaki araçlar bu sayıya dahil değil.',
   'home.productionEmpty': 'EOL akışında araç yok.',
   'home.eolStatusTitle': 'EOL Durumu',
-  'home.eolStatusHint': 'EOL kontrol listesi maddelerinin genel tamamlanma oranı',
+  'home.eolStatusHint':
+    'EOL kontrol listesi madde kayıtlarının tamamlanma oranı (araç başına madde sayısı değişebilir)',
   'home.eolOverall': 'Genel tamamlanma',
   'home.eolItemsOf': '{done}/{total}',
-  'home.eolCompose': '{vehicles} araç × {items} madde',
+  'home.eolCompose': '{vehicles} araç · {total} madde kaydı',
+  'home.eolComposeHint':
+    'Araç başına madde sayısı aynı olmayabilir (pasif maddeler değerlendirilmiş araçlarda kalır).',
   'home.eolTotalItems': 'Toplam {done}/{total}',
   'home.productionTotal': 'Toplam {n}',
   'home.productionComplete': 'Genel tamamlanma {pct}%',
@@ -718,6 +721,8 @@ export const tr = {
   'analysis.severityMix': 'Severity dağılımı',
   'analysis.eolFunnel': 'EOL hunisi (anlık)',
   'analysis.stagePerformance': 'Aşama performansı',
+  'analysis.stagePerformanceHint':
+    'Tamamlanan / toplam gerçek EOL madde kayıtlarıdır; araç başına madde sayısı aynı olmayabilir.',
   'analysis.openAge': 'Açık hata yaşı',
   'analysis.age.0_1': '0–1 gün',
   'analysis.age.1_3': '1–3 gün',
@@ -783,7 +788,7 @@ export const tr = {
   'templates.confirmDeactivateTitle': 'Maddeyi pasife çek',
   'templates.confirmDeleteTitle': 'Maddeyi sil',
   'templates.deleteBlocked':
-    'Bu madde {protected} araçta değerlendirilmiş veya issue\'ya bağlı — silinemez. Pasife çekin.',
+    'Bu madde {protected} araçta değerlendirilmiş veya issue\'ya bağlı — silinemez. Pasife çekebilirsiniz (geçmiş kayıtlar korunur).',
 
   'users.title': 'Kullanıcılar',
   'users.loadFailed': 'Kullanıcılar yüklenemedi',
@@ -1680,6 +1685,8 @@ export const en: Record<MessageKey, string> = {
   'analysis.severityMix': 'Severity mix',
   'analysis.eolFunnel': 'EOL funnel (live)',
   'analysis.stagePerformance': 'Stage performance',
+  'analysis.stagePerformanceHint':
+    'Completed / total are real EOL item rows; items per vehicle may differ.',
   'analysis.openAge': 'Open defect age',
   'analysis.age.0_1': '0–1 days',
   'analysis.age.1_3': '1–3 days',
@@ -1780,10 +1787,13 @@ export const en: Record<MessageKey, string> = {
   'home.productionExcluded': 'Vehicles in Planned status are not included.',
   'home.productionEmpty': 'No vehicles in the EOL flow.',
   'home.eolStatusTitle': 'EOL status',
-  'home.eolStatusHint': 'Overall completion of EOL checklist items',
+  'home.eolStatusHint':
+    'EOL checklist item-row completion (items per vehicle may differ)',
   'home.eolOverall': 'Overall completion',
   'home.eolItemsOf': '{done}/{total}',
-  'home.eolCompose': '{vehicles} vehicles × {items} items',
+  'home.eolCompose': '{vehicles} vehicles · {total} item rows',
+  'home.eolComposeHint':
+    'Items per vehicle may differ (inactive items can remain on vehicles that already evaluated them).',
   'home.eolTotalItems': 'Total {done}/{total}',
   'home.productionTotal': 'Total {n}',
   'home.productionComplete': 'Overall completion {pct}%',
@@ -1936,6 +1946,6 @@ export const en: Record<MessageKey, string> = {
   'templates.confirmDeactivateTitle': 'Deactivate item',
   'templates.confirmDeleteTitle': 'Delete item',
   'templates.deleteBlocked':
-    'This item is evaluated or issue-linked on {protected} vehicles — cannot delete. Deactivate instead.',
+    'This item is evaluated or issue-linked on {protected} vehicles — cannot delete. You can deactivate it (history is kept).',
 
 };

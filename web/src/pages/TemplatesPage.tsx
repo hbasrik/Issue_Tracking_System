@@ -217,11 +217,16 @@ export default function TemplatesPage() {
         item.ID,
       );
       if (impact.Protected > 0) {
-        setError(
-          t('templates.deleteBlocked', {
-            protected: impact.Protected,
-          }),
-        );
+        const message = t('templates.deleteBlocked', {
+          protected: impact.Protected,
+        });
+        setError(message);
+        await confirm({
+          mode: 'alert',
+          title: t('templates.confirmDeleteTitle'),
+          message,
+          tone: 'warning',
+        });
         return;
       }
       const ok = await confirm({
@@ -233,8 +238,17 @@ export default function TemplatesPage() {
       if (!ok) return;
       await api.deleteChecklistTemplateItem(selected.ID, item.ID);
       await refreshSelected(selected.ID);
+      setError(null);
     } catch (err) {
-      setError(err instanceof ApiError ? apiErrorMessage(err, t) : t('templates.deleteFailed'));
+      const message =
+        err instanceof ApiError ? apiErrorMessage(err, t) : t('templates.deleteFailed');
+      setError(message);
+      await confirm({
+        mode: 'alert',
+        title: t('templates.confirmDeleteTitle'),
+        message,
+        tone: 'danger',
+      });
     } finally {
       setBusy(false);
     }
