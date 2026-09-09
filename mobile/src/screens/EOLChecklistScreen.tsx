@@ -71,7 +71,7 @@ function countRemaining(items: ChecklistItem[]): number {
 }
 
 /**
- * EoL checklist — operator marks items; managers run Şube → Depo → Teslim
+ * EoL checklist — operator marks items; managers run Fabrika → Depo → Teslim
  * actions when every gate checklist is complete.
  */
 export default function EOLChecklistScreen() {

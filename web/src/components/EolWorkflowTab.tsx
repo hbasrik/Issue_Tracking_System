@@ -43,7 +43,7 @@ interface EolWorkflowTabProps {
 }
 
 /**
- * Vehicle Detail EoL tab: Şube → Depo → Teslim. Stage actions stay visible
+ * Vehicle Detail EoL tab: Fabrika → Depo → Teslim. Stage actions stay visible
  * while open and disable with per-checklist reasons until every gate passes.
  */
 export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
