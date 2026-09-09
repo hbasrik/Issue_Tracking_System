@@ -1,5 +1,5 @@
 export const tr = {
-  'app.title': 'Karea — Yönetim paneli',
+  'app.title': 'Karea',
   'common.save': 'Kaydet',
   'common.saving': 'Kaydediliyor…',
   'common.cancel': 'İptal',
@@ -989,7 +989,7 @@ export const tr = {
 export type MessageKey = keyof typeof tr;
 
 export const en: Record<MessageKey, string> = {
-  'app.title': 'Karea — Admin Dashboard',
+  'app.title': 'Karea',
   'common.save': 'Save',
   'common.saving': 'Saving…',
   'common.cancel': 'Cancel',
