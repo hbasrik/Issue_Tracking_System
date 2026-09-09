@@ -40,3 +40,4 @@ coverage/
 # Generated print QA artifacts (recreate via capture.mjs)
 docs/screenshots/analysis-print/*.pdf
 docs/screenshots/analysis-print/*.png
+docs/screenshots/mobile-filters/*.png
