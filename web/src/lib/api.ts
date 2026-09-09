@@ -257,7 +257,11 @@ export const api = {
 
   createChecklistTemplateItem(
     templateId: number,
-    body: { ItemText: string; EolPhase?: 'BRANCH' | 'DEPOT' | null },
+    body: {
+      ItemText: string;
+      EolPhase?: 'BRANCH' | 'DEPOT' | null;
+      PropagationScope?: PropagationScope;
+    },
   ) {
     return request<ChecklistTemplateItem>(
       `/checklist-templates/${templateId}/items`,
@@ -287,6 +291,7 @@ export const api = {
       ItemText?: string;
       EolPhase?: 'BRANCH' | 'DEPOT';
       IsActive?: boolean;
+      PropagationScope?: PropagationScope;
     },
   ) {
     return request<ChecklistTemplateItem>(
@@ -306,6 +311,16 @@ export const api = {
     return request<{ items: ChecklistTemplateItem[] }>(
       `/checklist-templates/${templateId}/items/reorder`,
       { method: 'POST', body: JSON.stringify({ ItemIDs: itemIds }) },
+    );
+  },
+
+  listChecklistTemplateItemMissingVehicles(
+    templateId: number,
+    itemId: number,
+    limit = 100,
+  ) {
+    return request<TemplateItemMissingVehicles>(
+      `/checklist-templates/${templateId}/items/${itemId}/missing-vehicles?limit=${limit}`,
     );
   },
 
@@ -576,6 +591,23 @@ export interface TemplateItemPropagationImpact {
   Affected: number;
   Protected: number;
   Action: string;
+  Scope?: PropagationScope | string;
+  NotStartedAffected?: number;
+  NotStartedProtected?: number;
+  IncompleteAffected?: number;
+  IncompleteProtected?: number;
+}
+
+export type PropagationScope = 'not_started' | 'incomplete';
+
+export interface TemplateItemMissingVehicle {
+  VIN: string;
+  CurrentGlobalStatus: string;
+}
+
+export interface TemplateItemMissingVehicles {
+  Count: number;
+  Vehicles: TemplateItemMissingVehicle[];
 }
 
 export type ChecklistType = 'eol' | 'shipment' | 'test';

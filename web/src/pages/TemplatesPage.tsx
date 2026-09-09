@@ -5,10 +5,14 @@ import {
   ApiError,
   type ChecklistTemplate,
   type ChecklistTemplateItem,
+  type PropagationScope,
+  type TemplateItemMissingVehicles,
+  type TemplateItemPropagationImpact,
 } from '../lib/api';
 import { apiErrorMessage } from '../lib/apiErrors';
 import { ActiveBadge } from '../components/ActiveBadge';
 import { useConfirm } from '../components/ConfirmDialog';
+import { TemplatePropagateDialog } from '../components/TemplatePropagateDialog';
 import {
   DataCard,
   DataCardField,
@@ -84,6 +88,15 @@ export default function TemplatesPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [propagate, setPropagate] = useState<{
+    kind: 'create' | 'activate';
+    item?: ChecklistTemplateItem;
+    impact: TemplateItemPropagationImpact;
+  } | null>(null);
+  const [missingByItem, setMissingByItem] = useState<
+    Record<number, TemplateItemMissingVehicles | 'loading' | 'error'>
+  >({});
+  const [missingOpen, setMissingOpen] = useState<Record<number, boolean>>({});
 
   const loadTemplates = useCallback(async () => {
     const res = await api.listChecklistTemplates();
@@ -152,20 +165,7 @@ export default function TemplatesPage() {
     setError(null);
     try {
       const impact = await api.previewChecklistTemplateItemImpact(selected.ID, 'create');
-      const ok = await confirm({
-        title: t('templates.confirmCreateTitle'),
-        message: t('templates.confirmCreate', {
-          affected: impact.Affected,
-          protected: impact.Protected,
-        }),
-      });
-      if (!ok) return;
-      await api.createChecklistTemplateItem(selected.ID, {
-        ItemText: newText.trim(),
-        EolPhase: selected.Type === 'EOL' ? newPhase : null,
-      });
-      setNewText('');
-      await refreshSelected(selected.ID);
+      setPropagate({ kind: 'create', impact });
     } catch (err) {
       setError(err instanceof ApiError ? apiErrorMessage(err, t) : t('templates.addFailed'));
     } finally {
@@ -199,36 +199,90 @@ export default function TemplatesPage() {
     setBusy(true);
     setError(null);
     try {
-      const action = isActive ? 'activate' : 'deactivate';
+      if (isActive) {
+        const impact = await api.previewChecklistTemplateItemImpact(
+          selected.ID,
+          'activate',
+          item.ID,
+        );
+        setPropagate({ kind: 'activate', item, impact });
+        return;
+      }
       const impact = await api.previewChecklistTemplateItemImpact(
         selected.ID,
-        action,
+        'deactivate',
         item.ID,
       );
       const ok = await confirm({
-        title: isActive
-          ? t('templates.confirmActivateTitle')
-          : t('templates.confirmDeactivateTitle'),
-        message: isActive
-          ? t('templates.confirmActivate', {
-              affected: impact.Affected,
-              protected: impact.Protected,
-            })
-          : t('templates.confirmDeactivate', {
-              affected: impact.Affected,
-              protected: impact.Protected,
-            }),
-        tone: isActive ? 'default' : 'warning',
+        title: t('templates.confirmDeactivateTitle'),
+        message: t('templates.confirmDeactivate', {
+          affected: impact.Affected,
+          protected: impact.Protected,
+        }),
+        tone: 'warning',
       });
       if (!ok) return;
       await api.updateChecklistTemplateItem(selected.ID, item.ID, {
-        IsActive: isActive,
+        IsActive: false,
       });
       await refreshSelected(selected.ID);
     } catch (err) {
       setError(err instanceof ApiError ? apiErrorMessage(err, t) : t('templates.updateFailed'));
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function confirmPropagate(scope: PropagationScope) {
+    if (!selected || !propagate) return;
+    const pending = propagate;
+    setPropagate(null);
+    setBusy(true);
+    setError(null);
+    try {
+      if (pending.kind === 'create') {
+        await api.createChecklistTemplateItem(selected.ID, {
+          ItemText: newText.trim(),
+          EolPhase: selected.Type === 'EOL' ? newPhase : null,
+          PropagationScope: scope,
+        });
+        setNewText('');
+      } else if (pending.item) {
+        await api.updateChecklistTemplateItem(selected.ID, pending.item.ID, {
+          IsActive: true,
+          PropagationScope: scope,
+        });
+      }
+      await refreshSelected(selected.ID);
+      setMissingByItem({});
+    } catch (err) {
+      setError(
+        err instanceof ApiError
+          ? apiErrorMessage(err, t)
+          : pending.kind === 'create'
+            ? t('templates.addFailed')
+            : t('templates.updateFailed'),
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function toggleMissing(item: ChecklistTemplateItem) {
+    if (!selected) return;
+    const open = !missingOpen[item.ID];
+    setMissingOpen((prev) => ({ ...prev, [item.ID]: open }));
+    if (!open) return;
+    if (missingByItem[item.ID] && missingByItem[item.ID] !== 'error') return;
+    setMissingByItem((prev) => ({ ...prev, [item.ID]: 'loading' }));
+    try {
+      const res = await api.listChecklistTemplateItemMissingVehicles(
+        selected.ID,
+        item.ID,
+      );
+      setMissingByItem((prev) => ({ ...prev, [item.ID]: res }));
+    } catch {
+      setMissingByItem((prev) => ({ ...prev, [item.ID]: 'error' }));
     }
   }
 
@@ -590,7 +644,83 @@ export default function TemplatesPage() {
                           >
                             {t('common.delete')}
                           </button>
+                          <button
+                            type="button"
+                            className={btnGhost}
+                            style={{ borderColor: 'var(--border)' }}
+                            disabled={busy}
+                            onClick={() => void toggleMissing(item)}
+                          >
+                            {missingOpen[item.ID]
+                              ? t('templates.missingHide')
+                              : t('templates.missingShow')}
+                          </button>
                         </div>
+                        {missingOpen[item.ID] ? (
+                          <div
+                            className="rounded-lg border px-3 py-2 text-[13px]"
+                            style={{ borderColor: 'var(--border)' }}
+                          >
+                            {missingByItem[item.ID] === 'loading' ? (
+                              <p className="text-[var(--text-secondary)]">{t('common.loading')}</p>
+                            ) : missingByItem[item.ID] === 'error' ? (
+                              <p style={{ color: 'var(--status-not-ok)' }}>
+                                {t('templates.missingFailed')}
+                              </p>
+                            ) : missingByItem[item.ID] ? (
+                              <>
+                                <p className="font-medium text-[var(--text-primary)]">
+                                  {(missingByItem[item.ID] as TemplateItemMissingVehicles)
+                                    .Count === 0
+                                    ? t('templates.missingNone')
+                                    : t('templates.missingCount', {
+                                        n: (
+                                          missingByItem[
+                                            item.ID
+                                          ] as TemplateItemMissingVehicles
+                                        ).Count,
+                                      })}
+                                </p>
+                                {(
+                                  missingByItem[item.ID] as TemplateItemMissingVehicles
+                                ).Vehicles.length > 0 ? (
+                                  <ul className="mt-2 max-h-40 space-y-1 overflow-auto font-mono text-[12px] text-[var(--text-secondary)]">
+                                    {(
+                                      missingByItem[item.ID] as TemplateItemMissingVehicles
+                                    ).Vehicles.map((v) => (
+                                      <li key={v.VIN}>
+                                        {v.VIN}
+                                        <span className="ml-2 font-sans opacity-80">
+                                          {v.CurrentGlobalStatus}
+                                        </span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                ) : null}
+                                {(
+                                  missingByItem[item.ID] as TemplateItemMissingVehicles
+                                ).Vehicles.length <
+                                (missingByItem[item.ID] as TemplateItemMissingVehicles)
+                                  .Count ? (
+                                  <p className="mt-1 text-[12px] text-[var(--text-secondary)]">
+                                    {t('templates.missingTruncated', {
+                                      shown: (
+                                        missingByItem[
+                                          item.ID
+                                        ] as TemplateItemMissingVehicles
+                                      ).Vehicles.length,
+                                      total: (
+                                        missingByItem[
+                                          item.ID
+                                        ] as TemplateItemMissingVehicles
+                                      ).Count,
+                                    })}
+                                  </p>
+                                ) : null}
+                              </>
+                            ) : null}
+                          </div>
+                        ) : null}
                       </div>
                     </div>
                   </li>
@@ -600,6 +730,18 @@ export default function TemplatesPage() {
           )}
         </div>
       </div>
+      {propagate ? (
+        <TemplatePropagateDialog
+          title={
+            propagate.kind === 'create'
+              ? t('templates.confirmCreateTitle')
+              : t('templates.confirmActivateTitle')
+          }
+          impact={propagate.impact}
+          onCancel={() => setPropagate(null)}
+          onConfirm={(scope) => void confirmPropagate(scope)}
+        />
+      ) : null}
     </section>
   );
 }

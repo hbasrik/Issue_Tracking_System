@@ -775,7 +775,7 @@ export const tr = {
   'templates.branch': 'BRANCH',
   'templates.depot': 'DEPOT',
   'templates.hint':
-    'Şablon değişiklikleri henüz başlamamış checklist\'lere yansır; değerlendirilmiş geçmiş korunur. Silmek yerine pasife çekin.',
+    'Yeni/aktif maddeler seçtiğiniz kapsamdaki araçlara eklenir; tamamlanmış checklist geçmişi korunur. Silmek yerine pasife çekin.',
   'templates.hideInactive': 'Pasif maddeleri gizle',
   'templates.activeCount': '{n} aktif madde',
   'templates.confirmDeactivate':
@@ -792,6 +792,24 @@ export const tr = {
   'templates.confirmDeleteTitle': 'Maddeyi sil',
   'templates.deleteBlocked':
     'Bu madde {protected} araçta değerlendirilmiş veya issue\'ya bağlı — silinemez. Pasife çekebilirsiniz (geçmiş kayıtlar korunur).',
+  'templates.scopePrompt': 'Madde hangi araçlara eklensin?',
+  'templates.scopeLegend': 'Yayılım kapsamı',
+  'templates.scopeNotStarted': 'Sadece başlamamış araçlar',
+  'templates.scopeNotStartedHint':
+    '{affected} araca eklenecek · {protected} araç (başlamış/tamamlanmış) etkilenmez',
+  'templates.scopeIncomplete': 'Tamamlanmamış tüm araçlar',
+  'templates.scopeIncompleteHint':
+    '{affected} araca eklenecek · {protected} tamamlanmış araç etkilenmez',
+  'templates.scopeSummary':
+    'Seçim: {affected} araç etkilenecek, {protected} araç korunacak.',
+  'templates.scopeIncompleteWarning':
+    'Bu araçların tamamlanma oranı düşecek ve daha önce sevk kapısını geçmiş olanlar tekrar engellenebilir.',
+  'templates.missingCount': '{n} araçta yok',
+  'templates.missingNone': 'Tüm atanan araçlarda var',
+  'templates.missingShow': 'Eksik araçları göster',
+  'templates.missingHide': 'Listeyi gizle',
+  'templates.missingFailed': 'Eksik araç listesi yüklenemedi',
+  'templates.missingTruncated': 'İlk {shown} / {total} araç gösteriliyor',
 
   'users.title': 'Kullanıcılar',
   'users.loadFailed': 'Kullanıcılar yüklenemedi',
@@ -1936,7 +1954,7 @@ export const en: Record<MessageKey, string> = {
   'vehicles.subtitle': 'Filterable vehicle table',
   'vehicles.vinSearch': 'VIN search',
   'templates.hint':
-    'Template changes apply to checklists not yet started; evaluated history is preserved. Prefer deactivate over delete.',
+    'New or reactivated items apply to vehicles in the scope you choose; completed checklist history is preserved. Prefer deactivate over delete.',
   'templates.hideInactive': 'Hide inactive items',
   'templates.activeCount': '{n} active items',
   'templates.confirmDeactivate':
@@ -1953,5 +1971,23 @@ export const en: Record<MessageKey, string> = {
   'templates.confirmDeleteTitle': 'Delete item',
   'templates.deleteBlocked':
     'This item is evaluated or issue-linked on {protected} vehicles — cannot delete. You can deactivate it (history is kept).',
+  'templates.scopePrompt': 'Which vehicles should receive this item?',
+  'templates.scopeLegend': 'Propagation scope',
+  'templates.scopeNotStarted': 'Not-started vehicles only',
+  'templates.scopeNotStartedHint':
+    'Will add to {affected} vehicles · {protected} started/completed stay unchanged',
+  'templates.scopeIncomplete': 'All incomplete vehicles',
+  'templates.scopeIncompleteHint':
+    'Will add to {affected} vehicles · {protected} completed stay unchanged',
+  'templates.scopeSummary':
+    'Selection: {affected} vehicles affected, {protected} protected.',
+  'templates.scopeIncompleteWarning':
+    'Completion rates on these vehicles will drop, and vehicles that already passed the shipment gate may be blocked again.',
+  'templates.missingCount': 'Missing on {n} vehicles',
+  'templates.missingNone': 'Present on all assigned vehicles',
+  'templates.missingShow': 'Show missing vehicles',
+  'templates.missingHide': 'Hide list',
+  'templates.missingFailed': 'Could not load missing vehicles',
+  'templates.missingTruncated': 'Showing first {shown} of {total} vehicles',
 
 };
