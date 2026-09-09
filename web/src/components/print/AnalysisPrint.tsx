@@ -24,7 +24,11 @@ import { useI18n } from '../../i18n';
 import type { AnalysisDashboard, AnalysisKPICards, Station } from '../../lib/api';
 import { printSection } from '../../lib/print';
 import { issueStatusColor, issueStatusLabel } from '../../lib/issueStatus';
-import { eolStageLabel, vehicleStatusLabel } from '../../lib/vehicleStatus';
+import {
+  deriveVehicleLifecycle,
+  eolStageLabel,
+  vehicleLifecycleLabel,
+} from '../../lib/vehicleStatus';
 import { statusColors } from '../../theme/tokens';
 import { PrintButton, PrintHeader, PrintRoot } from './PrintRoot';
 
@@ -165,12 +169,19 @@ export function AnalysisPrint({
             : statusColors.severityLow,
     }));
 
-  const mttrBars = (dash?.MTTR ?? []).map((r) => ({
-    station: t('analysis.stationN', {
-      id: stations.find((s) => s.ID === r.StationID)?.SequenceNo ?? r.StationID,
-    }),
-    hours: Number((r.Hours ?? 0).toFixed(2)),
-  }));
+  const mttrBars = (dash?.MTTR ?? []).map((r) => {
+    const raw =
+      r.Hours ??
+      (typeof r.MeanTimeToResolve === 'number'
+        ? r.MeanTimeToResolve / 1e9 / 3600
+        : 0);
+    return {
+      station: t('analysis.stationN', {
+        id: stations.find((s) => s.ID === r.StationID)?.SequenceNo ?? r.StationID,
+      }),
+      hours: Math.round(raw * 10) / 10,
+    };
+  });
 
   const openStationBars = (dash?.OpenByStation ?? []).map((r) => ({
     station: t('analysis.stationN', {
@@ -552,7 +563,12 @@ export function AnalysisPrint({
                         </td>
                         <td>{formatDateTime(r.ShippedAt, locale)}</td>
                         <td>{r.ShippedByName || t('common.emDash')}</td>
-                        <td>{vehicleStatusLabel(r.CurrentStatus, t)}</td>
+                        <td>
+                          {vehicleLifecycleLabel(
+                            deriveVehicleLifecycle(r.CurrentStatus, r.EOLStage),
+                            t,
+                          )}
+                        </td>
                         <td>{eolStageLabel(r.EOLStage, t)}</td>
                       </tr>
                     ))

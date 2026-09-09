@@ -65,8 +65,8 @@ import {
   VEHICLE_LIFECYCLE_FILTER_VALUES,
   eolStageLabel,
   vehicleLifecycleLabel,
-  vehicleStatusLabel,
 } from '../lib/vehicleStatus';
+import { VehicleStatusDisplay } from '../components/VehicleStatusDisplay';
 import { AnalysisPrint } from '../components/print/AnalysisPrint';
 import { formatDateRangeFull, formatDateRangeShort, formatDateTime, localeTag } from '../../../shared/i18n';
 
@@ -93,6 +93,72 @@ const mutedCaption = { color: 'var(--text-secondary)' } as const;
 const CHART_H = 'h-[200px]';
 const TICK = { fill: 'var(--text-secondary)', fontSize: 12 } as const;
 const AUTO_REFRESH_MS = 60_000;
+
+/** Round chart hour values; LabelList otherwise prints full float noise. */
+function roundHours(n: number): number {
+  if (!Number.isFinite(n)) return 0;
+  return Math.round(n * 10) / 10;
+}
+
+function formatHourLabel(value: unknown): string {
+  const n = typeof value === 'number' ? value : Number(value);
+  if (!Number.isFinite(n) || Math.abs(n) < 0.05) return '';
+  return n.toFixed(1);
+}
+
+/** Recharts LabelList content — skip near-zero / narrow bars to avoid clutter. */
+function HourBarLabel(props: {
+  x?: number | string;
+  y?: number | string;
+  width?: number | string;
+  value?: number | string;
+}) {
+  const label = formatHourLabel(props.value);
+  const width = Number(props.width ?? 0);
+  // Hide when value is ~0 or the bar is too narrow for a readable label.
+  if (!label || width < 14) return null;
+  const x = Number(props.x ?? 0);
+  const y = Number(props.y ?? 0);
+  return (
+    <text
+      x={x + width / 2}
+      y={y - 6}
+      textAnchor="middle"
+      fill="var(--text-primary)"
+      fontSize={11}
+      fontWeight={600}
+    >
+      {label}
+    </text>
+  );
+}
+
+/** Integer bar labels — avoid raw float noise on count charts. */
+function CountBarLabel(props: {
+  x?: number | string;
+  y?: number | string;
+  width?: number | string;
+  value?: number | string;
+}) {
+  const n = typeof props.value === 'number' ? props.value : Number(props.value);
+  if (!Number.isFinite(n) || n === 0) return null;
+  const width = Number(props.width ?? 0);
+  if (width > 0 && width < 10) return null;
+  const x = Number(props.x ?? 0);
+  const y = Number(props.y ?? 0);
+  return (
+    <text
+      x={x + (width > 0 ? width / 2 : 0)}
+      y={y - 6}
+      textAnchor="middle"
+      fill="var(--text-primary)"
+      fontSize={12}
+      fontWeight={600}
+    >
+      {Math.round(n)}
+    </text>
+  );
+}
 
 const STAGE_COLORS: Record<string, string> = {
   BRANCH: statusColors.info,
@@ -446,10 +512,17 @@ export default function AnalysisPage() {
 
   const mttrBars = useMemo(
     () =>
-      (dash?.MTTR ?? []).map((r) => ({
-        station: numberedStation(r.StationID, stations, t),
-        hours: r.Hours ?? Number((r.MeanTimeToResolve / 1e9 / 3600).toFixed(2)),
-      })),
+      (dash?.MTTR ?? []).map((r) => {
+        const raw =
+          r.Hours ??
+          (typeof r.MeanTimeToResolve === 'number'
+            ? r.MeanTimeToResolve / 1e9 / 3600
+            : 0);
+        return {
+          station: numberedStation(r.StationID, stations, t),
+          hours: roundHours(raw),
+        };
+      }),
     [dash, stations, t],
   );
 
@@ -572,7 +645,7 @@ export default function AnalysisPage() {
           row.Stage === 'DELIVERY'
             ? t('analysis.wait.delivery')
             : eolStageLabel(row.Stage, t),
-        hours: Number(row.AvgHours.toFixed(1)),
+        hours: roundHours(row.AvgHours),
       })),
     [dash, t],
   );
@@ -686,95 +759,7 @@ export default function AnalysisPage() {
         ))}
       </div>
 
-      {/* 2) Ops snapshot — TV wall: live ops first */}
-      <div className="mt-3 grid grid-cols-1 gap-3 xl:grid-cols-2">
-        <ChartCard
-          className="xl:col-span-2"
-          title={t('analysis.branchShippedList')}
-          subtitle={t('analysis.branchShippedListHint')}
-          icon={<Truck size={16} />}
-          filterNote={vehicleFilterNote}
-        >
-          {(dash?.BranchShippedList ?? []).length === 0 ? (
-            <EmptyChart />
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[28rem] text-left text-[14px]">
-                <thead>
-                  <tr
-                    className="border-b text-[11px] font-semibold uppercase tracking-wide"
-                    style={{ borderColor: 'var(--border)', ...mutedCaption }}
-                  >
-                    <th className="pb-1.5 pr-3">{t('issue.vin')}</th>
-                    <th className="pb-1.5 pr-3">{t('analysis.shippedAt')}</th>
-                    <th className="pb-1.5 pr-3">{t('analysis.shippedBy')}</th>
-                    <th className="pb-1.5 pr-3">{t('issue.status')}</th>
-                    <th className="pb-1.5">{t('print.eolStage')}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(dash?.BranchShippedList ?? []).map((row) => (
-                    <tr
-                      key={`${row.VIN}-${row.ShippedAt}`}
-                      className="cursor-pointer border-b hover:bg-[var(--bg-surface-2)]"
-                      style={{ borderColor: 'var(--border)' }}
-                      onClick={() => {
-                        window.location.assign(`/vehicles/${encodeURIComponent(row.VIN)}`);
-                      }}
-                    >
-                      <td className="py-2 pr-3">
-                        <Link
-                          to={`/vehicles/${encodeURIComponent(row.VIN)}`}
-                          className="font-mono text-[14px] font-semibold text-[var(--accent)] hover:underline"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          …{row.VIN.slice(-5)}
-                        </Link>
-                        <span className="ml-1.5 text-[11px]" style={mutedCaption}>
-                          {row.VIN}
-                        </span>
-                      </td>
-                      <td className="py-2 pr-3 tabular-nums whitespace-nowrap">
-                        {formatDateTime(row.ShippedAt, locale)}
-                      </td>
-                      <td className="py-2 pr-3">{row.ShippedByName || t('common.emDash')}</td>
-                      <td className="py-2 pr-3">{vehicleStatusLabel(row.CurrentStatus, t)}</td>
-                      <td className="py-2">{eolStageLabel(row.EOLStage, t)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </ChartCard>
-
-        <ChartCard
-          className="xl:col-span-2"
-          title={t('analysis.dailyOpenTrend')}
-          subtitle={t('analysis.dailyTrendCombinedHint')}
-          icon={<CalendarDays size={16} />}
-        >
-          {dualTrend.length === 0 ? (
-            <EmptyChart />
-          ) : (
-            <div className={`chart-inert ${CHART_H} w-full min-w-0`}>
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={dualTrend} tabIndex={-1} margin={{ top: 8, right: 12, left: 0, bottom: 4 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                  <XAxis dataKey="label" tick={TICK} interval="preserveStartEnd" />
-                  <YAxis allowDecimals={false} width={36} tick={TICK} />
-                  <Tooltip contentStyle={CHART_TOOLTIP} />
-                  <Legend wrapperStyle={{ fontSize: 13 }} />
-                  <Area type="monotone" dataKey="open" name={t('analysis.stat.openActive')} stroke={statusColors.issueOpen} fill={statusColors.issueOpen} fillOpacity={0.14} strokeWidth={2.5} isAnimationActive={false} />
-                  <Area type="monotone" dataKey="closed" name={t('analysis.stat.completed')} stroke={statusColors.ok} fill={statusColors.ok} fillOpacity={0.12} strokeWidth={2.5} isAnimationActive={false} />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-        </ChartCard>
-      </div>
-
-      {/* 3) Compact single-row filter bar */}
+      {/* 2) Compact single-row filter bar */}
       <div
         data-testid="analysis-filters"
         className="mt-3 flex flex-wrap items-end gap-x-1.5 gap-y-2 overflow-x-auto rounded-xl border bg-[var(--bg-surface-1)] px-2.5 py-2 xl:flex-nowrap"
@@ -908,6 +893,97 @@ export default function AnalysisPage() {
         {t('analysis.activeFilters', { summary: filterSummary })}
       </p>
 
+      {/* 3) Ops snapshot — TV wall: live ops first */}
+      <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-2">
+        <ChartCard
+          title={t('analysis.branchShippedList')}
+          subtitle={t('analysis.branchShippedListHint')}
+          icon={<Truck size={16} />}
+          filterNote={vehicleFilterNote}
+        >
+          {(dash?.BranchShippedList ?? []).length === 0 ? (
+            <EmptyChart />
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[28rem] text-left text-[14px]">
+                <thead>
+                  <tr
+                    className="border-b text-[11px] font-semibold uppercase tracking-wide"
+                    style={{ borderColor: 'var(--border)', ...mutedCaption }}
+                  >
+                    <th className="pb-1.5 pr-3">{t('issue.vin')}</th>
+                    <th className="pb-1.5 pr-3">{t('analysis.shippedAt')}</th>
+                    <th className="pb-1.5 pr-3">{t('analysis.shippedBy')}</th>
+                    <th className="pb-1.5 pr-3">{t('issue.status')}</th>
+                    <th className="pb-1.5">{t('print.eolStage')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(dash?.BranchShippedList ?? []).map((row) => (
+                    <tr
+                      key={`${row.VIN}-${row.ShippedAt}`}
+                      className="cursor-pointer border-b hover:bg-[var(--bg-surface-2)]"
+                      style={{ borderColor: 'var(--border)' }}
+                      onClick={() => {
+                        window.location.assign(`/vehicles/${encodeURIComponent(row.VIN)}`);
+                      }}
+                    >
+                      <td className="py-2 pr-3">
+                        <Link
+                          to={`/vehicles/${encodeURIComponent(row.VIN)}`}
+                          className="font-mono text-[14px] font-semibold text-[var(--accent)] hover:underline"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          …{row.VIN.slice(-5)}
+                        </Link>
+                        <span className="ml-1.5 text-[11px]" style={mutedCaption}>
+                          {row.VIN}
+                        </span>
+                      </td>
+                      <td className="py-2 pr-3 tabular-nums whitespace-nowrap">
+                        {formatDateTime(row.ShippedAt, locale)}
+                      </td>
+                      <td className="py-2 pr-3">{row.ShippedByName || t('common.emDash')}</td>
+                      <td className="py-2 pr-3">
+                        <VehicleStatusDisplay
+                          status={row.CurrentStatus}
+                          eolStage={row.EOLStage}
+                        />
+                      </td>
+                      <td className="py-2">{eolStageLabel(row.EOLStage, t)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </ChartCard>
+
+        <ChartCard
+          title={t('analysis.dailyOpenTrend')}
+          subtitle={t('analysis.dailyTrendCombinedHint')}
+          icon={<CalendarDays size={16} />}
+        >
+          {dualTrend.length === 0 ? (
+            <EmptyChart />
+          ) : (
+            <div className={`chart-inert ${CHART_H} w-full min-w-0`}>
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={dualTrend} tabIndex={-1} margin={{ top: 8, right: 12, left: 0, bottom: 4 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                  <XAxis dataKey="label" tick={TICK} interval="preserveStartEnd" />
+                  <YAxis allowDecimals={false} width={36} tick={TICK} />
+                  <Tooltip contentStyle={CHART_TOOLTIP} />
+                  <Legend wrapperStyle={{ fontSize: 13 }} />
+                  <Area type="monotone" dataKey="open" name={t('analysis.stat.openActive')} stroke={statusColors.issueOpen} fill={statusColors.issueOpen} fillOpacity={0.14} strokeWidth={2.5} isAnimationActive={false} />
+                  <Area type="monotone" dataKey="closed" name={t('analysis.stat.completed')} stroke={statusColors.ok} fill={statusColors.ok} fillOpacity={0.12} strokeWidth={2.5} isAnimationActive={false} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </ChartCard>
+      </div>
+
       {/* 4) Status snapshot */}
       <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
         <ChartCard
@@ -999,7 +1075,7 @@ export default function AnalysisPage() {
                   <YAxis allowDecimals={false} width={36} tick={TICK} />
                   <Tooltip contentStyle={CHART_TOOLTIP} />
                   <Bar dataKey="count" fill={statusColors.issueInProgress} name={t('nav.issues')} isAnimationActive={false}>
-                    <LabelList dataKey="count" position="top" style={{ fill: 'var(--text-primary)', fontSize: 12, fontWeight: 600 }} />
+                    <LabelList dataKey="count" content={CountBarLabel} />
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
@@ -1030,7 +1106,7 @@ export default function AnalysisPage() {
                   <YAxis width={40} tick={TICK} />
                   <Tooltip contentStyle={CHART_TOOLTIP} />
                   <Bar dataKey="hours" fill={statusColors.info} name={t('analysis.mttrH')} isAnimationActive={false}>
-                    <LabelList dataKey="hours" position="top" style={{ fill: 'var(--text-primary)', fontSize: 11, fontWeight: 600 }} />
+                    <LabelList dataKey="hours" content={HourBarLabel} />
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
@@ -1041,7 +1117,9 @@ export default function AnalysisPage() {
               {mttrValue != null && (
                 <span>
                   {t('analysis.kpi.mttr')}:{' '}
-                  <strong className="text-[15px] text-[var(--text-primary)]">{mttrValue.toFixed(2)}</strong>
+                  <strong className="text-[15px] text-[var(--text-primary)]">
+                    {roundHours(mttrValue).toFixed(1)}
+                  </strong>
                 </span>
               )}
               {fpyValue != null && (
@@ -1169,7 +1247,7 @@ export default function AnalysisPage() {
                 <p className="text-[14px]">
                   <span style={mutedCaption}>{t('analysis.branchShipHoursHint')}: </span>
                   <strong className="text-[18px] tabular-nums text-[var(--text-primary)]">
-                    {branchShipHours.toFixed(1)} {t('analysis.unit.hours')}
+                    {roundHours(branchShipHours).toFixed(1)} {t('analysis.unit.hours')}
                   </strong>
                 </p>
               )}
@@ -1182,7 +1260,7 @@ export default function AnalysisPage() {
                       <YAxis width={40} tick={TICK} />
                       <Tooltip contentStyle={CHART_TOOLTIP} />
                       <Bar dataKey="hours" fill={statusColors.info} name={t('analysis.unit.hours')} isAnimationActive={false}>
-                        <LabelList dataKey="hours" position="top" style={{ fill: 'var(--text-primary)', fontSize: 12, fontWeight: 600 }} />
+                        <LabelList dataKey="hours" content={HourBarLabel} />
                       </Bar>
                     </BarChart>
                   </ResponsiveContainer>

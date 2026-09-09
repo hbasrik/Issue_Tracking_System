@@ -221,9 +221,13 @@ export function buildAnalysisCsv(
       ...section(t('analysis.branchShipHours'), [
         row([
           t('analysis.branchShipHoursHint'),
-          dash.AvgHoursToBranchShip ?? '',
+          dash.AvgHoursToBranchShip != null
+            ? Math.round(dash.AvgHoursToBranchShip * 10) / 10
+            : '',
         ]),
-        ...((dash.EOLStageWait ?? []).map((s) => row([s.Stage, s.AvgHours]))),
+        ...((dash.EOLStageWait ?? []).map((s) =>
+          row([s.Stage, Math.round(s.AvgHours * 10) / 10]),
+        )),
       ]),
     );
   }
