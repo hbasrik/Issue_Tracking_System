@@ -12,14 +12,16 @@ import (
 )
 
 type createTemplateItemRequest struct {
-	ItemText string  `json:"ItemText"`
-	EolPhase *string `json:"EolPhase"`
+	ItemText         string  `json:"ItemText"`
+	EolPhase         *string `json:"EolPhase"`
+	PropagationScope *string `json:"PropagationScope"`
 }
 
 type updateTemplateItemRequest struct {
-	ItemText *string `json:"ItemText"`
-	EolPhase *string `json:"EolPhase"`
-	IsActive *bool   `json:"IsActive"`
+	ItemText         *string `json:"ItemText"`
+	EolPhase         *string `json:"EolPhase"`
+	IsActive         *bool   `json:"IsActive"`
+	PropagationScope *string `json:"PropagationScope"`
 }
 
 type reorderTemplateItemsRequest struct {
@@ -47,10 +49,16 @@ func (s *server) handleChecklistTemplateItemCreate(w http.ResponseWriter, r *htt
 		writeError(w, err)
 		return
 	}
+	scope, err := parsePropagationScope(req.PropagationScope)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
 	item, err := s.deps.Checklists.CreateTemplateItem(r.Context(), usecase.CreateTemplateItemInput{
-		TemplateID: templateID,
-		ItemText:   req.ItemText,
-		EolPhase:   phase,
+		TemplateID:       templateID,
+		ItemText:         req.ItemText,
+		EolPhase:         phase,
+		PropagationScope: scope,
 	})
 	if err != nil {
 		writeError(w, err)
@@ -83,12 +91,18 @@ func (s *server) handleChecklistTemplateItemUpdate(w http.ResponseWriter, r *htt
 		writeError(w, err)
 		return
 	}
+	scope, err := parsePropagationScope(req.PropagationScope)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
 	item, err := s.deps.Checklists.UpdateTemplateItem(r.Context(), usecase.UpdateTemplateItemInput{
-		TemplateID: templateID,
-		ItemID:     itemID,
-		ItemText:   req.ItemText,
-		EolPhase:   phase,
-		IsActive:   req.IsActive,
+		TemplateID:       templateID,
+		ItemID:           itemID,
+		ItemText:         req.ItemText,
+		EolPhase:         phase,
+		IsActive:         req.IsActive,
+		PropagationScope: scope,
 	})
 	if err != nil {
 		writeError(w, err)
@@ -194,6 +208,33 @@ func (s *server) handleChecklistTemplateItemImpact(w http.ResponseWriter, r *htt
 	writeJSON(w, http.StatusOK, impact)
 }
 
+// handleChecklistTemplateItemMissingVehicles lists assigned VINs without the item.
+func (s *server) handleChecklistTemplateItemMissingVehicles(w http.ResponseWriter, r *http.Request) {
+	if s.deps.Checklists == nil {
+		writeError(w, domain.ErrNotFound)
+		return
+	}
+	templateID, itemID, ok := parseTemplateItemIDs(w, r)
+	if !ok {
+		return
+	}
+	limit := 100
+	if raw := strings.TrimSpace(r.URL.Query().Get("limit")); raw != "" {
+		n, err := strconv.Atoi(raw)
+		if err != nil || n < 1 {
+			badRequest(w, "limit must be a positive integer")
+			return
+		}
+		limit = n
+	}
+	out, err := s.deps.Checklists.ListTemplateItemMissingVehicles(r.Context(), templateID, itemID, limit)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, out)
+}
+
 func parseTemplateItemIDs(w http.ResponseWriter, r *http.Request) (templateID, itemID int, ok bool) {
 	var err error
 	templateID, err = strconv.Atoi(chi.URLParam(r, "id"))
@@ -222,4 +263,11 @@ func parseOptionalEOLPhase(raw *string) (*domain.EOLItemPhase, error) {
 		return nil, domain.ErrInvalidEnumValue
 	}
 	return &p, nil
+}
+
+func parsePropagationScope(raw *string) (domain.TemplateItemPropagationScope, error) {
+	if raw == nil {
+		return domain.PropagationScopeNotStarted, nil
+	}
+	return domain.NormalizePropagationScope(*raw)
 }

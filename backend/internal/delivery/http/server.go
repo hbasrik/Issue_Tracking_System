@@ -184,6 +184,7 @@ func NewRouter(deps Deps) http.Handler {
 				r.Post("/checklist-templates/{id}/items", s.handleChecklistTemplateItemCreate)
 				r.Post("/checklist-templates/{id}/items/reorder", s.handleChecklistTemplateItemReorder)
 				r.Get("/checklist-templates/{id}/items/{itemId}/impact", s.handleChecklistTemplateItemImpact)
+				r.Get("/checklist-templates/{id}/items/{itemId}/missing-vehicles", s.handleChecklistTemplateItemMissingVehicles)
 				r.Patch("/checklist-templates/{id}/items/{itemId}", s.handleChecklistTemplateItemUpdate)
 				r.Delete("/checklist-templates/{id}/items/{itemId}", s.handleChecklistTemplateItemDelete)
 			})

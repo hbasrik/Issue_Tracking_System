@@ -177,16 +177,19 @@ func (f *httpFakeChecklistRepo) CountIssueLinkedVINs(_ context.Context, _ int) (
 func (f *httpFakeChecklistRepo) DeactivateImpact(_ context.Context, itemID int) (int, int, error) {
 	return f.pending[itemID], f.evaluated[itemID], nil
 }
-func (f *httpFakeChecklistRepo) CreateImpact(_ context.Context, _ int, _ domain.ChecklistType) (int, int, error) {
-	return 4, 1, nil
+func (f *httpFakeChecklistRepo) CreateImpact(_ context.Context, _ int, _ domain.ChecklistType) (int, int, int, int, error) {
+	return 4, 1, 5, 0, nil
 }
 func (f *httpFakeChecklistRepo) DeletePendingProgressForItem(_ context.Context, itemID int) (int64, error) {
 	n := int64(f.pending[itemID])
 	f.pending[itemID] = 0
 	return n, nil
 }
-func (f *httpFakeChecklistRepo) InsertPendingForNotStartedVehicles(_ context.Context, _, _ int, _ domain.ChecklistType) (int64, error) {
+func (f *httpFakeChecklistRepo) InsertPendingForVehicles(_ context.Context, _, _ int, _ domain.ChecklistType, _ domain.TemplateItemPropagationScope) (int64, error) {
 	return 4, nil
+}
+func (f *httpFakeChecklistRepo) ListVehiclesMissingTemplateItem(_ context.Context, _, _ int, _ domain.ChecklistType, _ int) ([]domain.TemplateItemMissingVehicle, int, error) {
+	return nil, 0, nil
 }
 
 func newChecklistTemplateRouter(checklists repository.ChecklistProgressRepository) (http.Handler, *auth.Issuer) {
