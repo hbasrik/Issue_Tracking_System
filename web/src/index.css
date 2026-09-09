@@ -348,48 +348,135 @@ tr.cursor-pointer:focus-visible {
     line-height: 1.4;
   }
 
-  /* Recharts: fixed boxes so ResponsiveContainer does not collapse to 0×0. */
-  body[data-print='analysis'] .print-chart-box {
-    width: 170mm !important;
-    height: 58mm !important;
-    min-width: 170mm !important;
-    min-height: 58mm !important;
-    max-width: 170mm !important;
-    overflow: visible !important;
+  /* Analysis print: dedicated document layout (not screen reflow). */
+  body[data-print='analysis'] .print-analysis-doc {
+    color: #111111;
+    background: #ffffff;
   }
 
-  body[data-print='analysis'] .print-chart-box .recharts-responsive-container,
-  body[data-print='analysis'] .print-chart-box .recharts-wrapper {
-    width: 170mm !important;
-    height: 58mm !important;
-    min-width: 170mm !important;
-    min-height: 58mm !important;
-  }
-
-  body[data-print='analysis'] .print-chart-box svg {
-    width: 170mm !important;
-    height: 58mm !important;
-    overflow: visible !important;
+  body[data-print='analysis'] .print-kpi-block {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    margin-top: 8pt;
+    margin-bottom: 10pt;
+    padding-bottom: 8pt;
+    border-bottom: 0.5pt solid #111111;
   }
 
   body[data-print='analysis'] .print-kpi-grid {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 6pt;
-    margin-bottom: 10pt;
+    margin: 0;
   }
 
   body[data-print='analysis'] .print-kpi-card {
     break-inside: avoid;
     page-break-inside: avoid;
     border: 0.5pt solid #111111;
-    padding: 6pt;
+    padding: 5pt 6pt;
+    background: #ffffff;
+  }
+
+  body[data-print='analysis'] .print-kpi-label {
+    font-size: 8pt;
+    font-weight: 600;
+    line-height: 1.2;
+  }
+
+  body[data-print='analysis'] .print-kpi-value {
+    font-size: 13pt;
+    font-weight: 700;
+    margin-top: 2pt;
   }
 
   body[data-print='analysis'] .print-chart-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 8pt;
+    gap: 10pt 8pt;
+    align-items: start;
+  }
+
+  body[data-print='analysis'] .print-chart-card {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    border: 0.5pt solid #dddddd;
+    padding: 6pt 6pt 4pt;
+    background: #ffffff;
+    overflow: hidden;
+  }
+
+  body[data-print='analysis'] .print-chart-card h2 {
+    font-size: 10pt;
+    margin: 0 0 4pt;
+    border-bottom: 0.5pt solid #111111;
+    padding-bottom: 2pt;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  body[data-print='analysis'] .print-chart-canvas {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  /* Keep Recharts at its intrinsic fixed size — never stretch SVG. */
+  body[data-print='analysis'] .print-chart-canvas .recharts-wrapper,
+  body[data-print='analysis'] .print-chart-canvas svg {
+    max-width: 100% !important;
+    overflow: hidden !important;
+  }
+
+  body[data-print='analysis'] .print-chart-empty {
+    margin: 24pt auto;
+    text-align: center;
+    font-size: 9pt;
+    color: #555555;
+  }
+
+  body[data-print='analysis'] .print-chart-legend ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2pt 10pt;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  body[data-print='analysis'] .print-chart-legend li {
+    display: inline-flex;
+    align-items: center;
+    gap: 4pt;
+  }
+
+  body[data-print='analysis'] .print-legend-swatch {
+    display: inline-block;
+    width: 8pt;
+    height: 8pt;
+    border: 0.4pt solid #333333;
+    flex-shrink: 0;
+  }
+
+  body[data-print='analysis'] .print-table-block {
+    break-inside: auto;
+    page-break-inside: auto;
+  }
+
+  body[data-print='analysis'] .print-table-block h2 {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  body[data-print='analysis'] .print-vin-tail {
+    font-family: ui-monospace, monospace;
+    font-weight: 700;
+  }
+
+  body[data-print='analysis'] .print-vin-full {
+    color: #555555;
   }
 
   body[data-print='analysis'] .print-section {
