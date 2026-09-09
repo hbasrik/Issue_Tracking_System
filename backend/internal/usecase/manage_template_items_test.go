@@ -154,8 +154,8 @@ func (f *templateCatalogueFake) CountIssueLinkedVINs(_ context.Context, itemID i
 func (f *templateCatalogueFake) DeactivateImpact(_ context.Context, itemID int) (int, int, error) {
 	return f.pendingVINs[itemID], f.evaluated[itemID] + f.issueLinked[itemID], nil
 }
-func (f *templateCatalogueFake) CreateImpact(_ context.Context, _ int, _ domain.ChecklistType) (int, int, error) {
-	return f.createAff, f.createProt, nil
+func (f *templateCatalogueFake) CreateImpact(_ context.Context, _ int, _ domain.ChecklistType) (int, int, int, int, error) {
+	return f.createAff, f.createProt, f.createAff+2, f.createProt-1, nil
 }
 func (f *templateCatalogueFake) DeletePendingProgressForItem(_ context.Context, itemID int) (int64, error) {
 	n := int64(f.pendingVINs[itemID])
@@ -163,10 +163,16 @@ func (f *templateCatalogueFake) DeletePendingProgressForItem(_ context.Context, 
 	f.pendingVINs[itemID] = 0
 	return n, nil
 }
-func (f *templateCatalogueFake) InsertPendingForNotStartedVehicles(_ context.Context, itemID, _ int, _ domain.ChecklistType) (int64, error) {
+func (f *templateCatalogueFake) InsertPendingForVehicles(_ context.Context, itemID, _ int, _ domain.ChecklistType, scope domain.TemplateItemPropagationScope) (int64, error) {
 	n := int64(f.createAff)
+	if scope == domain.PropagationScopeIncomplete {
+		n = int64(f.createAff + 2)
+	}
 	f.insertedPending[itemID] = n
 	return n, nil
+}
+func (f *templateCatalogueFake) ListVehiclesMissingTemplateItem(_ context.Context, _, _ int, _ domain.ChecklistType, _ int) ([]domain.TemplateItemMissingVehicle, int, error) {
+	return nil, 0, nil
 }
 
 func TestCreateTemplateItem_AppendsActiveEOLItem(t *testing.T) {

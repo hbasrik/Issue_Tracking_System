@@ -9,23 +9,25 @@ import (
 
 // CreateTemplateItemInput is a new catalogue row on an existing template.
 type CreateTemplateItemInput struct {
-	TemplateID int
-	ItemText   string
-	EolPhase   *domain.EOLItemPhase
+	TemplateID        int
+	ItemText          string
+	EolPhase          *domain.EOLItemPhase
+	PropagationScope  domain.TemplateItemPropagationScope
 }
 
 // UpdateTemplateItemInput patches text, phase and/or active flag.
 type UpdateTemplateItemInput struct {
-	TemplateID int
-	ItemID     int
-	ItemText   *string
-	EolPhase   *domain.EOLItemPhase
-	ClearPhase bool
-	IsActive   *bool
+	TemplateID       int
+	ItemID           int
+	ItemText         *string
+	EolPhase         *domain.EOLItemPhase
+	ClearPhase       bool
+	IsActive         *bool
+	PropagationScope domain.TemplateItemPropagationScope
 }
 
 // CreateTemplateItem appends an active item and backfills PENDING onto
-// vehicles assigned to the template that have not started that checklist.
+// vehicles selected by PropagationScope (default: not_started).
 func (r *ChecklistResultRecorder) CreateTemplateItem(ctx context.Context, in CreateTemplateItemInput) (*domain.ChecklistTemplateItem, error) {
 	tmpl, err := r.checklist.GetTemplate(ctx, in.TemplateID)
 	if err != nil {
@@ -34,6 +36,13 @@ func (r *ChecklistResultRecorder) CreateTemplateItem(ctx context.Context, in Cre
 	text := strings.TrimSpace(in.ItemText)
 	if err := domain.ValidateTemplateItemFields(tmpl.Type, text, in.EolPhase); err != nil {
 		return nil, err
+	}
+	scope := in.PropagationScope
+	if scope == "" {
+		scope = domain.PropagationScopeNotStarted
+	}
+	if !scope.Valid() {
+		return nil, domain.ErrInvalidEnumValue
 	}
 	item, err := r.checklist.CreateTemplateItem(ctx, &domain.ChecklistTemplateItem{
 		TemplateID: in.TemplateID,
@@ -44,14 +53,14 @@ func (r *ChecklistResultRecorder) CreateTemplateItem(ctx context.Context, in Cre
 	if err != nil {
 		return nil, err
 	}
-	if _, err := r.checklist.InsertPendingForNotStartedVehicles(ctx, item.ID, tmpl.ID, tmpl.Type); err != nil {
+	if _, err := r.checklist.InsertPendingForVehicles(ctx, item.ID, tmpl.ID, tmpl.Type, scope); err != nil {
 		return nil, err
 	}
 	return item, nil
 }
 
 // UpdateTemplateItem edits a catalogue item. Deactivate removes PENDING
-// progress on not-started history; reactivate backfills not-started VINs.
+// progress; reactivate backfills by PropagationScope (default: not_started).
 // Text/phase edits do not move progress rows.
 func (r *ChecklistResultRecorder) UpdateTemplateItem(ctx context.Context, in UpdateTemplateItemInput) (*domain.ChecklistTemplateItem, error) {
 	tmpl, err := r.checklist.GetTemplate(ctx, in.TemplateID)
@@ -89,7 +98,14 @@ func (r *ChecklistResultRecorder) UpdateTemplateItem(ctx context.Context, in Upd
 		}
 	}
 	if in.IsActive != nil && !prevActive && item.IsActive {
-		if _, err := r.checklist.InsertPendingForNotStartedVehicles(ctx, item.ID, tmpl.ID, tmpl.Type); err != nil {
+		scope := in.PropagationScope
+		if scope == "" {
+			scope = domain.PropagationScopeNotStarted
+		}
+		if !scope.Valid() {
+			return nil, domain.ErrInvalidEnumValue
+		}
+		if _, err := r.checklist.InsertPendingForVehicles(ctx, item.ID, tmpl.ID, tmpl.Type, scope); err != nil {
 			return nil, err
 		}
 	}
@@ -141,10 +157,20 @@ func (r *ChecklistResultRecorder) PreviewTemplateItemImpact(
 	}
 	out := &domain.TemplateItemPropagationImpact{Action: action}
 	switch action {
-	case "create":
-		out.Affected, out.Protected, err = r.checklist.CreateImpact(ctx, templateID, tmpl.Type)
-	case "activate":
-		out.Affected, out.Protected, err = r.checklist.CreateImpact(ctx, templateID, tmpl.Type)
+	case "create", "activate":
+		nsA, nsP, incA, incP, cerr := r.checklist.CreateImpact(ctx, templateID, tmpl.Type)
+		if cerr != nil {
+			return nil, cerr
+		}
+		out.NotStartedAffected = nsA
+		out.NotStartedProtected = nsP
+		out.IncompleteAffected = incA
+		out.IncompleteProtected = incP
+		// Default selected scope for Affected/Protected is not_started.
+		out.Scope = string(domain.PropagationScopeNotStarted)
+		out.Affected = nsA
+		out.Protected = nsP
+		return out, nil
 	case "deactivate":
 		if itemID < 1 {
 			return nil, domain.ErrNotFound
@@ -182,6 +208,31 @@ func (r *ChecklistResultRecorder) PreviewTemplateItemImpact(
 		return nil, err
 	}
 	return out, nil
+}
+
+// ListTemplateItemMissingVehicles returns assigned VINs without this item.
+func (r *ChecklistResultRecorder) ListTemplateItemMissingVehicles(
+	ctx context.Context, templateID, itemID, limit int,
+) (*domain.TemplateItemMissingVehicles, error) {
+	tmpl, err := r.checklist.GetTemplate(ctx, templateID)
+	if err != nil {
+		return nil, err
+	}
+	item, err := r.checklist.GetTemplateItem(ctx, itemID)
+	if err != nil {
+		return nil, err
+	}
+	if item.TemplateID != templateID {
+		return nil, domain.ErrNotFound
+	}
+	rows, total, err := r.checklist.ListVehiclesMissingTemplateItem(ctx, templateID, itemID, tmpl.Type, limit)
+	if err != nil {
+		return nil, err
+	}
+	if rows == nil {
+		rows = []domain.TemplateItemMissingVehicle{}
+	}
+	return &domain.TemplateItemMissingVehicles{Count: total, Vehicles: rows}, nil
 }
 
 // ReorderTemplateItems sets item_no from the given id order.

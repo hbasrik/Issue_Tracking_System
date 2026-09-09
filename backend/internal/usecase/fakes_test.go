@@ -319,14 +319,17 @@ func (f *fakeChecklistRepo) CountIssueLinkedVINs(_ context.Context, _ int) (int,
 func (f *fakeChecklistRepo) DeactivateImpact(_ context.Context, _ int) (int, int, error) {
 	return 0, 0, nil
 }
-func (f *fakeChecklistRepo) CreateImpact(_ context.Context, _ int, _ domain.ChecklistType) (int, int, error) {
-	return 0, 0, nil
+func (f *fakeChecklistRepo) CreateImpact(_ context.Context, _ int, _ domain.ChecklistType) (int, int, int, int, error) {
+	return 0, 0, 0, 0, nil
 }
 func (f *fakeChecklistRepo) DeletePendingProgressForItem(_ context.Context, _ int) (int64, error) {
 	return 0, nil
 }
-func (f *fakeChecklistRepo) InsertPendingForNotStartedVehicles(_ context.Context, _, _ int, _ domain.ChecklistType) (int64, error) {
+func (f *fakeChecklistRepo) InsertPendingForVehicles(_ context.Context, _, _ int, _ domain.ChecklistType, _ domain.TemplateItemPropagationScope) (int64, error) {
 	return 0, nil
+}
+func (f *fakeChecklistRepo) ListVehiclesMissingTemplateItem(_ context.Context, _, _ int, _ domain.ChecklistType, _ int) ([]domain.TemplateItemMissingVehicle, int, error) {
+	return nil, 0, nil
 }
 
 // fakeIssueRepo is an in-memory IssueRepository keyed by issue id.
