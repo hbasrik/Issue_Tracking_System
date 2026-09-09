@@ -58,7 +58,7 @@ import {
 } from '../lib/homeDashboard';
 import type { HomeIssueStatKey } from '../lib/homeIssueStats';
 import { SeverityIndicator } from '../components/SeverityIndicator';
-import { StatusBadge } from '../components/StatusBadge';
+import { VehicleStatusDisplay } from '../components/VehicleStatusDisplay';
 import { brandColors, statusColors } from '../theme/tokens';
 import { useAuth } from '../auth/AuthProvider';
 import { Perm } from '../auth/permissions';
@@ -649,7 +649,10 @@ export default function HomePage() {
                             <SeverityIndicator severity={row.WorstSeverity} />
                           </td>
                           <td className="py-1.5">
-                            <StatusBadge kind="vehicle" value={row.Status} />
+                            <VehicleStatusDisplay
+                              status={row.Status}
+                              eolStage={row.EOLStage}
+                            />
                           </td>
                           <td className="py-1.5 text-right text-[var(--text-secondary)]">
                             <ChevronRight size={16} aria-hidden />
