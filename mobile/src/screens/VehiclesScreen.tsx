@@ -148,8 +148,8 @@ export default function VehiclesScreen() {
                 color: tokens.textSecondary,
                 fontWeight: '600',
                 fontSize: 13,
-                marginTop: 16,
-                marginBottom: 8,
+                marginTop: 12,
+                marginBottom: 6,
               }}
             >
               {t('vehicles.lifecycle')}
@@ -163,7 +163,7 @@ export default function VehiclesScreen() {
                     onPress={() => toggleLifecycle(value)}
                     style={{
                       paddingHorizontal: 12,
-                      minHeight: 36,
+                      minHeight: 44,
                       borderRadius: 999,
                       borderWidth: 1,
                       borderColor: selected ? tokens.accent : tokens.border,
@@ -194,7 +194,7 @@ export default function VehiclesScreen() {
                 color: tokens.textSecondary,
                 fontWeight: '600',
                 fontSize: 13,
-                marginTop: 20,
+                marginTop: 14,
                 marginBottom: 4,
               }}
             >
