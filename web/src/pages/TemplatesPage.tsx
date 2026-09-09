@@ -9,7 +9,6 @@ import {
 import { apiErrorMessage } from '../lib/apiErrors';
 import { ActiveBadge } from '../components/ActiveBadge';
 import { useConfirm } from '../components/ConfirmDialog';
-import { StatusBadge } from '../components/StatusBadge';
 import {
   DataCard,
   DataCardField,
@@ -17,11 +16,38 @@ import {
   MobileCardStack,
 } from '../components/DataCard';
 import { useI18n, type Translate } from '../i18n';
+import { brandColors, inkOn, mixTowardBlack } from '../theme/tokens';
 
-function typeBadgeValue(type: ChecklistTemplate['Type']): string {
-  if (type === 'EOL') return 'OK';
-  if (type === 'TEST') return 'PENDING';
-  return 'CONDITIONAL_OK';
+/** Checklist catalogue type — not an item/issue status. */
+function templateTypeLabel(
+  type: ChecklistTemplate['Type'],
+  t: Translate,
+): string {
+  switch (type) {
+    case 'EOL':
+      return t('templates.typeEol');
+    case 'SHIPMENT':
+      return t('templates.typeShipment');
+    case 'TEST':
+      return t('templates.typeTest');
+    default:
+      return type;
+  }
+}
+
+/** Neutral chip — never StatusBadge / checklist / issue colors. */
+function TemplateTypeBadge({ type }: { type: ChecklistTemplate['Type'] }) {
+  const { t } = useI18n();
+  const color = mixTowardBlack(brandColors.neutralGray, 18);
+  const ink = inkOn(color);
+  return (
+    <span
+      className="inline-flex items-center rounded-full px-2.5 py-0.5 text-[12px] font-medium"
+      style={{ color: ink, backgroundColor: color }}
+    >
+      {templateTypeLabel(type, t)}
+    </span>
+  );
 }
 
 function modelLabel(modelId: number | null, t: Translate): string {
@@ -317,10 +343,7 @@ export default function TemplatesPage() {
                   {modelLabel(row.VehicleModelID, t)}
                 </DataCardField>
                 <DataCardField label={t('templates.type')}>
-                  <span className="inline-flex items-center gap-1">
-                    <StatusBadge kind="eol" value={typeBadgeValue(row.Type)} />
-                    {row.Type}
-                  </span>
+                  <TemplateTypeBadge type={row.Type} />
                 </DataCardField>
                 <DataCardField label={t('templates.activeItems')}>{row.ItemCount}</DataCardField>
                 <DataCardField label={t('templates.status')}>
@@ -367,8 +390,7 @@ export default function TemplatesPage() {
                   >
                     <td className="px-4 py-3">{modelLabel(row.VehicleModelID, t)}</td>
                     <td className="px-4 py-3">
-                      <StatusBadge kind="eol" value={typeBadgeValue(row.Type)} />{' '}
-                      {row.Type}
+                      <TemplateTypeBadge type={row.Type} />
                     </td>
                     <td className="px-4 py-3">{row.ItemCount}</td>
                     <td className="px-4 py-3">
