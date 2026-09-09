@@ -261,7 +261,16 @@ export default function MyIssuesScreen() {
                 rowGap: 10,
               }}
             >
-              <View style={{ flexGrow: 1, flexShrink: 1, flexBasis: 168, minWidth: 140 }}>
+              <View
+                style={{
+                  flexGrow: 1,
+                  flexShrink: 1,
+                  flexBasis: 160,
+                  // Allow shrink below chip intrinsic width so Severity stays
+                  // on the same row; chips wrap inside this column.
+                  minWidth: 0,
+                }}
+              >
                 <Text
                   style={{
                     color: tokens.textSecondary,

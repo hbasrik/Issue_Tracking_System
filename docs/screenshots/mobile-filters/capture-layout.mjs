@@ -39,7 +39,7 @@ function pageHtml(themeKey, width) {
   body { margin: 0; font-family: -apple-system, system-ui, sans-serif; background: ${c.bg}; color: ${c.text}; }
   .wrap { width: ${width}px; margin: 0 auto; padding: 16px; background: ${c.bg}; }
   .row { display: flex; flex-wrap: wrap; align-items: flex-start; column-gap: 16px; row-gap: 10px; margin-top: 12px; }
-  .type { flex: 1 1 168px; min-width: 140px; }
+  .type { flex: 1 1 160px; min-width: 0; }
   .sev { flex: 0 0 auto; }
   .label { color: ${c.muted}; font-weight: 600; font-size: 13px; margin: 0 0 6px; }
   .chips { display: flex; flex-wrap: wrap; gap: 8px; }
