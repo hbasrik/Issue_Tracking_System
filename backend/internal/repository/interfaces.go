@@ -98,16 +98,25 @@ type ChecklistProgressRepository interface {
 	// DeactivateImpact counts PENDING rows that would be removed vs vehicles
 	// that keep history (evaluated or issue-linked).
 	DeactivateImpact(ctx context.Context, itemID int) (affected, protected int, err error)
-	// CreateImpact counts vehicles assigned to the template that have not
-	// started the checklist type (affected) vs those that have (protected).
-	CreateImpact(ctx context.Context, templateID int, checklistType domain.ChecklistType) (affected, protected int, err error)
+	// CreateImpact counts vehicles for both create/activate scopes:
+	// not_started (no evaluated rows) and incomplete (still has PENDING / not
+	// fully finished). Completed checklists are never in the affected set.
+	CreateImpact(ctx context.Context, templateID int, checklistType domain.ChecklistType) (
+		notStartedAffected, notStartedProtected, incompleteAffected, incompleteProtected int, err error,
+	)
 	// DeletePendingProgressForItem removes PENDING progress rows for the item
 	// that are not issue-linked. Evaluated rows are left intact.
 	DeletePendingProgressForItem(ctx context.Context, itemID int) (int64, error)
-	// InsertPendingForNotStartedVehicles adds PENDING progress for the item
-	// onto vehicles assigned to the template that have no evaluated row of
-	// that checklist type yet (and do not already have this item).
-	InsertPendingForNotStartedVehicles(ctx context.Context, itemID, templateID int, checklistType domain.ChecklistType) (int64, error)
+	// InsertPendingForVehicles adds PENDING progress for the item onto
+	// vehicles selected by scope. Completed checklists are never touched.
+	InsertPendingForVehicles(
+		ctx context.Context, itemID, templateID int, checklistType domain.ChecklistType, scope domain.TemplateItemPropagationScope,
+	) (int64, error)
+	// ListVehiclesMissingTemplateItem returns assigned VINs that have no
+	// progress row for the catalogue item.
+	ListVehiclesMissingTemplateItem(
+		ctx context.Context, templateID, itemID int, checklistType domain.ChecklistType, limit int,
+	) ([]domain.TemplateItemMissingVehicle, int, error)
 }
 
 // IssueRepository persists and queries issues.

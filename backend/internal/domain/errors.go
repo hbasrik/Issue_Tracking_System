@@ -224,12 +224,66 @@ func (e *TemplateItemInUseError) Error() string {
 	return fmt.Sprintf("bu madde %d araçta değerlendirilmiş veya issue'ya bağlı, silinemez — pasife çekebilirsiniz", n)
 }
 
+// TemplateItemPropagationScope selects which assigned vehicles receive a new
+// or reactivated catalogue item as PENDING.
+type TemplateItemPropagationScope string
+
+const (
+	// PropagationScopeNotStarted = vehicles with no evaluated row of that type.
+	PropagationScopeNotStarted TemplateItemPropagationScope = "not_started"
+	// PropagationScopeIncomplete = vehicles that still have PENDING on that type
+	// (or no progress yet). Fully completed checklists are never touched.
+	PropagationScopeIncomplete TemplateItemPropagationScope = "incomplete"
+)
+
+// Valid reports whether scope is a known propagation mode.
+func (s TemplateItemPropagationScope) Valid() bool {
+	switch s {
+	case PropagationScopeNotStarted, PropagationScopeIncomplete:
+		return true
+	default:
+		return false
+	}
+}
+
+// NormalizePropagationScope defaults empty to not_started.
+func NormalizePropagationScope(raw string) (TemplateItemPropagationScope, error) {
+	s := TemplateItemPropagationScope(strings.TrimSpace(strings.ToLower(raw)))
+	if s == "" {
+		return PropagationScopeNotStarted, nil
+	}
+	if !s.Valid() {
+		return "", ErrInvalidEnumValue
+	}
+	return s, nil
+}
+
 // TemplateItemPropagationImpact describes how many vehicles a catalogue
 // change will touch versus leave alone (history preserved).
 type TemplateItemPropagationImpact struct {
 	Affected  int    `json:"Affected"`
 	Protected int    `json:"Protected"`
 	Action    string `json:"Action"` // deactivate | activate | create | delete
+	// Scope is the selected create/activate mode (echo). Empty for deactivate/delete.
+	Scope string `json:"Scope,omitempty"`
+	// Dual counts for create/activate so the UI can switch scopes without refetch.
+	NotStartedAffected  int `json:"NotStartedAffected,omitempty"`
+	NotStartedProtected int `json:"NotStartedProtected,omitempty"`
+	IncompleteAffected  int `json:"IncompleteAffected,omitempty"`
+	IncompleteProtected int `json:"IncompleteProtected,omitempty"`
+}
+
+// TemplateItemMissingVehicle is an assigned VIN that has no progress row for
+// the catalogue item (item was never backfilled onto that vehicle).
+type TemplateItemMissingVehicle struct {
+	VIN              string `json:"VIN"`
+	CurrentGlobalStatus string `json:"CurrentGlobalStatus"`
+}
+
+// TemplateItemMissingVehicles lists VINs lacking a given catalogue item.
+type TemplateItemMissingVehicles struct {
+	Count    int                          `json:"Count"`
+	Vehicles []TemplateItemMissingVehicle `json:"Vehicles"`
 }
 
 // UserInUseError is returned when DELETE is attempted on a user who still

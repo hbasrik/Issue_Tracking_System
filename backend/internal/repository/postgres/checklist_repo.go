@@ -403,11 +403,15 @@ func (r *ChecklistProgressRepo) DeactivateImpact(ctx context.Context, itemID int
 	return affected, protected, err
 }
 
-// CreateImpact counts not-started vs started vehicles for a template.
-func (r *ChecklistProgressRepo) CreateImpact(ctx context.Context, templateID int, checklistType domain.ChecklistType) (affected, protected int, err error) {
+// CreateImpact counts not-started and incomplete vehicle sets for a template.
+// Completed checklists (progress exists and no PENDING remains) are always
+// in the protected/incomplete-protected bucket — never affected.
+func (r *ChecklistProgressRepo) CreateImpact(ctx context.Context, templateID int, checklistType domain.ChecklistType) (
+	notStartedAffected, notStartedProtected, incompleteAffected, incompleteProtected int, err error,
+) {
 	col, err := vehicleTemplateColumn(checklistType)
 	if err != nil {
-		return 0, 0, err
+		return 0, 0, 0, 0, err
 	}
 	q := fmt.Sprintf(`
 		WITH assigned AS (
@@ -418,14 +422,31 @@ func (r *ChecklistProgressRepo) CreateImpact(ctx context.Context, templateID int
 		  FROM checklist_item_progress p
 		  JOIN assigned a ON a.vin = p.vin
 		  WHERE p.checklist_type = $2 AND p.check_status <> 'PENDING'
+		),
+		completed AS (
+		  SELECT a.vin
+		  FROM assigned a
+		  WHERE EXISTS (
+		    SELECT 1 FROM checklist_item_progress p
+		    WHERE p.vin = a.vin AND p.checklist_type = $2
+		  )
+		  AND NOT EXISTS (
+		    SELECT 1 FROM checklist_item_progress p
+		    WHERE p.vin = a.vin AND p.checklist_type = $2 AND p.check_status = 'PENDING'
+		  )
 		)
 		SELECT
 		  (SELECT COUNT(*)::int FROM assigned a
 		    WHERE NOT EXISTS (SELECT 1 FROM started s WHERE s.vin = a.vin)),
-		  (SELECT COUNT(*)::int FROM started)
+		  (SELECT COUNT(*)::int FROM started),
+		  (SELECT COUNT(*)::int FROM assigned a
+		    WHERE NOT EXISTS (SELECT 1 FROM completed c WHERE c.vin = a.vin)),
+		  (SELECT COUNT(*)::int FROM completed)
 	`, col)
-	err = r.pool.QueryRow(ctx, q, templateID, string(checklistType)).Scan(&affected, &protected)
-	return affected, protected, err
+	err = r.pool.QueryRow(ctx, q, templateID, string(checklistType)).Scan(
+		&notStartedAffected, &notStartedProtected, &incompleteAffected, &incompleteProtected,
+	)
+	return notStartedAffected, notStartedProtected, incompleteAffected, incompleteProtected, err
 }
 
 // DeletePendingProgressForItem removes removable PENDING rows for the item.
@@ -445,13 +466,44 @@ func (r *ChecklistProgressRepo) DeletePendingProgressForItem(ctx context.Context
 	return tag.RowsAffected(), nil
 }
 
-// InsertPendingForNotStartedVehicles backfills PENDING onto not-started VINs.
-func (r *ChecklistProgressRepo) InsertPendingForNotStartedVehicles(
-	ctx context.Context, itemID, templateID int, checklistType domain.ChecklistType,
+// InsertPendingForVehicles backfills PENDING onto vehicles selected by scope.
+// Completed checklists are never included.
+func (r *ChecklistProgressRepo) InsertPendingForVehicles(
+	ctx context.Context, itemID, templateID int, checklistType domain.ChecklistType, scope domain.TemplateItemPropagationScope,
 ) (int64, error) {
 	col, err := vehicleTemplateColumn(checklistType)
 	if err != nil {
 		return 0, err
+	}
+	var whereExtra string
+	switch scope {
+	case domain.PropagationScopeNotStarted, "":
+		// No evaluated row of this checklist type yet.
+		whereExtra = `
+		  AND NOT EXISTS (
+		    SELECT 1 FROM checklist_item_progress p
+		    WHERE p.vin = v.vin
+		      AND p.checklist_type = $2::checklist_type_enum
+		      AND p.check_status <> 'PENDING'
+		  )`
+	case domain.PropagationScopeIncomplete:
+		// Still incomplete: no progress yet OR any PENDING remains.
+		// Explicitly exclude completed (has progress, zero PENDING).
+		whereExtra = `
+		  AND NOT (
+		    EXISTS (
+		      SELECT 1 FROM checklist_item_progress p
+		      WHERE p.vin = v.vin AND p.checklist_type = $2::checklist_type_enum
+		    )
+		    AND NOT EXISTS (
+		      SELECT 1 FROM checklist_item_progress p
+		      WHERE p.vin = v.vin
+		        AND p.checklist_type = $2::checklist_type_enum
+		        AND p.check_status = 'PENDING'
+		    )
+		  )`
+	default:
+		return 0, domain.ErrInvalidEnumValue
 	}
 	q := fmt.Sprintf(`
 		INSERT INTO checklist_item_progress (vin, checklist_type, check_item_id, check_status)
@@ -460,20 +512,64 @@ func (r *ChecklistProgressRepo) InsertPendingForNotStartedVehicles(
 		WHERE v.%s = $1
 		  AND NOT EXISTS (
 		    SELECT 1 FROM checklist_item_progress p
-		    WHERE p.vin = v.vin
-		      AND p.checklist_type = $2::checklist_type_enum
-		      AND p.check_status <> 'PENDING'
-		  )
-		  AND NOT EXISTS (
-		    SELECT 1 FROM checklist_item_progress p
 		    WHERE p.vin = v.vin AND p.check_item_id = $3
 		  )
-		ON CONFLICT (vin, check_item_id) DO NOTHING`, col)
+		  %s
+		ON CONFLICT (vin, check_item_id) DO NOTHING`, col, whereExtra)
 	tag, err := r.pool.Exec(ctx, q, templateID, string(checklistType), itemID)
 	if err != nil {
 		return 0, err
 	}
 	return tag.RowsAffected(), nil
+}
+
+// ListVehiclesMissingTemplateItem returns assigned VINs without this item.
+func (r *ChecklistProgressRepo) ListVehiclesMissingTemplateItem(
+	ctx context.Context, templateID, itemID int, checklistType domain.ChecklistType, limit int,
+) ([]domain.TemplateItemMissingVehicle, int, error) {
+	col, err := vehicleTemplateColumn(checklistType)
+	if err != nil {
+		return nil, 0, err
+	}
+	if limit <= 0 || limit > 500 {
+		limit = 100
+	}
+	countQ := fmt.Sprintf(`
+		SELECT COUNT(*)::int
+		FROM vehicles v
+		WHERE v.%s = $1
+		  AND NOT EXISTS (
+		    SELECT 1 FROM checklist_item_progress p
+		    WHERE p.vin = v.vin AND p.check_item_id = $2
+		  )`, col)
+	var total int
+	if err := r.pool.QueryRow(ctx, countQ, templateID, itemID).Scan(&total); err != nil {
+		return nil, 0, err
+	}
+	listQ := fmt.Sprintf(`
+		SELECT v.vin, v.current_global_status::text
+		FROM vehicles v
+		WHERE v.%s = $1
+		  AND NOT EXISTS (
+		    SELECT 1 FROM checklist_item_progress p
+		    WHERE p.vin = v.vin AND p.check_item_id = $2
+		  )
+		ORDER BY v.vin
+		LIMIT $3`, col)
+	rows, err := r.pool.Query(ctx, listQ, templateID, itemID, limit)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+	out := make([]domain.TemplateItemMissingVehicle, 0)
+	for rows.Next() {
+		var row domain.TemplateItemMissingVehicle
+		if err := rows.Scan(&row.VIN, &row.CurrentGlobalStatus); err != nil {
+			return nil, 0, err
+		}
+		out = append(out, row)
+	}
+	return out, total, rows.Err()
 }
 
 func vehicleTemplateColumn(checklistType domain.ChecklistType) (string, error) {
