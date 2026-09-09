@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useI18n } from '../i18n';
 import { api, type Vehicle } from '../lib/api';
 import { lightTokens } from '../theme/tokens';
-import { StatusBadge } from './StatusBadge';
+import { VehicleStatusDisplay } from './VehicleStatusDisplay';
 
 interface VinSearchBoxProps {
   /** Controlled value (optional). */
@@ -181,7 +181,10 @@ export function VinSearchBox({
                     {vin}
                   </span>
                 </div>
-                <StatusBadge kind="vehicle" value={v.CurrentGlobalStatus} />
+                <VehicleStatusDisplay
+                  status={v.CurrentGlobalStatus}
+                  eolStage={v.CurrentEOLStage}
+                />
               </Link>
             );
           })}
