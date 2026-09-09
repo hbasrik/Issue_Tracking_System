@@ -179,15 +179,6 @@ export function AnalysisPrint({
     count: r.IssueCount,
   }));
 
-  const fpyBars = (dash?.FPYByStation ?? [])
-    .filter((r) => r.TotalCount > 0)
-    .map((r) => ({
-      station: t('analysis.stationN', {
-        id: stations.find((s) => s.ID === r.StationID)?.SequenceNo ?? r.StationID,
-      }),
-      pct: r.Percent ?? 0,
-    }));
-
   const reporterBars = (dash?.OpenedByReporter ?? []).map((r) => ({
     name: r.ReporterName.length > 18 ? `${r.ReporterName.slice(0, 16)}…` : r.ReporterName,
     count: r.Count,
@@ -229,7 +220,6 @@ export function AnalysisPrint({
 
   const shipped = dash?.BranchShippedList ?? [];
   const openH = verticalChartHeight(openStationBars.length);
-  const fpyH = verticalChartHeight(fpyBars.length);
   const reporterH = verticalChartHeight(reporterBars.length);
 
   return (
@@ -453,38 +443,6 @@ export function AnalysisPrint({
                   <Bar
                     dataKey="count"
                     fill={statusColors.issueOpen}
-                    isAnimationActive={false}
-                  />
-                </BarChart>
-              </ChartCard>
-
-              <ChartCard title={t('analysis.fpyByStation')}>
-                <BarChart
-                  layout="vertical"
-                  width={CHART_W}
-                  height={fpyH}
-                  data={fpyBars}
-                  margin={{ top: 4, right: 16, left: 4, bottom: 4 }}
-                >
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    stroke="#ccc"
-                    horizontal={false}
-                  />
-                  <XAxis
-                    type="number"
-                    domain={[0, 100]}
-                    tick={{ fontSize: 9, fill: '#111' }}
-                  />
-                  <YAxis
-                    type="category"
-                    dataKey="station"
-                    width={72}
-                    tick={{ fontSize: 9, fill: '#111' }}
-                  />
-                  <Bar
-                    dataKey="pct"
-                    fill={statusColors.ok}
                     isAnimationActive={false}
                   />
                 </BarChart>

@@ -68,7 +68,7 @@ import {
   vehicleStatusLabel,
 } from '../lib/vehicleStatus';
 import { AnalysisPrint } from '../components/print/AnalysisPrint';
-import { formatDateRangeFull, formatDateRangeShort, formatDateTime } from '../../../shared/i18n';
+import { formatDateRangeFull, formatDateRangeShort, formatDateTime, localeTag } from '../../../shared/i18n';
 
 const VEHICLE_LIFECYCLES = ['', ...VEHICLE_LIFECYCLE_FILTER_VALUES] as const;
 const SEVERITIES = ['', 'CRITICAL', 'MEDIUM', 'LOW'] as const;
@@ -89,7 +89,10 @@ const CHART_TOOLTIP = {
   fontSize: 12,
 } as const;
 const mutedCaption = { color: 'var(--text-secondary)' } as const;
-const CHART_H = 'h-[168px]';
+/** Taller charts for wall-mounted TV readability. */
+const CHART_H = 'h-[200px]';
+const TICK = { fill: 'var(--text-secondary)', fontSize: 12 } as const;
+const AUTO_REFRESH_MS = 60_000;
 
 const STAGE_COLORS: Record<string, string> = {
   BRANCH: statusColors.info,
@@ -247,10 +250,14 @@ export default function AnalysisPage() {
   const [stations, setStations] = useState<Station[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const load = useCallback(async (opts?: { silent?: boolean }) => {
+    const silent = opts?.silent === true;
+    if (silent) setRefreshing(true);
+    else setLoading(true);
     setError(null);
     try {
       const [d, stationRes, typesRes] = await Promise.all([
@@ -261,15 +268,24 @@ export default function AnalysisPage() {
       setDash(d);
       setStations(stationRes.items ?? []);
       setIssueTypes(typesRes.items ?? []);
+      setUpdatedAt(new Date());
     } catch (err) {
       setError(err instanceof Error ? err.message : t('analysis.loadFailed'));
     } finally {
-      setLoading(false);
+      if (silent) setRefreshing(false);
+      else setLoading(false);
     }
   }, [applied, t]);
 
   useEffect(() => {
     void load();
+  }, [load]);
+
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      void load({ silent: true });
+    }, AUTO_REFRESH_MS);
+    return () => window.clearInterval(id);
   }, [load]);
 
   // Keep chip list in sync when URL vins change (e.g. back/forward).
@@ -489,17 +505,6 @@ export default function AnalysisPage() {
     [dash, t],
   );
 
-  const fpyStationBars = useMemo(
-    () =>
-      (dash?.FPYByStation ?? [])
-        .filter((r) => r.TotalCount > 0)
-        .map((r) => ({
-          station: numberedStation(r.StationID, stations, t),
-          pct: r.Percent ?? 0,
-        })),
-    [dash, stations, t],
-  );
-
   const reporterBars = useMemo(
     () =>
       (dash?.OpenedByReporter ?? []).map((r) => ({
@@ -577,6 +582,14 @@ export default function AnalysisPage() {
   const mttrValue = dash?.Cards?.AvgResolutionHours ?? null;
   const branchShipHours = dash?.AvgHoursToBranchShip ?? null;
 
+  const updatedClock = updatedAt
+    ? updatedAt.toLocaleTimeString(localeTag(locale), {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      })
+    : t('common.emDash');
+
   function exportCsv() {
     if (!dash) return;
     setExporting(true);
@@ -602,7 +615,10 @@ export default function AnalysisPage() {
             {t('analysis.subtitle')}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-[13px] font-medium tabular-nums" style={mutedCaption}>
+            {t('home.lastUpdated', { time: updatedClock })}
+          </span>
           <button
             type="button"
             onClick={() => void load()}
@@ -610,7 +626,10 @@ export default function AnalysisPage() {
             aria-label={t('home.refresh')}
             title={t('home.refresh')}
           >
-            <RefreshCw size={16} className={loading ? 'animate-spin' : undefined} />
+            <RefreshCw
+              size={16}
+              className={loading || refreshing ? 'animate-spin' : undefined}
+            />
           </button>
           <AnalysisPrint
             dash={dash}
@@ -667,7 +686,95 @@ export default function AnalysisPage() {
         ))}
       </div>
 
-      {/* 2) Compact single-row filter bar */}
+      {/* 2) Ops snapshot — TV wall: live ops first */}
+      <div className="mt-3 grid grid-cols-1 gap-3 xl:grid-cols-2">
+        <ChartCard
+          className="xl:col-span-2"
+          title={t('analysis.branchShippedList')}
+          subtitle={t('analysis.branchShippedListHint')}
+          icon={<Truck size={16} />}
+          filterNote={vehicleFilterNote}
+        >
+          {(dash?.BranchShippedList ?? []).length === 0 ? (
+            <EmptyChart />
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[28rem] text-left text-[14px]">
+                <thead>
+                  <tr
+                    className="border-b text-[11px] font-semibold uppercase tracking-wide"
+                    style={{ borderColor: 'var(--border)', ...mutedCaption }}
+                  >
+                    <th className="pb-1.5 pr-3">{t('issue.vin')}</th>
+                    <th className="pb-1.5 pr-3">{t('analysis.shippedAt')}</th>
+                    <th className="pb-1.5 pr-3">{t('analysis.shippedBy')}</th>
+                    <th className="pb-1.5 pr-3">{t('issue.status')}</th>
+                    <th className="pb-1.5">{t('print.eolStage')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(dash?.BranchShippedList ?? []).map((row) => (
+                    <tr
+                      key={`${row.VIN}-${row.ShippedAt}`}
+                      className="cursor-pointer border-b hover:bg-[var(--bg-surface-2)]"
+                      style={{ borderColor: 'var(--border)' }}
+                      onClick={() => {
+                        window.location.assign(`/vehicles/${encodeURIComponent(row.VIN)}`);
+                      }}
+                    >
+                      <td className="py-2 pr-3">
+                        <Link
+                          to={`/vehicles/${encodeURIComponent(row.VIN)}`}
+                          className="font-mono text-[14px] font-semibold text-[var(--accent)] hover:underline"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          …{row.VIN.slice(-5)}
+                        </Link>
+                        <span className="ml-1.5 text-[11px]" style={mutedCaption}>
+                          {row.VIN}
+                        </span>
+                      </td>
+                      <td className="py-2 pr-3 tabular-nums whitespace-nowrap">
+                        {formatDateTime(row.ShippedAt, locale)}
+                      </td>
+                      <td className="py-2 pr-3">{row.ShippedByName || t('common.emDash')}</td>
+                      <td className="py-2 pr-3">{vehicleStatusLabel(row.CurrentStatus, t)}</td>
+                      <td className="py-2">{eolStageLabel(row.EOLStage, t)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </ChartCard>
+
+        <ChartCard
+          className="xl:col-span-2"
+          title={t('analysis.dailyOpenTrend')}
+          subtitle={t('analysis.dailyTrendCombinedHint')}
+          icon={<CalendarDays size={16} />}
+        >
+          {dualTrend.length === 0 ? (
+            <EmptyChart />
+          ) : (
+            <div className={`chart-inert ${CHART_H} w-full min-w-0`}>
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={dualTrend} tabIndex={-1} margin={{ top: 8, right: 12, left: 0, bottom: 4 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                  <XAxis dataKey="label" tick={TICK} interval="preserveStartEnd" />
+                  <YAxis allowDecimals={false} width={36} tick={TICK} />
+                  <Tooltip contentStyle={CHART_TOOLTIP} />
+                  <Legend wrapperStyle={{ fontSize: 13 }} />
+                  <Area type="monotone" dataKey="open" name={t('analysis.stat.openActive')} stroke={statusColors.issueOpen} fill={statusColors.issueOpen} fillOpacity={0.14} strokeWidth={2.5} isAnimationActive={false} />
+                  <Area type="monotone" dataKey="closed" name={t('analysis.stat.completed')} stroke={statusColors.ok} fill={statusColors.ok} fillOpacity={0.12} strokeWidth={2.5} isAnimationActive={false} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </ChartCard>
+      </div>
+
+      {/* 3) Compact single-row filter bar */}
       <div
         data-testid="analysis-filters"
         className="mt-3 flex flex-wrap items-end gap-x-1.5 gap-y-2 overflow-x-auto rounded-xl border bg-[var(--bg-surface-1)] px-2.5 py-2 xl:flex-nowrap"
@@ -801,7 +908,7 @@ export default function AnalysisPage() {
         {t('analysis.activeFilters', { summary: filterSummary })}
       </p>
 
-      {/* 3) Charts — 3 columns, mixed types */}
+      {/* 4) Status snapshot */}
       <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
         <ChartCard
           title={t('analysis.stagePerformance')}
@@ -823,57 +930,25 @@ export default function AnalysisPage() {
           {severityPie.length === 0 ? <EmptyChart /> : <DonutChart data={severityPie} />}
         </ChartCard>
 
-        <ChartCard title={t('analysis.stationMttr')} icon={<Timer size={16} />}>
-          {mttrBars.length === 0 ? (
-            <EmptyChart />
-          ) : (
-            <div className={`chart-inert ${CHART_H} w-full min-w-0`}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={mttrBars} tabIndex={-1} margin={{ top: 4, right: 8, left: 0, bottom: 36 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                  <XAxis dataKey="station" tick={{ fill: 'var(--text-secondary)', fontSize: 9 }} angle={-30} textAnchor="end" height={48} interval={0} />
-                  <YAxis width={32} tick={{ fill: 'var(--text-secondary)', fontSize: 10 }} />
-                  <Tooltip contentStyle={CHART_TOOLTIP} />
-                  <Bar dataKey="hours" fill={statusColors.info} name={t('analysis.mttrH')} isAnimationActive={false} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-          {(mttrValue != null || fpyValue != null) && (
-            <p className="mt-2 flex flex-wrap gap-3 text-[11px]" style={mutedCaption}>
-              {mttrValue != null && (
-                <span>
-                  {t('analysis.kpi.mttr')}: <strong className="text-[var(--text-primary)]">{mttrValue.toFixed(2)}</strong>
-                </span>
-              )}
-              {fpyValue != null && (
-                <span>
-                  {t('analysis.kpi.fpy')}: <strong className="text-[var(--text-primary)]">{fpyValue}%</strong>
-                </span>
-              )}
-            </p>
-          )}
-        </ChartCard>
-
-        <ChartCard title={t('analysis.openByStation')} icon={<BarChart3 size={16} />}>
-          {openStationBars.length === 0 ? (
-            <EmptyChart />
-          ) : (
-            <HorizontalBarChart data={openStationBars} color={statusColors.issueOpen} />
-          )}
-        </ChartCard>
-
         <ChartCard title={t('analysis.top5')} icon={<AlertCircle size={16} />}>
           {topVehicles.length === 0 ? (
             <EmptyChart />
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[14rem] text-left text-[12px]">
+              <table className="w-full table-fixed text-[14px]">
+                <colgroup>
+                  <col className="w-[42%]" />
+                  <col className="w-[22%]" />
+                  <col className="w-[36%]" />
+                </colgroup>
                 <thead>
-                  <tr className="border-b text-[10px] font-semibold uppercase tracking-wide" style={{ borderColor: 'var(--border)', ...mutedCaption }}>
-                    <th className="pb-1.5 pr-2">{t('issue.vin')}</th>
-                    <th className="pb-1.5 pr-2 text-right">{t('nav.issues')}</th>
-                    <th className="pb-1.5">{t('severity.label')}</th>
+                  <tr
+                    className="border-b text-[11px] font-semibold uppercase tracking-wide"
+                    style={{ borderColor: 'var(--border)', ...mutedCaption }}
+                  >
+                    <th className="pb-1.5 pr-2 text-left">{t('issue.vin')}</th>
+                    <th className="pb-1.5 px-2 text-right">{t('nav.issues')}</th>
+                    <th className="pb-1.5 pl-2 text-right">{t('severity.label')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -881,21 +956,23 @@ export default function AnalysisPage() {
                     const color = severityFillColor(row.worstSeverity);
                     return (
                       <tr key={row.vin} className="border-b" style={{ borderColor: 'var(--border)' }}>
-                        <td className="py-1.5 pr-2">
+                        <td className="py-2 pr-2 text-left">
                           <Link
                             to={`/vehicles/${encodeURIComponent(row.vin)}?tab=issues`}
-                            className="font-mono text-[12px] font-medium text-[var(--accent)] hover:underline"
+                            className="font-mono text-[14px] font-semibold text-[var(--accent)] hover:underline"
                           >
                             …{row.vinTail}
                           </Link>
                         </td>
-                        <td className="py-1.5 pr-2 text-right tabular-nums font-semibold">{row.openCount}</td>
-                        <td className="py-1.5">
+                        <td className="py-2 px-2 text-right tabular-nums text-[15px] font-semibold">
+                          {row.openCount}
+                        </td>
+                        <td className="py-2 pl-2 text-right">
                           <span
-                            className="inline-block rounded-full px-1.5 py-0.5 text-[10px] font-semibold"
+                            className="inline-block rounded-full px-2 py-0.5 text-[12px] font-semibold"
                             style={{
                               color,
-                              backgroundColor: `color-mix(in srgb, ${color} 16%, transparent)`,
+                              backgroundColor: `color-mix(in srgb, ${color} 18%, transparent)`,
                             }}
                           >
                             {t(`severity.${row.worstSeverity.toLowerCase()}` as 'severity.critical')}
@@ -910,42 +987,20 @@ export default function AnalysisPage() {
           )}
         </ChartCard>
 
-        <ChartCard
-          className="md:col-span-2"
-          title={t('analysis.dailyOpenTrend')}
-          subtitle={t('analysis.dailyTrendCombinedHint')}
-          icon={<CalendarDays size={16} />}
-        >
-          {dualTrend.length === 0 ? (
-            <EmptyChart />
-          ) : (
-            <div className={`chart-inert ${CHART_H} w-full min-w-0`}>
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={dualTrend} tabIndex={-1} margin={{ top: 8, right: 8, left: 0, bottom: 4 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                  <XAxis dataKey="label" tick={{ fill: 'var(--text-secondary)', fontSize: 10 }} interval="preserveStartEnd" />
-                  <YAxis allowDecimals={false} width={28} tick={{ fill: 'var(--text-secondary)', fontSize: 10 }} />
-                  <Tooltip contentStyle={CHART_TOOLTIP} />
-                  <Area type="monotone" dataKey="open" name={t('analysis.stat.openActive')} stroke={statusColors.issueOpen} fill={statusColors.issueOpen} fillOpacity={0.12} strokeWidth={2} isAnimationActive={false} />
-                  <Area type="monotone" dataKey="closed" name={t('analysis.stat.completed')} stroke={statusColors.ok} fill={statusColors.ok} fillOpacity={0.1} strokeWidth={2} isAnimationActive={false} />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-        </ChartCard>
-
         <ChartCard title={t('analysis.openAge')} icon={<Timer size={16} />}>
           {openAgeBars.every((r) => r.count === 0) ? (
             <EmptyChart />
           ) : (
             <div className={`chart-inert ${CHART_H} w-full min-w-0`}>
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={openAgeBars} tabIndex={-1} margin={{ top: 4, right: 8, left: 0, bottom: 4 }}>
+                <BarChart data={openAgeBars} tabIndex={-1} margin={{ top: 16, right: 8, left: 0, bottom: 4 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                  <XAxis dataKey="bucket" tick={{ fill: 'var(--text-secondary)', fontSize: 10 }} />
-                  <YAxis allowDecimals={false} width={28} tick={{ fill: 'var(--text-secondary)', fontSize: 10 }} />
+                  <XAxis dataKey="bucket" tick={TICK} />
+                  <YAxis allowDecimals={false} width={36} tick={TICK} />
                   <Tooltip contentStyle={CHART_TOOLTIP} />
-                  <Bar dataKey="count" fill={statusColors.issueInProgress} name={t('nav.issues')} isAnimationActive={false} />
+                  <Bar dataKey="count" fill={statusColors.issueInProgress} name={t('nav.issues')} isAnimationActive={false}>
+                    <LabelList dataKey="count" position="top" style={{ fill: 'var(--text-primary)', fontSize: 12, fontWeight: 600 }} />
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -957,6 +1012,53 @@ export default function AnalysisPage() {
             <EmptyChart />
           ) : (
             <HorizontalTypeChart data={issueTypeBars} color={statusColors.info} />
+          )}
+        </ChartCard>
+      </div>
+
+      {/* 5) Analytic detail — station diagnostics lower for TV */}
+      <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+        <ChartCard title={t('analysis.stationMttr')} icon={<Timer size={16} />}>
+          {mttrBars.length === 0 ? (
+            <EmptyChart />
+          ) : (
+            <div className={`chart-inert ${CHART_H} w-full min-w-0`}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={mttrBars} tabIndex={-1} margin={{ top: 16, right: 8, left: 0, bottom: 36 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                  <XAxis dataKey="station" tick={{ ...TICK, fontSize: 11 }} angle={-30} textAnchor="end" height={48} interval={0} />
+                  <YAxis width={40} tick={TICK} />
+                  <Tooltip contentStyle={CHART_TOOLTIP} />
+                  <Bar dataKey="hours" fill={statusColors.info} name={t('analysis.mttrH')} isAnimationActive={false}>
+                    <LabelList dataKey="hours" position="top" style={{ fill: 'var(--text-primary)', fontSize: 11, fontWeight: 600 }} />
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+          {(mttrValue != null || fpyValue != null) && (
+            <p className="mt-2 flex flex-wrap gap-4 text-[13px]" style={mutedCaption}>
+              {mttrValue != null && (
+                <span>
+                  {t('analysis.kpi.mttr')}:{' '}
+                  <strong className="text-[15px] text-[var(--text-primary)]">{mttrValue.toFixed(2)}</strong>
+                </span>
+              )}
+              {fpyValue != null && (
+                <span>
+                  {t('analysis.kpi.fpy')}:{' '}
+                  <strong className="text-[15px] text-[var(--text-primary)]">{fpyValue}%</strong>
+                </span>
+              )}
+            </p>
+          )}
+        </ChartCard>
+
+        <ChartCard title={t('analysis.openByStation')} icon={<BarChart3 size={16} />}>
+          {openStationBars.length === 0 ? (
+            <EmptyChart />
+          ) : (
+            <HorizontalBarChart data={openStationBars} color={statusColors.issueOpen} />
           )}
         </ChartCard>
 
@@ -983,13 +1085,13 @@ export default function AnalysisPage() {
                 const color = STAGE_COLORS[row.Stage] ?? statusColors.info;
                 return (
                   <div key={row.Stage}>
-                    <div className="mb-1 flex items-center justify-between text-[12px]">
-                      <span>{eolStageLabel(row.Stage, t)}</span>
-                      <span className="tabular-nums" style={mutedCaption}>
+                    <div className="mb-1 flex items-center justify-between text-[13px]">
+                      <span className="font-medium">{eolStageLabel(row.Stage, t)}</span>
+                      <span className="tabular-nums text-[14px] font-semibold text-[var(--text-primary)]">
                         {row.Count} ({pct}%)
                       </span>
                     </div>
-                    <div className="h-2 overflow-hidden rounded-full" style={{ backgroundColor: 'var(--bg-surface-2)' }}>
+                    <div className="h-2.5 overflow-hidden rounded-full" style={{ backgroundColor: 'var(--bg-surface-2)' }}>
                       <div
                         className="h-full rounded-full"
                         style={{ width: `${Math.max(pct, row.Count > 0 ? 4 : 0)}%`, backgroundColor: color }}
@@ -998,29 +1100,6 @@ export default function AnalysisPage() {
                   </div>
                 );
               })}
-            </div>
-          )}
-        </ChartCard>
-
-        <ChartCard title={t('analysis.fpyByStation')} icon={<Layers size={16} />}>
-          {fpyStationBars.length === 0 ? (
-            <EmptyChart />
-          ) : (
-            <div className={`chart-inert ${CHART_H} w-full min-w-0`}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  layout="vertical"
-                  data={fpyStationBars}
-                  tabIndex={-1}
-                  margin={{ top: 4, right: 16, left: 4, bottom: 4 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
-                  <XAxis type="number" domain={[0, 100]} tick={{ fill: 'var(--text-secondary)', fontSize: 10 }} unit="%" />
-                  <YAxis type="category" dataKey="station" width={72} tick={{ fill: 'var(--text-secondary)', fontSize: 10 }} />
-                  <Tooltip contentStyle={CHART_TOOLTIP} />
-                  <Bar dataKey="pct" fill={statusColors.ok} name={t('analysis.kpi.fpy')} isAnimationActive={false} radius={[0, 4, 4, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
             </div>
           )}
         </ChartCard>
@@ -1044,11 +1123,12 @@ export default function AnalysisPage() {
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={cumulativeFlow} tabIndex={-1} margin={{ top: 8, right: 8, left: 0, bottom: 4 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                  <XAxis dataKey="label" tick={{ fill: 'var(--text-secondary)', fontSize: 10 }} interval="preserveStartEnd" />
-                  <YAxis allowDecimals={false} width={28} tick={{ fill: 'var(--text-secondary)', fontSize: 10 }} />
+                  <XAxis dataKey="label" tick={TICK} interval="preserveStartEnd" />
+                  <YAxis allowDecimals={false} width={36} tick={TICK} />
                   <Tooltip contentStyle={CHART_TOOLTIP} />
-                  <Area type="monotone" dataKey="openedCum" name={t('analysis.kpi.opened')} stroke={statusColors.issueOpen} fill={statusColors.issueOpen} fillOpacity={0.12} strokeWidth={2} isAnimationActive={false} />
-                  <Area type="monotone" dataKey="closedCum" name={t('analysis.kpi.closed')} stroke={statusColors.ok} fill={statusColors.ok} fillOpacity={0.1} strokeWidth={2} isAnimationActive={false} />
+                  <Legend wrapperStyle={{ fontSize: 13 }} />
+                  <Area type="monotone" dataKey="openedCum" name={t('analysis.kpi.opened')} stroke={statusColors.issueOpen} fill={statusColors.issueOpen} fillOpacity={0.12} strokeWidth={2.5} isAnimationActive={false} />
+                  <Area type="monotone" dataKey="closedCum" name={t('analysis.kpi.closed')} stroke={statusColors.ok} fill={statusColors.ok} fillOpacity={0.1} strokeWidth={2.5} isAnimationActive={false} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -1063,10 +1143,10 @@ export default function AnalysisPage() {
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={typeSeverityStacked} tabIndex={-1} margin={{ top: 4, right: 8, left: 0, bottom: 28 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                  <XAxis dataKey="type" tick={{ fill: 'var(--text-secondary)', fontSize: 10 }} interval={0} />
-                  <YAxis allowDecimals={false} width={28} tick={{ fill: 'var(--text-secondary)', fontSize: 10 }} />
+                  <XAxis dataKey="type" tick={TICK} interval={0} />
+                  <YAxis allowDecimals={false} width={36} tick={TICK} />
                   <Tooltip contentStyle={CHART_TOOLTIP} />
-                  <Legend wrapperStyle={{ fontSize: 11 }} />
+                  <Legend wrapperStyle={{ fontSize: 13 }} />
                   <Bar dataKey="CRITICAL" stackId="a" fill={statusColors.severityCritical} name={t('severity.critical')} isAnimationActive={false} />
                   <Bar dataKey="MEDIUM" stackId="a" fill={statusColors.severityMedium} name={t('severity.medium')} isAnimationActive={false} />
                   <Bar dataKey="LOW" stackId="a" fill={statusColors.severityLow} name={t('severity.low')} isAnimationActive={false} />
@@ -1086,9 +1166,9 @@ export default function AnalysisPage() {
           ) : (
             <div className="space-y-3 py-1">
               {branchShipHours != null && (
-                <p className="text-[13px]">
+                <p className="text-[14px]">
                   <span style={mutedCaption}>{t('analysis.branchShipHoursHint')}: </span>
-                  <strong className="tabular-nums text-[var(--text-primary)]">
+                  <strong className="text-[18px] tabular-nums text-[var(--text-primary)]">
                     {branchShipHours.toFixed(1)} {t('analysis.unit.hours')}
                   </strong>
                 </p>
@@ -1096,12 +1176,14 @@ export default function AnalysisPage() {
               {eolWaitBars.length > 0 && (
                 <div className={`chart-inert ${CHART_H} w-full min-w-0`}>
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={eolWaitBars} tabIndex={-1} margin={{ top: 4, right: 8, left: 0, bottom: 4 }}>
+                    <BarChart data={eolWaitBars} tabIndex={-1} margin={{ top: 16, right: 8, left: 0, bottom: 4 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                      <XAxis dataKey="stage" tick={{ fill: 'var(--text-secondary)', fontSize: 10 }} />
-                      <YAxis width={32} tick={{ fill: 'var(--text-secondary)', fontSize: 10 }} />
+                      <XAxis dataKey="stage" tick={TICK} />
+                      <YAxis width={40} tick={TICK} />
                       <Tooltip contentStyle={CHART_TOOLTIP} />
-                      <Bar dataKey="hours" fill={statusColors.info} name={t('analysis.unit.hours')} isAnimationActive={false} />
+                      <Bar dataKey="hours" fill={statusColors.info} name={t('analysis.unit.hours')} isAnimationActive={false}>
+                        <LabelList dataKey="hours" position="top" style={{ fill: 'var(--text-primary)', fontSize: 12, fontWeight: 600 }} />
+                      </Bar>
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -1110,66 +1192,6 @@ export default function AnalysisPage() {
           )}
         </ChartCard>
       </div>
-
-      <ChartCard
-        className="mt-3"
-        title={t('analysis.branchShippedList')}
-        subtitle={t('analysis.branchShippedListHint')}
-        icon={<Truck size={16} />}
-        filterNote={vehicleFilterNote}
-      >
-        {(dash?.BranchShippedList ?? []).length === 0 ? (
-          <EmptyChart />
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[28rem] text-left text-[12px]">
-              <thead>
-                <tr
-                  className="border-b text-[10px] font-semibold uppercase tracking-wide"
-                  style={{ borderColor: 'var(--border)', ...mutedCaption }}
-                >
-                  <th className="pb-1.5 pr-2">{t('issue.vin')}</th>
-                  <th className="pb-1.5 pr-2">{t('analysis.shippedAt')}</th>
-                  <th className="pb-1.5 pr-2">{t('analysis.shippedBy')}</th>
-                  <th className="pb-1.5 pr-2">{t('issue.status')}</th>
-                  <th className="pb-1.5">{t('print.eolStage')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(dash?.BranchShippedList ?? []).map((row) => (
-                  <tr
-                    key={`${row.VIN}-${row.ShippedAt}`}
-                    className="cursor-pointer border-b hover:bg-[var(--bg-surface-2)]"
-                    style={{ borderColor: 'var(--border)' }}
-                    onClick={() => {
-                      window.location.assign(`/vehicles/${encodeURIComponent(row.VIN)}`);
-                    }}
-                  >
-                    <td className="py-1.5 pr-2">
-                      <Link
-                        to={`/vehicles/${encodeURIComponent(row.VIN)}`}
-                        className="font-mono text-[12px] font-semibold text-[var(--accent)] hover:underline"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        …{row.VIN.slice(-5)}
-                      </Link>
-                      <span className="ml-1.5 text-[10px]" style={mutedCaption}>
-                        {row.VIN}
-                      </span>
-                    </td>
-                    <td className="py-1.5 pr-2 tabular-nums whitespace-nowrap">
-                      {formatDateTime(row.ShippedAt, locale)}
-                    </td>
-                    <td className="py-1.5 pr-2">{row.ShippedByName || t('common.emDash')}</td>
-                    <td className="py-1.5 pr-2">{vehicleStatusLabel(row.CurrentStatus, t)}</td>
-                    <td className="py-1.5">{eolStageLabel(row.EOLStage, t)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </ChartCard>
 
       <ChartCard
         className="mt-3"
@@ -1194,17 +1216,17 @@ export default function AnalysisPage() {
                   margin={{ top: 4, right: 8, left: 0, bottom: 4 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                  <XAxis dataKey="vin" tick={{ fill: 'var(--text-secondary)', fontSize: 10 }} interval="preserveStartEnd" />
-                  <YAxis width={28} tick={{ fill: 'var(--text-secondary)', fontSize: 10 }} />
+                  <XAxis dataKey="vin" tick={TICK} interval="preserveStartEnd" />
+                  <YAxis width={36} tick={TICK} />
                   <Tooltip contentStyle={CHART_TOOLTIP} />
-                  <Legend wrapperStyle={{ fontSize: 11 }} />
+                  <Legend wrapperStyle={{ fontSize: 13 }} />
                   <Bar dataKey="critical" stackId="a" fill={statusColors.severityCritical} name={t('severity.critical')} isAnimationActive={false} />
                   <Bar dataKey="medium" stackId="a" fill={statusColors.severityMedium} name={t('severity.medium')} isAnimationActive={false} />
                   <Bar dataKey="low" stackId="a" fill={statusColors.severityLow} name={t('severity.low')} isAnimationActive={false} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
-            <table className="mt-3 hidden w-full text-left text-[13px] sm:table">
+            <table className="mt-3 hidden w-full text-left text-[14px] sm:table">
               <thead>
                 <tr className="text-[12px]" style={mutedCaption}>
                   <th className="pb-2 font-medium">{t('issue.vin')}</th>
@@ -1239,6 +1261,7 @@ export default function AnalysisPage() {
           </>
         )}
       </ChartCard>
+
     </section>
   );
 
@@ -1281,13 +1304,7 @@ function filterUnaffectedNote(
 
 function FilterScopeHint({ note }: { note: string }) {
   return (
-    <span
-      className="inline-flex shrink-0 text-[var(--text-secondary)]"
-      title={note}
-      aria-label={note}
-    >
-      <Info size={13} strokeWidth={2.25} />
-    </span>
+    <p className="mt-1 text-[12px] leading-snug text-[var(--text-secondary)]">{note}</p>
   );
 }
 
@@ -1423,7 +1440,7 @@ function AnalysisKpiCard({
   value,
   previous,
   compareHint,
-  compareHintTitle,
+  compareHintTitle: _compareHintTitle,
   spark,
   format,
   invertDelta,
@@ -1481,14 +1498,16 @@ function AnalysisKpiCard({
           {icon}
         </div>
         <div className="min-w-0 flex-1">
-          <p className="inline-flex items-center gap-1 text-[11px] font-medium leading-snug" style={mutedCaption}>
-            <span className="truncate">{title}</span>
-            {filterNote ? <FilterScopeHint note={filterNote} /> : null}
+          <p className="text-[12px] font-semibold leading-snug" style={mutedCaption}>
+            <span>{title}</span>
           </p>
-          <p className="mt-1 flex items-baseline gap-1.5 text-[var(--text-primary)]">
-            <span className="text-xl font-semibold tabular-nums leading-none">{display}</span>
+          {filterNote ? <FilterScopeHint note={filterNote} /> : null}
+          <p className="mt-1.5 flex items-baseline gap-1.5 text-[var(--text-primary)]">
+            <span className="text-[28px] font-semibold tabular-nums leading-none tracking-tight sm:text-[32px]">
+              {display}
+            </span>
             {unit ? (
-              <span className="text-[11px] font-medium" style={mutedCaption}>
+              <span className="text-[13px] font-semibold" style={mutedCaption}>
                 {unit}
               </span>
             ) : null}
@@ -1508,14 +1527,13 @@ function AnalysisKpiCard({
       </div>
       {previous != null && (
         <p
-          className="mt-2 inline-flex flex-wrap items-center gap-1 pl-9 text-[10px]"
+          className="mt-2 inline-flex flex-wrap items-center gap-1.5 pl-9 text-[12px]"
           style={mutedCaption}
-          title={compareHintTitle ?? compareHint}
         >
           <span>{compareHint}</span>
           <DeltaBadge polarity={polarity} color={color} label={delta} />
           {pct != null && (
-            <span className="tabular-nums" style={{ color }}>
+            <span className="tabular-nums font-semibold" style={{ color }}>
               ({pct})
             </span>
           )}
@@ -1566,22 +1584,20 @@ function ChartCard({
     >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <h2 className="flex items-center gap-2 text-[15px] font-semibold leading-tight sm:text-base">
+          <h2 className="flex items-center gap-2 text-[16px] font-semibold leading-tight sm:text-[17px]">
             {icon ? (
               <span className="inline-flex shrink-0 text-[var(--accent)]" aria-hidden>
                 {icon}
               </span>
             ) : null}
-            <span className="min-w-0 inline-flex items-center gap-1.5">
-              <span>{title}</span>
-              {filterNote ? <FilterScopeHint note={filterNote} /> : null}
-            </span>
+            <span>{title}</span>
           </h2>
-          {subtitle && (
-            <p className="mt-0.5 text-[12px] leading-snug" style={mutedCaption}>
+          {subtitle ? (
+            <p className="mt-0.5 text-[13px] leading-snug" style={mutedCaption}>
               {subtitle}
             </p>
-          )}
+          ) : null}
+          {filterNote ? <FilterScopeHint note={filterNote} /> : null}
         </div>
       </div>
       <div className="mt-2.5">{children}</div>
@@ -1633,10 +1649,10 @@ function DonutChart({
           </PieChart>
         </ResponsiveContainer>
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-[10px]" style={mutedCaption}>
+          <span className="text-[12px]" style={mutedCaption}>
             Σ
           </span>
-          <span className="text-[15px] font-semibold tabular-nums text-[var(--text-primary)]">
+          <span className="text-[18px] font-semibold tabular-nums text-[var(--text-primary)]">
             {total}
           </span>
         </div>
@@ -1645,17 +1661,17 @@ function DonutChart({
         {data.map((row) => {
           const pct = total === 0 ? 0 : Math.round((row.value / total) * 1000) / 10;
           return (
-            <li key={row.name} className="flex items-center gap-2 text-[12px]">
+            <li key={row.name} className="flex items-center gap-2 text-[13px]">
               <span
-                className="h-2 w-2 shrink-0 rounded-full"
+                className="h-2.5 w-2.5 shrink-0 rounded-full"
                 style={{ backgroundColor: row.color }}
                 aria-hidden
               />
-              <span className="min-w-0 flex-1 truncate text-[var(--text-primary)]">{row.name}</span>
-              <span className="shrink-0 tabular-nums font-semibold text-[var(--text-primary)]">
+              <span className="min-w-0 flex-1 truncate font-medium text-[var(--text-primary)]">{row.name}</span>
+              <span className="shrink-0 tabular-nums text-[14px] font-semibold text-[var(--text-primary)]">
                 {row.value}
               </span>
-              <span className="w-10 shrink-0 text-right tabular-nums" style={mutedCaption}>
+              <span className="w-12 shrink-0 text-right tabular-nums text-[13px]" style={mutedCaption}>
                 {pct}%
               </span>
             </li>
@@ -1683,15 +1699,17 @@ function HorizontalBarChart({
           margin={{ top: 4, right: 16, left: 4, bottom: 4 }}
         >
           <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
-          <XAxis type="number" allowDecimals={false} tick={{ fill: 'var(--text-secondary)', fontSize: 10 }} />
+          <XAxis type="number" allowDecimals={false} tick={TICK} />
           <YAxis
             type="category"
             dataKey="station"
-            width={72}
-            tick={{ fill: 'var(--text-secondary)', fontSize: 10 }}
+            width={80}
+            tick={TICK}
           />
           <Tooltip contentStyle={CHART_TOOLTIP} />
-          <Bar dataKey="issues" fill={color} isAnimationActive={false} radius={[0, 4, 4, 0]} />
+          <Bar dataKey="issues" fill={color} isAnimationActive={false} radius={[0, 4, 4, 0]}>
+            <LabelList dataKey="issues" position="right" style={{ fill: 'var(--text-primary)', fontSize: 12, fontWeight: 600 }} />
+          </Bar>
         </BarChart>
       </ResponsiveContainer>
     </div>
