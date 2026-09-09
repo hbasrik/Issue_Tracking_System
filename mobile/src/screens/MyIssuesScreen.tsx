@@ -216,7 +216,7 @@ export default function MyIssuesScreen() {
                 color: tokens.textSecondary,
                 fontWeight: '600',
                 fontSize: 13,
-                marginTop: 16,
+                marginTop: 12,
               }}
             >
               {t('issue.searchLabel')}
@@ -251,50 +251,106 @@ export default function MyIssuesScreen() {
               }}
             />
 
-            <Text
+            <View
               style={{
-                color: tokens.textSecondary,
-                fontWeight: '600',
-                fontSize: 13,
-                marginTop: 16,
-                marginBottom: 8,
+                marginTop: 12,
+                flexDirection: 'row',
+                flexWrap: 'wrap',
+                alignItems: 'flex-start',
+                columnGap: 16,
+                rowGap: 10,
               }}
             >
-              {t('issue.type')}
-            </Text>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-              {issueTypes.map((it) => {
-                const selected = !homeStat && typeIds.has(it.ID);
-                return (
-                  <Pressable
-                    key={it.ID}
-                    onPress={() => toggleType(it.ID)}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected }}
-                    style={{
-                      paddingHorizontal: 12,
-                      minHeight: 36,
-                      borderRadius: 999,
-                      backgroundColor: mixColors(
-                        tokens.textPrimary,
-                        tokens.bgSurface1,
-                        selected ? 14 : 6,
-                      ),
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <Text
-                      style={{
-                        color: selected ? tokens.textPrimary : tokens.textSecondary,
-                        fontSize: 12,
-                        fontWeight: '600',
-                      }}
-                    >
-                      {issueTypeChipLabel(it.Name)}
-                    </Text>
-                  </Pressable>
-                );
-              })}
+              <View style={{ flexGrow: 1, flexShrink: 1, flexBasis: 168, minWidth: 140 }}>
+                <Text
+                  style={{
+                    color: tokens.textSecondary,
+                    fontWeight: '600',
+                    fontSize: 13,
+                    marginBottom: 6,
+                  }}
+                >
+                  {t('issue.type')}
+                </Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                  {issueTypes.map((it) => {
+                    const selected = !homeStat && typeIds.has(it.ID);
+                    return (
+                      <Pressable
+                        key={it.ID}
+                        onPress={() => toggleType(it.ID)}
+                        accessibilityRole="button"
+                        accessibilityState={{ selected }}
+                        style={{
+                          paddingHorizontal: 12,
+                          minHeight: 44,
+                          borderRadius: 999,
+                          backgroundColor: mixColors(
+                            tokens.textPrimary,
+                            tokens.bgSurface1,
+                            selected ? 14 : 6,
+                          ),
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <Text
+                          style={{
+                            color: selected
+                              ? tokens.textPrimary
+                              : tokens.textSecondary,
+                            fontSize: 12,
+                            fontWeight: '600',
+                          }}
+                        >
+                          {issueTypeChipLabel(it.Name)}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
+
+              <View style={{ flexGrow: 0, flexShrink: 0 }}>
+                <Text
+                  style={{
+                    color: tokens.textSecondary,
+                    fontWeight: '600',
+                    fontSize: 13,
+                    marginBottom: 6,
+                  }}
+                >
+                  {t('severity.label')}
+                </Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                  {SEVERITIES.map((s) => {
+                    const selected = !homeStat && severities.has(s);
+                    const color = severityFillColor(s);
+                    const name = severityLabel(s, t);
+                    return (
+                      <Pressable
+                        key={s}
+                        onPress={() => toggleSeverity(s)}
+                        accessibilityRole="button"
+                        accessibilityLabel={name}
+                        accessibilityState={{ selected }}
+                        style={{
+                          minHeight: 44,
+                          minWidth: 44,
+                          borderRadius: 999,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          paddingHorizontal: 10,
+                          backgroundColor: selected
+                            ? mixColors(color, tokens.bgSurface1, 22)
+                            : 'transparent',
+                        }}
+                      >
+                        <SeverityIndicator severity={s} />
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
             </View>
 
             <Text
@@ -302,49 +358,8 @@ export default function MyIssuesScreen() {
                 color: tokens.textSecondary,
                 fontWeight: '600',
                 fontSize: 13,
-                marginTop: 16,
-                marginBottom: 8,
-              }}
-            >
-              {t('severity.label')}
-            </Text>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-              {SEVERITIES.map((s) => {
-                const selected = !homeStat && severities.has(s);
-                const color = severityFillColor(s);
-                const name = severityLabel(s, t);
-                return (
-                  <Pressable
-                    key={s}
-                    onPress={() => toggleSeverity(s)}
-                    accessibilityRole="button"
-                    accessibilityLabel={name}
-                    accessibilityState={{ selected }}
-                    style={{
-                      minHeight: 44,
-                      minWidth: 44,
-                      borderRadius: 999,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      paddingHorizontal: 10,
-                      backgroundColor: selected
-                        ? mixColors(color, tokens.bgSurface1, 22)
-                        : 'transparent',
-                    }}
-                  >
-                    <SeverityIndicator severity={s} />
-                  </Pressable>
-                );
-              })}
-            </View>
-
-            <Text
-              style={{
-                color: tokens.textSecondary,
-                fontWeight: '600',
-                fontSize: 13,
-                marginTop: 16,
-                marginBottom: 8,
+                marginTop: 12,
+                marginBottom: 6,
               }}
             >
               {t('issue.status')}
@@ -363,7 +378,7 @@ export default function MyIssuesScreen() {
                     accessibilityState={{ selected }}
                     style={{
                       paddingHorizontal: 12,
-                      minHeight: 36,
+                      minHeight: 44,
                       borderRadius: 999,
                       borderWidth: 1,
                       borderColor: color,
