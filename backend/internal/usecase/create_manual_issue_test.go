@@ -153,6 +153,9 @@ func (f *createIssueFakeRepo) ListOpenByVIN(context.Context, string) ([]domain.I
 func (f *createIssueFakeRepo) UpdateStatus(context.Context, int64, domain.IssueStatus, int, string) error {
 	return nil
 }
+func (f *createIssueFakeRepo) RevertApproval(context.Context, int64) error {
+	return nil
+}
 func (f *createIssueFakeRepo) ListIssueTypes(context.Context) ([]domain.IssueType, error) {
 	return nil, nil
 }

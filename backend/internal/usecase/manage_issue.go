@@ -232,3 +232,69 @@ func AuthorizeIssueTransition(current, target domain.IssueStatus, permissions do
 	}
 	return nil
 }
+
+// UndoApproval reverts APPROVED or CONDITIONAL_APPROVED back to DONE via a
+// dedicated path (not AuthorizeIssueTransition). It clears the matching
+// approval stamps so the issue again awaits quality sign-off, and writes an
+// ISSUE_STATUS_CHANGE audit row with metadata action=approval_undone.
+//
+// Allowed actors: the user who recorded the approval, or anyone holding the
+// same issue.transition.approve / issue.transition.conditional_approve
+// permission that would have been required to grant it.
+func (m *IssueManager) UndoApproval(ctx context.Context, id int64, actorID int, actorPermissions domain.PermissionSet) error {
+	issue, err := m.issues.GetByID(ctx, id)
+	if err != nil {
+		return err
+	}
+	if err := AuthorizeApprovalUndo(issue, actorID, actorPermissions); err != nil {
+		return err
+	}
+
+	from := issue.Status
+	performedBy := actorID
+	return m.uow.WithinTx(ctx, func(txCtx context.Context) error {
+		if err := m.issues.RevertApproval(txCtx, id); err != nil {
+			return err
+		}
+		return m.audit.Append(txCtx, domain.AuditLog{
+			VIN:         issue.VIN,
+			EventType:   domain.AuditEventIssueStatusChange,
+			OldValue:    string(from),
+			NewValue:    string(domain.IssueStatusDone),
+			StationID:   issue.StationID,
+			PerformedBy: &performedBy,
+			Metadata: map[string]any{
+				"issue_id": id,
+				"action":   "approval_undone",
+				"undo":     true,
+			},
+		})
+	})
+}
+
+// AuthorizeApprovalUndo validates who may reverse a quality decision.
+func AuthorizeApprovalUndo(issue *domain.Issue, actorID int, permissions domain.PermissionSet) error {
+	if issue == nil {
+		return domain.ErrNotFound
+	}
+	switch issue.Status {
+	case domain.IssueStatusApproved:
+		if issue.ApproveReporterID != nil && *issue.ApproveReporterID == actorID {
+			return nil
+		}
+		if permissions.Has(domain.PermissionIssueTransitionApprove) {
+			return nil
+		}
+		return domain.ErrForbidden
+	case domain.IssueStatusConditionalApproved:
+		if issue.ConditionalApproveReporterID != nil && *issue.ConditionalApproveReporterID == actorID {
+			return nil
+		}
+		if permissions.Has(domain.PermissionIssueTransitionConditionalApprove) {
+			return nil
+		}
+		return domain.ErrForbidden
+	default:
+		return domain.ErrInvalidStatusTransition
+	}
+}

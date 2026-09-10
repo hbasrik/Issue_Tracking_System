@@ -142,6 +142,10 @@ type IssueRepository interface {
 	// user against the appropriate lifecycle timestamp column. When status is
 	// DONE, solutionDescription is persisted on solution_description.
 	UpdateStatus(ctx context.Context, id int64, status domain.IssueStatus, actorID int, solutionDescription string) error
+	// RevertApproval moves APPROVED / CONDITIONAL_APPROVED back to DONE and
+	// clears both approval reporter/date pairs. Rows that are not in a
+	// quality-closed state are unchanged (0 rows → ErrNotFound).
+	RevertApproval(ctx context.Context, id int64) error
 	// ListIssueTypes returns the issue_types catalogue (Hata / Tamir Gerekiyor).
 	ListIssueTypes(ctx context.Context) ([]domain.IssueType, error)
 }

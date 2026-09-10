@@ -473,6 +473,25 @@ func (f *fakeIssueRepo) UpdateStatus(_ context.Context, id int64, status domain.
 	return nil
 }
 
+// RevertApproval mirrors the postgres implementation for unit tests.
+func (f *fakeIssueRepo) RevertApproval(_ context.Context, id int64) error {
+	issue, ok := f.issues[id]
+	if !ok {
+		return domain.ErrNotFound
+	}
+	switch issue.Status {
+	case domain.IssueStatusApproved, domain.IssueStatusConditionalApproved:
+		issue.Status = domain.IssueStatusDone
+		issue.ApproveReporterID = nil
+		issue.ApproveDate = nil
+		issue.ConditionalApproveReporterID = nil
+		issue.ConditionalApproveDate = nil
+		return nil
+	default:
+		return domain.ErrNotFound
+	}
+}
+
 func (f *fakeIssueRepo) ListIssueTypes(_ context.Context) ([]domain.IssueType, error) {
 	return []domain.IssueType{
 		{ID: 1, Name: "Hata"},
@@ -493,6 +512,13 @@ type auditSnapshot struct {
 
 func newFakeAuditRepo() *fakeAuditRepo {
 	return &fakeAuditRepo{}
+}
+
+// Entries returns a copy of appended audit rows (test helper).
+func (f *fakeAuditRepo) Entries() []domain.AuditLog {
+	out := make([]domain.AuditLog, len(f.entries))
+	copy(out, f.entries)
+	return out
 }
 
 func (f *fakeAuditRepo) snapshot() auditSnapshot {

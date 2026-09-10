@@ -88,13 +88,38 @@ func (f *httpFakeIssueRepo) ListOpenByVIN(_ context.Context, vin string) ([]doma
 	return f.ListByVIN(context.Background(), vin, nil)
 }
 
-func (f *httpFakeIssueRepo) UpdateStatus(_ context.Context, id int64, status domain.IssueStatus, _ int, _ string) error {
+func (f *httpFakeIssueRepo) UpdateStatus(_ context.Context, id int64, status domain.IssueStatus, actorID int, _ string) error {
 	issue, ok := f.issues[id]
 	if !ok {
 		return domain.ErrNotFound
 	}
+	now := time.Now()
+	switch status {
+	case domain.IssueStatusApproved:
+		issue.ApproveReporterID, issue.ApproveDate = &actorID, &now
+	case domain.IssueStatusConditionalApproved:
+		issue.ConditionalApproveReporterID, issue.ConditionalApproveDate = &actorID, &now
+	}
 	issue.Status = status
 	return nil
+}
+
+func (f *httpFakeIssueRepo) RevertApproval(_ context.Context, id int64) error {
+	issue, ok := f.issues[id]
+	if !ok {
+		return domain.ErrNotFound
+	}
+	switch issue.Status {
+	case domain.IssueStatusApproved, domain.IssueStatusConditionalApproved:
+		issue.Status = domain.IssueStatusDone
+		issue.ApproveReporterID = nil
+		issue.ApproveDate = nil
+		issue.ConditionalApproveReporterID = nil
+		issue.ConditionalApproveDate = nil
+		return nil
+	default:
+		return domain.ErrNotFound
+	}
 }
 
 func (f *httpFakeIssueRepo) ListIssueTypes(_ context.Context) ([]domain.IssueType, error) {

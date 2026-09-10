@@ -161,6 +161,7 @@ func NewRouter(deps Deps) http.Handler {
 			// specific issue.transition.* permission is checked in the usecase
 			// against the target status rather than here.
 			r.Patch("/issues/{id}/status", s.handleIssueStatus)
+			r.Post("/issues/{id}/undo-approval", s.handleIssueUndoApproval)
 
 			// Filtered Analysis tool.
 			r.Group(func(r chi.Router) {

@@ -233,6 +233,31 @@ func (r *IssueRepo) UpdateStatus(ctx context.Context, id int64, status domain.Is
 	return nil
 }
 
+// RevertApproval restores DONE after a quality decision and clears approval stamps.
+func (r *IssueRepo) RevertApproval(ctx context.Context, id int64) error {
+	tag, err := executor(ctx, r.pool).Exec(ctx, `
+		UPDATE issue_list
+		SET status = $2,
+		    approve_reporter_id = NULL,
+		    approve_date = NULL,
+		    conditional_approve_reporter_id = NULL,
+		    conditional_approve_date = NULL
+		WHERE id = $1
+		  AND status IN ($3, $4)`,
+		id,
+		string(domain.IssueStatusDone),
+		string(domain.IssueStatusApproved),
+		string(domain.IssueStatusConditionalApproved),
+	)
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		return domain.ErrNotFound
+	}
+	return nil
+}
+
 // ListIssueTypes returns the issue_types catalogue ordered by id.
 func (r *IssueRepo) ListIssueTypes(ctx context.Context) ([]domain.IssueType, error) {
 	rows, err := r.pool.Query(ctx, `SELECT id, name FROM issue_types ORDER BY id`)

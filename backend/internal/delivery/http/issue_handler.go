@@ -177,3 +177,27 @@ func (s *server) handleIssueStatus(w http.ResponseWriter, r *http.Request) {
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"id": id, "status": target})
 }
+
+// handleIssueUndoApproval reverts APPROVED / CONDITIONAL_APPROVED → DONE via the
+// dedicated UndoApproval usecase. This is intentionally separate from
+// PATCH /status so the one-way state machine stays closed while still allowing
+// a short-lived client-side undo.
+func (s *server) handleIssueUndoApproval(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	if err != nil {
+		badRequest(w, "id must be an integer")
+		return
+	}
+
+	claims, _ := ClaimsFromContext(r.Context())
+	ctx, permissions, err := s.permissions.Resolve(r.Context())
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	if err := s.deps.Issues.UndoApproval(ctx, id, claims.UserID, permissions); err != nil {
+		writeError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"id": id, "status": domain.IssueStatusDone})
+}
