@@ -1,5 +1,6 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
+  DeviceEventEmitter,
   Image,
   Modal,
   Pressable,
@@ -46,6 +47,8 @@ import { apiErrorMessage } from '../lib/password';
 import { useI18n } from '../i18n';
 import type { Locale } from '../../../shared/i18n';
 import type { RootStackParamList } from '../navigation/types';
+import { useConfirm } from '../components/ConfirmDialog';
+import { useApprovalUndo } from '../components/ApprovalUndoToast';
 
 function nextOperatorStatus(status: Issue['Status']): Issue['Status'] | null {
   if (status === 'OPEN') return 'IN_PROGRESS';
@@ -82,6 +85,8 @@ export default function IssueDetailScreen() {
   const { tokens } = useTheme();
   const { has } = useAuth();
   const { t, locale } = useI18n();
+  const confirm = useConfirm();
+  const { showAfterApproval } = useApprovalUndo();
   const [issue, setIssue] = useState<Issue | null>(null);
   const [history, setHistory] = useState<IssueStatusHistoryEntry[]>([]);
   const [reportPhotos, setReportPhotos] = useState<MediaAttachment[]>([]);
@@ -122,6 +127,18 @@ export default function IssueDetailScreen() {
       void load();
     }, [load]),
   );
+
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener(
+      'karea:issue-approval-undone',
+      (payload: { issueId?: number }) => {
+        if (payload?.issueId === route.params.id) {
+          void load();
+        }
+      },
+    );
+    return () => sub.remove();
+  }, [load, route.params.id]);
 
   async function pickResolution(from: 'library' | 'camera') {
     if (from === 'library') {
@@ -235,10 +252,42 @@ export default function IssueDetailScreen() {
 
   async function applyStatus(status: Issue['Status']) {
     if (!issue) return;
+    if (status === 'APPROVED' || status === 'CONDITIONAL_APPROVED') {
+      const vinTail = issue.VIN.slice(-5);
+      const desc =
+        issue.Description.length > 80
+          ? `${issue.Description.slice(0, 77)}…`
+          : issue.Description;
+      const ok = await confirm({
+        title:
+          status === 'APPROVED'
+            ? t('issueDetail.approveConfirmTitle')
+            : t('issueDetail.conditionalConfirmTitle'),
+        message:
+          status === 'APPROVED'
+            ? t('issueDetail.approveConfirmMessage', {
+                description: desc,
+                id: issue.ID,
+                vinTail,
+              })
+            : t('issueDetail.conditionalConfirmMessage', {
+                description: desc,
+                id: issue.ID,
+                vinTail,
+              }),
+        confirmLabel: t('common.confirm'),
+        cancelLabel: t('common.cancel'),
+        tone: status === 'CONDITIONAL_APPROVED' ? 'warning' : 'default',
+      });
+      if (!ok) return;
+    }
     setBusy(true);
     setError(null);
     try {
       await api.updateIssueStatus(issue.ID, status);
+      if (status === 'APPROVED' || status === 'CONDITIONAL_APPROVED') {
+        showAfterApproval(issue.ID, status);
+      }
       await load();
     } catch (err) {
       setError(apiErrorMessage(err, t));

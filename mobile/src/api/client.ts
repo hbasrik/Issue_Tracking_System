@@ -480,6 +480,13 @@ export const api = {
     });
   },
 
+  undoIssueApproval(id: number) {
+    return request<{ id: number; status: string }>(`/issues/${id}/undo-approval`, {
+      method: 'POST',
+      body: '{}',
+    });
+  },
+
   listStations() {
     return request<{ items: Station[] }>('/stations');
   },
