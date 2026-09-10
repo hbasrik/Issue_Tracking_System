@@ -78,11 +78,12 @@ export function ApprovalUndoProvider({ children }: { children: ReactNode }) {
     setBusy(true);
     setError(null);
     try {
-      await api.undoIssueApproval(toast.issueId);
+      const issueId = toast.issueId;
+      await api.undoIssueApproval(issueId);
       dismiss();
       window.dispatchEvent(
         new CustomEvent('karea:issue-approval-undone', {
-          detail: { issueId: toast.issueId },
+          detail: { issueId },
         }),
       );
     } catch (err) {
