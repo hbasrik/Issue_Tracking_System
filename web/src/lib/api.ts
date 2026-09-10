@@ -416,6 +416,13 @@ export const api = {
     });
   },
 
+  undoIssueApproval(id: number) {
+    return request<{ id: number; status: string }>(`/issues/${id}/undo-approval`, {
+      method: 'POST',
+      body: '{}',
+    });
+  },
+
   listMedia(entityType: MediaEntityType, entityId: string) {
     const q = new URLSearchParams({
       entity_type: entityType,

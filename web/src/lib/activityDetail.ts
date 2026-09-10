@@ -34,6 +34,13 @@ export function activityDetailLine(
   }
 
   if (row.EventType === 'ISSUE_STATUS_CHANGE' || row.EventType === 'STATUS_CHANGE') {
+    if (
+      row.EventType === 'ISSUE_STATUS_CHANGE' &&
+      (ov === 'APPROVED' || ov === 'CONDITIONAL_APPROVED') &&
+      nv === 'DONE'
+    ) {
+      return t('home.activity.approvalUndone');
+    }
     if (ov && nv) return `${ov} → ${nv}`;
     return nv || ov || t('common.emDash');
   }

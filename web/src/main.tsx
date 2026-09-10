@@ -5,6 +5,7 @@ import { AuthProvider } from './auth/AuthProvider';
 import { I18nProvider } from './i18n';
 import { ThemeProvider } from './theme/ThemeProvider';
 import { ConfirmProvider } from './components/ConfirmDialog';
+import { ApprovalUndoProvider } from './components/ApprovalUndoToast';
 import App from './App';
 import './index.css';
 
@@ -15,7 +16,9 @@ createRoot(document.getElementById('root')!).render(
         <ThemeProvider>
           <AuthProvider>
             <ConfirmProvider>
-              <App />
+              <ApprovalUndoProvider>
+                <App />
+              </ApprovalUndoProvider>
             </ConfirmProvider>
           </AuthProvider>
         </ThemeProvider>

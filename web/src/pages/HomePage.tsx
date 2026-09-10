@@ -706,7 +706,7 @@ export default function HomePage() {
                 </thead>
                 <tbody>
                   {overview?.Activity.map((row, i) => {
-                    const meta = activityMeta(row.EventType, row.NewValue, t);
+                    const meta = activityMeta(row.EventType, row.NewValue, t, row.OldValue);
                     const detail = activityDetailLine(row, t);
                     return (
                       <tr
@@ -1090,9 +1090,21 @@ function activityMeta(
   eventType: string,
   newValue: string,
   t: ReturnType<typeof useI18n>['t'],
+  oldValue?: string,
 ): { label: string; color: string; icon: ReactNode } {
   const nv = newValue.toUpperCase();
+  const ov = (oldValue ?? '').toUpperCase();
   if (eventType === 'ISSUE_STATUS_CHANGE') {
+    if (
+      nv === 'DONE' &&
+      (ov === 'APPROVED' || ov === 'CONDITIONAL_APPROVED')
+    ) {
+      return {
+        label: t('home.activity.approvalUndone'),
+        color: statusColors.pending,
+        icon: <AlertCircle size={16} />,
+      };
+    }
     if (nv === 'DONE') {
       return { label: t('home.activity.issueDone'), color: statusColors.ok, icon: <CheckCircle2 size={16} /> };
     }

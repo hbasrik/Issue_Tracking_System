@@ -49,12 +49,16 @@ function eventLabel(
   }
 }
 
-function activityIcon(eventType: string, newValue: string): {
+function activityIcon(eventType: string, newValue: string, oldValue?: string): {
   color: string;
   icon: ReactNode;
 } {
   const nv = newValue.toUpperCase();
+  const ov = (oldValue ?? '').toUpperCase();
   if (eventType === 'ISSUE_STATUS_CHANGE') {
+    if (nv === 'DONE' && (ov === 'APPROVED' || ov === 'CONDITIONAL_APPROVED')) {
+      return { color: statusColors.pending, icon: <AlertCircle size={16} /> };
+    }
     if (nv === 'DONE') return { color: statusColors.ok, icon: <CheckCircle2 size={16} /> };
     if (nv === 'IN_PROGRESS') {
       return { color: statusColors.issueInProgress, icon: <Timer size={16} /> };
@@ -248,7 +252,7 @@ export default function ActivityPage() {
             )}
             {!loading &&
               items.map((row, i) => {
-                const icon = activityIcon(row.EventType, row.NewValue);
+                const icon = activityIcon(row.EventType, row.NewValue, row.OldValue);
                 const detail = activityDetailLine(row, t);
                 return (
                   <tr

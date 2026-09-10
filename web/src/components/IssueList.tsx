@@ -20,6 +20,8 @@ import { IssueStatusHistory } from './IssueStatusHistory';
 import { SectionHeading } from './SectionHeading';
 import { issueStationLabel, reporterFallback } from '../lib/issueDetailCopy';
 import { IssueDetailPrint } from './print/IssuePrint';
+import { useConfirm } from './ConfirmDialog';
+import { useApprovalUndo } from './ApprovalUndoToast';
 
 function IssueThumb({ path }: { path?: string }) {
   const { t } = useI18n();
@@ -139,14 +141,60 @@ export function IssueDetailPanel({
   onStatusChanged?: () => void;
 }) {
   const { t } = useI18n();
+  const confirm = useConfirm();
+  const { showAfterApproval } = useApprovalUndo();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    const onUndone = (ev: Event) => {
+      const detail = (ev as CustomEvent<{ issueId: number }>).detail;
+      if (detail?.issueId === issue.ID) {
+        onStatusChanged?.();
+      }
+    };
+    window.addEventListener('karea:issue-approval-undone', onUndone);
+    return () => window.removeEventListener('karea:issue-approval-undone', onUndone);
+  }, [issue.ID, onStatusChanged]);
+
   async function transition(status: string) {
+    if (status === 'APPROVED' || status === 'CONDITIONAL_APPROVED') {
+      const vinTail = issue.VIN.slice(-5);
+      const desc =
+        issue.Description.length > 80
+          ? `${issue.Description.slice(0, 77)}…`
+          : issue.Description;
+      const ok = await confirm({
+        title:
+          status === 'APPROVED'
+            ? t('issueDetail.approveConfirmTitle')
+            : t('issueDetail.conditionalConfirmTitle'),
+        message:
+          status === 'APPROVED'
+            ? t('issueDetail.approveConfirmMessage', {
+                description: desc,
+                id: issue.ID,
+                vinTail,
+              })
+            : t('issueDetail.conditionalConfirmMessage', {
+                description: desc,
+                id: issue.ID,
+                vinTail,
+              }),
+        confirmLabel: t('common.confirm'),
+        cancelLabel: t('common.cancel'),
+        tone: status === 'CONDITIONAL_APPROVED' ? 'warning' : 'default',
+      });
+      if (!ok) return;
+    }
+
     setBusy(true);
     setError(null);
     try {
       await api.updateIssueStatus(issue.ID, status);
+      if (status === 'APPROVED' || status === 'CONDITIONAL_APPROVED') {
+        showAfterApproval(issue.ID, status);
+      }
       onStatusChanged?.();
     } catch (err) {
       setError(err instanceof Error ? apiErrorMessage(err, t) : t('issueDetail.statusFailed'));
