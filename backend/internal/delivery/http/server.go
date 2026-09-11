@@ -156,6 +156,10 @@ func NewRouter(deps Deps) http.Handler {
 				r.Get("/issues/{id}", s.handleIssueGet)
 				r.Get("/issues/{id}/history", s.handleIssueHistory)
 				r.Get("/issue-types", s.handleIssueTypeList)
+				// Active catalogue for issue queue filters + report forms.
+				r.Get("/defect-catalog/zones", s.handleDefectCatalogActiveZones)
+				r.Get("/defect-catalog/parts", s.handleDefectCatalogActiveParts)
+				r.Get("/defect-catalog/types", s.handleDefectCatalogActiveTypes)
 			})
 
 			// Issue lifecycle. One route serves every transition, so the
@@ -232,12 +236,8 @@ func NewRouter(deps Deps) http.Handler {
 			r.With(permissions.RequirePermission(domain.PermissionStationStepEdit)).
 				Post("/vehicles/{vin}/station-steps/{stationStepId}", s.handleRecordStationStep)
 			r.Post("/vehicles/{vin}/checklist/{type}/{itemId}", s.handleRecordChecklist)
-			r.With(permissions.RequirePermission(domain.PermissionIssueCreate)).Group(func(r chi.Router) {
-				r.Get("/defect-catalog/zones", s.handleDefectCatalogActiveZones)
-				r.Get("/defect-catalog/parts", s.handleDefectCatalogActiveParts)
-				r.Get("/defect-catalog/types", s.handleDefectCatalogActiveTypes)
-				r.Post("/issues", s.handleCreateIssue)
-			})
+			r.With(permissions.RequirePermission(domain.PermissionIssueCreate)).
+				Post("/issues", s.handleCreateIssue)
 
 			// EOL workflow (Karar 2). Each stage has its own permission so the
 			// three sign-offs can be delegated to different roles as the v2
