@@ -99,6 +99,14 @@ var (
 	ErrCustomDefectNameRequired = errors.New("custom defect name is required for Other")
 	// ErrDefectCatalogueInactive indicates a selected catalogue row is inactive.
 	ErrDefectCatalogueInactive = errors.New("selected catalogue item is inactive")
+	// ErrDefectProcessRequired indicates responsible process missing on edit.
+	ErrDefectProcessRequired = errors.New("responsible process is required")
+	// ErrDefectProcessInactive indicates selected process is inactive.
+	ErrDefectProcessInactive = errors.New("selected process is inactive")
+	// ErrPromoteOtherKindInvalid indicates promote kind is not part/type.
+	ErrPromoteOtherKindInvalid = errors.New("promote kind must be part or type")
+	// ErrPromoteOtherNameRequired indicates the free-text name to promote is empty.
+	ErrPromoteOtherNameRequired = errors.New("custom name to promote is required")
 	// ErrTemplateItemTextTooLong indicates item_text exceeds VARCHAR(250).
 	ErrTemplateItemTextTooLong = errors.New("item_text must be at most 250 characters")
 	// ErrEOLPhaseRequired indicates an EOL template item omitted BRANCH/DEPOT.

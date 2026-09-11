@@ -155,6 +155,30 @@ type Issue struct {
 	DefectProcessNameEN  string
 }
 
+// CanEditIssueClassification reports whether actor may correct classification
+// labels on the issue.
+//
+// Rules:
+//   - The original reporter may correct their own report (typos / wrong pick).
+//   - Anyone with quality sign-off (approve / conditional_approve) or
+//     admin.manage_masters may correct any issue — those roles own catalogue
+//     accuracy and reporting; there is no separate "issue.edit" permission.
+//
+// Closed (APPROVED / CONDITIONAL_APPROVED) issues remain editable: classification
+// is labelling for analytics, not a quality decision. Status stays unchanged;
+// audit_logs records the field-level correction.
+func CanEditIssueClassification(issue *Issue, actorID int, perms PermissionSet) bool {
+	if issue == nil {
+		return false
+	}
+	if issue.IssueReporterID == actorID {
+		return true
+	}
+	return perms.Has(PermissionIssueTransitionApprove) ||
+		perms.Has(PermissionIssueTransitionConditionalApprove) ||
+		perms.Has(PermissionAdminManageMasters)
+}
+
 // IssueType is a row from the issue_types catalogue (Hata / Tamir Gerekiyor).
 type IssueType struct {
 	ID   int

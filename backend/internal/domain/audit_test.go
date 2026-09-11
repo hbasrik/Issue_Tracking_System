@@ -17,6 +17,7 @@ func TestWorkAuditEventTypesCoversAllConstants(t *testing.T) {
 		domain.AuditEventStationExit,
 		domain.AuditEventChecklistItemUpdate,
 		domain.AuditEventIssueStatusChange,
+		domain.AuditEventIssueClassification,
 		domain.AuditEventEOLWorkflowStage,
 		domain.AuditEventMediaUploaded,
 	}

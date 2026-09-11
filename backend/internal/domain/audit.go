@@ -14,6 +14,7 @@ const (
 	AuditEventIssueStatusChange   AuditEvent = "ISSUE_STATUS_CHANGE"
 	AuditEventEOLWorkflowStage    AuditEvent = "EOL_WORKFLOW_STAGE_CHANGE"
 	AuditEventMediaUploaded       AuditEvent = "MEDIA_UPLOADED"
+	AuditEventIssueClassification AuditEvent = "ISSUE_CLASSIFICATION_CHANGE"
 )
 
 // WorkAuditEventTypes is the allowlist of audit_logs.event_type values that
@@ -30,6 +31,7 @@ var WorkAuditEventTypes = []AuditEvent{
 	AuditEventStationExit,         // line exit
 	AuditEventChecklistItemUpdate, // checklist tick / reject / approve
 	AuditEventIssueStatusChange,   // issue lifecycle (Karar 7 history)
+	AuditEventIssueClassification, // defect catalogue label corrections
 	AuditEventEOLWorkflowStage,    // branch/depot/document sign-off
 	AuditEventMediaUploaded,       // photo attached to an entity
 }

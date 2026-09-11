@@ -97,6 +97,13 @@ func FormatDefectCode(partCode, typeCode string) string {
 	return partCode + "-" + typeCode
 }
 
+// DefectOtherUsageGroup is one free-text "Diğer" value and how often it appears.
+type DefectOtherUsageGroup struct {
+	CustomName string `json:"CustomName"`
+	Count      int    `json:"Count"`
+	IssueIDs   []int64 `json:"IssueIDs"`
+}
+
 // VehicleRequiresIssueStation is true only while the vehicle is on the line.
 // Off-line statuses (warehouse / delivered / hold / planned / shipped) hide
 // the station field on the report form.
