@@ -18,7 +18,7 @@ import { VehicleIdentity } from './VehicleIdentity';
 import { DataCard, DataCardField } from './DataCard';
 import { IssueStatusHistory } from './IssueStatusHistory';
 import { SectionHeading } from './SectionHeading';
-import { issueStationLabel, reporterFallback } from '../lib/issueDetailCopy';
+import { issueStationLabel, issueDefectSummary, reporterFallback } from '../lib/issueDetailCopy';
 import { IssueDetailPrint } from './print/IssuePrint';
 import { useConfirm } from './ConfirmDialog';
 import { useApprovalUndo } from './ApprovalUndoToast';
@@ -104,12 +104,16 @@ function IssueCardSummary({
 function IssueInfoFields({ issue }: { issue: Issue }) {
   const { t, locale } = useI18n();
   const localeTag = locale === 'en' ? 'en-GB' : 'tr-TR';
+  const defect = issueDefectSummary(issue, t, locale);
   const rows: [string, string][] = [
     [
       t('issueDetail.reporter'),
       issue.ReporterName || reporterFallback(t, issue.IssueReporterID),
     ],
     [t('issueDetail.issueType'), issue.IssueTypeName || t('common.emDash')],
+    [t('issue.defectPart'), defect.part],
+    [t('issue.defectType'), defect.type],
+    [t('issue.defectCode'), defect.code],
     [t('issueDetail.station'), issueStationLabel(issue)],
     [
       t('issueDetail.reportedAt'),

@@ -13,6 +13,8 @@ interface VinSearchBoxProps {
   onResults?: (vehicles: Vehicle[]) => void;
   /** When true, show typeahead results under the input. */
   showResults?: boolean;
+  /** When set, suggestion click selects the vehicle instead of navigating. */
+  onPick?: (vehicle: Vehicle) => void;
   /** Destination for a suggestion click. Defaults to vehicle overview. */
   resultTo?: (vehicle: Vehicle) => string;
   placeholder?: string;
@@ -31,6 +33,7 @@ export function VinSearchBox({
   onChange,
   onResults,
   showResults = true,
+  onPick,
   resultTo = (v) => `/vehicles/${v.VIN}`,
   placeholder,
   className = '',
@@ -166,13 +169,8 @@ export function VinSearchBox({
           {results.map((v) => {
             const vin = v.VIN;
             const tail = vin.slice(-5);
-            return (
-              <Link
-                key={vin}
-                to={resultTo(v)}
-                className="flex items-center justify-between px-3 py-2 hover:bg-[var(--bg-surface-1)]"
-                onClick={dismissAndClear}
-              >
+            const inner = (
+              <>
                 <div>
                   <span className="text-[15px] font-semibold text-[var(--text-primary)]">
                     {tail}
@@ -185,6 +183,31 @@ export function VinSearchBox({
                   status={v.CurrentGlobalStatus}
                   eolStage={v.CurrentEOLStage}
                 />
+              </>
+            );
+            if (onPick) {
+              return (
+                <button
+                  key={vin}
+                  type="button"
+                  className="flex w-full items-center justify-between px-3 py-2 text-left hover:bg-[var(--bg-surface-1)]"
+                  onClick={() => {
+                    onPick(v);
+                    dismissAndClear();
+                  }}
+                >
+                  {inner}
+                </button>
+              );
+            }
+            return (
+              <Link
+                key={vin}
+                to={resultTo(v)}
+                className="flex items-center justify-between px-3 py-2 hover:bg-[var(--bg-surface-1)]"
+                onClick={dismissAndClear}
+              >
+                {inner}
               </Link>
             );
           })}

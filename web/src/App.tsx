@@ -13,6 +13,7 @@ import RolesPage from './pages/RolesPage';
 import SettingsPage from './pages/SettingsPage';
 import TemplatesPage from './pages/TemplatesPage';
 import DefectCatalogPage from './pages/DefectCatalogPage';
+import ReportIssuePage from './pages/ReportIssuePage';
 import UsersPage from './pages/UsersPage';
 import VehicleDetailPage from './pages/VehicleDetailPage';
 import VehiclesPage from './pages/VehiclesPage';
@@ -33,6 +34,9 @@ export default function App() {
           </Route>
           <Route element={<RequirePermission code={Perm.IssueView} />}>
             <Route path="/issues" element={<IssuesPage />} />
+          </Route>
+          <Route element={<RequirePermission code={Perm.IssueCreate} />}>
+            <Route path="/issues/new" element={<ReportIssuePage />} />
           </Route>
           <Route element={<RequirePermission code={Perm.AnalysisView} />}>
             <Route path="/analysis" element={<AnalysisPage />} />

@@ -481,6 +481,38 @@ export const api = {
     return request<{ items: IssueType[] }>('/issue-types');
   },
 
+  createIssue(body: {
+    vin: string;
+    source_type: string;
+    source_station_step_id?: number;
+    source_check_item_id?: number;
+    station_id?: number | null;
+    issue_type_id?: number;
+    severity: string;
+    description: string;
+    picture_url?: string;
+    defect_part_id: number;
+    defect_type_id: number;
+    custom_part_name?: string;
+    custom_defect_name?: string;
+  }) {
+    return request<Issue>('/issues', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  },
+
+  listDefectCatalogZones() {
+    return request<{ items: DefectZone[] }>('/defect-catalog/zones');
+  },
+  listDefectCatalogParts(zoneId?: number) {
+    const q = zoneId != null ? `?zone_id=${zoneId}` : '';
+    return request<{ items: DefectPart[] }>(`/defect-catalog/parts${q}`);
+  },
+  listDefectCatalogTypes() {
+    return request<{ items: DefectType[] }>('/defect-catalog/types');
+  },
+
   getIssue(id: number) {
     return request<Issue>(`/issues/${id}`);
   },
@@ -850,6 +882,20 @@ export interface Issue {
   ConditionalApproveReporterName?: string;
   /** Earliest ISSUE media attachment storage_path, when present. */
   ReportPhotoPath?: string;
+  DefectPartID?: number | null;
+  DefectTypeID?: number | null;
+  ResponsibleProcessID?: number | null;
+  CustomPartName?: string;
+  CustomDefectName?: string;
+  DefectCode?: string;
+  DefectPartNameTR?: string;
+  DefectPartNameEN?: string;
+  DefectTypeNameTR?: string;
+  DefectTypeNameEN?: string;
+  DefectZoneNameTR?: string;
+  DefectZoneNameEN?: string;
+  DefectProcessNameTR?: string;
+  DefectProcessNameEN?: string;
 }
 
 export interface IssueStatusHistoryEntry {

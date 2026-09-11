@@ -11,7 +11,7 @@ import {
   type IssueStatusHistoryEntry,
   type MediaAttachment,
 } from '../../lib/api';
-import { issueStationLabel, reporterFallback } from '../../lib/issueDetailCopy';
+import { issueStationLabel, issueDefectSummary, reporterFallback } from '../../lib/issueDetailCopy';
 import { issueStatusLabel } from '../../lib/issueStatus';
 import { printSection } from '../../lib/print';
 import { PrintButton, PrintHeader, PrintRoot } from './PrintRoot';
@@ -155,6 +155,18 @@ export function IssueDetailPrint({ issue }: { issue: Issue }) {
           </p>
           <p>
             <strong>{t('issueDetail.station')}:</strong> {issueStationLabel(issue)}
+          </p>
+          <p>
+            <strong>{t('issue.defectPart')}:</strong>{' '}
+            {issueDefectSummary(issue, t, locale).part}
+          </p>
+          <p>
+            <strong>{t('issue.defectType')}:</strong>{' '}
+            {issueDefectSummary(issue, t, locale).type}
+          </p>
+          <p>
+            <strong>{t('issue.defectCode')}:</strong>{' '}
+            {issueDefectSummary(issue, t, locale).code}
           </p>
           <p>
             <strong>{t('issueDetail.reporter')}:</strong>{' '}
