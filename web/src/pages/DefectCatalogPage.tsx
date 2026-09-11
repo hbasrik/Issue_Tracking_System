@@ -3,6 +3,7 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 import {
   api,
   type DefectCatalogueWrite,
+  type DefectOtherUsageGroup,
   type DefectPart,
   type DefectProcess,
   type DefectType,
@@ -13,7 +14,7 @@ import { ActiveBadge } from '../components/ActiveBadge';
 import { useConfirm } from '../components/ConfirmDialog';
 import { useI18n } from '../i18n';
 
-type Tab = 'zones' | 'parts' | 'types' | 'processes';
+type Tab = 'zones' | 'parts' | 'types' | 'processes' | 'other';
 
 const inputClass =
   'min-h-touch w-full rounded-lg border bg-[var(--bg-page)] px-3 text-[14px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]';
@@ -52,6 +53,18 @@ export default function DefectCatalogPage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [otherParts, setOtherParts] = useState<DefectOtherUsageGroup[]>([]);
+  const [otherTypes, setOtherTypes] = useState<DefectOtherUsageGroup[]>([]);
+  const [promoteTarget, setPromoteTarget] = useState<{
+    kind: 'part' | 'type';
+    group: DefectOtherUsageGroup;
+  } | null>(null);
+  const [promoteCode, setPromoteCode] = useState('');
+  const [promoteNameTR, setPromoteNameTR] = useState('');
+  const [promoteNameEN, setPromoteNameEN] = useState('');
+  const [promoteZoneId, setPromoteZoneId] = useState<number | ''>('');
+  const [promoteProcessId, setPromoteProcessId] = useState<number | ''>('');
+  const [promoteRebind, setPromoteRebind] = useState(true);
 
   const nameOf = useCallback(
     (tr: string, en: string) => (locale === 'en' ? en || tr : tr || en),
@@ -62,16 +75,19 @@ export default function DefectCatalogPage() {
     setLoading(true);
     setError(null);
     try {
-      const [z, p, ty, pr] = await Promise.all([
+      const [z, p, ty, pr, other] = await Promise.all([
         api.listDefectZones(),
         api.listDefectParts(),
         api.listDefectTypes(),
         api.listDefectProcesses(),
+        api.listDefectOtherUsage().catch(() => ({ parts: [], types: [] })),
       ]);
       setZones(z.items ?? []);
       setParts(p.items ?? []);
       setTypes(ty.items ?? []);
       setProcesses(pr.items ?? []);
+      setOtherParts(other.parts ?? []);
+      setOtherTypes(other.types ?? []);
     } catch (err) {
       setError(apiErrorMessage(err, t));
     } finally {
@@ -287,6 +303,9 @@ export default function DefectCatalogPage() {
           raw: ty,
         }));
     }
+    if (tab === 'other') {
+      return [];
+    }
     return processes
       .filter((p) => !hideInactive || p.IsActive)
       .map((p) => ({
@@ -305,7 +324,56 @@ export default function DefectCatalogPage() {
     { id: 'parts', label: t('defects.tabParts') },
     { id: 'types', label: t('defects.tabTypes') },
     { id: 'processes', label: t('defects.tabProcesses') },
+    { id: 'other', label: t('catalog.otherReview') },
   ];
+
+  function openPromote(kind: 'part' | 'type', group: DefectOtherUsageGroup) {
+    setPromoteTarget({ kind, group });
+    setPromoteCode('');
+    setPromoteNameTR(group.CustomName);
+    setPromoteNameEN(group.CustomName);
+    setPromoteZoneId(zones[0]?.ID ?? '');
+    setPromoteProcessId(processes.find((p) => p.IsActive)?.ID ?? '');
+    setPromoteRebind(true);
+  }
+
+  async function runPromote() {
+    if (!promoteTarget) return;
+    if (promoteRebind && promoteTarget.group.Count > 0) {
+      const ok = await confirm({
+        title: t('catalog.promoteToCatalog'),
+        message: t('catalog.promoteConfirm', { n: promoteTarget.group.Count }),
+        confirmLabel: t('common.confirm'),
+        cancelLabel: t('common.cancel'),
+      });
+      if (!ok) return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      const result = await api.promoteDefectOther({
+        kind: promoteTarget.kind,
+        custom_name: promoteTarget.group.CustomName,
+        code: promoteCode.trim(),
+        name_tr: promoteNameTR.trim(),
+        name_en: promoteNameEN.trim(),
+        zone_id: promoteTarget.kind === 'part' ? Number(promoteZoneId) : undefined,
+        default_process_id:
+          promoteTarget.kind === 'type' && promoteProcessId !== ''
+            ? Number(promoteProcessId)
+            : null,
+        rebind_issues: promoteRebind,
+      });
+      setPromoteTarget(null);
+      await load();
+      setError(null);
+      window.alert(t('catalog.promoteSuccess', { n: result.rebound_count }));
+    } catch (err) {
+      setError(apiErrorMessage(err, t));
+    } finally {
+      setBusy(false);
+    }
+  }
 
   return (
     <section className="mx-auto max-w-6xl px-4 py-6">
@@ -333,32 +401,38 @@ export default function DefectCatalogPage() {
       </div>
 
       <div className="mb-3 flex flex-wrap items-center gap-3">
-        <label className="inline-flex items-center gap-2 text-[13px] text-[var(--text-secondary)]">
-          <input
-            type="checkbox"
-            checked={hideInactive}
-            onChange={(e) => setHideInactive(e.target.checked)}
-          />
-          {t('defects.hideInactive')}
-        </label>
-        {tab === 'parts' ? (
-          <select
-            className={`${inputClass} max-w-[14rem]`}
-            style={{ borderColor: 'var(--border)' }}
-            value={filterZone === '' ? '' : String(filterZone)}
-            onChange={(e) => setFilterZone(e.target.value ? Number(e.target.value) : '')}
-          >
-            <option value="">{t('defects.allZones')}</option>
-            {zones.map((z) => (
-              <option key={z.ID} value={z.ID}>
-                {z.Code} — {nameOf(z.NameTR, z.NameEN)}
-              </option>
-            ))}
-          </select>
-        ) : null}
-        <button type="button" className={btnPrimary} disabled={busy} onClick={startCreate}>
-          {t('defects.add')}
-        </button>
+        {tab !== 'other' ? (
+          <>
+            <label className="inline-flex items-center gap-2 text-[13px] text-[var(--text-secondary)]">
+              <input
+                type="checkbox"
+                checked={hideInactive}
+                onChange={(e) => setHideInactive(e.target.checked)}
+              />
+              {t('defects.hideInactive')}
+            </label>
+            {tab === 'parts' ? (
+              <select
+                className={`${inputClass} max-w-[14rem]`}
+                style={{ borderColor: 'var(--border)' }}
+                value={filterZone === '' ? '' : String(filterZone)}
+                onChange={(e) => setFilterZone(e.target.value ? Number(e.target.value) : '')}
+              >
+                <option value="">{t('defects.allZones')}</option>
+                {zones.map((z) => (
+                  <option key={z.ID} value={z.ID}>
+                    {z.Code} — {nameOf(z.NameTR, z.NameEN)}
+                  </option>
+                ))}
+              </select>
+            ) : null}
+            <button type="button" className={btnPrimary} disabled={busy} onClick={startCreate}>
+              {t('defects.add')}
+            </button>
+          </>
+        ) : (
+          <p className="text-[13px] text-[var(--text-secondary)]">{t('catalog.otherReviewHint')}</p>
+        )}
       </div>
 
       {error ? (
@@ -367,6 +441,163 @@ export default function DefectCatalogPage() {
         </p>
       ) : null}
 
+      {tab === 'other' ? (
+        <div className="space-y-4">
+          {loading ? (
+            <p className="text-[14px] text-[var(--text-secondary)]">{t('common.loading')}</p>
+          ) : otherParts.length === 0 && otherTypes.length === 0 ? (
+            <p className="text-[14px] text-[var(--text-secondary)]">{t('catalog.otherEmpty')}</p>
+          ) : (
+            <>
+              {(
+                [
+                  { title: t('catalog.otherParts'), kind: 'part' as const, groups: otherParts },
+                  { title: t('catalog.otherTypes'), kind: 'type' as const, groups: otherTypes },
+                ] as const
+              ).map((section) => (
+                <div
+                  key={section.kind}
+                  className="overflow-hidden rounded-xl border bg-[var(--bg-surface-1)]"
+                  style={{ borderColor: 'var(--border)' }}
+                >
+                  <h2 className="border-b px-4 py-3 text-[15px] font-semibold text-[var(--text-primary)]"
+                    style={{ borderColor: 'var(--border)' }}>
+                    {section.title}
+                  </h2>
+                  {section.groups.length === 0 ? (
+                    <p className="p-4 text-[13px] text-[var(--text-secondary)]">—</p>
+                  ) : (
+                    <ul className="divide-y" style={{ borderColor: 'var(--border)' }}>
+                      {section.groups.map((g) => (
+                        <li
+                          key={`${section.kind}:${g.CustomName}`}
+                          className="flex flex-wrap items-center justify-between gap-3 px-4 py-3"
+                          style={{ borderColor: 'var(--border)' }}
+                        >
+                          <div>
+                            <p className="text-[14px] font-medium text-[var(--text-primary)]">
+                              {g.CustomName}
+                            </p>
+                            <p className="text-[12px] text-[var(--text-secondary)]">
+                              {t('defects.usageCount', { n: g.Count })}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            className={btnPrimary}
+                            disabled={busy}
+                            onClick={() => openPromote(section.kind, g)}
+                          >
+                            {t('catalog.promoteToCatalog')}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              ))}
+            </>
+          )}
+
+          {promoteTarget ? (
+            <div
+              className="rounded-xl border bg-[var(--bg-surface-1)] p-4 space-y-3"
+              style={{ borderColor: 'var(--border)' }}
+            >
+              <h3 className="text-[15px] font-semibold text-[var(--text-primary)]">
+                {t('catalog.promoteToCatalog')}: {promoteTarget.group.CustomName}
+              </h3>
+              <label className="block text-[12px] text-[var(--text-secondary)]">
+                Code
+                <input
+                  className={`${inputClass} mt-1`}
+                  style={{ borderColor: 'var(--border)' }}
+                  value={promoteCode}
+                  onChange={(e) => setPromoteCode(e.target.value)}
+                />
+              </label>
+              <label className="block text-[12px] text-[var(--text-secondary)]">
+                name_tr
+                <input
+                  className={`${inputClass} mt-1`}
+                  style={{ borderColor: 'var(--border)' }}
+                  value={promoteNameTR}
+                  onChange={(e) => setPromoteNameTR(e.target.value)}
+                />
+              </label>
+              <label className="block text-[12px] text-[var(--text-secondary)]">
+                name_en
+                <input
+                  className={`${inputClass} mt-1`}
+                  style={{ borderColor: 'var(--border)' }}
+                  value={promoteNameEN}
+                  onChange={(e) => setPromoteNameEN(e.target.value)}
+                />
+              </label>
+              {promoteTarget.kind === 'part' ? (
+                <label className="block text-[12px] text-[var(--text-secondary)]">
+                  {t('issue.defectZone')}
+                  <select
+                    className={`${inputClass} mt-1`}
+                    style={{ borderColor: 'var(--border)' }}
+                    value={promoteZoneId === '' ? '' : String(promoteZoneId)}
+                    onChange={(e) =>
+                      setPromoteZoneId(e.target.value ? Number(e.target.value) : '')
+                    }
+                  >
+                    {zones.filter((z) => z.IsActive).map((z) => (
+                      <option key={z.ID} value={z.ID}>
+                        {z.Code} — {nameOf(z.NameTR, z.NameEN)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : (
+                <label className="block text-[12px] text-[var(--text-secondary)]">
+                  {t('issue.defectProcess')}
+                  <select
+                    className={`${inputClass} mt-1`}
+                    style={{ borderColor: 'var(--border)' }}
+                    value={promoteProcessId === '' ? '' : String(promoteProcessId)}
+                    onChange={(e) =>
+                      setPromoteProcessId(e.target.value ? Number(e.target.value) : '')
+                    }
+                  >
+                    <option value="">{t('defects.noDefaultProcess')}</option>
+                    {processes.filter((p) => p.IsActive).map((p) => (
+                      <option key={p.ID} value={p.ID}>
+                        {nameOf(p.NameTR, p.NameEN)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
+              <label className="inline-flex items-center gap-2 text-[13px] text-[var(--text-primary)]">
+                <input
+                  type="checkbox"
+                  checked={promoteRebind}
+                  onChange={(e) => setPromoteRebind(e.target.checked)}
+                />
+                {t('catalog.rebindIssues', { n: promoteTarget.group.Count })}
+              </label>
+              <div className="flex gap-2">
+                <button type="button" className={btnPrimary} disabled={busy} onClick={() => void runPromote()}>
+                  {busy ? t('common.saving') : t('common.save')}
+                </button>
+                <button
+                  type="button"
+                  className={btnGhost}
+                  style={{ borderColor: 'var(--border)' }}
+                  disabled={busy}
+                  onClick={() => setPromoteTarget(null)}
+                >
+                  {t('common.cancel')}
+                </button>
+              </div>
+            </div>
+          ) : null}
+        </div>
+      ) : (
       <div className="grid gap-4 lg:grid-cols-[1fr_22rem]">
         <div
           className="overflow-hidden rounded-xl border bg-[var(--bg-surface-1)]"
@@ -570,6 +801,7 @@ export default function DefectCatalogPage() {
           </div>
         </aside>
       </div>
+      )}
     </section>
   );
 }
