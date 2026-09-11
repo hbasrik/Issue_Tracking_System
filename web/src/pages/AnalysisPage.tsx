@@ -18,6 +18,7 @@ import {
   TrendingUp,
   TriangleAlert,
   Truck,
+  Tags,
 } from 'lucide-react';
 import {
   Area,
@@ -59,7 +60,7 @@ import {
   type DeltaPolarity,
 } from '../lib/homeDashboard';
 import { downloadBlob } from '../lib/issueExport';
-import { statusColors } from '../theme/tokens';
+import { brandColors, statusColors } from '../theme/tokens';
 import { useI18n } from '../i18n';
 import {
   VEHICLE_LIFECYCLE_FILTER_VALUES,
@@ -165,6 +166,16 @@ const STAGE_COLORS: Record<string, string> = {
   DEPOT: statusColors.issueInProgress,
   COMPLETED: statusColors.ok,
 };
+
+const PIE_COLORS = [
+  statusColors.info,
+  statusColors.issueInProgress,
+  statusColors.ok,
+  statusColors.severityMedium,
+  statusColors.severityCritical,
+  statusColors.pending,
+  brandColors.secondary,
+];
 
 const AGE_BUCKET_KEYS = {
   '0-1': 'analysis.age.0_1',
@@ -649,6 +660,100 @@ export default function AnalysisPage() {
       })),
     [dash, t],
   );
+
+  const defectLabel = useCallback(
+    (tr: string, en: string) => (locale === 'en' ? en || tr : tr || en),
+    [locale],
+  );
+
+  const defectZonePie = useMemo(
+    () =>
+      (dash?.DefectByZone ?? []).map((r, i) => ({
+        name: defectLabel(r.NameTR, r.NameEN),
+        value: r.Count,
+        color: PIE_COLORS[i % PIE_COLORS.length],
+      })),
+    [dash, defectLabel],
+  );
+
+  const defectPartBars = useMemo(
+    () =>
+      (dash?.DefectTopParts ?? []).map((r) => ({
+        name: defectLabel(r.NameTR, r.NameEN),
+        count: r.Count,
+      })),
+    [dash, defectLabel],
+  );
+
+  const defectTypeBars = useMemo(
+    () =>
+      (dash?.DefectByType ?? []).map((r) => ({
+        name: defectLabel(r.NameTR, r.NameEN),
+        count: r.Count,
+      })),
+    [dash, defectLabel],
+  );
+
+  const defectProcessPie = useMemo(
+    () =>
+      (dash?.DefectByProcess ?? []).map((r, i) => ({
+        name: defectLabel(r.NameTR, r.NameEN),
+        value: r.Count,
+        color: PIE_COLORS[(i + 2) % PIE_COLORS.length],
+      })),
+    [dash, defectLabel],
+  );
+
+  const defectComboBars = useMemo(
+    () =>
+      (dash?.DefectPartTypeTop ?? []).map((r) => ({
+        name: `${defectLabel(r.PartNameTR, r.PartNameEN)} · ${defectLabel(r.TypeNameTR, r.TypeNameEN)}`,
+        count: r.Count,
+      })),
+    [dash, defectLabel],
+  );
+
+  const defectCoverageBars = useMemo(() => {
+    const cov = dash?.DefectCoverage;
+    if (!cov || cov.Total === 0) return [];
+    return [
+      {
+        name: t('analysis.defectClassified'),
+        value: cov.Classified,
+        color: statusColors.info,
+      },
+      {
+        name: t('analysis.defectUnclassified'),
+        value: cov.Unclassified,
+        color: statusColors.pending,
+      },
+    ];
+  }, [dash, t]);
+
+  const defectRecurrenceHotspotBars = useMemo(
+    () =>
+      (dash?.DefectRecurrence?.Hotspots ?? []).map((r) => ({
+        name: `${defectLabel(r.PartNameTR, r.PartNameEN)} · ${defectLabel(r.TypeNameTR, r.TypeNameEN)}`,
+        count: r.RecurringIssueCount,
+      })),
+    [dash, defectLabel],
+  );
+
+  const defectCoverage = dash?.DefectCoverage;
+  const defectOtherPartPct =
+    defectCoverage && defectCoverage.Total > 0
+      ? Math.round((defectCoverage.OtherPart / defectCoverage.Total) * 1000) / 10
+      : null;
+  const defectOtherTypePct =
+    defectCoverage && defectCoverage.Total > 0
+      ? Math.round((defectCoverage.OtherType / defectCoverage.Total) * 1000) / 10
+      : null;
+  const defectClassifiedPct =
+    defectCoverage && defectCoverage.Total > 0
+      ? Math.round((defectCoverage.Classified / defectCoverage.Total) * 1000) / 10
+      : null;
+  const defectRecurrence = dash?.DefectRecurrence;
+  const defectRecurrenceCases = defectRecurrence?.Cases ?? [];
 
   const eolFunnelRows = dash?.EOLFunnel ?? [];
   const fpyValue = dash?.Cards?.FirstTimeRightPercent ?? null;
@@ -1271,6 +1376,206 @@ export default function AnalysisPage() {
         </ChartCard>
       </div>
 
+      {/* 5b) Defect catalogue analytics — below TV ops strip */}
+      <div className="mt-5 mb-1 flex items-baseline justify-between gap-2">
+        <div>
+          <h2 className="flex items-center gap-2 text-[17px] font-semibold text-[var(--text-primary)]">
+            <Tags size={17} className="text-[var(--accent)]" aria-hidden />
+            {t('analysis.defectSection')}
+          </h2>
+          <p className="mt-0.5 text-[13px]" style={mutedCaption}>
+            {t('analysis.defectSectionHint')}
+          </p>
+        </div>
+      </div>
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+        <ChartCard
+          title={t('analysis.defectCoverage')}
+          subtitle={t('analysis.defectChart.coverage')}
+          icon={<Gauge size={16} />}
+        >
+          {!defectCoverage || defectCoverage.Total === 0 ? (
+            <EmptyChart />
+          ) : (
+            <div className="space-y-3">
+              <SplitBars data={defectCoverageBars} />
+              <p className="text-[14px] tabular-nums text-[var(--text-primary)]">
+                {defectClassifiedPct != null
+                  ? `${defectClassifiedPct}% ${t('analysis.defectClassified')} · ${defectCoverage.Classified}/${defectCoverage.Total}`
+                  : null}
+              </p>
+              <ul className="space-y-1 text-[13px]" style={mutedCaption}>
+                <li>
+                  {t('analysis.defectOtherPartRate')}:{' '}
+                  <span className="font-semibold tabular-nums text-[var(--text-primary)]">
+                    {defectOtherPartPct != null ? `${defectOtherPartPct}%` : t('common.emDash')}
+                    {` (${defectCoverage.OtherPart})`}
+                  </span>
+                </li>
+                <li>
+                  {t('analysis.defectOtherTypeRate')}:{' '}
+                  <span className="font-semibold tabular-nums text-[var(--text-primary)]">
+                    {defectOtherTypePct != null ? `${defectOtherTypePct}%` : t('common.emDash')}
+                    {` (${defectCoverage.OtherType})`}
+                  </span>
+                </li>
+              </ul>
+            </div>
+          )}
+        </ChartCard>
+
+        <ChartCard
+          title={t('analysis.defectRecurrence')}
+          subtitle={t('analysis.defectRecurrenceHint')}
+          icon={<RefreshCw size={16} />}
+        >
+          {!defectRecurrence || defectRecurrence.CodedIssueCount === 0 ? (
+            <EmptyChart />
+          ) : (
+            <div className="space-y-3 py-1">
+              <p className="text-[14px]">
+                <span style={mutedCaption}>{t('analysis.defectRecurrenceRate')}: </span>
+                <strong className="text-[22px] tabular-nums text-[var(--text-primary)]">
+                  {defectRecurrence.RecurrenceRatePct != null
+                    ? `${Math.round(defectRecurrence.RecurrenceRatePct * 10) / 10}%`
+                    : t('common.emDash')}
+                </strong>
+                <span className="ml-2 text-[13px]" style={mutedCaption}>
+                  ({defectRecurrence.RecurringIssueCount}/{defectRecurrence.CodedIssueCount})
+                </span>
+              </p>
+            </div>
+          )}
+        </ChartCard>
+
+        <ChartCard
+          title={t('analysis.defectByZone')}
+          subtitle={t('analysis.defectChart.zone')}
+          icon={<Layers size={16} />}
+        >
+          {defectZonePie.length === 0 ? <EmptyChart /> : <DonutChart data={defectZonePie} />}
+        </ChartCard>
+
+        <ChartCard
+          title={t('analysis.defectByProcess')}
+          subtitle={t('analysis.defectChart.process')}
+          icon={<Factory size={16} />}
+        >
+          {defectProcessPie.length === 0 ? (
+            <EmptyChart />
+          ) : (
+            <DonutChart data={defectProcessPie} />
+          )}
+        </ChartCard>
+
+        <ChartCard
+          title={t('analysis.defectTopParts')}
+          subtitle={t('analysis.defectChart.parts')}
+          icon={<BarChart3 size={16} />}
+        >
+          {defectPartBars.length === 0 ? (
+            <EmptyChart />
+          ) : (
+            <HorizontalRankChart data={defectPartBars} color={statusColors.issueInProgress} />
+          )}
+        </ChartCard>
+
+        <ChartCard
+          title={t('analysis.defectByType')}
+          subtitle={t('analysis.defectChart.type')}
+          icon={<TriangleAlert size={16} />}
+        >
+          {defectTypeBars.length === 0 ? (
+            <EmptyChart />
+          ) : (
+            <HorizontalRankChart data={defectTypeBars} color={statusColors.severityMedium} />
+          )}
+        </ChartCard>
+
+        <ChartCard
+          title={t('analysis.defectPartType')}
+          subtitle={t('analysis.defectChart.combo')}
+          icon={<ClipboardList size={16} />}
+        >
+          {defectComboBars.length === 0 ? (
+            <EmptyChart />
+          ) : (
+            <HorizontalRankChart
+              data={defectComboBars}
+              color={statusColors.info}
+              labelWidth={140}
+            />
+          )}
+        </ChartCard>
+
+        <ChartCard
+          title={t('analysis.defectRecurrenceHotspots')}
+          subtitle={t('analysis.defectChart.hotspots')}
+          icon={<AlertCircle size={16} />}
+        >
+          {defectRecurrenceHotspotBars.length === 0 ? (
+            <EmptyChart />
+          ) : (
+            <HorizontalRankChart
+              data={defectRecurrenceHotspotBars}
+              color={statusColors.severityCritical}
+              labelWidth={140}
+            />
+          )}
+        </ChartCard>
+      </div>
+
+      <ChartCard
+        className="mt-3"
+        title={t('analysis.defectRecurrenceCases')}
+        subtitle={t('analysis.defectRecurrenceHint')}
+        icon={<RefreshCw size={16} />}
+      >
+        {defectRecurrenceCases.length === 0 ? (
+          <EmptyChart />
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[22rem] text-left text-[14px]">
+              <thead>
+                <tr
+                  className="border-b text-[11px] font-semibold uppercase tracking-wide"
+                  style={{ borderColor: 'var(--border)', ...mutedCaption }}
+                >
+                  <th className="pb-1.5 pr-3">{t('issue.vin')}</th>
+                  <th className="pb-1.5 pr-3">{t('analysis.defectCode')}</th>
+                  <th className="pb-1.5 text-right">{t('analysis.defectOccurrences')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {defectRecurrenceCases.map((row) => (
+                  <tr
+                    key={`${row.VIN}-${row.DefectCode}`}
+                    className="border-b"
+                    style={{ borderColor: 'var(--border)' }}
+                  >
+                    <td className="py-2 pr-3 font-mono text-[13px]">
+                      <Link
+                        to={`/vehicles/${encodeURIComponent(row.VIN)}`}
+                        className="font-semibold text-[var(--accent)] hover:underline"
+                      >
+                        …{row.VIN.slice(-5)}
+                      </Link>
+                      <span className="ml-1.5 text-[11px]" style={mutedCaption}>
+                        {row.VIN}
+                      </span>
+                    </td>
+                    <td className="py-2 pr-3 font-mono tabular-nums">{row.DefectCode}</td>
+                    <td className="py-2 text-right tabular-nums font-semibold">
+                      {row.Count} {t('analysis.defectTimes')}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </ChartCard>
+
       <ChartCard
         className="mt-3"
         title={t('analysis.vehicleBreakdown')}
@@ -1820,6 +2125,47 @@ function HorizontalTypeChart({
           />
           <Tooltip contentStyle={CHART_TOOLTIP} />
           <Bar dataKey="count" fill={color} isAnimationActive={false} radius={[0, 4, 4, 0]} />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+function HorizontalRankChart({
+  data,
+  color,
+  labelWidth = 100,
+}: {
+  data: { name: string; count: number }[];
+  color: string;
+  labelWidth?: number;
+}) {
+  const h = Math.min(280, Math.max(140, 28 + data.length * 26));
+  return (
+    <div className="chart-inert w-full min-w-0" style={{ height: h }}>
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart
+          layout="vertical"
+          data={data}
+          tabIndex={-1}
+          margin={{ top: 4, right: 28, left: 4, bottom: 4 }}
+        >
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
+          <XAxis type="number" allowDecimals={false} tick={TICK} />
+          <YAxis
+            type="category"
+            dataKey="name"
+            width={labelWidth}
+            tick={{ fill: 'var(--text-secondary)', fontSize: 11 }}
+          />
+          <Tooltip contentStyle={CHART_TOOLTIP} />
+          <Bar dataKey="count" fill={color} isAnimationActive={false} radius={[0, 4, 4, 0]}>
+            <LabelList
+              dataKey="count"
+              position="right"
+              style={{ fill: 'var(--text-primary)', fontSize: 12, fontWeight: 600 }}
+            />
+          </Bar>
         </BarChart>
       </ResponsiveContainer>
     </div>
