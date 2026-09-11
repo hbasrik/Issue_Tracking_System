@@ -39,6 +39,7 @@ func main() {
 	eolRepo := postgres.NewEOLWorkflowRepo(pool)
 	mediaRepo := postgres.NewMediaRepo(pool)
 	auditRepo := postgres.NewAuditRepo(pool)
+	defectCatalogRepo := postgres.NewDefectCatalogRepo(pool)
 	uow := postgres.NewUnitOfWork(pool)
 
 	issuer := auth.NewIssuer(cfg.JWTSecret, 24*time.Hour)
@@ -73,6 +74,7 @@ func main() {
 		EOLReset:           eolReset,
 		ShipmentReadiness:  usecase.NewShipmentReadinessReader(vehicleRepo, checklists, issueRepo),
 		Media:              usecase.NewMediaUploader(mediaRepo, mediaStore),
+		DefectCatalog:      usecase.NewDefectCatalogAdmin(defectCatalogRepo),
 		CORSAllowedOrigins: cfg.CORSAllowedOrigins,
 		AppEnv:             cfg.AppEnv,
 		UploadDir:          cfg.UploadDir,

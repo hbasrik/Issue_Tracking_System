@@ -43,6 +43,7 @@ func writeError(w http.ResponseWriter, err error) {
 	var branchShip *domain.EOLBranchShipBlockedError
 	var rejected *domain.DatabaseRejectedError
 	var itemInUse *domain.TemplateItemInUseError
+	var catalogInUse *domain.CatalogInUseError
 	var emailDomain *domain.EmailDomainNotAllowedError
 	var userInUse *domain.UserInUseError
 	switch {
@@ -67,6 +68,8 @@ func writeError(w http.ResponseWriter, err error) {
 		writeJSON(w, http.StatusConflict, errorResponse{Error: rejected.Error()})
 	case errors.As(err, &itemInUse):
 		writeJSON(w, http.StatusConflict, errorResponse{Error: itemInUse.Error()})
+	case errors.As(err, &catalogInUse):
+		writeJSON(w, http.StatusConflict, errorResponse{Error: catalogInUse.Error()})
 	case errors.As(err, &userInUse):
 		writeJSON(w, http.StatusConflict, errorResponse{Error: userInUse.Error()})
 	case errors.As(err, &emailDomain):
@@ -76,7 +79,8 @@ func writeError(w http.ResponseWriter, err error) {
 		errors.Is(err, domain.ErrCannotHold),
 		errors.Is(err, domain.ErrNotOnHold),
 		errors.Is(err, domain.ErrLastActiveManager),
-		errors.Is(err, domain.ErrEmailTaken):
+		errors.Is(err, domain.ErrEmailTaken),
+		errors.Is(err, domain.ErrDefectCatalogueCodeTaken):
 		writeJSON(w, http.StatusConflict, errorResponse{Error: err.Error()})
 	case errors.Is(err, domain.ErrNotFound):
 		writeJSON(w, http.StatusNotFound, errorResponse{Error: err.Error()})
@@ -108,6 +112,11 @@ func writeError(w http.ResponseWriter, err error) {
 		errors.Is(err, domain.ErrEOLPhaseRequired),
 		errors.Is(err, domain.ErrEOLPhaseNotAllowed),
 		errors.Is(err, domain.ErrTemplateItemReorderInvalid),
+		errors.Is(err, domain.ErrDefectCatalogueFieldsRequired),
+		errors.Is(err, domain.ErrDefectCatalogueCodeTooLong),
+		errors.Is(err, domain.ErrDefectCatalogueNameTooLong),
+		errors.Is(err, domain.ErrDefectCatalogueReorderInvalid),
+		errors.Is(err, domain.ErrDefectZoneRequired),
 		errors.Is(err, domain.ErrHoldReasonRequired),
 		errors.Is(err, domain.ErrFullNameRequired),
 		errors.Is(err, domain.ErrEmailRequired),

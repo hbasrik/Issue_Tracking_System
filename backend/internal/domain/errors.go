@@ -77,6 +77,18 @@ var (
 	// ErrTemplateItemTextRequired indicates a template item create/update
 	// omitted item_text.
 	ErrTemplateItemTextRequired = errors.New("item_text is required")
+	// ErrDefectCatalogueFieldsRequired indicates code/name_tr/name_en missing.
+	ErrDefectCatalogueFieldsRequired = errors.New("code, name_tr and name_en are required")
+	// ErrDefectCatalogueCodeTooLong indicates code exceeds the column limit.
+	ErrDefectCatalogueCodeTooLong = errors.New("code is too long")
+	// ErrDefectCatalogueNameTooLong indicates a bilingual name exceeds the limit.
+	ErrDefectCatalogueNameTooLong = errors.New("name_tr or name_en is too long")
+	// ErrDefectCatalogueCodeTaken indicates a unique catalogue code collision.
+	ErrDefectCatalogueCodeTaken = errors.New("catalogue code already exists")
+	// ErrDefectCatalogueReorderInvalid indicates the id set does not match.
+	ErrDefectCatalogueReorderInvalid = errors.New("reorder id list is invalid")
+	// ErrDefectZoneRequired indicates a part create/update omitted zone_id.
+	ErrDefectZoneRequired = errors.New("zone_id is required")
 	// ErrTemplateItemTextTooLong indicates item_text exceeds VARCHAR(250).
 	ErrTemplateItemTextTooLong = errors.New("item_text must be at most 250 characters")
 	// ErrEOLPhaseRequired indicates an EOL template item omitted BRANCH/DEPOT.

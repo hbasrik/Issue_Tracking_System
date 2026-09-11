@@ -21,3 +21,9 @@ func mapRaiseException(err error) error {
 	}
 	return err
 }
+
+// IsUniqueViolation reports whether err is a PostgreSQL unique_violation (23505).
+func IsUniqueViolation(err error) bool {
+	var pgErr *pgconn.PgError
+	return errors.As(err, &pgErr) && pgErr.Code == "23505"
+}

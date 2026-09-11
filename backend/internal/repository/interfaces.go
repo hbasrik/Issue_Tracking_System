@@ -284,3 +284,36 @@ type AuditRepository interface {
 	// ListActivity returns a filtered, newest-first page of audit rows.
 	ListActivity(ctx context.Context, f domain.AuditActivityFilter) (*domain.AuditActivityPage, error)
 }
+
+// DefectCatalogRepository persists zones / parts / types / processes masters.
+type DefectCatalogRepository interface {
+	ListProcesses(ctx context.Context) ([]domain.DefectProcess, error)
+	CreateProcess(ctx context.Context, p *domain.DefectProcess) (int, error)
+	UpdateProcess(ctx context.Context, p *domain.DefectProcess) error
+	DeleteProcess(ctx context.Context, id int) error
+	CountProcessUsage(ctx context.Context, id int) (int, error)
+	ReorderProcesses(ctx context.Context, ids []int) error
+
+	ListZones(ctx context.Context) ([]domain.DefectZone, error)
+	GetZone(ctx context.Context, id int) (*domain.DefectZone, error)
+	CreateZone(ctx context.Context, z *domain.DefectZone) (int, error)
+	UpdateZone(ctx context.Context, z *domain.DefectZone) error
+	DeleteZone(ctx context.Context, id int) error
+	CountZoneUsage(ctx context.Context, id int) (int, error)
+	CountZoneParts(ctx context.Context, id int) (int, error)
+	ReorderZones(ctx context.Context, ids []int) error
+
+	ListParts(ctx context.Context, zoneID *int) ([]domain.DefectPart, error)
+	CreatePart(ctx context.Context, p *domain.DefectPart) (int, error)
+	UpdatePart(ctx context.Context, p *domain.DefectPart) error
+	DeletePart(ctx context.Context, id int) error
+	CountPartUsage(ctx context.Context, id int) (int, error)
+	ReorderParts(ctx context.Context, zoneID int, ids []int) error
+
+	ListTypes(ctx context.Context) ([]domain.DefectType, error)
+	CreateType(ctx context.Context, t *domain.DefectType) (int, error)
+	UpdateType(ctx context.Context, t *domain.DefectType) error
+	DeleteType(ctx context.Context, id int) error
+	CountTypeUsage(ctx context.Context, id int) (int, error)
+	ReorderTypes(ctx context.Context, ids []int) error
+}

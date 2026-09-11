@@ -45,6 +45,7 @@ type Deps struct {
 	EOLReset           *usecase.EOLWorkflowResetter
 	ShipmentReadiness  *usecase.ShipmentReadinessReader
 	Media              *usecase.MediaUploader
+	DefectCatalog      *usecase.DefectCatalogAdmin
 	CORSAllowedOrigins []string
 	// AppEnv is APP_ENV. The EoL reset route 404s unless this is "development".
 	AppEnv string
@@ -188,6 +189,30 @@ func NewRouter(deps Deps) http.Handler {
 				r.Get("/checklist-templates/{id}/items/{itemId}/missing-vehicles", s.handleChecklistTemplateItemMissingVehicles)
 				r.Patch("/checklist-templates/{id}/items/{itemId}", s.handleChecklistTemplateItemUpdate)
 				r.Delete("/checklist-templates/{id}/items/{itemId}", s.handleChecklistTemplateItemDelete)
+
+				r.Get("/defect-processes", s.handleDefectProcessList)
+				r.Post("/defect-processes", s.handleDefectProcessCreate)
+				r.Post("/defect-processes/reorder", s.handleDefectProcessReorder)
+				r.Patch("/defect-processes/{id}", s.handleDefectProcessUpdate)
+				r.Delete("/defect-processes/{id}", s.handleDefectProcessDelete)
+
+				r.Get("/defect-zones", s.handleDefectZoneList)
+				r.Post("/defect-zones", s.handleDefectZoneCreate)
+				r.Post("/defect-zones/reorder", s.handleDefectZoneReorder)
+				r.Patch("/defect-zones/{id}", s.handleDefectZoneUpdate)
+				r.Delete("/defect-zones/{id}", s.handleDefectZoneDelete)
+
+				r.Get("/defect-parts", s.handleDefectPartList)
+				r.Post("/defect-parts", s.handleDefectPartCreate)
+				r.Post("/defect-parts/reorder", s.handleDefectPartReorder)
+				r.Patch("/defect-parts/{id}", s.handleDefectPartUpdate)
+				r.Delete("/defect-parts/{id}", s.handleDefectPartDelete)
+
+				r.Get("/defect-types", s.handleDefectTypeList)
+				r.Post("/defect-types", s.handleDefectTypeCreate)
+				r.Post("/defect-types/reorder", s.handleDefectTypeReorder)
+				r.Patch("/defect-types/{id}", s.handleDefectTypeUpdate)
+				r.Delete("/defect-types/{id}", s.handleDefectTypeDelete)
 			})
 
 			r.Group(func(r chi.Router) {
