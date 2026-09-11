@@ -1,0 +1,45 @@
+---
+description: Reporting requirements for completed work in the Karea project
+alwaysApply: true
+---
+
+# Reporting rules
+
+At the end of every task, report the following. Do not skip sections —
+if a section does not apply, say so explicitly.
+
+## 1. Database
+- Was a migration added? Which number?
+- Which tables, columns, enums, triggers, indexes or constraints were
+  added, changed or removed?
+- Was any data written, updated or deleted? How many rows, in which
+  tables? This includes data touched during verification.
+- If nothing changed, state "no database changes" explicitly.
+
+## 2. Files
+- Full list of added, modified and deleted files.
+- Any new dependency added, and why.
+
+## 3. Behaviour changes
+- What will the user notice as different?
+- Was any existing behaviour removed, disabled or broken?
+
+## 4. Not done
+- Anything requested but skipped, partially done or deferred — list it
+  explicitly. Never report a task as complete when part of it is not.
+
+## 5. Verification
+- Provide evidence for every claim: SQL output, curl response, build
+  log, screenshot.
+- Never write "verified" without the evidence next to it.
+- If a screenshot or device test could not be taken, say so plainly
+  instead of implying it was checked.
+
+## 6. Cleanup
+- Was any temporary data, test record or throwaway entity created for
+  verification? Confirm it was removed.
+
+## 7. Destructive actions
+- Never delete or overwrite existing data to make a task work or to
+  make verification easier. If deletion seems necessary, stop and ask
+  first.
