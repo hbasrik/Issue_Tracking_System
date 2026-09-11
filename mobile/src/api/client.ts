@@ -227,6 +227,15 @@ export interface DefectType {
   IsActive: boolean;
 }
 
+export interface DefectProcess {
+  ID: number;
+  Code: string;
+  NameTR: string;
+  NameEN: string;
+  SortOrder?: number;
+  IsActive: boolean;
+}
+
 export interface Issue {
   ID: number;
   VIN: string;
@@ -513,6 +522,10 @@ export const api = {
     return request<{ items: DefectType[] }>('/defect-catalog/types');
   },
 
+  listDefectCatalogProcesses() {
+    return request<{ items: DefectProcess[] }>('/defect-catalog/processes');
+  },
+
   listIssueTypes() {
     return request<{ items: IssueType[] }>('/issue-types');
   },
@@ -539,6 +552,22 @@ export const api = {
       body.solution_description = solutionDescription;
     }
     return request<{ id: number; status: string }>(`/issues/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    });
+  },
+
+  updateIssueClassification(
+    id: number,
+    body: {
+      defect_part_id: number;
+      defect_type_id: number;
+      responsible_process_id: number;
+      custom_part_name?: string;
+      custom_defect_name?: string;
+    },
+  ) {
+    return request<Issue>(`/issues/${id}/classification`, {
       method: 'PATCH',
       body: JSON.stringify(body),
     });

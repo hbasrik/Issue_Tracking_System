@@ -13,6 +13,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   api,
   mediaFileUrl,
+  type DefectPart,
+  type DefectProcess,
+  type DefectType,
   type Issue,
   type IssueStatusHistoryEntry,
   type LocalFile,
@@ -30,6 +33,12 @@ import {
   Subtitle,
   AppTextInput,
 } from '../components/ui';
+import {
+  DefectClassificationFields,
+  OTHER_PART_CODE,
+  OTHER_TYPE_CODE,
+  type DefectClassificationState,
+} from '../components/DefectClassificationFields';
 import { SeverityIndicator } from '../components/SeverityIndicator';
 import { VehicleIdentity } from '../components/VehicleIdentity';
 import { useTheme } from '../theme/ThemeProvider';
@@ -91,13 +100,25 @@ export default function IssueDetailScreen() {
   const route = useRoute<RouteProp<RootStackParamList, 'IssueDetail'>>();
   const insets = useSafeAreaInsets();
   const { tokens } = useTheme();
-  const { has } = useAuth();
+  const { has, user } = useAuth();
   const { t, locale } = useI18n();
   const confirm = useConfirm();
   const { showAfterApproval } = useApprovalUndo();
   const [issue, setIssue] = useState<Issue | null>(null);
   const [history, setHistory] = useState<IssueStatusHistoryEntry[]>([]);
   const [reportPhotos, setReportPhotos] = useState<MediaAttachment[]>([]);
+  const [editingClassification, setEditingClassification] = useState(false);
+  const [classState, setClassState] = useState<DefectClassificationState>({
+    zoneId: null,
+    partId: null,
+    typeId: null,
+    customPartName: '',
+    customDefectName: '',
+  });
+  const [processes, setProcesses] = useState<DefectProcess[]>([]);
+  const [processId, setProcessId] = useState<number | null>(null);
+  const [catalogParts, setCatalogParts] = useState<DefectPart[]>([]);
+  const [catalogTypes, setCatalogTypes] = useState<DefectType[]>([]);
   const [resolutionPhotos, setResolutionPhotos] = useState<MediaAttachment[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -309,6 +330,66 @@ export default function IssueDetailScreen() {
   const canApprove = issue?.Status === 'DONE' && has(Perm.IssueTransitionApprove);
   const canConditional =
     issue?.Status === 'DONE' && has(Perm.IssueTransitionConditionalApprove);
+  const canEditClassification =
+    !!issue &&
+    ((user?.ID != null && issue.IssueReporterID === user.ID) ||
+      has(Perm.IssueTransitionApprove) ||
+      has(Perm.IssueTransitionConditionalApprove) ||
+      has(Perm.AdminManageMasters));
+
+  function startEditClassification() {
+    if (!issue) return;
+    setClassState({
+      zoneId: issue.DefectZoneID ?? null,
+      partId: issue.DefectPartID ?? null,
+      typeId: issue.DefectTypeID ?? null,
+      customPartName: issue.CustomPartName ?? '',
+      customDefectName: issue.CustomDefectName ?? '',
+    });
+    setProcessId(issue.ResponsibleProcessID ?? null);
+    setEditingClassification(true);
+    void api.listDefectCatalogProcesses().then((r) => setProcesses(r.items ?? []));
+  }
+
+  async function saveClassification() {
+    if (!issue || classState.partId == null || classState.typeId == null || processId == null) {
+      setError(t('issue.classificationIncomplete'));
+      return;
+    }
+    const part = catalogParts.find((p) => p.ID === classState.partId);
+    const typ = catalogTypes.find((ty) => ty.ID === classState.typeId);
+    if (part?.Code === OTHER_PART_CODE && !classState.customPartName.trim()) {
+      setError(t('report.customPartRequired'));
+      return;
+    }
+    if (typ?.Code === OTHER_TYPE_CODE && !classState.customDefectName.trim()) {
+      setError(t('report.customDefectRequired'));
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      const updated = await api.updateIssueClassification(issue.ID, {
+        defect_part_id: classState.partId,
+        defect_type_id: classState.typeId,
+        responsible_process_id: processId,
+        custom_part_name:
+          part?.Code === OTHER_PART_CODE
+            ? classState.customPartName.trim()
+            : undefined,
+        custom_defect_name:
+          typ?.Code === OTHER_TYPE_CODE
+            ? classState.customDefectName.trim()
+            : undefined,
+      });
+      setIssue(updated);
+      setEditingClassification(false);
+    } catch (err) {
+      setError(apiErrorMessage(err, t));
+    } finally {
+      setBusy(false);
+    }
+  }
 
   return (
     <Screen padded={false}>
@@ -358,18 +439,101 @@ export default function IssueDetailScreen() {
                 label={t('issueDetail.reportedAt')}
                 value={formatDate(issue.IssueDate || issue.CreatedAt, locale)}
               />
-              {(() => {
-                const d = defectLabels(issue, t, locale);
-                return (
-                  <>
-                    <InfoRow label={t('issue.defectZone')} value={d.zone} />
-                    <InfoRow label={t('issue.defectPart')} value={d.part} />
-                    <InfoRow label={t('issue.defectType')} value={d.type} />
-                    <InfoRow label={t('issue.defectProcess')} value={d.process} />
-                    <InfoRow label={t('issue.defectCode')} value={d.code} muted />
-                  </>
-                );
-              })()}
+              {editingClassification ? (
+                <View style={{ marginTop: space[3], gap: 10 }}>
+                  <Text style={{ color: tokens.textPrimary, fontWeight: '700', fontSize: 15 }}>
+                    {t('issue.editClassification')}
+                  </Text>
+                  <DefectClassificationFields
+                    zoneId={classState.zoneId}
+                    partId={classState.partId}
+                    typeId={classState.typeId}
+                    customPartName={classState.customPartName}
+                    customDefectName={classState.customDefectName}
+                    onChange={(patch) => {
+                      setClassState((prev) => {
+                        const next = { ...prev, ...patch };
+                        if (patch.typeId != null) {
+                          const typ = catalogTypes.find((ty) => ty.ID === patch.typeId);
+                          if (typ?.DefaultProcessID) setProcessId(typ.DefaultProcessID);
+                        }
+                        return next;
+                      });
+                    }}
+                    locale={locale}
+                    onCatalogLoaded={(parts, types) => {
+                      setCatalogParts(parts);
+                      setCatalogTypes(types);
+                    }}
+                  />
+                  <Text style={{ color: tokens.textSecondary, fontWeight: '600', fontSize: 13 }}>
+                    {t('issue.defectProcess')}
+                  </Text>
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                    {processes.map((p) => {
+                      const selected = processId === p.ID;
+                      const label = locale === 'en' ? p.NameEN || p.NameTR : p.NameTR || p.NameEN;
+                      return (
+                        <Pressable
+                          key={p.ID}
+                          onPress={() => setProcessId(p.ID)}
+                          style={{
+                            paddingHorizontal: 12,
+                            minHeight: 40,
+                            borderRadius: 999,
+                            backgroundColor: selected
+                              ? tokens.textPrimary
+                              : tokens.bgSurface2,
+                            justifyContent: 'center',
+                          }}
+                        >
+                          <Text
+                            style={{
+                              color: selected ? tokens.bgPage : tokens.textSecondary,
+                              fontSize: 12,
+                              fontWeight: '600',
+                            }}
+                          >
+                            {label}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                  <PrimaryButton
+                    label={busy ? t('common.saving') : t('common.save')}
+                    onPress={() => void saveClassification()}
+                    disabled={busy}
+                  />
+                  <OutlineButton
+                    label={t('common.cancel')}
+                    onPress={() => setEditingClassification(false)}
+                  />
+                </View>
+              ) : (
+                <>
+                  {(() => {
+                    const d = defectLabels(issue, t, locale);
+                    return (
+                      <>
+                        <InfoRow label={t('issue.defectZone')} value={d.zone} />
+                        <InfoRow label={t('issue.defectPart')} value={d.part} />
+                        <InfoRow label={t('issue.defectType')} value={d.type} />
+                        <InfoRow label={t('issue.defectProcess')} value={d.process} />
+                        <InfoRow label={t('issue.defectCode')} value={d.code} muted />
+                      </>
+                    );
+                  })()}
+                  {canEditClassification ? (
+                    <View style={{ marginTop: space[3] }}>
+                      <OutlineButton
+                        label={t('issue.editClassification')}
+                        onPress={startEditClassification}
+                      />
+                    </View>
+                  ) : null}
+                </>
+              )}
               {issue.SolutionDescription?.trim() ? (
                 <InfoRow
                   label={t('issueDetail.solution')}
