@@ -28,4 +28,8 @@ verify-seed:
 	@psql "$(DATABASE_URL)" -v ON_ERROR_STOP=1 -c "\
 		SELECT count(*) AS station_count FROM stations; \
 		SELECT count(*) AS station_step_count FROM station_steps; \
-		SELECT count(*) AS checklist_item_count FROM checklist_template_items;"
+		SELECT count(*) AS checklist_item_count FROM checklist_template_items; \
+		SELECT count(*) AS defect_zone_count FROM defect_zones; \
+		SELECT count(*) AS defect_part_count FROM defect_parts; \
+		SELECT count(*) AS defect_type_count FROM defect_types; \
+		SELECT count(*) AS defect_process_count FROM defect_processes;"
