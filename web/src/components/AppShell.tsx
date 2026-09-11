@@ -9,6 +9,7 @@ import {
   History,
   Home,
   LayoutGrid,
+  Tags,
   Shield,
   Users,
 } from 'lucide-react';
@@ -34,6 +35,7 @@ const NAV: {
   { to: '/analysis', labelKey: 'nav.analysis', perm: Perm.AnalysisView, icon: BarChart3 },
   { to: '/activity', labelKey: 'nav.activity', perm: Perm.AnalysisView, icon: History },
   { to: '/templates', labelKey: 'nav.templates', perm: Perm.AdminManageMasters, icon: LayoutGrid },
+  { to: '/defect-catalog', labelKey: 'nav.defects', perm: Perm.AdminManageMasters, icon: Tags },
   { to: '/users', labelKey: 'nav.users', perm: Perm.AdminManageUsers, icon: Users },
   { to: '/roles', labelKey: 'nav.roles', perm: Perm.AdminManageUsers, icon: Shield },
 ];

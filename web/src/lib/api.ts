@@ -249,6 +249,86 @@ export const api = {
     return request<{ items: ChecklistTemplate[] }>('/checklist-templates');
   },
 
+  listDefectZones() {
+    return request<{ items: DefectZone[] }>('/defect-zones');
+  },
+  createDefectZone(body: DefectCatalogueWrite) {
+    return request<DefectZone>('/defect-zones', { method: 'POST', body: JSON.stringify(body) });
+  },
+  updateDefectZone(id: number, body: DefectCatalogueWrite) {
+    return request<{ id: number }>(`/defect-zones/${id}`, { method: 'PATCH', body: JSON.stringify(body) });
+  },
+  deleteDefectZone(id: number) {
+    return request<void>(`/defect-zones/${id}`, { method: 'DELETE' });
+  },
+  reorderDefectZones(ids: number[]) {
+    return request<{ ok: boolean }>('/defect-zones/reorder', {
+      method: 'POST',
+      body: JSON.stringify({ ids }),
+    });
+  },
+
+  listDefectParts(zoneId?: number) {
+    const q = zoneId != null ? `?zone_id=${zoneId}` : '';
+    return request<{ items: DefectPart[] }>(`/defect-parts${q}`);
+  },
+  createDefectPart(body: DefectCatalogueWrite & { zone_id: number }) {
+    return request<DefectPart>('/defect-parts', { method: 'POST', body: JSON.stringify(body) });
+  },
+  updateDefectPart(id: number, body: DefectCatalogueWrite & { zone_id: number }) {
+    return request<{ id: number }>(`/defect-parts/${id}`, { method: 'PATCH', body: JSON.stringify(body) });
+  },
+  deleteDefectPart(id: number) {
+    return request<void>(`/defect-parts/${id}`, { method: 'DELETE' });
+  },
+  reorderDefectParts(zoneId: number, ids: number[]) {
+    return request<{ ok: boolean }>(`/defect-parts/reorder?zone_id=${zoneId}`, {
+      method: 'POST',
+      body: JSON.stringify({ ids }),
+    });
+  },
+
+  listDefectTypes() {
+    return request<{ items: DefectType[] }>('/defect-types');
+  },
+  createDefectType(body: DefectCatalogueWrite & { default_process_id?: number | null }) {
+    return request<DefectType>('/defect-types', { method: 'POST', body: JSON.stringify(body) });
+  },
+  updateDefectType(id: number, body: DefectCatalogueWrite & { default_process_id?: number | null }) {
+    return request<{ id: number }>(`/defect-types/${id}`, { method: 'PATCH', body: JSON.stringify(body) });
+  },
+  deleteDefectType(id: number) {
+    return request<void>(`/defect-types/${id}`, { method: 'DELETE' });
+  },
+  reorderDefectTypes(ids: number[]) {
+    return request<{ ok: boolean }>('/defect-types/reorder', {
+      method: 'POST',
+      body: JSON.stringify({ ids }),
+    });
+  },
+
+  listDefectProcesses() {
+    return request<{ items: DefectProcess[] }>('/defect-processes');
+  },
+  createDefectProcess(body: DefectCatalogueWrite) {
+    return request<DefectProcess>('/defect-processes', { method: 'POST', body: JSON.stringify(body) });
+  },
+  updateDefectProcess(id: number, body: DefectCatalogueWrite) {
+    return request<{ id: number }>(`/defect-processes/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    });
+  },
+  deleteDefectProcess(id: number) {
+    return request<void>(`/defect-processes/${id}`, { method: 'DELETE' });
+  },
+  reorderDefectProcesses(ids: number[]) {
+    return request<{ ok: boolean }>('/defect-processes/reorder', {
+      method: 'POST',
+      body: JSON.stringify({ ids }),
+    });
+  },
+
   listChecklistTemplateItems(templateId: number) {
     return request<{ items: ChecklistTemplateItem[] }>(
       `/checklist-templates/${templateId}/items`,
@@ -574,6 +654,63 @@ export interface StationStepItem {
 }
 
 export type ChecklistTemplateType = 'EOL' | 'SHIPMENT' | 'TEST';
+
+export type DefectCatalogueWrite = {
+  code: string;
+  name_tr: string;
+  name_en: string;
+  sort_order: number;
+  is_active: boolean;
+};
+
+export interface DefectZone {
+  ID: number;
+  Code: string;
+  NameTR: string;
+  NameEN: string;
+  SortOrder: number;
+  IsActive: boolean;
+  PartCount: number;
+  UsageCount: number;
+}
+
+export interface DefectPart {
+  ID: number;
+  ZoneID: number;
+  Code: string;
+  NameTR: string;
+  NameEN: string;
+  SortOrder: number;
+  IsActive: boolean;
+  ZoneCode: string;
+  ZoneNameTR: string;
+  ZoneNameEN: string;
+  UsageCount: number;
+}
+
+export interface DefectType {
+  ID: number;
+  Code: string;
+  NameTR: string;
+  NameEN: string;
+  DefaultProcessID: number | null;
+  SortOrder: number;
+  IsActive: boolean;
+  ProcessCode: string;
+  ProcessNameTR: string;
+  ProcessNameEN: string;
+  UsageCount: number;
+}
+
+export interface DefectProcess {
+  ID: number;
+  Code: string;
+  NameTR: string;
+  NameEN: string;
+  SortOrder: number;
+  IsActive: boolean;
+  UsageCount: number;
+}
 
 export interface ChecklistTemplate {
   ID: number;

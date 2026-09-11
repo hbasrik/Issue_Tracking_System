@@ -12,6 +12,7 @@ import NotAuthorizedPage from './pages/NotAuthorizedPage';
 import RolesPage from './pages/RolesPage';
 import SettingsPage from './pages/SettingsPage';
 import TemplatesPage from './pages/TemplatesPage';
+import DefectCatalogPage from './pages/DefectCatalogPage';
 import UsersPage from './pages/UsersPage';
 import VehicleDetailPage from './pages/VehicleDetailPage';
 import VehiclesPage from './pages/VehiclesPage';
@@ -39,6 +40,7 @@ export default function App() {
           </Route>
           <Route element={<RequirePermission code={Perm.AdminManageMasters} />}>
             <Route path="/templates" element={<TemplatesPage />} />
+            <Route path="/defect-catalog" element={<DefectCatalogPage />} />
           </Route>
           <Route element={<RequirePermission code={Perm.AdminManageUsers} />}>
             <Route path="/users" element={<UsersPage />} />
