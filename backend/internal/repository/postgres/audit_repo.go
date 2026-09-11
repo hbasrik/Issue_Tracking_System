@@ -128,6 +128,7 @@ func (r *AuditRepo) ListActivity(ctx context.Context, f domain.AuditActivityFilt
 		        OR COALESCE(u.email, '') ILIKE '%' || $6 || '%')
 		   AND a.event_type IN (
 		          'ISSUE_STATUS_CHANGE',
+		          'ISSUE_CLASSIFICATION_CHANGE',
 		          'STATUS_CHANGE',
 		          'EOL_WORKFLOW_STAGE_CHANGE',
 		          'CHECKLIST_ITEM_UPDATE',

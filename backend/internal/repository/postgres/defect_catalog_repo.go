@@ -56,6 +56,22 @@ func (r *DefectCatalogRepo) ListProcesses(ctx context.Context) ([]domain.DefectP
 	return out, rows.Err()
 }
 
+func (r *DefectCatalogRepo) GetProcess(ctx context.Context, id int) (*domain.DefectProcess, error) {
+	var p domain.DefectProcess
+	err := executor(ctx, r.pool).QueryRow(ctx, `
+		SELECT id, code, name_tr, name_en, sort_order, is_active, created_at, updated_at, 0
+		FROM defect_processes WHERE id = $1`, id).Scan(
+		&p.ID, &p.Code, &p.NameTR, &p.NameEN, &p.SortOrder, &p.IsActive, &p.CreatedAt, &p.UpdatedAt, &p.UsageCount,
+	)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, domain.ErrNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &p, nil
+}
+
 func (r *DefectCatalogRepo) CreateProcess(ctx context.Context, p *domain.DefectProcess) (int, error) {
 	var id int
 	err := executor(ctx, r.pool).QueryRow(ctx, `
@@ -489,4 +505,176 @@ func sameIntSet(a, b []int) bool {
 		}
 	}
 	return true
+}
+
+func (r *DefectCatalogRepo) GetPartByCode(ctx context.Context, code string) (*domain.DefectPart, error) {
+	var p domain.DefectPart
+	err := executor(ctx, r.pool).QueryRow(ctx, `
+		SELECT p.id, p.zone_id, p.code, p.name_tr, p.name_en, p.sort_order, p.is_active, p.created_at, p.updated_at,
+		       z.code, z.name_tr, z.name_en, 0
+		FROM defect_parts p
+		JOIN defect_zones z ON z.id = p.zone_id
+		WHERE p.code = $1`, strings.TrimSpace(code)).Scan(
+		&p.ID, &p.ZoneID, &p.Code, &p.NameTR, &p.NameEN, &p.SortOrder, &p.IsActive, &p.CreatedAt, &p.UpdatedAt,
+		&p.ZoneCode, &p.ZoneNameTR, &p.ZoneNameEN, &p.UsageCount,
+	)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, domain.ErrNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &p, nil
+}
+
+func (r *DefectCatalogRepo) GetTypeByCode(ctx context.Context, code string) (*domain.DefectType, error) {
+	var t domain.DefectType
+	err := executor(ctx, r.pool).QueryRow(ctx, `
+		SELECT t.id, t.code, t.name_tr, t.name_en, t.default_process_id, t.sort_order, t.is_active, t.created_at, t.updated_at,
+		       COALESCE(p.code, ''), COALESCE(p.name_tr, ''), COALESCE(p.name_en, ''), 0
+		FROM defect_types t
+		LEFT JOIN defect_processes p ON p.id = t.default_process_id
+		WHERE t.code = $1`, strings.TrimSpace(code)).Scan(
+		&t.ID, &t.Code, &t.NameTR, &t.NameEN, &t.DefaultProcessID, &t.SortOrder, &t.IsActive, &t.CreatedAt, &t.UpdatedAt,
+		&t.ProcessCode, &t.ProcessNameTR, &t.ProcessNameEN, &t.UsageCount,
+	)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, domain.ErrNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &t, nil
+}
+
+func (r *DefectCatalogRepo) ListOtherCustomPartGroups(ctx context.Context) ([]domain.DefectOtherUsageGroup, error) {
+	rows, err := executor(ctx, r.pool).Query(ctx, `
+		SELECT trim(i.custom_part_name) AS name,
+		       COUNT(*)::int AS cnt,
+		       array_agg(i.id ORDER BY i.id) AS ids
+		FROM issue_list i
+		JOIN defect_parts p ON p.id = i.defect_part_id
+		WHERE p.code = $1
+		  AND NULLIF(trim(i.custom_part_name), '') IS NOT NULL
+		GROUP BY trim(i.custom_part_name)
+		ORDER BY cnt DESC, name`, domain.DefectPartCodeOther)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	return scanOtherGroups(rows)
+}
+
+func (r *DefectCatalogRepo) ListOtherCustomDefectGroups(ctx context.Context) ([]domain.DefectOtherUsageGroup, error) {
+	rows, err := executor(ctx, r.pool).Query(ctx, `
+		SELECT trim(i.custom_defect_name) AS name,
+		       COUNT(*)::int AS cnt,
+		       array_agg(i.id ORDER BY i.id) AS ids
+		FROM issue_list i
+		JOIN defect_types t ON t.id = i.defect_type_id
+		WHERE t.code = $1
+		  AND NULLIF(trim(i.custom_defect_name), '') IS NOT NULL
+		GROUP BY trim(i.custom_defect_name)
+		ORDER BY cnt DESC, name`, domain.DefectTypeCodeOther)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	return scanOtherGroups(rows)
+}
+
+func scanOtherGroups(rows pgx.Rows) ([]domain.DefectOtherUsageGroup, error) {
+	var out []domain.DefectOtherUsageGroup
+	for rows.Next() {
+		var g domain.DefectOtherUsageGroup
+		if err := rows.Scan(&g.CustomName, &g.Count, &g.IssueIDs); err != nil {
+			return nil, err
+		}
+		if g.IssueIDs == nil {
+			g.IssueIDs = []int64{}
+		}
+		out = append(out, g)
+	}
+	if out == nil {
+		out = []domain.DefectOtherUsageGroup{}
+	}
+	return out, rows.Err()
+}
+
+func (r *DefectCatalogRepo) RebindOtherPartIssues(
+	ctx context.Context,
+	customName string,
+	otherPartID, newPartID int,
+	newPartCode string,
+) ([]int64, error) {
+	rows, err := executor(ctx, r.pool).Query(ctx, `
+		UPDATE issue_list i
+		SET defect_part_id = $3,
+		    custom_part_name = NULL,
+		    defect_code = CASE
+		      WHEN dt.code IS NULL OR dt.code = '' THEN NULL
+		      ELSE $4 || '-' || dt.code
+		    END,
+		    updated_at = now()
+		FROM defect_types dt
+		WHERE i.defect_type_id = dt.id
+		  AND i.defect_part_id = $1
+		  AND lower(trim(i.custom_part_name)) = lower(trim($2))
+		RETURNING i.id`, otherPartID, customName, newPartID, strings.TrimSpace(newPartCode))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var ids []int64
+	for rows.Next() {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+	if ids == nil {
+		ids = []int64{}
+	}
+	return ids, rows.Err()
+}
+
+func (r *DefectCatalogRepo) RebindOtherTypeIssues(
+	ctx context.Context,
+	customName string,
+	otherTypeID, newTypeID int,
+	newTypeCode string,
+) ([]int64, error) {
+	rows, err := executor(ctx, r.pool).Query(ctx, `
+		UPDATE issue_list i
+		SET defect_type_id = $3,
+		    custom_defect_name = NULL,
+		    responsible_process_id = COALESCE(dt_new.default_process_id, i.responsible_process_id),
+		    defect_code = CASE
+		      WHEN dp.code IS NULL OR dp.code = '' THEN NULL
+		      ELSE dp.code || '-' || $4
+		    END,
+		    updated_at = now()
+		FROM defect_parts dp, defect_types dt_new
+		WHERE i.defect_part_id = dp.id
+		  AND dt_new.id = $3
+		  AND i.defect_type_id = $1
+		  AND lower(trim(i.custom_defect_name)) = lower(trim($2))
+		RETURNING i.id`, otherTypeID, customName, newTypeID, strings.TrimSpace(newTypeCode))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var ids []int64
+	for rows.Next() {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+	if ids == nil {
+		ids = []int64{}
+	}
+	return ids, rows.Err()
 }

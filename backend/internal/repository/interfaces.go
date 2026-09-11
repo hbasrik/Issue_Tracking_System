@@ -146,6 +146,9 @@ type IssueRepository interface {
 	// clears both approval reporter/date pairs. Rows that are not in a
 	// quality-closed state are unchanged (0 rows → ErrNotFound).
 	RevertApproval(ctx context.Context, id int64) error
+	// UpdateClassification sets defect catalogue fields on an existing issue
+	// (nullable legacy rows included). Caller must recompute defect_code.
+	UpdateClassification(ctx context.Context, id int64, partID, typeID, processID *int, customPart, customDefect, defectCode string) error
 	// ListIssueTypes returns the issue_types catalogue (Hata / Tamir Gerekiyor).
 	ListIssueTypes(ctx context.Context) ([]domain.IssueType, error)
 }
@@ -288,6 +291,7 @@ type AuditRepository interface {
 // DefectCatalogRepository persists zones / parts / types / processes masters.
 type DefectCatalogRepository interface {
 	ListProcesses(ctx context.Context) ([]domain.DefectProcess, error)
+	GetProcess(ctx context.Context, id int) (*domain.DefectProcess, error)
 	CreateProcess(ctx context.Context, p *domain.DefectProcess) (int, error)
 	UpdateProcess(ctx context.Context, p *domain.DefectProcess) error
 	DeleteProcess(ctx context.Context, id int) error
@@ -318,4 +322,18 @@ type DefectCatalogRepository interface {
 	DeleteType(ctx context.Context, id int) error
 	CountTypeUsage(ctx context.Context, id int) (int, error)
 	ReorderTypes(ctx context.Context, ids []int) error
+
+	// ListOtherCustomPartGroups groups custom_part_name on "Diğer" part issues.
+	ListOtherCustomPartGroups(ctx context.Context) ([]domain.DefectOtherUsageGroup, error)
+	// ListOtherCustomDefectGroups groups custom_defect_name on "Diğer" type issues.
+	ListOtherCustomDefectGroups(ctx context.Context) ([]domain.DefectOtherUsageGroup, error)
+	// GetPartByCode returns a part by stable catalogue code.
+	GetPartByCode(ctx context.Context, code string) (*domain.DefectPart, error)
+	// GetTypeByCode returns a type by stable catalogue code.
+	GetTypeByCode(ctx context.Context, code string) (*domain.DefectType, error)
+	// RebindOtherPartIssues moves matching Diğer+custom_part_name issues onto newPartID,
+	// clears custom_part_name, and recomputes defect_code. Returns affected issue ids.
+	RebindOtherPartIssues(ctx context.Context, customName string, otherPartID, newPartID int, newPartCode string) ([]int64, error)
+	// RebindOtherTypeIssues moves matching Diğer+custom_defect_name issues onto newTypeID.
+	RebindOtherTypeIssues(ctx context.Context, customName string, otherTypeID, newTypeID int, newTypeCode string) ([]int64, error)
 }

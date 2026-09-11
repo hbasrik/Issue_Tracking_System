@@ -281,6 +281,34 @@ func (r *IssueRepo) RevertApproval(ctx context.Context, id int64) error {
 	return nil
 }
 
+// UpdateClassification persists defect catalogue fields on an existing issue.
+func (r *IssueRepo) UpdateClassification(
+	ctx context.Context,
+	id int64,
+	partID, typeID, processID *int,
+	customPart, customDefect, defectCode string,
+) error {
+	tag, err := executor(ctx, r.pool).Exec(ctx, `
+		UPDATE issue_list
+		SET defect_part_id = $2,
+		    defect_type_id = $3,
+		    responsible_process_id = $4,
+		    custom_part_name = NULLIF($5, ''),
+		    custom_defect_name = NULLIF($6, ''),
+		    defect_code = NULLIF($7, ''),
+		    updated_at = now()
+		WHERE id = $1`,
+		id, partID, typeID, processID, customPart, customDefect, defectCode,
+	)
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		return domain.ErrNotFound
+	}
+	return nil
+}
+
 // ListIssueTypes returns the issue_types catalogue ordered by id.
 func (r *IssueRepo) ListIssueTypes(ctx context.Context) ([]domain.IssueType, error) {
 	rows, err := r.pool.Query(ctx, `SELECT id, name FROM issue_types ORDER BY id`)
