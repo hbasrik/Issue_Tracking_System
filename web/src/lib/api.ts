@@ -329,6 +329,36 @@ export const api = {
     });
   },
 
+  listDefectOtherUsage() {
+    return request<{
+      parts: DefectOtherUsageGroup[];
+      types: DefectOtherUsageGroup[];
+    }>('/defect-catalog/other-usage');
+  },
+
+  promoteDefectOther(body: {
+    kind: 'part' | 'type';
+    custom_name: string;
+    code: string;
+    name_tr: string;
+    name_en: string;
+    zone_id?: number;
+    default_process_id?: number | null;
+    sort_order?: number;
+    rebind_issues: boolean;
+  }) {
+    return request<{
+      kind: string;
+      part?: DefectPart;
+      type?: DefectType;
+      rebound_count: number;
+      rebound_issue_ids: number[];
+    }>('/defect-catalog/promote-other', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  },
+
   listChecklistTemplateItems(templateId: number) {
     return request<{ items: ChecklistTemplateItem[] }>(
       `/checklist-templates/${templateId}/items`,
@@ -512,6 +542,9 @@ export const api = {
   listDefectCatalogTypes() {
     return request<{ items: DefectType[] }>('/defect-catalog/types');
   },
+  listDefectCatalogProcesses() {
+    return request<{ items: DefectProcess[] }>('/defect-catalog/processes');
+  },
 
   getIssue(id: number) {
     return request<Issue>(`/issues/${id}`);
@@ -525,6 +558,22 @@ export const api = {
     return request<{ id: number; status: string }>(`/issues/${id}/status`, {
       method: 'PATCH',
       body: JSON.stringify({ status }),
+    });
+  },
+
+  updateIssueClassification(
+    id: number,
+    body: {
+      defect_part_id: number;
+      defect_type_id: number;
+      responsible_process_id: number;
+      custom_part_name?: string;
+      custom_defect_name?: string;
+    },
+  ) {
+    return request<Issue>(`/issues/${id}/classification`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
     });
   },
 
@@ -718,6 +767,12 @@ export interface DefectPart {
   ZoneNameTR: string;
   ZoneNameEN: string;
   UsageCount: number;
+}
+
+export interface DefectOtherUsageGroup {
+  CustomName: string;
+  Count: number;
+  IssueIDs: number[];
 }
 
 export interface DefectType {

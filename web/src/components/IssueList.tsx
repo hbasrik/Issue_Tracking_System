@@ -22,6 +22,11 @@ import { issueStationLabel, defectLabels, reporterFallback } from '../lib/issueD
 import { IssueDetailPrint } from './print/IssuePrint';
 import { useConfirm } from './ConfirmDialog';
 import { useApprovalUndo } from './ApprovalUndoToast';
+import {
+  canEditIssueClassification,
+  IssueClassificationEditor,
+} from './IssueClassificationEditor';
+import { useAuth } from '../auth/AuthProvider';
 
 function IssueThumb({ path }: { path?: string }) {
   const { t } = useI18n();
@@ -156,10 +161,13 @@ export function IssueDetailPanel({
   onStatusChanged?: () => void;
 }) {
   const { t } = useI18n();
+  const { user, has } = useAuth();
   const confirm = useConfirm();
   const { showAfterApproval } = useApprovalUndo();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [editingClassification, setEditingClassification] = useState(false);
+  const canEditClassification = canEditIssueClassification(issue, user?.ID, has);
 
   useEffect(() => {
     const onUndone = (ev: Event) => {
@@ -244,7 +252,30 @@ export function IssueDetailPanel({
           {issue.Description}
         </p>
         <div className="mt-[var(--space-5)]">
-          <IssueInfoFields issue={issue} />
+          {editingClassification ? (
+            <IssueClassificationEditor
+              issue={issue}
+              onCancel={() => setEditingClassification(false)}
+              onSaved={() => {
+                setEditingClassification(false);
+                onStatusChanged?.();
+              }}
+            />
+          ) : (
+            <>
+              <IssueInfoFields issue={issue} />
+              {canEditClassification ? (
+                <button
+                  type="button"
+                  className="mt-3 min-h-touch rounded-lg border px-3 text-[13px] font-medium hover:bg-[var(--bg-surface-1)]"
+                  style={{ borderColor: 'var(--border)', color: 'var(--text-primary)' }}
+                  onClick={() => setEditingClassification(true)}
+                >
+                  {t('issue.editClassification')}
+                </button>
+              ) : null}
+            </>
+          )}
         </div>
         <div className="mt-[var(--space-5)]">
           <IssueActions
