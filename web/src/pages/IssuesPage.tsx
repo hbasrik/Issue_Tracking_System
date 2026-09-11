@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { Archive, FileSpreadsheet } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
-import { api, mediaFileUrl, type Issue, type IssueType, type MediaAttachment } from '../lib/api';
+import { api, mediaFileUrl, type DefectPart, type DefectType, type DefectZone, type Issue, type IssueType, type MediaAttachment } from '../lib/api';
 import { IssueList } from '../components/IssueList';
 import { issueMatchesListQuery } from '../lib/issueVinFilter';
 import { issueTypeChipLabel } from '../lib/issueTypeLabel';
@@ -62,7 +62,7 @@ function severityLabel(s: SeverityLevel, t: Translate): string {
 
 /** Issues list + detail — quality sign-off is gated on issue.transition.* permissions. */
 export default function IssuesPage() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { mode } = useTheme();
   const pageBg = tokensFor(mode)['bg-page'];
   const [searchParams, setSearchParams] = useSearchParams();
@@ -77,7 +77,13 @@ export default function IssuesPage() {
 
   const [listQuery, setListQuery] = useState('');
   const [issueTypes, setIssueTypes] = useState<IssueType[]>([]);
+  const [defectZones, setDefectZones] = useState<DefectZone[]>([]);
+  const [defectParts, setDefectParts] = useState<DefectPart[]>([]);
+  const [defectTypes, setDefectTypes] = useState<DefectType[]>([]);
   const [typeIds, setTypeIds] = useState<Set<number>>(new Set());
+  const [defectZoneIds, setDefectZoneIds] = useState<Set<number>>(new Set());
+  const [defectPartIds, setDefectPartIds] = useState<Set<number>>(new Set());
+  const [defectTypeIds, setDefectTypeIds] = useState<Set<number>>(new Set());
   const [severities, setSeverities] = useState<Set<SeverityLevel>>(new Set());
   const [statuses, setStatuses] = useState<Set<string>>(new Set());
   const [items, setItems] = useState<Issue[]>([]);
@@ -88,9 +94,12 @@ export default function IssuesPage() {
   const load = useCallback(async () => {
     setError(null);
     try {
-      const [res, typesRes] = await Promise.all([
+      const [res, typesRes, zonesRes, partsRes, defectTypesRes] = await Promise.all([
         api.listIssues(),
         api.listIssueTypes().catch(() => ({ items: [] as IssueType[] })),
+        api.listDefectCatalogZones().catch(() => ({ items: [] as DefectZone[] })),
+        api.listDefectCatalogParts().catch(() => ({ items: [] as DefectPart[] })),
+        api.listDefectCatalogTypes().catch(() => ({ items: [] as DefectType[] })),
       ]);
       const list = (res.items ?? []).slice().sort((a, b) => {
         const ta = Date.parse(a.CreatedAt || a.IssueDate || '') || 0;
@@ -100,6 +109,9 @@ export default function IssuesPage() {
       });
       setItems(list);
       setIssueTypes(typesRes.items ?? []);
+      setDefectZones(zonesRes.items ?? []);
+      setDefectParts(partsRes.items ?? []);
+      setDefectTypes(defectTypesRes.items ?? []);
     } catch (err) {
       setError(err instanceof Error ? err.message : t('issue.listFailed'));
       setItems([]);
@@ -127,6 +139,36 @@ export default function IssuesPage() {
   function toggleType(id: number) {
     if (homeStat || analysisStat) clearHomeStat();
     setTypeIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleDefectZone(id: number) {
+    if (homeStat || analysisStat) clearHomeStat();
+    setDefectZoneIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleDefectPart(id: number) {
+    if (homeStat || analysisStat) clearHomeStat();
+    setDefectPartIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleDefectType(id: number) {
+    if (homeStat || analysisStat) clearHomeStat();
+    setDefectTypeIds((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
@@ -176,6 +218,21 @@ export default function IssuesPage() {
             return false;
           }
         }
+        if (defectZoneIds.size > 0) {
+          if (issue.DefectZoneID == null || !defectZoneIds.has(issue.DefectZoneID)) {
+            return false;
+          }
+        }
+        if (defectPartIds.size > 0) {
+          if (issue.DefectPartID == null || !defectPartIds.has(issue.DefectPartID)) {
+            return false;
+          }
+        }
+        if (defectTypeIds.size > 0) {
+          if (issue.DefectTypeID == null || !defectTypeIds.has(issue.DefectTypeID)) {
+            return false;
+          }
+        }
         if (severities.size > 0 && !severities.has(issue.Severity as SeverityLevel)) {
           return false;
         }
@@ -184,7 +241,21 @@ export default function IssuesPage() {
         }
         return true;
       }),
-    [items, listQuery, homeStat, homeStatNow, analysisStat, analysisFrom, analysisTo, typeIds, severities, statuses],
+    [
+      items,
+      listQuery,
+      homeStat,
+      homeStatNow,
+      analysisStat,
+      analysisFrom,
+      analysisTo,
+      typeIds,
+      defectZoneIds,
+      defectPartIds,
+      defectTypeIds,
+      severities,
+      statuses,
+    ],
   );
 
   async function attachmentsFor(issues: Issue[]) {
@@ -480,6 +551,87 @@ export default function IssuesPage() {
                     title={name}
                   >
                     <SeverityIndicator severity={s} decorative />
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <div className="max-w-full">
+            <p
+              className="mb-2 text-[13px] font-semibold"
+              style={{ color: 'var(--text-secondary)' }}
+            >
+              {t('issue.filterZone')}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {defectZones.map((z) => {
+                const selected =
+                  !homeStat && !analysisStat && defectZoneIds.has(z.ID);
+                const label =
+                  locale === 'en' ? z.NameEN || z.NameTR : z.NameTR || z.NameEN;
+                return (
+                  <button
+                    key={z.ID}
+                    type="button"
+                    onClick={() => toggleDefectZone(z.ID)}
+                    className={TYPE_CHIP_CLASS}
+                    style={typeChipStyle(selected)}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <div className="max-w-full">
+            <p
+              className="mb-2 text-[13px] font-semibold"
+              style={{ color: 'var(--text-secondary)' }}
+            >
+              {t('issue.filterPart')}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {defectParts.map((p) => {
+                const selected =
+                  !homeStat && !analysisStat && defectPartIds.has(p.ID);
+                const label =
+                  locale === 'en' ? p.NameEN || p.NameTR : p.NameTR || p.NameEN;
+                return (
+                  <button
+                    key={p.ID}
+                    type="button"
+                    onClick={() => toggleDefectPart(p.ID)}
+                    className={TYPE_CHIP_CLASS}
+                    style={typeChipStyle(selected)}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <div className="max-w-full">
+            <p
+              className="mb-2 text-[13px] font-semibold"
+              style={{ color: 'var(--text-secondary)' }}
+            >
+              {t('issue.filterDefectType')}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {defectTypes.map((ty) => {
+                const selected =
+                  !homeStat && !analysisStat && defectTypeIds.has(ty.ID);
+                const label =
+                  locale === 'en' ? ty.NameEN || ty.NameTR : ty.NameTR || ty.NameEN;
+                return (
+                  <button
+                    key={ty.ID}
+                    type="button"
+                    onClick={() => toggleDefectType(ty.ID)}
+                    className={TYPE_CHIP_CLASS}
+                    style={typeChipStyle(selected)}
+                  >
+                    {label}
                   </button>
                 );
               })}
