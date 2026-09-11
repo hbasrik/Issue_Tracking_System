@@ -315,7 +315,16 @@ func (r *AnalysisRepo) Dashboard(ctx context.Context, f domain.AnalysisFilter) (
 		TypeSeverity:     []domain.TypeSeverityCount{},
 		EOLStageWait:      []domain.StageWaitHours{},
 		BranchShippedList: []domain.BranchShippedVehicle{},
-		CompareMode:       f.CompareMode,
+		DefectByZone:      []domain.DefectNamedCount{},
+		DefectTopParts:    []domain.DefectNamedCount{},
+		DefectByType:      []domain.DefectNamedCount{},
+		DefectByProcess:   []domain.DefectNamedCount{},
+		DefectPartTypeTop: []domain.DefectPartTypeCombo{},
+		DefectRecurrence: domain.DefectRecurrenceSummary{
+			Cases:    []domain.DefectRecurrenceCase{},
+			Hotspots: []domain.DefectRecurrenceHotspot{},
+		},
+		CompareMode: f.CompareMode,
 	}
 
 	kpis, err := r.kpis(ctx, f)
@@ -460,6 +469,10 @@ func (r *AnalysisRepo) Dashboard(ctx context.Context, f domain.AnalysisFilter) (
 		return nil, err
 	}
 	dash.BranchShippedList = shipped
+
+	if err := r.scanDefectClassification(ctx, f, dash); err != nil {
+		return nil, err
+	}
 
 	return dash, nil
 }
@@ -1464,4 +1477,260 @@ func (r *AnalysisRepo) CriticalVehicles(ctx context.Context, limit int) ([]domai
 		out = []domain.HomeCriticalVehicle{}
 	}
 	return out, rows.Err()
+}
+
+// defectCatalogueJoin extends issueJoin with classification masters.
+const defectCatalogueJoin = issueJoin + `
+LEFT JOIN defect_parts dp ON dp.id = i.defect_part_id
+LEFT JOIN defect_zones dz ON dz.id = dp.zone_id
+LEFT JOIN defect_types dt ON dt.id = i.defect_type_id
+LEFT JOIN defect_processes dpr ON dpr.id = i.responsible_process_id`
+
+func (r *AnalysisRepo) scanDefectClassification(ctx context.Context, f domain.AnalysisFilter, dash *domain.AnalysisDashboard) error {
+	zones, err := r.defectNamedGroup(ctx, f, `
+		SELECT coalesce(nullif(trim(dz.name_tr), ''), '(unknown)'),
+		       coalesce(nullif(trim(dz.name_en), ''), ''),
+		       coalesce(dz.code, ''),
+		       count(*)::bigint
+		`+defectCatalogueJoin+issueWhere("i.issue_date")+`
+		 AND i.defect_part_id IS NOT NULL
+		 GROUP BY dz.name_tr, dz.name_en, dz.code
+		 ORDER BY count(*) DESC`)
+	if err != nil {
+		return err
+	}
+	dash.DefectByZone = zones
+
+	parts, err := r.defectNamedGroup(ctx, f, `
+		SELECT coalesce(nullif(trim(i.custom_part_name), ''), nullif(trim(dp.name_tr), ''), '(unknown)'),
+		       coalesce(nullif(trim(i.custom_part_name), ''), nullif(trim(dp.name_en), ''), ''),
+		       coalesce(dp.code, ''),
+		       count(*)::bigint
+		`+defectCatalogueJoin+issueWhere("i.issue_date")+`
+		 AND i.defect_part_id IS NOT NULL
+		 GROUP BY 1, 2, 3
+		 ORDER BY count(*) DESC
+		 LIMIT 10`)
+	if err != nil {
+		return err
+	}
+	dash.DefectTopParts = parts
+
+	types, err := r.defectNamedGroup(ctx, f, `
+		SELECT coalesce(nullif(trim(i.custom_defect_name), ''), nullif(trim(dt.name_tr), ''), '(unknown)'),
+		       coalesce(nullif(trim(i.custom_defect_name), ''), nullif(trim(dt.name_en), ''), ''),
+		       coalesce(dt.code, ''),
+		       count(*)::bigint
+		`+defectCatalogueJoin+issueWhere("i.issue_date")+`
+		 AND i.defect_type_id IS NOT NULL
+		 GROUP BY 1, 2, 3
+		 ORDER BY count(*) DESC`)
+	if err != nil {
+		return err
+	}
+	dash.DefectByType = types
+
+	procs, err := r.defectNamedGroup(ctx, f, `
+		SELECT coalesce(nullif(trim(dpr.name_tr), ''), '(unknown)'),
+		       coalesce(nullif(trim(dpr.name_en), ''), ''),
+		       coalesce(dpr.code, ''),
+		       count(*)::bigint
+		`+defectCatalogueJoin+issueWhere("i.issue_date")+`
+		 AND i.responsible_process_id IS NOT NULL
+		 GROUP BY dpr.name_tr, dpr.name_en, dpr.code
+		 ORDER BY count(*) DESC`)
+	if err != nil {
+		return err
+	}
+	dash.DefectByProcess = procs
+
+	combos, err := r.defectPartTypeTop(ctx, f)
+	if err != nil {
+		return err
+	}
+	dash.DefectPartTypeTop = combos
+
+	cov, err := r.defectCoverage(ctx, f)
+	if err != nil {
+		return err
+	}
+	dash.DefectCoverage = cov
+
+	rec, err := r.defectRecurrence(ctx, f)
+	if err != nil {
+		return err
+	}
+	dash.DefectRecurrence = rec
+	return nil
+}
+
+func (r *AnalysisRepo) defectNamedGroup(ctx context.Context, f domain.AnalysisFilter, query string) ([]domain.DefectNamedCount, error) {
+	b := bounds(f)
+	rows, err := r.pool.Query(ctx, query, b.slice()...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []domain.DefectNamedCount
+	for rows.Next() {
+		var row domain.DefectNamedCount
+		if err := rows.Scan(&row.NameTR, &row.NameEN, &row.Code, &row.Count); err != nil {
+			return nil, err
+		}
+		out = append(out, row)
+	}
+	if out == nil {
+		out = []domain.DefectNamedCount{}
+	}
+	return out, rows.Err()
+}
+
+func (r *AnalysisRepo) defectPartTypeTop(ctx context.Context, f domain.AnalysisFilter) ([]domain.DefectPartTypeCombo, error) {
+	b := bounds(f)
+	rows, err := r.pool.Query(ctx, `
+		SELECT coalesce(nullif(trim(i.custom_part_name), ''), nullif(trim(dp.name_tr), ''), '(unknown)'),
+		       coalesce(nullif(trim(i.custom_part_name), ''), nullif(trim(dp.name_en), ''), ''),
+		       coalesce(nullif(trim(i.custom_defect_name), ''), nullif(trim(dt.name_tr), ''), '(unknown)'),
+		       coalesce(nullif(trim(i.custom_defect_name), ''), nullif(trim(dt.name_en), ''), ''),
+		       count(*)::bigint
+		`+defectCatalogueJoin+issueWhere("i.issue_date")+`
+		 AND i.defect_part_id IS NOT NULL
+		 AND i.defect_type_id IS NOT NULL
+		 GROUP BY 1, 2, 3, 4
+		 ORDER BY count(*) DESC
+		 LIMIT 10`, b.slice()...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []domain.DefectPartTypeCombo
+	for rows.Next() {
+		var row domain.DefectPartTypeCombo
+		if err := rows.Scan(&row.PartNameTR, &row.PartNameEN, &row.TypeNameTR, &row.TypeNameEN, &row.Count); err != nil {
+			return nil, err
+		}
+		out = append(out, row)
+	}
+	if out == nil {
+		out = []domain.DefectPartTypeCombo{}
+	}
+	return out, rows.Err()
+}
+
+func (r *AnalysisRepo) defectCoverage(ctx context.Context, f domain.AnalysisFilter) (domain.DefectClassificationCoverage, error) {
+	b := bounds(f)
+	var cov domain.DefectClassificationCoverage
+	err := r.pool.QueryRow(ctx, `
+		SELECT count(*)::bigint,
+		       count(*) FILTER (
+		         WHERE i.defect_part_id IS NOT NULL
+		            OR i.defect_type_id IS NOT NULL
+		            OR NULLIF(trim(i.defect_code), '') IS NOT NULL
+		       )::bigint,
+		       count(*) FILTER (
+		         WHERE dp.code = $10
+		       )::bigint,
+		       count(*) FILTER (
+		         WHERE dt.code = $11
+		       )::bigint
+		`+defectCatalogueJoin+issueWhere("i.issue_date"),
+		append(b.slice(), domain.DefectPartCodeOther, domain.DefectTypeCodeOther)...,
+	).Scan(&cov.Total, &cov.Classified, &cov.OtherPart, &cov.OtherType)
+	if err != nil {
+		return cov, err
+	}
+	cov.Unclassified = cov.Total - cov.Classified
+	return cov, nil
+}
+
+func (r *AnalysisRepo) defectRecurrence(ctx context.Context, f domain.AnalysisFilter) (domain.DefectRecurrenceSummary, error) {
+	out := domain.DefectRecurrenceSummary{
+		Cases:    []domain.DefectRecurrenceCase{},
+		Hotspots: []domain.DefectRecurrenceHotspot{},
+	}
+	b := bounds(f)
+
+	if err := r.pool.QueryRow(ctx, `
+		SELECT count(*)::bigint
+		`+issueJoin+issueWhere("i.issue_date")+`
+		 AND NULLIF(trim(i.defect_code), '') IS NOT NULL`, b.slice()...).Scan(&out.CodedIssueCount); err != nil {
+		return out, err
+	}
+
+	if err := r.pool.QueryRow(ctx, `
+		SELECT coalesce(sum(g.cnt), 0)::bigint
+		FROM (
+		  SELECT count(*)::bigint AS cnt
+		  `+issueJoin+issueWhere("i.issue_date")+`
+		   AND NULLIF(trim(i.defect_code), '') IS NOT NULL
+		  GROUP BY i.vin, i.defect_code
+		  HAVING count(*) >= 2
+		) g`, b.slice()...).Scan(&out.RecurringIssueCount); err != nil {
+		return out, err
+	}
+
+	if out.CodedIssueCount > 0 {
+		pct := float64(out.RecurringIssueCount) * 100 / float64(out.CodedIssueCount)
+		out.RecurrenceRatePct = &pct
+	}
+
+	rows, err := r.pool.Query(ctx, `
+		SELECT i.vin, i.defect_code, count(*)::bigint
+		`+issueJoin+issueWhere("i.issue_date")+`
+		 AND NULLIF(trim(i.defect_code), '') IS NOT NULL
+		GROUP BY i.vin, i.defect_code
+		HAVING count(*) >= 2
+		ORDER BY count(*) DESC, i.vin, i.defect_code
+		LIMIT 15`, b.slice()...)
+	if err != nil {
+		return out, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var c domain.DefectRecurrenceCase
+		if err := rows.Scan(&c.VIN, &c.DefectCode, &c.Count); err != nil {
+			return out, err
+		}
+		out.Cases = append(out.Cases, c)
+	}
+	if err := rows.Err(); err != nil {
+		return out, err
+	}
+
+	hotRows, err := r.pool.Query(ctx, `
+		WITH filtered AS (
+		  SELECT i.vin, i.defect_code, i.custom_part_name, i.custom_defect_name,
+		         dp.name_tr AS part_tr, dp.name_en AS part_en,
+		         dt.name_tr AS type_tr, dt.name_en AS type_en
+		  `+defectCatalogueJoin+issueWhere("i.issue_date")+`
+		   AND NULLIF(trim(i.defect_code), '') IS NOT NULL
+		),
+		recurring AS (
+		  SELECT vin, defect_code
+		  FROM filtered
+		  GROUP BY vin, defect_code
+		  HAVING count(*) >= 2
+		)
+		SELECT coalesce(nullif(trim(f.custom_part_name), ''), nullif(trim(f.part_tr), ''), '(unknown)'),
+		       coalesce(nullif(trim(f.custom_part_name), ''), nullif(trim(f.part_en), ''), ''),
+		       coalesce(nullif(trim(f.custom_defect_name), ''), nullif(trim(f.type_tr), ''), '(unknown)'),
+		       coalesce(nullif(trim(f.custom_defect_name), ''), nullif(trim(f.type_en), ''), ''),
+		       count(*)::bigint
+		FROM filtered f
+		JOIN recurring g ON g.vin = f.vin AND g.defect_code = f.defect_code
+		GROUP BY 1, 2, 3, 4
+		ORDER BY count(*) DESC
+		LIMIT 10`, b.slice()...)
+	if err != nil {
+		return out, err
+	}
+	defer hotRows.Close()
+	for hotRows.Next() {
+		var h domain.DefectRecurrenceHotspot
+		if err := hotRows.Scan(&h.PartNameTR, &h.PartNameEN, &h.TypeNameTR, &h.TypeNameEN, &h.RecurringIssueCount); err != nil {
+			return out, err
+		}
+		out.Hotspots = append(out.Hotspots, h)
+	}
+	return out, hotRows.Err()
 }
