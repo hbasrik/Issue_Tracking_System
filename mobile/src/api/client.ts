@@ -254,6 +254,8 @@ export interface Issue {
   StationName?: string;
   DefectPartID?: number | null;
   DefectTypeID?: number | null;
+  DefectZoneID?: number | null;
+  ResponsibleProcessID?: number | null;
   DefectCode?: string;
   CustomPartName?: string;
   CustomDefectName?: string;
@@ -263,6 +265,8 @@ export interface Issue {
   DefectTypeNameEN?: string;
   DefectZoneNameTR?: string;
   DefectZoneNameEN?: string;
+  DefectProcessNameTR?: string;
+  DefectProcessNameEN?: string;
   /** Earliest ISSUE media attachment storage_path, when present. */
   ReportPhotoPath?: string;
 }

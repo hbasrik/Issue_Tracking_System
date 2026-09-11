@@ -15,7 +15,7 @@ import {
 } from '@react-navigation/native';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { api, type Issue, type IssueType } from '../api/client';
+import { api, type DefectPart, type DefectType, type DefectZone, type Issue, type IssueType } from '../api/client';
 import { IssueCard } from '../components/IssueCard';
 import { listKeyboardDismissProps } from '../components/keyboard';
 import {
@@ -65,17 +65,23 @@ function issueCreatedMs(issue: Issue): number {
 
 export default function MyIssuesScreen() {
   const { tokens } = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const navigation = useNavigation<MyIssuesNavigation>();
   const route = useRoute<RouteProp<MainDrawerParamList, 'MyIssues'>>();
   const [items, setItems] = useState<Issue[]>([]);
   const [issueTypes, setIssueTypes] = useState<IssueType[]>([]);
+  const [defectZones, setDefectZones] = useState<DefectZone[]>([]);
+  const [defectParts, setDefectParts] = useState<DefectPart[]>([]);
+  const [defectTypes, setDefectTypes] = useState<DefectType[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [listQuery, setListQuery] = useState('');
   const [severities, setSeverities] = useState<Set<SeverityLevel>>(new Set());
   const [statuses, setStatuses] = useState<Set<IssueStatus>>(new Set());
   const [typeIds, setTypeIds] = useState<Set<number>>(new Set());
+  const [defectZoneIds, setDefectZoneIds] = useState<Set<number>>(new Set());
+  const [defectPartIds, setDefectPartIds] = useState<Set<number>>(new Set());
+  const [defectTypeIds, setDefectTypeIds] = useState<Set<number>>(new Set());
   const [homeStat, setHomeStat] = useState<HomeIssueStatKey | undefined>(
     route.params?.homeStat,
   );
@@ -86,9 +92,12 @@ export default function MyIssuesScreen() {
     setLoading(true);
     setError(null);
     try {
-      const [issuesRes, typesRes] = await Promise.all([
+      const [issuesRes, typesRes, zonesRes, partsRes, defectTypesRes] = await Promise.all([
         api.listIssues(),
         api.listIssueTypes().catch(() => ({ items: [] as IssueType[] })),
+        api.listDefectCatalogZones().catch(() => ({ items: [] as DefectZone[] })),
+        api.listDefectCatalogParts().catch(() => ({ items: [] as DefectPart[] })),
+        api.listDefectCatalogTypes().catch(() => ({ items: [] as DefectType[] })),
       ]);
       const list = (issuesRes.items ?? []).slice().sort((a, b) => {
         const ta = issueCreatedMs(a);
@@ -98,6 +107,9 @@ export default function MyIssuesScreen() {
       });
       setItems(list);
       setIssueTypes(typesRes.items ?? []);
+      setDefectZones(zonesRes.items ?? []);
+      setDefectParts(partsRes.items ?? []);
+      setDefectTypes(defectTypesRes.items ?? []);
     } catch (err) {
       setError(apiErrorMessage(err, t));
     } finally {
@@ -120,6 +132,9 @@ export default function MyIssuesScreen() {
       setStatuses(new Set());
       setSeverities(new Set());
       setTypeIds(new Set());
+      setDefectZoneIds(new Set());
+      setDefectPartIds(new Set());
+      setDefectTypeIds(new Set());
       setListQuery('');
     }
   }, [route.params?.homeStat]);
@@ -159,6 +174,36 @@ export default function MyIssuesScreen() {
     });
   }
 
+  function toggleDefectZone(id: number) {
+    if (homeStat) clearHomeStat();
+    setDefectZoneIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleDefectPart(id: number) {
+    if (homeStat) clearHomeStat();
+    setDefectPartIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleDefectType(id: number) {
+    if (homeStat) clearHomeStat();
+    setDefectTypeIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
   const filtered = useMemo(() => {
     return items.filter((issue) => {
       if (homeStat) {
@@ -170,11 +215,37 @@ export default function MyIssuesScreen() {
           return false;
         }
       }
+      if (defectZoneIds.size > 0) {
+        if (issue.DefectZoneID == null || !defectZoneIds.has(issue.DefectZoneID)) {
+          return false;
+        }
+      }
+      if (defectPartIds.size > 0) {
+        if (issue.DefectPartID == null || !defectPartIds.has(issue.DefectPartID)) {
+          return false;
+        }
+      }
+      if (defectTypeIds.size > 0) {
+        if (issue.DefectTypeID == null || !defectTypeIds.has(issue.DefectTypeID)) {
+          return false;
+        }
+      }
       if (severities.size > 0 && !severities.has(issue.Severity)) return false;
       if (statuses.size > 0 && !statuses.has(issue.Status)) return false;
       return true;
     });
-  }, [items, listQuery, typeIds, severities, statuses, homeStat, homeStatNow]);
+  }, [
+    items,
+    listQuery,
+    typeIds,
+    defectZoneIds,
+    defectPartIds,
+    defectTypeIds,
+    severities,
+    statuses,
+    homeStat,
+    homeStatNow,
+  ]);
 
   return (
     <Screen padded={false}>
@@ -408,6 +479,88 @@ export default function MyIssuesScreen() {
                 );
               })}
             </View>
+
+            {(
+              [
+                {
+                  key: 'zone',
+                  title: t('issue.filterZone'),
+                  items: defectZones.map((z) => ({
+                    id: z.ID,
+                    label: locale === 'en' ? z.NameEN || z.NameTR : z.NameTR || z.NameEN,
+                    selected: !homeStat && defectZoneIds.has(z.ID),
+                    onPress: () => toggleDefectZone(z.ID),
+                  })),
+                },
+                {
+                  key: 'part',
+                  title: t('issue.filterPart'),
+                  items: defectParts.map((p) => ({
+                    id: p.ID,
+                    label: locale === 'en' ? p.NameEN || p.NameTR : p.NameTR || p.NameEN,
+                    selected: !homeStat && defectPartIds.has(p.ID),
+                    onPress: () => toggleDefectPart(p.ID),
+                  })),
+                },
+                {
+                  key: 'dtype',
+                  title: t('issue.filterDefectType'),
+                  items: defectTypes.map((ty) => ({
+                    id: ty.ID,
+                    label:
+                      locale === 'en' ? ty.NameEN || ty.NameTR : ty.NameTR || ty.NameEN,
+                    selected: !homeStat && defectTypeIds.has(ty.ID),
+                    onPress: () => toggleDefectType(ty.ID),
+                  })),
+                },
+              ] as const
+            ).map((section) => (
+              <View key={section.key} style={{ marginTop: 12 }}>
+                <Text
+                  style={{
+                    color: tokens.textSecondary,
+                    fontWeight: '600',
+                    fontSize: 13,
+                    marginBottom: 6,
+                  }}
+                >
+                  {section.title}
+                </Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                  {section.items.map((chip) => (
+                    <Pressable
+                      key={chip.id}
+                      onPress={chip.onPress}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected: chip.selected }}
+                      style={{
+                        paddingHorizontal: 12,
+                        minHeight: 44,
+                        borderRadius: 999,
+                        backgroundColor: mixColors(
+                          tokens.textPrimary,
+                          tokens.bgSurface1,
+                          chip.selected ? 14 : 6,
+                        ),
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <Text
+                        style={{
+                          color: chip.selected
+                            ? tokens.textPrimary
+                            : tokens.textSecondary,
+                          fontSize: 12,
+                          fontWeight: '600',
+                        }}
+                      >
+                        {chip.label}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+              </View>
+            ))}
 
             {error ? <ErrorText>{error}</ErrorText> : null}
             {loading ? <Loading /> : null}

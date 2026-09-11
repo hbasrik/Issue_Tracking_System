@@ -42,7 +42,7 @@ import {
   DismissKeyboardScrollView,
 } from '../components/keyboard';
 import { formatActionAt } from '../lib/actionStamp';
-import { issueStationLabel, reporterFallback } from '../lib/issueDetailCopy';
+import { issueStationLabel, reporterFallback, defectLabels } from '../lib/issueDetailCopy';
 import { apiErrorMessage } from '../lib/password';
 import { useI18n } from '../i18n';
 import type { Locale } from '../../../shared/i18n';
@@ -60,16 +60,24 @@ function formatDate(iso: string | undefined, locale: Locale): string {
   return formatActionAt(iso, locale) ?? '—';
 }
 
-function InfoRow({ label, value }: { label: string; value: string }) {
+function InfoRow({
+  label,
+  value,
+  muted = false,
+}: {
+  label: string;
+  value: string;
+  muted?: boolean;
+}) {
   const { tokens } = useTheme();
   return (
     <View style={{ marginTop: space[3] }}>
       <Text style={{ color: tokens.textSecondary, fontSize: 12 }}>{label}</Text>
       <Text
         style={{
-          color: tokens.textPrimary,
-          fontSize: 15,
-          fontWeight: '600',
+          color: muted ? tokens.textSecondary : tokens.textPrimary,
+          fontSize: muted ? 13 : 15,
+          fontWeight: muted ? '500' : '600',
           marginTop: 2,
         }}
       >
@@ -350,6 +358,18 @@ export default function IssueDetailScreen() {
                 label={t('issueDetail.reportedAt')}
                 value={formatDate(issue.IssueDate || issue.CreatedAt, locale)}
               />
+              {(() => {
+                const d = defectLabels(issue, t, locale);
+                return (
+                  <>
+                    <InfoRow label={t('issue.defectZone')} value={d.zone} />
+                    <InfoRow label={t('issue.defectPart')} value={d.part} />
+                    <InfoRow label={t('issue.defectType')} value={d.type} />
+                    <InfoRow label={t('issue.defectProcess')} value={d.process} />
+                    <InfoRow label={t('issue.defectCode')} value={d.code} muted />
+                  </>
+                );
+              })()}
               {issue.SolutionDescription?.trim() ? (
                 <InfoRow
                   label={t('issueDetail.solution')}

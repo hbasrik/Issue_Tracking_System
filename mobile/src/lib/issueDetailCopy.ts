@@ -1,3 +1,8 @@
+import type { Issue } from '../api/client';
+import {
+  issueDefectDisplay,
+  type DefectDisplay,
+} from '../../../shared/issueDefectDisplay';
 import type { Translate } from '../../../shared/i18n';
 
 export function issueStationLabel(issue: {
@@ -11,4 +16,12 @@ export function issueStationLabel(issue: {
 
 export function reporterFallback(t: Translate, id: number | undefined): string {
   return t('common.userFallback', { id: id ?? 0 });
+}
+
+export function defectLabels(
+  issue: Issue,
+  t: Translate,
+  locale: string,
+): DefectDisplay {
+  return issueDefectDisplay(issue, t, locale);
 }

@@ -6,7 +6,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n';
 import { formatDateTimeShort } from '../../../shared/i18n';
 import { issueStatusColor, issueStatusLabel } from '../lib/issueStatus';
-import { reporterFallback } from '../lib/issueDetailCopy';
+import { reporterFallback, defectLabels } from '../lib/issueDetailCopy';
 
 export function IssueCard({
   issue,
@@ -100,6 +100,12 @@ export function IssueCard({
               numberOfLines={1}
             >
               {issue.ReporterName || reporterFallback(t, issue.IssueReporterID)}
+            </Text>
+            <Text
+              style={{ color: tokens.textSecondary, marginTop: 4, fontSize: 13 }}
+              numberOfLines={1}
+            >
+              {defectLabels(issue, t, locale).listLine}
             </Text>
             <Text
               style={{ color: tokens.textSecondary, marginTop: 4, fontSize: 13 }}
