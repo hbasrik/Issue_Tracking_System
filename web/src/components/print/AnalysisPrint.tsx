@@ -233,6 +233,52 @@ export function AnalysisPrint({
   const openH = verticalChartHeight(openStationBars.length);
   const reporterH = verticalChartHeight(reporterBars.length);
 
+  const defectLabel = (tr: string, en: string) =>
+    locale === 'en' ? en || tr : tr || en;
+
+  const defectZonePie = (dash?.DefectByZone ?? []).map((r, i) => ({
+    name: defectLabel(r.NameTR, r.NameEN),
+    value: r.Count,
+    color: [
+      statusColors.info,
+      statusColors.issueInProgress,
+      statusColors.ok,
+      statusColors.severityMedium,
+    ][i % 4],
+  }));
+
+  const defectProcessPie = (dash?.DefectByProcess ?? []).map((r, i) => ({
+    name: defectLabel(r.NameTR, r.NameEN),
+    value: r.Count,
+    color: [
+      statusColors.ok,
+      statusColors.info,
+      statusColors.issueInProgress,
+      statusColors.severityMedium,
+    ][i % 4],
+  }));
+
+  const defectPartBars = (dash?.DefectTopParts ?? []).map((r) => ({
+    name:
+      defectLabel(r.NameTR, r.NameEN).length > 18
+        ? `${defectLabel(r.NameTR, r.NameEN).slice(0, 16)}…`
+        : defectLabel(r.NameTR, r.NameEN),
+    count: r.Count,
+  }));
+
+  const defectComboBars = (dash?.DefectPartTypeTop ?? []).map((r) => {
+    const label = `${defectLabel(r.PartNameTR, r.PartNameEN)} · ${defectLabel(r.TypeNameTR, r.TypeNameEN)}`;
+    return {
+      name: label.length > 22 ? `${label.slice(0, 20)}…` : label,
+      count: r.Count,
+    };
+  });
+
+  const defectPartH = verticalChartHeight(defectPartBars.length);
+  const defectComboH = verticalChartHeight(defectComboBars.length);
+  const cov = dash?.DefectCoverage;
+  const rec = dash?.DefectRecurrence;
+
   return (
     <>
       <PrintButton
@@ -536,6 +582,186 @@ export function AnalysisPrint({
                 </BarChart>
               </ChartCard>
             </div>
+
+            <section className="print-section print-table-block">
+              <h2>{t('analysis.defectSection')}</h2>
+              {cov && cov.Total > 0 ? (
+                <p>
+                  {t('analysis.defectCoverage')}: {cov.Classified}/{cov.Total}{' '}
+                  {t('analysis.defectClassified')} · {cov.Unclassified}{' '}
+                  {t('analysis.defectUnclassified')} · {t('analysis.defectOtherPartRate')}{' '}
+                  {cov.OtherPart} · {t('analysis.defectOtherTypeRate')} {cov.OtherType}
+                </p>
+              ) : (
+                <p>{t('analysis.noData')}</p>
+              )}
+              {rec && rec.CodedIssueCount > 0 ? (
+                <p>
+                  {t('analysis.defectRecurrenceRate')}:{' '}
+                  {rec.RecurrenceRatePct != null
+                    ? `${Math.round(rec.RecurrenceRatePct * 10) / 10}%`
+                    : t('common.emDash')}{' '}
+                  ({rec.RecurringIssueCount}/{rec.CodedIssueCount}) —{' '}
+                  {t('analysis.defectRecurrenceHint')}
+                </p>
+              ) : null}
+            </section>
+
+            <div className="print-chart-grid">
+              <ChartCard
+                title={t('analysis.defectByZone')}
+                legend={<ColorLegend items={defectZonePie} />}
+              >
+                {defectZonePie.length === 0 ? (
+                  <p>{t('analysis.noData')}</p>
+                ) : (
+                  <PieChart width={PIE_SIZE} height={PIE_SIZE}>
+                    <Pie
+                      data={defectZonePie}
+                      dataKey="value"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={36}
+                      outerRadius={58}
+                      isAnimationActive={false}
+                    >
+                      {defectZonePie.map((e) => (
+                        <Cell key={e.name} fill={e.color} />
+                      ))}
+                    </Pie>
+                  </PieChart>
+                )}
+              </ChartCard>
+
+              <ChartCard
+                title={t('analysis.defectByProcess')}
+                legend={<ColorLegend items={defectProcessPie} />}
+              >
+                {defectProcessPie.length === 0 ? (
+                  <p>{t('analysis.noData')}</p>
+                ) : (
+                  <PieChart width={PIE_SIZE} height={PIE_SIZE}>
+                    <Pie
+                      data={defectProcessPie}
+                      dataKey="value"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={36}
+                      outerRadius={58}
+                      isAnimationActive={false}
+                    >
+                      {defectProcessPie.map((e) => (
+                        <Cell key={e.name} fill={e.color} />
+                      ))}
+                    </Pie>
+                  </PieChart>
+                )}
+              </ChartCard>
+
+              <ChartCard title={t('analysis.defectTopParts')}>
+                {defectPartBars.length === 0 ? (
+                  <p>{t('analysis.noData')}</p>
+                ) : (
+                  <BarChart
+                    layout="vertical"
+                    width={CHART_W}
+                    height={defectPartH}
+                    data={defectPartBars}
+                    margin={{ top: 4, right: 16, left: 4, bottom: 4 }}
+                  >
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      stroke="#ccc"
+                      horizontal={false}
+                    />
+                    <XAxis
+                      type="number"
+                      allowDecimals={false}
+                      tick={{ fontSize: 9, fill: '#111' }}
+                    />
+                    <YAxis
+                      type="category"
+                      dataKey="name"
+                      width={88}
+                      tick={{ fontSize: 8, fill: '#111' }}
+                    />
+                    <Bar
+                      dataKey="count"
+                      fill={statusColors.issueInProgress}
+                      isAnimationActive={false}
+                    />
+                  </BarChart>
+                )}
+              </ChartCard>
+
+              <ChartCard title={t('analysis.defectPartType')}>
+                {defectComboBars.length === 0 ? (
+                  <p>{t('analysis.noData')}</p>
+                ) : (
+                  <BarChart
+                    layout="vertical"
+                    width={CHART_W}
+                    height={defectComboH}
+                    data={defectComboBars}
+                    margin={{ top: 4, right: 16, left: 4, bottom: 4 }}
+                  >
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      stroke="#ccc"
+                      horizontal={false}
+                    />
+                    <XAxis
+                      type="number"
+                      allowDecimals={false}
+                      tick={{ fontSize: 9, fill: '#111' }}
+                    />
+                    <YAxis
+                      type="category"
+                      dataKey="name"
+                      width={100}
+                      tick={{ fontSize: 7, fill: '#111' }}
+                    />
+                    <Bar
+                      dataKey="count"
+                      fill={statusColors.info}
+                      isAnimationActive={false}
+                    />
+                  </BarChart>
+                )}
+              </ChartCard>
+            </div>
+
+            <section className="print-section print-table-block">
+              <h2>{t('analysis.defectRecurrenceCases')}</h2>
+              <table className="print-table">
+                <thead>
+                  <tr>
+                    <th>{t('issue.vin')}</th>
+                    <th>{t('analysis.defectCode')}</th>
+                    <th>{t('analysis.defectOccurrences')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(rec?.Cases ?? []).length === 0 ? (
+                    <tr>
+                      <td colSpan={3}>{t('analysis.noData')}</td>
+                    </tr>
+                  ) : (
+                    (rec?.Cases ?? []).map((r) => (
+                      <tr key={`${r.VIN}-${r.DefectCode}`}>
+                        <td>…{r.VIN.slice(-5)}</td>
+                        <td>{r.DefectCode}</td>
+                        <td>
+                          {r.Count} {t('analysis.defectTimes')}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </section>
 
             <section className="print-section print-table-block">
               <h2>{t('analysis.branchShippedList')}</h2>
