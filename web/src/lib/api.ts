@@ -884,6 +884,7 @@ export interface Issue {
   ReportPhotoPath?: string;
   DefectPartID?: number | null;
   DefectTypeID?: number | null;
+  DefectZoneID?: number | null;
   ResponsibleProcessID?: number | null;
   CustomPartName?: string;
   CustomDefectName?: string;
