@@ -33,7 +33,13 @@ const issueColumns = `i.id, i.vin, i.source_type, i.source_station_step_id, i.so
 	        COALESCE(report_photo.storage_path, ''),
 	        COALESCE(it.name, ''), COALESCE(st.name, ''),
 	        COALESCE(up.full_name, ''), COALESCE(uf.full_name, ''),
-	        COALESCE(ua.full_name, ''), COALESCE(uc.full_name, '')`
+	        COALESCE(ua.full_name, ''), COALESCE(uc.full_name, ''),
+	        i.defect_part_id, i.defect_type_id, i.responsible_process_id,
+	        COALESCE(i.custom_part_name, ''), COALESCE(i.custom_defect_name, ''), COALESCE(i.defect_code, ''),
+	        COALESCE(dp.name_tr, ''), COALESCE(dp.name_en, ''),
+	        COALESCE(dt.name_tr, ''), COALESCE(dt.name_en, ''),
+	        COALESCE(dz.name_tr, ''), COALESCE(dz.name_en, ''),
+	        COALESCE(dpr.name_tr, ''), COALESCE(dpr.name_en, '')`
 
 // issueFrom joins the reporter name and the earliest report photo
 // (media_attachments entity_type=ISSUE) used as a list thumbnail.
@@ -45,6 +51,10 @@ const issueFrom = `FROM issue_list i
 		 LEFT JOIN users uf ON uf.id = i.finish_reporter_id
 		 LEFT JOIN users ua ON ua.id = i.approve_reporter_id
 		 LEFT JOIN users uc ON uc.id = i.conditional_approve_reporter_id
+		 LEFT JOIN defect_parts dp ON dp.id = i.defect_part_id
+		 LEFT JOIN defect_types dt ON dt.id = i.defect_type_id
+		 LEFT JOIN defect_zones dz ON dz.id = dp.zone_id
+		 LEFT JOIN defect_processes dpr ON dpr.id = i.responsible_process_id
 		 LEFT JOIN LATERAL (
 		     SELECT m.storage_path
 		     FROM media_attachments m
@@ -68,6 +78,12 @@ func scanIssue(row pgx.Row) (*domain.Issue, error) {
 		&i.IssueTypeName, &i.StationName,
 		&i.ProcessReporterName, &i.FinishReporterName,
 		&i.ApproveReporterName, &i.ConditionalApproveReporterName,
+		&i.DefectPartID, &i.DefectTypeID, &i.ResponsibleProcessID,
+		&i.CustomPartName, &i.CustomDefectName, &i.DefectCode,
+		&i.DefectPartNameTR, &i.DefectPartNameEN,
+		&i.DefectTypeNameTR, &i.DefectTypeNameEN,
+		&i.DefectZoneNameTR, &i.DefectZoneNameEN,
+		&i.DefectProcessNameTR, &i.DefectProcessNameEN,
 	); err != nil {
 		return nil, err
 	}
@@ -83,12 +99,17 @@ func (r *IssueRepo) Create(ctx context.Context, issue *domain.Issue) (int64, err
 	err := executor(ctx, r.pool).QueryRow(ctx,
 		`INSERT INTO issue_list
 		    (vin, source_type, source_station_step_id, source_check_item_id, station_id,
-		     issue_type_id, severity, description, picture_url, status, issue_reporter_id)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NULLIF($9, ''), $10, $11)
+		     issue_type_id, severity, description, picture_url, status, issue_reporter_id,
+		     defect_part_id, defect_type_id, responsible_process_id,
+		     custom_part_name, custom_defect_name, defect_code)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NULLIF($9, ''), $10, $11,
+		         $12, $13, $14, NULLIF($15, ''), NULLIF($16, ''), NULLIF($17, ''))
 		 RETURNING id`,
 		issue.VIN, string(issue.SourceType), issue.SourceStationStepID, issue.SourceCheckItemID,
 		issue.StationID, issue.IssueTypeID, string(issue.Severity), issue.Description,
 		issue.PictureURL, string(issue.Status), issue.IssueReporterID,
+		issue.DefectPartID, issue.DefectTypeID, issue.ResponsibleProcessID,
+		issue.CustomPartName, issue.CustomDefectName, issue.DefectCode,
 	).Scan(&id)
 	return id, err
 }

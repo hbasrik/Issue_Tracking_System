@@ -70,6 +70,22 @@ type DefectType struct {
 	UsageCount       int       `json:"UsageCount"`
 }
 
+// Stable "Diğer / Other" catalogue codes from the seed (name may change; code does not).
+const (
+	DefectPartCodeOther = "99-99"
+	DefectTypeCodeOther = "99"
+)
+
+// IsOtherPart reports whether the part is the free-text "Other" catch-all.
+func IsOtherPart(code string) bool {
+	return strings.TrimSpace(code) == DefectPartCodeOther
+}
+
+// IsOtherType reports whether the defect type is the free-text "Other" catch-all.
+func IsOtherType(code string) bool {
+	return strings.TrimSpace(code) == DefectTypeCodeOther
+}
+
 // FormatDefectCode builds PARÇA-KUSUR (e.g. 10-01-01) from stable catalogue codes.
 // Part codes already embed the zone prefix.
 func FormatDefectCode(partCode, typeCode string) string {
@@ -79,6 +95,13 @@ func FormatDefectCode(partCode, typeCode string) string {
 		return ""
 	}
 	return partCode + "-" + typeCode
+}
+
+// VehicleRequiresIssueStation is true only while the vehicle is on the line.
+// Off-line statuses (warehouse / delivered / hold / planned / shipped) hide
+// the station field on the report form.
+func VehicleRequiresIssueStation(status VehicleStatus) bool {
+	return status == VehicleStatusInProduction
 }
 
 const (

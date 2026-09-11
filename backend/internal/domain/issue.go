@@ -119,6 +119,15 @@ type Issue struct {
 	SolutionDescription          string
 	CreatedAt                    time.Time
 	UpdatedAt                    time.Time
+
+	// Defect classification (nullable — legacy rows and pre-classification).
+	DefectPartID          *int
+	DefectTypeID          *int
+	ResponsibleProcessID  *int
+	CustomPartName        string
+	CustomDefectName      string
+	DefectCode            string
+
 	// ReporterName is populated on list queries via join to users; not a
 	// persisted column on issue_list.
 	ReporterName string
@@ -134,6 +143,15 @@ type Issue struct {
 	FinishReporterName               string
 	ApproveReporterName              string
 	ConditionalApproveReporterName   string
+	// Defect*Name* are list/get joins for classification display.
+	DefectPartNameTR   string
+	DefectPartNameEN   string
+	DefectTypeNameTR   string
+	DefectTypeNameEN   string
+	DefectZoneNameTR   string
+	DefectZoneNameEN   string
+	DefectProcessNameTR string
+	DefectProcessNameEN string
 }
 
 // IssueType is a row from the issue_types catalogue (Hata / Tamir Gerekiyor).

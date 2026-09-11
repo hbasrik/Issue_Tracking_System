@@ -123,6 +123,11 @@ func writeError(w http.ResponseWriter, err error) {
 		errors.Is(err, domain.ErrPasswordTooShort),
 		errors.Is(err, domain.ErrPasswordTooWeak),
 		errors.Is(err, domain.ErrPasswordMismatch),
+		errors.Is(err, domain.ErrDefectPartRequired),
+		errors.Is(err, domain.ErrDefectTypeRequired),
+		errors.Is(err, domain.ErrCustomPartNameRequired),
+		errors.Is(err, domain.ErrCustomDefectNameRequired),
+		errors.Is(err, domain.ErrDefectCatalogueInactive),
 		errors.Is(err, domain.ErrEmailInvalid):
 		writeJSON(w, http.StatusBadRequest, errorResponse{Error: err.Error()})
 	default:

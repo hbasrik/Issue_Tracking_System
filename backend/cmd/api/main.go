@@ -61,7 +61,7 @@ func main() {
 		Vehicles:           usecase.NewVehicleService(vehicleRepo, checklistRepo, auditRepo, uow),
 		StationSteps:       usecase.NewStationStepResultRecorder(vehicleRepo, stationStepRepo),
 		Checklists:         checklists,
-		Issues:             usecase.NewIssueManager(issueRepo, auditRepo, uow),
+		Issues:             usecase.NewIssueManager(issueRepo, auditRepo, uow, vehicleRepo, defectCatalogRepo),
 		Stations:           usecase.NewStationService(stationRepo),
 		Analysis:           usecase.NewAnalysisMetricsReader(analysisRepo),
 		Home:               usecase.NewHomeOverviewReader(analysisRepo, auditRepo),

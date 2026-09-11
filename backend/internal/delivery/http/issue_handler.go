@@ -21,6 +21,10 @@ type createIssueRequest struct {
 	Severity            string `json:"severity"`
 	Description         string `json:"description"`
 	PictureURL          string `json:"picture_url"`
+	DefectPartID        *int   `json:"defect_part_id"`
+	DefectTypeID        *int   `json:"defect_type_id"`
+	CustomPartName      string `json:"custom_part_name"`
+	CustomDefectName    string `json:"custom_defect_name"`
 }
 
 // handleCreateIssue creates a new issue (issue.create). Severity is mandatory
@@ -44,6 +48,10 @@ func (s *server) handleCreateIssue(w http.ResponseWriter, r *http.Request) {
 		Description:         req.Description,
 		PictureURL:          req.PictureURL,
 		ReporterID:          claims.UserID,
+		DefectPartID:        req.DefectPartID,
+		DefectTypeID:        req.DefectTypeID,
+		CustomPartName:      req.CustomPartName,
+		CustomDefectName:    req.CustomDefectName,
 	})
 	if err != nil {
 		writeError(w, err)

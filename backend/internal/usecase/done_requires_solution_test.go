@@ -19,7 +19,7 @@ func TestTransitionStatus_DoneRequiresSolutionDescription(t *testing.T) {
 	if err != nil {
 		t.Fatalf("seed: %v", err)
 	}
-	mgr := usecase.NewIssueManager(issues, newFakeAuditRepo(), &passthroughFakeUoW{})
+	mgr := usecase.NewIssueManager(issues, newFakeAuditRepo(), &passthroughFakeUoW{}, createIssueStubVehicles{}, createIssueStubCatalog{})
 
 	err = mgr.TransitionStatus(context.Background(), id, domain.IssueStatusDone, 2, operatorPermissions(), "  ")
 	if !errors.Is(err, domain.ErrSolutionDescriptionRequired) {

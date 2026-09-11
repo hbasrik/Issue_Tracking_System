@@ -8,17 +8,36 @@ import (
 	"github.com/karea/backend/internal/repository"
 )
 
+// vehicleByVIN looks up a vehicle for station/classification rules on create.
+type vehicleByVIN interface {
+	GetByVIN(ctx context.Context, vin string) (*domain.Vehicle, error)
+}
+
+// defectByID loads catalogue rows used when classifying a new issue.
+type defectByID interface {
+	GetPart(ctx context.Context, id int) (*domain.DefectPart, error)
+	GetType(ctx context.Context, id int) (*domain.DefectType, error)
+}
+
 // IssueManager handles the issue lifecycle: OPEN -> IN_PROGRESS -> DONE ->
 // APPROVED or CONDITIONAL_APPROVED.
 type IssueManager struct {
-	issues repository.IssueRepository
-	audit  repository.AuditRepository
-	uow    repository.TransactionManager
+	issues   repository.IssueRepository
+	audit    repository.AuditRepository
+	uow      repository.TransactionManager
+	vehicles vehicleByVIN
+	catalog  defectByID
 }
 
 // NewIssueManager wires the usecase with its repositories.
-func NewIssueManager(issues repository.IssueRepository, audit repository.AuditRepository, uow repository.TransactionManager) *IssueManager {
-	return &IssueManager{issues: issues, audit: audit, uow: uow}
+func NewIssueManager(
+	issues repository.IssueRepository,
+	audit repository.AuditRepository,
+	uow repository.TransactionManager,
+	vehicles vehicleByVIN,
+	catalog defectByID,
+) *IssueManager {
+	return &IssueManager{issues: issues, audit: audit, uow: uow, vehicles: vehicles, catalog: catalog}
 }
 
 // CreateIssueInput is the request to create a new issue.
@@ -33,64 +52,124 @@ type CreateIssueInput struct {
 	Description         string
 	PictureURL          string
 	ReporterID          int
+	DefectPartID        *int
+	DefectTypeID        *int
+	CustomPartName      string
+	CustomDefectName    string
 }
 
 // Create validates and inserts a new issue. Severity is mandatory
 // (Decision Log #7) and new issues always start in the OPEN state.
 //
-// MANUAL sources are standalone operator reports: vin, station_id,
-// issue_type_id, severity, and description are all required, and both
-// source_station_step_id and source_check_item_id must be unset.
+// MANUAL sources are standalone operator reports: vin, issue_type_id,
+// severity, description, and defect classification are required.
+// Station is required only when the vehicle is IN_PRODUCTION.
+//
+// Checklist / station-step linked sources also require classification —
+// NOT_OK does not auto-create issues; the operator already fills a form.
 func (m *IssueManager) Create(ctx context.Context, in CreateIssueInput) (*domain.Issue, error) {
 	if !in.SourceType.Valid() {
 		return nil, domain.ErrInvalidEnumValue
 	}
+	if in.Severity == "" {
+		return nil, domain.ErrSeverityRequired
+	}
+	if !in.Severity.Valid() {
+		return nil, domain.ErrInvalidEnumValue
+	}
+	if strings.TrimSpace(in.Description) == "" {
+		return nil, domain.ErrIssueDescriptionRequired
+	}
+
+	vin := strings.TrimSpace(in.VIN)
+	if vin == "" {
+		return nil, domain.ErrVINRequired
+	}
+
 	if in.SourceType == domain.IssueSourceManual {
-		if strings.TrimSpace(in.VIN) == "" {
-			return nil, domain.ErrVINRequired
-		}
-		if in.StationID == nil {
-			return nil, domain.ErrStationRequired
-		}
 		if in.IssueTypeID == nil {
 			return nil, domain.ErrIssueTypeRequired
-		}
-		if in.Severity == "" {
-			return nil, domain.ErrSeverityRequired
-		}
-		if !in.Severity.Valid() {
-			return nil, domain.ErrInvalidEnumValue
-		}
-		if strings.TrimSpace(in.Description) == "" {
-			return nil, domain.ErrIssueDescriptionRequired
 		}
 		if in.SourceStationStepID != nil || in.SourceCheckItemID != nil {
 			return nil, domain.ErrInvalidManualSource
 		}
-	} else {
-		if in.Severity == "" {
-			return nil, domain.ErrSeverityRequired
-		}
-		if !in.Severity.Valid() {
-			return nil, domain.ErrInvalidEnumValue
-		}
-		if strings.TrimSpace(in.Description) == "" {
-			return nil, domain.ErrIssueDescriptionRequired
-		}
 	}
 
+	vehicle, err := m.vehicles.GetByVIN(ctx, vin)
+	if err != nil {
+		return nil, err
+	}
+	stationID := in.StationID
+	if domain.VehicleRequiresIssueStation(vehicle.CurrentGlobalStatus) {
+		if stationID == nil {
+			return nil, domain.ErrStationRequired
+		}
+	} else {
+		// Off-line vehicles: station is not asked; ignore any client value.
+		stationID = nil
+	}
+
+	if in.DefectPartID == nil {
+		return nil, domain.ErrDefectPartRequired
+	}
+	if in.DefectTypeID == nil {
+		return nil, domain.ErrDefectTypeRequired
+	}
+
+	part, err := m.catalog.GetPart(ctx, *in.DefectPartID)
+	if err != nil {
+		return nil, err
+	}
+	if !part.IsActive {
+		return nil, domain.ErrDefectCatalogueInactive
+	}
+	typ, err := m.catalog.GetType(ctx, *in.DefectTypeID)
+	if err != nil {
+		return nil, err
+	}
+	if !typ.IsActive {
+		return nil, domain.ErrDefectCatalogueInactive
+	}
+
+	customPart := strings.TrimSpace(in.CustomPartName)
+	customDefect := strings.TrimSpace(in.CustomDefectName)
+	if domain.IsOtherPart(part.Code) {
+		if customPart == "" {
+			return nil, domain.ErrCustomPartNameRequired
+		}
+	} else {
+		customPart = ""
+	}
+	if domain.IsOtherType(typ.Code) {
+		if customDefect == "" {
+			return nil, domain.ErrCustomDefectNameRequired
+		}
+	} else {
+		customDefect = ""
+	}
+
+	code := domain.FormatDefectCode(part.Code, typ.Code)
+	partID := part.ID
+	typeID := typ.ID
+
 	issue := &domain.Issue{
-		VIN:                 strings.TrimSpace(in.VIN),
-		SourceType:          in.SourceType,
-		SourceStationStepID: in.SourceStationStepID,
-		SourceCheckItemID:   in.SourceCheckItemID,
-		StationID:           in.StationID,
-		IssueTypeID:         in.IssueTypeID,
-		Severity:            in.Severity,
-		Description:         strings.TrimSpace(in.Description),
-		PictureURL:          in.PictureURL,
-		Status:              domain.IssueStatusOpen,
-		IssueReporterID:     in.ReporterID,
+		VIN:                  vin,
+		SourceType:           in.SourceType,
+		SourceStationStepID:  in.SourceStationStepID,
+		SourceCheckItemID:    in.SourceCheckItemID,
+		StationID:            stationID,
+		IssueTypeID:          in.IssueTypeID,
+		Severity:             in.Severity,
+		Description:          strings.TrimSpace(in.Description),
+		PictureURL:           in.PictureURL,
+		Status:               domain.IssueStatusOpen,
+		IssueReporterID:      in.ReporterID,
+		DefectPartID:         &partID,
+		DefectTypeID:         &typeID,
+		ResponsibleProcessID: typ.DefaultProcessID,
+		CustomPartName:       customPart,
+		CustomDefectName:     customDefect,
+		DefectCode:           code,
 	}
 
 	id, err := m.issues.Create(ctx, issue)
@@ -150,11 +229,10 @@ func (m *IssueManager) ListStatusHistory(ctx context.Context, id int64) ([]domai
 		return nil, err
 	}
 	if items == nil {
-		return []domain.IssueStatusHistoryEntry{}, nil
+		items = []domain.IssueStatusHistoryEntry{}
 	}
 	return items, nil
 }
-
 // TransitionStatus moves an issue to a new status, enforcing both the valid
 // state machine and permission-based authorization. It records an
 // ISSUE_STATUS_CHANGE audit entry attributed to actorID so every state change

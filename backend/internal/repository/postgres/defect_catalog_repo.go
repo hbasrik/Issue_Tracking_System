@@ -234,6 +234,26 @@ func (r *DefectCatalogRepo) ListParts(ctx context.Context, zoneID *int) ([]domai
 	return out, rows.Err()
 }
 
+func (r *DefectCatalogRepo) GetPart(ctx context.Context, id int) (*domain.DefectPart, error) {
+	var p domain.DefectPart
+	err := executor(ctx, r.pool).QueryRow(ctx, `
+		SELECT p.id, p.zone_id, p.code, p.name_tr, p.name_en, p.sort_order, p.is_active, p.created_at, p.updated_at,
+		       z.code, z.name_tr, z.name_en, 0
+		FROM defect_parts p
+		JOIN defect_zones z ON z.id = p.zone_id
+		WHERE p.id = $1`, id).Scan(
+		&p.ID, &p.ZoneID, &p.Code, &p.NameTR, &p.NameEN, &p.SortOrder, &p.IsActive, &p.CreatedAt, &p.UpdatedAt,
+		&p.ZoneCode, &p.ZoneNameTR, &p.ZoneNameEN, &p.UsageCount,
+	)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, domain.ErrNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &p, nil
+}
+
 func (r *DefectCatalogRepo) CreatePart(ctx context.Context, p *domain.DefectPart) (int, error) {
 	var id int
 	err := executor(ctx, r.pool).QueryRow(ctx, `
@@ -337,6 +357,26 @@ func (r *DefectCatalogRepo) ListTypes(ctx context.Context) ([]domain.DefectType,
 		out = append(out, t)
 	}
 	return out, rows.Err()
+}
+
+func (r *DefectCatalogRepo) GetType(ctx context.Context, id int) (*domain.DefectType, error) {
+	var t domain.DefectType
+	err := executor(ctx, r.pool).QueryRow(ctx, `
+		SELECT t.id, t.code, t.name_tr, t.name_en, t.default_process_id, t.sort_order, t.is_active, t.created_at, t.updated_at,
+		       COALESCE(p.code, ''), COALESCE(p.name_tr, ''), COALESCE(p.name_en, ''), 0
+		FROM defect_types t
+		LEFT JOIN defect_processes p ON p.id = t.default_process_id
+		WHERE t.id = $1`, id).Scan(
+		&t.ID, &t.Code, &t.NameTR, &t.NameEN, &t.DefaultProcessID, &t.SortOrder, &t.IsActive, &t.CreatedAt, &t.UpdatedAt,
+		&t.ProcessCode, &t.ProcessNameTR, &t.ProcessNameEN, &t.UsageCount,
+	)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, domain.ErrNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &t, nil
 }
 
 func (r *DefectCatalogRepo) CreateType(ctx context.Context, t *domain.DefectType) (int, error) {

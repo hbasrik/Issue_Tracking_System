@@ -55,7 +55,7 @@ func TestIssueStatusChangeRollsBackOnAuditFailure(t *testing.T) {
 	audit := newFakeAuditRepo()
 	audit.appendErr = errAuditInsertFailed
 	uow := &snapshotFakeUoW{issues: issues, audit: audit}
-	mgr := usecase.NewIssueManager(issues, audit, uow)
+	mgr := usecase.NewIssueManager(issues, audit, uow, createIssueStubVehicles{}, createIssueStubCatalog{})
 
 	err = mgr.TransitionStatus(context.Background(), id, domain.IssueStatusInProgress, actorID, operatorPermissions(), "")
 	if !errors.Is(err, errAuditInsertFailed) {

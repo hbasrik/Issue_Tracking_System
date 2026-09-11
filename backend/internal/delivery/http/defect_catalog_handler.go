@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
+	"github.com/karea/backend/internal/domain"
 	"github.com/karea/backend/internal/usecase"
 )
 
@@ -342,4 +343,60 @@ func (s *server) handleDefectTypeReorder(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true})
+}
+
+// Active catalogue pickers for issue reporters (issue.create) — inactive rows hidden.
+
+func (s *server) handleDefectCatalogActiveZones(w http.ResponseWriter, r *http.Request) {
+	items, err := s.deps.DefectCatalog.ListZones(r.Context())
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	out := make([]domain.DefectZone, 0, len(items))
+	for _, z := range items {
+		if z.IsActive {
+			out = append(out, z)
+		}
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"items": out})
+}
+
+func (s *server) handleDefectCatalogActiveParts(w http.ResponseWriter, r *http.Request) {
+	var zoneID *int
+	if raw := r.URL.Query().Get("zone_id"); raw != "" {
+		id, err := strconv.Atoi(raw)
+		if err != nil {
+			badRequest(w, "zone_id must be an integer")
+			return
+		}
+		zoneID = &id
+	}
+	items, err := s.deps.DefectCatalog.ListParts(r.Context(), zoneID)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	out := make([]domain.DefectPart, 0, len(items))
+	for _, p := range items {
+		if p.IsActive {
+			out = append(out, p)
+		}
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"items": out})
+}
+
+func (s *server) handleDefectCatalogActiveTypes(w http.ResponseWriter, r *http.Request) {
+	items, err := s.deps.DefectCatalog.ListTypes(r.Context())
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	out := make([]domain.DefectType, 0, len(items))
+	for _, t := range items {
+		if t.IsActive {
+			out = append(out, t)
+		}
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"items": out})
 }

@@ -23,7 +23,7 @@ func seedDoneIssue(t *testing.T) (*usecase.IssueManager, *fakeIssueRepo, int64) 
 	if err != nil {
 		t.Fatalf("seed issue: %v", err)
 	}
-	mgr := usecase.NewIssueManager(issues, newFakeAuditRepo(), &passthroughFakeUoW{})
+	mgr := usecase.NewIssueManager(issues, newFakeAuditRepo(), &passthroughFakeUoW{}, createIssueStubVehicles{}, createIssueStubCatalog{})
 	return mgr, issues, id
 }
 

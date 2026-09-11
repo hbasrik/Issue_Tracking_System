@@ -12,14 +12,17 @@ import (
 func TestCreateManualIssue_RequiresEachField(t *testing.T) {
 	station := 1
 	typeID := 2
+	partID, typID := 10, 20
 	base := usecase.CreateIssueInput{
-		VIN:         "1KTSKRC2XSB010042",
-		SourceType:  domain.IssueSourceManual,
-		StationID:   &station,
-		IssueTypeID: &typeID,
-		Severity:    domain.IssueSeverityMedium,
-		Description: "scratch on door",
-		ReporterID:  1,
+		VIN:          "1KTSKRC2XSB010042",
+		SourceType:   domain.IssueSourceManual,
+		StationID:    &station,
+		IssueTypeID:  &typeID,
+		Severity:     domain.IssueSeverityMedium,
+		Description:  "scratch on door",
+		ReporterID:   1,
+		DefectPartID: &partID,
+		DefectTypeID: &typID,
 	}
 
 	cases := []struct {
@@ -76,7 +79,7 @@ func TestCreateManualIssue_RequiresEachField(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			in := base
 			c.mutate(&in)
-			mgr := usecase.NewIssueManager(newCreateIssueFakeRepo(), newNopAudit(), newNopUOW())
+			mgr := usecase.NewIssueManager(newCreateIssueFakeRepo(), newNopAudit(), newNopUOW(), createIssueStubVehicles{}, createIssueStubCatalog{})
 			_, err := mgr.Create(context.Background(), in)
 			if !errors.Is(err, c.wantErr) {
 				t.Fatalf("got %v, want %v", err, c.wantErr)
@@ -89,15 +92,18 @@ func TestCreateManualIssue_Succeeds(t *testing.T) {
 	station := 3
 	typeID := 1
 	repo := newCreateIssueFakeRepo()
-	mgr := usecase.NewIssueManager(repo, newNopAudit(), newNopUOW())
+	mgr := usecase.NewIssueManager(repo, newNopAudit(), newNopUOW(), createIssueStubVehicles{}, createIssueStubCatalog{})
+	partID, typID := 10, 20
 	issue, err := mgr.Create(context.Background(), usecase.CreateIssueInput{
-		VIN:         "1KTSKRC2XSB010042",
-		SourceType:  domain.IssueSourceManual,
-		StationID:   &station,
-		IssueTypeID: &typeID,
-		Severity:    domain.IssueSeverityCritical,
-		Description: "paint chip",
-		ReporterID:  7,
+		VIN:          "1KTSKRC2XSB010042",
+		SourceType:   domain.IssueSourceManual,
+		StationID:    &station,
+		IssueTypeID:  &typeID,
+		Severity:     domain.IssueSeverityCritical,
+		Description:  "paint chip",
+		ReporterID:   7,
+		DefectPartID: &partID,
+		DefectTypeID: &typID,
 	})
 	if err != nil {
 		t.Fatalf("create: %v", err)
@@ -183,3 +189,24 @@ func newNopUOW() *nopUOW { return &nopUOW{} }
 func (nopUOW) WithinTx(ctx context.Context, fn func(context.Context) error) error {
 	return fn(ctx)
 }
+
+type createIssueStubVehicles struct{ status domain.VehicleStatus }
+
+func (s createIssueStubVehicles) GetByVIN(_ context.Context, vin string) (*domain.Vehicle, error) {
+	st := s.status
+	if st == "" {
+		st = domain.VehicleStatusInProduction
+	}
+	return &domain.Vehicle{VIN: vin, CurrentGlobalStatus: st}, nil
+}
+
+type createIssueStubCatalog struct{}
+
+func (createIssueStubCatalog) GetPart(_ context.Context, id int) (*domain.DefectPart, error) {
+	return &domain.DefectPart{ID: id, ZoneID: 1, Code: "10-01", NameTR: "Kapı", NameEN: "Door", IsActive: true}, nil
+}
+func (createIssueStubCatalog) GetType(_ context.Context, id int) (*domain.DefectType, error) {
+	pid := 1
+	return &domain.DefectType{ID: id, Code: "01", NameTR: "Boşluk", NameEN: "Gap", DefaultProcessID: &pid, IsActive: true}, nil
+}
+

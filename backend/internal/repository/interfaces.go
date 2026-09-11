@@ -304,6 +304,7 @@ type DefectCatalogRepository interface {
 	ReorderZones(ctx context.Context, ids []int) error
 
 	ListParts(ctx context.Context, zoneID *int) ([]domain.DefectPart, error)
+	GetPart(ctx context.Context, id int) (*domain.DefectPart, error)
 	CreatePart(ctx context.Context, p *domain.DefectPart) (int, error)
 	UpdatePart(ctx context.Context, p *domain.DefectPart) error
 	DeletePart(ctx context.Context, id int) error
@@ -311,6 +312,7 @@ type DefectCatalogRepository interface {
 	ReorderParts(ctx context.Context, zoneID int, ids []int) error
 
 	ListTypes(ctx context.Context) ([]domain.DefectType, error)
+	GetType(ctx context.Context, id int) (*domain.DefectType, error)
 	CreateType(ctx context.Context, t *domain.DefectType) (int, error)
 	UpdateType(ctx context.Context, t *domain.DefectType) error
 	DeleteType(ctx context.Context, id int) error

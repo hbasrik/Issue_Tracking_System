@@ -151,12 +151,27 @@ func (httpNoopUoW) WithinTx(ctx context.Context, fn func(context.Context) error)
 	return fn(ctx)
 }
 
+type httpStubVehicles struct{}
+
+func (httpStubVehicles) GetByVIN(_ context.Context, vin string) (*domain.Vehicle, error) {
+	return &domain.Vehicle{VIN: vin, CurrentGlobalStatus: domain.VehicleStatusInProduction}, nil
+}
+
+type httpStubCatalog struct{}
+
+func (httpStubCatalog) GetPart(_ context.Context, id int) (*domain.DefectPart, error) {
+	return &domain.DefectPart{ID: id, Code: "10-01", IsActive: true}, nil
+}
+func (httpStubCatalog) GetType(_ context.Context, id int) (*domain.DefectType, error) {
+	return &domain.DefectType{ID: id, Code: "01", IsActive: true}, nil
+}
+
 func newIssueRouter(issues repository.IssueRepository) (http.Handler, *auth.Issuer) {
 	issuer := auth.NewIssuer("test-secret", time.Hour)
 	router := apphttp.NewRouter(apphttp.Deps{
 		Issuer: issuer,
 		Roles:  newFakeRoleRepo(),
-		Issues: usecase.NewIssueManager(issues, httpNoopAudit{}, httpNoopUoW{}),
+		Issues: usecase.NewIssueManager(issues, httpNoopAudit{}, httpNoopUoW{}, httpStubVehicles{}, httpStubCatalog{}),
 	})
 	return router, issuer
 }

@@ -73,7 +73,7 @@ func TestUndoApproval_WritesAuditWithUndoAction(t *testing.T) {
 	if err != nil {
 		t.Fatalf("seed: %v", err)
 	}
-	mgr := usecase.NewIssueManager(issues, audit, &passthroughFakeUoW{})
+	mgr := usecase.NewIssueManager(issues, audit, &passthroughFakeUoW{}, createIssueStubVehicles{}, createIssueStubCatalog{})
 	ctx := context.Background()
 
 	if err := mgr.TransitionStatus(ctx, id, domain.IssueStatusApproved, actorID, managerPermissions(), ""); err != nil {

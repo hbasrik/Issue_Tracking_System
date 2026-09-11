@@ -89,6 +89,16 @@ var (
 	ErrDefectCatalogueReorderInvalid = errors.New("reorder id list is invalid")
 	// ErrDefectZoneRequired indicates a part create/update omitted zone_id.
 	ErrDefectZoneRequired = errors.New("zone_id is required")
+	// ErrDefectPartRequired indicates classification part missing on create.
+	ErrDefectPartRequired = errors.New("defect part is required")
+	// ErrDefectTypeRequired indicates classification type missing on create.
+	ErrDefectTypeRequired = errors.New("defect type is required")
+	// ErrCustomPartNameRequired indicates Diğer part without free-text name.
+	ErrCustomPartNameRequired = errors.New("custom part name is required for Other")
+	// ErrCustomDefectNameRequired indicates Diğer type without free-text name.
+	ErrCustomDefectNameRequired = errors.New("custom defect name is required for Other")
+	// ErrDefectCatalogueInactive indicates a selected catalogue row is inactive.
+	ErrDefectCatalogueInactive = errors.New("selected catalogue item is inactive")
 	// ErrTemplateItemTextTooLong indicates item_text exceeds VARCHAR(250).
 	ErrTemplateItemTextTooLong = errors.New("item_text must be at most 250 characters")
 	// ErrEOLPhaseRequired indicates an EOL template item omitted BRANCH/DEPOT.
