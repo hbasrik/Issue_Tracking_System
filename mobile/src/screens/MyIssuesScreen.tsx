@@ -6,6 +6,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   CompositeNavigationProp,
   useFocusEffect,
@@ -17,6 +18,7 @@ import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { api, type DefectPart, type DefectType, type DefectZone, type Issue, type IssueType } from '../api/client';
 import { IssueCard } from '../components/IssueCard';
+import { PartMultiSelectFilter } from '../components/PartMultiSelectFilter';
 import { listKeyboardDismissProps } from '../components/keyboard';
 import {
   ErrorText,
@@ -59,6 +61,8 @@ const STATUSES: IssueStatus[] = [
   'APPROVED',
 ];
 
+const ADVANCED_FILTERS_OPEN_KEY = 'karea-issues-advanced-filters-open';
+
 function issueCreatedMs(issue: Issue): number {
   return Date.parse(issue.CreatedAt || issue.IssueDate || '') || 0;
 }
@@ -87,6 +91,18 @@ export default function MyIssuesScreen() {
   );
   /** Frozen at preset apply so list length matches the Home card at tap time. */
   const [homeStatNow, setHomeStatNow] = useState(() => new Date());
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+
+  useEffect(() => {
+    void AsyncStorage.getItem(ADVANCED_FILTERS_OPEN_KEY).then((raw) => {
+      if (raw === '1') setAdvancedOpen(true);
+    });
+  }, []);
+
+  function setAdvancedFiltersOpen(next: boolean) {
+    setAdvancedOpen(next);
+    void AsyncStorage.setItem(ADVANCED_FILTERS_OPEN_KEY, next ? '1' : '0');
+  }
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -184,15 +200,24 @@ export default function MyIssuesScreen() {
     });
   }
 
-  function toggleDefectPart(id: number) {
+  function setDefectPartsSelection(next: Set<number>) {
     if (homeStat) clearHomeStat();
-    setDefectPartIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+    setDefectPartIds(next);
   }
+
+  useEffect(() => {
+    if (defectZoneIds.size === 0) return;
+    setDefectPartIds((prev) => {
+      if (prev.size === 0) return prev;
+      const allowed = new Set(
+        defectParts
+          .filter((p) => defectZoneIds.has(p.ZoneID))
+          .map((p) => p.ID),
+      );
+      const pruned = new Set([...prev].filter((id) => allowed.has(id)));
+      return pruned.size === prev.size ? prev : pruned;
+    });
+  }, [defectZoneIds, defectParts]);
 
   function toggleDefectType(id: number) {
     if (homeStat) clearHomeStat();
@@ -203,6 +228,15 @@ export default function MyIssuesScreen() {
       return next;
     });
   }
+
+  const advancedActiveCount = useMemo(() => {
+    let n = 0;
+    if (typeIds.size > 0) n += 1;
+    if (defectZoneIds.size > 0) n += 1;
+    if (defectPartIds.size > 0) n += 1;
+    if (defectTypeIds.size > 0) n += 1;
+    return n;
+  }, [typeIds, defectZoneIds, defectPartIds, defectTypeIds]);
 
   const filtered = useMemo(() => {
     return items.filter((issue) => {
@@ -322,26 +356,8 @@ export default function MyIssuesScreen() {
               }}
             />
 
-            <View
-              style={{
-                marginTop: 12,
-                flexDirection: 'row',
-                flexWrap: 'wrap',
-                alignItems: 'flex-start',
-                columnGap: 16,
-                rowGap: 10,
-              }}
-            >
-              <View
-                style={{
-                  flexGrow: 1,
-                  flexShrink: 1,
-                  flexBasis: 160,
-                  // Allow shrink below chip intrinsic width so Severity stays
-                  // on the same row; chips wrap inside this column.
-                  minWidth: 0,
-                }}
-              >
+            <View style={{ marginTop: 12, gap: 12 }}>
+              <View>
                 <Text
                   style={{
                     color: tokens.textSecondary,
@@ -350,39 +366,40 @@ export default function MyIssuesScreen() {
                     marginBottom: 6,
                   }}
                 >
-                  {t('issue.type')}
+                  {t('issue.status')}
                 </Text>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                  {issueTypes.map((it) => {
-                    const selected = !homeStat && typeIds.has(it.ID);
+                  {STATUSES.map((status) => {
+                    const selected = !homeStat && statuses.has(status);
+                    const color = issueStatusColor(status);
+                    const fill = selected ? color : tokens.bgPage;
+                    const ink = selected
+                      ? inkOn(color)
+                      : readableOn(color, tokens.bgPage);
                     return (
                       <Pressable
-                        key={it.ID}
-                        onPress={() => toggleType(it.ID)}
+                        key={status}
+                        onPress={() => toggleStatus(status)}
                         accessibilityRole="button"
                         accessibilityState={{ selected }}
                         style={{
                           paddingHorizontal: 12,
                           minHeight: 44,
                           borderRadius: 999,
-                          backgroundColor: mixColors(
-                            tokens.textPrimary,
-                            tokens.bgSurface1,
-                            selected ? 14 : 6,
-                          ),
+                          borderWidth: 1,
+                          borderColor: color,
+                          backgroundColor: fill,
                           justifyContent: 'center',
                         }}
                       >
                         <Text
                           style={{
-                            color: selected
-                              ? tokens.textPrimary
-                              : tokens.textSecondary,
+                            color: ink,
                             fontSize: 12,
                             fontWeight: '600',
                           }}
                         >
-                          {issueTypeChipLabel(it.Name)}
+                          {issueStatusLabel(status, t)}
                         </Text>
                       </Pressable>
                     );
@@ -390,7 +407,7 @@ export default function MyIssuesScreen() {
                 </View>
               </View>
 
-              <View style={{ flexGrow: 0, flexShrink: 0 }}>
+              <View>
                 <Text
                   style={{
                     color: tokens.textSecondary,
@@ -433,134 +450,215 @@ export default function MyIssuesScreen() {
               </View>
             </View>
 
-            <Text
+            <Pressable
+              onPress={() => setAdvancedFiltersOpen(!advancedOpen)}
+              accessibilityRole="button"
+              accessibilityState={{ expanded: advancedOpen }}
               style={{
-                color: tokens.textSecondary,
-                fontWeight: '600',
-                fontSize: 13,
-                marginTop: 12,
-                marginBottom: 6,
+                marginTop: 14,
+                minHeight: 44,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                paddingVertical: 8,
+                borderTopWidth: 1,
+                borderTopColor: tokens.border,
               }}
             >
-              {t('issue.status')}
-            </Text>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-              {STATUSES.map((status) => {
-                const selected = !homeStat && statuses.has(status);
-                const color = issueStatusColor(status);
-                const fill = selected ? color : tokens.bgPage;
-                const ink = selected ? inkOn(color) : readableOn(color, tokens.bgPage);
-                return (
-                  <Pressable
-                    key={status}
-                    onPress={() => toggleStatus(status)}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected }}
+              <Text
+                style={{
+                  color: tokens.textPrimary,
+                  fontWeight: '700',
+                  fontSize: 13,
+                }}
+              >
+                {!advancedOpen && advancedActiveCount > 0
+                  ? t('issue.advancedFiltersActive', { n: advancedActiveCount })
+                  : t('issue.advancedFilters')}
+              </Text>
+              <Text style={{ color: tokens.textSecondary, fontSize: 16 }}>
+                {advancedOpen ? '▴' : '▾'}
+              </Text>
+            </Pressable>
+
+            {advancedOpen ? (
+              <View style={{ gap: 12, paddingBottom: 4 }}>
+                <View>
+                  <Text
                     style={{
-                      paddingHorizontal: 12,
-                      minHeight: 44,
-                      borderRadius: 999,
-                      borderWidth: 1,
-                      borderColor: color,
-                      backgroundColor: fill,
-                      justifyContent: 'center',
+                      color: tokens.textSecondary,
+                      fontWeight: '600',
+                      fontSize: 13,
+                      marginBottom: 6,
                     }}
                   >
-                    <Text
-                      style={{
-                        color: ink,
-                        fontSize: 12,
-                        fontWeight: '600',
-                      }}
-                    >
-                      {issueStatusLabel(status, t)}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
+                    {t('issue.type')}
+                  </Text>
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                    {issueTypes.map((it) => {
+                      const selected = !homeStat && typeIds.has(it.ID);
+                      return (
+                        <Pressable
+                          key={it.ID}
+                          onPress={() => toggleType(it.ID)}
+                          accessibilityRole="button"
+                          accessibilityState={{ selected }}
+                          style={{
+                            paddingHorizontal: 12,
+                            minHeight: 44,
+                            borderRadius: 999,
+                            backgroundColor: mixColors(
+                              tokens.textPrimary,
+                              tokens.bgSurface1,
+                              selected ? 14 : 6,
+                            ),
+                            justifyContent: 'center',
+                          }}
+                        >
+                          <Text
+                            style={{
+                              color: selected
+                                ? tokens.textPrimary
+                                : tokens.textSecondary,
+                              fontSize: 12,
+                              fontWeight: '600',
+                            }}
+                          >
+                            {issueTypeChipLabel(it.Name)}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                </View>
 
-            {(
-              [
-                {
-                  key: 'zone',
-                  title: t('issue.filterZone'),
-                  items: defectZones.map((z) => ({
-                    id: z.ID,
-                    label: locale === 'en' ? z.NameEN || z.NameTR : z.NameTR || z.NameEN,
-                    selected: !homeStat && defectZoneIds.has(z.ID),
-                    onPress: () => toggleDefectZone(z.ID),
-                  })),
-                },
-                {
-                  key: 'part',
-                  title: t('issue.filterPart'),
-                  items: defectParts.map((p) => ({
-                    id: p.ID,
-                    label: locale === 'en' ? p.NameEN || p.NameTR : p.NameTR || p.NameEN,
-                    selected: !homeStat && defectPartIds.has(p.ID),
-                    onPress: () => toggleDefectPart(p.ID),
-                  })),
-                },
-                {
-                  key: 'dtype',
-                  title: t('issue.filterDefectType'),
-                  items: defectTypes.map((ty) => ({
-                    id: ty.ID,
-                    label:
-                      locale === 'en' ? ty.NameEN || ty.NameTR : ty.NameTR || ty.NameEN,
-                    selected: !homeStat && defectTypeIds.has(ty.ID),
-                    onPress: () => toggleDefectType(ty.ID),
-                  })),
-                },
-              ] as const
-            ).map((section) => (
-              <View key={section.key} style={{ marginTop: 12 }}>
-                <Text
-                  style={{
-                    color: tokens.textSecondary,
-                    fontWeight: '600',
-                    fontSize: 13,
-                    marginBottom: 6,
-                  }}
-                >
-                  {section.title}
-                </Text>
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                  {section.items.map((chip) => (
-                    <Pressable
-                      key={chip.id}
-                      onPress={chip.onPress}
-                      accessibilityRole="button"
-                      accessibilityState={{ selected: chip.selected }}
-                      style={{
-                        paddingHorizontal: 12,
-                        minHeight: 44,
-                        borderRadius: 999,
-                        backgroundColor: mixColors(
-                          tokens.textPrimary,
-                          tokens.bgSurface1,
-                          chip.selected ? 14 : 6,
-                        ),
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <Text
-                        style={{
-                          color: chip.selected
-                            ? tokens.textPrimary
-                            : tokens.textSecondary,
-                          fontSize: 12,
-                          fontWeight: '600',
-                        }}
-                      >
-                        {chip.label}
-                      </Text>
-                    </Pressable>
-                  ))}
+                <View>
+                  <Text
+                    style={{
+                      color: tokens.textSecondary,
+                      fontWeight: '600',
+                      fontSize: 13,
+                      marginBottom: 6,
+                    }}
+                  >
+                    {t('issue.filterZone')}
+                  </Text>
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                    {defectZones.map((z) => {
+                      const selected = !homeStat && defectZoneIds.has(z.ID);
+                      const label =
+                        locale === 'en'
+                          ? z.NameEN || z.NameTR
+                          : z.NameTR || z.NameEN;
+                      return (
+                        <Pressable
+                          key={z.ID}
+                          onPress={() => toggleDefectZone(z.ID)}
+                          accessibilityRole="button"
+                          accessibilityState={{ selected }}
+                          style={{
+                            paddingHorizontal: 12,
+                            minHeight: 44,
+                            borderRadius: 999,
+                            backgroundColor: mixColors(
+                              tokens.textPrimary,
+                              tokens.bgSurface1,
+                              selected ? 14 : 6,
+                            ),
+                            justifyContent: 'center',
+                          }}
+                        >
+                          <Text
+                            style={{
+                              color: selected
+                                ? tokens.textPrimary
+                                : tokens.textSecondary,
+                              fontSize: 12,
+                              fontWeight: '600',
+                            }}
+                          >
+                            {label}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                </View>
+
+                <View>
+                  <Text
+                    style={{
+                      color: tokens.textSecondary,
+                      fontWeight: '600',
+                      fontSize: 13,
+                      marginBottom: 6,
+                    }}
+                  >
+                    {t('issue.filterPart')}
+                  </Text>
+                  <PartMultiSelectFilter
+                    parts={defectParts}
+                    selectedIds={defectPartIds}
+                    onChange={setDefectPartsSelection}
+                    zoneIds={defectZoneIds}
+                    disabled={Boolean(homeStat)}
+                  />
+                </View>
+
+                <View>
+                  <Text
+                    style={{
+                      color: tokens.textSecondary,
+                      fontWeight: '600',
+                      fontSize: 13,
+                      marginBottom: 6,
+                    }}
+                  >
+                    {t('issue.filterDefectType')}
+                  </Text>
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                    {defectTypes.map((ty) => {
+                      const selected = !homeStat && defectTypeIds.has(ty.ID);
+                      const label =
+                        locale === 'en'
+                          ? ty.NameEN || ty.NameTR
+                          : ty.NameTR || ty.NameEN;
+                      return (
+                        <Pressable
+                          key={ty.ID}
+                          onPress={() => toggleDefectType(ty.ID)}
+                          accessibilityRole="button"
+                          accessibilityState={{ selected }}
+                          style={{
+                            paddingHorizontal: 12,
+                            minHeight: 44,
+                            borderRadius: 999,
+                            backgroundColor: mixColors(
+                              tokens.textPrimary,
+                              tokens.bgSurface1,
+                              selected ? 14 : 6,
+                            ),
+                            justifyContent: 'center',
+                          }}
+                        >
+                          <Text
+                            style={{
+                              color: selected
+                                ? tokens.textPrimary
+                                : tokens.textSecondary,
+                              fontSize: 12,
+                              fontWeight: '600',
+                            }}
+                          >
+                            {label}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
                 </View>
               </View>
-            ))}
+            ) : null}
 
             {error ? <ErrorText>{error}</ErrorText> : null}
             {loading ? <Loading /> : null}
