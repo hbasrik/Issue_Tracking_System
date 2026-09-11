@@ -11,7 +11,7 @@ import {
   type IssueStatusHistoryEntry,
   type MediaAttachment,
 } from '../../lib/api';
-import { issueStationLabel, issueDefectSummary, reporterFallback } from '../../lib/issueDetailCopy';
+import { issueStationLabel, defectLabels, reporterFallback } from '../../lib/issueDetailCopy';
 import { issueStatusLabel } from '../../lib/issueStatus';
 import { printSection } from '../../lib/print';
 import { PrintButton, PrintHeader, PrintRoot } from './PrintRoot';
@@ -66,6 +66,7 @@ export function IssueListPrint({
               <th>{t('issue.id')}</th>
               <th>{t('issue.vin')}</th>
               <th>{t('issue.type')}</th>
+              <th>{t('issue.defectPart')}</th>
               <th>{t('severity.label')}</th>
               <th>{t('issue.status')}</th>
               <th>{t('issueDetail.reporter')}</th>
@@ -78,6 +79,7 @@ export function IssueListPrint({
                 <td>#{issue.ID}</td>
                 <td>{issue.VIN}</td>
                 <td>{issue.IssueTypeName || t('common.emDash')}</td>
+                <td>{defectLabels(issue, t, locale).listLine}</td>
                 <td>{severityLabel(issue.Severity, t)}</td>
                 <td>{issueStatusLabel(issue.Status, t)}</td>
                 <td>{issue.ReporterName || reporterFallback(t, issue.IssueReporterID)}</td>
@@ -156,18 +158,28 @@ export function IssueDetailPrint({ issue }: { issue: Issue }) {
           <p>
             <strong>{t('issueDetail.station')}:</strong> {issueStationLabel(issue)}
           </p>
-          <p>
-            <strong>{t('issue.defectPart')}:</strong>{' '}
-            {issueDefectSummary(issue, t, locale).part}
-          </p>
-          <p>
-            <strong>{t('issue.defectType')}:</strong>{' '}
-            {issueDefectSummary(issue, t, locale).type}
-          </p>
-          <p>
-            <strong>{t('issue.defectCode')}:</strong>{' '}
-            {issueDefectSummary(issue, t, locale).code}
-          </p>
+          {(() => {
+            const d = defectLabels(issue, t, locale);
+            return (
+              <>
+                <p>
+                  <strong>{t('issue.defectZone')}:</strong> {d.zone}
+                </p>
+                <p>
+                  <strong>{t('issue.defectPart')}:</strong> {d.part}
+                </p>
+                <p>
+                  <strong>{t('issue.defectType')}:</strong> {d.type}
+                </p>
+                <p>
+                  <strong>{t('issue.defectProcess')}:</strong> {d.process}
+                </p>
+                <p>
+                  <strong>{t('issue.defectCode')}:</strong> {d.code}
+                </p>
+              </>
+            );
+          })()}
           <p>
             <strong>{t('issueDetail.reporter')}:</strong>{' '}
             {issue.ReporterName || reporterFallback(t, issue.IssueReporterID)}

@@ -4,16 +4,20 @@ import {
   type MediaAttachment,
 } from './api';
 import { issueStatusLabel } from './issueStatus';
-import { issueDefectSummary } from './issueDetailCopy';
+import { defectLabels } from './issueDetailCopy';
 import type { Translate } from '../../../shared/i18n';
 
 const CSV_HEADERS = [
   'id',
   'vin',
   'issue_tipi',
+  'bolge',
   'parca',
   'kusur_tipi',
+  'sorumlu_surec',
   'hata_kodu',
+  'ozel_parca_adi',
+  'ozel_kusur_adi',
   'severity',
   'durum',
   'aciklama',
@@ -70,14 +74,18 @@ export function issueCsvRow(
   t: Translate,
 ): string[] {
   const approver = approverOf(issue);
-  const defect = issueDefectSummary(issue, t, 'tr');
+  const defect = defectLabels(issue, t, 'tr');
   return [
     String(issue.ID),
     issue.VIN ?? '',
     issue.IssueTypeName ?? '',
+    defect.zone,
     defect.part,
     defect.type,
+    defect.process,
     defect.code,
+    issue.CustomPartName?.trim() ?? '',
+    issue.CustomDefectName?.trim() ?? '',
     issue.Severity ?? '',
     issueStatusLabel(issue.Status, t),
     issue.Description ?? '',
