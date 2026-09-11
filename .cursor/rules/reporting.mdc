@@ -41,5 +41,12 @@ if a section does not apply, say so explicitly.
 
 ## 7. Destructive actions
 - Never delete or overwrite existing data to make a task work or to
-  make verification easier. If deletion seems necessary, stop and ask
-  first.
+  make verification easier. This includes user credentials, password
+  hashes, roles, permissions, and any field on a real user or vehicle
+  record — even if you intend to restore it afterwards.
+- If you need credentials to verify something, create a temporary test
+  user through the application's own user-creation flow and delete it
+  afterwards. Never modify an existing account.
+- If a destructive action seems unavoidable, stop and ask first.
+- Report any such action under "Destructive actions" — restoring
+  something afterwards does not make it non-destructive.
