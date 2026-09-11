@@ -1161,6 +1161,58 @@ export interface AnalysisDashboard {
     CurrentStatus: string;
     EOLStage: string;
   }[];
+  DefectByZone?: DefectNamedCount[];
+  DefectTopParts?: DefectNamedCount[];
+  DefectByType?: DefectNamedCount[];
+  DefectByProcess?: DefectNamedCount[];
+  DefectPartTypeTop?: DefectPartTypeCombo[];
+  DefectCoverage?: DefectClassificationCoverage;
+  DefectRecurrence?: DefectRecurrenceSummary;
+}
+
+export interface DefectNamedCount {
+  NameTR: string;
+  NameEN: string;
+  Code: string;
+  Count: number;
+}
+
+export interface DefectPartTypeCombo {
+  PartNameTR: string;
+  PartNameEN: string;
+  TypeNameTR: string;
+  TypeNameEN: string;
+  Count: number;
+}
+
+export interface DefectClassificationCoverage {
+  Total: number;
+  Classified: number;
+  Unclassified: number;
+  OtherPart: number;
+  OtherType: number;
+}
+
+export interface DefectRecurrenceCase {
+  VIN: string;
+  DefectCode: string;
+  Count: number;
+}
+
+export interface DefectRecurrenceHotspot {
+  PartNameTR: string;
+  PartNameEN: string;
+  TypeNameTR: string;
+  TypeNameEN: string;
+  RecurringIssueCount: number;
+}
+
+export interface DefectRecurrenceSummary {
+  Cases: DefectRecurrenceCase[];
+  Hotspots: DefectRecurrenceHotspot[];
+  RecurringIssueCount: number;
+  CodedIssueCount: number;
+  RecurrenceRatePct: number | null;
 }
 
 export interface AnalysisKPICards {
