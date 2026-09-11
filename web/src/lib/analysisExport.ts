@@ -249,5 +249,109 @@ export function buildAnalysisCsv(
     );
   }
 
+  const nameLocale = (tr: string, en: string) => tr || en;
+  const cov = dash.DefectCoverage;
+  if (cov && cov.Total > 0) {
+    lines.push(
+      ...section(t('analysis.defectCoverage'), [
+        row([t('analysis.defectClassified'), cov.Classified]),
+        row([t('analysis.defectUnclassified'), cov.Unclassified]),
+        row([t('analysis.defectOtherPartRate'), cov.OtherPart]),
+        row([t('analysis.defectOtherTypeRate'), cov.OtherType]),
+        row([t('analysis.total'), cov.Total]),
+      ]),
+    );
+  }
+
+  if (dash.DefectByZone?.length) {
+    lines.push(
+      ...section(t('analysis.defectByZone'), [
+        row([t('defects.colName'), t('defects.colCode'), t('analysis.total')]),
+        ...dash.DefectByZone.map((r) =>
+          row([nameLocale(r.NameTR, r.NameEN), r.Code, r.Count]),
+        ),
+      ]),
+    );
+  }
+
+  if (dash.DefectTopParts?.length) {
+    lines.push(
+      ...section(t('analysis.defectTopParts'), [
+        row([t('defects.colName'), t('defects.colCode'), t('analysis.total')]),
+        ...dash.DefectTopParts.map((r) =>
+          row([nameLocale(r.NameTR, r.NameEN), r.Code, r.Count]),
+        ),
+      ]),
+    );
+  }
+
+  if (dash.DefectByType?.length) {
+    lines.push(
+      ...section(t('analysis.defectByType'), [
+        row([t('defects.colName'), t('defects.colCode'), t('analysis.total')]),
+        ...dash.DefectByType.map((r) =>
+          row([nameLocale(r.NameTR, r.NameEN), r.Code, r.Count]),
+        ),
+      ]),
+    );
+  }
+
+  if (dash.DefectByProcess?.length) {
+    lines.push(
+      ...section(t('analysis.defectByProcess'), [
+        row([t('defects.colName'), t('defects.colCode'), t('analysis.total')]),
+        ...dash.DefectByProcess.map((r) =>
+          row([nameLocale(r.NameTR, r.NameEN), r.Code, r.Count]),
+        ),
+      ]),
+    );
+  }
+
+  if (dash.DefectPartTypeTop?.length) {
+    lines.push(
+      ...section(t('analysis.defectPartType'), [
+        row(['part', 'type', t('analysis.total')]),
+        ...dash.DefectPartTypeTop.map((r) =>
+          row([
+            nameLocale(r.PartNameTR, r.PartNameEN),
+            nameLocale(r.TypeNameTR, r.TypeNameEN),
+            r.Count,
+          ]),
+        ),
+      ]),
+    );
+  }
+
+  const rec = dash.DefectRecurrence;
+  if (rec && (rec.CodedIssueCount > 0 || rec.Cases?.length)) {
+    lines.push(
+      ...section(t('analysis.defectRecurrence'), [
+        row([
+          t('analysis.defectRecurrenceRate'),
+          rec.RecurrenceRatePct ?? '',
+        ]),
+        row([t('analysis.defectOccurrences'), rec.RecurringIssueCount]),
+        row(['coded', rec.CodedIssueCount]),
+        ...(rec.Cases ?? []).map((c) =>
+          row([c.VIN, c.DefectCode, c.Count]),
+        ),
+      ]),
+    );
+    if (rec.Hotspots?.length) {
+      lines.push(
+        ...section(t('analysis.defectRecurrenceHotspots'), [
+          row(['part', 'type', t('analysis.total')]),
+          ...rec.Hotspots.map((h) =>
+            row([
+              nameLocale(h.PartNameTR, h.PartNameEN),
+              nameLocale(h.TypeNameTR, h.TypeNameEN),
+              h.RecurringIssueCount,
+            ]),
+          ),
+        ]),
+      );
+    }
+  }
+
   return lines.join('\n');
 }
