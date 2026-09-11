@@ -209,3 +209,47 @@ func (s *server) handleIssueUndoApproval(w http.ResponseWriter, r *http.Request)
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"id": id, "status": domain.IssueStatusDone})
 }
+
+type updateClassificationRequest struct {
+	DefectPartID         *int   `json:"defect_part_id"`
+	DefectTypeID         *int   `json:"defect_type_id"`
+	ResponsibleProcessID *int   `json:"responsible_process_id"`
+	CustomPartName       string `json:"custom_part_name"`
+	CustomDefectName     string `json:"custom_defect_name"`
+}
+
+// handleIssueClassificationUpdate corrects or backfills defect classification.
+// Auth is ownership or quality/admin (checked in usecase). Closed issues allowed.
+func (s *server) handleIssueClassificationUpdate(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	if err != nil {
+		badRequest(w, "id must be an integer")
+		return
+	}
+	var req updateClassificationRequest
+	if err := decodeJSON(r, &req); err != nil {
+		badRequest(w, "invalid request body")
+		return
+	}
+	claims, _ := ClaimsFromContext(r.Context())
+	ctx, permissions, err := s.permissions.Resolve(r.Context())
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	issue, err := s.deps.Issues.UpdateClassification(ctx, usecase.UpdateClassificationInput{
+		IssueID:              id,
+		ActorID:              claims.UserID,
+		ActorPermissions:     permissions,
+		DefectPartID:         req.DefectPartID,
+		DefectTypeID:         req.DefectTypeID,
+		ResponsibleProcessID: req.ResponsibleProcessID,
+		CustomPartName:       req.CustomPartName,
+		CustomDefectName:     req.CustomDefectName,
+	})
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, issue)
+}

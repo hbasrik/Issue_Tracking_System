@@ -400,3 +400,59 @@ func (s *server) handleDefectCatalogActiveTypes(w http.ResponseWriter, r *http.R
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"items": out})
 }
+
+func (s *server) handleDefectCatalogActiveProcesses(w http.ResponseWriter, r *http.Request) {
+	items, err := s.deps.DefectCatalog.ListActiveProcesses(r.Context())
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"items": items})
+}
+
+func (s *server) handleDefectCatalogOtherUsage(w http.ResponseWriter, r *http.Request) {
+	report, err := s.deps.DefectCatalog.ListOtherUsage(r.Context())
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, report)
+}
+
+type promoteOtherBody struct {
+	Kind             string `json:"kind"`
+	CustomName       string `json:"custom_name"`
+	Code             string `json:"code"`
+	NameTR           string `json:"name_tr"`
+	NameEN           string `json:"name_en"`
+	ZoneID           int    `json:"zone_id"`
+	DefaultProcessID *int   `json:"default_process_id"`
+	SortOrder        int    `json:"sort_order"`
+	RebindIssues     bool   `json:"rebind_issues"`
+}
+
+func (s *server) handleDefectCatalogPromoteOther(w http.ResponseWriter, r *http.Request) {
+	var req promoteOtherBody
+	if err := decodeJSON(r, &req); err != nil {
+		badRequest(w, "invalid request body")
+		return
+	}
+	claims, _ := ClaimsFromContext(r.Context())
+	result, err := s.deps.DefectCatalog.PromoteOther(r.Context(), usecase.PromoteOtherInput{
+		Kind:             req.Kind,
+		CustomName:       req.CustomName,
+		Code:             req.Code,
+		NameTR:           req.NameTR,
+		NameEN:           req.NameEN,
+		ZoneID:           req.ZoneID,
+		DefaultProcessID: req.DefaultProcessID,
+		SortOrder:        req.SortOrder,
+		RebindIssues:     req.RebindIssues,
+		ActorID:          claims.UserID,
+	})
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusCreated, result)
+}

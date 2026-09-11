@@ -122,6 +122,25 @@ func (f *httpFakeIssueRepo) RevertApproval(_ context.Context, id int64) error {
 	}
 }
 
+func (f *httpFakeIssueRepo) UpdateClassification(
+	_ context.Context,
+	id int64,
+	partID, typeID, processID *int,
+	customPart, customDefect, defectCode string,
+) error {
+	issue, ok := f.issues[id]
+	if !ok {
+		return domain.ErrNotFound
+	}
+	issue.DefectPartID = partID
+	issue.DefectTypeID = typeID
+	issue.ResponsibleProcessID = processID
+	issue.CustomPartName = customPart
+	issue.CustomDefectName = customDefect
+	issue.DefectCode = defectCode
+	return nil
+}
+
 func (f *httpFakeIssueRepo) ListIssueTypes(_ context.Context) ([]domain.IssueType, error) {
 	return []domain.IssueType{}, nil
 }
@@ -164,6 +183,9 @@ func (httpStubCatalog) GetPart(_ context.Context, id int) (*domain.DefectPart, e
 }
 func (httpStubCatalog) GetType(_ context.Context, id int) (*domain.DefectType, error) {
 	return &domain.DefectType{ID: id, Code: "01", IsActive: true}, nil
+}
+func (httpStubCatalog) GetProcess(_ context.Context, id int) (*domain.DefectProcess, error) {
+	return &domain.DefectProcess{ID: id, Code: "WELD", IsActive: true}, nil
 }
 
 func newIssueRouter(issues repository.IssueRepository) (http.Handler, *auth.Issuer) {

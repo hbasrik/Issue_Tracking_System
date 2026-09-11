@@ -160,6 +160,7 @@ func NewRouter(deps Deps) http.Handler {
 				r.Get("/defect-catalog/zones", s.handleDefectCatalogActiveZones)
 				r.Get("/defect-catalog/parts", s.handleDefectCatalogActiveParts)
 				r.Get("/defect-catalog/types", s.handleDefectCatalogActiveTypes)
+				r.Get("/defect-catalog/processes", s.handleDefectCatalogActiveProcesses)
 			})
 
 			// Issue lifecycle. One route serves every transition, so the
@@ -167,6 +168,8 @@ func NewRouter(deps Deps) http.Handler {
 			// against the target status rather than here.
 			r.Patch("/issues/{id}/status", s.handleIssueStatus)
 			r.Post("/issues/{id}/undo-approval", s.handleIssueUndoApproval)
+			// Classification edit: ownership or quality/admin checked in usecase.
+			r.Patch("/issues/{id}/classification", s.handleIssueClassificationUpdate)
 
 			// Filtered Analysis tool.
 			r.Group(func(r chi.Router) {
@@ -217,6 +220,9 @@ func NewRouter(deps Deps) http.Handler {
 				r.Post("/defect-types/reorder", s.handleDefectTypeReorder)
 				r.Patch("/defect-types/{id}", s.handleDefectTypeUpdate)
 				r.Delete("/defect-types/{id}", s.handleDefectTypeDelete)
+
+				r.Get("/defect-catalog/other-usage", s.handleDefectCatalogOtherUsage)
+				r.Post("/defect-catalog/promote-other", s.handleDefectCatalogPromoteOther)
 			})
 
 			r.Group(func(r chi.Router) {
