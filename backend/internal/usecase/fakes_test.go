@@ -492,6 +492,25 @@ func (f *fakeIssueRepo) RevertApproval(_ context.Context, id int64) error {
 	}
 }
 
+func (f *fakeIssueRepo) UpdateClassification(
+	_ context.Context,
+	id int64,
+	partID, typeID, processID *int,
+	customPart, customDefect, defectCode string,
+) error {
+	issue, ok := f.issues[id]
+	if !ok {
+		return domain.ErrNotFound
+	}
+	issue.DefectPartID = partID
+	issue.DefectTypeID = typeID
+	issue.ResponsibleProcessID = processID
+	issue.CustomPartName = customPart
+	issue.CustomDefectName = customDefect
+	issue.DefectCode = defectCode
+	return nil
+}
+
 func (f *fakeIssueRepo) ListIssueTypes(_ context.Context) ([]domain.IssueType, error) {
 	return []domain.IssueType{
 		{ID: 1, Name: "Hata"},

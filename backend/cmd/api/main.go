@@ -74,7 +74,7 @@ func main() {
 		EOLReset:           eolReset,
 		ShipmentReadiness:  usecase.NewShipmentReadinessReader(vehicleRepo, checklists, issueRepo),
 		Media:              usecase.NewMediaUploader(mediaRepo, mediaStore),
-		DefectCatalog:      usecase.NewDefectCatalogAdmin(defectCatalogRepo),
+		DefectCatalog:      usecase.NewDefectCatalogAdmin(defectCatalogRepo, issueRepo, auditRepo, uow),
 		CORSAllowedOrigins: cfg.CORSAllowedOrigins,
 		AppEnv:             cfg.AppEnv,
 		UploadDir:          cfg.UploadDir,

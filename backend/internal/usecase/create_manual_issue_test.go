@@ -162,6 +162,11 @@ func (f *createIssueFakeRepo) UpdateStatus(context.Context, int64, domain.IssueS
 func (f *createIssueFakeRepo) RevertApproval(context.Context, int64) error {
 	return nil
 }
+func (f *createIssueFakeRepo) UpdateClassification(
+	context.Context, int64, *int, *int, *int, string, string, string,
+) error {
+	return nil
+}
 func (f *createIssueFakeRepo) ListIssueTypes(context.Context) ([]domain.IssueType, error) {
 	return nil, nil
 }
@@ -208,5 +213,8 @@ func (createIssueStubCatalog) GetPart(_ context.Context, id int) (*domain.Defect
 func (createIssueStubCatalog) GetType(_ context.Context, id int) (*domain.DefectType, error) {
 	pid := 1
 	return &domain.DefectType{ID: id, Code: "01", NameTR: "Boşluk", NameEN: "Gap", DefaultProcessID: &pid, IsActive: true}, nil
+}
+func (createIssueStubCatalog) GetProcess(_ context.Context, id int) (*domain.DefectProcess, error) {
+	return &domain.DefectProcess{ID: id, Code: "WELD", NameTR: "Kaynak", NameEN: "Weld", IsActive: true}, nil
 }
 

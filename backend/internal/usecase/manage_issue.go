@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/karea/backend/internal/domain"
@@ -17,6 +18,7 @@ type vehicleByVIN interface {
 type defectByID interface {
 	GetPart(ctx context.Context, id int) (*domain.DefectPart, error)
 	GetType(ctx context.Context, id int) (*domain.DefectType, error)
+	GetProcess(ctx context.Context, id int) (*domain.DefectProcess, error)
 }
 
 // IssueManager handles the issue lifecycle: OPEN -> IN_PROGRESS -> DONE ->
@@ -233,6 +235,169 @@ func (m *IssueManager) ListStatusHistory(ctx context.Context, id int64) ([]domai
 	}
 	return items, nil
 }
+
+// UpdateClassificationInput corrects or backfills defect classification on an
+// existing issue (including legacy unclassified rows).
+type UpdateClassificationInput struct {
+	IssueID              int64
+	ActorID              int
+	ActorPermissions     domain.PermissionSet
+	DefectPartID         *int
+	DefectTypeID         *int
+	ResponsibleProcessID *int
+	CustomPartName       string
+	CustomDefectName     string
+}
+
+// UpdateClassification validates catalogue picks, recomputes defect_code, and
+// writes an ISSUE_CLASSIFICATION_CHANGE audit row with field-level before/after.
+// Closed issues remain editable (labelling, not a quality decision).
+func (m *IssueManager) UpdateClassification(ctx context.Context, in UpdateClassificationInput) (*domain.Issue, error) {
+	issue, err := m.issues.GetByID(ctx, in.IssueID)
+	if err != nil {
+		return nil, err
+	}
+	if !domain.CanEditIssueClassification(issue, in.ActorID, in.ActorPermissions) {
+		return nil, domain.ErrForbidden
+	}
+	if in.DefectPartID == nil {
+		return nil, domain.ErrDefectPartRequired
+	}
+	if in.DefectTypeID == nil {
+		return nil, domain.ErrDefectTypeRequired
+	}
+	if in.ResponsibleProcessID == nil {
+		return nil, domain.ErrDefectProcessRequired
+	}
+
+	part, err := m.catalog.GetPart(ctx, *in.DefectPartID)
+	if err != nil {
+		return nil, err
+	}
+	if !part.IsActive {
+		return nil, domain.ErrDefectCatalogueInactive
+	}
+	typ, err := m.catalog.GetType(ctx, *in.DefectTypeID)
+	if err != nil {
+		return nil, err
+	}
+	if !typ.IsActive {
+		return nil, domain.ErrDefectCatalogueInactive
+	}
+	proc, err := m.catalog.GetProcess(ctx, *in.ResponsibleProcessID)
+	if err != nil {
+		return nil, err
+	}
+	if !proc.IsActive {
+		return nil, domain.ErrDefectProcessInactive
+	}
+
+	customPart := strings.TrimSpace(in.CustomPartName)
+	customDefect := strings.TrimSpace(in.CustomDefectName)
+	if domain.IsOtherPart(part.Code) {
+		if customPart == "" {
+			return nil, domain.ErrCustomPartNameRequired
+		}
+	} else {
+		customPart = ""
+	}
+	if domain.IsOtherType(typ.Code) {
+		if customDefect == "" {
+			return nil, domain.ErrCustomDefectNameRequired
+		}
+	} else {
+		customDefect = ""
+	}
+
+	code := domain.FormatDefectCode(part.Code, typ.Code)
+	partID := part.ID
+	typeID := typ.ID
+	processID := proc.ID
+
+	oldSummary := classificationAuditSummary(issue)
+	fields := classificationFieldDiffs(issue, &partID, &typeID, &processID, customPart, customDefect, code)
+
+	performedBy := in.ActorID
+	err = m.uow.WithinTx(ctx, func(txCtx context.Context) error {
+		if err := m.issues.UpdateClassification(
+			txCtx, in.IssueID, &partID, &typeID, &processID, customPart, customDefect, code,
+		); err != nil {
+			return err
+		}
+		return m.audit.Append(txCtx, domain.AuditLog{
+			VIN:         issue.VIN,
+			EventType:   domain.AuditEventIssueClassification,
+			OldValue:    oldSummary,
+			NewValue:    classificationAuditSummaryFrom(&partID, &typeID, &processID, customPart, customDefect, code),
+			StationID:   issue.StationID,
+			PerformedBy: &performedBy,
+			Metadata: map[string]any{
+				"issue_id": in.IssueID,
+				"fields":   fields,
+			},
+		})
+	})
+	if err != nil {
+		return nil, err
+	}
+	return m.issues.GetByID(ctx, in.IssueID)
+}
+
+func classificationAuditSummary(issue *domain.Issue) string {
+	return classificationAuditSummaryFrom(
+		issue.DefectPartID,
+		issue.DefectTypeID,
+		issue.ResponsibleProcessID,
+		issue.CustomPartName,
+		issue.CustomDefectName,
+		issue.DefectCode,
+	)
+}
+
+func classificationAuditSummaryFrom(partID, typeID, processID *int, customPart, customDefect, code string) string {
+	pid, tid, prid := "null", "null", "null"
+	if partID != nil {
+		pid = fmt.Sprintf("%d", *partID)
+	}
+	if typeID != nil {
+		tid = fmt.Sprintf("%d", *typeID)
+	}
+	if processID != nil {
+		prid = fmt.Sprintf("%d", *processID)
+	}
+	return fmt.Sprintf(
+		"code=%s|part=%s|type=%s|process=%s|custom_part=%s|custom_defect=%s",
+		strings.TrimSpace(code), pid, tid, prid, strings.TrimSpace(customPart), strings.TrimSpace(customDefect),
+	)
+}
+
+func classificationFieldDiffs(
+	issue *domain.Issue,
+	partID, typeID, processID *int,
+	customPart, customDefect, code string,
+) map[string]any {
+	out := map[string]any{}
+	add := func(key string, from, to any) {
+		if fmt.Sprint(from) != fmt.Sprint(to) {
+			out[key] = map[string]any{"from": from, "to": to}
+		}
+	}
+	add("defect_part_id", ptrOrNil(issue.DefectPartID), ptrOrNil(partID))
+	add("defect_type_id", ptrOrNil(issue.DefectTypeID), ptrOrNil(typeID))
+	add("responsible_process_id", ptrOrNil(issue.ResponsibleProcessID), ptrOrNil(processID))
+	add("custom_part_name", strings.TrimSpace(issue.CustomPartName), strings.TrimSpace(customPart))
+	add("custom_defect_name", strings.TrimSpace(issue.CustomDefectName), strings.TrimSpace(customDefect))
+	add("defect_code", strings.TrimSpace(issue.DefectCode), strings.TrimSpace(code))
+	return out
+}
+
+func ptrOrNil(p *int) any {
+	if p == nil {
+		return nil
+	}
+	return *p
+}
+
 // TransitionStatus moves an issue to a new status, enforcing both the valid
 // state machine and permission-based authorization. It records an
 // ISSUE_STATUS_CHANGE audit entry attributed to actorID so every state change
