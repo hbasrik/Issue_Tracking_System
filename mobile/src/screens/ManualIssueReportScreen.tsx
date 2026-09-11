@@ -12,6 +12,8 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
   api,
+  type DefectPart,
+  type DefectType,
   type IssueType,
   type LocalFile,
   type Station,
@@ -21,6 +23,12 @@ import { VinSearchBox } from '../components/VinSearchBox';
 import {
   DismissKeyboardScrollView,
 } from '../components/keyboard';
+import {
+  DefectClassificationFields,
+  defectClassificationValidationMessage,
+  isDefectClassificationComplete,
+  type DefectClassificationState,
+} from '../components/DefectClassificationFields';
 import { prepareUploadImage } from '../lib/prepareUploadImage';
 import {
   Badge,
@@ -46,6 +54,14 @@ import type { RootStackParamList } from '../navigation/types';
 
 const SEVERITIES: SeverityLevel[] = ['CRITICAL', 'MEDIUM', 'LOW'];
 
+const EMPTY_CLASSIFICATION: DefectClassificationState = {
+  zoneId: null,
+  partId: null,
+  typeId: null,
+  customPartName: '',
+  customDefectName: '',
+};
+
 /**
  * Standalone Issue Bildir — MANUAL source, not tied to a station step or
  * checklist item. Every field (including photo) is required before submit.
@@ -54,14 +70,18 @@ export default function ManualIssueReportScreen() {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { tokens } = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
 
   const [issueTypes, setIssueTypes] = useState<IssueType[]>([]);
   const [stations, setStations] = useState<Station[]>([]);
+  const [defectParts, setDefectParts] = useState<DefectPart[]>([]);
+  const [defectTypes, setDefectTypes] = useState<DefectType[]>([]);
   const [issueTypeId, setIssueTypeId] = useState<number | null>(null);
   const [severity, setSeverity] = useState<SeverityLevel | null>(null);
   const [stationId, setStationId] = useState<number | null>(null);
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
+  const [classification, setClassification] =
+    useState<DefectClassificationState>(EMPTY_CLASSIFICATION);
   const [vinPickerOpen, setVinPickerOpen] = useState(false);
   const [stationPickerOpen, setStationPickerOpen] = useState(false);
   const [description, setDescription] = useState('');
@@ -69,6 +89,14 @@ export default function ManualIssueReportScreen() {
   const [createdIssueId, setCreatedIssueId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  const stationRequired = vehicle?.CurrentGlobalStatus === 'IN_PRODUCTION';
+
+  useEffect(() => {
+    if (!stationRequired) {
+      setStationId(null);
+    }
+  }, [stationRequired]);
 
   useEffect(() => {
     let cancelled = false;
@@ -99,24 +127,54 @@ export default function ManualIssueReportScreen() {
   const selectedStation = stations.find((s) => s.ID === stationId) ?? null;
   const selectedType = issueTypes.find((it) => it.ID === issueTypeId) ?? null;
 
+  const classificationComplete = isDefectClassificationComplete(
+    classification,
+    defectParts,
+    defectTypes,
+  );
+
   const canSubmit =
     issueTypeId != null &&
     severity != null &&
-    stationId != null &&
+    (!stationRequired || stationId != null) &&
     vehicle != null &&
+    classificationComplete &&
     description.trim().length > 0 &&
     photo != null &&
     !busy;
 
   const validationMessage = useCallback((): string | null => {
-    if (issueTypeId == null) return t('report.typeRequired');
-    if (severity == null) return t('report.severityRequired');
-    if (stationId == null) return t('report.stationRequired');
     if (vehicle == null) return t('report.vinRequired');
+    if (stationRequired && stationId == null) return t('report.stationRequired');
+    const classMsg = defectClassificationValidationMessage(
+      classification,
+      defectParts,
+      defectTypes,
+      t,
+    );
+    if (classMsg) return classMsg;
+    if (severity == null) return t('report.severityRequired');
+    if (issueTypeId == null) return t('report.typeRequired');
     if (!description.trim()) return t('report.descRequired');
     if (photo == null) return t('report.photoRequired');
     return null;
-  }, [issueTypeId, severity, stationId, vehicle, description, photo, t]);
+  }, [
+    issueTypeId,
+    severity,
+    stationRequired,
+    stationId,
+    vehicle,
+    classification,
+    defectParts,
+    defectTypes,
+    description,
+    photo,
+    t,
+  ]);
+
+  function patchClassification(patch: Partial<DefectClassificationState>) {
+    setClassification((prev) => ({ ...prev, ...patch }));
+  }
 
   async function pickFromLibrary() {
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -184,7 +242,15 @@ export default function ManualIssueReportScreen() {
       setError(msg);
       return;
     }
-    if (!vehicle || !severity || stationId == null || issueTypeId == null || !photo) {
+    if (
+      !vehicle ||
+      !severity ||
+      (stationRequired && stationId == null) ||
+      issueTypeId == null ||
+      !photo ||
+      classification.partId == null ||
+      classification.typeId == null
+    ) {
       return;
     }
 
@@ -192,14 +258,25 @@ export default function ManualIssueReportScreen() {
     try {
       let issueId = createdIssueId;
       if (issueId == null) {
-        const issue = await api.createIssue({
+        const body: Parameters<typeof api.createIssue>[0] = {
           vin: vehicle.VIN,
           source_type: 'MANUAL',
-          station_id: stationId,
           issue_type_id: issueTypeId,
           severity,
           description: description.trim(),
-        });
+          defect_part_id: classification.partId,
+          defect_type_id: classification.typeId,
+        };
+        if (stationRequired && stationId != null) {
+          body.station_id = stationId;
+        }
+        if (classification.customPartName.trim()) {
+          body.custom_part_name = classification.customPartName.trim();
+        }
+        if (classification.customDefectName.trim()) {
+          body.custom_defect_name = classification.customDefectName.trim();
+        }
+        const issue = await api.createIssue(body);
         issueId = issue.ID;
         setCreatedIssueId(issueId);
       }
@@ -218,6 +295,107 @@ export default function ManualIssueReportScreen() {
       <DismissKeyboardScrollView contentContainerStyle={{ padding: 16, paddingBottom: 48 }}>
         <Title>{t('nav.reportIssue')}</Title>
         <Subtitle>{t('report.manualSubtitle')}</Subtitle>
+
+        <Text style={labelStyle(tokens)}>{t('issue.vin')} *</Text>
+        <Pressable
+          onPress={() => setVinPickerOpen(true)}
+          style={{
+            marginTop: 8,
+            minHeight: 44,
+            borderRadius: 10,
+            borderWidth: 1,
+            borderColor: tokens.border,
+            backgroundColor: tokens.bgSurface1,
+            paddingHorizontal: 12,
+            justifyContent: 'center',
+          }}
+        >
+          {vehicle ? (
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+              <Badge label={`…${vehicle.VIN.slice(-5)}`} color={tokens.accent} />
+              <Text style={{ color: tokens.textSecondary, fontSize: 13 }}>
+                {vehicle.VIN}
+              </Text>
+            </View>
+          ) : (
+            <Text style={{ color: tokens.textSecondary }}>{t('report.pickVehicle')}</Text>
+          )}
+        </Pressable>
+
+        {stationRequired ? (
+          <>
+            <Text style={labelStyle(tokens)}>{t('issueDetail.station')} *</Text>
+            <Pressable
+              onPress={() => setStationPickerOpen(true)}
+              style={{
+                marginTop: 8,
+                minHeight: 44,
+                borderRadius: 10,
+                borderWidth: 1,
+                borderColor: tokens.border,
+                backgroundColor: tokens.bgSurface1,
+                paddingHorizontal: 12,
+                justifyContent: 'center',
+              }}
+            >
+              <Text style={{ color: selectedStation ? tokens.textPrimary : tokens.textSecondary }}>
+                {selectedStation
+                  ? `${selectedStation.SequenceNo}. ${selectedStation.Name}`
+                  : t('report.pickStation')}
+              </Text>
+            </Pressable>
+          </>
+        ) : null}
+
+        <DefectClassificationFields
+          zoneId={classification.zoneId}
+          partId={classification.partId}
+          typeId={classification.typeId}
+          customPartName={classification.customPartName}
+          customDefectName={classification.customDefectName}
+          onChange={patchClassification}
+          locale={locale}
+          onCatalogLoaded={(parts, types) => {
+            setDefectParts(parts);
+            setDefectTypes(types);
+          }}
+        />
+
+        <Text style={labelStyle(tokens)}>{t('severity.label')} *</Text>
+        <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
+          {SEVERITIES.map((s) => {
+            const selected = severity === s;
+            const color = severityFillColor(s);
+            return (
+              <Pressable
+                key={s}
+                onPress={() => setSeverity(s)}
+                style={{
+                  flex: 1,
+                  minHeight: 44,
+                  borderRadius: 10,
+                  borderWidth: 1.5,
+                  borderColor: selected ? color : tokens.border,
+                  backgroundColor: selected ? color + '33' : tokens.bgSurface1,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 4,
+                }}
+              >
+                <SeverityIndicator severity={s} />
+                <Text
+                  style={{
+                    color: selected ? color : tokens.textSecondary,
+                    fontWeight: '600',
+                    fontSize: 11,
+                  }}
+                >
+                  {severityLabel(s, t)}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
 
         <Text style={labelStyle(tokens)}>{t('issue.type')} *</Text>
         <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
@@ -258,89 +436,6 @@ export default function ManualIssueReportScreen() {
         {issueTypes.length === 0 ? (
           <Subtitle>{t('report.typesLoading')}</Subtitle>
         ) : null}
-
-        <Text style={labelStyle(tokens)}>{t('severity.label')} *</Text>
-        <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
-          {SEVERITIES.map((s) => {
-            const selected = severity === s;
-            const color = severityFillColor(s);
-            return (
-              <Pressable
-                key={s}
-                onPress={() => setSeverity(s)}
-                style={{
-                  flex: 1,
-                  minHeight: 44,
-                  borderRadius: 10,
-                  borderWidth: 1.5,
-                  borderColor: selected ? color : tokens.border,
-                  backgroundColor: selected ? color + '33' : tokens.bgSurface1,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 4,
-                }}
-              >
-                <SeverityIndicator severity={s} />
-                <Text
-                  style={{
-                    color: selected ? color : tokens.textSecondary,
-                    fontWeight: '600',
-                    fontSize: 11,
-                  }}
-                >
-                  {severityLabel(s, t)}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-
-        <Text style={labelStyle(tokens)}>{t('issueDetail.station')} *</Text>
-        <Pressable
-          onPress={() => setStationPickerOpen(true)}
-          style={{
-            marginTop: 8,
-            minHeight: 44,
-            borderRadius: 10,
-            borderWidth: 1,
-            borderColor: tokens.border,
-            backgroundColor: tokens.bgSurface1,
-            paddingHorizontal: 12,
-            justifyContent: 'center',
-          }}
-        >
-          <Text style={{ color: selectedStation ? tokens.textPrimary : tokens.textSecondary }}>
-            {selectedStation
-              ? `${selectedStation.SequenceNo}. ${selectedStation.Name}`
-              : t('report.pickStation')}
-          </Text>
-        </Pressable>
-
-        <Text style={labelStyle(tokens)}>{t('issue.vin')} *</Text>
-        <Pressable
-          onPress={() => setVinPickerOpen(true)}
-          style={{
-            marginTop: 8,
-            minHeight: 44,
-            borderRadius: 10,
-            borderWidth: 1,
-            borderColor: tokens.border,
-            backgroundColor: tokens.bgSurface1,
-            paddingHorizontal: 12,
-            justifyContent: 'center',
-          }}
-        >
-          {vehicle ? (
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
-              <Badge label={`…${vehicle.VIN.slice(-5)}`} color={tokens.accent} />
-              <Text style={{ color: tokens.textSecondary, fontSize: 13 }}>
-                {vehicle.VIN}
-              </Text>
-            </View>
-          ) : (
-            <Text style={{ color: tokens.textSecondary }}>{t('report.pickVehicle')}</Text>
-          )}
-        </Pressable>
 
         <Text style={labelStyle(tokens)}>{t('issueDetail.descriptionStar')}</Text>
         <AppTextInput

@@ -195,6 +195,38 @@ export interface EOLWorkflowView {
   branch_open_issue_count_at_shipment: number | null;
 }
 
+export interface DefectZone {
+  ID: number;
+  Code: string;
+  NameTR: string;
+  NameEN: string;
+  SortOrder?: number;
+  IsActive: boolean;
+}
+
+export interface DefectPart {
+  ID: number;
+  ZoneID: number;
+  Code: string;
+  NameTR: string;
+  NameEN: string;
+  SortOrder?: number;
+  IsActive: boolean;
+  ZoneCode?: string;
+  ZoneNameTR?: string;
+  ZoneNameEN?: string;
+}
+
+export interface DefectType {
+  ID: number;
+  Code: string;
+  NameTR: string;
+  NameEN: string;
+  DefaultProcessID?: number | null;
+  SortOrder?: number;
+  IsActive: boolean;
+}
+
 export interface Issue {
   ID: number;
   VIN: string;
@@ -220,6 +252,17 @@ export interface Issue {
   IssueTypeID?: number | null;
   IssueTypeName?: string;
   StationName?: string;
+  DefectPartID?: number | null;
+  DefectTypeID?: number | null;
+  DefectCode?: string;
+  CustomPartName?: string;
+  CustomDefectName?: string;
+  DefectPartNameTR?: string;
+  DefectPartNameEN?: string;
+  DefectTypeNameTR?: string;
+  DefectTypeNameEN?: string;
+  DefectZoneNameTR?: string;
+  DefectZoneNameEN?: string;
   /** Earliest ISSUE media attachment storage_path, when present. */
   ReportPhotoPath?: string;
 }
@@ -442,11 +485,28 @@ export const api = {
     severity: string;
     description: string;
     picture_url?: string;
+    defect_part_id?: number;
+    defect_type_id?: number;
+    custom_part_name?: string;
+    custom_defect_name?: string;
   }) {
     return request<Issue>('/issues', {
       method: 'POST',
       body: JSON.stringify(body),
     });
+  },
+
+  listDefectCatalogZones() {
+    return request<{ items: DefectZone[] }>('/defect-catalog/zones');
+  },
+
+  listDefectCatalogParts(zoneId?: number) {
+    const q = zoneId != null ? `?zone_id=${zoneId}` : '';
+    return request<{ items: DefectPart[] }>(`/defect-catalog/parts${q}`);
+  },
+
+  listDefectCatalogTypes() {
+    return request<{ items: DefectType[] }>('/defect-catalog/types');
   },
 
   listIssueTypes() {

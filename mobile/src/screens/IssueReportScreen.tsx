@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import {
   Pressable,
   Text,
@@ -10,7 +10,7 @@ import {
   useRoute,
   type RouteProp,
 } from '@react-navigation/native';
-import { api, type LocalFile } from '../api/client';
+import { api, type DefectPart, type DefectType, type LocalFile } from '../api/client';
 import {
   Badge,
   Card,
@@ -22,6 +22,12 @@ import {
   Title,
   AppTextInput,
 } from '../components/ui';
+import {
+  DefectClassificationFields,
+  defectClassificationValidationMessage,
+  isDefectClassificationComplete,
+  type DefectClassificationState,
+} from '../components/DefectClassificationFields';
 import {
   SeverityIndicator,
   severityFillColor,
@@ -41,6 +47,14 @@ import { formatDateTime } from '../../../shared/i18n';
 
 const SEVERITIES: SeverityLevel[] = ['CRITICAL', 'MEDIUM', 'LOW'];
 
+const EMPTY_CLASSIFICATION: DefectClassificationState = {
+  zoneId: null,
+  partId: null,
+  typeId: null,
+  customPartName: '',
+  customDefectName: '',
+};
+
 /** Issue girme formu — §3.3. Soft-warning: after save, return to station screen (no block). */
 export default function IssueReportScreen() {
   const route = useRoute<RouteProp<RootStackParamList, 'IssueReport'>>();
@@ -52,10 +66,43 @@ export default function IssueReportScreen() {
 
   const [description, setDescription] = useState('');
   const [severity, setSeverity] = useState<'CRITICAL' | 'MEDIUM' | 'LOW' | null>(null);
+  const [classification, setClassification] =
+    useState<DefectClassificationState>(EMPTY_CLASSIFICATION);
+  const [defectParts, setDefectParts] = useState<DefectPart[]>([]);
+  const [defectTypes, setDefectTypes] = useState<DefectType[]>([]);
   const [photo, setPhoto] = useState<LocalFile | null>(null);
   const [createdIssueId, setCreatedIssueId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  const classificationComplete = isDefectClassificationComplete(
+    classification,
+    defectParts,
+    defectTypes,
+  );
+
+  const canSubmit =
+    description.trim().length > 0 &&
+    severity != null &&
+    classificationComplete &&
+    !busy;
+
+  function patchClassification(patch: Partial<DefectClassificationState>) {
+    setClassification((prev) => ({ ...prev, ...patch }));
+  }
+
+  const validationMessage = useCallback((): string | null => {
+    const classMsg = defectClassificationValidationMessage(
+      classification,
+      defectParts,
+      defectTypes,
+      t,
+    );
+    if (classMsg) return classMsg;
+    if (!description.trim()) return t('report.descRequired');
+    if (!severity) return t('report.severityRequired');
+    return null;
+  }, [classification, defectParts, defectTypes, description, severity, t]);
 
   async function pickPhoto() {
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -95,26 +142,39 @@ export default function IssueReportScreen() {
 
   async function submit() {
     setError(null);
-    if (!description.trim()) {
-      setError(t('report.descRequired'));
+    const msg = validationMessage();
+    if (msg) {
+      setError(msg);
       return;
     }
-    if (!severity) {
-      setError(t('report.severityRequired'));
+    if (
+      !severity ||
+      classification.partId == null ||
+      classification.typeId == null
+    ) {
       return;
     }
     setBusy(true);
     try {
       let issueId = createdIssueId;
       if (issueId == null) {
-        const issue = await api.createIssue({
+        const body: Parameters<typeof api.createIssue>[0] = {
           vin,
           source_type: 'STATION_STEP',
           source_station_step_id: stationStepId,
           station_id: stationId,
           severity,
           description: description.trim(),
-        });
+          defect_part_id: classification.partId,
+          defect_type_id: classification.typeId,
+        };
+        if (classification.customPartName.trim()) {
+          body.custom_part_name = classification.customPartName.trim();
+        }
+        if (classification.customDefectName.trim()) {
+          body.custom_defect_name = classification.customDefectName.trim();
+        }
+        const issue = await api.createIssue(body);
         issueId = issue.ID;
         setCreatedIssueId(issueId);
       }
@@ -146,6 +206,20 @@ export default function IssueReportScreen() {
             {formatDateTime(new Date().toISOString(), locale)}
           </Text>
         </Card>
+
+        <DefectClassificationFields
+          zoneId={classification.zoneId}
+          partId={classification.partId}
+          typeId={classification.typeId}
+          customPartName={classification.customPartName}
+          customDefectName={classification.customDefectName}
+          onChange={patchClassification}
+          locale={locale}
+          onCatalogLoaded={(parts, types) => {
+            setDefectParts(parts);
+            setDefectTypes(types);
+          }}
+        />
 
         <Text style={{ color: tokens.textSecondary, marginTop: 16, fontSize: 13 }}>
           {t('issueDetail.descriptionStar')}
@@ -230,7 +304,7 @@ export default function IssueReportScreen() {
                   : t('report.saveContinue')
             }
             onPress={submit}
-            disabled={busy}
+            disabled={busy || (createdIssueId == null ? !canSubmit : false)}
           />
         </View>
         {createdIssueId != null ? (
