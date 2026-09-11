@@ -294,6 +294,67 @@ type AnalysisDashboard struct {
 	AvgHoursToBranchShip *float64
 	EOLStageWait         []StageWaitHours
 	BranchShippedList    []BranchShippedVehicle
+
+	// Defect catalogue breakdowns (Tour D) — honor the same issue filter window.
+	DefectByZone       []DefectNamedCount
+	DefectTopParts     []DefectNamedCount
+	DefectByType       []DefectNamedCount
+	DefectByProcess    []DefectNamedCount
+	DefectPartTypeTop  []DefectPartTypeCombo
+	DefectCoverage     DefectClassificationCoverage
+	DefectRecurrence   DefectRecurrenceSummary
+}
+
+// DefectNamedCount is one catalogue label with an issue count in the window.
+type DefectNamedCount struct {
+	NameTR string
+	NameEN string
+	Code   string
+	Count  int64
+}
+
+// DefectPartTypeCombo is a part × defect-type pair ranked by frequency.
+type DefectPartTypeCombo struct {
+	PartNameTR string
+	PartNameEN string
+	TypeNameTR string
+	TypeNameEN string
+	Count      int64
+}
+
+// DefectClassificationCoverage is how many issues in the window carry catalogue
+// labels (legacy rows stay Unclassified). Other* counts use the catch-all codes.
+type DefectClassificationCoverage struct {
+	Total        int64
+	Classified   int64
+	Unclassified int64
+	OtherPart    int64
+	OtherType    int64
+}
+
+// DefectRecurrenceCase is one vehicle + defect_code pair that appeared ≥2 times.
+type DefectRecurrenceCase struct {
+	VIN        string
+	DefectCode string
+	Count      int64
+}
+
+// DefectRecurrenceHotspot is a part × type pair among recurring coded issues.
+type DefectRecurrenceHotspot struct {
+	PartNameTR          string
+	PartNameEN          string
+	TypeNameTR          string
+	TypeNameEN          string
+	RecurringIssueCount int64
+}
+
+// DefectRecurrenceSummary is a heuristic repeat signal (same VIN + same code).
+type DefectRecurrenceSummary struct {
+	Cases               []DefectRecurrenceCase
+	Hotspots            []DefectRecurrenceHotspot
+	RecurringIssueCount int64
+	CodedIssueCount     int64
+	RecurrenceRatePct   *float64
 }
 
 // AnalysisKPICards is the redesigned Analysis headline strip (real counts only).
