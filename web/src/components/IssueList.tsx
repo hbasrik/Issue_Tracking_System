@@ -18,7 +18,7 @@ import { VehicleIdentity } from './VehicleIdentity';
 import { DataCard, DataCardField } from './DataCard';
 import { IssueStatusHistory } from './IssueStatusHistory';
 import { SectionHeading } from './SectionHeading';
-import { issueStationLabel, issueDefectSummary, reporterFallback } from '../lib/issueDetailCopy';
+import { issueStationLabel, defectLabels, reporterFallback } from '../lib/issueDetailCopy';
 import { IssueDetailPrint } from './print/IssuePrint';
 import { useConfirm } from './ConfirmDialog';
 import { useApprovalUndo } from './ApprovalUndoToast';
@@ -95,6 +95,9 @@ function IssueCardSummary({
         <DataCardField label={t('issueDetail.reporter')}>
           {issue.ReporterName || reporterFallback(t, issue.IssueReporterID)}
         </DataCardField>
+        <p className="text-[13px] text-[var(--text-secondary)]">
+          {defectLabels(issue, t, locale).listLine}
+        </p>
       </div>
     </div>
   );
@@ -104,31 +107,39 @@ function IssueCardSummary({
 function IssueInfoFields({ issue }: { issue: Issue }) {
   const { t, locale } = useI18n();
   const localeTag = locale === 'en' ? 'en-GB' : 'tr-TR';
-  const defect = issueDefectSummary(issue, t, locale);
-  const rows: [string, string][] = [
+  const defect = defectLabels(issue, t, locale);
+  const rows: [string, string, boolean?][] = [
     [
       t('issueDetail.reporter'),
       issue.ReporterName || reporterFallback(t, issue.IssueReporterID),
     ],
     [t('issueDetail.issueType'), issue.IssueTypeName || t('common.emDash')],
-    [t('issue.defectPart'), defect.part],
-    [t('issue.defectType'), defect.type],
-    [t('issue.defectCode'), defect.code],
     [t('issueDetail.station'), issueStationLabel(issue)],
     [
       t('issueDetail.reportedAt'),
       formatIssueCreatedAt(issue.CreatedAt || issue.IssueDate, localeTag),
     ],
+    [t('issue.defectZone'), defect.zone],
+    [t('issue.defectPart'), defect.part],
+    [t('issue.defectType'), defect.type],
+    [t('issue.defectProcess'), defect.process],
+    [t('issue.defectCode'), defect.code, true],
   ];
   if (issue.SolutionDescription?.trim()) {
     rows.push([t('issueDetail.solution'), issue.SolutionDescription.trim()]);
   }
   return (
     <div className="flex flex-col gap-[var(--space-4)] sm:grid sm:grid-cols-[minmax(8.5rem,auto)_1fr] sm:gap-x-[var(--space-6)] sm:gap-y-[var(--space-3)]">
-      {rows.map(([label, value]) => (
+      {rows.map(([label, value, muted]) => (
         <div key={label} className="flex flex-col gap-0.5 sm:contents">
           <p className="text-[13px] text-[var(--text-secondary)]">{label}</p>
-          <p className="text-[15px] font-medium text-[var(--text-primary)]">
+          <p
+            className={
+              muted
+                ? 'text-[13px] font-medium text-[var(--text-secondary)]'
+                : 'text-[15px] font-medium text-[var(--text-primary)]'
+            }
+          >
             {value}
           </p>
         </div>
