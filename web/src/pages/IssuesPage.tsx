@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
-import { Archive, FileSpreadsheet } from 'lucide-react';
+import { Archive, ChevronDown, FileSpreadsheet } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { api, mediaFileUrl, type DefectPart, type DefectType, type DefectZone, type Issue, type IssueType, type MediaAttachment } from '../lib/api';
 import { IssueList } from '../components/IssueList';
+import { PartMultiSelect } from '../components/PartMultiSelect';
 import { issueMatchesListQuery } from '../lib/issueVinFilter';
 import { issueTypeChipLabel } from '../lib/issueTypeLabel';
 import {
@@ -49,6 +50,16 @@ const STATUSES: IssueStatus[] = [
   'APPROVED',
 ];
 
+const ADVANCED_FILTERS_OPEN_KEY = 'karea-issues-advanced-filters-open';
+
+function readAdvancedFiltersOpen(): boolean {
+  try {
+    return localStorage.getItem(ADVANCED_FILTERS_OPEN_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
 function severityLabel(s: SeverityLevel, t: Translate): string {
   switch (s) {
     case 'CRITICAL':
@@ -90,6 +101,7 @@ export default function IssuesPage() {
   const [error, setError] = useState<string | null>(null);
   const [homeStatNow] = useState(() => new Date());
   const [exporting, setExporting] = useState<'csv' | 'zip' | null>(null);
+  const [advancedOpen, setAdvancedOpen] = useState(readAdvancedFiltersOpen);
 
   const load = useCallback(async () => {
     setError(null);
@@ -156,15 +168,42 @@ export default function IssuesPage() {
     });
   }
 
-  function toggleDefectPart(id: number) {
+  function setDefectPartsSelection(next: Set<number>) {
     if (homeStat || analysisStat) clearHomeStat();
-    setDefectPartIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+    setDefectPartIds(next);
   }
+
+  useEffect(() => {
+    if (defectZoneIds.size === 0) return;
+    setDefectPartIds((prev) => {
+      if (prev.size === 0) return prev;
+      const allowed = new Set(
+        defectParts
+          .filter((p) => defectZoneIds.has(p.ZoneID))
+          .map((p) => p.ID),
+      );
+      const pruned = new Set([...prev].filter((id) => allowed.has(id)));
+      return pruned.size === prev.size ? prev : pruned;
+    });
+  }, [defectZoneIds, defectParts]);
+
+  function setAdvancedFiltersOpen(next: boolean) {
+    setAdvancedOpen(next);
+    try {
+      localStorage.setItem(ADVANCED_FILTERS_OPEN_KEY, next ? '1' : '0');
+    } catch {
+      /* ignore quota / private mode */
+    }
+  }
+
+  const advancedActiveCount = useMemo(() => {
+    let n = 0;
+    if (typeIds.size > 0) n += 1;
+    if (defectZoneIds.size > 0) n += 1;
+    if (defectPartIds.size > 0) n += 1;
+    if (defectTypeIds.size > 0) n += 1;
+    return n;
+  }, [typeIds, defectZoneIds, defectPartIds, defectTypeIds]);
 
   function toggleDefectType(id: number) {
     if (homeStat || analysisStat) clearHomeStat();
@@ -454,11 +493,11 @@ export default function IssuesPage() {
       )}
 
       <div
-        className="mt-4 space-y-4 rounded-xl border bg-[var(--bg-surface-1)] p-4"
+        className="mt-4 min-w-0 space-y-4 overflow-hidden rounded-xl border bg-[var(--bg-surface-1)] p-4"
         style={{ borderColor: 'var(--border)' }}
       >
-        <div className="grid grid-cols-1 items-start justify-start gap-x-6 gap-y-4 sm:grid-cols-[max-content_max-content]">
-          <div className="w-full max-w-sm">
+        <div className="min-w-0 space-y-4">
+          <div className="w-full max-w-md">
             <label
               className="text-[13px] font-semibold"
               style={{ color: 'var(--text-secondary)' }}
@@ -478,165 +517,193 @@ export default function IssuesPage() {
               style={{ borderColor: 'var(--border)' }}
             />
           </div>
-          <div className="max-w-full">
-            <p
-              className="mb-2 text-[13px] font-semibold"
-              style={{ color: 'var(--text-secondary)' }}
-            >
-              {t('issue.type')}
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {issueTypes.map((itype) => {
-                const selected = !homeStat && !analysisStat && typeIds.has(itype.ID);
-                return (
-                  <button
-                    key={itype.ID}
-                    type="button"
-                    onClick={() => toggleType(itype.ID)}
-                    className={TYPE_CHIP_CLASS}
-                    style={typeChipStyle(selected)}
-                  >
-                    {issueTypeChipLabel(itype.Name)}
-                  </button>
-                );
-              })}
+
+          <div className="flex min-w-0 flex-wrap gap-x-6 gap-y-4">
+            <div className="min-w-0 max-w-full">
+              <p
+                className="mb-2 text-[13px] font-semibold"
+                style={{ color: 'var(--text-secondary)' }}
+              >
+                {t('issue.status')}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {STATUSES.map((status) => {
+                  const selected =
+                    !homeStat && !analysisStat && statuses.has(status);
+                  const color = issueStatusColor(status);
+                  return (
+                    <button
+                      key={status}
+                      type="button"
+                      onClick={() => toggleStatus(status)}
+                      className={`${CHIP_CLASS} shrink-0`}
+                      style={chipStyle(selected, color, pageBg)}
+                    >
+                      {issueStatusLabel(status, t)}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="min-w-0">
+              <p
+                className="mb-2 text-[13px] font-semibold"
+                style={{ color: 'var(--text-secondary)' }}
+              >
+                {t('severity.label')}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {SEVERITIES.map((s) => {
+                  const selected =
+                    !homeStat && !analysisStat && severities.has(s);
+                  const color = severityFillColor(s);
+                  const name = severityLabel(s, t);
+                  return (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => toggleSeverity(s)}
+                      className={SEVERITY_CHIP_CLASS}
+                      style={severityChipStyle(selected, color)}
+                      aria-label={name}
+                      aria-pressed={selected}
+                      title={name}
+                    >
+                      <SeverityIndicator severity={s} decorative />
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
-          <div className="max-w-full">
-            <p
-              className="mb-2 text-[13px] font-semibold"
-              style={{ color: 'var(--text-secondary)' }}
-            >
-              {t('issue.status')}
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {STATUSES.map((status) => {
-                const selected = !homeStat && !analysisStat && statuses.has(status);
-                const color = issueStatusColor(status);
-                return (
-                  <button
-                    key={status}
-                    type="button"
-                    onClick={() => toggleStatus(status)}
-                    className={`${CHIP_CLASS} shrink-0`}
-                    style={chipStyle(selected, color, pageBg)}
-                  >
-                    {issueStatusLabel(status, t)}
-                  </button>
-                );
-              })}
+        </div>
+
+        <div className="min-w-0 border-t pt-3" style={{ borderColor: 'var(--border)' }}>
+          <button
+            type="button"
+            onClick={() => setAdvancedFiltersOpen(!advancedOpen)}
+            className="flex min-h-touch w-full items-center justify-between gap-2 rounded-lg px-1 py-1 text-left text-[13px] font-semibold hover:bg-[var(--bg-surface-2)]"
+            style={{ color: 'var(--text-primary)' }}
+            aria-expanded={advancedOpen}
+          >
+            <span>
+              {!advancedOpen && advancedActiveCount > 0
+                ? t('issue.advancedFiltersActive', { n: advancedActiveCount })
+                : t('issue.advancedFilters')}
+            </span>
+            <ChevronDown
+              className={`h-4 w-4 shrink-0 text-[var(--text-secondary)] transition-transform ${
+                advancedOpen ? 'rotate-180' : ''
+              }`}
+              aria-hidden
+            />
+          </button>
+
+          {advancedOpen ? (
+            <div className="mt-3 min-w-0 space-y-4">
+              <div className="min-w-0 max-w-full">
+                <p
+                  className="mb-2 text-[13px] font-semibold"
+                  style={{ color: 'var(--text-secondary)' }}
+                >
+                  {t('issue.type')}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {issueTypes.map((itype) => {
+                    const selected =
+                      !homeStat && !analysisStat && typeIds.has(itype.ID);
+                    return (
+                      <button
+                        key={itype.ID}
+                        type="button"
+                        onClick={() => toggleType(itype.ID)}
+                        className={TYPE_CHIP_CLASS}
+                        style={typeChipStyle(selected)}
+                      >
+                        {issueTypeChipLabel(itype.Name)}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="min-w-0 max-w-full">
+                <p
+                  className="mb-2 text-[13px] font-semibold"
+                  style={{ color: 'var(--text-secondary)' }}
+                >
+                  {t('issue.filterZone')}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {defectZones.map((z) => {
+                    const selected =
+                      !homeStat && !analysisStat && defectZoneIds.has(z.ID);
+                    const label =
+                      locale === 'en'
+                        ? z.NameEN || z.NameTR
+                        : z.NameTR || z.NameEN;
+                    return (
+                      <button
+                        key={z.ID}
+                        type="button"
+                        onClick={() => toggleDefectZone(z.ID)}
+                        className={TYPE_CHIP_CLASS}
+                        style={typeChipStyle(selected)}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="min-w-0 max-w-full">
+                <p
+                  className="mb-2 text-[13px] font-semibold"
+                  style={{ color: 'var(--text-secondary)' }}
+                >
+                  {t('issue.filterPart')}
+                </p>
+                <PartMultiSelect
+                  parts={defectParts}
+                  selectedIds={defectPartIds}
+                  onChange={setDefectPartsSelection}
+                  zoneIds={defectZoneIds}
+                  disabled={Boolean(homeStat || analysisStat)}
+                />
+              </div>
+
+              <div className="min-w-0 max-w-full">
+                <p
+                  className="mb-2 text-[13px] font-semibold"
+                  style={{ color: 'var(--text-secondary)' }}
+                >
+                  {t('issue.filterDefectType')}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {defectTypes.map((ty) => {
+                    const selected =
+                      !homeStat && !analysisStat && defectTypeIds.has(ty.ID);
+                    const label =
+                      locale === 'en'
+                        ? ty.NameEN || ty.NameTR
+                        : ty.NameTR || ty.NameEN;
+                    return (
+                      <button
+                        key={ty.ID}
+                        type="button"
+                        onClick={() => toggleDefectType(ty.ID)}
+                        className={TYPE_CHIP_CLASS}
+                        style={typeChipStyle(selected)}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
-          </div>
-          <div className="max-w-full">
-            <p
-              className="mb-2 text-[13px] font-semibold"
-              style={{ color: 'var(--text-secondary)' }}
-            >
-              {t('severity.label')}
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {SEVERITIES.map((s) => {
-                const selected = !homeStat && !analysisStat && severities.has(s);
-                const color = severityFillColor(s);
-                const name = severityLabel(s, t);
-                return (
-                  <button
-                    key={s}
-                    type="button"
-                    onClick={() => toggleSeverity(s)}
-                    className={SEVERITY_CHIP_CLASS}
-                    style={severityChipStyle(selected, color)}
-                    aria-label={name}
-                    aria-pressed={selected}
-                    title={name}
-                  >
-                    <SeverityIndicator severity={s} decorative />
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-          <div className="max-w-full">
-            <p
-              className="mb-2 text-[13px] font-semibold"
-              style={{ color: 'var(--text-secondary)' }}
-            >
-              {t('issue.filterZone')}
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {defectZones.map((z) => {
-                const selected =
-                  !homeStat && !analysisStat && defectZoneIds.has(z.ID);
-                const label =
-                  locale === 'en' ? z.NameEN || z.NameTR : z.NameTR || z.NameEN;
-                return (
-                  <button
-                    key={z.ID}
-                    type="button"
-                    onClick={() => toggleDefectZone(z.ID)}
-                    className={TYPE_CHIP_CLASS}
-                    style={typeChipStyle(selected)}
-                  >
-                    {label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-          <div className="max-w-full">
-            <p
-              className="mb-2 text-[13px] font-semibold"
-              style={{ color: 'var(--text-secondary)' }}
-            >
-              {t('issue.filterPart')}
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {defectParts.map((p) => {
-                const selected =
-                  !homeStat && !analysisStat && defectPartIds.has(p.ID);
-                const label =
-                  locale === 'en' ? p.NameEN || p.NameTR : p.NameTR || p.NameEN;
-                return (
-                  <button
-                    key={p.ID}
-                    type="button"
-                    onClick={() => toggleDefectPart(p.ID)}
-                    className={TYPE_CHIP_CLASS}
-                    style={typeChipStyle(selected)}
-                  >
-                    {label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-          <div className="max-w-full">
-            <p
-              className="mb-2 text-[13px] font-semibold"
-              style={{ color: 'var(--text-secondary)' }}
-            >
-              {t('issue.filterDefectType')}
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {defectTypes.map((ty) => {
-                const selected =
-                  !homeStat && !analysisStat && defectTypeIds.has(ty.ID);
-                const label =
-                  locale === 'en' ? ty.NameEN || ty.NameTR : ty.NameTR || ty.NameEN;
-                return (
-                  <button
-                    key={ty.ID}
-                    type="button"
-                    onClick={() => toggleDefectType(ty.ID)}
-                    className={TYPE_CHIP_CLASS}
-                    style={typeChipStyle(selected)}
-                  >
-                    {label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+          ) : null}
         </div>
       </div>
 
