@@ -144,14 +144,15 @@ type Issue struct {
 	ApproveReporterName              string
 	ConditionalApproveReporterName   string
 	// Defect*Name* are list/get joins for classification display.
-	DefectPartNameTR   string
-	DefectPartNameEN   string
-	DefectTypeNameTR   string
-	DefectTypeNameEN   string
-	DefectZoneNameTR   string
-	DefectZoneNameEN   string
-	DefectProcessNameTR string
-	DefectProcessNameEN string
+	DefectZoneID         *int
+	DefectPartNameTR     string
+	DefectPartNameEN     string
+	DefectTypeNameTR     string
+	DefectTypeNameEN     string
+	DefectZoneNameTR     string
+	DefectZoneNameEN     string
+	DefectProcessNameTR  string
+	DefectProcessNameEN  string
 }
 
 // IssueType is a row from the issue_types catalogue (Hata / Tamir Gerekiyor).
