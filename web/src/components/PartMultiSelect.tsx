@@ -54,8 +54,15 @@ export function PartMultiSelect({
     function onDoc(e: MouseEvent) {
       if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
     }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setOpen(false);
+    }
     document.addEventListener('mousedown', onDoc);
-    return () => document.removeEventListener('mousedown', onDoc);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDoc);
+      document.removeEventListener('keydown', onKey);
+    };
   }, []);
 
   function toggle(id: number) {
@@ -72,9 +79,9 @@ export function PartMultiSelect({
   }
 
   return (
-    <div ref={rootRef} className="relative min-w-0 max-w-full">
+    <div ref={rootRef} className="relative w-full min-w-0">
       {selectedParts.length > 0 ? (
-        <div className="mb-2 flex max-w-full flex-wrap gap-1.5">
+        <div className="mb-2 flex w-full max-w-full flex-wrap gap-1.5">
           {selectedParts.map((p) => (
             <span
               key={p.ID}
@@ -104,7 +111,7 @@ export function PartMultiSelect({
         type="button"
         disabled={disabled}
         onClick={() => setOpen((v) => !v)}
-        className="flex min-h-9 w-full max-w-md items-center justify-between gap-2 rounded-lg border bg-[var(--bg-page)] px-3 py-2 text-left text-[14px] text-[var(--text-primary)]"
+        className="flex min-h-9 w-full items-center justify-between gap-2 rounded-lg border bg-[var(--bg-page)] px-3 py-2 text-left text-[14px] text-[var(--text-primary)]"
         style={{ borderColor: 'var(--border)' }}
         aria-expanded={open}
         aria-haspopup="listbox"
@@ -122,7 +129,7 @@ export function PartMultiSelect({
 
       {open ? (
         <div
-          className="absolute z-30 mt-1 w-full max-w-md overflow-hidden rounded-lg border bg-[var(--bg-surface-1)] shadow-lg"
+          className="absolute left-0 right-0 z-30 mt-1 min-w-[14rem] overflow-hidden rounded-lg border bg-[var(--bg-surface-1)] shadow-lg"
           style={{ borderColor: 'var(--border)' }}
           role="listbox"
           aria-multiselectable
@@ -162,6 +169,7 @@ export function PartMultiSelect({
                         ? 'color-mix(in srgb, var(--text-primary) 10%, transparent)'
                         : undefined,
                     }}
+                    onMouseDown={(e) => e.preventDefault()}
                     onClick={() => toggle(p.ID)}
                   >
                     <span
