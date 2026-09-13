@@ -220,9 +220,33 @@ a[href]:not([class*='bg-']):not(.logo-home-link):active {
 
 button:not(:disabled):focus-visible,
 [role='button']:focus-visible,
-a:focus-visible {
+a:focus-visible,
+summary:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+}
+
+/*
+ * Mouse / touch activation focuses the control but must not leave a ring.
+ * Only keyboard (:focus-visible) shows the outline. Some engines still match
+ * :focus-visible on click for buttons — this kills the leftover ring.
+ */
+button:focus:not(:focus-visible),
+[role='button']:focus:not(:focus-visible),
+a:focus:not(:focus-visible),
+summary:focus:not(:focus-visible) {
+  outline: none;
+  /* Clear Tailwind ring-* left after pointer activation. */
+  --tw-ring-shadow: 0 0 #0000;
+  --tw-ring-offset-shadow: 0 0 #0000;
+}
+
+/* Full-width disclosure / section toggles — thinner, quieter ring. */
+button.focus-ring-quiet:focus-visible,
+button:not(:disabled).focus-ring-quiet:focus-visible,
+[role='button'].focus-ring-quiet:focus-visible {
+  outline: 1px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  outline-offset: 1px;
 }
 
 input,
@@ -281,8 +305,12 @@ tr.cursor-pointer:active {
 }
 
 tr.cursor-pointer:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: -2px;
+  outline: 1px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  outline-offset: -1px;
+}
+
+tr.cursor-pointer:focus:not(:focus-visible) {
+  outline: none;
 }
 
 /* Print: hide the live UI, show only the chosen print document, force light ink. */
