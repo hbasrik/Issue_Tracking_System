@@ -117,7 +117,7 @@ export function AppShell() {
             onClick={toggleCollapsed}
             title={collapsed ? t('nav.expand') : t('nav.collapse')}
             aria-label={collapsed ? t('nav.expand') : t('nav.collapse')}
-            className="flex min-h-touch w-full items-center gap-2 rounded-lg px-3 text-[14px] font-semibold text-[color-mix(in_srgb,var(--sidebar-text)_88%,transparent)] hover:bg-[color-mix(in_srgb,var(--sidebar-text)_12%,transparent)] hover:text-[var(--sidebar-text)]"
+            className="focus-ring-quiet flex min-h-touch w-full items-center gap-2 rounded-lg px-3 text-[14px] font-semibold text-[color-mix(in_srgb,var(--sidebar-text)_88%,transparent)] hover:bg-[color-mix(in_srgb,var(--sidebar-text)_12%,transparent)] hover:text-[var(--sidebar-text)]"
           >
             {collapsed ? <ChevronsRight size={18} /> : <ChevronsLeft size={18} />}
             {!collapsed && <span>{t('nav.collapse')}</span>}
