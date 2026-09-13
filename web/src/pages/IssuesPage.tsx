@@ -582,7 +582,7 @@ export default function IssuesPage() {
           <button
             type="button"
             onClick={() => setAdvancedFiltersOpen(!advancedOpen)}
-            className="flex min-h-touch w-full items-center justify-between gap-2 rounded-lg px-1 py-1 text-left text-[13px] font-semibold hover:bg-[var(--bg-surface-2)]"
+            className="focus-ring-quiet flex min-h-touch w-full items-center justify-between gap-2 rounded-lg px-1 py-1 text-left text-[13px] font-semibold hover:bg-[var(--bg-surface-2)]"
             style={{ color: 'var(--text-primary)' }}
             aria-expanded={advancedOpen}
           >
@@ -601,76 +601,78 @@ export default function IssuesPage() {
 
           {advancedOpen ? (
             <div className="mt-3 min-w-0 space-y-4">
-              <div className="min-w-0 max-w-full">
-                <p
-                  className="mb-2 text-[13px] font-semibold"
-                  style={{ color: 'var(--text-secondary)' }}
-                >
-                  {t('issue.type')}
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {issueTypes.map((itype) => {
-                    const selected =
-                      !homeStat && !analysisStat && typeIds.has(itype.ID);
-                    return (
-                      <button
-                        key={itype.ID}
-                        type="button"
-                        onClick={() => toggleType(itype.ID)}
-                        className={TYPE_CHIP_CLASS}
-                        style={typeChipStyle(selected)}
-                      >
-                        {issueTypeChipLabel(itype.Name)}
-                      </button>
-                    );
-                  })}
+              <div className="flex w-full min-w-0 flex-wrap items-start gap-x-5 gap-y-4">
+                <div className="min-w-0 shrink-0">
+                  <p
+                    className="mb-2 text-[13px] font-semibold"
+                    style={{ color: 'var(--text-secondary)' }}
+                  >
+                    {t('issue.type')}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {issueTypes.map((itype) => {
+                      const selected =
+                        !homeStat && !analysisStat && typeIds.has(itype.ID);
+                      return (
+                        <button
+                          key={itype.ID}
+                          type="button"
+                          onClick={() => toggleType(itype.ID)}
+                          className={TYPE_CHIP_CLASS}
+                          style={typeChipStyle(selected)}
+                        >
+                          {issueTypeChipLabel(itype.Name)}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
 
-              <div className="min-w-0 max-w-full">
-                <p
-                  className="mb-2 text-[13px] font-semibold"
-                  style={{ color: 'var(--text-secondary)' }}
-                >
-                  {t('issue.filterZone')}
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {defectZones.map((z) => {
-                    const selected =
-                      !homeStat && !analysisStat && defectZoneIds.has(z.ID);
-                    const label =
-                      locale === 'en'
-                        ? z.NameEN || z.NameTR
-                        : z.NameTR || z.NameEN;
-                    return (
-                      <button
-                        key={z.ID}
-                        type="button"
-                        onClick={() => toggleDefectZone(z.ID)}
-                        className={TYPE_CHIP_CLASS}
-                        style={typeChipStyle(selected)}
-                      >
-                        {label}
-                      </button>
-                    );
-                  })}
+                <div className="min-w-0 shrink-0">
+                  <p
+                    className="mb-2 text-[13px] font-semibold"
+                    style={{ color: 'var(--text-secondary)' }}
+                  >
+                    {t('issue.filterZone')}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {defectZones.map((z) => {
+                      const selected =
+                        !homeStat && !analysisStat && defectZoneIds.has(z.ID);
+                      const label =
+                        locale === 'en'
+                          ? z.NameEN || z.NameTR
+                          : z.NameTR || z.NameEN;
+                      return (
+                        <button
+                          key={z.ID}
+                          type="button"
+                          onClick={() => toggleDefectZone(z.ID)}
+                          className={TYPE_CHIP_CLASS}
+                          style={typeChipStyle(selected)}
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
 
-              <div className="min-w-0 max-w-full">
-                <p
-                  className="mb-2 text-[13px] font-semibold"
-                  style={{ color: 'var(--text-secondary)' }}
-                >
-                  {t('issue.filterPart')}
-                </p>
-                <PartMultiSelect
-                  parts={defectParts}
-                  selectedIds={defectPartIds}
-                  onChange={setDefectPartsSelection}
-                  zoneIds={defectZoneIds}
-                  disabled={Boolean(homeStat || analysisStat)}
-                />
+                <div className="min-w-[14rem] flex-1 grow basis-[16rem]">
+                  <p
+                    className="mb-2 text-[13px] font-semibold"
+                    style={{ color: 'var(--text-secondary)' }}
+                  >
+                    {t('issue.filterPart')}
+                  </p>
+                  <PartMultiSelect
+                    parts={defectParts}
+                    selectedIds={defectPartIds}
+                    onChange={setDefectPartsSelection}
+                    zoneIds={defectZoneIds}
+                    disabled={Boolean(homeStat || analysisStat)}
+                  />
+                </div>
               </div>
 
               <div className="min-w-0 max-w-full">
