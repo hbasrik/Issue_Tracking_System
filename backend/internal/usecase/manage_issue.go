@@ -172,6 +172,10 @@ func (m *IssueManager) Create(ctx context.Context, in CreateIssueInput) (*domain
 		CustomPartName:       customPart,
 		CustomDefectName:     customDefect,
 		DefectCode:           code,
+		DefectPartNameTR:     part.NameTR,
+		DefectPartNameEN:     part.NameEN,
+		DefectTypeNameTR:     typ.NameTR,
+		DefectTypeNameEN:     typ.NameEN,
 	}
 
 	id, err := m.issues.Create(ctx, issue)
@@ -321,6 +325,7 @@ func (m *IssueManager) UpdateClassification(ctx context.Context, in UpdateClassi
 	err = m.uow.WithinTx(ctx, func(txCtx context.Context) error {
 		if err := m.issues.UpdateClassification(
 			txCtx, in.IssueID, &partID, &typeID, &processID, customPart, customDefect, code,
+			part.NameTR, part.NameEN, typ.NameTR, typ.NameEN,
 		); err != nil {
 			return err
 		}

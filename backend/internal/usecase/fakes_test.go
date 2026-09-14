@@ -497,6 +497,7 @@ func (f *fakeIssueRepo) UpdateClassification(
 	id int64,
 	partID, typeID, processID *int,
 	customPart, customDefect, defectCode string,
+	partNameTR, partNameEN, typeNameTR, typeNameEN string,
 ) error {
 	issue, ok := f.issues[id]
 	if !ok {
@@ -508,6 +509,10 @@ func (f *fakeIssueRepo) UpdateClassification(
 	issue.CustomPartName = customPart
 	issue.CustomDefectName = customDefect
 	issue.DefectCode = defectCode
+	issue.DefectPartNameTR = partNameTR
+	issue.DefectPartNameEN = partNameEN
+	issue.DefectTypeNameTR = typeNameTR
+	issue.DefectTypeNameEN = typeNameEN
 	return nil
 }
 

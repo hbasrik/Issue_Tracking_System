@@ -37,8 +37,10 @@ const issueColumns = `i.id, i.vin, i.source_type, i.source_station_step_id, i.so
 	        i.defect_part_id, i.defect_type_id, i.responsible_process_id,
 	        COALESCE(i.custom_part_name, ''), COALESCE(i.custom_defect_name, ''), COALESCE(i.defect_code, ''),
 	        dp.zone_id,
-	        COALESCE(dp.name_tr, ''), COALESCE(dp.name_en, ''),
-	        COALESCE(dt.name_tr, ''), COALESCE(dt.name_en, ''),
+	        COALESCE(NULLIF(trim(i.defect_part_name_tr), ''), dp.name_tr, ''),
+	        COALESCE(NULLIF(trim(i.defect_part_name_en), ''), dp.name_en, ''),
+	        COALESCE(NULLIF(trim(i.defect_type_name_tr), ''), dt.name_tr, ''),
+	        COALESCE(NULLIF(trim(i.defect_type_name_en), ''), dt.name_en, ''),
 	        COALESCE(dz.name_tr, ''), COALESCE(dz.name_en, ''),
 	        COALESCE(dpr.name_tr, ''), COALESCE(dpr.name_en, '')`
 
@@ -103,15 +105,20 @@ func (r *IssueRepo) Create(ctx context.Context, issue *domain.Issue) (int64, err
 		    (vin, source_type, source_station_step_id, source_check_item_id, station_id,
 		     issue_type_id, severity, description, picture_url, status, issue_reporter_id,
 		     defect_part_id, defect_type_id, responsible_process_id,
-		     custom_part_name, custom_defect_name, defect_code)
+		     custom_part_name, custom_defect_name, defect_code,
+		     defect_part_name_tr, defect_part_name_en,
+		     defect_type_name_tr, defect_type_name_en)
 		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NULLIF($9, ''), $10, $11,
-		         $12, $13, $14, NULLIF($15, ''), NULLIF($16, ''), NULLIF($17, ''))
+		         $12, $13, $14, NULLIF($15, ''), NULLIF($16, ''), NULLIF($17, ''),
+		         NULLIF($18, ''), NULLIF($19, ''), NULLIF($20, ''), NULLIF($21, ''))
 		 RETURNING id`,
 		issue.VIN, string(issue.SourceType), issue.SourceStationStepID, issue.SourceCheckItemID,
 		issue.StationID, issue.IssueTypeID, string(issue.Severity), issue.Description,
 		issue.PictureURL, string(issue.Status), issue.IssueReporterID,
 		issue.DefectPartID, issue.DefectTypeID, issue.ResponsibleProcessID,
 		issue.CustomPartName, issue.CustomDefectName, issue.DefectCode,
+		issue.DefectPartNameTR, issue.DefectPartNameEN,
+		issue.DefectTypeNameTR, issue.DefectTypeNameEN,
 	).Scan(&id)
 	return id, err
 }
@@ -282,11 +289,14 @@ func (r *IssueRepo) RevertApproval(ctx context.Context, id int64) error {
 }
 
 // UpdateClassification persists defect catalogue fields on an existing issue.
+// Name snapshots are rewritten because this is a conscious re-label, not a
+// catalogue rename.
 func (r *IssueRepo) UpdateClassification(
 	ctx context.Context,
 	id int64,
 	partID, typeID, processID *int,
 	customPart, customDefect, defectCode string,
+	partNameTR, partNameEN, typeNameTR, typeNameEN string,
 ) error {
 	tag, err := executor(ctx, r.pool).Exec(ctx, `
 		UPDATE issue_list
@@ -296,9 +306,14 @@ func (r *IssueRepo) UpdateClassification(
 		    custom_part_name = NULLIF($5, ''),
 		    custom_defect_name = NULLIF($6, ''),
 		    defect_code = NULLIF($7, ''),
+		    defect_part_name_tr = NULLIF($8, ''),
+		    defect_part_name_en = NULLIF($9, ''),
+		    defect_type_name_tr = NULLIF($10, ''),
+		    defect_type_name_en = NULLIF($11, ''),
 		    updated_at = now()
 		WHERE id = $1`,
 		id, partID, typeID, processID, customPart, customDefect, defectCode,
+		partNameTR, partNameEN, typeNameTR, typeNameEN,
 	)
 	if err != nil {
 		return err

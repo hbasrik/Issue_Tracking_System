@@ -148,7 +148,7 @@ type IssueRepository interface {
 	RevertApproval(ctx context.Context, id int64) error
 	// UpdateClassification sets defect catalogue fields on an existing issue
 	// (nullable legacy rows included). Caller must recompute defect_code.
-	UpdateClassification(ctx context.Context, id int64, partID, typeID, processID *int, customPart, customDefect, defectCode string) error
+	UpdateClassification(ctx context.Context, id int64, partID, typeID, processID *int, customPart, customDefect, defectCode, partNameTR, partNameEN, typeNameTR, typeNameEN string) error
 	// ListIssueTypes returns the issue_types catalogue (Hata / Tamir Gerekiyor).
 	ListIssueTypes(ctx context.Context) ([]domain.IssueType, error)
 }

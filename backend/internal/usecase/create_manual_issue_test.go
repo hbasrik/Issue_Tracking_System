@@ -163,7 +163,7 @@ func (f *createIssueFakeRepo) RevertApproval(context.Context, int64) error {
 	return nil
 }
 func (f *createIssueFakeRepo) UpdateClassification(
-	context.Context, int64, *int, *int, *int, string, string, string,
+	context.Context, int64, *int, *int, *int, string, string, string, string, string, string, string,
 ) error {
 	return nil
 }
