@@ -1502,8 +1502,8 @@ func (r *AnalysisRepo) scanDefectClassification(ctx context.Context, f domain.An
 	dash.DefectByZone = zones
 
 	parts, err := r.defectNamedGroup(ctx, f, `
-		SELECT coalesce(nullif(trim(i.custom_part_name), ''), nullif(trim(dp.name_tr), ''), '(unknown)'),
-		       coalesce(nullif(trim(i.custom_part_name), ''), nullif(trim(dp.name_en), ''), ''),
+		SELECT coalesce(nullif(trim(i.custom_part_name), ''), nullif(trim(i.defect_part_name_tr), ''), nullif(trim(dp.name_tr), ''), '(unknown)'),
+		       coalesce(nullif(trim(i.custom_part_name), ''), nullif(trim(i.defect_part_name_en), ''), nullif(trim(dp.name_en), ''), ''),
 		       coalesce(dp.code, ''),
 		       count(*)::bigint
 		`+defectCatalogueJoin+issueWhere("i.issue_date")+`
@@ -1517,8 +1517,8 @@ func (r *AnalysisRepo) scanDefectClassification(ctx context.Context, f domain.An
 	dash.DefectTopParts = parts
 
 	types, err := r.defectNamedGroup(ctx, f, `
-		SELECT coalesce(nullif(trim(i.custom_defect_name), ''), nullif(trim(dt.name_tr), ''), '(unknown)'),
-		       coalesce(nullif(trim(i.custom_defect_name), ''), nullif(trim(dt.name_en), ''), ''),
+		SELECT coalesce(nullif(trim(i.custom_defect_name), ''), nullif(trim(i.defect_type_name_tr), ''), nullif(trim(dt.name_tr), ''), '(unknown)'),
+		       coalesce(nullif(trim(i.custom_defect_name), ''), nullif(trim(i.defect_type_name_en), ''), nullif(trim(dt.name_en), ''), ''),
 		       coalesce(dt.code, ''),
 		       count(*)::bigint
 		`+defectCatalogueJoin+issueWhere("i.issue_date")+`
@@ -1588,10 +1588,10 @@ func (r *AnalysisRepo) defectNamedGroup(ctx context.Context, f domain.AnalysisFi
 func (r *AnalysisRepo) defectPartTypeTop(ctx context.Context, f domain.AnalysisFilter) ([]domain.DefectPartTypeCombo, error) {
 	b := bounds(f)
 	rows, err := r.pool.Query(ctx, `
-		SELECT coalesce(nullif(trim(i.custom_part_name), ''), nullif(trim(dp.name_tr), ''), '(unknown)'),
-		       coalesce(nullif(trim(i.custom_part_name), ''), nullif(trim(dp.name_en), ''), ''),
-		       coalesce(nullif(trim(i.custom_defect_name), ''), nullif(trim(dt.name_tr), ''), '(unknown)'),
-		       coalesce(nullif(trim(i.custom_defect_name), ''), nullif(trim(dt.name_en), ''), ''),
+		SELECT coalesce(nullif(trim(i.custom_part_name), ''), nullif(trim(i.defect_part_name_tr), ''), nullif(trim(dp.name_tr), ''), '(unknown)'),
+		       coalesce(nullif(trim(i.custom_part_name), ''), nullif(trim(i.defect_part_name_en), ''), nullif(trim(dp.name_en), ''), ''),
+		       coalesce(nullif(trim(i.custom_defect_name), ''), nullif(trim(i.defect_type_name_tr), ''), nullif(trim(dt.name_tr), ''), '(unknown)'),
+		       coalesce(nullif(trim(i.custom_defect_name), ''), nullif(trim(i.defect_type_name_en), ''), nullif(trim(dt.name_en), ''), ''),
 		       count(*)::bigint
 		`+defectCatalogueJoin+issueWhere("i.issue_date")+`
 		 AND i.defect_part_id IS NOT NULL
@@ -1700,6 +1700,8 @@ func (r *AnalysisRepo) defectRecurrence(ctx context.Context, f domain.AnalysisFi
 	hotRows, err := r.pool.Query(ctx, `
 		WITH filtered AS (
 		  SELECT i.vin, i.defect_code, i.custom_part_name, i.custom_defect_name,
+		         i.defect_part_name_tr, i.defect_part_name_en,
+		         i.defect_type_name_tr, i.defect_type_name_en,
 		         dp.name_tr AS part_tr, dp.name_en AS part_en,
 		         dt.name_tr AS type_tr, dt.name_en AS type_en
 		  `+defectCatalogueJoin+issueWhere("i.issue_date")+`
@@ -1711,10 +1713,10 @@ func (r *AnalysisRepo) defectRecurrence(ctx context.Context, f domain.AnalysisFi
 		  GROUP BY vin, defect_code
 		  HAVING count(*) >= 2
 		)
-		SELECT coalesce(nullif(trim(f.custom_part_name), ''), nullif(trim(f.part_tr), ''), '(unknown)'),
-		       coalesce(nullif(trim(f.custom_part_name), ''), nullif(trim(f.part_en), ''), ''),
-		       coalesce(nullif(trim(f.custom_defect_name), ''), nullif(trim(f.type_tr), ''), '(unknown)'),
-		       coalesce(nullif(trim(f.custom_defect_name), ''), nullif(trim(f.type_en), ''), ''),
+		SELECT coalesce(nullif(trim(f.custom_part_name), ''), nullif(trim(f.defect_part_name_tr), ''), nullif(trim(f.part_tr), ''), '(unknown)'),
+		       coalesce(nullif(trim(f.custom_part_name), ''), nullif(trim(f.defect_part_name_en), ''), nullif(trim(f.part_en), ''), ''),
+		       coalesce(nullif(trim(f.custom_defect_name), ''), nullif(trim(f.defect_type_name_tr), ''), nullif(trim(f.type_tr), ''), '(unknown)'),
+		       coalesce(nullif(trim(f.custom_defect_name), ''), nullif(trim(f.defect_type_name_en), ''), nullif(trim(f.type_en), ''), ''),
 		       count(*)::bigint
 		FROM filtered f
 		JOIN recurring g ON g.vin = f.vin AND g.defect_code = f.defect_code
