@@ -139,6 +139,9 @@ type ChecklistTemplateItem struct {
 	StationID  *int
 	EolPhase   *EOLItemPhase
 	IsActive   bool
+	// EvaluatedCount is non-PENDING progress rows for this item (list join).
+	// Used to warn before renaming catalogue text.
+	EvaluatedCount int `json:"EvaluatedCount,omitempty"`
 }
 
 // ChecklistProgress mirrors the checklist_item_progress table: a

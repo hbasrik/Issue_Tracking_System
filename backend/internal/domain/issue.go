@@ -143,7 +143,9 @@ type Issue struct {
 	FinishReporterName               string
 	ApproveReporterName              string
 	ConditionalApproveReporterName   string
-	// Defect*Name* are list/get joins for classification display.
+	// Defect*Name* are frozen at create/classification edit (issue_list
+	// columns). List/get COALESCE to live catalogue when the snapshot is NULL
+	// (legacy rows). CustomPartName / CustomDefectName still win for Diğer.
 	DefectZoneID         *int
 	DefectPartNameTR     string
 	DefectPartNameEN     string
