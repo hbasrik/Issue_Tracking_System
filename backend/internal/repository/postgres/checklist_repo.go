@@ -78,7 +78,8 @@ func (r *ChecklistProgressRepo) ResolveDefaultTemplateID(ctx context.Context, ch
 // deactivated item still appears on vehicles that already have progress.
 func (r *ChecklistProgressRepo) ListItemsWithProgress(ctx context.Context, vin string, checklistType domain.ChecklistType, templateID int) ([]domain.ChecklistItemView, error) {
 	rows, err := r.pool.Query(ctx,
-		`SELECT cti.id, cti.item_no, cti.item_text,
+		`SELECT cti.id, cti.item_no,
+		        COALESCE(NULLIF(trim(p.item_text_snapshot), ''), cti.item_text),
 		        COALESCE(p.check_status::text, 'PENDING'),
 		        COALESCE(p.rework_desc, ''), COALESCE(p.conditional_desc, ''), COALESCE(p.rejected_desc, ''),
 		        cti.eol_phase::text, p.id,
@@ -137,7 +138,7 @@ func (r *ChecklistProgressRepo) ListItemsWithProgress(ctx context.Context, vin s
 // older Onay stamp. Description CHECK and depot sequencing stay in the DB.
 func (r *ChecklistProgressRepo) SaveResult(ctx context.Context, result domain.ChecklistProgress) error {
 	tag, err := executor(ctx, r.pool).Exec(ctx,
-		`UPDATE checklist_item_progress
+		`UPDATE checklist_item_progress p
 		 SET check_status = $3::check_status_enum,
 		     checker_id = $4::int,
 		     check_date = now(),
@@ -147,8 +148,13 @@ func (r *ChecklistProgressRepo) SaveResult(ctx context.Context, result domain.Ch
 		     rejected_by = CASE WHEN $3::check_status_enum = 'NOT_OK' THEN $4::int ELSE NULL END,
 		     rejected_date = CASE WHEN $3::check_status_enum = 'NOT_OK' THEN now() ELSE NULL END,
 		     approved_by = CASE WHEN $3::check_status_enum IN ('OK', 'CONDITIONAL_OK') THEN $4::int ELSE NULL END,
-		     approved_date = CASE WHEN $3::check_status_enum IN ('OK', 'CONDITIONAL_OK') THEN now() ELSE NULL END
-		 WHERE vin = $1 AND check_item_id = $2 AND checklist_type = $8`,
+		     approved_date = CASE WHEN $3::check_status_enum IN ('OK', 'CONDITIONAL_OK') THEN now() ELSE NULL END,
+		     item_text_snapshot = CASE
+		       WHEN $3::check_status_enum = 'PENDING' THEN p.item_text_snapshot
+		       WHEN NULLIF(trim(p.item_text_snapshot), '') IS NOT NULL THEN p.item_text_snapshot
+		       ELSE (SELECT cti.item_text FROM checklist_template_items cti WHERE cti.id = p.check_item_id)
+		     END
+		 WHERE p.vin = $1 AND p.check_item_id = $2 AND p.checklist_type = $8`,
 		result.VIN, result.CheckItemID, string(result.CheckStatus), result.CheckerID,
 		result.ReworkDesc, result.ConditionalDesc, result.RejectedDesc, string(result.ChecklistType))
 	if err != nil {
@@ -198,12 +204,15 @@ func (r *ChecklistProgressRepo) ListTemplates(ctx context.Context) ([]domain.Che
 }
 
 // ListTemplateItems returns every item of one template (including inactive).
+// EvaluatedCount is how many vehicle progress rows are non-PENDING (rename impact).
 func (r *ChecklistProgressRepo) ListTemplateItems(ctx context.Context, templateID int) ([]domain.ChecklistTemplateItem, error) {
 	rows, err := r.pool.Query(ctx,
-		`SELECT id, template_id, item_no, item_text, station_id, eol_phase::text, is_active
-		 FROM checklist_template_items
-		 WHERE template_id = $1
-		 ORDER BY item_no`, templateID)
+		`SELECT cti.id, cti.template_id, cti.item_no, cti.item_text, cti.station_id, cti.eol_phase::text, cti.is_active,
+		        (SELECT count(*)::int FROM checklist_item_progress p
+		          WHERE p.check_item_id = cti.id AND p.check_status <> 'PENDING') AS evaluated_count
+		 FROM checklist_template_items cti
+		 WHERE cti.template_id = $1
+		 ORDER BY cti.item_no`, templateID)
 	if err != nil {
 		return nil, err
 	}
@@ -215,7 +224,7 @@ func (r *ChecklistProgressRepo) ListTemplateItems(ctx context.Context, templateI
 		var eolPhase *string
 		if err := rows.Scan(
 			&item.ID, &item.TemplateID, &item.ItemNo, &item.ItemText,
-			&item.StationID, &eolPhase, &item.IsActive,
+			&item.StationID, &eolPhase, &item.IsActive, &item.EvaluatedCount,
 		); err != nil {
 			return nil, err
 		}
