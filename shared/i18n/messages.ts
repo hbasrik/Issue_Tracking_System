@@ -815,6 +815,9 @@ export const tr = {
   'defects.cannotDeleteTitle': 'Silinemez',
   'defects.cannotDeleteMessage':
     'Bu madde {n} kayıtta kullanılmış, silinemez — pasife çekebilirsiniz',
+  'defects.renameImpactTitle': 'Ad değişikliği',
+  'defects.renameImpactMessage':
+    'Bu madde {n} kayıtta kullanılmış. Snapshot sayesinde geçmiş etiketler korunur; yeni kayıtlarda yeni ad görünür. Devam edilsin mi?',
   'defects.deleteTitle': 'Katalog maddesini sil',
   'defects.deleteConfirm': 'Bu madde hiç kullanılmamış. Kalıcı olarak silinsin mi?',
   'templates.subtitle': 'Madde metinleri, sıra ve aktif/pasif.',
@@ -858,6 +861,9 @@ export const tr = {
   'templates.confirmCreateTitle': 'Madde ekle',
   'templates.confirmActivateTitle': 'Maddeyi aktife al',
   'templates.confirmDeactivateTitle': 'Maddeyi pasife çek',
+  'templates.renameImpactTitle': 'Madde metnini değiştir',
+  'templates.renameImpactMessage':
+    'Bu madde {n} araç kaydında değerlendirilmiş. Snapshot sayesinde eski metinler korunur; yeni değerlendirmelerde yeni metin yazılır. Devam edilsin mi?',
   'templates.confirmDeleteTitle': 'Maddeyi sil',
   'templates.deleteBlocked':
     'Bu madde {protected} araçta değerlendirilmiş veya issue\'ya bağlı — silinemez. Pasife çekebilirsiniz (geçmiş kayıtlar korunur).',
@@ -1620,6 +1626,9 @@ export const en: Record<MessageKey, string> = {
   'defects.cannotDeleteTitle': 'Cannot delete',
   'defects.cannotDeleteMessage':
     'This item is used in {n} record(s) and cannot be deleted — deactivate it instead',
+  'defects.renameImpactTitle': 'Rename',
+  'defects.renameImpactMessage':
+    'This item is used on {n} records. Snapshots keep past labels; new records will show the new name. Continue?',
   'defects.deleteTitle': 'Delete catalogue item',
   'defects.deleteConfirm': 'This item has never been used. Delete permanently?',
   'templates.subtitle': 'Item text, order, and active/inactive.',
@@ -2194,6 +2203,9 @@ export const en: Record<MessageKey, string> = {
   'templates.confirmCreateTitle': 'Add item',
   'templates.confirmActivateTitle': 'Activate item',
   'templates.confirmDeactivateTitle': 'Deactivate item',
+  'templates.renameImpactTitle': 'Change item text',
+  'templates.renameImpactMessage':
+    'This item is evaluated on {n} vehicle records. Snapshots keep past wording; new evaluations will store the new text. Continue?',
   'templates.confirmDeleteTitle': 'Delete item',
   'templates.deleteBlocked':
     'This item is evaluated or issue-linked on {protected} vehicles — cannot delete. You can deactivate it (history is kept).',

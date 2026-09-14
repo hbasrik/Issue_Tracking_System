@@ -178,10 +178,24 @@ export default function TemplatesPage() {
     setBusy(true);
     setError(null);
     try {
+      const nextText = (draftText[item.ID] ?? item.ItemText).trim();
+      if (nextText !== item.ItemText.trim() && (item.EvaluatedCount ?? 0) > 0) {
+        const ok = await confirm({
+          title: t('templates.renameImpactTitle'),
+          message: t('templates.renameImpactMessage', {
+            n: item.EvaluatedCount ?? 0,
+          }),
+          tone: 'warning',
+        });
+        if (!ok) {
+          setBusy(false);
+          return;
+        }
+      }
       const body: {
         ItemText?: string;
         EolPhase?: 'BRANCH' | 'DEPOT';
-      } = { ItemText: (draftText[item.ID] ?? item.ItemText).trim() };
+      } = { ItemText: nextText };
       if (selected.Type === 'EOL') {
         body.EolPhase = draftPhase[item.ID] ?? item.EolPhase ?? 'BRANCH';
       }

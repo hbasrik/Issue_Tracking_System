@@ -139,6 +139,28 @@ export default function DefectCatalogPage() {
       is_active: draft.is_active,
     };
     try {
+      if (editId != null && (tab === 'parts' || tab === 'types')) {
+        const rows =
+          tab === 'parts'
+            ? parts
+            : types;
+        const existing = rows.find((r) => r.ID === editId);
+        const nameChanged =
+          existing &&
+          (existing.NameTR !== body.name_tr || existing.NameEN !== body.name_en);
+        const usage = existing?.UsageCount ?? 0;
+        if (nameChanged && usage > 0) {
+          const ok = await confirm({
+            title: t('defects.renameImpactTitle'),
+            message: t('defects.renameImpactMessage', { n: usage }),
+            tone: 'warning',
+          });
+          if (!ok) {
+            setBusy(false);
+            return;
+          }
+        }
+      }
       if (tab === 'zones') {
         if (editId == null) await api.createDefectZone(body);
         else await api.updateDefectZone(editId, body);

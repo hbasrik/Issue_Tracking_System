@@ -816,6 +816,7 @@ export interface ChecklistTemplateItem {
   StationID: number | null;
   EolPhase: 'BRANCH' | 'DEPOT' | null;
   IsActive: boolean;
+  EvaluatedCount?: number;
 }
 
 export interface TemplateItemPropagationImpact {
