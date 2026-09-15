@@ -22,17 +22,7 @@ import { useI18n } from '../i18n';
 import { useTheme } from '../theme/ThemeProvider';
 import { statusColors } from '../theme/tokens';
 import type { RootStackParamList } from '../navigation/types';
-import type { MessageKey } from '../../../shared/i18n';
 import { groupChecklistSections } from '../lib/checklistSections';
-
-const SECTIONS: { titleKey: MessageKey; from: number; to: number }[] = [
-  { titleKey: 'checklist.section.identity', from: 1, to: 6 },
-  { titleKey: 'checklist.section.exterior', from: 7, to: 16 },
-  { titleKey: 'checklist.section.locks', from: 17, to: 20 },
-  { titleKey: 'checklist.section.lighting', from: 21, to: 27 },
-  { titleKey: 'checklist.section.interior', from: 28, to: 35 },
-  { titleKey: 'checklist.section.charge', from: 36, to: 43 },
-];
 
 function isDone(s: ChecklistItem['Status']): boolean {
   return s === 'OK' || s === 'CONDITIONAL_OK';
@@ -85,8 +75,8 @@ export default function ShipmentChecklistScreen() {
   }
 
   const grouped = useMemo(
-    () => groupChecklistSections(items, SECTIONS),
-    [items],
+    () => groupChecklistSections(items, t),
+    [items, t],
   );
 
   if (!items.length && !error) return <Loading />;
@@ -120,9 +110,9 @@ export default function ShipmentChecklistScreen() {
         {error ? <ErrorText>{error}</ErrorText> : null}
 
         {grouped.map((g) => (
-          <View key={g.titleKey} style={{ marginTop: 16 }}>
+          <View key={g.title} style={{ marginTop: 16 }}>
             <Text style={{ color: tokens.textSecondary, fontWeight: '600', fontSize: 13 }}>
-              {t(g.titleKey)}
+              {g.title}
             </Text>
             {g.items.map((item) => {
               const checked = isDone(item.Status);

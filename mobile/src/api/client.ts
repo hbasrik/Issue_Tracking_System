@@ -169,6 +169,8 @@ export interface ChecklistItem {
   ConditionalDesc?: string;
   RejectedDesc?: string;
   EolPhase?: EOLItemPhase | null;
+  SectionKey?: string | null;
+  SectionSort?: number | null;
   ProgressID?: number | null;
   CheckerName?: string;
   CheckDate?: string | null;
