@@ -56,20 +56,36 @@ func (r *ChecklistProgressRepo) ListByVINAndType(ctx context.Context, vin string
 	return out, rows.Err()
 }
 
-// ResolveDefaultTemplateID returns the active default template for a type.
-func (r *ChecklistProgressRepo) ResolveDefaultTemplateID(ctx context.Context, checklistType domain.ChecklistType) (int, error) {
-	var id int
-	err := r.pool.QueryRow(ctx,
-		`SELECT id FROM checklist_templates
-		 WHERE vehicle_model_id IS NULL AND type = $1 AND is_active = TRUE
-		 ORDER BY id LIMIT 1`, string(checklistType)).Scan(&id)
-	if errors.Is(err, pgx.ErrNoRows) {
-		return 0, domain.ErrNotFound
-	}
+// ResolveDefaultTemplateID returns the preferred active template for a type:
+// model-specific when vehicleModelID is set and a matching row exists, else
+// the generic (vehicle_model_id IS NULL) template. Mirrors
+// domain.PreferredActiveTemplateID / fn_assign_checklist_templates.
+func (r *ChecklistProgressRepo) ResolveDefaultTemplateID(ctx context.Context, checklistType domain.ChecklistType, vehicleModelID *int) (int, error) {
+	rows, err := r.pool.Query(ctx,
+		`SELECT id, vehicle_model_id, type::text, name, is_active
+		 FROM checklist_templates
+		 WHERE type = $1 AND is_active = TRUE
+		   AND (vehicle_model_id IS NOT DISTINCT FROM $2 OR vehicle_model_id IS NULL)
+		 ORDER BY id`, string(checklistType), vehicleModelID)
 	if err != nil {
 		return 0, err
 	}
-	return id, nil
+	defer rows.Close()
+
+	var candidates []domain.ChecklistTemplate
+	for rows.Next() {
+		var t domain.ChecklistTemplate
+		var typ string
+		if err := rows.Scan(&t.ID, &t.VehicleModelID, &typ, &t.Name, &t.IsActive); err != nil {
+			return 0, err
+		}
+		t.Type = domain.ChecklistType(typ)
+		candidates = append(candidates, t)
+	}
+	if err := rows.Err(); err != nil {
+		return 0, err
+	}
+	return domain.PreferredActiveTemplateID(candidates, vehicleModelID)
 }
 
 // ListItemsWithProgress returns every active catalogue item for the template

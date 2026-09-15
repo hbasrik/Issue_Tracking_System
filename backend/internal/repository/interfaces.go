@@ -59,9 +59,10 @@ type ChecklistProgressRepository interface {
 	// ListByVINAndType returns all checklist progress rows of a given type for
 	// a vehicle.
 	ListByVINAndType(ctx context.Context, vin string, checklistType domain.ChecklistType) ([]domain.ChecklistProgress, error)
-	// ResolveDefaultTemplateID returns the active default template (vehicle_model_id
-	// IS NULL) for the given checklist type.
-	ResolveDefaultTemplateID(ctx context.Context, checklistType domain.ChecklistType) (int, error)
+	// ResolveDefaultTemplateID returns the preferred active template for a
+	// checklist type: model-specific when vehicleModelID matches, else the
+	// generic (vehicle_model_id IS NULL) row.
+	ResolveDefaultTemplateID(ctx context.Context, checklistType domain.ChecklistType, vehicleModelID *int) (int, error)
 	// ListItemsWithProgress returns the vehicle's materialized checklist
 	// ListItemsWithProgress returns active template items left-joined to
 	// progress (missing → PENDING, nil ProgressID) plus inactive items that

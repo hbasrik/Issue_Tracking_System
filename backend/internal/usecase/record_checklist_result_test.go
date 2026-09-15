@@ -229,3 +229,50 @@ func TestRecordChecklistResult_WritesChecklistItemUpdateAudit(t *testing.T) {
 		t.Errorf("metadata item_id = %v", e.Metadata["item_id"])
 	}
 }
+
+func TestListForVehicle_ResolvePrefersModelSpecific(t *testing.T) {
+	const vin = "TMPMODELRESOLVE0001"
+	modelID := 42
+	vehicles := newFakeVehicleRepo()
+	vehicles.vehicles[vin] = &domain.Vehicle{
+		VIN:            vin,
+		VehicleModelID: &modelID,
+		// No per-vehicle template FKs → fall through to ResolveDefaultTemplateID.
+	}
+	checklist := newFakeChecklistRepo()
+	checklist.resolveByKey = map[string]int{
+		"TEST":    100, // generic
+		"TEST:42": 200, // model-specific
+	}
+	rec := usecase.NewChecklistResultRecorder(vehicles, checklist, nil, nil)
+	if _, err := rec.ListForVehicle(context.Background(), vin, domain.ChecklistTypeTest); err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	if checklist.lastListTemplateID != 200 {
+		t.Fatalf("templateID = %d, want model-specific 200", checklist.lastListTemplateID)
+	}
+	if checklist.lastResolveModel == nil || *checklist.lastResolveModel != 42 {
+		t.Fatalf("resolve model = %v, want 42", checklist.lastResolveModel)
+	}
+}
+
+func TestListForVehicle_ResolveFallsBackToGeneric(t *testing.T) {
+	const vin = "TMPMODELRESOLVE0002"
+	modelID := 99
+	vehicles := newFakeVehicleRepo()
+	vehicles.vehicles[vin] = &domain.Vehicle{
+		VIN:            vin,
+		VehicleModelID: &modelID,
+	}
+	checklist := newFakeChecklistRepo()
+	checklist.resolveByKey = map[string]int{
+		"TEST": 100, // only generic registered
+	}
+	rec := usecase.NewChecklistResultRecorder(vehicles, checklist, nil, nil)
+	if _, err := rec.ListForVehicle(context.Background(), vin, domain.ChecklistTypeTest); err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	if checklist.lastListTemplateID != 100 {
+		t.Fatalf("templateID = %d, want generic 100", checklist.lastListTemplateID)
+	}
+}

@@ -52,7 +52,7 @@ func newHTTPFakeChecklistRepo() *httpFakeChecklistRepo {
 func (f *httpFakeChecklistRepo) ListByVINAndType(context.Context, string, domain.ChecklistType) ([]domain.ChecklistProgress, error) {
 	return nil, nil
 }
-func (f *httpFakeChecklistRepo) ResolveDefaultTemplateID(context.Context, domain.ChecklistType) (int, error) {
+func (f *httpFakeChecklistRepo) ResolveDefaultTemplateID(context.Context, domain.ChecklistType, *int) (int, error) {
 	return 0, domain.ErrNotFound
 }
 func (f *httpFakeChecklistRepo) ListItemsWithProgress(context.Context, string, domain.ChecklistType, int) ([]domain.ChecklistItemView, error) {

@@ -179,7 +179,7 @@ func (r *ChecklistResultRecorder) ListForVehicle(ctx context.Context, vin string
 	if templateID != nil {
 		resolved = *templateID
 	} else {
-		resolved, err = r.checklist.ResolveDefaultTemplateID(ctx, checklistType)
+		resolved, err = r.checklist.ResolveDefaultTemplateID(ctx, checklistType, vehicle.VehicleModelID)
 		if err != nil {
 			return nil, err
 		}

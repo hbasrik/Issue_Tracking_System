@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -233,6 +234,11 @@ func (f *fakeStationStepRepo) SaveResult(_ context.Context, vin string, stationS
 type fakeChecklistRepo struct {
 	rows  map[string][]domain.ChecklistProgress
 	views map[string][]domain.ChecklistItemView
+	// resolveByKey maps "TYPE" or "TYPE:modelID" → template id for ResolveDefaultTemplateID.
+	resolveByKey map[string]int
+	lastResolveModel *int
+	lastResolveType  domain.ChecklistType
+	lastListTemplateID int
 }
 
 func newFakeChecklistRepo() *fakeChecklistRepo {
@@ -252,11 +258,24 @@ func (f *fakeChecklistRepo) ListByVINAndType(_ context.Context, vin string, t do
 	return out, nil
 }
 
-func (f *fakeChecklistRepo) ResolveDefaultTemplateID(_ context.Context, _ domain.ChecklistType) (int, error) {
+func (f *fakeChecklistRepo) ResolveDefaultTemplateID(_ context.Context, typ domain.ChecklistType, vehicleModelID *int) (int, error) {
+	f.lastResolveType = typ
+	f.lastResolveModel = vehicleModelID
+	if f.resolveByKey != nil {
+		if vehicleModelID != nil {
+				if id, ok := f.resolveByKey[string(typ)+":"+strconv.Itoa(*vehicleModelID)]; ok {
+				return id, nil
+			}
+		}
+		if id, ok := f.resolveByKey[string(typ)]; ok {
+			return id, nil
+		}
+	}
 	return 1, nil
 }
 
-func (f *fakeChecklistRepo) ListItemsWithProgress(_ context.Context, vin string, t domain.ChecklistType, _ int) ([]domain.ChecklistItemView, error) {
+func (f *fakeChecklistRepo) ListItemsWithProgress(_ context.Context, vin string, t domain.ChecklistType, templateID int) ([]domain.ChecklistItemView, error) {
+	f.lastListTemplateID = templateID
 	if items, ok := f.views[vin+"|"+string(t)]; ok {
 		return items, nil
 	}
