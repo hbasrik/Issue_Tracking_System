@@ -5,6 +5,10 @@
 -- All identifiers and comments are in English per Clean Code convention.
 -- =====================================================================
 
+-- Idempotent notes: CREATE TYPE guarded (duplicate_object),
+-- CREATE TABLE/INDEX IF NOT EXISTS, DROP TRIGGER IF EXISTS before CREATE.
+-- Safe to re-run after a partial/dirty apply on an empty or partial DB.
+
 -- =====================================================================
 -- SECTION 0: EXTENSIONS
 -- =====================================================================
@@ -16,58 +20,115 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";  -- reserved for future UUID-based e
 -- SECTION 1: ENUM TYPES
 -- =====================================================================
 
-CREATE TYPE user_role_enum AS ENUM (
+DO $migrate$
+BEGIN
+    CREATE TYPE user_role_enum AS ENUM (
     'OPERATOR',       -- mobile only: fills phases/checklists, reports issues
     'MANAGER_ADMIN'   -- web only: full tracking, status updates, issue closing
 );
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END
+$migrate$;
 
-CREATE TYPE vehicle_status_enum AS ENUM (
+
+DO $migrate$
+BEGIN
+    CREATE TYPE vehicle_status_enum AS ENUM (
     'IN_PRODUCTION',  -- Hatta
     'IN_WAREHOUSE',   -- Depoda
     'WITH_CUSTOMER',  -- Musteride
     'SHIPPED',        -- Sevk edildi (final logistics state, post WITH_CUSTOMER handoff)
     'ON_HOLD'         -- manual exception state
 );
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END
+$migrate$;
 
-CREATE TYPE checkpoint_status_enum AS ENUM (
+
+DO $migrate$
+BEGIN
+    CREATE TYPE checkpoint_status_enum AS ENUM (
     'PENDING',
     'OK',
     'NOT_OK'
 );
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END
+$migrate$;
 
-CREATE TYPE check_status_enum AS ENUM (
+
+DO $migrate$
+BEGIN
+    CREATE TYPE check_status_enum AS ENUM (
     'PENDING',
     'OK',
     'NOT_OK',
     'REWORK',
     'CONDITIONAL_OK'
 );
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END
+$migrate$;
 
-CREATE TYPE checklist_type_enum AS ENUM (
+
+DO $migrate$
+BEGIN
+    CREATE TYPE checklist_type_enum AS ENUM (
     'EOL',
     'SHIPMENT'
 );
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END
+$migrate$;
 
-CREATE TYPE issue_status_enum AS ENUM (
-    'OPEN',         -- Bekliyor: reported, not yet picked up
-    'IN_PROGRESS',  -- Islemde: technician actively repairing
-    'DONE',         -- Tamamlandi: repair finished, awaiting quality sign-off
-    'APPROVED'      -- Kalite Onay: quality/manager approved; terminal closed state
-);
 
-CREATE TYPE issue_severity_enum AS ENUM (
+DO $migrate$
+BEGIN
+    CREATE TYPE issue_status_enum AS ENUM (
+        'OPEN',         -- Bekliyor: reported, not yet picked up
+        'IN_PROGRESS',  -- Islemde: technician actively repairing
+        'DONE',         -- Tamamlandi: repair finished, awaiting quality sign-off
+        'APPROVED'      -- Kalite Onay: quality/manager approved; terminal closed state
+    );
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END
+$migrate$;
+
+DO $migrate$
+BEGIN
+    CREATE TYPE issue_severity_enum AS ENUM (
     'CRITICAL',
     'MEDIUM',
     'LOW'
 );
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END
+$migrate$;
 
-CREATE TYPE issue_source_enum AS ENUM (
+
+DO $migrate$
+BEGIN
+    CREATE TYPE issue_source_enum AS ENUM (
     'PHASE_CHECKPOINT',
     'EOL_ITEM',
     'SHIPMENT_ITEM'
 );
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END
+$migrate$;
 
-CREATE TYPE audit_event_enum AS ENUM (
+
+DO $migrate$
+BEGIN
+    CREATE TYPE audit_event_enum AS ENUM (
     'STATUS_CHANGE',
     'LOCATION_CHANGE',
     'PHASE_ENTER',
@@ -77,12 +138,17 @@ CREATE TYPE audit_event_enum AS ENUM (
     'CHECKLIST_ITEM_UPDATE',
     'ISSUE_STATUS_CHANGE'
 );
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END
+$migrate$;
+
 
 -- =====================================================================
 -- SECTION 2: REFERENCE / MASTER TABLES
 -- =====================================================================
 
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     id            SERIAL PRIMARY KEY,
     full_name     VARCHAR(150) NOT NULL,
     email         VARCHAR(200) NOT NULL UNIQUE,
@@ -92,19 +158,19 @@ CREATE TABLE users (
     created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE TABLE vehicle_models (
+CREATE TABLE IF NOT EXISTS vehicle_models (
     id            SERIAL PRIMARY KEY,
     name          VARCHAR(100) NOT NULL UNIQUE,
     code          VARCHAR(30) NOT NULL UNIQUE,
     is_active     BOOLEAN NOT NULL DEFAULT TRUE
 );
 
-CREATE TABLE phases (
+CREATE TABLE IF NOT EXISTS phases (
     phase_number  SMALLINT PRIMARY KEY CHECK (phase_number BETWEEN 1 AND 8),
     name          VARCHAR(100) NOT NULL
 );
 
-CREATE TABLE stations (
+CREATE TABLE IF NOT EXISTS stations (
     id            SERIAL PRIMARY KEY,
     name          VARCHAR(100) NOT NULL,
     phase_number  SMALLINT REFERENCES phases(phase_number)
@@ -114,7 +180,7 @@ CREATE TABLE stations (
 -- Master checkpoint catalogue (the 7-8 items per phase). Vehicle-specific
 -- progress is tracked separately in production_phase_progress so this table
 -- stays a small, stable reference set even as vehicle volume grows.
-CREATE TABLE checkpoints (
+CREATE TABLE IF NOT EXISTS checkpoints (
     id            SERIAL PRIMARY KEY,
     phase_number  SMALLINT NOT NULL REFERENCES phases(phase_number),
     station_id    INT REFERENCES stations(id),
@@ -126,14 +192,14 @@ CREATE TABLE checkpoints (
 
 -- Issue category catalogue (e.g. Electrical, Paint, Trim) used for
 -- "hata turu" filtering in the Analysis tab.
-CREATE TABLE issue_types (
+CREATE TABLE IF NOT EXISTS issue_types (
     id            SERIAL PRIMARY KEY,
     name          VARCHAR(100) NOT NULL UNIQUE
 );
 
 -- Multi-template architecture (Decision Log #3): EoL and Shipment
 -- checklists can differ per vehicle model instead of being hard-coded.
-CREATE TABLE checklist_templates (
+CREATE TABLE IF NOT EXISTS checklist_templates (
     id                SERIAL PRIMARY KEY,
     vehicle_model_id  INT REFERENCES vehicle_models(id),  -- NULL = generic/default template
     type              checklist_type_enum NOT NULL,
@@ -142,7 +208,7 @@ CREATE TABLE checklist_templates (
     created_at        TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE TABLE checklist_template_items (
+CREATE TABLE IF NOT EXISTS checklist_template_items (
     id            SERIAL PRIMARY KEY,
     template_id   INT NOT NULL REFERENCES checklist_templates(id) ON DELETE CASCADE,
     item_no       SMALLINT NOT NULL,
@@ -156,7 +222,7 @@ CREATE TABLE checklist_template_items (
 -- SECTION 3: CORE TABLE — vehicles (Master Vehicle Identity Table)
 -- =====================================================================
 
-CREATE TABLE vehicles (
+CREATE TABLE IF NOT EXISTS vehicles (
     vin                         VARCHAR(17) PRIMARY KEY,
     vehicle_model_id            INT NOT NULL REFERENCES vehicle_models(id),
     current_global_status       vehicle_status_enum NOT NULL DEFAULT 'IN_PRODUCTION',
@@ -180,7 +246,7 @@ COMMENT ON COLUMN vehicles.current_global_status IS
 -- back to the issue that a failed checkpoint/checklist item generated.
 -- =====================================================================
 
-CREATE TABLE issue_list (
+CREATE TABLE IF NOT EXISTS issue_list (
     id                     BIGSERIAL PRIMARY KEY,
     vin                    VARCHAR(17) NOT NULL REFERENCES vehicles(vin) ON DELETE CASCADE,
 
@@ -225,7 +291,7 @@ CREATE TABLE issue_list (
 -- SECTION 5: production_phase_progress (8-Phase Progress & Operator Tracking)
 -- =====================================================================
 
-CREATE TABLE production_phase_progress (
+CREATE TABLE IF NOT EXISTS production_phase_progress (
     id                BIGSERIAL PRIMARY KEY,
     vin               VARCHAR(17) NOT NULL REFERENCES vehicles(vin) ON DELETE CASCADE,
     phase_number      SMALLINT NOT NULL REFERENCES phases(phase_number),
@@ -248,7 +314,7 @@ CREATE TABLE production_phase_progress (
 -- (13-item EoL and N-item Shipment checklist progress — template driven)
 -- =====================================================================
 
-CREATE TABLE eol_and_shipment_checklist_progress (
+CREATE TABLE IF NOT EXISTS eol_and_shipment_checklist_progress (
     id                BIGSERIAL PRIMARY KEY,
     vin               VARCHAR(17) NOT NULL REFERENCES vehicles(vin) ON DELETE CASCADE,
     checklist_type    checklist_type_enum NOT NULL,
@@ -295,7 +361,7 @@ CREATE TABLE eol_and_shipment_checklist_progress (
 -- Append-only. Feeds Elapsed Time, MTTR and all Analysis-tab charts.
 -- =====================================================================
 
-CREATE TABLE audit_logs (
+CREATE TABLE IF NOT EXISTS audit_logs (
     id             BIGSERIAL PRIMARY KEY,
     vin            VARCHAR(17) NOT NULL REFERENCES vehicles(vin) ON DELETE CASCADE,
     event_type     audit_event_enum NOT NULL,
@@ -316,28 +382,28 @@ CREATE TABLE audit_logs (
 -- vehicles.vin already has a unique btree index (PK) for exact match.
 -- Partial "LIKE '%00057%'" search needs a trigram GIN index to stay in
 -- the millisecond range at million-row scale.
-CREATE INDEX idx_vehicles_vin_trgm ON vehicles USING gin (vin gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_vehicles_vin_trgm ON vehicles USING gin (vin gin_trgm_ops);
 
 -- Common vehicle-list filters
-CREATE INDEX idx_vehicles_status ON vehicles (current_global_status);
-CREATE INDEX idx_vehicles_model ON vehicles (vehicle_model_id);
+CREATE INDEX IF NOT EXISTS idx_vehicles_status ON vehicles (current_global_status);
+CREATE INDEX IF NOT EXISTS idx_vehicles_model ON vehicles (vehicle_model_id);
 
 -- --- issue_list: Analysis-tab hot paths --------------------------------
-CREATE INDEX idx_issue_list_vin ON issue_list (vin);
+CREATE INDEX IF NOT EXISTS idx_issue_list_vin ON issue_list (vin);
 
 -- "Daily Pending Issues" and "Vehicle Severity Breakdown" both filter on
 -- open/in-progress issues; a partial index keeps this narrow and fast.
-CREATE INDEX idx_issue_list_open_by_vin
+CREATE INDEX IF NOT EXISTS idx_issue_list_open_by_vin
     ON issue_list (vin, severity)
     WHERE status IN ('OPEN', 'IN_PROGRESS');
 
-CREATE INDEX idx_issue_list_status_date ON issue_list (status, issue_date);
-CREATE INDEX idx_issue_list_station ON issue_list (station_id);
-CREATE INDEX idx_issue_list_severity ON issue_list (severity);
+CREATE INDEX IF NOT EXISTS idx_issue_list_status_date ON issue_list (status, issue_date);
+CREATE INDEX IF NOT EXISTS idx_issue_list_station ON issue_list (station_id);
+CREATE INDEX IF NOT EXISTS idx_issue_list_severity ON issue_list (severity);
 
 -- date_trunc(text, timestamptz) is STABLE, not IMMUTABLE (it depends on
 -- the session TimeZone setting), so it cannot be used directly inside a
--- CREATE INDEX expression. This small wrapper pins the conversion to UTC
+-- CREATE INDEX IF NOT EXISTS expression. This small wrapper pins the conversion to UTC
 -- and is declared IMMUTABLE, which is the standard Postgres pattern for
 -- day-level expression indexes on timestamptz columns.
 CREATE OR REPLACE FUNCTION immutable_utc_date(ts TIMESTAMPTZ)
@@ -347,29 +413,29 @@ $$ LANGUAGE sql IMMUTABLE;
 
 -- Expression index for fast day-level grouping in the Daily Pending /
 -- Completed Issues charts (avoids a functional scan on every query).
-CREATE INDEX idx_issue_list_issue_date_day ON issue_list (immutable_utc_date(issue_date));
+CREATE INDEX IF NOT EXISTS idx_issue_list_issue_date_day ON issue_list (immutable_utc_date(issue_date));
 
 -- --- production_phase_progress -----------------------------------------
-CREATE INDEX idx_ppp_vin_phase ON production_phase_progress (vin, phase_number);
-CREATE INDEX idx_ppp_checkpoint ON production_phase_progress (checkpoint_id);
-CREATE INDEX idx_ppp_checked_at ON production_phase_progress (checked_at);
+CREATE INDEX IF NOT EXISTS idx_ppp_vin_phase ON production_phase_progress (vin, phase_number);
+CREATE INDEX IF NOT EXISTS idx_ppp_checkpoint ON production_phase_progress (checkpoint_id);
+CREATE INDEX IF NOT EXISTS idx_ppp_checked_at ON production_phase_progress (checked_at);
 
 -- --- eol_and_shipment_checklist_progress --------------------------------
-CREATE INDEX idx_eol_ship_vin_type ON eol_and_shipment_checklist_progress (vin, checklist_type);
+CREATE INDEX IF NOT EXISTS idx_eol_ship_vin_type ON eol_and_shipment_checklist_progress (vin, checklist_type);
 
 -- Speeds up the hard-block gate check ("are all items OK/CONDITIONAL_OK?")
-CREATE INDEX idx_eol_ship_status
+CREATE INDEX IF NOT EXISTS idx_eol_ship_status
     ON eol_and_shipment_checklist_progress (vin, checklist_type, check_status);
 
 -- --- audit_logs: append-only, time-series ------------------------------
-CREATE INDEX idx_audit_logs_vin_event_at ON audit_logs (vin, event_at);
-CREATE INDEX idx_audit_logs_type_event_at ON audit_logs (event_type, event_at);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_vin_event_at ON audit_logs (vin, event_at);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_type_event_at ON audit_logs (event_type, event_at);
 
 -- BRIN is far cheaper than btree for a large, naturally time-ordered,
 -- append-only table and is the recommended index type once audit_logs
 -- reaches multi-million-row scale (see architecture notes for
 -- partitioning guidance beyond this).
-CREATE INDEX idx_audit_logs_event_at_brin ON audit_logs USING brin (event_at);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_event_at_brin ON audit_logs USING brin (event_at);
 
 -- =====================================================================
 -- SECTION 9: FUNCTIONS & TRIGGERS
@@ -384,18 +450,22 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trg_vehicles_updated_at ON vehicles;
 CREATE TRIGGER trg_vehicles_updated_at
     BEFORE UPDATE ON vehicles
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
+DROP TRIGGER IF EXISTS trg_issue_list_updated_at ON issue_list;
 CREATE TRIGGER trg_issue_list_updated_at
     BEFORE UPDATE ON issue_list
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
+DROP TRIGGER IF EXISTS trg_ppp_updated_at ON production_phase_progress;
 CREATE TRIGGER trg_ppp_updated_at
     BEFORE UPDATE ON production_phase_progress
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
+DROP TRIGGER IF EXISTS trg_eol_ship_updated_at ON eol_and_shipment_checklist_progress;
 CREATE TRIGGER trg_eol_ship_updated_at
     BEFORE UPDATE ON eol_and_shipment_checklist_progress
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
@@ -430,6 +500,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trg_assign_checklist_templates ON vehicles;
 CREATE TRIGGER trg_assign_checklist_templates
     BEFORE INSERT ON vehicles
     FOR EACH ROW EXECUTE FUNCTION fn_assign_checklist_templates();
@@ -460,6 +531,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trg_initialize_vehicle_progress ON vehicles;
 CREATE TRIGGER trg_initialize_vehicle_progress
     AFTER INSERT ON vehicles
     FOR EACH ROW EXECUTE FUNCTION fn_initialize_vehicle_progress();
@@ -522,6 +594,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trg_recalculate_vehicle_progress ON production_phase_progress;
 CREATE TRIGGER trg_recalculate_vehicle_progress
     AFTER INSERT OR UPDATE OF status ON production_phase_progress
     FOR EACH ROW EXECUTE FUNCTION fn_recalculate_vehicle_progress();
@@ -565,6 +638,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trg_recheck_eol_gate ON eol_and_shipment_checklist_progress;
 CREATE TRIGGER trg_recheck_eol_gate
     AFTER INSERT OR UPDATE OF check_status ON eol_and_shipment_checklist_progress
     FOR EACH ROW EXECUTE FUNCTION fn_recheck_eol_gate_on_item_update();
@@ -603,6 +677,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trg_check_shipment_completion ON eol_and_shipment_checklist_progress;
 CREATE TRIGGER trg_check_shipment_completion
     AFTER INSERT OR UPDATE OF check_status ON eol_and_shipment_checklist_progress
     FOR EACH ROW EXECUTE FUNCTION fn_check_shipment_completion();
@@ -635,6 +710,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trg_enforce_manual_status_change ON vehicles;
 CREATE TRIGGER trg_enforce_manual_status_change
     BEFORE UPDATE OF current_global_status ON vehicles
     FOR EACH ROW EXECUTE FUNCTION fn_enforce_manual_status_change();
@@ -662,6 +738,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trg_link_latest_issue_to_source ON issue_list;
 CREATE TRIGGER trg_link_latest_issue_to_source
     AFTER INSERT ON issue_list
     FOR EACH ROW EXECUTE FUNCTION fn_link_latest_issue_to_source();
@@ -741,12 +818,20 @@ FROM vehicles;
 
 INSERT INTO phases (phase_number, name) VALUES
     (1, 'Phase 1'), (2, 'Phase 2'), (3, 'Phase 3'), (4, 'Phase 4'),
-    (5, 'Phase 5'), (6, 'Phase 6'), (7, 'Phase 7'), (8, 'Phase 8');
+    (5, 'Phase 5'), (6, 'Phase 6'), (7, 'Phase 7'), (8, 'Phase 8')
+ON CONFLICT (phase_number) DO NOTHING;
 
 -- Sample checklist templates (generic defaults, vehicle_model_id = NULL)
-INSERT INTO checklist_templates (vehicle_model_id, type, name, is_active) VALUES
-    (NULL, 'EOL', 'Default EoL Template (13 items)', TRUE),
-    (NULL, 'SHIPMENT', 'Default Shipment Template (43 items)', TRUE);
+INSERT INTO checklist_templates (vehicle_model_id, type, name, is_active)
+SELECT NULL, v.type::checklist_type_enum, v.name, TRUE
+FROM (VALUES
+    ('EOL', 'Default EoL Template (13 items)'),
+    ('SHIPMENT', 'Default Shipment Template (43 items)')
+) AS v(type, name)
+WHERE NOT EXISTS (
+    SELECT 1 FROM checklist_templates ct
+    WHERE ct.vehicle_model_id IS NULL AND ct.name = v.name
+);
 
 -- Item rows are omitted here for brevity — see architecture notes
 -- (09_KAREA_DB_Mimari_ve_Kurulum_Notlari.md) for the seed-data loading plan.
