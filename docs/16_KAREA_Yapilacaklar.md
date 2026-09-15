@@ -1,6 +1,6 @@
 # KAREA — Yapılacaklar Listesi
 
-**Güncelleme:** 2026-09-14
+**Güncelleme:** 2026-09-15
 **Amaç:** Canlıya çıkmadan önce ve sonra yapılacakları ayırmak, neyin
 kimi beklediğini takip etmek.
 
@@ -95,10 +95,19 @@ oturumda defalarca öldüğünü gördük. systemd veya eşdeğeri gerekli.
 ### B5. Veritabanı yedekleme `[!]`
 Tanımlı bir yedekleme politikası yok.
 
-### B6. Üretim veritabanı kurulumu `[ ]`
+### B6. Üretim veritabanı kurulumu `[~]`
 Boş DB, migration'ların kontrollü çalıştırılması, 500 VIN'in yüklenmesi.
-Migration'ların idempotent olması (0013'te yaşadığımız dirty durumun
-tekrarını önlemek için).
+Migration'ların idempotent olması (0013/0020 dirty durumunun tekrarını
+önlemek için).
+
+**Durum (2026-09-15):**
+- Additive migration'lar idempotent hale getirildi (`IF NOT EXISTS`,
+  guarded `RENAME VALUE`, `DROP TRIGGER IF EXISTS` öncesi create).
+- Doğrulama: `database/scripts/verify_migrations.sh` — temiz DB'de
+  `migrate up`, ikinci `migrate up` (no-op), ardından additive SQL'lerin
+  ikinci kez `psql` ile uygulanması.
+- Bootstrap (0001/0002) hâlâ büyük ölçüde tek seferlik; boş DB üzerinde
+  `migrate up` ile doğrulanır, kısmi 0001/0002 yeniden koşusu desteklenmez.
 
 ### B7. Hata izleme ve log toplama `[ ]`
 Canlıda bir şey patlarsa kimsenin haberi olmuyor.
