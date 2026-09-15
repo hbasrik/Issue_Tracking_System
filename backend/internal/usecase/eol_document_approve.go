@@ -63,15 +63,66 @@ func (s *EOLDocumentApprover) Approve(ctx context.Context, vin string, actorID i
 
 // EOLWorkflowReader serves the Vehicle Detail EoL tab.
 type EOLWorkflowReader struct {
-	workflow repository.EOLWorkflowRepository
+	workflow     repository.EOLWorkflowRepository
+	issues       repository.IssueRepository
+	checklists   *ChecklistResultRecorder
+	progress     repository.ChecklistProgressRepository
+	stationSteps repository.StationStepProgressRepository
 }
 
-// NewEOLWorkflowReader wires the usecase with its repository.
-func NewEOLWorkflowReader(workflow repository.EOLWorkflowRepository) *EOLWorkflowReader {
-	return &EOLWorkflowReader{workflow: workflow}
+// NewEOLWorkflowReader wires the usecase with its repositories.
+func NewEOLWorkflowReader(
+	workflow repository.EOLWorkflowRepository,
+	issues repository.IssueRepository,
+	checklists *ChecklistResultRecorder,
+	progress repository.ChecklistProgressRepository,
+	stationSteps repository.StationStepProgressRepository,
+) *EOLWorkflowReader {
+	return &EOLWorkflowReader{
+		workflow:     workflow,
+		issues:       issues,
+		checklists:   checklists,
+		progress:     progress,
+		stationSteps: stationSteps,
+	}
 }
 
-// Get returns the current stage plus each stage's timestamp and actor.
+// Get returns the current stage, each stage's timestamp/actor, and
+// server-computed gate readiness (single source of truth for web/mobile).
 func (r *EOLWorkflowReader) Get(ctx context.Context, vin string) (*domain.EOLWorkflowView, error) {
-	return r.workflow.GetView(ctx, vin)
+	view, err := r.workflow.GetView(ctx, vin)
+	if err != nil {
+		return nil, err
+	}
+	workflow, err := r.workflow.Get(ctx, vin)
+	if err != nil {
+		return nil, err
+	}
+
+	blockers, err := BranchShipBlockers(ctx, vin, r.checklists, r.progress)
+	if err != nil {
+		return nil, err
+	}
+	stepsLeft, err := IncompleteStationSteps(ctx, vin, r.stationSteps)
+	if err != nil {
+		return nil, err
+	}
+	depotRemaining, depotMissing, err := DepotEOLRemainders(ctx, vin, r.checklists)
+	if err != nil {
+		return nil, err
+	}
+	openIssues, err := r.issues.ListOpenByVIN(ctx, vin)
+	if err != nil {
+		return nil, err
+	}
+
+	view.Gates = BuildEOLGates(
+		workflow,
+		blockers,
+		stepsLeft,
+		depotRemaining,
+		depotMissing,
+		len(openIssues),
+	)
+	return view, nil
 }
