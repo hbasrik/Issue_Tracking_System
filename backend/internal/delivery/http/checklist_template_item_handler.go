@@ -14,12 +14,17 @@ import (
 type createTemplateItemRequest struct {
 	ItemText         string  `json:"ItemText"`
 	EolPhase         *string `json:"EolPhase"`
+	SectionKey       *string `json:"SectionKey"`
+	SectionSort      *int16  `json:"SectionSort"`
 	PropagationScope *string `json:"PropagationScope"`
 }
 
 type updateTemplateItemRequest struct {
 	ItemText         *string `json:"ItemText"`
 	EolPhase         *string `json:"EolPhase"`
+	SectionKey       *string `json:"SectionKey"`
+	ClearSection     bool    `json:"ClearSection"`
+	SectionSort      *int16  `json:"SectionSort"`
 	IsActive         *bool   `json:"IsActive"`
 	PropagationScope *string `json:"PropagationScope"`
 }
@@ -58,6 +63,8 @@ func (s *server) handleChecklistTemplateItemCreate(w http.ResponseWriter, r *htt
 		TemplateID:       templateID,
 		ItemText:         req.ItemText,
 		EolPhase:         phase,
+		SectionKey:       req.SectionKey,
+		SectionSort:      req.SectionSort,
 		PropagationScope: scope,
 	})
 	if err != nil {
@@ -82,8 +89,9 @@ func (s *server) handleChecklistTemplateItemUpdate(w http.ResponseWriter, r *htt
 		badRequest(w, "invalid request body")
 		return
 	}
-	if req.ItemText == nil && req.EolPhase == nil && req.IsActive == nil {
-		badRequest(w, "ItemText, EolPhase or IsActive is required")
+	if req.ItemText == nil && req.EolPhase == nil && req.IsActive == nil &&
+		req.SectionKey == nil && !req.ClearSection && req.SectionSort == nil {
+		badRequest(w, "ItemText, EolPhase, SectionKey, ClearSection, SectionSort or IsActive is required")
 		return
 	}
 	phase, err := parseOptionalEOLPhase(req.EolPhase)
@@ -101,6 +109,9 @@ func (s *server) handleChecklistTemplateItemUpdate(w http.ResponseWriter, r *htt
 		ItemID:           itemID,
 		ItemText:         req.ItemText,
 		EolPhase:         phase,
+		SectionKey:       req.SectionKey,
+		ClearSection:     req.ClearSection,
+		SectionSort:      req.SectionSort,
 		IsActive:         req.IsActive,
 		PropagationScope: scope,
 	})

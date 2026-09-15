@@ -130,6 +130,25 @@ func ValidateTemplateItemFields(templateType ChecklistType, itemText string, pha
 	return nil
 }
 
+// MaxSectionKeyLen matches checklist_template_items.section_key VARCHAR(64).
+const MaxSectionKeyLen = 64
+
+// NormalizeSectionKey trims and lowercases a section id. Empty becomes nil
+// (unsectioned). Invalid length returns ErrInvalidEnumValue.
+func NormalizeSectionKey(raw *string) (*string, error) {
+	if raw == nil {
+		return nil, nil
+	}
+	s := strings.ToLower(strings.TrimSpace(*raw))
+	if s == "" {
+		return nil, nil
+	}
+	if utf8.RuneCountInString(s) > MaxSectionKeyLen {
+		return nil, ErrInvalidEnumValue
+	}
+	return &s, nil
+}
+
 // ChecklistTemplateItem mirrors the checklist_template_items table.
 type ChecklistTemplateItem struct {
 	ID         int
@@ -138,6 +157,11 @@ type ChecklistTemplateItem struct {
 	ItemText   string
 	StationID  *int
 	EolPhase   *EOLItemPhase
+	// SectionKey groups items in the UI independently of ItemNo reorder.
+	// Empty/nil = unsectioned ("Other items").
+	SectionKey *string `json:"SectionKey,omitempty"`
+	// SectionSort orders sections; not rewritten by item reorder.
+	SectionSort *int16 `json:"SectionSort,omitempty"`
 	IsActive   bool
 	// EvaluatedCount is non-PENDING progress rows for this item (list join).
 	// Used to warn before renaming catalogue text.
@@ -179,6 +203,8 @@ type ChecklistItemView struct {
 	ConditionalDesc string
 	RejectedDesc    string
 	EolPhase        *EOLItemPhase
+	SectionKey      *string `json:"SectionKey,omitempty"`
+	SectionSort     *int16  `json:"SectionSort,omitempty"`
 	ProgressID      *int64
 	IsActive        bool
 	CheckerName     string     `json:"CheckerName,omitempty"`

@@ -9,19 +9,24 @@ import (
 
 // CreateTemplateItemInput is a new catalogue row on an existing template.
 type CreateTemplateItemInput struct {
-	TemplateID        int
-	ItemText          string
-	EolPhase          *domain.EOLItemPhase
-	PropagationScope  domain.TemplateItemPropagationScope
+	TemplateID       int
+	ItemText         string
+	EolPhase         *domain.EOLItemPhase
+	SectionKey       *string
+	SectionSort      *int16
+	PropagationScope domain.TemplateItemPropagationScope
 }
 
-// UpdateTemplateItemInput patches text, phase and/or active flag.
+// UpdateTemplateItemInput patches text, phase, section and/or active flag.
 type UpdateTemplateItemInput struct {
 	TemplateID       int
 	ItemID           int
 	ItemText         *string
 	EolPhase         *domain.EOLItemPhase
 	ClearPhase       bool
+	SectionKey       *string
+	ClearSection     bool
+	SectionSort      *int16
 	IsActive         *bool
 	PropagationScope domain.TemplateItemPropagationScope
 }
@@ -40,6 +45,10 @@ func (r *ChecklistResultRecorder) CreateTemplateItem(ctx context.Context, in Cre
 	if err := domain.ValidateTemplateItemFields(tmpl.Type, text, in.EolPhase); err != nil {
 		return nil, err
 	}
+	sectionKey, err := domain.NormalizeSectionKey(in.SectionKey)
+	if err != nil {
+		return nil, err
+	}
 	scope := in.PropagationScope
 	if scope == "" {
 		scope = domain.PropagationScopeNotStarted
@@ -48,10 +57,12 @@ func (r *ChecklistResultRecorder) CreateTemplateItem(ctx context.Context, in Cre
 		return nil, domain.ErrInvalidEnumValue
 	}
 	item, err := r.checklist.CreateTemplateItem(ctx, &domain.ChecklistTemplateItem{
-		TemplateID: in.TemplateID,
-		ItemText:   text,
-		EolPhase:   in.EolPhase,
-		IsActive:   true,
+		TemplateID:  in.TemplateID,
+		ItemText:    text,
+		EolPhase:    in.EolPhase,
+		SectionKey:  sectionKey,
+		SectionSort: in.SectionSort,
+		IsActive:    true,
 	})
 	if err != nil {
 		return nil, err
@@ -97,6 +108,23 @@ func (r *ChecklistResultRecorder) UpdateTemplateItem(ctx context.Context, in Upd
 		item.EolPhase = nil
 	} else if in.EolPhase != nil {
 		item.EolPhase = in.EolPhase
+	}
+	if in.ClearSection {
+		item.SectionKey = nil
+		item.SectionSort = nil
+	} else if in.SectionKey != nil {
+		key, err := domain.NormalizeSectionKey(in.SectionKey)
+		if err != nil {
+			return nil, err
+		}
+		item.SectionKey = key
+		if key == nil {
+			item.SectionSort = nil
+		} else if in.SectionSort != nil {
+			item.SectionSort = in.SectionSort
+		}
+	} else if in.SectionSort != nil {
+		item.SectionSort = in.SectionSort
 	}
 	if in.IsActive != nil {
 		item.IsActive = *in.IsActive

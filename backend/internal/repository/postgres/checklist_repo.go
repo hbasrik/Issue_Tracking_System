@@ -83,6 +83,7 @@ func (r *ChecklistProgressRepo) ListItemsWithProgress(ctx context.Context, vin s
 		        COALESCE(p.check_status::text, 'PENDING'),
 		        COALESCE(p.rework_desc, ''), COALESCE(p.conditional_desc, ''), COALESCE(p.rejected_desc, ''),
 		        cti.eol_phase::text, p.id, cti.is_active,
+		        cti.section_key, cti.section_sort,
 		        p.check_date, COALESCE(checker.full_name, ''),
 		        p.rejected_date, COALESCE(rej.full_name, ''),
 		        p.approved_date, COALESCE(appr.full_name, '')
@@ -100,6 +101,7 @@ func (r *ChecklistProgressRepo) ListItemsWithProgress(ctx context.Context, vin s
 		        p.check_status::text,
 		        COALESCE(p.rework_desc, ''), COALESCE(p.conditional_desc, ''), COALESCE(p.rejected_desc, ''),
 		        cti.eol_phase::text, p.id, cti.is_active,
+		        cti.section_key, cti.section_sort,
 		        p.check_date, COALESCE(checker.full_name, ''),
 		        p.rejected_date, COALESCE(rej.full_name, ''),
 		        p.approved_date, COALESCE(appr.full_name, '')
@@ -126,6 +128,7 @@ func (r *ChecklistProgressRepo) ListItemsWithProgress(ctx context.Context, vin s
 			&item.ItemID, &item.ItemNo, &item.ItemText, &status,
 			&item.ReworkDesc, &item.ConditionalDesc, &item.RejectedDesc,
 			&eolPhase, &item.ProgressID, &item.IsActive,
+			&item.SectionKey, &item.SectionSort,
 			&item.CheckDate, &item.CheckerName,
 			&item.RejectedAt, &item.RejectedByName,
 			&item.ApprovedAt, &item.ApprovedByName,
@@ -221,11 +224,14 @@ func (r *ChecklistProgressRepo) ListTemplates(ctx context.Context) ([]domain.Che
 	return out, rows.Err()
 }
 
+const templateItemColumns = `id, template_id, item_no, item_text, station_id, eol_phase::text, is_active, section_key, section_sort`
+
 // ListTemplateItems returns every item of one template (including inactive).
 // EvaluatedCount is how many vehicle progress rows are non-PENDING (rename impact).
 func (r *ChecklistProgressRepo) ListTemplateItems(ctx context.Context, templateID int) ([]domain.ChecklistTemplateItem, error) {
 	rows, err := r.pool.Query(ctx,
 		`SELECT cti.id, cti.template_id, cti.item_no, cti.item_text, cti.station_id, cti.eol_phase::text, cti.is_active,
+		        cti.section_key, cti.section_sort,
 		        (SELECT count(*)::int FROM checklist_item_progress p
 		          WHERE p.check_item_id = cti.id AND p.check_status <> 'PENDING') AS evaluated_count
 		 FROM checklist_template_items cti
@@ -242,7 +248,8 @@ func (r *ChecklistProgressRepo) ListTemplateItems(ctx context.Context, templateI
 		var eolPhase *string
 		if err := rows.Scan(
 			&item.ID, &item.TemplateID, &item.ItemNo, &item.ItemText,
-			&item.StationID, &eolPhase, &item.IsActive, &item.EvaluatedCount,
+			&item.StationID, &eolPhase, &item.IsActive,
+			&item.SectionKey, &item.SectionSort, &item.EvaluatedCount,
 		); err != nil {
 			return nil, err
 		}
@@ -261,6 +268,7 @@ func scanTemplateItem(row pgx.Row) (*domain.ChecklistTemplateItem, error) {
 	if err := row.Scan(
 		&item.ID, &item.TemplateID, &item.ItemNo, &item.ItemText,
 		&item.StationID, &eolPhase, &item.IsActive,
+		&item.SectionKey, &item.SectionSort,
 	); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, domain.ErrNotFound
@@ -273,8 +281,6 @@ func scanTemplateItem(row pgx.Row) (*domain.ChecklistTemplateItem, error) {
 	}
 	return &item, nil
 }
-
-const templateItemColumns = `id, template_id, item_no, item_text, station_id, eol_phase::text, is_active`
 
 // GetTemplate returns one checklist_templates row.
 func (r *ChecklistProgressRepo) GetTemplate(ctx context.Context, templateID int) (*domain.ChecklistTemplate, error) {
@@ -307,17 +313,17 @@ func (r *ChecklistProgressRepo) CreateTemplateItem(ctx context.Context, item *do
 		phase = string(*item.EolPhase)
 	}
 	return scanTemplateItem(r.pool.QueryRow(ctx,
-		`INSERT INTO checklist_template_items (template_id, item_no, item_text, station_id, eol_phase, is_active)
+		`INSERT INTO checklist_template_items (template_id, item_no, item_text, station_id, eol_phase, is_active, section_key, section_sort)
 		 VALUES (
 		   $1,
 		   COALESCE((SELECT MAX(item_no) FROM checklist_template_items WHERE template_id = $1), 0) + 1,
-		   $2, $3, $4, TRUE
+		   $2, $3, $4, TRUE, $5, $6
 		 )
 		 RETURNING `+templateItemColumns,
-		item.TemplateID, item.ItemText, item.StationID, phase))
+		item.TemplateID, item.ItemText, item.StationID, phase, item.SectionKey, item.SectionSort))
 }
 
-// UpdateTemplateItem persists item_text, eol_phase and is_active.
+// UpdateTemplateItem persists item_text, eol_phase, is_active and section fields.
 func (r *ChecklistProgressRepo) UpdateTemplateItem(ctx context.Context, item *domain.ChecklistTemplateItem) error {
 	var phase any
 	if item.EolPhase != nil {
@@ -325,9 +331,10 @@ func (r *ChecklistProgressRepo) UpdateTemplateItem(ctx context.Context, item *do
 	}
 	tag, err := r.pool.Exec(ctx,
 		`UPDATE checklist_template_items
-		 SET item_text = $2, eol_phase = $3, is_active = $4
+		 SET item_text = $2, eol_phase = $3, is_active = $4,
+		     section_key = $5, section_sort = $6
 		 WHERE id = $1`,
-		item.ID, item.ItemText, phase, item.IsActive)
+		item.ID, item.ItemText, phase, item.IsActive, item.SectionKey, item.SectionSort)
 	if err != nil {
 		return err
 	}
