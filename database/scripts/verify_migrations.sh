@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
-# Prove migrations apply cleanly on an empty database, and that additive
-# migrations can be re-executed without error (dirty-recovery path).
+# Prove migrations apply cleanly on an empty database:
+#   1) migrate up (fresh)
+#   2) migrate up again (no-op)
+#   3) re-apply every *.up.sql via psql (idempotent DDL)
+#   4) migrate down to version 0, then up again (up → down → up)
+# Uses an ephemeral Postgres container; never touches the live DB.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 MIG="$ROOT/database/migrations"
@@ -38,31 +42,36 @@ for _ in $(seq 1 40); do
 done
 docker exec "$NAME" pg_isready -U karea -d karea >/dev/null
 
-echo "==> migrate up (fresh)"
+psql_file() {
+  local f="$1"
+  docker exec -i "$NAME" psql -U karea -d karea -v ON_ERROR_STOP=1 <"$f" >/dev/null
+}
+
+echo "==> [1/4] migrate up (fresh)"
 "$MIGRATE_BIN" -path "$MIG" -database "$URL" up
 VER="$("$MIGRATE_BIN" -path "$MIG" -database "$URL" version 2>&1 || true)"
 echo "    version: $VER"
 
-echo "==> migrate up again (must be no-op / already at latest)"
+echo "==> [2/4] migrate up again (must be no-op / already at latest)"
 OUT="$("$MIGRATE_BIN" -path "$MIG" -database "$URL" up 2>&1 || true)"
 echo "    ${OUT:-"(no output — already up)"}"
 "$MIGRATE_BIN" -path "$MIG" -database "$URL" version
 
-echo "==> re-apply additive migrations via psql (idempotency)"
-for f in \
-  0008_media_attachments_vin.up.sql \
-  0012_must_change_password.up.sql \
-  0013_eol_deliver_flow.up.sql \
-  0015_one_way_status_and_hold.up.sql \
-  0018_defect_catalog.up.sql \
-  0019_issue_classification_audit.up.sql \
-  0020_freeze_catalogue_snapshots.up.sql \
-  0021_clear_ambiguous_process_defaults.up.sql \
-  0022_template_aware_checklist_gates.up.sql \
-  0023_backfill_missing_checklist_progress.up.sql
-do
-  echo "    $f"
-  docker exec -i "$NAME" psql -U karea -d karea -v ON_ERROR_STOP=1 <"$MIG/$f" >/dev/null
+echo "==> [3/4] re-apply every *.up.sql via psql (full idempotency)"
+shopt -s nullglob
+for f in "$MIG"/*.up.sql; do
+  base="$(basename "$f")"
+  echo "    $base"
+  psql_file "$f"
 done
+echo "    re-apply complete; migrate version still: $("$MIGRATE_BIN" -path "$MIG" -database "$URL" version 2>&1 || true)"
 
-echo "==> OK: fresh migrate up + second migrate up + additive re-apply"
+echo "==> [4/4] up → down → up"
+echo "    migrate down to 0"
+"$MIGRATE_BIN" -path "$MIG" -database "$URL" down -all
+echo "    version after down: $("$MIGRATE_BIN" -path "$MIG" -database "$URL" version 2>&1 || true)"
+echo "    migrate up again"
+"$MIGRATE_BIN" -path "$MIG" -database "$URL" up
+echo "    version after re-up: $("$MIGRATE_BIN" -path "$MIG" -database "$URL" version 2>&1 || true)"
+
+echo "==> OK: fresh up + second up + full SQL re-apply + up/down/up"
