@@ -137,7 +137,7 @@ DROP TYPE IF EXISTS user_role_enum;
 -- ---------------------------------------------------------------------
 -- checklist_type_enum: add TEST
 ALTER TABLE checklist_templates ALTER COLUMN type TYPE text;
-DROP TYPE checklist_type_enum;
+DROP TYPE IF EXISTS checklist_type_enum;
 CREATE TYPE checklist_type_enum AS ENUM (
     'EOL',
     'SHIPMENT',
@@ -149,7 +149,7 @@ ALTER TABLE checklist_templates
 -- issue_status_enum: add CONDITIONAL_APPROVED
 ALTER TABLE issue_list ALTER COLUMN status DROP DEFAULT;
 ALTER TABLE issue_list ALTER COLUMN status TYPE text;
-DROP TYPE issue_status_enum;
+DROP TYPE IF EXISTS issue_status_enum;
 CREATE TYPE issue_status_enum AS ENUM (
     'OPEN',
     'IN_PROGRESS',
@@ -164,7 +164,7 @@ ALTER TABLE issue_list ALTER COLUMN status SET DEFAULT 'OPEN';
 -- issue_source_enum: STATION_STEP + TEST_ITEM (no PHASE_CHECKPOINT)
 ALTER TABLE issue_list ALTER COLUMN source_type TYPE text;
 UPDATE issue_list SET source_type = 'STATION_STEP' WHERE source_type = 'PHASE_CHECKPOINT';
-DROP TYPE issue_source_enum;
+DROP TYPE IF EXISTS issue_source_enum;
 CREATE TYPE issue_source_enum AS ENUM (
     'STATION_STEP',
     'EOL_ITEM',
@@ -176,7 +176,7 @@ ALTER TABLE issue_list
 
 -- audit_event_enum: drop PHASE_ENTER/PHASE_EXIT; add EOL/MEDIA events
 ALTER TABLE audit_logs ALTER COLUMN event_type TYPE text;
-DROP TYPE audit_event_enum;
+DROP TYPE IF EXISTS audit_event_enum;
 CREATE TYPE audit_event_enum AS ENUM (
     'STATUS_CHANGE',
     'LOCATION_CHANGE',
@@ -397,7 +397,7 @@ CREATE INDEX IF NOT EXISTS idx_vehicles_model ON vehicles (vehicle_model_id);
 CREATE INDEX IF NOT EXISTS idx_vehicles_current_station ON vehicles (current_station_id);
 
 CREATE INDEX IF NOT EXISTS idx_issue_list_vin ON issue_list (vin);
-CREATE INDEX idx_issue_list_open_by_vin
+CREATE INDEX IF NOT EXISTS idx_issue_list_open_by_vin
     ON issue_list (vin, severity)
     WHERE status IN ('OPEN', 'IN_PROGRESS', 'DONE');
 CREATE INDEX IF NOT EXISTS idx_issue_list_status_date ON issue_list (status, issue_date);
@@ -441,22 +441,27 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trg_vehicles_updated_at ON vehicles;
 CREATE TRIGGER trg_vehicles_updated_at
     BEFORE UPDATE ON vehicles
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
+DROP TRIGGER IF EXISTS trg_issue_list_updated_at ON issue_list;
 CREATE TRIGGER trg_issue_list_updated_at
     BEFORE UPDATE ON issue_list
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
+DROP TRIGGER IF EXISTS trg_vssp_updated_at ON vehicle_station_step_progress;
 CREATE TRIGGER trg_vssp_updated_at
     BEFORE UPDATE ON vehicle_station_step_progress
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
+DROP TRIGGER IF EXISTS trg_cip_updated_at ON checklist_item_progress;
 CREATE TRIGGER trg_cip_updated_at
     BEFORE UPDATE ON checklist_item_progress
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
+DROP TRIGGER IF EXISTS trg_eol_workflow_updated_at ON vehicle_eol_workflow;
 CREATE TRIGGER trg_eol_workflow_updated_at
     BEFORE UPDATE ON vehicle_eol_workflow
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
@@ -505,6 +510,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trg_assign_checklist_templates ON vehicles;
 CREATE TRIGGER trg_assign_checklist_templates
     BEFORE INSERT ON vehicles
     FOR EACH ROW EXECUTE FUNCTION fn_assign_checklist_templates();
@@ -544,6 +550,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trg_initialize_vehicle_progress ON vehicles;
 CREATE TRIGGER trg_initialize_vehicle_progress
     AFTER INSERT ON vehicles
     FOR EACH ROW EXECUTE FUNCTION fn_initialize_vehicle_progress();
@@ -589,6 +596,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trg_recalculate_vehicle_progress ON vehicle_station_step_progress;
 CREATE TRIGGER trg_recalculate_vehicle_progress
     AFTER INSERT OR UPDATE OF status ON vehicle_station_step_progress
     FOR EACH ROW EXECUTE FUNCTION fn_recalculate_vehicle_progress();
@@ -622,6 +630,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trg_enforce_branch_shipment ON vehicle_eol_workflow;
 CREATE TRIGGER trg_enforce_branch_shipment
     BEFORE UPDATE OF branch_shipped_at ON vehicle_eol_workflow
     FOR EACH ROW EXECUTE FUNCTION fn_enforce_branch_shipment();
@@ -655,6 +664,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trg_enforce_depot_release ON vehicle_eol_workflow;
 CREATE TRIGGER trg_enforce_depot_release
     BEFORE UPDATE OF depot_released_at ON vehicle_eol_workflow
     FOR EACH ROW EXECUTE FUNCTION fn_enforce_depot_release();
@@ -676,6 +686,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trg_enforce_document_approval ON vehicle_eol_workflow;
 CREATE TRIGGER trg_enforce_document_approval
     BEFORE UPDATE OF document_approved_at ON vehicle_eol_workflow
     FOR EACH ROW EXECUTE FUNCTION fn_enforce_document_approval();
@@ -716,6 +727,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trg_check_shipment_completion ON checklist_item_progress;
 CREATE TRIGGER trg_check_shipment_completion
     AFTER INSERT OR UPDATE OF check_status ON checklist_item_progress
     FOR EACH ROW EXECUTE FUNCTION fn_check_shipment_completion();
@@ -761,6 +773,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trg_enforce_manual_status_change ON vehicles;
 CREATE TRIGGER trg_enforce_manual_status_change
     BEFORE UPDATE OF current_global_status ON vehicles
     FOR EACH ROW EXECUTE FUNCTION fn_enforce_manual_status_change();
@@ -788,6 +801,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trg_link_latest_issue_to_source ON issue_list;
 CREATE TRIGGER trg_link_latest_issue_to_source
     AFTER INSERT ON issue_list
     FOR EACH ROW EXECUTE FUNCTION fn_link_latest_issue_to_source();

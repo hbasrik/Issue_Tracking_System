@@ -1,12 +1,24 @@
 -- EOL flow: branch ship gates TEST + SHIPMENT + EOL BRANCH; depot release stays
 -- IN_WAREHOUSE; explicit deliver sets DELIVERED. Removes auto shipment-completion
 -- trigger and depot-release → SHIPPED writer from migration 0011.
+-- Idempotent: safe to re-run after a partial/dirty apply.
 
-ALTER TYPE vehicle_status_enum RENAME VALUE 'WITH_CUSTOMER' TO 'DELIVERED';
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM pg_enum e
+        JOIN pg_type t ON t.oid = e.enumtypid
+        WHERE t.typname = 'vehicle_status_enum'
+          AND e.enumlabel = 'WITH_CUSTOMER'
+    ) THEN
+        ALTER TYPE vehicle_status_enum RENAME VALUE 'WITH_CUSTOMER' TO 'DELIVERED';
+    END IF;
+END $$;
 
 ALTER TABLE vehicle_eol_workflow
-    ADD COLUMN delivered_at TIMESTAMPTZ,
-    ADD COLUMN delivered_by INT REFERENCES users(id);
+    ADD COLUMN IF NOT EXISTS delivered_at TIMESTAMPTZ,
+    ADD COLUMN IF NOT EXISTS delivered_by INT REFERENCES users(id);
 
 -- Shipment checklist completion no longer auto-advances vehicle status.
 DROP TRIGGER IF EXISTS trg_check_shipment_completion ON checklist_item_progress;

@@ -1,7 +1,8 @@
 -- Karar 11: real vin column on media_attachments (nullable add, backfill, then NOT NULL).
+-- Idempotent: safe to re-run after a partial/dirty apply.
 
 ALTER TABLE media_attachments
-    ADD COLUMN vin VARCHAR(17) REFERENCES vehicles(vin) ON DELETE CASCADE;
+    ADD COLUMN IF NOT EXISTS vin VARCHAR(17) REFERENCES vehicles(vin) ON DELETE CASCADE;
 
 COMMENT ON COLUMN media_attachments.vin IS
     'Karar 11: denormalized vehicle key so Vehicle Detail can list every photo for a VIN without resolving the polymorphic entity_id.';
@@ -11,28 +12,32 @@ UPDATE media_attachments m
 SET vin = i.vin
 FROM issue_list i
 WHERE m.entity_type IN ('ISSUE', 'ISSUE_RESOLUTION')
-  AND m.entity_id = i.id::text;
+  AND m.entity_id = i.id::text
+  AND m.vin IS NULL;
 
 -- CHECKLIST_ITEM_PROGRESS → checklist_item_progress.vin
 UPDATE media_attachments m
 SET vin = c.vin
 FROM checklist_item_progress c
 WHERE m.entity_type = 'CHECKLIST_ITEM_PROGRESS'
-  AND m.entity_id = c.id::text;
+  AND m.entity_id = c.id::text
+  AND m.vin IS NULL;
 
 -- STATION_STEP_PROGRESS → vehicle_station_step_progress.vin
 UPDATE media_attachments m
 SET vin = p.vin
 FROM vehicle_station_step_progress p
 WHERE m.entity_type = 'STATION_STEP_PROGRESS'
-  AND m.entity_id = p.id::text;
+  AND m.entity_id = p.id::text
+  AND m.vin IS NULL;
 
 -- VEHICLE → entity_id is already the VIN
 UPDATE media_attachments m
 SET vin = v.vin
 FROM vehicles v
 WHERE m.entity_type = 'VEHICLE'
-  AND m.entity_id = v.vin;
+  AND m.entity_id = v.vin
+  AND m.vin IS NULL;
 
 -- Parent rows may have been deleted while media_attachments survived (no
 -- polymorphic FK). Recover ISSUE* VINs from audit_logs when the issue is gone.
@@ -66,4 +71,4 @@ END $$;
 
 ALTER TABLE media_attachments ALTER COLUMN vin SET NOT NULL;
 
-CREATE INDEX idx_media_attachments_vin ON media_attachments (vin);
+CREATE INDEX IF NOT EXISTS idx_media_attachments_vin ON media_attachments (vin);
