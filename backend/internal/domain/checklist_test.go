@@ -60,3 +60,43 @@ func TestUserInUseError(t *testing.T) {
 		t.Fatalf("empty = %q", empty.Error())
 	}
 }
+
+func TestPreferredActiveTemplateID(t *testing.T) {
+	model5 := 5
+	model9 := 9
+	generic := ChecklistTemplate{ID: 1, Type: ChecklistTypeTest, Name: "generic", IsActive: true}
+	specific5 := ChecklistTemplate{ID: 10, VehicleModelID: &model5, Type: ChecklistTypeTest, Name: "m5", IsActive: true}
+	specific9 := ChecklistTemplate{ID: 11, VehicleModelID: &model9, Type: ChecklistTypeTest, Name: "m9", IsActive: true}
+	inactive := ChecklistTemplate{ID: 12, VehicleModelID: &model5, Type: ChecklistTypeTest, Name: "off", IsActive: false}
+
+	t.Run("prefers model-specific", func(t *testing.T) {
+		id, err := PreferredActiveTemplateID([]ChecklistTemplate{generic, specific5, specific9}, &model5)
+		if err != nil || id != 10 {
+			t.Fatalf("id=%d err=%v, want 10", id, err)
+		}
+	})
+	t.Run("falls back to generic", func(t *testing.T) {
+		id, err := PreferredActiveTemplateID([]ChecklistTemplate{generic, specific9}, &model5)
+		if err != nil || id != 1 {
+			t.Fatalf("id=%d err=%v, want 1", id, err)
+		}
+	})
+	t.Run("nil model uses generic", func(t *testing.T) {
+		id, err := PreferredActiveTemplateID([]ChecklistTemplate{generic, specific5}, nil)
+		if err != nil || id != 1 {
+			t.Fatalf("id=%d err=%v, want 1", id, err)
+		}
+	})
+	t.Run("ignores inactive specific", func(t *testing.T) {
+		id, err := PreferredActiveTemplateID([]ChecklistTemplate{generic, inactive}, &model5)
+		if err != nil || id != 1 {
+			t.Fatalf("id=%d err=%v, want 1", id, err)
+		}
+	})
+	t.Run("not found", func(t *testing.T) {
+		_, err := PreferredActiveTemplateID(nil, &model5)
+		if err != ErrNotFound {
+			t.Fatalf("err=%v, want ErrNotFound", err)
+		}
+	})
+}

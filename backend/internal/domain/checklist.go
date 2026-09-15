@@ -75,6 +75,38 @@ type ChecklistTemplate struct {
 	IsActive       bool
 }
 
+// PreferredActiveTemplateID picks among active candidates already filtered to
+// one checklist type: prefer a row whose VehicleModelID matches vehicleModelID,
+// otherwise the generic (nil model) row. Lowest ID wins ties. Mirrors the SQL
+// used by ResolveDefaultTemplateID and fn_assign_checklist_templates.
+func PreferredActiveTemplateID(candidates []ChecklistTemplate, vehicleModelID *int) (int, error) {
+	var bestSpecific, bestGeneric *ChecklistTemplate
+	for i := range candidates {
+		c := &candidates[i]
+		if !c.IsActive {
+			continue
+		}
+		if c.VehicleModelID == nil {
+			if bestGeneric == nil || c.ID < bestGeneric.ID {
+				bestGeneric = c
+			}
+			continue
+		}
+		if vehicleModelID != nil && *c.VehicleModelID == *vehicleModelID {
+			if bestSpecific == nil || c.ID < bestSpecific.ID {
+				bestSpecific = c
+			}
+		}
+	}
+	if bestSpecific != nil {
+		return bestSpecific.ID, nil
+	}
+	if bestGeneric != nil {
+		return bestGeneric.ID, nil
+	}
+	return 0, ErrNotFound
+}
+
 // ChecklistTemplateSummary is the /templates admin row: a template plus the
 // live count of its active items, so the page never has to hardcode 13/43.
 type ChecklistTemplateSummary struct {
