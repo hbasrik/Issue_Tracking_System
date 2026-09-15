@@ -1619,7 +1619,10 @@ func (r *AnalysisRepo) defectPartTypeTop(ctx context.Context, f domain.AnalysisF
 
 func (r *AnalysisRepo) defectCoverage(ctx context.Context, f domain.AnalysisFilter) (domain.DefectClassificationCoverage, error) {
 	b := bounds(f)
-	var cov domain.DefectClassificationCoverage
+	cov := domain.DefectClassificationCoverage{
+		TopOtherParts: []domain.DefectCustomTextCount{},
+		TopOtherTypes: []domain.DefectCustomTextCount{},
+	}
 	err := r.pool.QueryRow(ctx, `
 		SELECT count(*)::bigint,
 		       count(*) FILTER (
@@ -1632,15 +1635,67 @@ func (r *AnalysisRepo) defectCoverage(ctx context.Context, f domain.AnalysisFilt
 		       )::bigint,
 		       count(*) FILTER (
 		         WHERE dt.code = $11
+		       )::bigint,
+		       count(*) FILTER (
+		         WHERE i.responsible_process_id IS NULL
 		       )::bigint
 		`+defectCatalogueJoin+issueWhere("i.issue_date"),
 		append(b.slice(), domain.DefectPartCodeOther, domain.DefectTypeCodeOther)...,
-	).Scan(&cov.Total, &cov.Classified, &cov.OtherPart, &cov.OtherType)
+	).Scan(&cov.Total, &cov.Classified, &cov.OtherPart, &cov.OtherType, &cov.ProcessUnassigned)
 	if err != nil {
 		return cov, err
 	}
 	cov.Unclassified = cov.Total - cov.Classified
+
+	parts, err := r.defectOtherCustomTexts(ctx, f, `
+		SELECT trim(i.custom_part_name), count(*)::bigint
+		`+defectCatalogueJoin+issueWhere("i.issue_date")+`
+		 AND dp.code = $10
+		 AND NULLIF(trim(i.custom_part_name), '') IS NOT NULL
+		 GROUP BY 1
+		 ORDER BY count(*) DESC, 1
+		 LIMIT 8`, domain.DefectPartCodeOther)
+	if err != nil {
+		return cov, err
+	}
+	cov.TopOtherParts = parts
+
+	types, err := r.defectOtherCustomTexts(ctx, f, `
+		SELECT trim(i.custom_defect_name), count(*)::bigint
+		`+defectCatalogueJoin+issueWhere("i.issue_date")+`
+		 AND dt.code = $10
+		 AND NULLIF(trim(i.custom_defect_name), '') IS NOT NULL
+		 GROUP BY 1
+		 ORDER BY count(*) DESC, 1
+		 LIMIT 8`, domain.DefectTypeCodeOther)
+	if err != nil {
+		return cov, err
+	}
+	cov.TopOtherTypes = types
 	return cov, nil
+}
+
+func (r *AnalysisRepo) defectOtherCustomTexts(
+	ctx context.Context,
+	f domain.AnalysisFilter,
+	query string,
+	otherCode string,
+) ([]domain.DefectCustomTextCount, error) {
+	b := bounds(f)
+	rows, err := r.pool.Query(ctx, query, append(b.slice(), otherCode)...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := []domain.DefectCustomTextCount{}
+	for rows.Next() {
+		var c domain.DefectCustomTextCount
+		if err := rows.Scan(&c.Name, &c.Count); err != nil {
+			return nil, err
+		}
+		out = append(out, c)
+	}
+	return out, rows.Err()
 }
 
 func (r *AnalysisRepo) defectRecurrence(ctx context.Context, f domain.AnalysisFilter) (domain.DefectRecurrenceSummary, error) {

@@ -254,11 +254,18 @@ export function buildAnalysisCsv(
   if (cov && cov.Total > 0) {
     lines.push(
       ...section(t('analysis.defectCoverage'), [
-        row([t('analysis.defectClassified'), cov.Classified]),
-        row([t('analysis.defectUnclassified'), cov.Unclassified]),
         row([t('analysis.defectOtherPartRate'), cov.OtherPart]),
         row([t('analysis.defectOtherTypeRate'), cov.OtherType]),
+        row([t('analysis.defectProcessUnassigned'), cov.ProcessUnassigned]),
+        row([t('analysis.defectLegacyUnclassifiedNote'), cov.Unclassified]),
+        row([t('analysis.defectClassified'), cov.Classified]),
         row([t('analysis.total'), cov.Total]),
+        ...(cov.TopOtherParts ?? []).map((r) =>
+          row([`${t('analysis.defectTopOtherParts')}: ${r.Name}`, r.Count]),
+        ),
+        ...(cov.TopOtherTypes ?? []).map((r) =>
+          row([`${t('analysis.defectTopOtherTypes')}: ${r.Name}`, r.Count]),
+        ),
       ]),
     );
   }

@@ -587,14 +587,29 @@ export function AnalysisPrint({
               <h2>{t('analysis.defectSection')}</h2>
               {cov && cov.Total > 0 ? (
                 <p>
-                  {t('analysis.defectCoverage')}: {cov.Classified}/{cov.Total}{' '}
-                  {t('analysis.defectClassified')} · {cov.Unclassified}{' '}
-                  {t('analysis.defectUnclassified')} · {t('analysis.defectOtherPartRate')}{' '}
-                  {cov.OtherPart} · {t('analysis.defectOtherTypeRate')} {cov.OtherType}
+                  {t('analysis.defectCoverage')}: {t('analysis.defectOtherPartRate')}{' '}
+                  {cov.OtherPart} · {t('analysis.defectOtherTypeRate')} {cov.OtherType} ·{' '}
+                  {t('analysis.defectProcessUnassigned')} {cov.ProcessUnassigned}
+                  {cov.Unclassified > 0
+                    ? ` · ${t('analysis.defectLegacyUnclassifiedNote')} ${cov.Unclassified}`
+                    : ''}
                 </p>
               ) : (
                 <p>{t('analysis.noData')}</p>
               )}
+              {cov && (cov.TopOtherParts?.length || cov.TopOtherTypes?.length) ? (
+                <p>
+                  {(cov.TopOtherParts ?? [])
+                    .slice(0, 5)
+                    .map((r) => `${r.Name} (${r.Count})`)
+                    .join(', ')}
+                  {(cov.TopOtherParts?.length && cov.TopOtherTypes?.length) ? ' · ' : ''}
+                  {(cov.TopOtherTypes ?? [])
+                    .slice(0, 5)
+                    .map((r) => `${r.Name} (${r.Count})`)
+                    .join(', ')}
+                </p>
+              ) : null}
               {rec && rec.CodedIssueCount > 0 ? (
                 <p>
                   {t('analysis.defectRecurrenceRate')}:{' '}

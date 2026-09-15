@@ -322,14 +322,23 @@ type DefectPartTypeCombo struct {
 	Count      int64
 }
 
-// DefectClassificationCoverage is how many issues in the window carry catalogue
-// labels (legacy rows stay Unclassified). Other* counts use the catch-all codes.
+// DefectCustomTextCount is a free-text "Diğer" value ranked by frequency.
+type DefectCustomTextCount struct {
+	Name  string
+	Count int64
+}
+
+// DefectClassificationCoverage measures catalogue adequacy (Other rates + top
+// free-texts) plus process backlog. Unclassified stays as a legacy side note.
 type DefectClassificationCoverage struct {
-	Total        int64
-	Classified   int64
-	Unclassified int64
-	OtherPart    int64
-	OtherType    int64
+	Total             int64
+	Classified        int64
+	Unclassified      int64
+	OtherPart         int64
+	OtherType         int64
+	ProcessUnassigned int64
+	TopOtherParts     []DefectCustomTextCount
+	TopOtherTypes     []DefectCustomTextCount
 }
 
 // DefectRecurrenceCase is one vehicle + defect_code pair that appeared ≥2 times.

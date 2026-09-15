@@ -718,16 +718,21 @@ export default function AnalysisPage() {
     if (!cov || cov.Total === 0) return [];
     return [
       {
-        name: t('analysis.defectClassified'),
-        value: cov.Classified,
-        color: statusColors.info,
-      },
-      {
-        name: t('analysis.defectUnclassified'),
-        value: cov.Unclassified,
+        name: t('analysis.defectOtherPartRate'),
+        value: cov.OtherPart,
         color: statusColors.pending,
       },
-    ];
+      {
+        name: t('analysis.defectOtherTypeRate'),
+        value: cov.OtherType,
+        color: statusColors.severityMedium,
+      },
+      {
+        name: t('analysis.defectProcessUnassigned'),
+        value: cov.ProcessUnassigned,
+        color: statusColors.severityCritical,
+      },
+    ].filter((r) => r.value > 0);
   }, [dash, t]);
 
   const defectRecurrenceHotspotBars = useMemo(
@@ -748,12 +753,18 @@ export default function AnalysisPage() {
     defectCoverage && defectCoverage.Total > 0
       ? Math.round((defectCoverage.OtherType / defectCoverage.Total) * 1000) / 10
       : null;
-  const defectClassifiedPct =
+  const defectProcessUnassignedPct =
     defectCoverage && defectCoverage.Total > 0
-      ? Math.round((defectCoverage.Classified / defectCoverage.Total) * 1000) / 10
+      ? Math.round((defectCoverage.ProcessUnassigned / defectCoverage.Total) * 1000) / 10
+      : null;
+  const defectUnclassifiedPct =
+    defectCoverage && defectCoverage.Total > 0
+      ? Math.round((defectCoverage.Unclassified / defectCoverage.Total) * 1000) / 10
       : null;
   const defectRecurrence = dash?.DefectRecurrence;
   const defectRecurrenceCases = defectRecurrence?.Cases ?? [];
+  const topOtherParts = defectCoverage?.TopOtherParts ?? [];
+  const topOtherTypes = defectCoverage?.TopOtherTypes ?? [];
 
   const eolFunnelRows = dash?.EOLFunnel ?? [];
   const fpyValue = dash?.Cards?.FirstTimeRightPercent ?? null;
@@ -1391,7 +1402,7 @@ export default function AnalysisPage() {
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
         <ChartCard
           title={t('analysis.defectCoverage')}
-          subtitle={t('analysis.defectChart.coverage')}
+          subtitle={t('analysis.defectCatalogAdequacyHint')}
           icon={<Gauge size={16} />}
         >
           {!defectCoverage || defectCoverage.Total === 0 ? (
@@ -1399,11 +1410,6 @@ export default function AnalysisPage() {
           ) : (
             <div className="space-y-3">
               <SplitBars data={defectCoverageBars} />
-              <p className="text-[14px] tabular-nums text-[var(--text-primary)]">
-                {defectClassifiedPct != null
-                  ? `${defectClassifiedPct}% ${t('analysis.defectClassified')} · ${defectCoverage.Classified}/${defectCoverage.Total}`
-                  : null}
-              </p>
               <ul className="space-y-1 text-[13px]" style={mutedCaption}>
                 <li>
                   {t('analysis.defectOtherPartRate')}:{' '}
@@ -1419,7 +1425,63 @@ export default function AnalysisPage() {
                     {` (${defectCoverage.OtherType})`}
                   </span>
                 </li>
+                <li>
+                  {t('analysis.defectProcessUnassigned')}:{' '}
+                  <span className="font-semibold tabular-nums text-[var(--text-primary)]">
+                    {defectProcessUnassignedPct != null
+                      ? `${defectProcessUnassignedPct}%`
+                      : t('common.emDash')}
+                    {` (${defectCoverage.ProcessUnassigned})`}
+                  </span>
+                </li>
               </ul>
+              {(topOtherParts.length > 0 || topOtherTypes.length > 0) && (
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  {topOtherParts.length > 0 ? (
+                    <div>
+                      <p className="mb-1 text-[12px] font-medium text-[var(--text-primary)]">
+                        {t('analysis.defectTopOtherParts')}
+                      </p>
+                      <ul className="space-y-0.5 text-[12px]" style={mutedCaption}>
+                        {topOtherParts.map((row) => (
+                          <li key={`op-${row.Name}`} className="flex justify-between gap-2">
+                            <span className="truncate">{row.Name}</span>
+                            <span className="tabular-nums text-[var(--text-primary)]">
+                              {row.Count}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
+                  {topOtherTypes.length > 0 ? (
+                    <div>
+                      <p className="mb-1 text-[12px] font-medium text-[var(--text-primary)]">
+                        {t('analysis.defectTopOtherTypes')}
+                      </p>
+                      <ul className="space-y-0.5 text-[12px]" style={mutedCaption}>
+                        {topOtherTypes.map((row) => (
+                          <li key={`ot-${row.Name}`} className="flex justify-between gap-2">
+                            <span className="truncate">{row.Name}</span>
+                            <span className="tabular-nums text-[var(--text-primary)]">
+                              {row.Count}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
+                </div>
+              )}
+              {defectCoverage.Unclassified > 0 ? (
+                <p className="text-[11px]" style={mutedCaption}>
+                  {t('analysis.defectLegacyUnclassifiedNote')}:{' '}
+                  <span className="tabular-nums">
+                    {defectUnclassifiedPct != null ? `${defectUnclassifiedPct}%` : t('common.emDash')}
+                    {` (${defectCoverage.Unclassified}/${defectCoverage.Total})`}
+                  </span>
+                </p>
+              ) : null}
             </div>
           )}
         </ChartCard>
