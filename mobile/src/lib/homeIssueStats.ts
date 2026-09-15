@@ -18,6 +18,18 @@ export type MobileHomeIssueStatKey = Exclude<
   'pending_quality' | 'critical'
 >;
 
+export function isMobileHomeIssueStatKey(
+  value: string | null | undefined,
+): value is MobileHomeIssueStatKey {
+  return (
+    value === 'open' ||
+    value === 'in_progress' ||
+    value === 'closed_today' ||
+    value === 'approved_today' ||
+    value === 'conditional_approved_today'
+  );
+}
+
 const HOME_ISSUE_STAT_KEYS: Record<MobileHomeIssueStatKey, MessageKey> = {
   open: 'home.mobile.open',
   in_progress: 'home.mobile.inProgress',

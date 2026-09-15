@@ -1,5 +1,5 @@
 import type { NavigatorScreenParams } from '@react-navigation/native';
-import type { HomeIssueStatKey } from '../lib/homeIssueStats';
+import type { MobileHomeIssueStatKey } from '../lib/homeIssueStats';
 
 export type RootStackParamList = {
   Login: undefined;
@@ -26,6 +26,6 @@ export type RootStackParamList = {
 export type MainDrawerParamList = {
   Home: undefined;
   Vehicles: undefined;
-  MyIssues: { homeStat?: HomeIssueStatKey } | undefined;
+  MyIssues: { homeStat?: MobileHomeIssueStatKey } | undefined;
   Profile: undefined;
 };

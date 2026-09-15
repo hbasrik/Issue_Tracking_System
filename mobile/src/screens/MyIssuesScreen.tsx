@@ -36,8 +36,9 @@ import { inkOn, mixColors, readableOn } from '../theme/tokens';
 import { issueStatusColor, issueStatusLabel } from '../lib/issueStatus';
 import {
   homeIssueStatLabel,
+  isMobileHomeIssueStatKey,
   matchesHomeIssueStat,
-  type HomeIssueStatKey,
+  type MobileHomeIssueStatKey,
 } from '../lib/homeIssueStats';
 import { issueMatchesListQuery } from '../lib/issueVinFilter';
 import { issueTypeChipLabel } from '../lib/issueTypeLabel';
@@ -86,8 +87,10 @@ export default function MyIssuesScreen() {
   const [defectZoneIds, setDefectZoneIds] = useState<Set<number>>(new Set());
   const [defectPartIds, setDefectPartIds] = useState<Set<number>>(new Set());
   const [defectTypeIds, setDefectTypeIds] = useState<Set<number>>(new Set());
-  const [homeStat, setHomeStat] = useState<HomeIssueStatKey | undefined>(
-    route.params?.homeStat,
+  const [homeStat, setHomeStat] = useState<MobileHomeIssueStatKey | undefined>(
+    isMobileHomeIssueStatKey(route.params?.homeStat)
+      ? route.params?.homeStat
+      : undefined,
   );
   /** Frozen at preset apply so list length matches the Home card at tap time. */
   const [homeStatNow, setHomeStatNow] = useState(() => new Date());
@@ -141,7 +144,9 @@ export default function MyIssuesScreen() {
 
   // Apply (or clear) the Home deep-link whenever the route param changes.
   useEffect(() => {
-    const next = route.params?.homeStat;
+    const next = isMobileHomeIssueStatKey(route.params?.homeStat)
+      ? route.params.homeStat
+      : undefined;
     setHomeStat(next);
     if (next) {
       setHomeStatNow(new Date());
