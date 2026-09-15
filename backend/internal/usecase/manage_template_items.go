@@ -28,6 +28,9 @@ type UpdateTemplateItemInput struct {
 
 // CreateTemplateItem appends an active item and backfills PENDING onto
 // vehicles selected by PropagationScope (default: not_started).
+// If the scope matches nobody while assigned vehicles still lack the item,
+// the catalogue row is deleted and TemplatePropagationEmptyError is returned
+// so a silent zero-propagate cannot leave an orphan (root cause of #44).
 func (r *ChecklistResultRecorder) CreateTemplateItem(ctx context.Context, in CreateTemplateItemInput) (*domain.ChecklistTemplateItem, error) {
 	tmpl, err := r.checklist.GetTemplate(ctx, in.TemplateID)
 	if err != nil {
@@ -53,8 +56,20 @@ func (r *ChecklistResultRecorder) CreateTemplateItem(ctx context.Context, in Cre
 	if err != nil {
 		return nil, err
 	}
-	if _, err := r.checklist.InsertPendingForVehicles(ctx, item.ID, tmpl.ID, tmpl.Type, scope); err != nil {
+	n, err := r.checklist.InsertPendingForVehicles(ctx, item.ID, tmpl.ID, tmpl.Type, scope)
+	if err != nil {
+		_ = r.checklist.DeleteTemplateItem(ctx, item.ID)
 		return nil, err
+	}
+	_, missing, err := r.checklist.ListVehiclesMissingTemplateItem(ctx, tmpl.ID, item.ID, tmpl.Type, 1)
+	if err != nil {
+		return item, err
+	}
+	if n == 0 && missing > 0 {
+		if delErr := r.checklist.DeleteTemplateItem(ctx, item.ID); delErr != nil {
+			return nil, delErr
+		}
+		return nil, &domain.TemplatePropagationEmptyError{Scope: scope, MissingVehicles: missing}
 	}
 	return item, nil
 }

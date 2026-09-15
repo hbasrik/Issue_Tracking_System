@@ -18,6 +18,7 @@ type templateCatalogueFake struct {
 	pendingVINs map[int]int
 	createAff  int
 	createProt int
+	missingTotal int
 	deletedPending map[int]int64
 	insertedPending map[int]int64
 }
@@ -165,14 +166,14 @@ func (f *templateCatalogueFake) DeletePendingProgressForItem(_ context.Context, 
 }
 func (f *templateCatalogueFake) InsertPendingForVehicles(_ context.Context, itemID, _ int, _ domain.ChecklistType, scope domain.TemplateItemPropagationScope) (int64, error) {
 	n := int64(f.createAff)
-	if scope == domain.PropagationScopeIncomplete {
+	if scope == domain.PropagationScopeIncomplete && f.createAff > 0 {
 		n = int64(f.createAff + 2)
 	}
 	f.insertedPending[itemID] = n
 	return n, nil
 }
 func (f *templateCatalogueFake) ListVehiclesMissingTemplateItem(_ context.Context, _, _ int, _ domain.ChecklistType, _ int) ([]domain.TemplateItemMissingVehicle, int, error) {
-	return nil, 0, nil
+	return nil, f.missingTotal, nil
 }
 
 func TestCreateTemplateItem_AppendsActiveEOLItem(t *testing.T) {
@@ -324,5 +325,30 @@ func TestReorderTemplateItems_RejectsPartialList(t *testing.T) {
 	err := svc.ReorderTemplateItems(context.Background(), 1, []int{10})
 	if !errors.Is(err, domain.ErrTemplateItemReorderInvalid) {
 		t.Fatalf("err = %v", err)
+	}
+}
+
+func TestCreateTemplateItem_RejectsEmptyPropagation(t *testing.T) {
+	fake := newTemplateCatalogueFake()
+	fake.createAff = 0
+	fake.missingTotal = 12
+	before := len(fake.items[1])
+	svc := NewChecklistResultRecorder(nil, fake, nil, nil)
+	branch := domain.EOLItemPhaseBranch
+	_, err := svc.CreateTemplateItem(context.Background(), CreateTemplateItemInput{
+		TemplateID:       1,
+		ItemText:         "Orphan risk",
+		EolPhase:         &branch,
+		PropagationScope: domain.PropagationScopeNotStarted,
+	})
+	var empty *domain.TemplatePropagationEmptyError
+	if !errors.As(err, &empty) {
+		t.Fatalf("err = %v, want TemplatePropagationEmptyError", err)
+	}
+	if empty.MissingVehicles != 12 {
+		t.Fatalf("missing = %d", empty.MissingVehicles)
+	}
+	if len(fake.items[1]) != before {
+		t.Fatalf("orphan catalogue row left behind: %d items", len(fake.items[1]))
 	}
 }
