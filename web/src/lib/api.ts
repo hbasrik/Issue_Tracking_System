@@ -379,6 +379,8 @@ export const api = {
     body: {
       ItemText: string;
       EolPhase?: 'BRANCH' | 'DEPOT' | null;
+      SectionKey?: string | null;
+      SectionSort?: number | null;
       PropagationScope?: PropagationScope;
     },
   ) {
@@ -409,6 +411,9 @@ export const api = {
     body: {
       ItemText?: string;
       EolPhase?: 'BRANCH' | 'DEPOT';
+      SectionKey?: string | null;
+      ClearSection?: boolean;
+      SectionSort?: number | null;
       IsActive?: boolean;
       PropagationScope?: PropagationScope;
     },
@@ -824,6 +829,8 @@ export interface ChecklistTemplateItem {
   ItemText: string;
   StationID: number | null;
   EolPhase: 'BRANCH' | 'DEPOT' | null;
+  SectionKey?: string | null;
+  SectionSort?: number | null;
   IsActive: boolean;
   EvaluatedCount?: number;
 }
@@ -862,6 +869,8 @@ export interface ChecklistItem {
   ConditionalDesc: string;
   RejectedDesc: string;
   EolPhase?: 'BRANCH' | 'DEPOT' | null;
+  SectionKey?: string | null;
+  SectionSort?: number | null;
   ProgressID?: number | null;
   CheckerName?: string;
   CheckDate?: string | null;

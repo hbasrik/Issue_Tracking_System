@@ -21,6 +21,10 @@ import {
 } from '../components/DataCard';
 import { useI18n, type Translate } from '../i18n';
 import { brandColors, inkOn, mixTowardBlack } from '../theme/tokens';
+import {
+  catalogSortForSectionKey,
+  sectionsForTemplateType,
+} from '../../../shared/checklistSections';
 
 /** Checklist catalogue type — not an item/issue status. */
 function templateTypeLabel(
@@ -83,8 +87,11 @@ export default function TemplatesPage() {
   const [hideInactive, setHideInactive] = useState(false);
   const [draftText, setDraftText] = useState<Record<number, string>>({});
   const [draftPhase, setDraftPhase] = useState<Record<number, 'BRANCH' | 'DEPOT'>>({});
+  const [draftSection, setDraftSection] = useState<Record<number, string>>({});
   const [newText, setNewText] = useState('');
   const [newPhase, setNewPhase] = useState<'BRANCH' | 'DEPOT'>('BRANCH');
+  const [newSection, setNewSection] = useState('');
+  const [newSectionCustom, setNewSectionCustom] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -131,16 +138,21 @@ export default function TemplatesPage() {
       setItems(list);
       const texts: Record<number, string> = {};
       const phases: Record<number, 'BRANCH' | 'DEPOT'> = {};
+      const sections: Record<number, string> = {};
       for (const item of list) {
         texts[item.ID] = item.ItemText;
         if (item.EolPhase === 'BRANCH' || item.EolPhase === 'DEPOT') {
           phases[item.ID] = item.EolPhase;
         }
+        sections[item.ID] = item.SectionKey?.trim() || '';
       }
       setDraftText(texts);
       setDraftPhase(phases);
+      setDraftSection(sections);
       setNewText('');
       setNewPhase('BRANCH');
+      setNewSection('');
+      setNewSectionCustom('');
     } catch (err) {
       setError(err instanceof Error ? apiErrorMessage(err, t) : t('templates.itemsFailed'));
     }
@@ -195,9 +207,22 @@ export default function TemplatesPage() {
       const body: {
         ItemText?: string;
         EolPhase?: 'BRANCH' | 'DEPOT';
+        SectionKey?: string | null;
+        ClearSection?: boolean;
+        SectionSort?: number | null;
       } = { ItemText: nextText };
       if (selected.Type === 'EOL') {
         body.EolPhase = draftPhase[item.ID] ?? item.EolPhase ?? 'BRANCH';
+      }
+      const nextSection = (draftSection[item.ID] ?? item.SectionKey ?? '').trim();
+      const prevSection = item.SectionKey?.trim() || '';
+      if (nextSection !== prevSection) {
+        if (!nextSection) {
+          body.ClearSection = true;
+        } else {
+          body.SectionKey = nextSection;
+          body.SectionSort = catalogSortForSectionKey(selected.Type, nextSection);
+        }
       }
       await api.updateChecklistTemplateItem(selected.ID, item.ID, body);
       await refreshSelected(selected.ID);
@@ -255,12 +280,20 @@ export default function TemplatesPage() {
     setError(null);
     try {
       if (pending.kind === 'create') {
+        const sectionKey =
+          newSection === '__custom__'
+            ? newSectionCustom.trim() || null
+            : newSection.trim() || null;
         await api.createChecklistTemplateItem(selected.ID, {
           ItemText: newText.trim(),
           EolPhase: selected.Type === 'EOL' ? newPhase : null,
+          SectionKey: sectionKey,
+          SectionSort: catalogSortForSectionKey(selected.Type, sectionKey),
           PropagationScope: scope,
         });
         setNewText('');
+        setNewSection('');
+        setNewSectionCustom('');
       } else if (pending.item) {
         await api.updateChecklistTemplateItem(selected.ID, pending.item.ID, {
           IsActive: true,
@@ -524,6 +557,37 @@ export default function TemplatesPage() {
                     <option value="DEPOT">{t('templates.depot')}</option>
                   </select>
                 ) : null}
+                {sectionsForTemplateType(selected.Type).length > 0 ||
+                selected.Type === 'TEST' ||
+                selected.Type === 'SHIPMENT' ? (
+                  <>
+                    <select
+                      className={inputClass}
+                      style={{ borderColor: 'var(--border)' }}
+                      value={newSection}
+                      onChange={(e) => setNewSection(e.target.value)}
+                      aria-label={t('templates.section')}
+                    >
+                      <option value="">{t('templates.sectionNone')}</option>
+                      {sectionsForTemplateType(selected.Type).map((s) => (
+                        <option key={s.key} value={s.key}>
+                          {t(s.titleKey)}
+                        </option>
+                      ))}
+                      <option value="__custom__">{t('templates.sectionCustom')}</option>
+                    </select>
+                    {newSection === '__custom__' ? (
+                      <input
+                        className={inputClass}
+                        style={{ borderColor: 'var(--border)' }}
+                        value={newSectionCustom}
+                        onChange={(e) => setNewSectionCustom(e.target.value)}
+                        placeholder={t('templates.section')}
+                        maxLength={64}
+                      />
+                    ) : null}
+                  </>
+                ) : null}
                 <button
                   type="button"
                   className={btnPrimary}
@@ -591,6 +655,22 @@ export default function TemplatesPage() {
                               <option value="BRANCH">{t('templates.branch')}</option>
                               <option value="DEPOT">{t('templates.depot')}</option>
                             </select>
+                          ) : null}
+                          {sectionsForTemplateType(selected.Type).length > 0 ||
+                          selected.Type === 'TEST' ||
+                          selected.Type === 'SHIPMENT' ? (
+                            <SectionKeyEditor
+                              catalog={sectionsForTemplateType(selected.Type)}
+                              value={draftSection[item.ID] ?? item.SectionKey ?? ''}
+                              onChange={(v) =>
+                                setDraftSection((prev) => ({
+                                  ...prev,
+                                  [item.ID]: v,
+                                }))
+                              }
+                              t={t}
+                              inputClass={inputClass}
+                            />
                           ) : null}
                         </div>
                         <div className="flex flex-wrap gap-2" style={{ opacity: 1 }}>
@@ -757,5 +837,56 @@ export default function TemplatesPage() {
         />
       ) : null}
     </section>
+  );
+}
+
+function SectionKeyEditor({
+  catalog,
+  value,
+  onChange,
+  t,
+  inputClass,
+}: {
+  catalog: ReturnType<typeof sectionsForTemplateType>;
+  value: string;
+  onChange: (v: string) => void;
+  t: Translate;
+  inputClass: string;
+}) {
+  const known = catalog.some((c) => c.key === value);
+  const mode = !value ? '' : known ? value : '__custom__';
+  const custom = mode === '__custom__' ? value : '';
+  return (
+    <>
+      <select
+        className={inputClass}
+        style={{ borderColor: 'var(--border)' }}
+        value={mode}
+        onChange={(e) => {
+          const v = e.target.value;
+          if (v === '__custom__') onChange(custom || 'custom');
+          else onChange(v);
+        }}
+        aria-label={t('templates.section')}
+      >
+        <option value="">{t('templates.sectionNone')}</option>
+        {catalog.map((s) => (
+          <option key={s.key} value={s.key}>
+            {t(s.titleKey)}
+          </option>
+        ))}
+        <option value="__custom__">{t('templates.sectionCustom')}</option>
+      </select>
+      {mode === '__custom__' ? (
+        <input
+          className={inputClass}
+          style={{ borderColor: 'var(--border)' }}
+          value={custom}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={t('templates.section')}
+          maxLength={64}
+        />
+      ) : null}
+    </>
   );
 }

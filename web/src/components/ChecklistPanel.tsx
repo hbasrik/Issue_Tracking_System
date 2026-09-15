@@ -14,6 +14,7 @@ import { statusColors } from '../theme/tokens';
 import { useAuth } from '../auth/AuthProvider';
 import { Perm } from '../auth/permissions';
 import { ChecklistPrint } from './print/ChecklistPrint';
+import { groupItemsBySectionKey } from '../../../shared/checklistSections';
 
 interface ChecklistPanelProps {
   vin: string;
@@ -118,6 +119,17 @@ export function ChecklistPanel({
     return items.filter((item) => item.EolPhase === eolPhase);
   }, [items, eolPhase]);
 
+  const grouped = useMemo(() => {
+    const hasSection = visible.some((i) => Boolean(i.SectionKey?.trim()));
+    if (!hasSection) {
+      return [{ title: null as string | null, items: visible }];
+    }
+    return groupItemsBySectionKey(visible, t).map((g) => ({
+      title: g.title as string | null,
+      items: g.items,
+    }));
+  }, [visible, t]);
+
   const done = visible.filter((item) => PASSING.has(item.Status)).length;
   const editor = type === 'eol' ? 'eol' : 'yesno';
   const readOnly = locked || !canEdit;
@@ -163,26 +175,37 @@ export function ChecklistPanel({
           pointerEvents: readOnly ? 'none' : undefined,
         }}
       >
-        {visible.map((item) =>
-          editor === 'eol' ? (
-            <EolItemRow
-              key={item.ItemID}
-              vin={vin}
-              item={item}
-              onSaved={load}
-              disabled={readOnly}
-            />
-          ) : (
-            <YesNoItemRow
-              key={item.ItemID}
-              vin={vin}
-              type={type}
-              item={item}
-              onSaved={load}
-              disabled={readOnly}
-            />
-          ),
-        )}
+        {grouped.map((g) => (
+          <li key={g.title ?? '__flat'} className="list-none">
+            {g.title ? (
+              <p className="px-1 pb-2 pt-3 text-[13px] font-semibold text-[var(--text-secondary)] first:pt-0">
+                {g.title}
+              </p>
+            ) : null}
+            <ul className="divide-y" style={{ borderColor: 'var(--border)' }}>
+              {g.items.map((item) =>
+                editor === 'eol' ? (
+                  <EolItemRow
+                    key={item.ItemID}
+                    vin={vin}
+                    item={item}
+                    onSaved={load}
+                    disabled={readOnly}
+                  />
+                ) : (
+                  <YesNoItemRow
+                    key={item.ItemID}
+                    vin={vin}
+                    type={type}
+                    item={item}
+                    onSaved={load}
+                    disabled={readOnly}
+                  />
+                ),
+              )}
+            </ul>
+          </li>
+        ))}
       </ul>
       {visible.length === 0 && !error && (
         <p className="mt-3 text-[13px] text-[var(--text-secondary)]">
