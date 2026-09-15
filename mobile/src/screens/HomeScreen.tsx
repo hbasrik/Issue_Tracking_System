@@ -33,7 +33,7 @@ import { statusColors } from '../theme/tokens';
 import {
   countHomeIssueStat,
   homeIssueStatLabel,
-  type HomeIssueStatKey,
+  type MobileHomeIssueStatKey,
 } from '../lib/homeIssueStats';
 import type { MainDrawerParamList, RootStackParamList } from '../navigation/types';
 
@@ -42,7 +42,7 @@ type HomeNavigation = CompositeNavigationProp<
   NativeStackNavigationProp<RootStackParamList>
 >;
 
-const STAT_KEYS: { key: HomeIssueStatKey }[] = [
+const STAT_KEYS: { key: MobileHomeIssueStatKey }[] = [
   { key: 'open' },
   { key: 'in_progress' },
   { key: 'closed_today' },
@@ -50,7 +50,7 @@ const STAT_KEYS: { key: HomeIssueStatKey }[] = [
   { key: 'conditional_approved_today' },
 ];
 
-function statCardColor(key: HomeIssueStatKey): string {
+function statCardColor(key: MobileHomeIssueStatKey): string {
   switch (key) {
     case 'open':
       return statusColors.issueOpen;
@@ -74,7 +74,7 @@ export default function HomeScreen() {
   const { user, token, has } = useAuth();
   const { tokens } = useTheme();
   const { t } = useI18n();
-  const [counts, setCounts] = useState<Record<HomeIssueStatKey, number>>({
+  const [counts, setCounts] = useState<Record<MobileHomeIssueStatKey, number>>({
     open: 0,
     in_progress: 0,
     closed_today: 0,
@@ -133,7 +133,7 @@ export default function HomeScreen() {
     navigation.navigate('VehicleStation', { vin: v.VIN });
   }
 
-  function openStat(key: HomeIssueStatKey) {
+  function openStat(key: MobileHomeIssueStatKey) {
     Keyboard.dismiss();
     navigation.navigate('MyIssues', { homeStat: key });
   }

@@ -2,6 +2,14 @@ import type { Issue, Station, VehicleSeverityBreakdown } from './api';
 import { brandColors, statusColors } from '../theme/tokens';
 import type { SeverityLevel } from '../components/SeverityIndicator';
 import type { Translate } from '../../../shared/i18n';
+import {
+  isQualityClosedStatus,
+  parseInstant,
+  qualityClosedAt,
+  startOfLocalDay,
+} from '../../../shared/homeIssueStats';
+
+export { isQualityClosedStatus, parseInstant, qualityClosedAt, startOfLocalDay };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const OPEN_STATUSES = new Set(['OPEN', 'IN_PROGRESS', 'DONE']);
@@ -74,10 +82,6 @@ export type HomeDashboardMetrics = {
   sparkCritical: DayCount[];
 };
 
-export function startOfLocalDay(d: Date): Date {
-  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
-}
-
 export function endOfLocalDay(d: Date): Date {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
 }
@@ -95,29 +99,9 @@ export function localDayKey(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
-export function parseInstant(iso?: string | null): number | null {
-  if (!iso) return null;
-  if (iso.startsWith('0001-')) return null;
-  const t = Date.parse(iso);
-  return Number.isNaN(t) ? null : t;
-}
-
 /** When the defect entered the backlog — prefer IssueDate (report time). */
 function reportedAt(issue: Issue): number | null {
   return parseInstant(issue.IssueDate) ?? parseInstant(issue.CreatedAt);
-}
-
-/** Quality-close instant: APPROVED / CONDITIONAL_APPROVED timestamps. */
-export function qualityClosedAt(issue: Issue): number | null {
-  const approved = parseInstant(issue.ApproveDate);
-  const conditional = parseInstant(issue.ConditionalApproveDate);
-  if (issue.Status === 'APPROVED') {
-    return approved ?? conditional ?? parseInstant(issue.UpdatedAt);
-  }
-  if (issue.Status === 'CONDITIONAL_APPROVED') {
-    return conditional ?? approved ?? parseInstant(issue.UpdatedAt);
-  }
-  return approved ?? conditional;
 }
 
 export function isOpenAt(issue: Issue, atMs: number): boolean {
@@ -222,10 +206,6 @@ export function formatAbsDelta(current: number, previous: number): string {
 
 export function isOpenIssueStatus(status: string): boolean {
   return OPEN_STATUSES.has(status);
-}
-
-export function isQualityClosedStatus(status: string): boolean {
-  return status === 'APPROVED' || status === 'CONDITIONAL_APPROVED';
 }
 
 export function countClosedOnDay(issues: Issue[], day: Date): number {

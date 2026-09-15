@@ -1,78 +1,34 @@
-import type { Issue } from '../api/client';
-import type { MessageKey, Translate } from '../../../shared/i18n';
-
 /**
- * Home day-stat cards and Issues deep-links share this matcher so the
- * count on a card and the list after tapping it stay in lockstep.
+ * Home issue-stat helpers — re-export shared single source of truth.
+ * Mobile-only label keys stay here (home.mobile.*).
  */
-export type HomeIssueStatKey =
-  | 'open'
-  | 'in_progress'
-  | 'closed_today'
-  | 'approved_today'
-  | 'conditional_approved_today';
+import type { MessageKey, Translate } from '../../../shared/i18n';
+import type { HomeIssueStatKey } from '../../../shared/homeIssueStats';
 
-export function isSameLocalDay(iso: string | undefined, now: Date): boolean {
-  if (!iso) return false;
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return false;
-  return (
-    d.getFullYear() === now.getFullYear() &&
-    d.getMonth() === now.getMonth() &&
-    d.getDate() === now.getDate()
-  );
-}
+export type { HomeIssueStatKey } from '../../../shared/homeIssueStats';
+export {
+  countHomeIssueStat,
+  isHomeIssueStatKey,
+  matchesHomeIssueStat,
+} from '../../../shared/homeIssueStats';
 
-function isClosedStatus(status: Issue['Status']): boolean {
-  return (
-    status === 'DONE' ||
-    status === 'APPROVED' ||
-    status === 'CONDITIONAL_APPROVED'
-  );
-}
+/** Mobile home shows a shorter card set; keys still share shared predicates. */
+export type MobileHomeIssueStatKey = Exclude<
+  HomeIssueStatKey,
+  'pending_quality' | 'critical'
+>;
 
-/** Same predicate Home uses when tallying a card. */
-export function matchesHomeIssueStat(
-  issue: Issue,
-  key: HomeIssueStatKey,
-  now: Date = new Date(),
-): boolean {
-  switch (key) {
-    case 'open':
-      return issue.Status === 'OPEN';
-    case 'in_progress':
-      return issue.Status === 'IN_PROGRESS';
-    case 'closed_today':
-      return isClosedStatus(issue.Status) && isSameLocalDay(issue.UpdatedAt, now);
-    case 'approved_today':
-      return issue.Status === 'APPROVED' && isSameLocalDay(issue.UpdatedAt, now);
-    case 'conditional_approved_today':
-      return (
-        issue.Status === 'CONDITIONAL_APPROVED' &&
-        isSameLocalDay(issue.UpdatedAt, now)
-      );
-  }
-}
+const HOME_ISSUE_STAT_KEYS: Record<MobileHomeIssueStatKey, MessageKey> = {
+  open: 'home.mobile.open',
+  in_progress: 'home.mobile.inProgress',
+  closed_today: 'home.mobile.closedToday',
+  approved_today: 'home.mobile.approvedToday',
+  conditional_approved_today: 'home.mobile.conditionalToday',
+};
 
-export function countHomeIssueStat(
-  items: Issue[],
-  key: HomeIssueStatKey,
-  now: Date = new Date(),
-): number {
-  let n = 0;
-  for (const issue of items) {
-    if (matchesHomeIssueStat(issue, key, now)) n += 1;
-  }
-  return n;
-}
-
-export function homeIssueStatLabel(key: HomeIssueStatKey, t: Translate): string {
-  const keys: Record<HomeIssueStatKey, MessageKey> = {
-    open: 'home.mobile.open',
-    in_progress: 'home.mobile.inProgress',
-    closed_today: 'home.mobile.closedToday',
-    approved_today: 'home.mobile.approvedToday',
-    conditional_approved_today: 'home.mobile.conditionalToday',
-  };
-  return t(keys[key]);
+export function homeIssueStatLabel(
+  key: MobileHomeIssueStatKey,
+  t: Translate,
+): string {
+  return t(HOME_ISSUE_STAT_KEYS[key]);
 }
