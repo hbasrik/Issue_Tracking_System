@@ -22,6 +22,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { statusColors } from '../theme/tokens';
 import type { RootStackParamList } from '../navigation/types';
 import type { MessageKey } from '../../../shared/i18n';
+import { groupChecklistSections } from '../lib/checklistSections';
 
 const SECTIONS: { titleKey: MessageKey; from: number; to: number }[] = [
   { titleKey: 'checklist.section.brakes', from: 1, to: 4 },
@@ -91,11 +92,7 @@ export default function TestChecklistScreen() {
   }
 
   const grouped = useMemo(
-    () =>
-      SECTIONS.map((sec) => ({
-        ...sec,
-        items: items.filter((i) => i.ItemNo >= sec.from && i.ItemNo <= sec.to),
-      })).filter((g) => g.items.length > 0),
+    () => groupChecklistSections(items, SECTIONS),
     [items],
   );
 

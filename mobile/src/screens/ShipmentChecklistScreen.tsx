@@ -23,6 +23,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { statusColors } from '../theme/tokens';
 import type { RootStackParamList } from '../navigation/types';
 import type { MessageKey } from '../../../shared/i18n';
+import { groupChecklistSections } from '../lib/checklistSections';
 
 const SECTIONS: { titleKey: MessageKey; from: number; to: number }[] = [
   { titleKey: 'checklist.section.identity', from: 1, to: 6 },
@@ -64,7 +65,7 @@ export default function ShipmentChecklistScreen() {
     }, [load]),
   );
 
-  const total = items.length || 43;
+  const total = items.length;
   const completed = items.filter((i) => isDone(i.Status)).length;
   const remaining = total - completed;
   const allDone = total > 0 && completed === total;
@@ -83,12 +84,10 @@ export default function ShipmentChecklistScreen() {
     }
   }
 
-  const grouped = useMemo(() => {
-    return SECTIONS.map((sec) => ({
-      ...sec,
-      items: items.filter((i) => i.ItemNo >= sec.from && i.ItemNo <= sec.to),
-    })).filter((g) => g.items.length > 0);
-  }, [items]);
+  const grouped = useMemo(
+    () => groupChecklistSections(items, SECTIONS),
+    [items],
+  );
 
   if (!items.length && !error) return <Loading />;
 
