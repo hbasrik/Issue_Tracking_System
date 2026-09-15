@@ -566,7 +566,7 @@ export const api = {
     body: {
       defect_part_id: number;
       defect_type_id: number;
-      responsible_process_id: number;
+      responsible_process_id: number | null;
       custom_part_name?: string;
       custom_defect_name?: string;
     },
@@ -1186,12 +1186,20 @@ export interface DefectPartTypeCombo {
   Count: number;
 }
 
+export interface DefectCustomTextCount {
+  Name: string;
+  Count: number;
+}
+
 export interface DefectClassificationCoverage {
   Total: number;
   Classified: number;
   Unclassified: number;
   OtherPart: number;
   OtherType: number;
+  ProcessUnassigned: number;
+  TopOtherParts?: DefectCustomTextCount[];
+  TopOtherTypes?: DefectCustomTextCount[];
 }
 
 export interface DefectRecurrenceCase {

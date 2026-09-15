@@ -352,7 +352,7 @@ export default function IssueDetailScreen() {
   }
 
   async function saveClassification() {
-    if (!issue || classState.partId == null || classState.typeId == null || processId == null) {
+    if (!issue || classState.partId == null || classState.typeId == null) {
       setError(t('issue.classificationIncomplete'));
       return;
     }
@@ -456,6 +456,7 @@ export default function IssueDetailScreen() {
                         if (patch.typeId != null) {
                           const typ = catalogTypes.find((ty) => ty.ID === patch.typeId);
                           if (typ?.DefaultProcessID) setProcessId(typ.DefaultProcessID);
+                          else setProcessId(null);
                         }
                         return next;
                       });
@@ -470,6 +471,27 @@ export default function IssueDetailScreen() {
                     {t('issue.defectProcess')}
                   </Text>
                   <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                    <Pressable
+                      onPress={() => setProcessId(null)}
+                      style={{
+                        paddingHorizontal: 12,
+                        minHeight: 40,
+                        borderRadius: 999,
+                        backgroundColor:
+                          processId == null ? tokens.textPrimary : tokens.bgSurface2,
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <Text
+                        style={{
+                          color: processId == null ? tokens.bgPage : tokens.textSecondary,
+                          fontSize: 12,
+                          fontWeight: '600',
+                        }}
+                      >
+                        {t('issue.processUnassigned')}
+                      </Text>
+                    </Pressable>
                     {processes.map((p) => {
                       const selected = processId === p.ID;
                       const label = locale === 'en' ? p.NameEN || p.NameTR : p.NameTR || p.NameEN;

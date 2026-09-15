@@ -86,7 +86,7 @@ export function issueDefectDisplay(
     unclassified;
   const process =
     pickLocale(issue.DefectProcessNameTR, issue.DefectProcessNameEN, locale) ||
-    unclassified;
+    t('issue.processUnassigned');
   const code = (issue.DefectCode ?? '').trim() || unclassified;
 
   return {

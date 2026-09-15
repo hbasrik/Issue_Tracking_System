@@ -270,9 +270,6 @@ func (m *IssueManager) UpdateClassification(ctx context.Context, in UpdateClassi
 	if in.DefectTypeID == nil {
 		return nil, domain.ErrDefectTypeRequired
 	}
-	if in.ResponsibleProcessID == nil {
-		return nil, domain.ErrDefectProcessRequired
-	}
 
 	part, err := m.catalog.GetPart(ctx, *in.DefectPartID)
 	if err != nil {
@@ -288,12 +285,15 @@ func (m *IssueManager) UpdateClassification(ctx context.Context, in UpdateClassi
 	if !typ.IsActive {
 		return nil, domain.ErrDefectCatalogueInactive
 	}
-	proc, err := m.catalog.GetProcess(ctx, *in.ResponsibleProcessID)
-	if err != nil {
-		return nil, err
-	}
-	if !proc.IsActive {
-		return nil, domain.ErrDefectProcessInactive
+
+	if in.ResponsibleProcessID != nil {
+		proc, err := m.catalog.GetProcess(ctx, *in.ResponsibleProcessID)
+		if err != nil {
+			return nil, err
+		}
+		if !proc.IsActive {
+			return nil, domain.ErrDefectProcessInactive
+		}
 	}
 
 	customPart := strings.TrimSpace(in.CustomPartName)
@@ -316,15 +316,15 @@ func (m *IssueManager) UpdateClassification(ctx context.Context, in UpdateClassi
 	code := domain.FormatDefectCode(part.Code, typ.Code)
 	partID := part.ID
 	typeID := typ.ID
-	processID := proc.ID
+	processID := in.ResponsibleProcessID
 
 	oldSummary := classificationAuditSummary(issue)
-	fields := classificationFieldDiffs(issue, &partID, &typeID, &processID, customPart, customDefect, code)
+	fields := classificationFieldDiffs(issue, &partID, &typeID, processID, customPart, customDefect, code)
 
 	performedBy := in.ActorID
 	err = m.uow.WithinTx(ctx, func(txCtx context.Context) error {
 		if err := m.issues.UpdateClassification(
-			txCtx, in.IssueID, &partID, &typeID, &processID, customPart, customDefect, code,
+			txCtx, in.IssueID, &partID, &typeID, processID, customPart, customDefect, code,
 			part.NameTR, part.NameEN, typ.NameTR, typ.NameEN,
 		); err != nil {
 			return err
@@ -333,7 +333,7 @@ func (m *IssueManager) UpdateClassification(ctx context.Context, in UpdateClassi
 			VIN:         issue.VIN,
 			EventType:   domain.AuditEventIssueClassification,
 			OldValue:    oldSummary,
-			NewValue:    classificationAuditSummaryFrom(&partID, &typeID, &processID, customPart, customDefect, code),
+			NewValue:    classificationAuditSummaryFrom(&partID, &typeID, processID, customPart, customDefect, code),
 			StationID:   issue.StationID,
 			PerformedBy: &performedBy,
 			Metadata: map[string]any{

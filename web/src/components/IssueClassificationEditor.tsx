@@ -110,7 +110,7 @@ export function IssueClassificationEditor({
 
   async function save() {
     setError(null);
-    if (partId === '' || typeId === '' || processId === '') {
+    if (partId === '' || typeId === '') {
       setError(t('issue.classificationIncomplete'));
       return;
     }
@@ -127,7 +127,7 @@ export function IssueClassificationEditor({
       const updated = await api.updateIssueClassification(issue.ID, {
         defect_part_id: partId,
         defect_type_id: typeId,
-        responsible_process_id: processId,
+        responsible_process_id: processId === '' ? null : processId,
         custom_part_name:
           selectedPart?.Code === OTHER_PART ? customPartName.trim() : undefined,
         custom_defect_name:
@@ -229,6 +229,7 @@ export function IssueClassificationEditor({
             setTypeId(id);
             const ty = types.find((x) => x.ID === id);
             if (ty?.DefaultProcessID) setProcessId(ty.DefaultProcessID);
+            else setProcessId('');
             if (!ty || ty.Code !== OTHER_TYPE) setCustomDefectName('');
           }}
         >
@@ -263,7 +264,7 @@ export function IssueClassificationEditor({
             setProcessId(e.target.value ? Number(e.target.value) : '')
           }
         >
-          <option value="">{t('issue.pickProcess')}</option>
+          <option value="">{t('issue.processUnassigned')}</option>
           {processes.map((p) => (
             <option key={p.ID} value={p.ID}>
               {nameOf(p.NameTR, p.NameEN, locale)}
