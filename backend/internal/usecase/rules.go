@@ -44,16 +44,42 @@ func ComputeProgress(items []domain.VehicleStationStepProgress) (percentage floa
 	return percentage, currentStationID
 }
 
-// EvaluateChecklistGate reports whether a hard-block quality gate is open,
-// i.e. every item is OK or CONDITIONAL_OK (FR-3.5/FR-4.3). When closed it
-// also returns the IDs of the items that block the gate (FR-3.7).
-func EvaluateChecklistGate(items []domain.ChecklistProgress) (open bool, blockingItemIDs []int) {
+// EvaluateChecklistGate reports whether a hard-block quality gate is open.
+// Only active catalogue items count: a missing progress row blocks the gate
+// (it is not treated as passed). Inactive items with leftover progress are
+// ignored. Returns separate ID lists for "not yet on vehicle" vs "not OK".
+func EvaluateChecklistGate(items []domain.ChecklistItemView) (open bool, blockingItemIDs, missingItemIDs []int) {
 	for _, it := range items {
-		if !it.CheckStatus.IsPassing() {
-			blockingItemIDs = append(blockingItemIDs, it.CheckItemID)
+		if !it.IsActive {
+			continue
+		}
+		if it.ProgressID == nil {
+			missingItemIDs = append(missingItemIDs, it.ItemID)
+			continue
+		}
+		if !it.Status.IsPassing() {
+			blockingItemIDs = append(blockingItemIDs, it.ItemID)
 		}
 	}
-	return len(blockingItemIDs) == 0, blockingItemIDs
+	return len(blockingItemIDs) == 0 && len(missingItemIDs) == 0, blockingItemIDs, missingItemIDs
+}
+
+// CountGateRemainders returns non-passing active items and how many of those
+// have no progress row yet.
+func CountGateRemainders(items []domain.ChecklistItemView) (remaining, missing int) {
+	_, blocking, miss := EvaluateChecklistGate(items)
+	return len(blocking) + len(miss), len(miss)
+}
+
+// CountGateRemaindersEOLPhase limits CountGateRemainders to one EoL phase.
+func CountGateRemaindersEOLPhase(items []domain.ChecklistItemView, phase domain.EOLItemPhase) (remaining, missing int) {
+	var scoped []domain.ChecklistItemView
+	for _, it := range items {
+		if it.EolPhase != nil && *it.EolPhase == phase {
+			scoped = append(scoped, it)
+		}
+	}
+	return CountGateRemainders(scoped)
 }
 
 // ValidateChecklistDescription enforces the mandatory-description rule

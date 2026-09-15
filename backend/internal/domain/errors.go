@@ -159,22 +159,41 @@ func (e *DatabaseRejectedError) Error() string {
 // GateBlockedError is returned when a hard-block quality gate (EoL or
 // Shipment) is not fully passing and a gate exit / status transition is
 // attempted. It carries the offending item IDs so the UI can list exactly
-// which items block the transition (FR-3.7).
+// which items block the transition (FR-3.7). MissingItemIDs are active
+// catalogue items with no progress row yet (not the same as PENDING).
 type GateBlockedError struct {
 	ChecklistType   ChecklistType
 	BlockingItemIDs []int
+	MissingItemIDs  []int
 }
 
 // Error implements the error interface.
 func (e *GateBlockedError) Error() string {
-	ids := make([]string, len(e.BlockingItemIDs))
-	for i, id := range e.BlockingItemIDs {
-		ids[i] = fmt.Sprintf("%d", id)
+	parts := []string{}
+	if len(e.MissingItemIDs) > 0 {
+		parts = append(parts, fmt.Sprintf(
+			"%d item(s) not yet on the vehicle (item ids: %s)",
+			len(e.MissingItemIDs), joinIntIDs(e.MissingItemIDs),
+		))
 	}
-	return fmt.Sprintf(
-		"%s gate blocked: %d item(s) not OK/CONDITIONAL_OK (item ids: %s)",
-		e.ChecklistType, len(e.BlockingItemIDs), strings.Join(ids, ", "),
-	)
+	if len(e.BlockingItemIDs) > 0 {
+		parts = append(parts, fmt.Sprintf(
+			"%d item(s) not OK/CONDITIONAL_OK (item ids: %s)",
+			len(e.BlockingItemIDs), joinIntIDs(e.BlockingItemIDs),
+		))
+	}
+	if len(parts) == 0 {
+		return fmt.Sprintf("%s gate blocked", e.ChecklistType)
+	}
+	return fmt.Sprintf("%s gate blocked: %s", e.ChecklistType, strings.Join(parts, "; "))
+}
+
+func joinIntIDs(ids []int) string {
+	out := make([]string, len(ids))
+	for i, id := range ids {
+		out[i] = fmt.Sprintf("%d", id)
+	}
+	return strings.Join(out, ", ")
 }
 
 // BlockingIssue identifies one issue that holds a hard-block gate shut.
@@ -187,9 +206,10 @@ type BlockingIssue struct {
 // EOLChecklistBlocker names one checklist that still has incomplete items
 // before branch shipment or depot release.
 type EOLChecklistBlocker struct {
-	ChecklistType ChecklistType   `json:"checklist_type"`
-	EolPhase      *EOLItemPhase   `json:"eol_phase,omitempty"`
-	Remaining     int             `json:"remaining"`
+	ChecklistType ChecklistType `json:"checklist_type"`
+	EolPhase      *EOLItemPhase `json:"eol_phase,omitempty"`
+	Remaining     int           `json:"remaining"`
+	Missing       int           `json:"missing,omitempty"`
 }
 
 // EOLBranchShipBlockedError is returned when branch shipment is attempted
@@ -286,6 +306,29 @@ func NormalizePropagationScope(raw string) (TemplateItemPropagationScope, error)
 		return "", ErrInvalidEnumValue
 	}
 	return s, nil
+}
+
+// TemplatePropagationEmptyError means InsertPendingForVehicles matched no
+// vehicle while assigned VINs still lack the new item (typical when
+// not_started is chosen but every vehicle already has an evaluated row).
+type TemplatePropagationEmptyError struct {
+	Scope           TemplateItemPropagationScope
+	MissingVehicles int
+}
+
+func (e *TemplatePropagationEmptyError) Error() string {
+	n := 0
+	if e != nil {
+		n = e.MissingVehicles
+	}
+	scope := PropagationScopeNotStarted
+	if e != nil && e.Scope != "" {
+		scope = e.Scope
+	}
+	return fmt.Sprintf(
+		"catalogue item created but scope %q matched 0 vehicles; %d assigned vehicle(s) still missing it — choose incomplete or backfill",
+		scope, n,
+	)
 }
 
 // TemplateItemPropagationImpact describes how many vehicles a catalogue

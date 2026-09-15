@@ -8,36 +8,14 @@ import (
 	"github.com/karea/backend/internal/repository"
 )
 
-func countNonPassingProgress(items []domain.ChecklistProgress) int {
-	n := 0
-	for _, it := range items {
-		if !it.CheckStatus.IsPassing() {
-			n++
-		}
-	}
-	return n
-}
-
-func countNonPassingEOLPhase(items []domain.ChecklistItemView, phase domain.EOLItemPhase) int {
-	n := 0
-	for _, it := range items {
-		if it.EolPhase == nil || *it.EolPhase != phase {
-			continue
-		}
-		if !it.Status.IsPassing() {
-			n++
-		}
-	}
-	return n
-}
-
 // BranchShipBlockers returns every checklist that still blocks branch shipment.
 // Station-step incompleteness is counted separately via IncompleteStationSteps.
+// Active template items without a progress row count as remaining (and Missing).
 func BranchShipBlockers(
 	ctx context.Context,
 	vin string,
 	checklists *ChecklistResultRecorder,
-	progress repository.ChecklistProgressRepository,
+	_ repository.ChecklistProgressRepository,
 ) ([]domain.EOLChecklistBlocker, error) {
 	var blockers []domain.EOLChecklistBlocker
 
@@ -45,24 +23,26 @@ func BranchShipBlockers(
 	if err != nil && !errors.Is(err, domain.ErrNotFound) {
 		return nil, err
 	}
-	if branch := countNonPassingEOLPhase(eolViews, domain.EOLItemPhaseBranch); branch > 0 {
+	if remaining, missing := CountGateRemaindersEOLPhase(eolViews, domain.EOLItemPhaseBranch); remaining > 0 {
 		phase := domain.EOLItemPhaseBranch
 		blockers = append(blockers, domain.EOLChecklistBlocker{
 			ChecklistType: domain.ChecklistTypeEOL,
 			EolPhase:      &phase,
-			Remaining:     branch,
+			Remaining:     remaining,
+			Missing:       missing,
 		})
 	}
 
 	for _, typ := range []domain.ChecklistType{domain.ChecklistTypeTest, domain.ChecklistTypeShipment} {
-		items, err := progress.ListByVINAndType(ctx, vin, typ)
-		if err != nil {
+		items, err := checklists.ListForVehicle(ctx, vin, typ)
+		if err != nil && !errors.Is(err, domain.ErrNotFound) {
 			return nil, err
 		}
-		if remaining := countNonPassingProgress(items); remaining > 0 {
+		if remaining, missing := CountGateRemainders(items); remaining > 0 {
 			blockers = append(blockers, domain.EOLChecklistBlocker{
 				ChecklistType: typ,
 				Remaining:     remaining,
+				Missing:       missing,
 			})
 		}
 	}
@@ -92,7 +72,8 @@ func IncompleteStationSteps(
 	return n, nil
 }
 
-// DepotEOLItemsRemaining counts depot-phase EoL items that are not passing.
+// DepotEOLItemsRemaining counts depot-phase EoL items that are not passing,
+// including active catalogue items with no progress row yet.
 func DepotEOLItemsRemaining(
 	ctx context.Context,
 	vin string,
@@ -102,5 +83,6 @@ func DepotEOLItemsRemaining(
 	if err != nil && !errors.Is(err, domain.ErrNotFound) {
 		return 0, err
 	}
-	return countNonPassingEOLPhase(views, domain.EOLItemPhaseDepot), nil
+	remaining, _ := CountGateRemaindersEOLPhase(views, domain.EOLItemPhaseDepot)
+	return remaining, nil
 }

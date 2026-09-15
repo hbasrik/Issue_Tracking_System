@@ -63,8 +63,9 @@ type ChecklistProgressRepository interface {
 	// IS NULL) for the given checklist type.
 	ResolveDefaultTemplateID(ctx context.Context, checklistType domain.ChecklistType) (int, error)
 	// ListItemsWithProgress returns the vehicle's materialized checklist
-	// rows joined to catalogue text. Not-started vehicles receive catalogue
-	// add/reactivate backfill; deactivated PENDING rows are removed.
+	// ListItemsWithProgress returns active template items left-joined to
+	// progress (missing → PENDING, nil ProgressID) plus inactive items that
+	// already have progress so historical ticks remain visible.
 	ListItemsWithProgress(ctx context.Context, vin string, checklistType domain.ChecklistType, templateID int) ([]domain.ChecklistItemView, error)
 	// SaveResult updates a single pre-materialized checklist progress row.
 	SaveResult(ctx context.Context, result domain.ChecklistProgress) error

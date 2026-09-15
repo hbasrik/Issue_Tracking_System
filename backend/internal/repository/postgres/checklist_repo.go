@@ -72,17 +72,34 @@ func (r *ChecklistProgressRepo) ResolveDefaultTemplateID(ctx context.Context, ch
 	return id, nil
 }
 
-// ListItemsWithProgress returns only rows that were materialized onto the
-// vehicle. Starting from checklist_item_progress (INNER JOIN) means a
-// catalogue item added later is not backfilled onto existing VINs, and a
-// deactivated item still appears on vehicles that already have progress.
+// ListItemsWithProgress returns every active catalogue item for the template
+// (LEFT JOIN progress — missing rows appear as PENDING with nil ProgressID)
+// plus inactive items that already have progress so historical ticks stay
+// visible. Gates must ignore inactive rows (IsActive=false).
 func (r *ChecklistProgressRepo) ListItemsWithProgress(ctx context.Context, vin string, checklistType domain.ChecklistType, templateID int) ([]domain.ChecklistItemView, error) {
 	rows, err := r.pool.Query(ctx,
 		`SELECT cti.id, cti.item_no,
 		        COALESCE(NULLIF(trim(p.item_text_snapshot), ''), cti.item_text),
 		        COALESCE(p.check_status::text, 'PENDING'),
 		        COALESCE(p.rework_desc, ''), COALESCE(p.conditional_desc, ''), COALESCE(p.rejected_desc, ''),
-		        cti.eol_phase::text, p.id,
+		        cti.eol_phase::text, p.id, cti.is_active,
+		        p.check_date, COALESCE(checker.full_name, ''),
+		        p.rejected_date, COALESCE(rej.full_name, ''),
+		        p.approved_date, COALESCE(appr.full_name, '')
+		 FROM checklist_template_items cti
+		 LEFT JOIN checklist_item_progress p
+		   ON p.check_item_id = cti.id AND p.vin = $1 AND p.checklist_type = $2
+		 LEFT JOIN users checker ON checker.id = p.checker_id
+		 LEFT JOIN users rej ON rej.id = p.rejected_by
+		 LEFT JOIN users appr ON appr.id = p.approved_by
+		 WHERE cti.template_id = $3
+		   AND cti.is_active
+		 UNION ALL
+		 SELECT cti.id, cti.item_no,
+		        COALESCE(NULLIF(trim(p.item_text_snapshot), ''), cti.item_text),
+		        p.check_status::text,
+		        COALESCE(p.rework_desc, ''), COALESCE(p.conditional_desc, ''), COALESCE(p.rejected_desc, ''),
+		        cti.eol_phase::text, p.id, cti.is_active,
 		        p.check_date, COALESCE(checker.full_name, ''),
 		        p.rejected_date, COALESCE(rej.full_name, ''),
 		        p.approved_date, COALESCE(appr.full_name, '')
@@ -93,7 +110,8 @@ func (r *ChecklistProgressRepo) ListItemsWithProgress(ctx context.Context, vin s
 		 LEFT JOIN users appr ON appr.id = p.approved_by
 		 WHERE p.vin = $1 AND p.checklist_type = $2
 		   AND cti.template_id = $3
-		 ORDER BY cti.item_no`, vin, string(checklistType), templateID)
+		   AND NOT cti.is_active
+		 ORDER BY 2`, vin, string(checklistType), templateID)
 	if err != nil {
 		return nil, err
 	}
@@ -107,7 +125,7 @@ func (r *ChecklistProgressRepo) ListItemsWithProgress(ctx context.Context, vin s
 		if err := rows.Scan(
 			&item.ItemID, &item.ItemNo, &item.ItemText, &status,
 			&item.ReworkDesc, &item.ConditionalDesc, &item.RejectedDesc,
-			&eolPhase, &item.ProgressID,
+			&eolPhase, &item.ProgressID, &item.IsActive,
 			&item.CheckDate, &item.CheckerName,
 			&item.RejectedAt, &item.RejectedByName,
 			&item.ApprovedAt, &item.ApprovedByName,

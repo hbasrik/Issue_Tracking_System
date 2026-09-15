@@ -168,6 +168,8 @@ type ChecklistProgress struct {
 // ProgressID is the checklist_item_progress row id, used as entity_id when
 // attaching media (CHECKLIST_ITEM_PROGRESS). Actor names are joined in the
 // list query so the UI never N+1s users.
+// IsActive mirrors the catalogue flag: gates ignore inactive items; missing
+// progress on an active item (ProgressID == nil) blocks the gate.
 type ChecklistItemView struct {
 	ItemID          int
 	ItemNo          int16
@@ -178,6 +180,7 @@ type ChecklistItemView struct {
 	RejectedDesc    string
 	EolPhase        *EOLItemPhase
 	ProgressID      *int64
+	IsActive        bool
 	CheckerName     string     `json:"CheckerName,omitempty"`
 	CheckDate       *time.Time `json:"CheckDate,omitempty"`
 	RejectedByName  string     `json:"RejectedByName,omitempty"`

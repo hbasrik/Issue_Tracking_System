@@ -17,6 +17,7 @@ import (
 type errorResponse struct {
 	Error               string                      `json:"error"`
 	BlockingItemIDs     []int                       `json:"blocking_item_ids,omitempty"`
+	MissingItemIDs      []int                       `json:"missing_item_ids,omitempty"`
 	BlockingIssues      []domain.BlockingIssue      `json:"blocking_issues,omitempty"`
 	ChecklistBlockers       []domain.EOLChecklistBlocker `json:"checklist_blockers,omitempty"`
 	DepotItemsRemaining     int                          `json:"depot_items_remaining,omitempty"`
@@ -46,11 +47,13 @@ func writeError(w http.ResponseWriter, err error) {
 	var catalogInUse *domain.CatalogInUseError
 	var emailDomain *domain.EmailDomainNotAllowedError
 	var userInUse *domain.UserInUseError
+	var propEmpty *domain.TemplatePropagationEmptyError
 	switch {
 	case errors.As(err, &gate):
 		writeJSON(w, http.StatusConflict, errorResponse{
 			Error:           gate.Error(),
 			BlockingItemIDs: gate.BlockingItemIDs,
+			MissingItemIDs:  gate.MissingItemIDs,
 		})
 	case errors.As(err, &branchShip):
 		writeJSON(w, http.StatusConflict, errorResponse{
@@ -74,6 +77,8 @@ func writeError(w http.ResponseWriter, err error) {
 		writeJSON(w, http.StatusConflict, errorResponse{Error: userInUse.Error()})
 	case errors.As(err, &emailDomain):
 		writeJSON(w, http.StatusBadRequest, errorResponse{Error: emailDomain.Error()})
+	case errors.As(err, &propEmpty):
+		writeJSON(w, http.StatusConflict, errorResponse{Error: propEmpty.Error()})
 	case errors.Is(err, domain.ErrDepotChecklistLocked),
 		errors.Is(err, domain.ErrInvalidStatusTransition),
 		errors.Is(err, domain.ErrCannotHold),

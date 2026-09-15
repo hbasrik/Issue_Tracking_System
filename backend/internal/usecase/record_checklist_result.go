@@ -121,12 +121,12 @@ func (r *ChecklistResultRecorder) Record(ctx context.Context, in RecordChecklist
 		return nil, err
 	}
 
-	items, err := r.checklist.ListByVINAndType(ctx, in.VIN, in.ChecklistType)
+	items, err := r.ListForVehicle(ctx, in.VIN, in.ChecklistType)
 	if err != nil {
 		return nil, err
 	}
 
-	open, blocking := EvaluateChecklistGate(items)
+	open, blocking, missing := EvaluateChecklistGate(items)
 	out := &RecordChecklistOutput{GateOpen: open}
 
 	if in.RequestGateExit {
@@ -141,6 +141,7 @@ func (r *ChecklistResultRecorder) Record(ctx context.Context, in RecordChecklist
 			return nil, &domain.GateBlockedError{
 				ChecklistType:   in.ChecklistType,
 				BlockingItemIDs: blocking,
+				MissingItemIDs:  missing,
 			}
 		}
 		if err := r.vehicles.UpdateStatus(ctx, in.VIN, target); err != nil {

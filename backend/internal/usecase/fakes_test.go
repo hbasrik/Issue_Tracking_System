@@ -260,7 +260,23 @@ func (f *fakeChecklistRepo) ListItemsWithProgress(_ context.Context, vin string,
 	if items, ok := f.views[vin+"|"+string(t)]; ok {
 		return items, nil
 	}
-	return f.views[vin], nil
+	if items, ok := f.views[vin]; ok {
+		return items, nil
+	}
+	var out []domain.ChecklistItemView
+	for _, r := range f.rows[vin] {
+		if r.ChecklistType != t {
+			continue
+		}
+		pid := int64(r.CheckItemID)
+		out = append(out, domain.ChecklistItemView{
+			ItemID:     r.CheckItemID,
+			Status:     r.CheckStatus,
+			ProgressID: &pid,
+			IsActive:   true,
+		})
+	}
+	return out, nil
 }
 
 func (f *fakeChecklistRepo) SaveResult(_ context.Context, result domain.ChecklistProgress) error {
