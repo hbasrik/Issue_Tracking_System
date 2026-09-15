@@ -3,6 +3,15 @@
  * All pages/components must call through this module — never hardcode the API origin.
  */
 
+import type { EOLGates } from '../../../shared/eolGates';
+
+export type {
+  EOLGates,
+  EOLBranchShipGate,
+  EOLDepotReleaseGate,
+  EOLDeliverGate,
+} from '../../../shared/eolGates';
+
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') ||
   'http://localhost:8080/api/v1';
@@ -878,6 +887,7 @@ export interface EOLWorkflowView {
   document_approve: EOLStageRecord;
   deliver: EOLStageRecord;
   branch_open_issue_count_at_shipment: number | null;
+  gates: EOLGates;
 }
 
 export interface BranchShipResult {

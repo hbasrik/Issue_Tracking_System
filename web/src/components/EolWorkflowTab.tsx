@@ -17,6 +17,11 @@ import { SeverityIndicator } from './SeverityIndicator';
 import { StatusBadge } from './StatusBadge';
 import { ActionStamp } from './ActionStamp';
 import { ChecklistPrint } from './print/ChecklistPrint';
+import {
+  branchShipGateReasons,
+  deliverGateReasons,
+  depotReleaseGateReasons,
+} from '../../../shared/eolGates';
 
 const STAGE_IDS: { id: Exclude<EOLStage, 'COMPLETED' | 'DOCUMENT'> }[] = [
   { id: 'BRANCH' },
@@ -25,16 +30,8 @@ const STAGE_IDS: { id: Exclude<EOLStage, 'COMPLETED' | 'DOCUMENT'> }[] = [
 
 const STAGE_ORDER: EOLStage[] = ['BRANCH', 'DEPOT', 'COMPLETED'];
 
-function passing(status: ChecklistItem['Status']): boolean {
-  return status === 'OK' || status === 'CONDITIONAL_OK';
-}
-
 function stepperStage(stage: EOLStage): EOLStage {
   return stage === 'DOCUMENT' ? 'COMPLETED' : stage;
-}
-
-function countRemaining(items: ChecklistItem[]): number {
-  return items.filter((item) => !passing(item.Status)).length;
 }
 
 interface EolWorkflowTabProps {
@@ -52,9 +49,6 @@ export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
   const confirm = useConfirm();
   const [workflow, setWorkflow] = useState<EOLWorkflowView | null>(null);
   const [eolItems, setEolItems] = useState<ChecklistItem[]>([]);
-  const [testItems, setTestItems] = useState<ChecklistItem[]>([]);
-  const [shipmentItems, setShipmentItems] = useState<ChecklistItem[]>([]);
-  const [stationStepsRemaining, setStationStepsRemaining] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [warning, setWarning] = useState<string | null>(null);
   const [blocking, setBlocking] = useState<BlockingIssue[] | null>(null);
@@ -85,23 +79,12 @@ export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
   const load = useCallback(async () => {
     setError(null);
     try {
-      const [view, eol, test, shipment, steps] = await Promise.all([
+      const [view, eol] = await Promise.all([
         api.getEOLWorkflow(vin),
         api.getVehicleChecklist(vin, 'eol'),
-        api.getVehicleChecklist(vin, 'test'),
-        api.getVehicleChecklist(vin, 'shipment'),
-        api.getStationSteps(vin).catch(() => ({
-          Items: [] as { Status: string }[],
-          OpenIssuesByStation: {},
-        })),
       ]);
       setWorkflow(view);
       setEolItems(eol.items ?? []);
-      setTestItems(test.items ?? []);
-      setShipmentItems(shipment.items ?? []);
-      setStationStepsRemaining(
-        (steps.Items ?? []).filter((s) => s.Status !== 'OK').length,
-      );
       if (
         view.branch_open_issue_count_at_shipment &&
         view.branch_open_issue_count_at_shipment > 0 &&
@@ -189,67 +172,26 @@ export function EolWorkflowTab({ vin, onVehicleChanged }: EolWorkflowTabProps) {
   }
 
   const currentIndex = STAGE_ORDER.indexOf(stepperStage(workflow.current_stage));
-  const branchItems = eolItems.filter((item) => item.EolPhase === 'BRANCH');
-  const depotItems = eolItems.filter((item) => item.EolPhase === 'DEPOT');
-  const branchRemaining = countRemaining(branchItems);
-  const testRemaining = countRemaining(testItems);
-  const shipmentRemaining = countRemaining(shipmentItems);
-  const depotRemaining = countRemaining(depotItems);
-  const depotLocked = branchRemaining > 0;
+  const depotLocked = (workflow.gates?.branch_ship.branch_eol_remaining ?? 0) > 0;
 
-  const canShip =
-    has(Perm.EOLBranchShip) &&
-    workflow.current_stage === 'BRANCH' &&
-    branchRemaining === 0 &&
-    testRemaining === 0 &&
-    shipmentRemaining === 0 &&
-    stationStepsRemaining === 0;
-  const shipDisabledReasons: string[] = [];
-  if (!has(Perm.EOLBranchShip)) {
-    shipDisabledReasons.push(t('eol.forbidden'));
-  } else if (workflow.current_stage !== 'BRANCH') {
-    shipDisabledReasons.push(t('eol.needBranchShip'));
-  } else {
-    if (branchRemaining > 0) {
-      shipDisabledReasons.push(t('eol.branchRemaining', { n: branchRemaining }));
-    }
-    if (testRemaining > 0) {
-      shipDisabledReasons.push(t('eol.branchBlockerTest', { n: testRemaining }));
-    }
-    if (shipmentRemaining > 0) {
-      shipDisabledReasons.push(t('eol.branchBlockerShipment', { n: shipmentRemaining }));
-    }
-    if (stationStepsRemaining > 0) {
-      shipDisabledReasons.push(
-        t('eol.branchBlockerStationSteps', { n: stationStepsRemaining }),
-      );
-    }
-  }
+  const canShip = has(Perm.EOLBranchShip) && Boolean(workflow.gates?.branch_ship.ready);
+  const shipDisabledReasons = branchShipGateReasons(
+    workflow.gates?.branch_ship,
+    has(Perm.EOLBranchShip),
+  ).map((r) => t(r.key, r.params));
 
   const canRelease =
-    has(Perm.EOLDepotRelease) &&
-    Boolean(workflow.branch_ship.at) &&
-    workflow.current_stage === 'DEPOT' &&
-    depotRemaining === 0;
-  const releaseDisabledReasons: string[] = [];
-  if (!has(Perm.EOLDepotRelease)) {
-    releaseDisabledReasons.push(t('eol.forbidden'));
-  } else if (!workflow.branch_ship.at) {
-    releaseDisabledReasons.push(t('eol.needBranchShip'));
-  } else if (depotRemaining > 0) {
-    releaseDisabledReasons.push(t('eol.depotRemaining', { n: depotRemaining }));
-  }
+    has(Perm.EOLDepotRelease) && Boolean(workflow.gates?.depot_release.ready);
+  const releaseDisabledReasons = depotReleaseGateReasons(
+    workflow.gates?.depot_release,
+    has(Perm.EOLDepotRelease),
+  ).map((r) => t(r.key, r.params));
 
-  const canDeliver =
-    has(Perm.EOLDeliver) &&
-    Boolean(workflow.depot_release.at) &&
-    !workflow.deliver?.at;
-  const deliverDisabledReasons: string[] = [];
-  if (!has(Perm.EOLDeliver)) {
-    deliverDisabledReasons.push(t('eol.forbidden'));
-  } else if (!workflow.depot_release.at) {
-    deliverDisabledReasons.push(t('eol.needDepotRelease'));
-  }
+  const canDeliver = has(Perm.EOLDeliver) && Boolean(workflow.gates?.deliver.ready);
+  const deliverDisabledReasons = deliverGateReasons(
+    workflow.gates?.deliver,
+    has(Perm.EOLDeliver),
+  ).map((r) => t(r.key, r.params));
 
   const stages = STAGE_IDS.map((stage) => ({
     ...stage,

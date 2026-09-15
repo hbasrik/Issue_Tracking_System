@@ -4,6 +4,7 @@
  */
 
 import { File as ExpoFile } from 'expo-file-system';
+import type { EOLGates } from '../../../shared/eolGates';
 
 const API_BASE_URL =
   (process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:8080/api/v1').replace(
@@ -193,6 +194,7 @@ export interface EOLWorkflowView {
   document_approve: EOLStageRecord;
   deliver: EOLStageRecord;
   branch_open_issue_count_at_shipment: number | null;
+  gates: EOLGates;
 }
 
 export interface DefectZone {
@@ -256,6 +258,10 @@ export interface Issue {
   IssueDate?: string;
   CreatedAt?: string;
   UpdatedAt?: string;
+  ProcessDate?: string | null;
+  FinishDate?: string | null;
+  ApproveDate?: string | null;
+  ConditionalApproveDate?: string | null;
   SolutionDescription?: string;
   ReporterName?: string;
   IssueTypeID?: number | null;
