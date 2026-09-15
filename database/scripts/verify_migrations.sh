@@ -57,7 +57,9 @@ for f in \
   0018_defect_catalog.up.sql \
   0019_issue_classification_audit.up.sql \
   0020_freeze_catalogue_snapshots.up.sql \
-  0021_clear_ambiguous_process_defaults.up.sql
+  0021_clear_ambiguous_process_defaults.up.sql \
+  0022_template_aware_checklist_gates.up.sql \
+  0023_backfill_missing_checklist_progress.up.sql
 do
   echo "    $f"
   docker exec -i "$NAME" psql -U karea -d karea -v ON_ERROR_STOP=1 <"$MIG/$f" >/dev/null
