@@ -55,7 +55,7 @@ func newTemplateCatalogueFake() *templateCatalogueFake {
 func (f *templateCatalogueFake) ListByVINAndType(context.Context, string, domain.ChecklistType) ([]domain.ChecklistProgress, error) {
 	return nil, nil
 }
-func (f *templateCatalogueFake) ResolveDefaultTemplateID(context.Context, domain.ChecklistType) (int, error) {
+func (f *templateCatalogueFake) ResolveDefaultTemplateID(context.Context, domain.ChecklistType, *int) (int, error) {
 	return 0, domain.ErrNotFound
 }
 func (f *templateCatalogueFake) ListItemsWithProgress(context.Context, string, domain.ChecklistType, int) ([]domain.ChecklistItemView, error) {
@@ -251,6 +251,38 @@ func TestUpdateTemplateItem_ReactivatesBackfill(t *testing.T) {
 	}
 	if fake.insertedPending[11] != 7 {
 		t.Fatalf("reactivate backfill = %d, want 7", fake.insertedPending[11])
+	}
+}
+
+func TestUpdateTemplateItem_RejectsEmptyReactivate(t *testing.T) {
+	fake := newTemplateCatalogueFake()
+	fake.createAff = 0
+	fake.missingTotal = 9
+	svc := NewChecklistResultRecorder(nil, fake, nil, nil)
+	off := false
+	if _, err := svc.UpdateTemplateItem(context.Background(), UpdateTemplateItemInput{
+		TemplateID: 1, ItemID: 11, IsActive: &off,
+	}); err != nil {
+		t.Fatalf("deactivate: %v", err)
+	}
+	on := true
+	_, err := svc.UpdateTemplateItem(context.Background(), UpdateTemplateItemInput{
+		TemplateID: 1, ItemID: 11, IsActive: &on,
+		PropagationScope: domain.PropagationScopeNotStarted,
+	})
+	var empty *domain.TemplatePropagationEmptyError
+	if !errors.As(err, &empty) {
+		t.Fatalf("err = %v, want TemplatePropagationEmptyError", err)
+	}
+	if empty.MissingVehicles != 9 {
+		t.Fatalf("missing = %d", empty.MissingVehicles)
+	}
+	got, err := fake.GetTemplateItem(context.Background(), 11)
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+	if got.IsActive {
+		t.Fatal("reactivate must revert is_active when propagation is empty")
 	}
 }
 

@@ -148,8 +148,20 @@ func (r *ChecklistResultRecorder) UpdateTemplateItem(ctx context.Context, in Upd
 		if !scope.Valid() {
 			return nil, domain.ErrInvalidEnumValue
 		}
-		if _, err := r.checklist.InsertPendingForVehicles(ctx, item.ID, tmpl.ID, tmpl.Type, scope); err != nil {
+		n, err := r.checklist.InsertPendingForVehicles(ctx, item.ID, tmpl.ID, tmpl.Type, scope)
+		if err != nil {
 			return nil, err
+		}
+		_, missing, err := r.checklist.ListVehiclesMissingTemplateItem(ctx, tmpl.ID, item.ID, tmpl.Type, 1)
+		if err != nil {
+			return item, err
+		}
+		if n == 0 && missing > 0 {
+			item.IsActive = false
+			if revErr := r.checklist.UpdateTemplateItem(ctx, item); revErr != nil {
+				return nil, revErr
+			}
+			return nil, &domain.TemplatePropagationEmptyError{Scope: scope, MissingVehicles: missing}
 		}
 	}
 	return item, nil
