@@ -75,17 +75,20 @@ ON CONFLICT (code) DO UPDATE SET
     updated_at = now();
 
 -- Defect types with default process mapping
+-- Only assign a default when the responsible process is reliably known.
+-- Ambiguous types (gap, scratch/impact, deformation, leak, NVH) stay NULL
+-- so quality picks the process intentionally.
 WITH seed (code, name_tr, name_en, process_code, sort_order) AS (
     VALUES
-        ('01', 'Boşluk / hizasızlık', 'Gap / misalignment', 'ASSEMBLY', 1::SMALLINT),
+        ('01', 'Boşluk / hizasızlık', 'Gap / misalignment', NULL, 1::SMALLINT),
         ('02', 'Yüzey / boya hatası', 'Surface / paint defect', 'PAINT', 2),
-        ('03', 'Çizik / darbe / hasar', 'Scratch / impact / damage', 'ASSEMBLY', 3),
-        ('04', 'Deformasyon', 'Deformation', 'WELD', 4),
+        ('03', 'Çizik / darbe / hasar', 'Scratch / impact / damage', NULL, 3),
+        ('04', 'Deformasyon', 'Deformation', NULL, 4),
         ('05', 'Eksik / yanlış parça', 'Missing / wrong part', 'ASSEMBLY', 5),
         ('06', 'Bağlantı / tork sorunu', 'Fastener / torque issue', 'ASSEMBLY', 6),
-        ('07', 'Sızdırma', 'Leak', 'ASSEMBLY', 7),
+        ('07', 'Sızdırma', 'Leak', NULL, 7),
         ('08', 'Fonksiyon çalışmıyor', 'Function not working', 'ELECTRICAL', 8),
-        ('09', 'Ses / titreşim', 'Noise / vibration', 'ASSEMBLY', 9),
+        ('09', 'Ses / titreşim', 'Noise / vibration', NULL, 9),
         ('99', 'Diğer', 'Other', NULL, 99)
 )
 INSERT INTO defect_types (code, name_tr, name_en, default_process_id, sort_order, is_active)
