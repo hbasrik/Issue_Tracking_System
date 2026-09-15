@@ -17,7 +17,7 @@ BEGIN
         RETURN NEW;
     END IF;
 
-    IF NEW.current_global_status = 'WITH_CUSTOMER' THEN
+    IF NEW.current_global_status::text = 'WITH_CUSTOMER' THEN
         SELECT EXISTS (
             SELECT 1 FROM checklist_item_progress
             WHERE vin = NEW.vin AND checklist_type = 'SHIPMENT'
@@ -173,7 +173,8 @@ FROM vehicle_eol_workflow w
 WHERE w.vin = v.vin
   AND w.current_stage = 'DOCUMENT'
   AND w.depot_released_at IS NOT NULL
-  AND v.current_global_status NOT IN ('SHIPPED', 'WITH_CUSTOMER');
+  -- ::text so this stays re-runnable after 0013 renames WITH_CUSTOMER → DELIVERED
+  AND v.current_global_status::text NOT IN ('SHIPPED', 'WITH_CUSTOMER', 'DELIVERED');
 
 UPDATE vehicle_eol_workflow
 SET current_stage = 'COMPLETED'
