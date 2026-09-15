@@ -1,3 +1,7 @@
+-- Idempotent notes: CREATE TABLE IF NOT EXISTS; enum recreates skip when
+-- the target label already exists; new enums use duplicate_object guards;
+-- roles INSERT uses ON CONFLICT DO NOTHING.
+
 -- =====================================================================
 -- KAREA v2 architecture migration
 -- Reference: /docs/12_KAREA_v2_database_schema.sql, /docs/11_KAREA_v2_Mimari_Mutabakat_Dokümanı.md
@@ -20,37 +24,59 @@ DROP VIEW IF EXISTS vw_eol_workflow_funnel;
 -- ---------------------------------------------------------------------
 -- B. Drop v1 triggers / functions that reference replaced tables
 -- ---------------------------------------------------------------------
-DROP TRIGGER IF EXISTS trg_link_latest_issue_to_source ON issue_list;
-DROP TRIGGER IF EXISTS trg_enforce_manual_status_change ON vehicles;
-DROP TRIGGER IF EXISTS trg_check_shipment_completion ON eol_and_shipment_checklist_progress;
-DROP TRIGGER IF EXISTS trg_recheck_eol_gate ON eol_and_shipment_checklist_progress;
-DROP TRIGGER IF EXISTS trg_recalculate_vehicle_progress ON production_phase_progress;
-DROP TRIGGER IF EXISTS trg_initialize_vehicle_progress ON vehicles;
-DROP TRIGGER IF EXISTS trg_assign_checklist_templates ON vehicles;
-DROP TRIGGER IF EXISTS trg_eol_ship_updated_at ON eol_and_shipment_checklist_progress;
-DROP TRIGGER IF EXISTS trg_ppp_updated_at ON production_phase_progress;
-DROP TRIGGER IF EXISTS trg_issue_list_updated_at ON issue_list;
-DROP TRIGGER IF EXISTS trg_vehicles_updated_at ON vehicles;
+DO $migrate$
+BEGIN
+    IF to_regclass('public.issue_list') IS NOT NULL THEN
+        DROP TRIGGER IF EXISTS trg_link_latest_issue_to_source ON issue_list;
+        DROP TRIGGER IF EXISTS trg_issue_list_updated_at ON issue_list;
+    END IF;
+    IF to_regclass('public.vehicles') IS NOT NULL THEN
+        DROP TRIGGER IF EXISTS trg_enforce_manual_status_change ON vehicles;
+        DROP TRIGGER IF EXISTS trg_initialize_vehicle_progress ON vehicles;
+        DROP TRIGGER IF EXISTS trg_assign_checklist_templates ON vehicles;
+        DROP TRIGGER IF EXISTS trg_vehicles_updated_at ON vehicles;
+    END IF;
+    IF to_regclass('public.eol_and_shipment_checklist_progress') IS NOT NULL THEN
+        DROP TRIGGER IF EXISTS trg_check_shipment_completion ON eol_and_shipment_checklist_progress;
+        DROP TRIGGER IF EXISTS trg_recheck_eol_gate ON eol_and_shipment_checklist_progress;
+        DROP TRIGGER IF EXISTS trg_eol_ship_updated_at ON eol_and_shipment_checklist_progress;
+    END IF;
+    IF to_regclass('public.production_phase_progress') IS NOT NULL THEN
+        DROP TRIGGER IF EXISTS trg_recalculate_vehicle_progress ON production_phase_progress;
+        DROP TRIGGER IF EXISTS trg_ppp_updated_at ON production_phase_progress;
+    END IF;
+END
+$migrate$;
 
-DROP FUNCTION IF EXISTS fn_link_latest_issue_to_source();
-DROP FUNCTION IF EXISTS fn_enforce_manual_status_change();
-DROP FUNCTION IF EXISTS fn_check_shipment_completion();
-DROP FUNCTION IF EXISTS fn_recheck_eol_gate_on_item_update();
-DROP FUNCTION IF EXISTS fn_recalculate_vehicle_progress();
-DROP FUNCTION IF EXISTS fn_initialize_vehicle_progress();
-DROP FUNCTION IF EXISTS fn_assign_checklist_templates();
-DROP FUNCTION IF EXISTS fn_enforce_branch_shipment();
-DROP FUNCTION IF EXISTS fn_enforce_depot_release();
-DROP FUNCTION IF EXISTS fn_enforce_document_approval();
+DROP FUNCTION IF EXISTS fn_link_latest_issue_to_source() CASCADE;
+DROP FUNCTION IF EXISTS fn_enforce_manual_status_change() CASCADE;
+DROP FUNCTION IF EXISTS fn_check_shipment_completion() CASCADE;
+DROP FUNCTION IF EXISTS fn_recheck_eol_gate_on_item_update() CASCADE;
+DROP FUNCTION IF EXISTS fn_recalculate_vehicle_progress() CASCADE;
+DROP FUNCTION IF EXISTS fn_initialize_vehicle_progress() CASCADE;
+DROP FUNCTION IF EXISTS fn_assign_checklist_templates() CASCADE;
+DROP FUNCTION IF EXISTS fn_enforce_branch_shipment() CASCADE;
+DROP FUNCTION IF EXISTS fn_enforce_depot_release() CASCADE;
+DROP FUNCTION IF EXISTS fn_enforce_document_approval() CASCADE;
 
 -- ---------------------------------------------------------------------
 -- C. Clear transactional seed/test rows, then drop replaced tables
 -- ---------------------------------------------------------------------
 TRUNCATE TABLE audit_logs RESTART IDENTITY CASCADE;
 TRUNCATE TABLE issue_list RESTART IDENTITY CASCADE;
-TRUNCATE TABLE eol_and_shipment_checklist_progress RESTART IDENTITY CASCADE;
-TRUNCATE TABLE production_phase_progress RESTART IDENTITY CASCADE;
 TRUNCATE TABLE vehicles CASCADE;
+
+-- v1 progress tables exist only before first 0002 apply
+DO $migrate$
+BEGIN
+    IF to_regclass('public.eol_and_shipment_checklist_progress') IS NOT NULL THEN
+        TRUNCATE TABLE eol_and_shipment_checklist_progress RESTART IDENTITY CASCADE;
+    END IF;
+    IF to_regclass('public.production_phase_progress') IS NOT NULL THEN
+        TRUNCATE TABLE production_phase_progress RESTART IDENTITY CASCADE;
+    END IF;
+END
+$migrate$;
 
 DROP TABLE IF EXISTS production_phase_progress;
 DROP TABLE IF EXISTS eol_and_shipment_checklist_progress;
@@ -73,34 +99,48 @@ UPDATE checklist_template_items SET station_id = NULL;
 ALTER TABLE audit_logs DROP COLUMN IF EXISTS phase_number;
 
 -- Drop FKs that point at stations/phases before replacing those tables
-ALTER TABLE issue_list DROP CONSTRAINT IF EXISTS issue_list_station_id_fkey;
-ALTER TABLE checklist_template_items DROP CONSTRAINT IF EXISTS checklist_template_items_station_id_fkey;
-ALTER TABLE audit_logs DROP CONSTRAINT IF EXISTS audit_logs_station_id_fkey;
-ALTER TABLE checkpoints DROP CONSTRAINT IF EXISTS checkpoints_station_id_fkey;
-ALTER TABLE checkpoints DROP CONSTRAINT IF EXISTS checkpoints_phase_number_fkey;
+DO $migrate$
+BEGIN
+    IF to_regclass('public.issue_list') IS NOT NULL THEN
+        ALTER TABLE issue_list DROP CONSTRAINT IF EXISTS issue_list_station_id_fkey;
+    END IF;
+    IF to_regclass('public.checklist_template_items') IS NOT NULL THEN
+        ALTER TABLE checklist_template_items DROP CONSTRAINT IF EXISTS checklist_template_items_station_id_fkey;
+    END IF;
+    IF to_regclass('public.audit_logs') IS NOT NULL THEN
+        ALTER TABLE audit_logs DROP CONSTRAINT IF EXISTS audit_logs_station_id_fkey;
+    END IF;
+    IF to_regclass('public.checkpoints') IS NOT NULL THEN
+        ALTER TABLE checkpoints DROP CONSTRAINT IF EXISTS checkpoints_station_id_fkey;
+        ALTER TABLE checkpoints DROP CONSTRAINT IF EXISTS checkpoints_phase_number_fkey;
+    END IF;
+END
+$migrate$;
 
 DROP TABLE IF EXISTS checkpoints;
-DROP TABLE IF EXISTS stations;
+-- station_steps may already exist on re-run; drop before stations.
+DROP TABLE IF EXISTS station_steps CASCADE;
+DROP TABLE IF EXISTS stations CASCADE;
 DROP TABLE IF EXISTS phases;
 DROP TYPE IF EXISTS checkpoint_status_enum;
 
 -- ---------------------------------------------------------------------
 -- D. RBAC: roles tables + migrate users.role -> users.role_id
 -- ---------------------------------------------------------------------
-CREATE TABLE roles (
+CREATE TABLE IF NOT EXISTS roles (
     id         SERIAL PRIMARY KEY,
     code       VARCHAR(50) NOT NULL UNIQUE,
     name       VARCHAR(100) NOT NULL,
     is_active  BOOLEAN NOT NULL DEFAULT TRUE
 );
 
-CREATE TABLE permissions (
+CREATE TABLE IF NOT EXISTS permissions (
     id           SERIAL PRIMARY KEY,
     code         VARCHAR(100) NOT NULL UNIQUE,
     description  VARCHAR(250)
 );
 
-CREATE TABLE role_permissions (
+CREATE TABLE IF NOT EXISTS role_permissions (
     role_id        INT NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
     permission_id  INT NOT NULL REFERENCES permissions(id) ON DELETE CASCADE,
     PRIMARY KEY (role_id, permission_id)
@@ -108,76 +148,130 @@ CREATE TABLE role_permissions (
 
 INSERT INTO roles (code, name) VALUES
     ('OPERATOR', 'Operator'),
-    ('MANAGER_ADMIN', 'Manager / Admin');
+    ('MANAGER_ADMIN', 'Manager / Admin')
+ON CONFLICT (code) DO NOTHING;
 
 ALTER TABLE users ADD COLUMN IF NOT EXISTS role_id INT REFERENCES roles(id);
 
-UPDATE users u
-SET role_id = r.id
-FROM roles r
-WHERE u.role_id IS NULL
-  AND r.code = u.role::text;
-
--- Fresh DBs may have zero users; only enforce NOT NULL when rows exist
--- or after seed. Keep NOT NULL to match v2 DDL once role_id is populated
--- for any existing rows; default path after 0001 has no users yet.
-DO $$
+-- Skip when already migrated (users.role column dropped on first apply).
+DO $migrate$
 BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = 'users' AND column_name = 'role'
+    ) THEN
+        UPDATE users u
+        SET role_id = r.id
+        FROM roles r
+        WHERE u.role_id IS NULL
+          AND r.code = u.role::text;
+    END IF;
+
     IF EXISTS (SELECT 1 FROM users WHERE role_id IS NULL) THEN
         RAISE EXCEPTION 'users.role_id migration left NULL rows';
     END IF;
-END $$;
+END
+$migrate$;
 
-ALTER TABLE users ALTER COLUMN role_id SET NOT NULL;
+DO $migrate$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = 'users' AND column_name = 'role_id'
+          AND is_nullable = 'YES'
+    ) THEN
+        ALTER TABLE users ALTER COLUMN role_id SET NOT NULL;
+    END IF;
+END
+$migrate$;
+
 ALTER TABLE users DROP COLUMN IF EXISTS role;
 DROP TYPE IF EXISTS user_role_enum;
 
 -- ---------------------------------------------------------------------
 -- E. Recreate / extend enums to match v2 exactly
 -- ---------------------------------------------------------------------
--- checklist_type_enum: add TEST
-ALTER TABLE checklist_templates ALTER COLUMN type TYPE text;
-DROP TYPE IF EXISTS checklist_type_enum;
-CREATE TYPE checklist_type_enum AS ENUM (
-    'EOL',
-    'SHIPMENT',
-    'TEST'
-);
-ALTER TABLE checklist_templates
-    ALTER COLUMN type TYPE checklist_type_enum USING type::checklist_type_enum;
+-- checklist_type_enum: add TEST (idempotent)
+DO $migrate$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM pg_enum e
+        JOIN pg_type t ON t.oid = e.enumtypid
+        WHERE t.typname = 'checklist_type_enum' AND e.enumlabel = 'TEST'
+    ) THEN
+        RAISE NOTICE 'checklist_type_enum already includes TEST — skip recreate';
+    ELSE
+        ALTER TABLE checklist_templates ALTER COLUMN type TYPE text;
+        DROP TYPE IF EXISTS checklist_type_enum;
+        CREATE TYPE checklist_type_enum AS ENUM ('EOL', 'SHIPMENT', 'TEST');
+        ALTER TABLE checklist_templates
+            ALTER COLUMN type TYPE checklist_type_enum USING type::checklist_type_enum;
+    END IF;
+END
+$migrate$;
 
--- issue_status_enum: add CONDITIONAL_APPROVED
-ALTER TABLE issue_list ALTER COLUMN status DROP DEFAULT;
-ALTER TABLE issue_list ALTER COLUMN status TYPE text;
-DROP TYPE IF EXISTS issue_status_enum;
-CREATE TYPE issue_status_enum AS ENUM (
-    'OPEN',
-    'IN_PROGRESS',
-    'DONE',
-    'APPROVED',
-    'CONDITIONAL_APPROVED'
-);
-ALTER TABLE issue_list
-    ALTER COLUMN status TYPE issue_status_enum USING status::issue_status_enum;
-ALTER TABLE issue_list ALTER COLUMN status SET DEFAULT 'OPEN';
+-- issue_status_enum: add CONDITIONAL_APPROVED (idempotent)
+DO $migrate$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM pg_enum e
+        JOIN pg_type t ON t.oid = e.enumtypid
+        WHERE t.typname = 'issue_status_enum' AND e.enumlabel = 'CONDITIONAL_APPROVED'
+    ) THEN
+        RAISE NOTICE 'issue_status_enum already includes CONDITIONAL_APPROVED — skip recreate';
+    ELSE
+        ALTER TABLE issue_list ALTER COLUMN status DROP DEFAULT;
+        ALTER TABLE issue_list ALTER COLUMN status TYPE text;
+        DROP TYPE IF EXISTS issue_status_enum;
+        CREATE TYPE issue_status_enum AS ENUM (
+            'OPEN', 'IN_PROGRESS', 'DONE', 'APPROVED', 'CONDITIONAL_APPROVED'
+        );
+        ALTER TABLE issue_list
+            ALTER COLUMN status TYPE issue_status_enum USING status::issue_status_enum;
+        ALTER TABLE issue_list ALTER COLUMN status SET DEFAULT 'OPEN';
+    END IF;
+END
+$migrate$;
 
--- issue_source_enum: STATION_STEP + TEST_ITEM (no PHASE_CHECKPOINT)
-ALTER TABLE issue_list ALTER COLUMN source_type TYPE text;
-UPDATE issue_list SET source_type = 'STATION_STEP' WHERE source_type = 'PHASE_CHECKPOINT';
-DROP TYPE IF EXISTS issue_source_enum;
-CREATE TYPE issue_source_enum AS ENUM (
-    'STATION_STEP',
-    'EOL_ITEM',
-    'SHIPMENT_ITEM',
-    'TEST_ITEM'
-);
-ALTER TABLE issue_list
-    ALTER COLUMN source_type TYPE issue_source_enum USING source_type::issue_source_enum;
+-- issue_source_enum: STATION_STEP + TEST_ITEM (idempotent)
+DO $migrate$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM pg_enum e
+        JOIN pg_type t ON t.oid = e.enumtypid
+        WHERE t.typname = 'issue_source_enum' AND e.enumlabel = 'STATION_STEP'
+    ) AND EXISTS (
+        SELECT 1 FROM pg_enum e
+        JOIN pg_type t ON t.oid = e.enumtypid
+        WHERE t.typname = 'issue_source_enum' AND e.enumlabel = 'TEST_ITEM'
+    ) THEN
+        RAISE NOTICE 'issue_source_enum already at v2 — skip recreate';
+    ELSE
+        ALTER TABLE issue_list ALTER COLUMN source_type TYPE text;
+        UPDATE issue_list SET source_type = 'STATION_STEP' WHERE source_type = 'PHASE_CHECKPOINT';
+        DROP TYPE IF EXISTS issue_source_enum;
+        CREATE TYPE issue_source_enum AS ENUM (
+            'STATION_STEP', 'EOL_ITEM', 'SHIPMENT_ITEM', 'TEST_ITEM'
+        );
+        ALTER TABLE issue_list
+            ALTER COLUMN source_type TYPE issue_source_enum USING source_type::issue_source_enum;
+    END IF;
+END
+$migrate$;
 
--- audit_event_enum: drop PHASE_ENTER/PHASE_EXIT; add EOL/MEDIA events
-ALTER TABLE audit_logs ALTER COLUMN event_type TYPE text;
-DROP TYPE IF EXISTS audit_event_enum;
-CREATE TYPE audit_event_enum AS ENUM (
+-- audit_event_enum: v2 set (idempotent)
+DO $migrate$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM pg_enum e
+        JOIN pg_type t ON t.oid = e.enumtypid
+        WHERE t.typname = 'audit_event_enum' AND e.enumlabel = 'EOL_WORKFLOW_STAGE_CHANGE'
+    ) THEN
+        RAISE NOTICE 'audit_event_enum already at v2 — skip recreate';
+    ELSE
+        ALTER TABLE audit_logs ALTER COLUMN event_type TYPE text;
+        DROP TYPE IF EXISTS audit_event_enum;
+        CREATE TYPE audit_event_enum AS ENUM (
     'STATUS_CHANGE',
     'LOCATION_CHANGE',
     'STATION_ENTER',
@@ -187,38 +281,59 @@ CREATE TYPE audit_event_enum AS ENUM (
     'EOL_WORKFLOW_STAGE_CHANGE',
     'MEDIA_UPLOADED'
 );
-ALTER TABLE audit_logs
-    ALTER COLUMN event_type TYPE audit_event_enum USING event_type::audit_event_enum;
+        ALTER TABLE audit_logs
+            ALTER COLUMN event_type TYPE audit_event_enum USING event_type::audit_event_enum;
+    END IF;
+END
+$migrate$;
 
-CREATE TYPE station_step_status_enum AS ENUM (
+DO $migrate$
+BEGIN
+    CREATE TYPE station_step_status_enum AS ENUM (
     'PENDING',
     'OK',
     'NOT_OK'
 );
+EXCEPTION WHEN duplicate_object THEN
+    RAISE NOTICE 'station_step_status_enum already exists — skip';
+END
+$migrate$;
 
-CREATE TYPE eol_item_phase_enum AS ENUM (
+DO $migrate$
+BEGIN
+    CREATE TYPE eol_item_phase_enum AS ENUM (
     'BRANCH',
     'DEPOT'
 );
+EXCEPTION WHEN duplicate_object THEN
+    RAISE NOTICE 'eol_item_phase_enum already exists — skip';
+END
+$migrate$;
 
-CREATE TYPE eol_workflow_stage_enum AS ENUM (
+DO $migrate$
+BEGIN
+    CREATE TYPE eol_workflow_stage_enum AS ENUM (
     'BRANCH',
     'DEPOT',
     'DOCUMENT',
     'COMPLETED'
 );
+EXCEPTION WHEN duplicate_object THEN
+    RAISE NOTICE 'eol_workflow_stage_enum already exists — skip';
+END
+$migrate$;
 
 -- ---------------------------------------------------------------------
 -- F. Recreate stations (v2 shape) + station_steps
 -- ---------------------------------------------------------------------
-CREATE TABLE stations (
+CREATE TABLE IF NOT EXISTS stations (
     id            SERIAL PRIMARY KEY,
     name          VARCHAR(100) NOT NULL,
     sequence_no   SMALLINT NOT NULL UNIQUE,
     is_active     BOOLEAN NOT NULL DEFAULT TRUE
 );
 
-CREATE TABLE station_steps (
+CREATE TABLE IF NOT EXISTS station_steps (
     id            SERIAL PRIMARY KEY,
     station_id    INT NOT NULL REFERENCES stations(id),
     sequence_no   SMALLINT NOT NULL,
@@ -294,7 +409,7 @@ ALTER TABLE issue_list ADD CONSTRAINT chk_conditional_approve_pair CHECK (
 -- ---------------------------------------------------------------------
 -- H. New tables
 -- ---------------------------------------------------------------------
-CREATE TABLE vehicle_station_step_progress (
+CREATE TABLE IF NOT EXISTS vehicle_station_step_progress (
     id                BIGSERIAL PRIMARY KEY,
     vin               VARCHAR(17) NOT NULL REFERENCES vehicles(vin) ON DELETE CASCADE,
     station_id        INT NOT NULL REFERENCES stations(id),
@@ -312,7 +427,7 @@ CREATE TABLE vehicle_station_step_progress (
     UNIQUE (vin, station_step_id)
 );
 
-CREATE TABLE checklist_item_progress (
+CREATE TABLE IF NOT EXISTS checklist_item_progress (
     id                BIGSERIAL PRIMARY KEY,
     vin               VARCHAR(17) NOT NULL REFERENCES vehicles(vin) ON DELETE CASCADE,
     checklist_type    checklist_type_enum NOT NULL,
@@ -352,7 +467,7 @@ CREATE TABLE checklist_item_progress (
     )
 );
 
-CREATE TABLE vehicle_eol_workflow (
+CREATE TABLE IF NOT EXISTS vehicle_eol_workflow (
     vin                       VARCHAR(17) PRIMARY KEY REFERENCES vehicles(vin) ON DELETE CASCADE,
     current_stage             eol_workflow_stage_enum NOT NULL DEFAULT 'BRANCH',
 
@@ -375,7 +490,7 @@ COMMENT ON TABLE vehicle_eol_workflow IS
     'Depot release is a hard-block transition (open issues — OPEN/IN_PROGRESS/DONE — are rejected '
     'at the database layer, not just the UI). Document approval is the final EOL sign-off.';
 
-CREATE TABLE media_attachments (
+CREATE TABLE IF NOT EXISTS media_attachments (
     id             BIGSERIAL PRIMARY KEY,
     entity_type    VARCHAR(50) NOT NULL,
     entity_id      TEXT NOT NULL,
@@ -906,23 +1021,27 @@ INSERT INTO permissions (code, description) VALUES
     ('eol.depot_release', 'Release a vehicle from depot (hard-block gate)'),
     ('eol.document_approve', 'Approve the EOL document phase'),
     ('analysis.view', 'View the Analysis tab'),
-    ('admin.manage_masters', 'Manage master data (stations, templates, roles)');
+    ('admin.manage_masters', 'Manage master data (stations, templates, roles)')
+ON CONFLICT (code) DO UPDATE SET description = EXCLUDED.description;
 
 INSERT INTO role_permissions (role_id, permission_id)
 SELECT r.id, p.id FROM roles r, permissions p
 WHERE r.code = 'OPERATOR'
   AND p.code IN ('vehicle.view', 'station_step.update', 'checklist_item.update',
-                 'issue.create', 'issue.transition.in_progress', 'issue.transition.done');
+                 'issue.create', 'issue.transition.in_progress', 'issue.transition.done')
+ON CONFLICT DO NOTHING;
 
 INSERT INTO role_permissions (role_id, permission_id)
 SELECT r.id, p.id FROM roles r, permissions p
-WHERE r.code = 'MANAGER_ADMIN';  -- full access, all permissions
+WHERE r.code = 'MANAGER_ADMIN'  -- full access, all permissions
+ON CONFLICT DO NOTHING;
 
 -- --- Stations (replaces v1's fixed 8 phases; still 8 by default, but ---
 -- the table itself imposes no limit)
 INSERT INTO stations (name, sequence_no) VALUES
     ('Station 1', 1), ('Station 2', 2), ('Station 3', 3), ('Station 4', 4),
-    ('Station 5', 5), ('Station 6', 6), ('Station 7', 7), ('Station 8', 8);
+    ('Station 5', 5), ('Station 6', 6), ('Station 7', 7), ('Station 8', 8)
+ON CONFLICT (sequence_no) DO NOTHING;
 
 -- Replace v1 default templates with v2 names/types (cascade clears old items)
 DELETE FROM checklist_templates
@@ -935,10 +1054,17 @@ WHERE vehicle_model_id IS NULL
       'Default Test Checklist (45 items)'
   );
 
-INSERT INTO checklist_templates (vehicle_model_id, type, name, is_active) VALUES
-    (NULL, 'EOL', 'Default EoL Template (16 items, Branch + Depot)', TRUE),
-    (NULL, 'SHIPMENT', 'Default Customer Vehicle Checklist (43 items)', TRUE),
-    (NULL, 'TEST', 'Default Test Checklist (45 items)', TRUE);
+INSERT INTO checklist_templates (vehicle_model_id, type, name, is_active)
+SELECT NULL, v.type::checklist_type_enum, v.name, TRUE
+FROM (VALUES
+    ('EOL', 'Default EoL Template (16 items, Branch + Depot)'),
+    ('SHIPMENT', 'Default Customer Vehicle Checklist (43 items)'),
+    ('TEST', 'Default Test Checklist (45 items)')
+) AS v(type, name)
+WHERE NOT EXISTS (
+    SELECT 1 FROM checklist_templates ct
+    WHERE ct.vehicle_model_id IS NULL AND ct.name = v.name
+);
 
 -- Item rows are omitted here for brevity — see 09_KAREA_DB_Mimari_ve_Kurulum_Notlari.md
 -- for the seed-data loading plan (to be updated alongside the v2 prompt sequence).
