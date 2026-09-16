@@ -2,10 +2,13 @@ package usecase
 
 import (
 	"context"
+	"errors"
 	"strings"
 
 	"github.com/karea/backend/internal/domain"
 )
+
+const templateItemNoRetries = 8
 
 // CreateTemplateItemInput is a new catalogue row on an existing template.
 type CreateTemplateItemInput struct {
@@ -31,12 +34,43 @@ type UpdateTemplateItemInput struct {
 	PropagationScope domain.TemplateItemPropagationScope
 }
 
+func (r *ChecklistResultRecorder) withTx(ctx context.Context, fn func(context.Context) error) error {
+	if r.uow == nil {
+		return fn(ctx)
+	}
+	return r.uow.WithinTx(ctx, fn)
+}
+
 // CreateTemplateItem appends an active item and backfills PENDING onto
 // vehicles selected by PropagationScope (default: not_started).
 // If the scope matches nobody while assigned vehicles still lack the item,
 // the catalogue row is deleted and TemplatePropagationEmptyError is returned
 // so a silent zero-propagate cannot leave an orphan (root cause of #44).
+// Insert + propagate run in one transaction; item_no unique conflicts retry.
 func (r *ChecklistResultRecorder) CreateTemplateItem(ctx context.Context, in CreateTemplateItemInput) (*domain.ChecklistTemplateItem, error) {
+	var created *domain.ChecklistTemplateItem
+	var last error
+	for attempt := 0; attempt < templateItemNoRetries; attempt++ {
+		last = r.withTx(ctx, func(txCtx context.Context) error {
+			item, err := r.createTemplateItemTx(txCtx, in)
+			if err != nil {
+				return err
+			}
+			created = item
+			return nil
+		})
+		if last == nil {
+			return created, nil
+		}
+		if errors.Is(last, domain.ErrTemplateItemNoConflict) {
+			continue
+		}
+		return nil, last
+	}
+	return nil, last
+}
+
+func (r *ChecklistResultRecorder) createTemplateItemTx(ctx context.Context, in CreateTemplateItemInput) (*domain.ChecklistTemplateItem, error) {
 	tmpl, err := r.checklist.GetTemplate(ctx, in.TemplateID)
 	if err != nil {
 		return nil, err
@@ -89,6 +123,19 @@ func (r *ChecklistResultRecorder) CreateTemplateItem(ctx context.Context, in Cre
 // progress; reactivate backfills by PropagationScope (default: not_started).
 // Text/phase edits do not move progress rows.
 func (r *ChecklistResultRecorder) UpdateTemplateItem(ctx context.Context, in UpdateTemplateItemInput) (*domain.ChecklistTemplateItem, error) {
+	var updated *domain.ChecklistTemplateItem
+	err := r.withTx(ctx, func(txCtx context.Context) error {
+		item, err := r.updateTemplateItemTx(txCtx, in)
+		if err != nil {
+			return err
+		}
+		updated = item
+		return nil
+	})
+	return updated, err
+}
+
+func (r *ChecklistResultRecorder) updateTemplateItemTx(ctx context.Context, in UpdateTemplateItemInput) (*domain.ChecklistTemplateItem, error) {
 	tmpl, err := r.checklist.GetTemplate(ctx, in.TemplateID)
 	if err != nil {
 		return nil, err
@@ -170,6 +217,12 @@ func (r *ChecklistResultRecorder) UpdateTemplateItem(ctx context.Context, in Upd
 // DeleteTemplateItem hard-deletes only when nothing was evaluated and no
 // issue is linked. PENDING-only materialization is cleared first.
 func (r *ChecklistResultRecorder) DeleteTemplateItem(ctx context.Context, templateID, itemID int) error {
+	return r.withTx(ctx, func(txCtx context.Context) error {
+		return r.deleteTemplateItemTx(txCtx, templateID, itemID)
+	})
+}
+
+func (r *ChecklistResultRecorder) deleteTemplateItemTx(ctx context.Context, templateID, itemID int) error {
 	item, err := r.checklist.GetTemplateItem(ctx, itemID)
 	if err != nil {
 		return err

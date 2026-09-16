@@ -116,6 +116,9 @@ var (
 	// ErrTemplateItemReorderInvalid indicates the reorder payload did not
 	// list every item on the template exactly once.
 	ErrTemplateItemReorderInvalid = errors.New("item_ids must list every item on the template exactly once")
+	// ErrTemplateItemNoConflict indicates two inserts raced on the same
+	// (template_id, item_no). Callers retry; the unique constraint holds.
+	ErrTemplateItemNoConflict = errors.New("template item_no conflict")
 	// ErrEmailTaken indicates create-user hit the unique email constraint.
 	ErrEmailTaken = errors.New("email is already in use")
 	// ErrFullNameRequired indicates create-user omitted a non-empty name.

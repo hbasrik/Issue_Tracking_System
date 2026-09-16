@@ -85,7 +85,8 @@ func writeError(w http.ResponseWriter, err error) {
 		errors.Is(err, domain.ErrNotOnHold),
 		errors.Is(err, domain.ErrLastActiveManager),
 		errors.Is(err, domain.ErrEmailTaken),
-		errors.Is(err, domain.ErrDefectCatalogueCodeTaken):
+		errors.Is(err, domain.ErrDefectCatalogueCodeTaken),
+		errors.Is(err, domain.ErrTemplateItemNoConflict):
 		writeJSON(w, http.StatusConflict, errorResponse{Error: err.Error()})
 	case errors.Is(err, domain.ErrNotFound):
 		writeJSON(w, http.StatusNotFound, errorResponse{Error: err.Error()})

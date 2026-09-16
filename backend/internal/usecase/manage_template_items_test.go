@@ -21,6 +21,7 @@ type templateCatalogueFake struct {
 	missingTotal int
 	deletedPending map[int]int64
 	insertedPending map[int]int64
+	createConflicts int
 }
 
 var _ repository.ChecklistProgressRepository = (*templateCatalogueFake)(nil)
@@ -95,6 +96,10 @@ func (f *templateCatalogueFake) ListTemplateItems(_ context.Context, templateID 
 }
 
 func (f *templateCatalogueFake) CreateTemplateItem(_ context.Context, item *domain.ChecklistTemplateItem) (*domain.ChecklistTemplateItem, error) {
+	if f.createConflicts > 0 {
+		f.createConflicts--
+		return nil, domain.ErrTemplateItemNoConflict
+	}
 	f.nextID++
 	created := *item
 	created.ID = f.nextID
@@ -197,6 +202,27 @@ func TestCreateTemplateItem_AppendsActiveEOLItem(t *testing.T) {
 	}
 	if fake.insertedPending[got.ID] != 7 {
 		t.Fatalf("backfill = %d, want 7", fake.insertedPending[got.ID])
+	}
+}
+
+func TestCreateTemplateItem_RetriesItemNoConflict(t *testing.T) {
+	fake := newTemplateCatalogueFake()
+	fake.createConflicts = 2
+	svc := NewChecklistResultRecorder(nil, fake, nil, nil)
+	depot := domain.EOLItemPhaseDepot
+	got, err := svc.CreateTemplateItem(context.Background(), CreateTemplateItemInput{
+		TemplateID: 1,
+		ItemText:   "Retry item",
+		EolPhase:   &depot,
+	})
+	if err != nil {
+		t.Fatalf("create after retry: %v", err)
+	}
+	if fake.createConflicts != 0 {
+		t.Fatalf("conflicts remaining = %d, want 0", fake.createConflicts)
+	}
+	if got.ItemText != "Retry item" {
+		t.Fatalf("item = %+v", got)
 	}
 }
 
