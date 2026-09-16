@@ -32,8 +32,22 @@ func newHTTPFakeIssueRepo(issues ...domain.Issue) *httpFakeIssueRepo {
 	return f
 }
 
-func (f *httpFakeIssueRepo) Create(_ context.Context, _ *domain.Issue) (int64, error) {
-	return 0, domain.ErrNotFound
+func (f *httpFakeIssueRepo) Create(_ context.Context, issue *domain.Issue) (int64, error) {
+	if issue.ClientRequestID != "" {
+		for _, existing := range f.issues {
+			if existing.ClientRequestID == issue.ClientRequestID {
+				return existing.ID, nil
+			}
+		}
+	}
+	id := int64(len(f.issues) + 1)
+	for f.issues[id] != nil {
+		id++
+	}
+	stored := *issue
+	stored.ID = id
+	f.issues[id] = &stored
+	return id, nil
 }
 
 func (f *httpFakeIssueRepo) GetByID(_ context.Context, id int64) (*domain.Issue, error) {
@@ -43,6 +57,19 @@ func (f *httpFakeIssueRepo) GetByID(_ context.Context, id int64) (*domain.Issue,
 	}
 	copied := *issue
 	return &copied, nil
+}
+
+func (f *httpFakeIssueRepo) GetByClientRequestID(_ context.Context, clientRequestID string) (*domain.Issue, error) {
+	if clientRequestID == "" {
+		return nil, domain.ErrNotFound
+	}
+	for _, issue := range f.issues {
+		if issue.ClientRequestID == clientRequestID {
+			copied := *issue
+			return &copied, nil
+		}
+	}
+	return nil, domain.ErrNotFound
 }
 
 func (f *httpFakeIssueRepo) ListForUser(_ context.Context, userID int, status *domain.IssueStatus) ([]domain.Issue, error) {
@@ -378,5 +405,56 @@ func TestIssueStatus_QualityCanApprove(t *testing.T) {
 	router.ServeHTTP(rec, req)
 	if rec.Code != http.StatusOK {
 		t.Fatalf("status = %d body %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestIssueCreate_IdempotencyKeyReplaysSameIssue(t *testing.T) {
+	repo := newHTTPFakeIssueRepo()
+	router, issuer := newIssueRouter(repo)
+	token, err := issuer.Issue(operatorUserID, domain.RoleCodeOperator)
+	if err != nil {
+		t.Fatal(err)
+	}
+	body, _ := json.Marshal(map[string]any{
+		"vin":            "N7V1K1SA9SK000001",
+		"source_type":    "MANUAL",
+		"severity":       "LOW",
+		"description":    "queued report",
+		"issue_type_id":  1,
+		"station_id":     1,
+		"defect_part_id": 10,
+		"defect_type_id": 20,
+	})
+	key := "550e8400-e29b-41d4-a716-446655440000"
+	post := func() *httptest.ResponseRecorder {
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/issues", bytes.NewReader(body))
+		req.Header.Set("Authorization", "Bearer "+token)
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Idempotency-Key", key)
+		rec := httptest.NewRecorder()
+		router.ServeHTTP(rec, req)
+		return rec
+	}
+	first := post()
+	if first.Code != http.StatusCreated {
+		t.Fatalf("first status = %d body %s", first.Code, first.Body.String())
+	}
+	var created domain.Issue
+	if err := json.Unmarshal(first.Body.Bytes(), &created); err != nil {
+		t.Fatalf("decode first: %v", err)
+	}
+	second := post()
+	if second.Code != http.StatusCreated {
+		t.Fatalf("replay status = %d body %s", second.Code, second.Body.String())
+	}
+	var replayed domain.Issue
+	if err := json.Unmarshal(second.Body.Bytes(), &replayed); err != nil {
+		t.Fatalf("decode replay: %v", err)
+	}
+	if created.ID == 0 || created.ID != replayed.ID {
+		t.Fatalf("ids first=%d replay=%d", created.ID, replayed.ID)
+	}
+	if len(repo.issues) != 1 {
+		t.Fatalf("rows = %d, want 1", len(repo.issues))
 	}
 }

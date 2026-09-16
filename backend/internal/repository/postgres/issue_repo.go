@@ -107,10 +107,11 @@ func (r *IssueRepo) Create(ctx context.Context, issue *domain.Issue) (int64, err
 		     defect_part_id, defect_type_id, responsible_process_id,
 		     custom_part_name, custom_defect_name, defect_code,
 		     defect_part_name_tr, defect_part_name_en,
-		     defect_type_name_tr, defect_type_name_en)
+		     defect_type_name_tr, defect_type_name_en, client_request_id)
 		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NULLIF($9, ''), $10, $11,
 		         $12, $13, $14, NULLIF($15, ''), NULLIF($16, ''), NULLIF($17, ''),
-		         NULLIF($18, ''), NULLIF($19, ''), NULLIF($20, ''), NULLIF($21, ''))
+		         NULLIF($18, ''), NULLIF($19, ''), NULLIF($20, ''), NULLIF($21, ''),
+		         NULLIF($22, ''))
 		 RETURNING id`,
 		issue.VIN, string(issue.SourceType), issue.SourceStationStepID, issue.SourceCheckItemID,
 		issue.StationID, issue.IssueTypeID, string(issue.Severity), issue.Description,
@@ -119,6 +120,7 @@ func (r *IssueRepo) Create(ctx context.Context, issue *domain.Issue) (int64, err
 		issue.CustomPartName, issue.CustomDefectName, issue.DefectCode,
 		issue.DefectPartNameTR, issue.DefectPartNameEN,
 		issue.DefectTypeNameTR, issue.DefectTypeNameEN,
+		issue.ClientRequestID,
 	).Scan(&id)
 	return id, err
 }
@@ -129,6 +131,22 @@ func (r *IssueRepo) GetByID(ctx context.Context, id int64) (*domain.Issue, error
 		`SELECT `+issueColumns+`
 		 `+issueFrom+`
 		 WHERE i.id = $1`, id)
+	i, err := scanIssue(row)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, domain.ErrNotFound
+	}
+	return i, err
+}
+
+// GetByClientRequestID returns the issue created with this idempotency key.
+func (r *IssueRepo) GetByClientRequestID(ctx context.Context, clientRequestID string) (*domain.Issue, error) {
+	if clientRequestID == "" {
+		return nil, domain.ErrNotFound
+	}
+	row := executor(ctx, r.pool).QueryRow(ctx,
+		`SELECT `+issueColumns+`
+		 `+issueFrom+`
+		 WHERE i.client_request_id = $1`, clientRequestID)
 	i, err := scanIssue(row)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, domain.ErrNotFound

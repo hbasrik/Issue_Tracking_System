@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -58,6 +59,7 @@ type CreateIssueInput struct {
 	DefectTypeID        *int
 	CustomPartName      string
 	CustomDefectName    string
+	ClientRequestID     string
 }
 
 // Create validates and inserts a new issue. Severity is mandatory
@@ -70,6 +72,20 @@ type CreateIssueInput struct {
 // Checklist / station-step linked sources also require classification —
 // NOT_OK does not auto-create issues; the operator already fills a form.
 func (m *IssueManager) Create(ctx context.Context, in CreateIssueInput) (*domain.Issue, error) {
+	clientRequestID, err := domain.NormalizeClientRequestID(in.ClientRequestID)
+	if err != nil {
+		return nil, err
+	}
+	if clientRequestID != "" {
+		existing, lookupErr := m.issues.GetByClientRequestID(ctx, clientRequestID)
+		if lookupErr == nil {
+			return existing, nil
+		}
+		if !errors.Is(lookupErr, domain.ErrNotFound) {
+			return nil, lookupErr
+		}
+	}
+
 	if !in.SourceType.Valid() {
 		return nil, domain.ErrInvalidEnumValue
 	}
@@ -176,10 +192,17 @@ func (m *IssueManager) Create(ctx context.Context, in CreateIssueInput) (*domain
 		DefectPartNameEN:     part.NameEN,
 		DefectTypeNameTR:     typ.NameTR,
 		DefectTypeNameEN:     typ.NameEN,
+		ClientRequestID:      clientRequestID,
 	}
 
 	id, err := m.issues.Create(ctx, issue)
 	if err != nil {
+		if clientRequestID != "" {
+			existing, lookupErr := m.issues.GetByClientRequestID(ctx, clientRequestID)
+			if lookupErr == nil {
+				return existing, nil
+			}
+		}
 		return nil, err
 	}
 	issue.ID = id

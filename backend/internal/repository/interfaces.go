@@ -127,6 +127,9 @@ type IssueRepository interface {
 	Create(ctx context.Context, issue *domain.Issue) (int64, error)
 	// GetByID returns the issue with the given ID, or domain.ErrNotFound.
 	GetByID(ctx context.Context, id int64) (*domain.Issue, error)
+	// GetByClientRequestID returns the issue created with this idempotency
+	// key, or domain.ErrNotFound. Empty keys are never stored.
+	GetByClientRequestID(ctx context.Context, clientRequestID string) (*domain.Issue, error)
 	// ListForUser returns issues where the user is issue, process, or finish
 	// reporter. When status is non-nil, results are filtered to that status.
 	ListForUser(ctx context.Context, userID int, status *domain.IssueStatus) ([]domain.Issue, error)

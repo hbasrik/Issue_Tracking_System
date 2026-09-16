@@ -412,6 +412,18 @@ func (f *fakeIssueRepo) GetByID(_ context.Context, id int64) (*domain.Issue, err
 	return issue, nil
 }
 
+func (f *fakeIssueRepo) GetByClientRequestID(_ context.Context, clientRequestID string) (*domain.Issue, error) {
+	if clientRequestID == "" {
+		return nil, domain.ErrNotFound
+	}
+	for _, issue := range f.issues {
+		if issue.ClientRequestID == clientRequestID {
+			return issue, nil
+		}
+	}
+	return nil, domain.ErrNotFound
+}
+
 func (f *fakeIssueRepo) ListForUser(_ context.Context, userID int, status *domain.IssueStatus) ([]domain.Issue, error) {
 	var out []domain.Issue
 	for _, issue := range f.issues {

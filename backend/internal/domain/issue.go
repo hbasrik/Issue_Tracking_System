@@ -119,6 +119,9 @@ type Issue struct {
 	SolutionDescription          string
 	CreatedAt                    time.Time
 	UpdatedAt                    time.Time
+	// ClientRequestID is the optional idempotency key from the mobile queue.
+	// Empty on web creates and on rows created before the column existed.
+	ClientRequestID string
 
 	// Defect classification (nullable — legacy rows and pre-classification).
 	DefectPartID          *int

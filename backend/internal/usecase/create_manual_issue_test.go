@@ -119,6 +119,62 @@ func TestCreateManualIssue_Succeeds(t *testing.T) {
 	}
 }
 
+func TestCreateManualIssue_IdempotentReplay(t *testing.T) {
+	station := 3
+	typeID := 1
+	partID, typID := 10, 20
+	repo := newCreateIssueFakeRepo()
+	mgr := usecase.NewIssueManager(repo, newNopAudit(), newNopUOW(), createIssueStubVehicles{}, createIssueStubCatalog{})
+	in := usecase.CreateIssueInput{
+		VIN:             "1KTSKRC2XSB010042",
+		SourceType:      domain.IssueSourceManual,
+		StationID:       &station,
+		IssueTypeID:     &typeID,
+		Severity:        domain.IssueSeverityLow,
+		Description:     "offline retry",
+		ReporterID:      7,
+		DefectPartID:    &partID,
+		DefectTypeID:    &typID,
+		ClientRequestID: "550e8400-e29b-41d4-a716-446655440000",
+	}
+	first, err := mgr.Create(context.Background(), in)
+	if err != nil {
+		t.Fatalf("first create: %v", err)
+	}
+	second, err := mgr.Create(context.Background(), in)
+	if err != nil {
+		t.Fatalf("replay: %v", err)
+	}
+	if first.ID != second.ID {
+		t.Fatalf("replay id = %d, want %d", second.ID, first.ID)
+	}
+	if len(repo.byID) != 1 {
+		t.Fatalf("rows = %d, want 1", len(repo.byID))
+	}
+}
+
+func TestCreateManualIssue_InvalidClientRequestID(t *testing.T) {
+	station := 3
+	typeID := 1
+	partID, typID := 10, 20
+	mgr := usecase.NewIssueManager(newCreateIssueFakeRepo(), newNopAudit(), newNopUOW(), createIssueStubVehicles{}, createIssueStubCatalog{})
+	_, err := mgr.Create(context.Background(), usecase.CreateIssueInput{
+		VIN:             "1KTSKRC2XSB010042",
+		SourceType:      domain.IssueSourceManual,
+		StationID:       &station,
+		IssueTypeID:     &typeID,
+		Severity:        domain.IssueSeverityLow,
+		Description:     "bad key",
+		ReporterID:      7,
+		DefectPartID:    &partID,
+		DefectTypeID:    &typID,
+		ClientRequestID: "not-a-uuid",
+	})
+	if !errors.Is(err, domain.ErrClientRequestIDInvalid) {
+		t.Fatalf("err = %v, want %v", err, domain.ErrClientRequestIDInvalid)
+	}
+}
+
 // Minimal fakes local to this file so we do not depend on unexported test
 // helpers from fakes_test.go (same package _test).
 type createIssueFakeRepo struct {
@@ -141,6 +197,17 @@ func (f *createIssueFakeRepo) Create(_ context.Context, issue *domain.Issue) (in
 func (f *createIssueFakeRepo) GetByID(_ context.Context, id int64) (*domain.Issue, error) {
 	if i, ok := f.byID[id]; ok {
 		return i, nil
+	}
+	return nil, domain.ErrNotFound
+}
+func (f *createIssueFakeRepo) GetByClientRequestID(_ context.Context, clientRequestID string) (*domain.Issue, error) {
+	if clientRequestID == "" {
+		return nil, domain.ErrNotFound
+	}
+	for _, i := range f.byID {
+		if i.ClientRequestID == clientRequestID {
+			return i, nil
+		}
 	}
 	return nil, domain.ErrNotFound
 }

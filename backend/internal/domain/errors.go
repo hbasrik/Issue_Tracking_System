@@ -24,6 +24,9 @@ var (
 	ErrSeverityRequired = errors.New("issue severity is required")
 	// ErrVINRequired indicates a MANUAL (or other) issue create omitted vin.
 	ErrVINRequired = errors.New("vin is required")
+	// ErrClientRequestIDInvalid indicates Idempotency-Key / client_request_id
+	// was present but not a UUID. Empty is allowed (no idempotency).
+	ErrClientRequestIDInvalid = errors.New("client_request_id must be a uuid")
 	// ErrStationRequired indicates a MANUAL issue create omitted station_id.
 	ErrStationRequired = errors.New("station_id is required")
 	// ErrIssueTypeRequired indicates a MANUAL issue create omitted issue_type_id.

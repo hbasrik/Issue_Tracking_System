@@ -25,10 +25,14 @@ type createIssueRequest struct {
 	DefectTypeID        *int   `json:"defect_type_id"`
 	CustomPartName      string `json:"custom_part_name"`
 	CustomDefectName    string `json:"custom_defect_name"`
+	ClientRequestID     string `json:"client_request_id"`
 }
 
 // handleCreateIssue creates a new issue (issue.create). Severity is mandatory
 // (Decision Log #7); a missing severity is rejected with 400.
+//
+// Idempotency-Key (or JSON client_request_id) maps a mobile offline retry to
+// one issue row: a replay returns the existing issue instead of inserting again.
 func (s *server) handleCreateIssue(w http.ResponseWriter, r *http.Request) {
 	var req createIssueRequest
 	if err := decodeJSON(r, &req); err != nil {
@@ -37,6 +41,10 @@ func (s *server) handleCreateIssue(w http.ResponseWriter, r *http.Request) {
 	}
 
 	claims, _ := ClaimsFromContext(r.Context())
+	clientRequestID := strings.TrimSpace(r.Header.Get("Idempotency-Key"))
+	if clientRequestID == "" {
+		clientRequestID = req.ClientRequestID
+	}
 	issue, err := s.deps.Issues.Create(r.Context(), usecase.CreateIssueInput{
 		VIN:                 req.VIN,
 		SourceType:          domain.IssueSource(req.SourceType),
@@ -52,6 +60,7 @@ func (s *server) handleCreateIssue(w http.ResponseWriter, r *http.Request) {
 		DefectTypeID:        req.DefectTypeID,
 		CustomPartName:      req.CustomPartName,
 		CustomDefectName:    req.CustomDefectName,
+		ClientRequestID:     clientRequestID,
 	})
 	if err != nil {
 		writeError(w, err)
