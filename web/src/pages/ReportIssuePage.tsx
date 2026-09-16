@@ -14,9 +14,12 @@ import { VinSearchBox } from '../components/VinSearchBox';
 import { useAuth } from '../auth/AuthProvider';
 import { Perm } from '../auth/permissions';
 import { useI18n } from '../i18n';
+import {
+  isOtherPartCode,
+  isOtherTypeCode,
+  validateDefectClassification,
+} from '../lib/issueDefectValidation';
 
-const OTHER_PART = '99-99';
-const OTHER_TYPE = '99';
 const SEVERITIES = ['CRITICAL', 'MEDIUM', 'LOW'] as const;
 
 const inputClass =
@@ -115,7 +118,7 @@ export default function ReportIssuePage() {
     setPartId(p.ID);
     setZoneId(p.ZoneID);
     setPartSearch('');
-    if (p.Code !== OTHER_PART) setCustomPartName('');
+    if (!isOtherPartCode(p.Code)) setCustomPartName('');
   }, []);
 
   async function submit(e: React.FormEvent) {
@@ -129,24 +132,22 @@ export default function ReportIssuePage() {
       setError(t('report.stationRequired'));
       return;
     }
-    if (zoneId === '') {
-      setError(t('report.zoneRequired'));
+    const classErr = validateDefectClassification(
+      {
+        zoneId: zoneId === '' ? null : zoneId,
+        partId: partId === '' ? null : partId,
+        typeId: typeId === '' ? null : typeId,
+        customPartName,
+        customDefectName,
+      },
+      parts,
+      types,
+    );
+    if (classErr) {
+      setError(t(classErr));
       return;
     }
-    if (partId === '' || !selectedPart) {
-      setError(t('report.partRequired'));
-      return;
-    }
-    if (typeId === '' || !selectedType) {
-      setError(t('report.defectTypeRequired'));
-      return;
-    }
-    if (selectedPart.Code === OTHER_PART && !customPartName.trim()) {
-      setError(t('report.customPartRequired'));
-      return;
-    }
-    if (selectedType.Code === OTHER_TYPE && !customDefectName.trim()) {
-      setError(t('report.customDefectRequired'));
+    if (!selectedPart || !selectedType) {
       return;
     }
     if (!severity) {
@@ -177,10 +178,12 @@ export default function ReportIssuePage() {
         description: description.trim(),
         defect_part_id: Number(partId),
         defect_type_id: Number(typeId),
-        custom_part_name:
-          selectedPart.Code === OTHER_PART ? customPartName.trim() : undefined,
-        custom_defect_name:
-          selectedType.Code === OTHER_TYPE ? customDefectName.trim() : undefined,
+        custom_part_name: isOtherPartCode(selectedPart.Code)
+          ? customPartName.trim()
+          : undefined,
+        custom_defect_name: isOtherTypeCode(selectedType.Code)
+          ? customDefectName.trim()
+          : undefined,
       });
       await api.uploadMedia('ISSUE', String(issue.ID), photo);
       navigate(`/issues`, { replace: true, state: { highlightIssueId: issue.ID } });
@@ -312,7 +315,7 @@ export default function ReportIssuePage() {
           </select>
         </label>
 
-        {selectedPart?.Code === OTHER_PART ? (
+        {isOtherPartCode(selectedPart?.Code) ? (
           <label className="block text-[12px] text-[var(--text-secondary)]">
             {t('report.customPartName')} *
             <input
@@ -334,7 +337,7 @@ export default function ReportIssuePage() {
               const id = e.target.value === '' ? '' : Number(e.target.value);
               setTypeId(id);
               const ty = types.find((x) => x.ID === id);
-              if (!ty || ty.Code !== OTHER_TYPE) setCustomDefectName('');
+              if (!ty || !isOtherTypeCode(ty.Code)) setCustomDefectName('');
             }}
           >
             <option value="">{t('report.pickDefectType')}</option>
@@ -346,7 +349,7 @@ export default function ReportIssuePage() {
           </select>
         </label>
 
-        {selectedType?.Code === OTHER_TYPE ? (
+        {isOtherTypeCode(selectedType?.Code) ? (
           <label className="block text-[12px] text-[var(--text-secondary)]">
             {t('report.customDefectName')} *
             <input

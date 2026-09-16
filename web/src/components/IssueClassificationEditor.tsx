@@ -9,9 +9,11 @@ import {
 } from '../lib/api';
 import { apiErrorMessage } from '../lib/apiErrors';
 import { useI18n } from '../i18n';
-
-const OTHER_PART = '99-99';
-const OTHER_TYPE = '99';
+import {
+  isOtherPartCode,
+  isOtherTypeCode,
+  validateDefectClassification,
+} from '../lib/issueDefectValidation';
 
 const inputClass =
   'min-h-touch w-full rounded-lg border bg-[var(--bg-page)] px-3 text-[14px] text-[var(--text-primary)]';
@@ -110,16 +112,22 @@ export function IssueClassificationEditor({
 
   async function save() {
     setError(null);
+    const classErr = validateDefectClassification(
+      {
+        zoneId: zoneId === '' ? null : zoneId,
+        partId: partId === '' ? null : partId,
+        typeId: typeId === '' ? null : typeId,
+        customPartName,
+        customDefectName,
+      },
+      parts,
+      types,
+    );
+    if (classErr) {
+      setError(t(classErr));
+      return;
+    }
     if (partId === '' || typeId === '') {
-      setError(t('issue.classificationIncomplete'));
-      return;
-    }
-    if (selectedPart?.Code === OTHER_PART && !customPartName.trim()) {
-      setError(t('report.customPartRequired'));
-      return;
-    }
-    if (selectedType?.Code === OTHER_TYPE && !customDefectName.trim()) {
-      setError(t('report.customDefectRequired'));
       return;
     }
     setBusy(true);
@@ -128,10 +136,12 @@ export function IssueClassificationEditor({
         defect_part_id: partId,
         defect_type_id: typeId,
         responsible_process_id: processId === '' ? null : processId,
-        custom_part_name:
-          selectedPart?.Code === OTHER_PART ? customPartName.trim() : undefined,
-        custom_defect_name:
-          selectedType?.Code === OTHER_TYPE ? customDefectName.trim() : undefined,
+        custom_part_name: isOtherPartCode(selectedPart?.Code)
+          ? customPartName.trim()
+          : undefined,
+        custom_defect_name: isOtherTypeCode(selectedType?.Code)
+          ? customDefectName.trim()
+          : undefined,
       });
       onSaved(updated);
     } catch (err) {
@@ -194,7 +204,7 @@ export function IssueClassificationEditor({
             setPartId(id);
             const p = parts.find((x) => x.ID === id);
             if (p) setZoneId(p.ZoneID);
-            if (!p || p.Code !== OTHER_PART) setCustomPartName('');
+            if (!p || !isOtherPartCode(p.Code)) setCustomPartName('');
           }}
         >
           <option value="">{t('report.pickPart')}</option>
@@ -206,7 +216,7 @@ export function IssueClassificationEditor({
         </select>
       </label>
 
-      {selectedPart?.Code === OTHER_PART ? (
+      {isOtherPartCode(selectedPart?.Code) ? (
         <label className="block text-[12px] text-[var(--text-secondary)]">
           {t('report.customPartName')}
           <input
@@ -230,7 +240,7 @@ export function IssueClassificationEditor({
             const ty = types.find((x) => x.ID === id);
             if (ty?.DefaultProcessID) setProcessId(ty.DefaultProcessID);
             else setProcessId('');
-            if (!ty || ty.Code !== OTHER_TYPE) setCustomDefectName('');
+            if (!ty || !isOtherTypeCode(ty.Code)) setCustomDefectName('');
           }}
         >
           <option value="">{t('report.pickDefectType')}</option>
@@ -242,7 +252,7 @@ export function IssueClassificationEditor({
         </select>
       </label>
 
-      {selectedType?.Code === OTHER_TYPE ? (
+      {isOtherTypeCode(selectedType?.Code) ? (
         <label className="block text-[12px] text-[var(--text-secondary)]">
           {t('report.customDefectName')}
           <input

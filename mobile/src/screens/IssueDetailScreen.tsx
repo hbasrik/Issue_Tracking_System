@@ -35,8 +35,6 @@ import {
 } from '../components/ui';
 import {
   DefectClassificationFields,
-  OTHER_PART_CODE,
-  OTHER_TYPE_CODE,
   type DefectClassificationState,
 } from '../components/DefectClassificationFields';
 import { SeverityIndicator } from '../components/SeverityIndicator';
@@ -55,6 +53,11 @@ import { issueStationLabel, reporterFallback, defectLabels } from '../lib/issueD
 import { apiErrorMessage } from '../lib/password';
 import { useI18n } from '../i18n';
 import type { Locale } from '../../../shared/i18n';
+import {
+  isOtherPartCode,
+  isOtherTypeCode,
+  validateDefectClassification,
+} from '../../../shared/issueDefectValidation';
 import type { RootStackParamList } from '../navigation/types';
 import { useConfirm } from '../components/ConfirmDialog';
 import { useApprovalUndo } from '../components/ApprovalUndoToast';
@@ -352,18 +355,19 @@ export default function IssueDetailScreen() {
   }
 
   async function saveClassification() {
-    if (!issue || classState.partId == null || classState.typeId == null) {
-      setError(t('issue.classificationIncomplete'));
+    if (!issue) return;
+    const classErr = validateDefectClassification(
+      classState,
+      catalogParts,
+      catalogTypes,
+    );
+    if (classErr) {
+      setError(t(classErr));
       return;
     }
     const part = catalogParts.find((p) => p.ID === classState.partId);
     const typ = catalogTypes.find((ty) => ty.ID === classState.typeId);
-    if (part?.Code === OTHER_PART_CODE && !classState.customPartName.trim()) {
-      setError(t('report.customPartRequired'));
-      return;
-    }
-    if (typ?.Code === OTHER_TYPE_CODE && !classState.customDefectName.trim()) {
-      setError(t('report.customDefectRequired'));
+    if (classState.partId == null || classState.typeId == null) {
       return;
     }
     setBusy(true);
@@ -373,14 +377,12 @@ export default function IssueDetailScreen() {
         defect_part_id: classState.partId,
         defect_type_id: classState.typeId,
         responsible_process_id: processId,
-        custom_part_name:
-          part?.Code === OTHER_PART_CODE
-            ? classState.customPartName.trim()
-            : undefined,
-        custom_defect_name:
-          typ?.Code === OTHER_TYPE_CODE
-            ? classState.customDefectName.trim()
-            : undefined,
+        custom_part_name: isOtherPartCode(part?.Code)
+          ? classState.customPartName.trim()
+          : undefined,
+        custom_defect_name: isOtherTypeCode(typ?.Code)
+          ? classState.customDefectName.trim()
+          : undefined,
       });
       setIssue(updated);
       setEditingClassification(false);

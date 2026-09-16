@@ -17,9 +17,15 @@ import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n';
 import { apiErrorMessage } from '../lib/password';
 import type { Locale, Translate } from '../../../shared/i18n';
+import {
+  OTHER_PART_CODE,
+  OTHER_TYPE_CODE,
+  isOtherPartCode,
+  isOtherTypeCode,
+  validateDefectClassification,
+} from '../../../shared/issueDefectValidation';
 
-export const OTHER_PART_CODE = '99-99';
-export const OTHER_TYPE_CODE = '99';
+export { OTHER_PART_CODE, OTHER_TYPE_CODE };
 
 export interface DefectClassificationState {
   zoneId: number | null;
@@ -66,7 +72,7 @@ export function isDefectClassificationComplete(
   parts: DefectPart[],
   types: DefectType[],
 ): boolean {
-  return defectClassificationValidationMessage(state, parts, types) == null;
+  return validateDefectClassification(state, parts, types) == null;
 }
 
 export function defectClassificationValidationMessage(
@@ -75,24 +81,9 @@ export function defectClassificationValidationMessage(
   types: DefectType[],
   t?: Translate,
 ): string | null {
-  if (state.zoneId == null) {
-    return t?.('report.zoneRequired') ?? 'zone required';
-  }
-  if (state.partId == null) {
-    return t?.('report.partRequired') ?? 'part required';
-  }
-  if (state.typeId == null) {
-    return t?.('report.defectTypeRequired') ?? 'defect type required';
-  }
-  const part = parts.find((p) => p.ID === state.partId);
-  const type = types.find((dt) => dt.ID === state.typeId);
-  if (part?.Code === OTHER_PART_CODE && !state.customPartName.trim()) {
-    return t?.('report.customPartRequired') ?? 'custom part required';
-  }
-  if (type?.Code === OTHER_TYPE_CODE && !state.customDefectName.trim()) {
-    return t?.('report.customDefectRequired') ?? 'custom defect required';
-  }
-  return null;
+  const key = validateDefectClassification(state, parts, types);
+  if (!key) return null;
+  return t ? t(key) : key;
 }
 
 export function DefectClassificationFields({
@@ -177,14 +168,14 @@ export function DefectClassificationFields({
     });
   }, [allParts, partSearch]);
 
-  const showCustomPart = selectedPart?.Code === OTHER_PART_CODE;
-  const showCustomDefect = selectedType?.Code === OTHER_TYPE_CODE;
+  const showCustomPart = isOtherPartCode(selectedPart?.Code);
+  const showCustomDefect = isOtherTypeCode(selectedType?.Code);
 
   function pickPart(part: DefectPart) {
     onChange({
       partId: part.ID,
       zoneId: part.ZoneID,
-      customPartName: part.Code === OTHER_PART_CODE ? customPartName : '',
+      customPartName: isOtherPartCode(part.Code) ? customPartName : '',
     });
     setPartSearch('');
     setPartPickerOpen(false);
@@ -198,7 +189,7 @@ export function DefectClassificationFields({
     onChange({
       zoneId: id,
       partId: nextPart?.ID ?? null,
-      customPartName: nextPart?.Code === OTHER_PART_CODE ? customPartName : '',
+      customPartName: isOtherPartCode(nextPart?.Code) ? customPartName : '',
     });
     setZonePickerOpen(false);
   }
@@ -428,7 +419,7 @@ export function DefectClassificationFields({
                     onChange({
                       typeId: dt.ID,
                       customDefectName:
-                        dt.Code === OTHER_TYPE_CODE ? customDefectName : '',
+                        isOtherTypeCode(dt.Code) ? customDefectName : '',
                     });
                     setTypePickerOpen(false);
                   }}
