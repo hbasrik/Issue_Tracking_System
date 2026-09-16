@@ -21,6 +21,7 @@ import ProfileScreen from '../screens/ProfileScreen';
 import VehicleStationScreen from '../screens/VehicleStationScreen';
 import IssueReportScreen from '../screens/IssueReportScreen';
 import ManualIssueReportScreen from '../screens/ManualIssueReportScreen';
+import PendingReportsScreen from '../screens/PendingReportsScreen';
 import EOLChecklistScreen from '../screens/EOLChecklistScreen';
 import ShipmentChecklistScreen from '../screens/ShipmentChecklistScreen';
 import TestChecklistScreen from '../screens/TestChecklistScreen';
@@ -169,6 +170,11 @@ export function RootNavigator() {
               name="ManualIssueReport"
               component={ManualIssueReportScreen}
               options={() => ({ title: t('nav.reportIssue') })}
+            />
+            <Stack.Screen
+              name="PendingReports"
+              component={PendingReportsScreen}
+              options={() => ({ title: t('nav.pendingReports') })}
             />
             <Stack.Screen
               name="EOLChecklist"

@@ -1072,6 +1072,32 @@ export const tr = {
   'report.pickVin': 'VIN seç',
   'report.savedPhotoFailed':
     'Issue #{id} kaydedildi, fotoğraf yüklenemedi: {msg}',
+  'nav.pendingReports': 'Bekleyen gönderimler',
+  'queue.banner': '{n} hata bildirimi bekliyor',
+  'queue.bannerOne': '1 hata bildirimi bekliyor',
+  'queue.open': 'Görüntüle',
+  'queue.empty': 'Bekleyen gönderim yok',
+  'queue.pending': 'Bekliyor',
+  'queue.sending': 'Gönderiliyor',
+  'queue.failed': 'Gönderilemedi',
+  'queue.sendNow': 'Şimdi gönder',
+  'queue.sendAll': 'Bekleyenleri gönder',
+  'queue.delete': 'Kuyruktan sil',
+  'queue.deleteConfirm':
+    'Bu kayıt cihazdan silinecek ve sunucuya gitmeyecek.',
+  'queue.queuedOffline':
+    'Kaydedildi. Bağlantı gelince otomatik gönderilecek.',
+  'queue.full':
+    'Bekleyen kayıt limiti doldu (20). Önce bekleyenleri gönderin veya silin.',
+  'queue.photoTooLarge':
+    'Fotoğraf 4 MB sınırını aşıyor. Daha küçük bir fotoğraf çekin.',
+  'queue.expired':
+    '7 günden eski — otomatik gönderim durdu. Silin veya tekrar deneyin.',
+  'queue.noPhoto': 'Kayıtlı fotoğraf bulunamadı',
+  'queue.photoPending': 'Fotoğraf henüz yüklenmedi',
+  'queue.ageHint':
+    'Kayıtlar 7 gün sonra otomatik gönderilmez; silinene kadar cihazda kalır.',
+  'queue.vin': 'VIN {vin}',
 
   'email.formatHint':
     'Geçerli bir e-posta girin (alan adı uzantısı gerekli, örn. ad@sirket.com).',
@@ -1134,6 +1160,7 @@ export const tr = {
   'error.depotReleaseBlocked':
     '{vin} için depo çıkışı engellendi: {n} açık issue kaldı (issue no: {ids}).',
   'error.dbRejected': 'Veritabanı değişikliği reddetti.',
+  'error.clientRequestIdInvalid': 'İstek anahtarı geçersiz.',
 } as const;
 
 export type MessageKey = keyof typeof tr;
@@ -1878,6 +1905,7 @@ export const en: Record<MessageKey, string> = {
   'error.depotReleaseBlocked':
     'Depot release blocked for {vin}: {n} open Issue(s) remain (issue ids: {ids}).',
   'error.dbRejected': 'The database rejected the change.',
+  'error.clientRequestIdInvalid': 'The request key is not valid.',
   'analysis.activeFilters': 'Active filters: {summary}',
   'analysis.apply': 'Apply',
   'analysis.completedSlice': 'Done',
@@ -2177,6 +2205,32 @@ export const en: Record<MessageKey, string> = {
   'report.pickVin': 'Select VIN',
   'report.readOnly': '{name} (read-only)',
   'report.savedPhotoFailed': 'Issue #{id} saved, photo upload failed: {msg}',
+  'nav.pendingReports': 'Pending sends',
+  'queue.banner': '{n} issue reports waiting',
+  'queue.bannerOne': '1 issue report waiting',
+  'queue.open': 'View',
+  'queue.empty': 'Nothing waiting to send',
+  'queue.pending': 'Waiting',
+  'queue.sending': 'Sending',
+  'queue.failed': 'Failed',
+  'queue.sendNow': 'Send now',
+  'queue.sendAll': 'Send waiting reports',
+  'queue.delete': 'Remove from queue',
+  'queue.deleteConfirm':
+    'This record will be deleted from the device and will not be sent.',
+  'queue.queuedOffline':
+    'Saved. It will send automatically when a connection is available.',
+  'queue.full':
+    'The waiting-report limit is full (20). Send or delete waiting items first.',
+  'queue.photoTooLarge':
+    'The photo exceeds the 4 MB limit. Take a smaller photo.',
+  'queue.expired':
+    'Older than 7 days — automatic sending stopped. Delete it or retry.',
+  'queue.noPhoto': 'The stored photo was not found',
+  'queue.photoPending': 'Photo not uploaded yet',
+  'queue.ageHint':
+    'Reports older than 7 days are not sent automatically; they stay on the device until you delete them.',
+  'queue.vin': 'VIN {vin}',
   'report.stationStepSubtitle': 'Station step failure report',
   'report.summary': 'Summary: {type} · {severity} · {station} · {vin}',
   'report.typesLoading': 'Loading types…',

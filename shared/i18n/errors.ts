@@ -55,6 +55,7 @@ const EXACT: Record<string, MessageKey> = {
   'token expired': 'error.tokenExpired',
   'permission not granted': 'error.permissionDenied',
   'database rejected the change': 'error.dbRejected',
+  'client_request_id must be a uuid': 'error.clientRequestIdInvalid',
   'bu kullanıcı kayıtlarda kullanılmış, silinemez — pasife çekebilirsiniz':
     'error.userInUseUnknown',
 };

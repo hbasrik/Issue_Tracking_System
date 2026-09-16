@@ -10,7 +10,7 @@ import {
   useRoute,
   type RouteProp,
 } from '@react-navigation/native';
-import { api, type DefectPart, type DefectType, type LocalFile } from '../api/client';
+import { type DefectPart, type DefectType, type LocalFile } from '../api/client';
 import {
   Badge,
   Card,
@@ -43,6 +43,7 @@ import {
 import { prepareUploadImage } from '../lib/prepareUploadImage';
 import { apiErrorMessage } from '../lib/password';
 import { useI18n } from '../i18n';
+import { useIssueReportQueue, QueueLimitError } from '../offline/IssueReportQueueProvider';
 import { formatDateTime } from '../../../shared/i18n';
 
 const SEVERITIES: SeverityLevel[] = ['CRITICAL', 'MEDIUM', 'LOW'];
@@ -71,9 +72,9 @@ export default function IssueReportScreen() {
   const [defectParts, setDefectParts] = useState<DefectPart[]>([]);
   const [defectTypes, setDefectTypes] = useState<DefectType[]>([]);
   const [photo, setPhoto] = useState<LocalFile | null>(null);
-  const [createdIssueId, setCreatedIssueId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const { enqueue } = useIssueReportQueue();
 
   const classificationComplete = isDefectClassificationComplete(
     classification,
@@ -124,22 +125,6 @@ export default function IssueReportScreen() {
     }
   }
 
-  async function uploadPhoto(issueId: number): Promise<boolean> {
-    if (!photo) return true;
-    try {
-      await api.uploadMedia('ISSUE', String(issueId), photo);
-      return true;
-    } catch (err) {
-      setError(
-        t('report.savedPhotoFailed', {
-          id: issueId,
-          msg: apiErrorMessage(err, t),
-        }),
-      );
-      return false;
-    }
-  }
-
   async function submit() {
     setError(null);
     const msg = validationMessage();
@@ -156,33 +141,30 @@ export default function IssueReportScreen() {
     }
     setBusy(true);
     try {
-      let issueId = createdIssueId;
-      if (issueId == null) {
-        const body: Parameters<typeof api.createIssue>[0] = {
-          vin,
-          source_type: 'STATION_STEP',
-          source_station_step_id: stationStepId,
-          station_id: stationId,
-          severity,
-          description: description.trim(),
-          defect_part_id: classification.partId,
-          defect_type_id: classification.typeId,
-        };
-        if (classification.customPartName.trim()) {
-          body.custom_part_name = classification.customPartName.trim();
-        }
-        if (classification.customDefectName.trim()) {
-          body.custom_defect_name = classification.customDefectName.trim();
-        }
-        const issue = await api.createIssue(body);
-        issueId = issue.ID;
-        setCreatedIssueId(issueId);
-      }
-      if (await uploadPhoto(issueId)) {
-        navigation.goBack();
-      }
+      const body = {
+        vin,
+        source_type: 'STATION_STEP',
+        source_station_step_id: stationStepId,
+        station_id: stationId,
+        severity,
+        description: description.trim(),
+        defect_part_id: classification.partId,
+        defect_type_id: classification.typeId,
+        ...(classification.customPartName.trim()
+          ? { custom_part_name: classification.customPartName.trim() }
+          : {}),
+        ...(classification.customDefectName.trim()
+          ? { custom_defect_name: classification.customDefectName.trim() }
+          : {}),
+      };
+      await enqueue(body, photo);
+      navigation.goBack();
     } catch (err) {
-      setError(apiErrorMessage(err, t));
+      if (err instanceof QueueLimitError) {
+        setError(err.code === 'full' ? t('queue.full') : t('queue.photoTooLarge'));
+      } else {
+        setError(apiErrorMessage(err, t));
+      }
     } finally {
       setBusy(false);
     }
@@ -296,25 +278,12 @@ export default function IssueReportScreen() {
 
         <View style={{ marginTop: 24 }}>
           <PrimaryButton
-            label={
-              busy
-                ? t('common.saving')
-                : createdIssueId != null
-                  ? t('report.retryUpload')
-                  : t('report.saveContinue')
-            }
-            onPress={submit}
-            disabled={busy || (createdIssueId == null ? !canSubmit : false)}
+            label={busy ? t('common.saving') : t('report.saveContinue')}
+            onPress={() => void submit()}
+            disabled={busy || !canSubmit}
           />
+          <Subtitle>{t('queue.queuedOffline')}</Subtitle>
         </View>
-        {createdIssueId != null ? (
-          <View style={{ marginTop: 12 }}>
-            <OutlineButton
-              label={t('report.continueNoPhoto')}
-              onPress={() => navigation.goBack()}
-            />
-          </View>
-        ) : null}
       </DismissKeyboardScrollView>
     </Screen>
   );

@@ -20,6 +20,7 @@ import { Perm } from '../auth/permissions';
 import { DurumOverview } from '../components/DurumOverview';
 import { DismissKeyboardScrollView } from '../components/keyboard';
 import { VehicleSearchPanel } from '../components/VehicleSearchPanel';
+import { PendingReportsBanner } from '../components/PendingReportsBanner';
 import {
   Card,
   PrimaryButton,
@@ -153,6 +154,10 @@ export default function HomeScreen() {
         <View>
           <Title>{t('login.brand')}</Title>
           <Subtitle>{user?.FullName ?? t('home.roleOperator')}</Subtitle>
+        </View>
+
+        <View style={{ marginTop: 12 }}>
+          <PendingReportsBanner />
         </View>
 
         {has(Perm.IssueCreate) ? (

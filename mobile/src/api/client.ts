@@ -496,24 +496,36 @@ export const api = {
     );
   },
 
-  createIssue(body: {
-    vin: string;
-    source_type: string;
-    source_station_step_id?: number;
-    source_check_item_id?: number;
-    station_id?: number;
-    issue_type_id?: number;
-    severity: string;
-    description: string;
-    picture_url?: string;
-    defect_part_id?: number;
-    defect_type_id?: number;
-    custom_part_name?: string;
-    custom_defect_name?: string;
-  }) {
+  createIssue(
+    body: {
+      vin: string;
+      source_type: string;
+      source_station_step_id?: number;
+      source_check_item_id?: number;
+      station_id?: number;
+      issue_type_id?: number;
+      severity: string;
+      description: string;
+      picture_url?: string;
+      defect_part_id?: number;
+      defect_type_id?: number;
+      custom_part_name?: string;
+      custom_defect_name?: string;
+      client_request_id?: string;
+    },
+    opts?: { idempotencyKey?: string },
+  ) {
+    const headers = new Headers();
+    if (opts?.idempotencyKey) {
+      headers.set('Idempotency-Key', opts.idempotencyKey);
+    }
+    const payload = opts?.idempotencyKey
+      ? { ...body, client_request_id: opts.idempotencyKey }
+      : body;
     return request<Issue>('/issues', {
       method: 'POST',
-      body: JSON.stringify(body),
+      body: JSON.stringify(payload),
+      headers,
     });
   },
 

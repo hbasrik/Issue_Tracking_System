@@ -15,6 +15,8 @@ export type RootStackParamList = {
     stationName: string;
     stationStepName: string;
   };
+  /** Device-local unsent issue reports (offline queue). */
+  PendingReports: undefined;
   /** Standalone MANUAL Issue Bildir — no checklist/step source. */
   ManualIssueReport: undefined;
   EOLChecklist: { vin: string };

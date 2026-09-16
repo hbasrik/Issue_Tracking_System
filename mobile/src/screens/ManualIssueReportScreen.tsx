@@ -50,6 +50,7 @@ import {
 import { useTheme } from '../theme/ThemeProvider';
 import { apiErrorMessage } from '../lib/password';
 import { useI18n } from '../i18n';
+import { useIssueReportQueue, QueueLimitError } from '../offline/IssueReportQueueProvider';
 import type { RootStackParamList } from '../navigation/types';
 
 const SEVERITIES: SeverityLevel[] = ['CRITICAL', 'MEDIUM', 'LOW'];
@@ -86,9 +87,9 @@ export default function ManualIssueReportScreen() {
   const [stationPickerOpen, setStationPickerOpen] = useState(false);
   const [description, setDescription] = useState('');
   const [photo, setPhoto] = useState<LocalFile | null>(null);
-  const [createdIssueId, setCreatedIssueId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const { enqueue } = useIssueReportQueue();
 
   const stationRequired = vehicle?.CurrentGlobalStatus === 'IN_PRODUCTION';
 
@@ -216,25 +217,6 @@ export default function ManualIssueReportScreen() {
     }
   }
 
-  async function uploadPhoto(issueId: number): Promise<boolean> {
-    if (!photo) {
-      setError(t('report.savedMissingPhoto', { id: issueId }));
-      return false;
-    }
-    try {
-      await api.uploadMedia('ISSUE', String(issueId), photo);
-      return true;
-    } catch (err) {
-      setError(
-        t('report.savedPhotoFailed', {
-          id: issueId,
-          msg: apiErrorMessage(err, t),
-        }),
-      );
-      return false;
-    }
-  }
-
   async function submit() {
     setError(null);
     const msg = validationMessage();
@@ -256,35 +238,30 @@ export default function ManualIssueReportScreen() {
 
     setBusy(true);
     try {
-      let issueId = createdIssueId;
-      if (issueId == null) {
-        const body: Parameters<typeof api.createIssue>[0] = {
-          vin: vehicle.VIN,
-          source_type: 'MANUAL',
-          issue_type_id: issueTypeId,
-          severity,
-          description: description.trim(),
-          defect_part_id: classification.partId,
-          defect_type_id: classification.typeId,
-        };
-        if (stationRequired && stationId != null) {
-          body.station_id = stationId;
-        }
-        if (classification.customPartName.trim()) {
-          body.custom_part_name = classification.customPartName.trim();
-        }
-        if (classification.customDefectName.trim()) {
-          body.custom_defect_name = classification.customDefectName.trim();
-        }
-        const issue = await api.createIssue(body);
-        issueId = issue.ID;
-        setCreatedIssueId(issueId);
-      }
-      if (await uploadPhoto(issueId)) {
-        navigation.goBack();
-      }
+      const body = {
+        vin: vehicle.VIN,
+        source_type: 'MANUAL',
+        issue_type_id: issueTypeId,
+        severity,
+        description: description.trim(),
+        defect_part_id: classification.partId,
+        defect_type_id: classification.typeId,
+        ...(stationRequired && stationId != null ? { station_id: stationId } : {}),
+        ...(classification.customPartName.trim()
+          ? { custom_part_name: classification.customPartName.trim() }
+          : {}),
+        ...(classification.customDefectName.trim()
+          ? { custom_defect_name: classification.customDefectName.trim() }
+          : {}),
+      };
+      await enqueue(body, photo);
+      navigation.goBack();
     } catch (err) {
-      setError(apiErrorMessage(err, t));
+      if (err instanceof QueueLimitError) {
+        setError(err.code === 'full' ? t('queue.full') : t('queue.photoTooLarge'));
+      } else {
+        setError(apiErrorMessage(err, t));
+      }
     } finally {
       setBusy(false);
     }
@@ -488,19 +465,11 @@ export default function ManualIssueReportScreen() {
 
         <View style={{ marginTop: 24 }}>
           <PrimaryButton
-            label={
-              busy
-                ? t('common.saving')
-                : createdIssueId != null
-                  ? t('report.retryUpload')
-                  : t('report.save')
-            }
+            label={busy ? t('common.saving') : t('report.save')}
             onPress={() => void submit()}
-            disabled={
-              busy ||
-              (createdIssueId == null ? !canSubmit : photo == null)
-            }
+            disabled={busy || !canSubmit}
           />
+          <Subtitle>{t('queue.queuedOffline')}</Subtitle>
         </View>
       </DismissKeyboardScrollView>
 
