@@ -830,7 +830,11 @@ FROM (VALUES
 ) AS v(type, name)
 WHERE NOT EXISTS (
     SELECT 1 FROM checklist_templates ct
-    WHERE ct.vehicle_model_id IS NULL AND ct.name = v.name
+    WHERE ct.vehicle_model_id IS NULL
+      AND (
+        ct.name = v.name
+        OR (ct.type::text = v.type AND ct.is_active)
+      )
 );
 
 -- Item rows are omitted here for brevity — see architecture notes
