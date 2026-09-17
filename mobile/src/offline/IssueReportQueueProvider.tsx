@@ -19,6 +19,7 @@ import {
   type IssueReportPayload,
   type QueuedIssueReport,
 } from '../lib/issueReportQueue';
+import { overlaySendingStatus } from '../lib/issueReportQueuePolicy';
 import type { LocalFile } from '../api/client';
 
 type EnqueueResult = {
@@ -35,7 +36,7 @@ interface QueueContextValue {
     payload: IssueReportPayload,
     photo: LocalFile | null,
   ) => Promise<EnqueueResult>;
-  flush: (opts?: { id?: string; force?: boolean }) => Promise<void>;
+  flush: (opts?: { id?: string; force?: boolean; afterLogin?: boolean }) => Promise<void>;
   remove: (id: string) => Promise<void>;
 }
 
@@ -55,7 +56,10 @@ export function IssueReportQueueProvider({ children }: { children: ReactNode }) 
   const userId = user?.ID ?? null;
   const [items, setItems] = useState<QueuedIssueReport[]>([]);
   const [flushing, setFlushing] = useState(false);
+  const [sendingIds, setSendingIds] = useState<Set<string>>(() => new Set());
   const flushLock = useRef(false);
+  const itemsRef = useRef<QueuedIssueReport[]>([]);
+  itemsRef.current = items;
 
   const refresh = useCallback(async () => {
     if (userId == null) {
@@ -66,10 +70,23 @@ export function IssueReportQueueProvider({ children }: { children: ReactNode }) 
   }, [userId]);
 
   const flush = useCallback(
-    async (opts?: { id?: string; force?: boolean }) => {
+    async (opts?: { id?: string; force?: boolean; afterLogin?: boolean }) => {
       if (userId == null || !token) return;
+      const requestedIds: string[] = [];
+      if (opts?.force) {
+        requestedIds.push(
+          ...(opts.id ? [opts.id] : itemsRef.current.map((item) => item.id)),
+        );
+        if (requestedIds.length > 0) {
+          setSendingIds((prev) => {
+            const next = new Set(prev);
+            for (const id of requestedIds) next.add(id);
+            return next;
+          });
+        }
+      }
       if (flushLock.current) {
-        if (!opts?.force) return;
+        if (!opts?.force && !opts?.afterLogin) return;
         while (flushLock.current) {
           await new Promise((resolve) => setTimeout(resolve, 50));
         }
@@ -82,6 +99,13 @@ export function IssueReportQueueProvider({ children }: { children: ReactNode }) 
       } finally {
         flushLock.current = false;
         setFlushing(false);
+        if (requestedIds.length > 0) {
+          setSendingIds((prev) => {
+            const next = new Set(prev);
+            for (const id of requestedIds) next.delete(id);
+            return next;
+          });
+        }
         await refresh();
       }
     },
@@ -127,7 +151,7 @@ export function IssueReportQueueProvider({ children }: { children: ReactNode }) 
 
   useEffect(() => {
     if (!isAuthenticated || userId == null) return;
-    void flush();
+    void flush({ afterLogin: true });
 
     const onAppState = (state: AppStateStatus) => {
       if (state === 'active') void flush();
@@ -143,16 +167,21 @@ export function IssueReportQueueProvider({ children }: { children: ReactNode }) 
     };
   }, [isAuthenticated, userId, flush]);
 
+  const visibleItems = useMemo(
+    () => overlaySendingStatus(items, sendingIds),
+    [items, sendingIds],
+  );
+
   const value = useMemo<QueueContextValue>(
     () => ({
-      items,
-      pendingCount: items.length,
+      items: visibleItems,
+      pendingCount: visibleItems.length,
       flushing,
       enqueue,
       flush,
       remove,
     }),
-    [items, flushing, enqueue, flush, remove],
+    [visibleItems, flushing, enqueue, flush, remove],
   );
 
   return (
