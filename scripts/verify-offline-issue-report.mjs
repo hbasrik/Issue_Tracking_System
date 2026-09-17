@@ -1,11 +1,13 @@
 #!/usr/bin/env node
 /**
- * Proofs for the five device-test bugs:
+ * Proofs for offline issue-report behaviour:
  * 1) issue-report cache set == every VIN Create Issue accepts
  * 2) HTTP 401/200 flips connectivity back to online (listener fires)
  * 3) user flush is not gated on the online flag
  * 4) banner is in-flow (no absolute overlay)
  * 5) 401 keeps the row; 400/409 marks failed and does not delete
+ * 6) 401 pending/auth is auto-sent after a successful login
+ * 7) send-now shows sending before the flush lock is free
  */
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
@@ -16,6 +18,7 @@ import {
   shouldQueueIssueSubmit,
 } from '../shared/networkError.ts';
 import {
+  overlaySendingStatus,
   queueItemAfterSendError,
   shouldAutoFlush,
 } from '../mobile/src/lib/issueReportQueuePolicy.ts';
@@ -184,6 +187,101 @@ const pending = readFileSync('mobile/src/screens/PendingReportsScreen.tsx', 'utf
 if (pending.includes('return item.lastError')) {
   fail('pending screen still dumps raw lastError');
 } else pass('pending screen maps errors through i18n / session copy');
+
+// --- 6. post-login auto-retry: 401 pending/auth → login → selected for send ---
+function flushTargets(items, opts, nowMs) {
+  return items
+    .filter((item) => (opts.id ? item.id === opts.id : true))
+    .filter((item) =>
+      shouldAutoFlush(item, nowMs, opts.force === true, opts.afterLogin === true),
+    );
+}
+
+const loginNow = Date.now();
+const authPatch = queueItemAfterSendError({
+  attempts: 0,
+  kind: 'auth',
+  message: 'token expired',
+  nowMs: loginNow,
+});
+const queuedAfter401 = {
+  id: 'client-req-401',
+  createdAt: new Date(loginNow).toISOString(),
+  status: authPatch.status,
+  lastErrorCode: authPatch.lastErrorCode,
+  lastError: authPatch.lastError,
+  attempts: authPatch.attempts,
+  nextAttemptAt: authPatch.nextAttemptAt,
+};
+if (queuedAfter401.status !== 'pending' || queuedAfter401.lastErrorCode !== 'auth') {
+  fail(`pre-login row ${JSON.stringify(queuedAfter401)}`);
+}
+const pollAfter401 = flushTargets([queuedAfter401], {}, loginNow);
+if (pollAfter401.length !== 0) {
+  fail('periodic flush must still honor backoff immediately after 401');
+} else pass('periodic flush leaves 401/auth queued during backoff');
+
+const loginAfter401 = flushTargets([queuedAfter401], { afterLogin: true }, loginNow);
+if (loginAfter401.length !== 1 || loginAfter401[0].id !== 'client-req-401') {
+  fail(`login flush did not select the auth row: ${JSON.stringify(loginAfter401)}`);
+} else pass('login flush selects the 401/auth row for sendOne despite backoff');
+
+const payloadOnLogin = flushTargets(
+  [
+    {
+      ...queuedAfter401,
+      id: 'client-req-400',
+      status: 'failed',
+      lastErrorCode: 'http',
+      lastError: 'description is required',
+    },
+  ],
+  { afterLogin: true },
+  loginNow,
+);
+if (payloadOnLogin.length !== 0) {
+  fail('login flush must not auto-send payload failures');
+} else pass('login flush still skips payload http rows');
+
+if (!provider.includes('flush({ afterLogin: true })')) {
+  fail('auth effect does not call flush({ afterLogin: true })');
+} else pass('isAuthenticated effect triggers flush({ afterLogin: true })');
+if (!queue.includes('shouldAutoFlush(item, now, force, afterLogin)')) {
+  fail('flushQueue does not thread afterLogin into shouldAutoFlush');
+} else pass('flushQueue passes afterLogin to shouldAutoFlush (the send gate)');
+if (
+  !queue.includes('for (const item of targets)') ||
+  !queue.includes('await sendOne(userId, item, force)')
+) {
+  fail('flushQueue no longer sends selected targets');
+} else pass('flushQueue sendOne is the only step after shouldAutoFlush');
+if (!provider.includes('!opts?.force && !opts?.afterLogin')) {
+  fail('login flush still returns no-op while the background lock is held');
+} else pass('afterLogin waits for the flush lock instead of dropping the retry');
+
+const sentIds = [];
+for (const item of loginAfter401) sentIds.push(item.id);
+if (sentIds.length !== 1 || sentIds[0] !== 'client-req-401') {
+  fail(`login would not send the queued 401 row: ${JSON.stringify(sentIds)}`);
+} else pass('post-login flush would send client-req-401 (sendOne target list)');
+
+// --- 7. send-now overlays sending before waiting on the lock ---
+const overlayNow = overlaySendingStatus(
+  [{ id: 'client-req-401', status: 'pending' }],
+  new Set(['client-req-401']),
+);
+if (overlayNow[0].status !== 'sending') {
+  fail(`send-now overlay ${JSON.stringify(overlayNow)}`);
+} else pass('send-now overlay flips pending → sending before the request runs');
+
+const sendNowIdx = provider.indexOf('opts?.force');
+const lockWaitIdx = provider.indexOf('while (flushLock.current)');
+if (sendNowIdx < 0 || lockWaitIdx < 0 || sendNowIdx > lockWaitIdx) {
+  fail('sending overlay is not applied before the flush-lock wait');
+} else pass('setSendingIds runs before while (flushLock.current)');
+if (!provider.includes('overlaySendingStatus(items, sendingIds)')) {
+  fail('queue context does not expose overlay sending status');
+} else pass('pending list reads overlaySendingStatus so the button state updates immediately');
 
 if (process.exitCode) {
   console.error('verify-offline-issue-report: failed');
