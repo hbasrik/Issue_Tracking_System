@@ -3,6 +3,8 @@ import { View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider } from './src/auth/AuthProvider';
 import { IssueReportQueueProvider } from './src/offline/IssueReportQueueProvider';
+import { ReferenceCacheProvider } from './src/offline/ReferenceCacheProvider';
+import { OfflineBanner } from './src/offline/OfflineBanner';
 import { KeyboardDoneAccessory } from './src/components/keyboard';
 import { ConfirmProvider } from './src/components/ConfirmDialog';
 import { ApprovalUndoProvider } from './src/components/ApprovalUndoToast';
@@ -21,6 +23,7 @@ function AppShell() {
       <StatusBar style={mode === 'dark' ? 'light' : 'dark'} />
       <RootNavigator />
       <KeyboardDoneAccessory />
+      <OfflineBanner />
     </View>
   );
 }
@@ -32,11 +35,13 @@ export default function App() {
         <ThemeProvider>
           <AuthProvider>
             <IssueReportQueueProvider>
-            <ConfirmProvider>
-              <ApprovalUndoProvider>
-                <AppShell />
-              </ApprovalUndoProvider>
-            </ConfirmProvider>
+              <ReferenceCacheProvider>
+                <ConfirmProvider>
+                  <ApprovalUndoProvider>
+                    <AppShell />
+                  </ApprovalUndoProvider>
+                </ConfirmProvider>
+              </ReferenceCacheProvider>
             </IssueReportQueueProvider>
           </AuthProvider>
         </ThemeProvider>

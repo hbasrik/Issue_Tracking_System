@@ -25,6 +25,7 @@ import {
   Badge,
   Card,
   ErrorText,
+  InfoText,
   Loading,
   OutlineButton,
   PrimaryButton,
@@ -51,6 +52,8 @@ import {
 import { formatActionAt } from '../lib/actionStamp';
 import { issueStationLabel, reporterFallback, defectLabels } from '../lib/issueDetailCopy';
 import { apiErrorMessage } from '../lib/password';
+import { loadFailureMessage } from '../offline/userFacingError';
+import { isTransportError } from '../../../shared/networkError';
 import { useI18n } from '../i18n';
 import type { Locale } from '../../../shared/i18n';
 import {
@@ -124,6 +127,7 @@ export default function IssueDetailScreen() {
   const [catalogTypes, setCatalogTypes] = useState<DefectType[]>([]);
   const [resolutionPhotos, setResolutionPhotos] = useState<MediaAttachment[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [offlineHint, setOfflineHint] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   const [showDoneForm, setShowDoneForm] = useState(false);
@@ -134,6 +138,7 @@ export default function IssueDetailScreen() {
 
   const load = useCallback(async () => {
     setError(null);
+    setOfflineHint(null);
     try {
       const id = route.params.id;
       const [i, hist, report, resolution] = await Promise.all([
@@ -150,7 +155,13 @@ export default function IssueDetailScreen() {
         setResolutionUploaded(true);
       }
     } catch (err) {
-      setError(apiErrorMessage(err, t));
+      if (isTransportError(err)) {
+        setOfflineHint(t('offline.liveUnavailable'));
+      } else {
+        const split = loadFailureMessage(err, t);
+        setError(split.error);
+        setOfflineHint(split.offlineHint);
+      }
     }
   }, [route.params.id, t]);
 
@@ -280,7 +291,7 @@ export default function IssueDetailScreen() {
     }
   }
 
-  if (!issue && !error) return <Loading />;
+  if (!issue && !error && !offlineHint) return <Loading />;
 
   async function applyStatus(status: Issue['Status']) {
     if (!issue) return;
@@ -852,6 +863,7 @@ export default function IssueDetailScreen() {
           </View>
         ) : null}
         {error ? <ErrorText>{error}</ErrorText> : null}
+        {offlineHint ? <InfoText>{offlineHint}</InfoText> : null}
       </DismissKeyboardScrollView>
 
       <Modal

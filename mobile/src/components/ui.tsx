@@ -211,6 +211,15 @@ export function ErrorText({ children }: { children: string }) {
   return <Text style={styles.error}>{children}</Text>;
 }
 
+export function InfoText({ children }: { children: string }) {
+  const { tokens } = useTheme();
+  return (
+    <Text style={{ marginTop: 8, color: tokens.textSecondary, fontSize: 13 }}>
+      {children}
+    </Text>
+  );
+}
+
 export function SectionHeading({ children }: { children: React.ReactNode }) {
   const { tokens } = useTheme();
   return (

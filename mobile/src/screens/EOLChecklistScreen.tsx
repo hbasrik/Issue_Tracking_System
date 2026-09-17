@@ -20,6 +20,7 @@ import {
 import {
   Card,
   ErrorText,
+  InfoText,
   Loading,
   PrimaryButton,
   Screen,
@@ -37,6 +38,8 @@ import { Perm } from '../auth/permissions';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n';
 import { apiErrorMessage } from '../lib/password';
+import { loadFailureMessage } from '../offline/userFacingError';
+import { isTransportError } from '../../../shared/networkError';
 import { statusColors } from '../theme/tokens';
 import type { RootStackParamList } from '../navigation/types';
 import {
@@ -86,12 +89,14 @@ export default function EOLChecklistScreen() {
   const [items, setItems] = useState<ChecklistItem[]>([]);
   const [drafts, setDrafts] = useState<Record<number, { status: string; desc: string }>>({});
   const [error, setError] = useState<string | null>(null);
+  const [offlineHint, setOfflineHint] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
   const load = useCallback(async () => {
     setError(null);
+    setOfflineHint(null);
     try {
       const [view, res] = await Promise.all([
         api.getEOLWorkflow(vin),
@@ -109,7 +114,13 @@ export default function EOLChecklistScreen() {
       }
       setDrafts(next);
     } catch (err) {
-      setError(apiErrorMessage(err, t));
+      if (isTransportError(err)) {
+        setOfflineHint(t('offline.liveUnavailable'));
+      } else {
+        const split = loadFailureMessage(err, t);
+        setError(split.error);
+        setOfflineHint(split.offlineHint);
+      }
     } finally {
       setLoaded(true);
     }
@@ -312,6 +323,7 @@ export default function EOLChecklistScreen() {
         </Card>
         {renderStageActions()}
         {error ? <ErrorText>{error}</ErrorText> : null}
+        {offlineHint ? <InfoText>{offlineHint}</InfoText> : null}
       </Screen>
     );
   }
@@ -325,6 +337,7 @@ export default function EOLChecklistScreen() {
         </Subtitle>
         {renderStageActions()}
         {error ? <ErrorText>{error}</ErrorText> : null}
+        {offlineHint ? <InfoText>{offlineHint}</InfoText> : null}
 
         {stageItems.map((item) => {
           const d = drafts[item.ItemID] ?? { status: '', desc: '' };

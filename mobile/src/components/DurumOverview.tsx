@@ -8,11 +8,11 @@ import {
   type VehicleSeverityBreakdown,
 } from '../api/client';
 import { useAuth } from '../auth/AuthProvider';
-import { Badge, Card, ErrorText, Loading, Subtitle } from './ui';
+import { Badge, Card, ErrorText, InfoText, Loading, Subtitle } from './ui';
 import { SeverityIndicator } from './SeverityIndicator';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n';
-import { apiErrorMessage } from '../lib/password';
+import { loadFailureMessage } from '../offline/userFacingError';
 import { statusColors } from '../theme/tokens';
 import type { RootStackParamList } from '../navigation/types';
 
@@ -29,12 +29,14 @@ export function DurumOverview() {
   const [vehicles, setVehicles] = useState<VehicleSeverityBreakdown[]>([]);
   const [stations, setStations] = useState<StationDefectRate[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [offlineHint, setOfflineHint] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     if (!token) return;
     setLoading(true);
     setError(null);
+    setOfflineHint(null);
     try {
       const [sev, def] = await Promise.all([
         api.vehicleSeverityBreakdown(),
@@ -44,8 +46,12 @@ export function DurumOverview() {
       rows.sort((a, b) => b.TotalOpenIssues - a.TotalOpenIssues);
       setVehicles(rows);
       setStations(def.items ?? []);
+      setError(null);
+      setOfflineHint(null);
     } catch (err) {
-      setError(apiErrorMessage(err, t));
+      const split = loadFailureMessage(err, t);
+      setError(split.error);
+      setOfflineHint(split.offlineHint);
     } finally {
       setLoading(false);
     }
@@ -75,6 +81,7 @@ export function DurumOverview() {
         {t('home.snapshot')}
       </Text>
       <Subtitle>{t('home.durumTitle')}</Subtitle>
+      {offlineHint ? <InfoText>{offlineHint}</InfoText> : null}
       {error ? <ErrorText>{error}</ErrorText> : null}
 
       <Text

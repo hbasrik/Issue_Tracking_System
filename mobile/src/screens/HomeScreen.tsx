@@ -30,6 +30,7 @@ import {
 } from '../components/ui';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n';
+import { isTransportError } from '../../../shared/networkError';
 import { statusColors } from '../theme/tokens';
 import {
   countHomeIssueStat,
@@ -83,6 +84,7 @@ export default function HomeScreen() {
     conditional_approved_today: 0,
   });
   const [statsLoading, setStatsLoading] = useState(true);
+  const [statsOffline, setStatsOffline] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [statsKey, setStatsKey] = useState(0);
 
@@ -105,10 +107,13 @@ export default function HomeScreen() {
       };
       setCounts(next);
       setStatsLoading(false);
+      setStatsOffline(false);
       if (__DEV__) {
         console.info('[karea] home stats loaded', next);
       }
     } catch (err) {
+      setStatsLoading(false);
+      setStatsOffline(isTransportError(err));
       if (__DEV__) {
         console.warn('[karea] home stats failed', err);
       }
@@ -187,12 +192,14 @@ export default function HomeScreen() {
         ) : null}
 
         {has(Perm.IssueView) ? (
+        <View style={{ marginTop: 20 }}>
+        {statsOffline ? <Subtitle>{t('offline.liveUnavailable')}</Subtitle> : null}
         <View
           style={{
             flexDirection: 'row',
             flexWrap: 'wrap',
             gap: 8,
-            marginTop: 20,
+            marginTop: statsOffline ? 8 : 0,
           }}
         >
           {STAT_KEYS.map((s) => {
@@ -229,6 +236,7 @@ export default function HomeScreen() {
               </Pressable>
             );
           })}
+        </View>
         </View>
         ) : null}
 

@@ -9,6 +9,7 @@ import { api, type ChecklistItem } from '../api/client';
 import {
   Card,
   ErrorText,
+  InfoText,
   Loading,
   PrimaryButton,
   Screen,
@@ -18,6 +19,8 @@ import {
 import { ActionStamp } from '../components/ActionStamp';
 import { checklistActorLines } from '../lib/actionStamp';
 import { apiErrorMessage } from '../lib/password';
+import { loadFailureMessage } from '../offline/userFacingError';
+import { isTransportError } from '../../../shared/networkError';
 import { useI18n } from '../i18n';
 import { useTheme } from '../theme/ThemeProvider';
 import { statusColors } from '../theme/tokens';
@@ -37,15 +40,23 @@ export default function ShipmentChecklistScreen() {
 
   const [items, setItems] = useState<ChecklistItem[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [offlineHint, setOfflineHint] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<number | null>(null);
 
   const load = useCallback(async () => {
     setError(null);
+    setOfflineHint(null);
     try {
       const res = await api.getChecklist(vin, 'shipment');
       setItems(res.items ?? []);
     } catch (err) {
-      setError(apiErrorMessage(err, t));
+      if (isTransportError(err)) {
+        setOfflineHint(t('offline.liveUnavailable'));
+      } else {
+        const split = loadFailureMessage(err, t);
+        setError(split.error);
+        setOfflineHint(split.offlineHint);
+      }
     }
   }, [vin, t]);
 
@@ -79,7 +90,7 @@ export default function ShipmentChecklistScreen() {
     [items, t],
   );
 
-  if (!items.length && !error) return <Loading />;
+  if (!items.length && !error && !offlineHint) return <Loading />;
 
   return (
     <Screen padded={false}>
@@ -108,6 +119,7 @@ export default function ShipmentChecklistScreen() {
         </View>
 
         {error ? <ErrorText>{error}</ErrorText> : null}
+        {offlineHint ? <InfoText>{offlineHint}</InfoText> : null}
 
         {grouped.map((g) => (
           <View key={g.title} style={{ marginTop: 16 }}>

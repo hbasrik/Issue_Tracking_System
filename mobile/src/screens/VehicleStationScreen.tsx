@@ -32,6 +32,7 @@ import {
   Badge,
   Card,
   ErrorText,
+  InfoText,
   Loading,
   OutlineButton,
   PrimaryButton,
@@ -46,6 +47,9 @@ import { statusColors } from '../theme/tokens';
 import { ActionStamp } from '../components/ActionStamp';
 import { useI18n } from '../i18n';
 import { apiErrorMessage } from '../lib/password';
+import { loadFailureMessage } from '../offline/userFacingError';
+import { useReferenceCache } from '../offline/ReferenceCacheProvider';
+import { isTransportError } from '../../../shared/networkError';
 import type { RootStackParamList } from '../navigation/types';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -122,6 +126,7 @@ export default function VehicleStationScreen() {
   const { tokens } = useTheme();
   const { has } = useAuth();
   const { t } = useI18n();
+  const { snapshot } = useReferenceCache();
   const vin = route.params.vin;
 
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
@@ -132,12 +137,14 @@ export default function VehicleStationScreen() {
   const [openByStation, setOpenByStation] = useState<Record<string, number>>({});
   const [expandedStation, setExpandedStation] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [offlineHint, setOfflineHint] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<number | null>(null);
   const [holdReason, setHoldReason] = useState('');
   const [holdBusy, setHoldBusy] = useState(false);
 
   const load = useCallback(async () => {
     setError(null);
+    setOfflineHint(null);
     try {
       const [v, res, issueRes, ready, historyRes] = await Promise.all([
         api.getVehicle(vin),
@@ -158,9 +165,17 @@ export default function VehicleStationScreen() {
       setStatusHistory(historyRes.items ?? []);
       setExpandedStation((prev) => prev ?? v.CurrentStationID);
     } catch (err) {
-      setError(apiErrorMessage(err, t));
+      if (isTransportError(err)) {
+        const cached = snapshot.vehicles.find((row) => row.VIN === vin) ?? null;
+        if (cached) setVehicle(cached);
+        setOfflineHint(t('offline.liveUnavailable'));
+      } else {
+        const split = loadFailureMessage(err, t);
+        setError(split.error);
+        setOfflineHint(split.offlineHint);
+      }
     }
-  }, [vin, has, t]);
+  }, [vin, has, t, snapshot.vehicles]);
 
   useFocusEffect(
     useCallback(() => {
@@ -259,7 +274,7 @@ export default function VehicleStationScreen() {
   const manageHold = has(Perm.AdminManageMasters);
   const onHold = vehicle?.CurrentGlobalStatus === 'ON_HOLD';
 
-  if (!vehicle && !error) return <Loading />;
+  if (!vehicle && !error && !offlineHint) return <Loading />;
 
   return (
     <Screen padded={false}>
@@ -366,6 +381,7 @@ export default function VehicleStationScreen() {
         </View>
 
         {error ? <ErrorText>{error}</ErrorText> : null}
+        {offlineHint ? <InfoText>{offlineHint}</InfoText> : null}
 
         {has(Perm.IssueView) ? (
         <View style={{ marginBottom: 16 }}>

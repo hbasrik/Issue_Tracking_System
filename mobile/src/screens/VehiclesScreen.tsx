@@ -17,6 +17,7 @@ import {
   Badge,
   Card,
   ErrorText,
+  InfoText,
   Loading,
   Screen,
   Subtitle,
@@ -24,7 +25,10 @@ import {
 } from '../components/ui';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n';
-import { apiErrorMessage } from '../lib/password';
+import { loadFailureMessage } from '../offline/userFacingError';
+import { useReferenceCache } from '../offline/ReferenceCacheProvider';
+import { CacheAgeHint } from '../offline/CacheAgeHint';
+import { isTransportError } from '../../../shared/networkError';
 import {
   VEHICLE_LIFECYCLE_FILTER_VALUES,
   deriveVehicleLifecycle,
@@ -52,8 +56,10 @@ export default function VehiclesScreen() {
   const { t } = useI18n();
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { snapshot } = useReferenceCache();
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [offlineHint, setOfflineHint] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [vinQuery, setVinQuery] = useState('');
   const [lifecycles, setLifecycles] = useState<Set<VehicleLifecycleFilterValue>>(
@@ -63,6 +69,7 @@ export default function VehiclesScreen() {
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
+    setOfflineHint(null);
     try {
       const lifecycleParam =
         lifecycles.size === 1 ? [...lifecycles][0] : undefined;
@@ -72,12 +79,25 @@ export default function VehiclesScreen() {
       const items = (res.Items ?? []).slice().sort(compareVinDesc);
       setVehicles(items);
     } catch (err) {
-      setError(apiErrorMessage(err, t));
-      setVehicles([]);
+      if (isTransportError(err)) {
+        const cached = snapshot.vehicles.slice().sort(compareVinDesc);
+        if (cached.length > 0) {
+          setVehicles(cached);
+          setOfflineHint(null);
+        } else {
+          setVehicles([]);
+          setOfflineHint(t('offline.noCache'));
+        }
+      } else {
+        const split = loadFailureMessage(err, t);
+        setError(split.error);
+        setOfflineHint(split.offlineHint);
+        setVehicles([]);
+      }
     } finally {
       setLoading(false);
     }
-  }, [lifecycles, t]);
+  }, [lifecycles, t, snapshot.vehicles]);
 
   // Refetch whenever this screen gains focus so depot-release / hold / deliver
   // done on the detail screen show up in the list badge immediately.
@@ -136,6 +156,7 @@ export default function VehiclesScreen() {
           <Pressable onPress={Keyboard.dismiss} accessible={false} style={{ marginBottom: 12 }}>
             <Title>{t('vehicles.title')}</Title>
             <Subtitle>{t('vehicles.listSubtitle')}</Subtitle>
+            <CacheAgeHint />
             <View style={{ marginTop: 12 }}>
               <VehicleSearchPanel
                 onSelect={openVehicle}
@@ -188,6 +209,7 @@ export default function VehiclesScreen() {
             </View>
 
             {error ? <ErrorText>{error}</ErrorText> : null}
+            {offlineHint ? <InfoText>{offlineHint}</InfoText> : null}
             {loading && vehicles.length === 0 ? <Loading /> : null}
             <Text
               style={{

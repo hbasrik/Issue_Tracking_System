@@ -22,6 +22,7 @@ import { PartMultiSelectFilter } from '../components/PartMultiSelectFilter';
 import { listKeyboardDismissProps } from '../components/keyboard';
 import {
   ErrorText,
+  InfoText,
   Loading,
   OutlineButton,
   Screen,
@@ -42,7 +43,9 @@ import {
 } from '../lib/homeIssueStats';
 import { issueMatchesListQuery } from '../lib/issueVinFilter';
 import { issueTypeChipLabel } from '../lib/issueTypeLabel';
-import { apiErrorMessage } from '../lib/password';
+import { loadFailureMessage } from '../offline/userFacingError';
+import { useReferenceCache } from '../offline/ReferenceCacheProvider';
+import { isTransportError } from '../../../shared/networkError';
 import type { MainDrawerParamList, RootStackParamList } from '../navigation/types';
 
 type IssueStatus = Issue['Status'];
@@ -73,12 +76,14 @@ export default function MyIssuesScreen() {
   const { t, locale } = useI18n();
   const navigation = useNavigation<MyIssuesNavigation>();
   const route = useRoute<RouteProp<MainDrawerParamList, 'MyIssues'>>();
+  const { snapshot } = useReferenceCache();
   const [items, setItems] = useState<Issue[]>([]);
   const [issueTypes, setIssueTypes] = useState<IssueType[]>([]);
   const [defectZones, setDefectZones] = useState<DefectZone[]>([]);
   const [defectParts, setDefectParts] = useState<DefectPart[]>([]);
   const [defectTypes, setDefectTypes] = useState<DefectType[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [offlineHint, setOfflineHint] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [listQuery, setListQuery] = useState('');
   const [severities, setSeverities] = useState<Set<SeverityLevel>>(new Set());
@@ -110,13 +115,14 @@ export default function MyIssuesScreen() {
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
+    setOfflineHint(null);
     try {
       const [issuesRes, typesRes, zonesRes, partsRes, defectTypesRes] = await Promise.all([
         api.listIssues(),
-        api.listIssueTypes().catch(() => ({ items: [] as IssueType[] })),
-        api.listDefectCatalogZones().catch(() => ({ items: [] as DefectZone[] })),
-        api.listDefectCatalogParts().catch(() => ({ items: [] as DefectPart[] })),
-        api.listDefectCatalogTypes().catch(() => ({ items: [] as DefectType[] })),
+        api.listIssueTypes().catch(() => ({ items: snapshot.issueTypes })),
+        api.listDefectCatalogZones().catch(() => ({ items: snapshot.zones })),
+        api.listDefectCatalogParts().catch(() => ({ items: snapshot.parts })),
+        api.listDefectCatalogTypes().catch(() => ({ items: snapshot.types })),
       ]);
       const list = (issuesRes.items ?? []).slice().sort((a, b) => {
         const ta = issueCreatedMs(a);
@@ -125,16 +131,26 @@ export default function MyIssuesScreen() {
         return b.ID - a.ID;
       });
       setItems(list);
-      setIssueTypes(typesRes.items ?? []);
-      setDefectZones(zonesRes.items ?? []);
-      setDefectParts(partsRes.items ?? []);
-      setDefectTypes(defectTypesRes.items ?? []);
+      setIssueTypes(typesRes.items ?? snapshot.issueTypes);
+      setDefectZones(zonesRes.items ?? snapshot.zones);
+      setDefectParts(partsRes.items ?? snapshot.parts);
+      setDefectTypes(defectTypesRes.items ?? snapshot.types);
     } catch (err) {
-      setError(apiErrorMessage(err, t));
+      setIssueTypes(snapshot.issueTypes);
+      setDefectZones(snapshot.zones);
+      setDefectParts(snapshot.parts);
+      setDefectTypes(snapshot.types);
+      if (isTransportError(err)) {
+        setOfflineHint(t('offline.liveUnavailable'));
+      } else {
+        const split = loadFailureMessage(err, t);
+        setError(split.error);
+        setOfflineHint(split.offlineHint);
+      }
     } finally {
       setLoading(false);
     }
-  }, [t]);
+  }, [t, snapshot]);
 
   useFocusEffect(
     useCallback(() => {
@@ -666,6 +682,7 @@ export default function MyIssuesScreen() {
             ) : null}
 
             {error ? <ErrorText>{error}</ErrorText> : null}
+            {offlineHint ? <InfoText>{offlineHint}</InfoText> : null}
             {loading ? <Loading /> : null}
           </Pressable>
         }
