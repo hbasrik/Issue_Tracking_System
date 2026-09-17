@@ -46,25 +46,46 @@ export function isExpired(createdAt: string, nowMs: number): boolean {
   return nowMs - created >= MAX_AGE_MS;
 }
 
-export function shouldAutoFlush(item: {
-  status: QueueItemStatus;
-  createdAt: string;
-  nextAttemptAt?: string;
-  issueId?: number;
-  lastError?: string;
-  lastErrorCode?: QueueErrorCode;
-}, nowMs: number, force: boolean): boolean {
+export function shouldAutoFlush(
+  item: {
+    status: QueueItemStatus;
+    createdAt: string;
+    nextAttemptAt?: string;
+    issueId?: number;
+    lastError?: string;
+    lastErrorCode?: QueueErrorCode;
+  },
+  nowMs: number,
+  force: boolean,
+  afterLogin = false,
+): boolean {
   if (item.status === 'sending') return false;
   if (force) return true;
   if (item.lastErrorCode === 'http' && !isStoredAuthFailure(item.lastError)) {
     return false;
   }
   if (isExpired(item.createdAt, nowMs) && item.issueId == null) return false;
-  if (item.nextAttemptAt) {
+  const retryAuthNow =
+    afterLogin &&
+    (item.lastErrorCode === 'auth' || isStoredAuthFailure(item.lastError));
+  if (!retryAuthNow && item.nextAttemptAt) {
     const next = Date.parse(item.nextAttemptAt);
     if (!Number.isNaN(next) && next > nowMs) return false;
   }
   return true;
+}
+
+/** User tapped send-now: show sending before the flush lock is free. */
+export function overlaySendingStatus<T extends { id: string; status: QueueItemStatus }>(
+  items: T[],
+  requestedIds: ReadonlySet<string>,
+): T[] {
+  if (requestedIds.size === 0) return items;
+  return items.map((item) =>
+    requestedIds.has(item.id) && item.status !== 'sending'
+      ? { ...item, status: 'sending' as const }
+      : item,
+  );
 }
 
 /** Devices that queued a 401 before lastErrorCode=auth existed stored the English phrase. */
