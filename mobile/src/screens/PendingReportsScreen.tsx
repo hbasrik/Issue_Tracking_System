@@ -6,6 +6,7 @@ import { useConfirm } from '../components/ConfirmDialog';
 import {
   Card,
   ErrorText,
+  InfoText,
   OutlineButton,
   PrimaryButton,
   Screen,
@@ -16,6 +17,7 @@ import { DismissKeyboardScrollView } from '../components/keyboard';
 import { useIssueReportQueue } from '../offline/IssueReportQueueProvider';
 import type { QueuedIssueReport } from '../lib/issueReportQueue';
 import { isExpired } from '../lib/issueReportQueuePolicy';
+import { isTransportError } from '../../../shared/networkError';
 import { statusColors } from '../theme/tokens';
 
 function statusLabel(item: QueuedIssueReport, t: Translate): string {
@@ -30,6 +32,12 @@ function statusColor(item: QueuedIssueReport): string {
   return statusColors.issueOpen;
 }
 
+function isWaitingConnection(item: QueuedIssueReport): boolean {
+  if (item.lastErrorCode === 'network') return true;
+  if (item.status !== 'failed') return false;
+  return isTransportError(item.lastError ? new Error(item.lastError) : null);
+}
+
 function errorText(item: QueuedIssueReport, t: Translate): string | null {
   if (item.lastErrorCode === 'expired' || isExpired(item.createdAt, Date.now())) {
     return t('queue.expired');
@@ -37,6 +45,7 @@ function errorText(item: QueuedIssueReport, t: Translate): string | null {
   if (item.lastErrorCode === 'photo' || item.lastError === 'queued photo missing') {
     return t('queue.noPhoto');
   }
+  if (isWaitingConnection(item)) return null;
   return item.lastError ?? null;
 }
 
@@ -77,6 +86,7 @@ export default function PendingReportsScreen() {
         {items.map((item) => {
           const color = statusColor(item);
           const err = errorText(item, t);
+          const waiting = isWaitingConnection(item) || item.status === 'pending';
           return (
             <Card key={item.id}>
               <View style={{ gap: 8 }}>
@@ -104,6 +114,9 @@ export default function PendingReportsScreen() {
                       ? ''
                       : ` · ${t('queue.photoPending')}`}
                   </Text>
+                ) : null}
+                {waiting && !err ? (
+                  <InfoText>{t('queue.waitingConnection')}</InfoText>
                 ) : null}
                 {err ? <ErrorText>{err}</ErrorText> : null}
                 <View style={{ flexDirection: 'row', gap: 8 }}>

@@ -15,6 +15,7 @@ import {
   Badge,
   Card,
   ErrorText,
+  InfoText,
   OutlineButton,
   PrimaryButton,
   Screen,
@@ -43,6 +44,7 @@ import {
 import { prepareUploadImage } from '../lib/prepareUploadImage';
 import { apiErrorMessage } from '../lib/password';
 import { useI18n } from '../i18n';
+import { CacheAgeHint } from '../offline/CacheAgeHint';
 import { useIssueReportQueue, QueueLimitError } from '../offline/IssueReportQueueProvider';
 import { formatDateTime } from '../../../shared/i18n';
 
@@ -73,6 +75,7 @@ export default function IssueReportScreen() {
   const [defectTypes, setDefectTypes] = useState<DefectType[]>([]);
   const [photo, setPhoto] = useState<LocalFile | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const { enqueue } = useIssueReportQueue();
 
@@ -157,8 +160,13 @@ export default function IssueReportScreen() {
           ? { custom_defect_name: classification.customDefectName.trim() }
           : {}),
       };
-      await enqueue(body, photo);
-      navigation.goBack();
+      const result = await enqueue(body, photo);
+      if (result.sent) {
+        navigation.goBack();
+        return;
+      }
+      setNotice(t('queue.queuedOffline'));
+      setTimeout(() => navigation.goBack(), 1600);
     } catch (err) {
       if (err instanceof QueueLimitError) {
         setError(err.code === 'full' ? t('queue.full') : t('queue.photoTooLarge'));
@@ -175,6 +183,7 @@ export default function IssueReportScreen() {
       <DismissKeyboardScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
         <Title>{t('nav.reportIssue')}</Title>
         <Subtitle>{t('report.stationStepSubtitle')}</Subtitle>
+        <CacheAgeHint />
 
         <Card>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
@@ -275,14 +284,14 @@ export default function IssueReportScreen() {
         </View>
 
         {error ? <ErrorText>{error}</ErrorText> : null}
+        {notice ? <InfoText>{notice}</InfoText> : null}
 
         <View style={{ marginTop: 24 }}>
           <PrimaryButton
             label={busy ? t('common.saving') : t('report.saveContinue')}
             onPress={() => void submit()}
-            disabled={busy || !canSubmit}
+            disabled={busy || !canSubmit || !!notice}
           />
-          <Subtitle>{t('queue.queuedOffline')}</Subtitle>
         </View>
       </DismissKeyboardScrollView>
     </Screen>

@@ -12,18 +12,18 @@ import { AppState, type AppStateStatus } from 'react-native';
 import { useAuth } from '../auth/AuthProvider';
 import {
   deleteQueuedReport,
-  enqueueIssueReport,
   flushQueue,
   loadQueue,
   QueueLimitError,
+  submitOrQueueIssueReport,
   type IssueReportPayload,
   type QueuedIssueReport,
 } from '../lib/issueReportQueue';
 import type { LocalFile } from '../api/client';
 
 type EnqueueResult = {
-  item: QueuedIssueReport;
   sent: boolean;
+  item?: QueuedIssueReport;
 };
 
 interface QueueContextValue {
@@ -96,13 +96,17 @@ export function IssueReportQueueProvider({ children }: { children: ReactNode }) 
       if (userId == null) {
         throw new Error('not authenticated');
       }
-      const item = await enqueueIssueReport(userId, payload, photo);
+      const outcome = await submitOrQueueIssueReport(userId, payload, photo);
+      if (outcome.kind === 'rejected') {
+        throw outcome.error;
+      }
       await refresh();
-      await flush({ id: item.id, force: true });
-      const latest = (await loadQueue(userId)).find((row) => row.id === item.id);
-      return { item: latest ?? item, sent: latest == null };
+      if (outcome.kind === 'sent') {
+        return { sent: true };
+      }
+      return { item: outcome.item, sent: false };
     },
-    [userId, refresh, flush],
+    [userId, refresh],
   );
 
   const remove = useCallback(

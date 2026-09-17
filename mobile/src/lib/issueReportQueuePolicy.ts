@@ -49,9 +49,11 @@ export function shouldAutoFlush(item: {
   createdAt: string;
   nextAttemptAt?: string;
   issueId?: number;
+  lastErrorCode?: 'expired' | 'network' | 'http' | 'photo' | 'storage';
 }, nowMs: number, force: boolean): boolean {
   if (item.status === 'sending') return false;
   if (force) return true;
+  if (item.lastErrorCode === 'http') return false;
   if (isExpired(item.createdAt, nowMs) && item.issueId == null) return false;
   if (item.nextAttemptAt) {
     const next = Date.parse(item.nextAttemptAt);

@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as FileSystem from 'expo-file-system/legacy';
 import { api, ApiError, type LocalFile } from '../api/client';
+import { shouldQueueIssueSubmit, isTransportError } from '../../../shared/networkError';
 import {
   MAX_PHOTO_BYTES,
   MAX_QUEUE_ITEMS,
@@ -156,16 +157,21 @@ export async function enqueueIssueReport(
   userId: number,
   payload: IssueReportPayload,
   photo: LocalFile | null,
+  opts?: { id?: string; issueId?: number },
 ): Promise<QueuedIssueReport> {
   const existing = await loadQueue(userId);
-  if (existing.length >= MAX_QUEUE_ITEMS) {
+  if (existing.length >= MAX_QUEUE_ITEMS && !opts?.id) {
     throw new QueueLimitError('full');
   }
-  const id = newClientRequestId();
-  let photoUri: string | null = null;
-  let photoName: string | null = null;
-  let photoType: string | null = null;
-  if (photo) {
+  const id = opts?.id ?? newClientRequestId();
+  const already = existing.find((row) => row.id === id);
+  if (!already && existing.length >= MAX_QUEUE_ITEMS) {
+    throw new QueueLimitError('full');
+  }
+  let photoUri = already?.photoUri ?? null;
+  let photoName = already?.photoName ?? null;
+  let photoType = already?.photoType ?? null;
+  if (photo && !photoUri) {
     const copied = await persistPhotoCopy(id, photo);
     if (copied.size > MAX_PHOTO_BYTES) {
       await removePhotoFile(copied.uri);
@@ -177,17 +183,62 @@ export async function enqueueIssueReport(
   }
   const item: QueuedIssueReport = {
     id,
-    createdAt: new Date().toISOString(),
+    createdAt: already?.createdAt ?? new Date().toISOString(),
     status: 'pending',
-    attempts: 0,
+    attempts: already?.attempts ?? 0,
     photoUploaded: photo == null,
     photoUri,
     photoName,
     photoType,
     payload,
+    issueId: opts?.issueId ?? already?.issueId,
   };
-  await saveUserQueue(userId, [...existing, item]);
+  const next = already
+    ? existing.map((row) => (row.id === id ? item : row))
+    : [...existing, item];
+  await saveUserQueue(userId, next);
   return item;
+}
+
+export type SubmitOutcome =
+  | { kind: 'sent' }
+  | { kind: 'queued'; item: QueuedIssueReport }
+  | { kind: 'rejected'; error: unknown };
+
+/**
+ * Try the network first. Queue only when the phone never received a 4xx.
+ * A 400/401/403/422 is a real form error and must not be stored.
+ */
+export async function submitOrQueueIssueReport(
+  userId: number,
+  payload: IssueReportPayload,
+  photo: LocalFile | null,
+): Promise<SubmitOutcome> {
+  const id = newClientRequestId();
+  try {
+    const created = await api.createIssue(payload, { idempotencyKey: id });
+    if (photo) {
+      try {
+        await api.uploadMedia('ISSUE', String(created.ID), photo);
+      } catch (err) {
+        if (!shouldQueueIssueSubmit(err)) {
+          return { kind: 'rejected', error: err };
+        }
+        const item = await enqueueIssueReport(userId, payload, photo, {
+          id,
+          issueId: created.ID,
+        });
+        return { kind: 'queued', item };
+      }
+    }
+    return { kind: 'sent' };
+  } catch (err) {
+    if (!shouldQueueIssueSubmit(err)) {
+      return { kind: 'rejected', error: err };
+    }
+    const item = await enqueueIssueReport(userId, payload, photo, { id });
+    return { kind: 'queued', item };
+  }
 }
 
 export async function deleteQueuedReport(
@@ -214,10 +265,7 @@ function errorMessage(err: unknown): string {
 }
 
 function isNetworkError(err: unknown): boolean {
-  if (err instanceof ApiError && err.status === 0) return true;
-  if (err instanceof TypeError) return true;
-  const msg = errorMessage(err).toLowerCase();
-  return /network|failed to fetch|internet|offline|timed out|aborted/.test(msg);
+  return isTransportError(err);
 }
 
 async function uploadQueuedPhoto(item: QueuedIssueReport): Promise<void> {
@@ -274,10 +322,10 @@ async function sendOne(
     const network = isNetworkError(err);
     const failed: QueuedIssueReport = {
       ...item,
-      status: 'failed',
+      status: network ? 'pending' : 'failed',
       attempts,
       issueId: item.issueId,
-      lastError: errorMessage(err),
+      lastError: network ? undefined : errorMessage(err),
       lastErrorCode:
         errorMessage(err) === 'queued photo missing'
           ? 'photo'

@@ -11,12 +11,9 @@ import * as ImagePicker from 'expo-image-picker';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
-  api,
   type DefectPart,
   type DefectType,
-  type IssueType,
   type LocalFile,
-  type Station,
   type Vehicle,
 } from '../api/client';
 import { VinSearchBox } from '../components/VinSearchBox';
@@ -34,6 +31,7 @@ import {
   Badge,
   Card,
   ErrorText,
+  InfoText,
   OutlineButton,
   PrimaryButton,
   Screen,
@@ -51,6 +49,8 @@ import { useTheme } from '../theme/ThemeProvider';
 import { apiErrorMessage } from '../lib/password';
 import { useI18n } from '../i18n';
 import { useIssueReportQueue, QueueLimitError } from '../offline/IssueReportQueueProvider';
+import { useReferenceCache } from '../offline/ReferenceCacheProvider';
+import { CacheAgeHint } from '../offline/CacheAgeHint';
 import type { RootStackParamList } from '../navigation/types';
 
 const SEVERITIES: SeverityLevel[] = ['CRITICAL', 'MEDIUM', 'LOW'];
@@ -73,8 +73,6 @@ export default function ManualIssueReportScreen() {
   const { tokens } = useTheme();
   const { t, locale } = useI18n();
 
-  const [issueTypes, setIssueTypes] = useState<IssueType[]>([]);
-  const [stations, setStations] = useState<Station[]>([]);
   const [defectParts, setDefectParts] = useState<DefectPart[]>([]);
   const [defectTypes, setDefectTypes] = useState<DefectType[]>([]);
   const [issueTypeId, setIssueTypeId] = useState<number | null>(null);
@@ -88,8 +86,12 @@ export default function ManualIssueReportScreen() {
   const [description, setDescription] = useState('');
   const [photo, setPhoto] = useState<LocalFile | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const { enqueue } = useIssueReportQueue();
+  const { snapshot, ready } = useReferenceCache();
+  const issueTypes = snapshot.issueTypes;
+  const stations = snapshot.stations;
 
   const stationRequired = vehicle?.CurrentGlobalStatus === 'IN_PRODUCTION';
 
@@ -98,32 +100,6 @@ export default function ManualIssueReportScreen() {
       setStationId(null);
     }
   }, [stationRequired]);
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const [typesRes, stationsRes] = await Promise.all([
-          api.listIssueTypes(),
-          api.listStations(),
-        ]);
-        if (cancelled) return;
-        setIssueTypes(typesRes.items ?? []);
-        setStations(
-          (stationsRes.items ?? [])
-            .slice()
-            .sort((a, b) => a.SequenceNo - b.SequenceNo),
-        );
-      } catch (err) {
-        if (!cancelled) {
-          setError(apiErrorMessage(err, t));
-        }
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [t]);
 
   const selectedStation = stations.find((s) => s.ID === stationId) ?? null;
   const selectedType = issueTypes.find((it) => it.ID === issueTypeId) ?? null;
@@ -254,8 +230,13 @@ export default function ManualIssueReportScreen() {
           ? { custom_defect_name: classification.customDefectName.trim() }
           : {}),
       };
-      await enqueue(body, photo);
-      navigation.goBack();
+      const result = await enqueue(body, photo);
+      if (result.sent) {
+        navigation.goBack();
+        return;
+      }
+      setNotice(t('queue.queuedOffline'));
+      setTimeout(() => navigation.goBack(), 1600);
     } catch (err) {
       if (err instanceof QueueLimitError) {
         setError(err.code === 'full' ? t('queue.full') : t('queue.photoTooLarge'));
@@ -272,6 +253,7 @@ export default function ManualIssueReportScreen() {
       <DismissKeyboardScrollView contentContainerStyle={{ padding: 16, paddingBottom: 48 }}>
         <Title>{t('nav.reportIssue')}</Title>
         <Subtitle>{t('report.manualSubtitle')}</Subtitle>
+        <CacheAgeHint />
 
         <Text style={labelStyle(tokens)}>{t('issue.vin')} *</Text>
         <Pressable
@@ -411,7 +393,9 @@ export default function ManualIssueReportScreen() {
           })}
         </View>
         {issueTypes.length === 0 ? (
-          <Subtitle>{t('report.typesLoading')}</Subtitle>
+          <Subtitle>
+            {ready ? t('offline.noCache') : t('report.typesLoading')}
+          </Subtitle>
         ) : null}
 
         <Text style={labelStyle(tokens)}>{t('issueDetail.descriptionStar')}</Text>
@@ -462,14 +446,14 @@ export default function ManualIssueReportScreen() {
         ) : null}
 
         {error ? <ErrorText>{error}</ErrorText> : null}
+        {notice ? <InfoText>{notice}</InfoText> : null}
 
         <View style={{ marginTop: 24 }}>
           <PrimaryButton
             label={busy ? t('common.saving') : t('report.save')}
             onPress={() => void submit()}
-            disabled={busy || !canSubmit}
+            disabled={busy || !canSubmit || !!notice}
           />
-          <Subtitle>{t('queue.queuedOffline')}</Subtitle>
         </View>
       </DismissKeyboardScrollView>
 
