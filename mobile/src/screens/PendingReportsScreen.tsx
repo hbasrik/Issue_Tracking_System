@@ -40,6 +40,7 @@ function isWaitingConnection(item: QueuedIssueReport): boolean {
 }
 
 function errorText(item: QueuedIssueReport, t: Translate): string | null {
+  if (item.status === 'sending') return null;
   if (item.lastErrorCode === 'expired' || isExpired(item.createdAt, Date.now())) {
     return t('queue.expired');
   }
@@ -91,7 +92,9 @@ export default function PendingReportsScreen() {
         {items.map((item) => {
           const color = statusColor(item);
           const err = errorText(item, t);
-          const waiting = isWaitingConnection(item) || item.status === 'pending';
+          const waiting =
+            item.status !== 'sending' &&
+            (isWaitingConnection(item) || item.status === 'pending');
           return (
             <Card key={item.id}>
               <View style={{ gap: 8 }}>
