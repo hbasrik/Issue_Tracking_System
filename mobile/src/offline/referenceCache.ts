@@ -69,13 +69,21 @@ async function saveReferenceSnapshot(snap: ReferenceSnapshot): Promise<void> {
 
 async function listAllVehicles(): Promise<Vehicle[]> {
   const pageSize = 100;
-  const first = await api.listVehicles({ page: 1, size: pageSize });
+  const first = await api.listVehicles({
+    page: 1,
+    size: pageSize,
+    scope: 'issue_report',
+  });
   const items = [...(first.Items ?? [])];
   const total = first.Total ?? items.length;
   const size = first.Size || pageSize;
   const pages = Math.min(20, Math.max(1, Math.ceil(total / size)));
   for (let page = 2; page <= pages; page += 1) {
-    const next = await api.listVehicles({ page, size: pageSize });
+    const next = await api.listVehicles({
+      page,
+      size: pageSize,
+      scope: 'issue_report',
+    });
     items.push(...(next.Items ?? []));
   }
   return items;

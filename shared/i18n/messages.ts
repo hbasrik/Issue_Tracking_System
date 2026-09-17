@@ -1099,6 +1099,8 @@ export const tr = {
     'Kayıtlar 7 gün sonra otomatik gönderilmez; silinene kadar cihazda kalır.',
   'queue.vin': 'VIN {vin}',
   'queue.waitingConnection': 'Bağlantı bekleniyor',
+  'queue.sessionExpired':
+    'Oturumunuzun süresi doldu, tekrar giriş yapın. Bekleyen kayıtlarınız duruyor.',
   'offline.banner': 'Çevrimdışısınız. Kayıtlı verilerle çalışabilirsiniz.',
   'offline.cacheAge': 'Liste {age} önce güncellendi',
   'offline.noCache':
@@ -1109,6 +1111,8 @@ export const tr = {
   'offline.days': '{n} gün',
   'offline.liveUnavailable':
     'Canlı veri yok. Bağlantı gelince bu ekran güncellenecek.',
+  'offline.cacheSummary': 'Önbellek: {n} araç, {age} önce güncellendi',
+  'offline.cacheEmpty': 'Önbellek: henüz kayıt yok',
 
   'email.formatHint':
     'Geçerli bir e-posta girin (alan adı uzantısı gerekli, örn. ad@sirket.com).',
@@ -2245,6 +2249,8 @@ export const en: Record<MessageKey, string> = {
     'Reports older than 7 days are not sent automatically; they stay on the device until you delete them.',
   'queue.vin': 'VIN {vin}',
   'queue.waitingConnection': 'Waiting for a connection',
+  'queue.sessionExpired':
+    'Your session expired. Sign in again. Pending reports are still on this device.',
   'offline.banner': 'You are offline. You can keep working with saved data.',
   'offline.cacheAge': 'List updated {age} ago',
   'offline.noCache':
@@ -2255,6 +2261,8 @@ export const en: Record<MessageKey, string> = {
   'offline.days': '{n} d',
   'offline.liveUnavailable':
     'Live data is unavailable. This screen will update when you are back online.',
+  'offline.cacheSummary': 'Cache: {n} vehicles, updated {age} ago',
+  'offline.cacheEmpty': 'Cache: no records yet',
   'report.stationStepSubtitle': 'Station step failure report',
   'report.summary': 'Summary: {type} · {severity} · {station} · {vin}',
   'report.typesLoading': 'Loading types…',

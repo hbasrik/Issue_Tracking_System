@@ -100,6 +100,37 @@ func TestVehicleList_AnalysisStatOnLine(t *testing.T) {
 	}
 }
 
+func TestVehicleList_IssueReportScopeIncludesPlanned(t *testing.T) {
+	repo := &recordingVehicleRepo{items: []domain.Vehicle{{
+		VIN:                 "VINPLANNED0000001",
+		CurrentGlobalStatus: domain.VehicleStatusPlanned,
+	}}}
+	issuer := auth.NewIssuer("test-secret", time.Hour)
+	router := apphttp.NewRouter(apphttp.Deps{
+		Issuer:   issuer,
+		Roles:    newFakeRoleRepo(),
+		Vehicles: usecase.NewVehicleService(repo, nil, nil, nil),
+	})
+	token, err := issuer.Issue(managerUserID, domain.RoleCodeManagerAdmin)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/vehicles?scope=issue_report&size=100", nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d body=%s", rec.Code, rec.Body.String())
+	}
+	if !repo.last.ForIssueReport {
+		t.Fatal("scope=issue_report must set ForIssueReport so PLANNED VINs are cached")
+	}
+	if repo.last.Limit != 100 {
+		t.Fatalf("size = %d, want 100", repo.last.Limit)
+	}
+}
+
 func TestVehicleList_AnalysisStatInvalid(t *testing.T) {
 	issuer := auth.NewIssuer("test-secret", time.Hour)
 	router := apphttp.NewRouter(apphttp.Deps{

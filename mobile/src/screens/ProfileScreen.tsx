@@ -5,11 +5,20 @@ import { useI18n } from '../i18n';
 import { useTheme } from '../theme/ThemeProvider';
 import { roleDisplayName } from '../lib/roleLabels';
 import ChangePasswordScreen from './ChangePasswordScreen';
+import { useReferenceCache } from '../offline/ReferenceCacheProvider';
+import { formatCacheAge } from '../offline/referenceCache';
 
 export default function ProfileScreen() {
   const { user, logout } = useAuth();
   const { tokens, mode, toggle } = useTheme();
   const { t, locale, setLocale } = useI18n();
+  const { snapshot } = useReferenceCache();
+  const cacheLine = snapshot.fetchedAt
+    ? t('offline.cacheSummary', {
+        n: snapshot.vehicles.length,
+        age: formatCacheAge(snapshot.fetchedAt, Date.now(), t),
+      })
+    : t('offline.cacheEmpty');
 
   return (
     <Screen>
@@ -23,6 +32,9 @@ export default function ProfileScreen() {
         <View style={{ marginTop: 12 }}>
           <Badge label={roleDisplayName(user?.Role, t)} color={tokens.accent} />
         </View>
+      </Card>
+      <Card>
+        <Text style={{ color: tokens.textSecondary, fontSize: 13 }}>{cacheLine}</Text>
       </Card>
       <Card>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>

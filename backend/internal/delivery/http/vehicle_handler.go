@@ -67,6 +67,10 @@ func (s *server) handleVehicleList(w http.ResponseWriter, r *http.Request) {
 		}
 		page = p
 	}
+	if q.Get("scope") == "issue_report" {
+		filter.ForIssueReport = true
+	}
+
 	if raw := q.Get("size"); raw != "" {
 		n, err := strconv.Atoi(raw)
 		if err != nil || n < 1 {

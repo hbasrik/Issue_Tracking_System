@@ -115,6 +115,8 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     });
 
     if (!res.ok) {
+      // Reached the server. 401/5xx must flip the banner back to online.
+      noteTransportSuccess();
       let body: ApiErrorBody = { error: res.statusText };
       try {
         body = (await res.json()) as ApiErrorBody;
@@ -125,6 +127,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     }
 
     if (res.status === 204) {
+      noteTransportSuccess();
       return undefined as T;
     }
     const parsed = (await res.json()) as T;
@@ -132,7 +135,6 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     return parsed;
   } catch (err) {
     if (err instanceof ApiError) {
-      if (isTransportError(err)) noteTransportFailure();
       throw err;
     }
     if (err instanceof Error && err.name === 'AbortError') {
@@ -404,6 +406,7 @@ export const api = {
     status?: string;
     eol_stage?: string;
     vin?: string;
+    scope?: string;
   } = {}) {
     const q = new URLSearchParams();
     if (params.station) q.set('station', String(params.station));
@@ -413,6 +416,7 @@ export const api = {
     if (params.status) q.set('status', params.status);
     if (params.eol_stage) q.set('eol_stage', params.eol_stage);
     if (params.vin) q.set('vin', params.vin);
+    if (params.scope) q.set('scope', params.scope);
     const qs = q.toString();
     return request<{ Items: Vehicle[]; Total: number; Page: number; Size: number }>(
       `/vehicles${qs ? `?${qs}` : ''}`,

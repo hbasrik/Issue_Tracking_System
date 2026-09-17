@@ -102,7 +102,9 @@ func vehicleFilterClause(f domain.VehicleListFilter) (string, []any) {
 	var args []any
 
 	includePlanned := f.Lifecycle != nil && *f.Lifecycle == domain.LifecyclePlanned
-	if f.AnalysisStat == domain.VehicleAnalysisStatOnLine {
+	if f.ForIssueReport {
+		conds = append(conds, domain.IssueReportStatusSQL("vehicles.current_global_status"))
+	} else if f.AnalysisStat == domain.VehicleAnalysisStatOnLine {
 		conds = append(conds, "vehicles.current_global_status = 'IN_PRODUCTION'")
 	} else if !includePlanned {
 		conds = append(conds, "vehicles.current_global_status <> 'PLANNED'")

@@ -25,6 +25,38 @@ func (s VehicleStatus) Valid() bool {
 	}
 }
 
+// IssueReportVehicleStatuses is the single list of statuses a VIN may have
+// when an operator opens a defect report (manual or station-step). Create
+// Issue looks the VIN up and does not reject on status, so the offline
+// cache and live typeahead must include every one of these — including
+// PLANNED (Karar 10: the Vehicles table hides them, issue entry must not).
+func IssueReportVehicleStatuses() []VehicleStatus {
+	return []VehicleStatus{
+		VehicleStatusPlanned,
+		VehicleStatusInProduction,
+		VehicleStatusInWarehouse,
+		VehicleStatusDelivered,
+		VehicleStatusShipped,
+		VehicleStatusOnHold,
+	}
+}
+
+// VehicleEligibleForIssueReport is true when a VIN in this status can be
+// chosen on the issue-report form.
+func VehicleEligibleForIssueReport(status VehicleStatus) bool {
+	for _, s := range IssueReportVehicleStatuses() {
+		if status == s {
+			return true
+		}
+	}
+	return false
+}
+
+// IssueReportStatusSQL is the WHERE fragment matching IssueReportVehicleStatuses.
+func IssueReportStatusSQL(column string) string {
+	return column + " IN ('PLANNED','IN_PRODUCTION','IN_WAREHOUSE','DELIVERED','SHIPPED','ON_HOLD')"
+}
+
 // VehicleAnalysisStat is a dashboard-card drill-down key for GET /vehicles.
 type VehicleAnalysisStat string
 
@@ -62,8 +94,11 @@ type VehicleListFilter struct {
 	AnalysisStat VehicleAnalysisStat
 	WindowFrom   *time.Time
 	WindowUntil  *time.Time
-	Limit        int
-	Offset       int
+	// ForIssueReport uses IssueReportVehicleStatuses (includes PLANNED)
+	// instead of the Vehicles-table Karar 10 exclusion.
+	ForIssueReport bool
+	Limit          int
+	Offset         int
 }
 
 // Vehicle mirrors the vehicles table (master vehicle identity). Karar 1
