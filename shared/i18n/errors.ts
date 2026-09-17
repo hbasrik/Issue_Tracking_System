@@ -1,3 +1,4 @@
+import { isTransportError } from '../networkError';
 import type { MessageKey } from './messages';
 import type { Translate } from './translate';
 
@@ -61,6 +62,8 @@ const EXACT: Record<string, MessageKey> = {
 };
 
 export function translateApiError(t: Translate, err: unknown): string {
+  if (isTransportError(err)) return t('error.offline');
+
   const msg = err instanceof Error ? err.message : '';
   if (!msg) return t('common.error');
 

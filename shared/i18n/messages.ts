@@ -1098,6 +1098,17 @@ export const tr = {
   'queue.ageHint':
     'Kayıtlar 7 gün sonra otomatik gönderilmez; silinene kadar cihazda kalır.',
   'queue.vin': 'VIN {vin}',
+  'queue.waitingConnection': 'Bağlantı bekleniyor',
+  'offline.banner': 'Çevrimdışısınız. Kayıtlı verilerle çalışabilirsiniz.',
+  'offline.cacheAge': 'Liste {age} önce güncellendi',
+  'offline.noCache':
+    'Kayıtlı liste yok. Formu doldurmak için bir kez çevrimiçi olun.',
+  'offline.justNow': 'az önce',
+  'offline.minutes': '{n} dk',
+  'offline.hours': '{n} sa',
+  'offline.days': '{n} gün',
+  'offline.liveUnavailable':
+    'Canlı veri yok. Bağlantı gelince bu ekran güncellenecek.',
 
   'email.formatHint':
     'Geçerli bir e-posta girin (alan adı uzantısı gerekli, örn. ad@sirket.com).',
@@ -1161,6 +1172,7 @@ export const tr = {
     '{vin} için depo çıkışı engellendi: {n} açık issue kaldı (issue no: {ids}).',
   'error.dbRejected': 'Veritabanı değişikliği reddetti.',
   'error.clientRequestIdInvalid': 'İstek anahtarı geçersiz.',
+  'error.offline': 'Çevrimdışısınız. Bağlantı gelince tekrar deneyin.',
 } as const;
 
 export type MessageKey = keyof typeof tr;
@@ -1906,6 +1918,7 @@ export const en: Record<MessageKey, string> = {
     'Depot release blocked for {vin}: {n} open Issue(s) remain (issue ids: {ids}).',
   'error.dbRejected': 'The database rejected the change.',
   'error.clientRequestIdInvalid': 'The request key is not valid.',
+  'error.offline': 'You are offline. Try again when a connection is available.',
   'analysis.activeFilters': 'Active filters: {summary}',
   'analysis.apply': 'Apply',
   'analysis.completedSlice': 'Done',
@@ -2231,6 +2244,17 @@ export const en: Record<MessageKey, string> = {
   'queue.ageHint':
     'Reports older than 7 days are not sent automatically; they stay on the device until you delete them.',
   'queue.vin': 'VIN {vin}',
+  'queue.waitingConnection': 'Waiting for a connection',
+  'offline.banner': 'You are offline. You can keep working with saved data.',
+  'offline.cacheAge': 'List updated {age} ago',
+  'offline.noCache':
+    'No saved list yet. Go online once so the form can be filled offline.',
+  'offline.justNow': 'just now',
+  'offline.minutes': '{n} min',
+  'offline.hours': '{n} h',
+  'offline.days': '{n} d',
+  'offline.liveUnavailable':
+    'Live data is unavailable. This screen will update when you are back online.',
   'report.stationStepSubtitle': 'Station step failure report',
   'report.summary': 'Summary: {type} · {severity} · {station} · {vin}',
   'report.typesLoading': 'Loading types…',

@@ -18,3 +18,8 @@ export {
   formatShortDay,
 } from './dates';
 export { translateApiError, translatePasswordError } from './errors';
+export {
+  isClientRejection,
+  isTransportError,
+  shouldQueueIssueSubmit,
+} from '../networkError';
