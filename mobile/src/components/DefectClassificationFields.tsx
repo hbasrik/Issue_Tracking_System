@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Modal,
   Pressable,
@@ -7,15 +7,14 @@ import {
   View,
 } from 'react-native';
 import {
-  api,
   type DefectPart,
   type DefectType,
-  type DefectZone,
 } from '../api/client';
-import { AppTextInput, Subtitle } from './ui';
+import { AppTextInput, InfoText, Subtitle } from './ui';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n';
-import { apiErrorMessage } from '../lib/password';
+import { useReferenceCache } from '../offline/ReferenceCacheProvider';
+import { CacheAgeHint } from '../offline/CacheAgeHint';
 import type { Locale, Translate } from '../../../shared/i18n';
 import {
   OTHER_PART_CODE,
@@ -98,48 +97,25 @@ export function DefectClassificationFields({
 }: DefectClassificationFieldsProps) {
   const { tokens } = useTheme();
   const { t } = useI18n();
+  const { snapshot, ready } = useReferenceCache();
 
-  const [zones, setZones] = useState<DefectZone[]>([]);
-  const [allParts, setAllParts] = useState<DefectPart[]>([]);
-  const [types, setTypes] = useState<DefectType[]>([]);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const zones = snapshot.zones;
+  const allParts = snapshot.parts;
+  const types = snapshot.types;
+  const loading = !ready && zones.length === 0;
+  const emptyCache = ready && zones.length === 0 && allParts.length === 0;
 
   const [zonePickerOpen, setZonePickerOpen] = useState(false);
   const [partPickerOpen, setPartPickerOpen] = useState(false);
   const [typePickerOpen, setTypePickerOpen] = useState(false);
   const [partSearch, setPartSearch] = useState('');
 
+  const onCatalogLoadedRef = useRef(onCatalogLoaded);
+  onCatalogLoadedRef.current = onCatalogLoaded;
+
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      setLoading(true);
-      setLoadError(null);
-      try {
-        const [zonesRes, partsRes, typesRes] = await Promise.all([
-          api.listDefectCatalogZones(),
-          api.listDefectCatalogParts(),
-          api.listDefectCatalogTypes(),
-        ]);
-        if (cancelled) return;
-        const parts = partsRes.items ?? [];
-        const loadedTypes = typesRes.items ?? [];
-        setZones(zonesRes.items ?? []);
-        setAllParts(parts);
-        setTypes(loadedTypes);
-        onCatalogLoaded?.(parts, loadedTypes);
-      } catch (err) {
-        if (!cancelled) {
-          setLoadError(apiErrorMessage(err, t));
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [t]);
+    onCatalogLoadedRef.current?.(snapshot.parts, snapshot.types);
+  }, [snapshot.parts, snapshot.types]);
 
   const selectedZone = zones.find((z) => z.ID === zoneId) ?? null;
   const selectedPart = allParts.find((p) => p.ID === partId) ?? null;
@@ -350,11 +326,8 @@ export function DefectClassificationFields({
       ) : null}
 
       {loading ? <Subtitle>{t('report.typesLoading')}</Subtitle> : null}
-      {loadError ? (
-        <Text style={{ color: tokens.textSecondary, marginTop: 8, fontSize: 13 }}>
-          {loadError}
-        </Text>
-      ) : null}
+      {emptyCache ? <InfoText>{t('offline.noCache')}</InfoText> : null}
+      <CacheAgeHint />
 
       <Modal visible={zonePickerOpen} animationType="slide" transparent>
         <Pressable

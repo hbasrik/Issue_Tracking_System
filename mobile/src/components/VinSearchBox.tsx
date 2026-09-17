@@ -9,8 +9,10 @@ import {
 import { api, type Vehicle } from '../api/client';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n';
-import { apiErrorMessage } from '../lib/password';
-import { Badge, Card, ErrorText, Subtitle, AppTextInput } from './ui';
+import { isTransportError } from '../../../shared/networkError';
+import { useAppOnline } from '../offline/connectivity';
+import { useReferenceCache } from '../offline/ReferenceCacheProvider';
+import { Badge, Card, InfoText, Subtitle, AppTextInput } from './ui';
 
 function vinTail(vin: string): string {
   return vin.slice(-5);
@@ -19,10 +21,11 @@ function vinTail(vin: string): string {
 /**
  * Shared VIN suffix search + typeahead — design guide §3.1.
  *
- * Results render as a plain View/map (not FlatList). The API caps typeahead
- * at a handful of rows, and this box is always embedded in a parent
- * ScrollView/FlatList (Home, Vehicles, Manual Issue modal) —
- * a nested VirtualizedList would warn and break scrolling.
+ * Online: live typeahead, falling back to the device cache on transport
+ * failure. Offline: cache only. Raw fetch errors are never shown.
+ *
+ * Results render as a plain View/map (not FlatList). Nested
+ * VirtualizedList would warn and break scrolling.
  */
 export function VinSearchBox({
   onSelect,
@@ -37,35 +40,64 @@ export function VinSearchBox({
 }) {
   const { tokens } = useTheme();
   const { t } = useI18n();
+  const online = useAppOnline();
+  const { searchVehicles, snapshot, cacheAgeLabel, ready } = useReferenceCache();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<Vehicle[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const [hint, setHint] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const onResultsRef = useRef(onResults);
   onResultsRef.current = onResults;
 
-  const search = useCallback(async (suffix: string) => {
-    if (suffix.trim().length < 2) {
-      setResults([]);
-      onResultsRef.current?.([]);
-      return;
-    }
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await api.searchVehicles(suffix.trim());
-      const items = res.items ?? [];
+  const apply = useCallback(
+    (items: Vehicle[], fromCache: boolean) => {
       setResults(items);
       onResultsRef.current?.(items);
-    } catch (err) {
-      setError(apiErrorMessage(err, t));
-      setResults([]);
-      onResultsRef.current?.([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [t]);
+      if (fromCache && cacheAgeLabel) {
+        setHint(cacheAgeLabel);
+      } else if (
+        items.length === 0 &&
+        snapshot.vehicles.length === 0 &&
+        ready
+      ) {
+        setHint(t('offline.noCache'));
+      } else {
+        setHint(null);
+      }
+    },
+    [cacheAgeLabel, snapshot.vehicles.length, ready, t],
+  );
+
+  const search = useCallback(
+    async (suffix: string) => {
+      if (suffix.trim().length < 2) {
+        setResults([]);
+        onResultsRef.current?.([]);
+        setHint(null);
+        return;
+      }
+      setHint(null);
+      if (online) {
+        setLoading(true);
+        try {
+          const res = await api.searchVehicles(suffix.trim());
+          apply(res.items ?? [], false);
+          return;
+        } catch (err) {
+          if (!isTransportError(err)) {
+            apply([], false);
+            setHint(null);
+            return;
+          }
+        } finally {
+          setLoading(false);
+        }
+      }
+      apply(searchVehicles(suffix), true);
+    },
+    [online, apply, searchVehicles],
+  );
 
   useEffect(() => {
     if (timer.current) clearTimeout(timer.current);
@@ -107,10 +139,8 @@ export function VinSearchBox({
           },
         ]}
       />
-      {loading ? (
-        <Subtitle>{t('common.searching')}</Subtitle>
-      ) : null}
-      {error ? <ErrorText>{error}</ErrorText> : null}
+      {loading ? <Subtitle>{t('common.searching')}</Subtitle> : null}
+      {hint ? <InfoText>{hint}</InfoText> : null}
       {results.length >= 2 ? (
         <View style={[styles.banner, { backgroundColor: tokens.bgSurface2 }]}>
           <Text style={{ color: tokens.textSecondary, fontSize: 13 }}>
@@ -120,10 +150,13 @@ export function VinSearchBox({
       ) : null}
       <View>
         {results.map((item) => (
-          <Pressable key={item.VIN} onPress={() => {
-            Keyboard.dismiss();
-            onSelect(item);
-          }}>
+          <Pressable
+            key={item.VIN}
+            onPress={() => {
+              Keyboard.dismiss();
+              onSelect(item);
+            }}
+          >
             <Card>
               <View style={styles.row}>
                 <View style={{ flex: 1 }}>
