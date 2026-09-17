@@ -342,14 +342,15 @@ async function sendOne(
 
 export async function flushQueue(
   userId: number,
-  opts?: { id?: string; force?: boolean },
+  opts?: { id?: string; force?: boolean; afterLogin?: boolean },
 ): Promise<QueuedIssueReport[]> {
   const force = opts?.force === true;
+  const afterLogin = opts?.afterLogin === true;
   const now = Date.now();
   let items = await loadQueue(userId);
   const targets = items
     .filter((item) => (opts?.id ? item.id === opts.id : true))
-    .filter((item) => shouldAutoFlush(item, now, force))
+    .filter((item) => shouldAutoFlush(item, now, force, afterLogin))
     .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 
   for (const item of targets) {
