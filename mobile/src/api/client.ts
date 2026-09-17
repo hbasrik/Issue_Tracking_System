@@ -5,6 +5,8 @@
 
 import { File as ExpoFile } from 'expo-file-system';
 import type { EOLGates } from '../../../shared/eolGates';
+import { isTransportError } from '../../../shared/networkError';
+import { noteTransportFailure, noteTransportSuccess } from '../offline/connectivity';
 
 const API_BASE_URL =
   (process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:8080/api/v1').replace(
@@ -58,7 +60,23 @@ export function setTokenGetter(fn: TokenGetter): void {
 
 const REQUEST_TIMEOUT_MS = 15_000;
 
+/** Test hook: force every request to fail as a transport error. */
+let forceTransportError = false;
+
+export function setForceTransportError(value: boolean): void {
+  forceTransportError = value;
+}
+
+export function isForceTransportError(): boolean {
+  return forceTransportError;
+}
+
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  if (forceTransportError) {
+    noteTransportFailure();
+    throw new ApiError(0, { error: 'network unavailable' });
+  }
+
   const headers = new Headers(options.headers);
   // A multipart body has to keep the boundary fetch generates for it, so only
   // JSON bodies get an explicit content type.
@@ -109,10 +127,21 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     if (res.status === 204) {
       return undefined as T;
     }
-    return (await res.json()) as T;
+    const parsed = (await res.json()) as T;
+    noteTransportSuccess();
+    return parsed;
   } catch (err) {
+    if (err instanceof ApiError) {
+      if (isTransportError(err)) noteTransportFailure();
+      throw err;
+    }
     if (err instanceof Error && err.name === 'AbortError') {
-      throw new ApiError(0, { error: `request timed out: ${path}` });
+      noteTransportFailure();
+      throw new ApiError(0, { error: 'network unavailable' });
+    }
+    if (isTransportError(err)) {
+      noteTransportFailure();
+      throw new ApiError(0, { error: 'network unavailable' });
     }
     throw err;
   } finally {
@@ -370,6 +399,7 @@ export const api = {
   listVehicles(params: {
     station?: number;
     page?: number;
+    size?: number;
     lifecycle?: string;
     status?: string;
     eol_stage?: string;
@@ -378,6 +408,7 @@ export const api = {
     const q = new URLSearchParams();
     if (params.station) q.set('station', String(params.station));
     if (params.page) q.set('page', String(params.page));
+    if (params.size) q.set('size', String(params.size));
     if (params.lifecycle) q.set('lifecycle', params.lifecycle);
     if (params.status) q.set('status', params.status);
     if (params.eol_stage) q.set('eol_stage', params.eol_stage);

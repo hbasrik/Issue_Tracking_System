@@ -67,6 +67,14 @@ func (s *server) handleVehicleList(w http.ResponseWriter, r *http.Request) {
 		}
 		page = p
 	}
+	if raw := q.Get("size"); raw != "" {
+		n, err := strconv.Atoi(raw)
+		if err != nil || n < 1 {
+			badRequest(w, "size must be a positive integer")
+			return
+		}
+		filter.Limit = n
+	}
 
 	emptyWindow, ok := applyVehicleAnalysisStat(w, r, &filter)
 	if !ok {
