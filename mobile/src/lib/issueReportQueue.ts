@@ -1,14 +1,15 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as FileSystem from 'expo-file-system/legacy';
 import { api, ApiError, type LocalFile } from '../api/client';
-import { shouldQueueIssueSubmit, isTransportError } from '../../../shared/networkError';
+import { shouldQueueIssueSubmit, isAuthError, classifyQueueSendError } from '../../../shared/networkError';
 import {
   MAX_PHOTO_BYTES,
   MAX_QUEUE_ITEMS,
-  backoffMs,
   isExpired,
   newClientRequestId,
+  queueItemAfterSendError,
   shouldAutoFlush,
+  type QueueErrorCode,
   type QueueItemStatus,
 } from './issueReportQueuePolicy';
 
@@ -35,7 +36,7 @@ export type QueuedIssueReport = {
   createdAt: string;
   status: QueueItemStatus;
   lastError?: string;
-  lastErrorCode?: 'expired' | 'network' | 'http' | 'photo' | 'storage';
+  lastErrorCode?: QueueErrorCode;
   attempts: number;
   nextAttemptAt?: string;
   issueId?: number;
@@ -202,12 +203,12 @@ export async function enqueueIssueReport(
 
 export type SubmitOutcome =
   | { kind: 'sent' }
-  | { kind: 'queued'; item: QueuedIssueReport }
+  | { kind: 'queued'; item: QueuedIssueReport; authExpired?: boolean }
   | { kind: 'rejected'; error: unknown };
 
 /**
- * Try the network first. Queue only when the phone never received a 4xx.
- * A 400/401/403/422 is a real form error and must not be stored.
+ * Try the network first. Queue on transport or auth expiry.
+ * Invalid payload (400/404/409/422) is rejected and not stored.
  */
 export async function submitOrQueueIssueReport(
   userId: number,
@@ -228,7 +229,7 @@ export async function submitOrQueueIssueReport(
           id,
           issueId: created.ID,
         });
-        return { kind: 'queued', item };
+        return { kind: 'queued', item, authExpired: isAuthError(err) };
       }
     }
     return { kind: 'sent' };
@@ -237,7 +238,7 @@ export async function submitOrQueueIssueReport(
       return { kind: 'rejected', error: err };
     }
     const item = await enqueueIssueReport(userId, payload, photo, { id });
-    return { kind: 'queued', item };
+    return { kind: 'queued', item, authExpired: isAuthError(err) };
   }
 }
 
@@ -262,10 +263,6 @@ function errorMessage(err: unknown): string {
     return err.message;
   }
   return 'network error';
-}
-
-function isNetworkError(err: unknown): boolean {
-  return isTransportError(err);
 }
 
 async function uploadQueuedPhoto(item: QueuedIssueReport): Promise<void> {
@@ -318,21 +315,20 @@ async function sendOne(
     await saveUserQueue(userId, remaining);
     return 'done';
   } catch (err) {
-    const attempts = item.attempts + 1;
-    const network = isNetworkError(err);
+    const patch = queueItemAfterSendError({
+      attempts: item.attempts,
+      kind: classifyQueueSendError(err),
+      message: errorMessage(err),
+      nowMs: now,
+    });
     const failed: QueuedIssueReport = {
       ...item,
-      status: network ? 'pending' : 'failed',
-      attempts,
+      status: patch.status,
+      attempts: patch.attempts,
       issueId: item.issueId,
-      lastError: network ? undefined : errorMessage(err),
-      lastErrorCode:
-        errorMessage(err) === 'queued photo missing'
-          ? 'photo'
-          : network
-            ? 'network'
-            : 'http',
-      nextAttemptAt: new Date(now + backoffMs(attempts - 1)).toISOString(),
+      lastError: patch.lastError,
+      lastErrorCode: patch.lastErrorCode,
+      nextAttemptAt: patch.nextAttemptAt,
     };
     const latest = await loadQueue(userId);
     const current = latest.find((row) => row.id === item.id);

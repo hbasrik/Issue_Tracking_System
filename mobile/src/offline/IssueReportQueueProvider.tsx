@@ -24,6 +24,7 @@ import type { LocalFile } from '../api/client';
 type EnqueueResult = {
   sent: boolean;
   item?: QueuedIssueReport;
+  authExpired?: boolean;
 };
 
 interface QueueContextValue {
@@ -69,10 +70,9 @@ export function IssueReportQueueProvider({ children }: { children: ReactNode }) 
       if (userId == null || !token) return;
       if (flushLock.current) {
         if (!opts?.force) return;
-        for (let i = 0; i < 40 && flushLock.current; i += 1) {
+        while (flushLock.current) {
           await new Promise((resolve) => setTimeout(resolve, 50));
         }
-        if (flushLock.current) return;
       }
       flushLock.current = true;
       setFlushing(true);
@@ -104,7 +104,11 @@ export function IssueReportQueueProvider({ children }: { children: ReactNode }) 
       if (outcome.kind === 'sent') {
         return { sent: true };
       }
-      return { item: outcome.item, sent: false };
+      return {
+        item: outcome.item,
+        sent: false,
+        authExpired: outcome.authExpired,
+      };
     },
     [userId, refresh],
   );

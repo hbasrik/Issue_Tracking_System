@@ -235,7 +235,9 @@ export default function ManualIssueReportScreen() {
         navigation.goBack();
         return;
       }
-      setNotice(t('queue.queuedOffline'));
+      setNotice(
+        result.authExpired ? t('queue.sessionExpired') : t('queue.queuedOffline'),
+      );
       setTimeout(() => navigation.goBack(), 1600);
     } catch (err) {
       if (err instanceof QueueLimitError) {

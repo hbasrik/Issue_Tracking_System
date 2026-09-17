@@ -16,8 +16,8 @@ import {
 import { DismissKeyboardScrollView } from '../components/keyboard';
 import { useIssueReportQueue } from '../offline/IssueReportQueueProvider';
 import type { QueuedIssueReport } from '../lib/issueReportQueue';
-import { isExpired } from '../lib/issueReportQueuePolicy';
-import { isTransportError } from '../../../shared/networkError';
+import { isExpired, isStoredAuthFailure } from '../lib/issueReportQueuePolicy';
+import { translateApiError } from '../../../shared/i18n';
 import { statusColors } from '../theme/tokens';
 
 function statusLabel(item: QueuedIssueReport, t: Translate): string {
@@ -34,8 +34,9 @@ function statusColor(item: QueuedIssueReport): string {
 
 function isWaitingConnection(item: QueuedIssueReport): boolean {
   if (item.lastErrorCode === 'network') return true;
+  if (item.lastErrorCode === 'auth') return false;
   if (item.status !== 'failed') return false;
-  return isTransportError(item.lastError ? new Error(item.lastError) : null);
+  return false;
 }
 
 function errorText(item: QueuedIssueReport, t: Translate): string | null {
@@ -45,8 +46,12 @@ function errorText(item: QueuedIssueReport, t: Translate): string | null {
   if (item.lastErrorCode === 'photo' || item.lastError === 'queued photo missing') {
     return t('queue.noPhoto');
   }
+  if (item.lastErrorCode === 'auth' || isStoredAuthFailure(item.lastError)) {
+    return t('queue.sessionExpired');
+  }
   if (isWaitingConnection(item)) return null;
-  return item.lastError ?? null;
+  if (item.lastError) return translateApiError(t, new Error(item.lastError));
+  return null;
 }
 
 export default function PendingReportsScreen() {
@@ -124,7 +129,7 @@ export default function PendingReportsScreen() {
                     <PrimaryButton
                       label={t('queue.sendNow')}
                       onPress={() => void flush({ id: item.id, force: true })}
-                      disabled={flushing || item.status === 'sending'}
+                      disabled={item.status === 'sending'}
                     />
                   </View>
                   <View style={{ flex: 1 }}>

@@ -19,7 +19,10 @@ export {
 } from './dates';
 export { translateApiError, translatePasswordError } from './errors';
 export {
+  isAuthError,
   isClientRejection,
+  isPayloadRejection,
   isTransportError,
   shouldQueueIssueSubmit,
+  classifyQueueSendError,
 } from '../networkError';

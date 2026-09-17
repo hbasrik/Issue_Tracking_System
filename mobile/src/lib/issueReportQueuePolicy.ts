@@ -17,6 +17,8 @@ const BACKOFF_MS = [5_000, 15_000, 45_000, 120_000, 300_000] as const;
 
 export type QueueItemStatus = 'pending' | 'sending' | 'failed';
 
+export type QueueErrorCode = 'expired' | 'network' | 'http' | 'photo' | 'storage' | 'auth';
+
 export function newClientRequestId(): string {
   const bytes = new Uint8Array(16);
   const cryptoObj = globalThis.crypto;
@@ -49,15 +51,79 @@ export function shouldAutoFlush(item: {
   createdAt: string;
   nextAttemptAt?: string;
   issueId?: number;
-  lastErrorCode?: 'expired' | 'network' | 'http' | 'photo' | 'storage';
+  lastError?: string;
+  lastErrorCode?: QueueErrorCode;
 }, nowMs: number, force: boolean): boolean {
   if (item.status === 'sending') return false;
   if (force) return true;
-  if (item.lastErrorCode === 'http') return false;
+  if (item.lastErrorCode === 'http' && !isStoredAuthFailure(item.lastError)) {
+    return false;
+  }
   if (isExpired(item.createdAt, nowMs) && item.issueId == null) return false;
   if (item.nextAttemptAt) {
     const next = Date.parse(item.nextAttemptAt);
     if (!Number.isNaN(next) && next > nowMs) return false;
   }
   return true;
+}
+
+/** Devices that queued a 401 before lastErrorCode=auth existed stored the English phrase. */
+export function isStoredAuthFailure(lastError?: string): boolean {
+  const msg = (lastError ?? '').toLowerCase();
+  return msg === 'token expired' || msg === 'invalid token';
+}
+
+export function queueItemAfterSendError(args: {
+  attempts: number;
+  kind: 'transport' | 'auth' | 'payload' | 'photo';
+  message: string;
+  nowMs: number;
+}): {
+  status: QueueItemStatus;
+  lastErrorCode: QueueErrorCode;
+  lastError: string | undefined;
+  attempts: number;
+  nextAttemptAt: string;
+  deleted: false;
+} {
+  const attempts = args.attempts + 1;
+  const nextAttemptAt = new Date(args.nowMs + backoffMs(attempts - 1)).toISOString();
+  if (args.kind === 'transport') {
+    return {
+      status: 'pending',
+      lastErrorCode: 'network',
+      lastError: undefined,
+      attempts,
+      nextAttemptAt,
+      deleted: false,
+    };
+  }
+  if (args.kind === 'auth') {
+    return {
+      status: 'pending',
+      lastErrorCode: 'auth',
+      lastError: undefined,
+      attempts,
+      nextAttemptAt,
+      deleted: false,
+    };
+  }
+  if (args.kind === 'photo') {
+    return {
+      status: 'failed',
+      lastErrorCode: 'photo',
+      lastError: args.message,
+      attempts,
+      nextAttemptAt,
+      deleted: false,
+    };
+  }
+  return {
+    status: 'failed',
+    lastErrorCode: 'http',
+    lastError: args.message,
+    attempts,
+    nextAttemptAt,
+    deleted: false,
+  };
 }
