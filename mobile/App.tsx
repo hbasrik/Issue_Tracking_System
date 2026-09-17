@@ -21,9 +21,11 @@ function AppShell() {
   return (
     <View style={{ flex: 1 }}>
       <StatusBar style={mode === 'dark' ? 'light' : 'dark'} />
-      <RootNavigator />
-      <KeyboardDoneAccessory />
       <OfflineBanner />
+      <View style={{ flex: 1 }}>
+        <RootNavigator />
+      </View>
+      <KeyboardDoneAccessory />
     </View>
   );
 }

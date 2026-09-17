@@ -4,7 +4,7 @@ import { useI18n } from '../i18n';
 import { useTheme } from '../theme/ThemeProvider';
 import { useAppOnline } from './connectivity';
 
-/** Global calm notice. Does not block taps on the screen beneath. */
+/** In-flow notice at the top so it never covers a save/send control. */
 export function OfflineBanner() {
   const online = useAppOnline();
   const { t } = useI18n();
@@ -15,18 +15,13 @@ export function OfflineBanner() {
 
   return (
     <View
-      pointerEvents="none"
       style={{
-        position: 'absolute',
-        left: 12,
-        right: 12,
-        bottom: Math.max(insets.bottom, 8) + 8,
-        backgroundColor: tokens.bgSurface1,
-        borderColor: tokens.border,
-        borderWidth: 1,
-        borderRadius: 12,
-        paddingVertical: 10,
+        paddingTop: Math.max(insets.top, 8),
+        paddingBottom: 10,
         paddingHorizontal: 12,
+        backgroundColor: tokens.bgSurface1,
+        borderBottomWidth: 1,
+        borderBottomColor: tokens.border,
       }}
     >
       <Text

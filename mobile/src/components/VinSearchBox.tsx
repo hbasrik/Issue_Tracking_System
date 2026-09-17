@@ -9,8 +9,7 @@ import {
 import { api, type Vehicle } from '../api/client';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n';
-import { isTransportError } from '../../../shared/networkError';
-import { useAppOnline } from '../offline/connectivity';
+import { isTransportError, isAuthError } from '../../../shared/networkError';
 import { useReferenceCache } from '../offline/ReferenceCacheProvider';
 import { Badge, Card, InfoText, Subtitle, AppTextInput } from './ui';
 
@@ -40,7 +39,6 @@ export function VinSearchBox({
 }) {
   const { tokens } = useTheme();
   const { t } = useI18n();
-  const online = useAppOnline();
   const { searchVehicles, snapshot, cacheAgeLabel, ready } = useReferenceCache();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<Vehicle[]>([]);
@@ -78,25 +76,23 @@ export function VinSearchBox({
         return;
       }
       setHint(null);
-      if (online) {
-        setLoading(true);
-        try {
-          const res = await api.searchVehicles(suffix.trim());
-          apply(res.items ?? [], false);
+      setLoading(true);
+      try {
+        const res = await api.searchVehicles(suffix.trim());
+        apply(res.items ?? [], false);
+        return;
+      } catch (err) {
+        if (!isTransportError(err) && !isAuthError(err)) {
+          apply([], false);
+          setHint(null);
           return;
-        } catch (err) {
-          if (!isTransportError(err)) {
-            apply([], false);
-            setHint(null);
-            return;
-          }
-        } finally {
-          setLoading(false);
         }
+      } finally {
+        setLoading(false);
       }
       apply(searchVehicles(suffix), true);
     },
-    [online, apply, searchVehicles],
+    [apply, searchVehicles],
   );
 
   useEffect(() => {
