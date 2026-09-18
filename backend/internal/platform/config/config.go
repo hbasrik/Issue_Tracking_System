@@ -4,6 +4,7 @@ package config
 import (
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/joho/godotenv"
@@ -22,6 +23,14 @@ type Config struct {
 	// UploadDir is where media attachments are written. Karar 8 defers the
 	// cloud-storage decision, so uploads live on local disk for now.
 	UploadDir string
+	// LogLevel is debug|info|warn|error (default info).
+	LogLevel string
+	// LogFile is the rotating log path. Empty disables the file sink (stderr only).
+	LogFile string
+	// LogMaxBytes rotates the file when it exceeds this size (default 10 MiB).
+	LogMaxBytes int64
+	// LogMaxBackups is how many rotated files to keep (default 5).
+	LogMaxBackups int
 }
 
 // Load reads configuration from the process environment, after filling gaps
@@ -40,6 +49,10 @@ func Load() Config {
 		)),
 		AllowedEmailDomains: parseCSV(os.Getenv("ALLOWED_EMAIL_DOMAINS")),
 		UploadDir:           envOrDefault("UPLOAD_DIR", "uploads"),
+		LogLevel:            envOrDefault("LOG_LEVEL", "info"),
+		LogFile:             envOrDefault("LOG_FILE", "logs/karea-api.log"),
+		LogMaxBytes:         envInt64OrDefault("LOG_MAX_BYTES", 10<<20),
+		LogMaxBackups:       envIntOrDefault("LOG_MAX_BACKUPS", 5),
 	}
 }
 
@@ -77,6 +90,30 @@ func envOrDefault(key, fallback string) string {
 		return v
 	}
 	return fallback
+}
+
+func envIntOrDefault(key string, fallback int) int {
+	raw := strings.TrimSpace(os.Getenv(key))
+	if raw == "" {
+		return fallback
+	}
+	n, err := strconv.Atoi(raw)
+	if err != nil || n < 0 {
+		return fallback
+	}
+	return n
+}
+
+func envInt64OrDefault(key string, fallback int64) int64 {
+	raw := strings.TrimSpace(os.Getenv(key))
+	if raw == "" {
+		return fallback
+	}
+	n, err := strconv.ParseInt(raw, 10, 64)
+	if err != nil || n < 0 {
+		return fallback
+	}
+	return n
 }
 
 // parseCSV splits a comma-separated list and trims whitespace. Empty
