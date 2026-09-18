@@ -127,7 +127,7 @@ func (r *AuditRepo) ListActivity(ctx context.Context, f domain.AuditActivityFilt
 		   AND ($2::timestamptz IS NULL OR a.event_at < $2)
 		   AND ($3::text = '' OR a.event_type::text = $3)
 		   AND ($4::int IS NULL OR a.performed_by = $4)
-		   AND ($5::text = '' OR right(a.vin, length($5)) = $5)
+		   AND ($5::text = '' OR right(COALESCE(a.vin, ''), length($5)) = $5)
 		   AND ($6::text = '' OR COALESCE(u.full_name, '') ILIKE '%' || $6 || '%'
 		        OR COALESCE(u.email, '') ILIKE '%' || $6 || '%')
 		   AND a.event_type IN (
