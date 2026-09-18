@@ -6,11 +6,12 @@ import (
 	"github.com/karea/backend/internal/domain"
 )
 
-// Every declared AuditEvent constant must appear in WorkAuditEventTypes so a
-// new enum value cannot be added without deciding whether it blocks DELETE.
+// Every shop-floor AuditEvent constant must appear in WorkAuditEventTypes so a
+// new work enum value cannot be added without deciding whether it blocks DELETE.
+// Auth-only events (LOGIN_RATE_LIMITED) are intentionally excluded.
 func TestWorkAuditEventTypesCoversAllConstants(t *testing.T) {
 	t.Parallel()
-	declared := []domain.AuditEvent{
+	workEvents := []domain.AuditEvent{
 		domain.AuditEventStatusChange,
 		domain.AuditEventLocationChange,
 		domain.AuditEventStationEnter,
@@ -21,6 +22,9 @@ func TestWorkAuditEventTypesCoversAllConstants(t *testing.T) {
 		domain.AuditEventEOLWorkflowStage,
 		domain.AuditEventMediaUploaded,
 	}
+	nonWork := []domain.AuditEvent{
+		domain.AuditEventLoginRateLimited,
+	}
 	seen := make(map[domain.AuditEvent]bool, len(domain.WorkAuditEventTypes))
 	for _, ev := range domain.WorkAuditEventTypes {
 		if seen[ev] {
@@ -28,13 +32,18 @@ func TestWorkAuditEventTypesCoversAllConstants(t *testing.T) {
 		}
 		seen[ev] = true
 	}
-	if len(domain.WorkAuditEventTypes) != len(declared) {
-		t.Errorf("WorkAuditEventTypes has %d entries, want %d declared constants",
-			len(domain.WorkAuditEventTypes), len(declared))
+	if len(domain.WorkAuditEventTypes) != len(workEvents) {
+		t.Errorf("WorkAuditEventTypes has %d entries, want %d work constants",
+			len(domain.WorkAuditEventTypes), len(workEvents))
 	}
-	for _, ev := range declared {
+	for _, ev := range workEvents {
 		if !seen[ev] {
-			t.Errorf("%q is a declared AuditEvent but missing from WorkAuditEventTypes", ev)
+			t.Errorf("%q is a work AuditEvent but missing from WorkAuditEventTypes", ev)
+		}
+	}
+	for _, ev := range nonWork {
+		if seen[ev] {
+			t.Errorf("%q must not block user DELETE (not a work event)", ev)
 		}
 	}
 }

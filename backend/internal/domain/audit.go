@@ -15,12 +15,15 @@ const (
 	AuditEventEOLWorkflowStage    AuditEvent = "EOL_WORKFLOW_STAGE_CHANGE"
 	AuditEventMediaUploaded       AuditEvent = "MEDIA_UPLOADED"
 	AuditEventIssueClassification AuditEvent = "ISSUE_CLASSIFICATION_CHANGE"
+	// AuditEventLoginRateLimited records a blocked login (account lock or IP
+	// ceiling). Not a shop-floor work event — omitted from WorkAuditEventTypes.
+	AuditEventLoginRateLimited AuditEvent = "LOGIN_RATE_LIMITED"
 )
 
 // WorkAuditEventTypes is the allowlist of audit_logs.event_type values that
 // count as real shop-floor work when deciding whether a user may be hard-
 // deleted (Karar 7: audit_logs is the issue/vehicle history — there is no
-// separate Issue_History table). Login/session is not written to this table.
+// separate Issue_History table). LOGIN_RATE_LIMITED is auth telemetry only.
 //
 // When you add a value to audit_event_enum, add it here if the acting user
 // must be retained. Omitting it means that event will not block DELETE.

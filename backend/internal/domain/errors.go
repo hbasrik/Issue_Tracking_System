@@ -3,7 +3,9 @@ package domain
 import (
 	"errors"
 	"fmt"
+	"math"
 	"strings"
+	"time"
 )
 
 // Sentinel domain errors. These are transport-agnostic; the delivery layer
@@ -146,6 +148,33 @@ var (
 	// ErrCannotDeleteSelf indicates an admin tried to DELETE their own row.
 	ErrCannotDeleteSelf = errors.New("you cannot delete your own account")
 )
+
+// LoginRateLimitedError is returned when an account is locked after too many
+// failed logins, or when the shared-egress IP ceiling is hit. Clients show the
+// remaining wait in minutes.
+type LoginRateLimitedError struct {
+	RetryAfter time.Duration
+}
+
+// NewLoginRateLimitedError builds a 429 payload with a ceil-minute wait.
+func NewLoginRateLimitedError(remaining time.Duration) *LoginRateLimitedError {
+	if remaining < time.Second {
+		remaining = time.Second
+	}
+	return &LoginRateLimitedError{RetryAfter: remaining}
+}
+
+// Error implements the error interface with a stable English phrase clients map.
+func (e *LoginRateLimitedError) Error() string {
+	mins := 1
+	if e != nil && e.RetryAfter > 0 {
+		mins = int(math.Ceil(e.RetryAfter.Seconds() / 60))
+		if mins < 1 {
+			mins = 1
+		}
+	}
+	return fmt.Sprintf("too many failed login attempts. try again in %d minutes", mins)
+}
 
 // DatabaseRejectedError wraps a PostgreSQL RAISE EXCEPTION (SQLSTATE P0001)
 // so hard-block gates enforced only in the database still reach the client
