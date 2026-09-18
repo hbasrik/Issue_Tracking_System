@@ -7,23 +7,85 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	apphttp "github.com/karea/backend/internal/delivery/http"
 	"github.com/karea/backend/internal/domain"
 	"github.com/karea/backend/internal/platform/applog"
+	"github.com/karea/backend/internal/platform/auth"
 )
+
+func panicProbeRouter(t *testing.T, appEnv string, enableProbe bool) (http.Handler, *auth.Issuer) {
+	t.Helper()
+	issuer := auth.NewIssuer("test-secret", time.Hour)
+	router := apphttp.NewRouter(apphttp.Deps{
+		CORSAllowedOrigins: []string{"http://localhost:5173"},
+		AppEnv:             appEnv,
+		EnablePanicProbe:   enableProbe,
+		Issuer:             issuer,
+	})
+	return router, issuer
+}
+
+func authGET(t *testing.T, issuer *auth.Issuer, path string) *http.Request {
+	t.Helper()
+	token, err := issuer.Issue(1, domain.RoleCodeOperator)
+	if err != nil {
+		t.Fatalf("issue token: %v", err)
+	}
+	req := httptest.NewRequest(http.MethodGet, path, nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	return req
+}
+
+func TestPanicProbe_ProductionConfig_NotFound(t *testing.T) {
+	// Negative proof: production AppEnv must not register the probe even when
+	// EnablePanicProbe is incorrectly true — flag presence alone is not enough.
+	router, issuer := panicProbeRouter(t, "production", true)
+
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, authGET(t, issuer, "/api/v1/__test/panic"))
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("production+probe flag: status = %d, want 404 (body: %s)", rec.Code, rec.Body.String())
+	}
+
+	// Unauthenticated must also 404 (route absent), not 401.
+	bare := httptest.NewRecorder()
+	router.ServeHTTP(bare, httptest.NewRequest(http.MethodGet, "/api/v1/__test/panic", nil))
+	if bare.Code != http.StatusNotFound {
+		t.Fatalf("production bare: status = %d, want 404", bare.Code)
+	}
+}
+
+func TestPanicProbe_RequiresAuth(t *testing.T) {
+	router, issuer := panicProbeRouter(t, "development", true)
+
+	unauth := httptest.NewRecorder()
+	router.ServeHTTP(unauth, httptest.NewRequest(http.MethodGet, "/api/v1/__test/panic", nil))
+	if unauth.Code != http.StatusUnauthorized {
+		t.Fatalf("unauthenticated probe: status = %d, want 401 (body: %s)", unauth.Code, unauth.Body.String())
+	}
+
+	// Authenticated request reaches the handler and is recovered as 500.
+	var logBuf bytes.Buffer
+	applog.SetOutputForTest(&logBuf, applog.LevelDebug)
+	t.Cleanup(func() { applog.SetOutputForTest(nil, applog.LevelInfo) })
+
+	authRec := httptest.NewRecorder()
+	router.ServeHTTP(authRec, authGET(t, issuer, "/api/v1/__test/panic"))
+	if authRec.Code != http.StatusInternalServerError {
+		t.Fatalf("authenticated probe: status = %d, want 500", authRec.Code)
+	}
+}
 
 func TestRecoverPanic_Returns500KeepsProcess(t *testing.T) {
 	var logBuf bytes.Buffer
 	applog.SetOutputForTest(&logBuf, applog.LevelDebug)
 	t.Cleanup(func() { applog.SetOutputForTest(nil, applog.LevelInfo) })
 
-	router := apphttp.NewRouter(apphttp.Deps{
-		CORSAllowedOrigins: []string{"http://localhost:5173"},
-		EnablePanicProbe:   true,
-	})
+	router, issuer := panicProbeRouter(t, "development", true)
 
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/__test/panic", nil)
+	req := authGET(t, issuer, "/api/v1/__test/panic")
 	rec := httptest.NewRecorder()
 	router.ServeHTTP(rec, req)
 
@@ -84,15 +146,9 @@ func TestUnhandledError_5xxIncludesRequestID(t *testing.T) {
 	applog.SetOutputForTest(&logBuf, applog.LevelDebug)
 	t.Cleanup(func() { applog.SetOutputForTest(nil, applog.LevelInfo) })
 
-	// Login with limiter nil and Auth that returns a non-mapped error is hard;
-	// hit panic path already covers request_id. Here verify a forced 500 via
-	// the probe is enough; add a tiny router that calls writeError with a plain error.
-	router := apphttp.NewRouter(apphttp.Deps{
-		CORSAllowedOrigins: []string{"http://localhost:5173"},
-		EnablePanicProbe:   true,
-	})
+	router, issuer := panicProbeRouter(t, "development", true)
 	rec := httptest.NewRecorder()
-	router.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/v1/__test/panic", nil))
+	router.ServeHTTP(rec, authGET(t, issuer, "/api/v1/__test/panic"))
 	if rec.Code != 500 {
 		t.Fatalf("status=%d", rec.Code)
 	}

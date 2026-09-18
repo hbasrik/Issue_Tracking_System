@@ -15,7 +15,7 @@ function run(args) {
 }
 
 const suites = [
-  ['./internal/delivery/http/', '-run', 'TestRecoverPanic_Returns500KeepsProcess|TestLogin_PasswordNotLogged|TestUnhandledError_5xxIncludesRequestID', '-count=1', '-v'],
+  ['./internal/delivery/http/', '-run', 'TestRecoverPanic_Returns500KeepsProcess|TestLogin_PasswordNotLogged|TestUnhandledError_5xxIncludesRequestID|TestPanicProbe_ProductionConfig_NotFound|TestPanicProbe_RequiresAuth', '-count=1', '-v'],
   ['./internal/platform/applog/', '-count=1', '-v'],
 ];
 

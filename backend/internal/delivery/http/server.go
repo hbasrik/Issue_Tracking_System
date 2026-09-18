@@ -54,7 +54,9 @@ type Deps struct {
 	// so clients can display attachment images from storage_path.
 	UploadDir string
 	// EnablePanicProbe registers GET /api/v1/__test/panic for recovery tests.
-	// Must stay false in production binaries.
+	// Only takes effect when AppEnv is development; production configs never
+	// register the route even if this flag is true. Must stay false in
+	// production binaries (main never sets it).
 	EnablePanicProbe bool
 }
 
@@ -94,9 +96,15 @@ func NewRouter(deps Deps) http.Handler {
 		writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 	})
 
-	if deps.EnablePanicProbe {
-		r.Get("/api/v1/__test/panic", func(http.ResponseWriter, *http.Request) {
-			panic("intentional panic probe")
+	// Panic probe: development-only and authenticated. Production AppEnv never
+	// registers the route (404), so a mis-set EnablePanicProbe cannot expose it.
+	// Auth stops unauthenticated clients from inflating panic logs on the LAN.
+	if deps.EnablePanicProbe && s.isDevelopment() && deps.Issuer != nil {
+		r.Group(func(r chi.Router) {
+			r.Use(RequireAuth(deps.Issuer))
+			r.Get("/api/v1/__test/panic", func(http.ResponseWriter, *http.Request) {
+				panic("intentional panic probe")
+			})
 		})
 	}
 
