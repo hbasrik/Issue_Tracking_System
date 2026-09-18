@@ -910,6 +910,12 @@ export const tr = {
   'users.role': 'Rol',
   'users.tempPassword': 'Geçici şifre',
   'users.resetPassword': 'Şifreyi sıfırla',
+  'users.unlockLogin': 'Giriş kilidini aç',
+  'users.unlockLoginConfirm':
+    '{name} için giriş kilidi kaldırılsın mı? Kullanıcı hemen tekrar deneyebilir.',
+  'users.unlockLoginTitle': 'Giriş kilidini aç',
+  'users.unlockFailed': 'Kilit açılamadı',
+  'users.loginLocked': 'Giriş kilitli (~{minutes} dk)',
   'users.cannotChangeOwnRole': 'Kendi rolünüzü değiştiremezsiniz.',
   'users.cannotDeactivateSelf': 'Kendi hesabınızı pasife çekemezsiniz.',
   'users.lastAdmin': 'En az bir aktif yönetici kalmalıdır.',
@@ -1061,6 +1067,10 @@ export const tr = {
   'report.saveContinue': 'Issue’ı Kaydet ve Devam Et',
   'report.continueNoPhoto': 'Fotoğrafsız devam et',
   'report.save': 'Issue’ı Kaydet',
+  'report.sessionExpired':
+    'Oturumunuz sona erdi. Giriş yapıp forma geri dönebilirsiniz — alanlar korunur.',
+  'report.submitKeepEditing':
+    'Gönderilemedi. Form içeriği korundu; düzelttiğinizde tekrar deneyin.',
   'report.stationStepFailed': 'İstasyon adımı güncellenemedi',
   'report.stationStepSubtitle': 'İstasyon adımı hata bildirimi',
   'report.readOnly': '{name} (salt okunur)',
@@ -1121,6 +1131,8 @@ export const tr = {
   'email.domainDeniedShort': 'Bu alan adına izin yok.',
 
   'error.invalidCredentials': 'E-posta veya şifre yanlış.',
+  'error.loginRateLimited':
+    'Çok fazla hatalı deneme. {minutes} dakika sonra tekrar deneyin.',
   'error.passwordTooShort': 'Şifre en az 8 karakter olmalı.',
   'error.passwordTooWeak': 'Şifre en az bir harf ve bir rakam içermeli.',
   'error.passwordMismatch': 'Yeni şifre ve tekrarı eşleşmiyor.',
@@ -1732,6 +1744,12 @@ export const en: Record<MessageKey, string> = {
   'users.role': 'Role',
   'users.tempPassword': 'Temporary password',
   'users.resetPassword': 'Reset password',
+  'users.unlockLogin': 'Unlock login',
+  'users.unlockLoginConfirm':
+    'Clear the login lock for {name}? They can try again immediately.',
+  'users.unlockLoginTitle': 'Unlock login',
+  'users.unlockFailed': 'Could not unlock login',
+  'users.loginLocked': 'Login locked (~{minutes} min)',
   'users.cannotChangeOwnRole': 'You cannot change your own role.',
   'users.cannotDeactivateSelf': 'You cannot deactivate your own account.',
   'users.lastAdmin': 'At least one active administrator must remain.',
@@ -1859,6 +1877,10 @@ export const en: Record<MessageKey, string> = {
   'report.saveContinue': 'Save Issue and continue',
   'report.continueNoPhoto': 'Continue without photo',
   'report.save': 'Save Issue',
+  'report.sessionExpired':
+    'Your session expired. Sign in again and return to this form — your fields are kept.',
+  'report.submitKeepEditing':
+    'Could not submit. Your form was kept; fix the issue and try again.',
   'report.stationStepFailed': 'Could not update station step',
 
   'email.formatHint':
@@ -1868,6 +1890,8 @@ export const en: Record<MessageKey, string> = {
   'email.domainDeniedShort': 'This domain is not allowed.',
 
   'error.invalidCredentials': 'Email or password is incorrect.',
+  'error.loginRateLimited':
+    'Too many failed attempts. Try again in {minutes} minutes.',
   'error.passwordTooShort': 'Password must be at least 8 characters.',
   'error.passwordTooWeak': 'Password must contain a letter and a digit.',
   'error.passwordMismatch': 'New password and confirmation do not match.',

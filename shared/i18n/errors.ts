@@ -77,6 +77,13 @@ export function translateApiError(t: Translate, err: unknown): string {
       : t('email.domainDeniedShort');
   }
 
+  const loginLimited = msg.match(
+    /^too many failed login attempts\. try again in (\d+) minutes$/,
+  );
+  if (loginLimited) {
+    return t('error.loginRateLimited', { minutes: loginLimited[1] });
+  }
+
   const templateInUse = msg.match(
     /^bu madde (\d+) araçta kullanılmış, silinemez/,
   );
