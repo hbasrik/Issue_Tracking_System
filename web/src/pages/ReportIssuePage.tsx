@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
+  ApiError,
   api,
   type DefectPart,
   type DefectType,
@@ -19,16 +20,76 @@ import {
   isOtherTypeCode,
   validateDefectClassification,
 } from '../lib/issueDefectValidation';
+import { isAuthError } from '../../../shared/networkError';
 
 const SEVERITIES = ['CRITICAL', 'MEDIUM', 'LOW'] as const;
+const DRAFT_KEY = 'karea.reportIssue.draft.v1';
 
 const inputClass =
   'min-h-touch w-full rounded-lg border bg-[var(--bg-page)] px-3 text-[14px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]';
 const btnPrimary =
   'min-h-touch rounded-lg bg-[var(--accent)] px-4 text-[14px] font-medium text-white disabled:opacity-40';
 
+type ReportDraft = {
+  vehicle?: Vehicle | null;
+  stationId?: number | '';
+  zoneId?: number | '';
+  partId?: number | '';
+  typeId?: number | '';
+  customPartName?: string;
+  customDefectName?: string;
+  issueTypeId?: number | '';
+  severity?: (typeof SEVERITIES)[number] | '';
+  description?: string;
+  photo?: { name: string; type: string; dataUrl: string } | null;
+};
+
 function nameOf(tr: string, en: string, locale: string) {
   return locale === 'en' ? en || tr : tr || en;
+}
+
+async function fileToDraftPhoto(file: File): Promise<NonNullable<ReportDraft['photo']>> {
+  const dataUrl = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result ?? ''));
+    reader.onerror = () => reject(reader.error ?? new Error('read failed'));
+    reader.readAsDataURL(file);
+  });
+  return { name: file.name, type: file.type || 'image/jpeg', dataUrl };
+}
+
+async function draftPhotoToFile(
+  photo: NonNullable<ReportDraft['photo']>,
+): Promise<File> {
+  const res = await fetch(photo.dataUrl);
+  const blob = await res.blob();
+  return new File([blob], photo.name, { type: photo.type || blob.type });
+}
+
+function clearReportDraft() {
+  try {
+    sessionStorage.removeItem(DRAFT_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
+async function writeReportDraft(draft: ReportDraft) {
+  try {
+    sessionStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+  } catch {
+    /* ignore quota */
+  }
+}
+
+function readReportDraft(): ReportDraft | null {
+  try {
+    const raw = sessionStorage.getItem(DRAFT_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as ReportDraft;
+  } catch {
+    return null;
+  }
 }
 
 /** Standalone web issue report — MANUAL source with defect classification. */
@@ -59,6 +120,35 @@ export default function ReportIssuePage() {
   const [busy, setBusy] = useState(false);
 
   const needsStation = vehicle?.CurrentGlobalStatus === 'IN_PRODUCTION';
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const draft = readReportDraft();
+      if (!draft || cancelled) return;
+      if (draft.vehicle) setVehicle(draft.vehicle);
+      if (draft.stationId !== undefined) setStationId(draft.stationId);
+      if (draft.zoneId !== undefined) setZoneId(draft.zoneId);
+      if (draft.partId !== undefined) setPartId(draft.partId);
+      if (draft.typeId !== undefined) setTypeId(draft.typeId);
+      if (draft.customPartName !== undefined) setCustomPartName(draft.customPartName);
+      if (draft.customDefectName !== undefined) setCustomDefectName(draft.customDefectName);
+      if (draft.issueTypeId !== undefined) setIssueTypeId(draft.issueTypeId);
+      if (draft.severity !== undefined) setSeverity(draft.severity);
+      if (draft.description !== undefined) setDescription(draft.description);
+      if (draft.photo?.dataUrl) {
+        try {
+          const file = await draftPhotoToFile(draft.photo);
+          if (!cancelled) setPhoto(file);
+        } catch {
+          /* photo may need re-pick */
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -186,9 +276,32 @@ export default function ReportIssuePage() {
           : undefined,
       });
       await api.uploadMedia('ISSUE', String(issue.ID), photo);
+      clearReportDraft();
       navigate(`/issues`, { replace: true, state: { highlightIssueId: issue.ID } });
     } catch (err) {
-      setError(apiErrorMessage(err, t));
+      try {
+        await writeReportDraft({
+          vehicle,
+          stationId,
+          zoneId,
+          partId,
+          typeId,
+          customPartName,
+          customDefectName,
+          issueTypeId,
+          severity,
+          description,
+          photo: photo ? await fileToDraftPhoto(photo) : null,
+        });
+      } catch {
+        /* keep React state even if sessionStorage fails */
+      }
+      const mapped = apiErrorMessage(err, t);
+      if (isAuthError(err) || (err instanceof ApiError && err.status === 401)) {
+        setError(`${t('report.sessionExpired')} ${mapped}`);
+      } else {
+        setError(`${t('report.submitKeepEditing')} ${mapped}`);
+      }
     } finally {
       setBusy(false);
     }
