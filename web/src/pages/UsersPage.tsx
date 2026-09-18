@@ -80,6 +80,7 @@ function UserAssignControls({
   onRole,
   onActive,
   onReset,
+  onUnlock,
   onDelete,
 }: {
   user: User;
@@ -90,12 +91,18 @@ function UserAssignControls({
   onRole: (role: UserRole) => void;
   onActive: (isActive: boolean) => void;
   onReset: () => void;
+  onUnlock: () => void;
   onDelete: () => void;
 }) {
   const { t } = useI18n();
   const reasonId = useId();
   const adminRoles = userAdminRoleCodes(roles);
   const locks = userEditLocks(u, currentUserId, users, adminRoles, t);
+  const lockedUntil = u.LoginLockedUntil ? Date.parse(u.LoginLockedUntil) : NaN;
+  const lockMinutes = Number.isFinite(lockedUntil)
+    ? Math.max(1, Math.ceil((lockedUntil - Date.now()) / 60_000))
+    : 0;
+  const isLoginLocked = lockMinutes > 0;
   const selectClass =
     'min-h-touch rounded-lg border bg-[var(--bg-page)] px-2 text-[13px] disabled:cursor-not-allowed disabled:opacity-60';
   const helpId = locks.roleSelectDisabled || locks.activeSelectDisabled || locks.resetDisabled || locks.deleteDisabled
@@ -104,6 +111,11 @@ function UserAssignControls({
 
   return (
     <div className="flex flex-col gap-2">
+      {isLoginLocked ? (
+        <p className="text-[12px]" style={{ color: 'var(--status-not-ok)' }}>
+          {t('users.loginLocked', { minutes: lockMinutes })}
+        </p>
+      ) : null}
       <div className="flex flex-wrap gap-2">
         <select
           value={u.Role}
@@ -148,6 +160,17 @@ function UserAssignControls({
         >
           {t('users.resetPassword')}
         </button>
+        {isLoginLocked ? (
+          <button
+            type="button"
+            disabled={busy}
+            onClick={onUnlock}
+            className="min-h-touch rounded-lg border px-3 text-[13px] disabled:cursor-not-allowed disabled:opacity-60"
+            style={{ borderColor: 'var(--border)' }}
+          >
+            {t('users.unlockLogin')}
+          </button>
+        ) : null}
       </div>
       <button
         type="button"
@@ -444,6 +467,25 @@ export default function UsersPage() {
     }
   }
 
+  async function unlockLogin(u: User) {
+    const ok = await confirm({
+      title: t('users.unlockLoginTitle'),
+      message: t('users.unlockLoginConfirm', { name: u.FullName }),
+      tone: 'warning',
+    });
+    if (!ok) return;
+    setBusyId(u.ID);
+    setError(null);
+    try {
+      const updated = await api.unlockUserLogin(u.ID);
+      setUsers((prev) => prev.map((row) => (row.ID === updated.ID ? updated : row)));
+    } catch (err) {
+      setError(err instanceof ApiError ? apiErrorMessage(err, t) : t('users.unlockFailed'));
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   async function deleteUser(u: User) {
     const ok = await confirm({
       title: t('users.deleteTitle'),
@@ -545,6 +587,7 @@ export default function UsersPage() {
                   onRole={(role) => void patch(u.ID, { role })}
                   onActive={(isActive) => void patch(u.ID, { is_active: isActive })}
                   onReset={() => void resetPassword(u)}
+                  onUnlock={() => void unlockLogin(u)}
                   onDelete={() => void deleteUser(u)}
                 />
               </DataCardField>
@@ -600,6 +643,7 @@ export default function UsersPage() {
                       onRole={(role) => void patch(u.ID, { role })}
                       onActive={(isActive) => void patch(u.ID, { is_active: isActive })}
                       onReset={() => void resetPassword(u)}
+                  onUnlock={() => void unlockLogin(u)}
                   onDelete={() => void deleteUser(u)}
                     />
                   </td>

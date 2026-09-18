@@ -30,6 +30,7 @@ export interface User {
   IsActive: boolean;
   MustChangePassword?: boolean;
   CreatedAt?: string;
+  LoginLockedUntil?: string;
 }
 
 export interface LoginResponse {
@@ -163,6 +164,12 @@ export const api = {
 
   resetUserPassword(id: number) {
     return request<{ temporary_password: string }>(`/users/${id}/reset-password`, {
+      method: 'POST',
+    });
+  },
+
+  unlockUserLogin(id: number) {
+    return request<User>(`/users/${id}/unlock-login`, {
       method: 'POST',
     });
   },
