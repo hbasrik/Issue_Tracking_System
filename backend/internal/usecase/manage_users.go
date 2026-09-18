@@ -47,6 +47,11 @@ func (a *UserAdmin) List(ctx context.Context) ([]domain.User, error) {
 	return a.users.List(ctx)
 }
 
+// GetByID returns one user for admin unlock and similar actions.
+func (a *UserAdmin) GetByID(ctx context.Context, id int) (*domain.User, error) {
+	return a.users.GetByID(ctx, id)
+}
+
 // Update applies a role and/or is_active change.
 //
 // Order of checks:

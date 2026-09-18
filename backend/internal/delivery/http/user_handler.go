@@ -25,7 +25,7 @@ func (s *server) handleUserList(w http.ResponseWriter, r *http.Request) {
 	}
 	out := make([]loginUser, 0, len(items))
 	for i := range items {
-		out = append(out, publicUser(&items[i]))
+		out = append(out, publicUserWithLock(&items[i], s.deps.LoginLimiter))
 	}
 	writeJSON(w, http.StatusOK, map[string]any{
 		"items":                 out,
@@ -116,6 +116,29 @@ func (s *server) handleUserResetPassword(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"temporary_password": plain})
+}
+
+// handleUserUnlockLogin clears in-memory login lockout for the target account
+// so an admin does not need database access after lockouts.
+func (s *server) handleUserUnlockLogin(w http.ResponseWriter, r *http.Request) {
+	if s.deps.Users == nil {
+		writeError(w, domain.ErrNotFound)
+		return
+	}
+	id, err := strconv.Atoi(chi.URLParam(r, "id"))
+	if err != nil || id < 1 {
+		badRequest(w, "id must be a positive integer")
+		return
+	}
+	user, err := s.deps.Users.GetByID(r.Context(), id)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	if s.deps.LoginLimiter != nil {
+		s.deps.LoginLimiter.Unlock(user.Email)
+	}
+	writeJSON(w, http.StatusOK, publicUserWithLock(user, s.deps.LoginLimiter))
 }
 
 // handleUserDelete hard-deletes an unused user. Referenced accounts, self,

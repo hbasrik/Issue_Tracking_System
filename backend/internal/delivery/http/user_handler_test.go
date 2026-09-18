@@ -169,6 +169,15 @@ func usersRouterWithRefs(users map[int]*domain.User, refs map[int]int) http.Hand
 }
 
 func usersRouterFull(users map[int]*domain.User, domains []string, refs map[int]int) http.Handler {
+	return usersRouterWithLimiter(users, domains, refs, nil)
+}
+
+func usersRouterWithLimiter(
+	users map[int]*domain.User,
+	domains []string,
+	refs map[int]int,
+	lim *usecase.LoginLimiter,
+) http.Handler {
 	roles := newFakeRoleRepo()
 	copied := make(map[int]*domain.User, len(users))
 	for id, u := range users {
@@ -177,9 +186,11 @@ func usersRouterFull(users map[int]*domain.User, domains []string, refs map[int]
 	}
 	issuer := auth.NewIssuer("test-secret", time.Hour)
 	return apphttp.NewRouter(apphttp.Deps{
-		Issuer: issuer,
-		Roles:  roles,
-		Users:  usecase.NewUserAdmin(&httpAdminUserRepo{users: copied, refs: refs}, roles, domains),
+		Issuer:       issuer,
+		Auth:         usecase.NewAuthenticator(&httpAdminUserRepo{users: copied, refs: refs}),
+		Roles:        roles,
+		Users:        usecase.NewUserAdmin(&httpAdminUserRepo{users: copied, refs: refs}, roles, domains),
+		LoginLimiter: lim,
 	})
 }
 
@@ -541,5 +552,37 @@ func TestUserDelete_OperatorForbidden(t *testing.T) {
 	rec := deleteUser(router, token, 2)
 	if rec.Code != http.StatusForbidden {
 		t.Fatalf("status = %d body %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestUserUnlockLogin_ClearsAccountLock(t *testing.T) {
+	op := httpUser(2, httpOperatorRole)
+	op.Email = "op@karea.local"
+	op.PasswordHash = hashPassword(t, "secret12")
+	lim := usecase.NewLoginLimiter(nil)
+	for i := 0; i < 5; i++ {
+		_ = lim.Check(context.Background(), op.Email, "10.0.0.1")
+		lim.RecordFailure(op.Email)
+	}
+	if err := lim.Check(context.Background(), op.Email, "10.0.0.1"); err == nil {
+		t.Fatal("expected lock before unlock")
+	}
+
+	router := usersRouterWithLimiter(map[int]*domain.User{
+		1: httpUser(1, httpManagerRole),
+		2: op,
+	}, nil, nil, lim)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/users/2/unlock-login", nil)
+	req.Header.Set("Authorization", "Bearer "+managerToken(t, router))
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("unlock status = %d body %s", rec.Code, rec.Body.String())
+	}
+
+	login := postLogin(router, op.Email, "secret12")
+	if login.Code != http.StatusOK {
+		t.Fatalf("login after unlock = %d body %s", login.Code, login.Body.String())
 	}
 }
