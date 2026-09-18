@@ -1,11 +1,13 @@
 package http
 
 import (
+	"errors"
 	"net/http"
 	"sort"
 	"time"
 
 	"github.com/karea/backend/internal/domain"
+	"github.com/karea/backend/internal/usecase"
 )
 
 type loginRequest struct {
@@ -23,19 +25,19 @@ type loginResponse struct {
 // its code so the API contract is unchanged now that domain.User.Role is a
 // table row rather than an enum value.
 type loginUser struct {
-	ID                 int       `json:"ID"`
-	FullName           string    `json:"FullName"`
-	Email              string    `json:"Email"`
-	Role               string    `json:"Role"`
-	IsActive           bool      `json:"IsActive"`
-	MustChangePassword bool      `json:"MustChangePassword"`
-	CreatedAt          time.Time `json:"CreatedAt"`
+	ID                 int        `json:"ID"`
+	FullName           string     `json:"FullName"`
+	Email              string     `json:"Email"`
+	Role               string     `json:"Role"`
+	IsActive           bool       `json:"IsActive"`
+	MustChangePassword bool       `json:"MustChangePassword"`
+	CreatedAt          time.Time  `json:"CreatedAt"`
+	LoginLockedUntil   *time.Time `json:"LoginLockedUntil,omitempty"`
 }
 
 // handleLogin verifies credentials and returns a signed JWT carrying the user
-// id and role claim. The password is checked with bcrypt in the usecase; it is
-// never compared as plaintext, and the User's password hash is never returned
-// (it is tagged json:"-").
+// id and role claim. Account lockouts and a high IP ceiling are enforced so
+// factory shared-egress traffic is not blocked by one noisy account.
 func (s *server) handleLogin(w http.ResponseWriter, r *http.Request) {
 	var req loginRequest
 	if err := decodeJSON(r, &req); err != nil {
@@ -47,10 +49,25 @@ func (s *server) handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	ip := usecase.ClientIP(r.RemoteAddr, r.Header.Get("X-Forwarded-For"))
+	if s.deps.LoginLimiter != nil {
+		if err := s.deps.LoginLimiter.Check(r.Context(), req.Email, ip); err != nil {
+			writeError(w, err)
+			return
+		}
+	}
+
 	user, err := s.deps.Auth.Login(r.Context(), req.Email, req.Password)
 	if err != nil {
+		if s.deps.LoginLimiter != nil && errors.Is(err, domain.ErrInvalidCredentials) {
+			s.deps.LoginLimiter.RecordFailure(req.Email)
+		}
 		writeError(w, err)
 		return
+	}
+
+	if s.deps.LoginLimiter != nil {
+		s.deps.LoginLimiter.RecordSuccess(req.Email)
 	}
 
 	token, err := s.deps.Issuer.Issue(user.ID, user.Role.Code)
@@ -112,6 +129,18 @@ func publicUser(user *domain.User) loginUser {
 		MustChangePassword: user.MustChangePassword,
 		CreatedAt:          user.CreatedAt,
 	}
+}
+
+func publicUserWithLock(user *domain.User, limiter *usecase.LoginLimiter) loginUser {
+	out := publicUser(user)
+	if limiter == nil {
+		return out
+	}
+	until := limiter.LockedUntil(user.Email)
+	if !until.IsZero() {
+		out.LoginLockedUntil = &until
+	}
+	return out
 }
 
 func permissionCodes(granted []domain.Permission) []string {

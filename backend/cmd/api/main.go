@@ -41,6 +41,7 @@ func main() {
 	auditRepo := postgres.NewAuditRepo(pool)
 	defectCatalogRepo := postgres.NewDefectCatalogRepo(pool)
 	uow := postgres.NewUnitOfWork(pool)
+	loginLimiter := usecase.NewLoginLimiter(auditRepo)
 
 	issuer := auth.NewIssuer(cfg.JWTSecret, 24*time.Hour)
 	mediaStore := storage.NewLocalDisk(cfg.UploadDir)
@@ -75,6 +76,7 @@ func main() {
 		ShipmentReadiness:  usecase.NewShipmentReadinessReader(vehicleRepo, checklists, issueRepo),
 		Media:              usecase.NewMediaUploader(mediaRepo, mediaStore),
 		DefectCatalog:      usecase.NewDefectCatalogAdmin(defectCatalogRepo, issueRepo, auditRepo, uow),
+		LoginLimiter:       loginLimiter,
 		CORSAllowedOrigins: cfg.CORSAllowedOrigins,
 		AppEnv:             cfg.AppEnv,
 		UploadDir:          cfg.UploadDir,

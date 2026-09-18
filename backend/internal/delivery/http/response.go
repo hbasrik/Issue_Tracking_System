@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/karea/backend/internal/domain"
 	"github.com/karea/backend/internal/platform/auth"
@@ -48,6 +49,7 @@ func writeError(w http.ResponseWriter, err error) {
 	var emailDomain *domain.EmailDomainNotAllowedError
 	var userInUse *domain.UserInUseError
 	var propEmpty *domain.TemplatePropagationEmptyError
+	var rateLimited *domain.LoginRateLimitedError
 	switch {
 	case errors.As(err, &gate):
 		writeJSON(w, http.StatusConflict, errorResponse{
@@ -79,6 +81,13 @@ func writeError(w http.ResponseWriter, err error) {
 		writeJSON(w, http.StatusBadRequest, errorResponse{Error: emailDomain.Error()})
 	case errors.As(err, &propEmpty):
 		writeJSON(w, http.StatusConflict, errorResponse{Error: propEmpty.Error()})
+	case errors.As(err, &rateLimited):
+		secs := int(rateLimited.RetryAfter.Seconds()) + 1
+		if secs < 1 {
+			secs = 1
+		}
+		w.Header().Set("Retry-After", strconv.Itoa(secs))
+		writeJSON(w, http.StatusTooManyRequests, errorResponse{Error: rateLimited.Error()})
 	case errors.Is(err, domain.ErrDepotChecklistLocked),
 		errors.Is(err, domain.ErrInvalidStatusTransition),
 		errors.Is(err, domain.ErrCannotHold),

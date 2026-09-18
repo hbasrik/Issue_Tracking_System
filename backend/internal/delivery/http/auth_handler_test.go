@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -90,10 +91,16 @@ func hashPassword(t *testing.T, password string) string {
 
 func loginRouter(t *testing.T, users map[string]*domain.User) http.Handler {
 	t.Helper()
+	return loginRouterWithLimiter(t, users, usecase.NewLoginLimiter(nil))
+}
+
+func loginRouterWithLimiter(t *testing.T, users map[string]*domain.User, lim *usecase.LoginLimiter) http.Handler {
+	t.Helper()
 	return apphttp.NewRouter(apphttp.Deps{
-		Issuer: auth.NewIssuer("test-secret", time.Hour),
-		Auth:   usecase.NewAuthenticator(&loginUserRepo{byEmail: users}),
-		Roles:  newFakeRoleRepo(),
+		Issuer:       auth.NewIssuer("test-secret", time.Hour),
+		Auth:         usecase.NewAuthenticator(&loginUserRepo{byEmail: users}),
+		Roles:        newFakeRoleRepo(),
+		LoginLimiter: lim,
 	})
 }
 
@@ -304,3 +311,117 @@ func TestLogin_IncludesMustChangePassword(t *testing.T) {
 		t.Fatal("MustChangePassword should be true")
 	}
 }
+
+func TestLogin_RateLimit_LocksAccountEvenWithCorrectPassword(t *testing.T) {
+	users := map[string]*domain.User{
+		"op@karea.local": {
+			ID:           2,
+			Email:        "op@karea.local",
+			PasswordHash: hashPassword(t, "secret12"),
+			IsActive:     true,
+			Role:         domain.Role{Code: domain.RoleCodeOperator, IsActive: true},
+		},
+	}
+	lim := usecase.NewLoginLimiter(nil)
+	router := loginRouterWithLimiter(t, users, lim)
+
+	for i := 0; i < 5; i++ {
+		rec := postLogin(router, "op@karea.local", "wrong-password")
+		if rec.Code != http.StatusUnauthorized {
+			t.Fatalf("fail %d: status = %d body %s", i+1, rec.Code, rec.Body.String())
+		}
+	}
+	rec := postLogin(router, "op@karea.local", "secret12")
+	if rec.Code != http.StatusTooManyRequests {
+		t.Fatalf("locked correct password: status = %d body %s", rec.Code, rec.Body.String())
+	}
+	var body map[string]any
+	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+		t.Fatal(err)
+	}
+	errMsg, _ := body["error"].(string)
+	if !strings.Contains(errMsg, "try again in") {
+		t.Fatalf("error = %q", errMsg)
+	}
+}
+
+func TestLogin_RateLimit_SuccessClearsFailures(t *testing.T) {
+	users := map[string]*domain.User{
+		"op@karea.local": {
+			ID:           2,
+			Email:        "op@karea.local",
+			PasswordHash: hashPassword(t, "secret12"),
+			IsActive:     true,
+			Role:         domain.Role{Code: domain.RoleCodeOperator, IsActive: true},
+		},
+	}
+	router := loginRouterWithLimiter(t, users, usecase.NewLoginLimiter(nil))
+	for i := 0; i < 4; i++ {
+		if rec := postLogin(router, "op@karea.local", "wrong"); rec.Code != http.StatusUnauthorized {
+			t.Fatalf("status = %d", rec.Code)
+		}
+	}
+	if rec := postLogin(router, "op@karea.local", "secret12"); rec.Code != http.StatusOK {
+		t.Fatalf("success after 4 fails: %d %s", rec.Code, rec.Body.String())
+	}
+	for i := 0; i < 4; i++ {
+		if rec := postLogin(router, "op@karea.local", "wrong"); rec.Code != http.StatusUnauthorized {
+			t.Fatalf("post-reset fail %d: %d", i+1, rec.Code)
+		}
+	}
+	if rec := postLogin(router, "op@karea.local", "secret12"); rec.Code != http.StatusOK {
+		t.Fatalf("still unlocked after reset: %d %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestLogin_RateLimit_SharedIPDifferentAccountsIndependent(t *testing.T) {
+	users := map[string]*domain.User{
+		"a@karea.local": {
+			ID: 1, Email: "a@karea.local", PasswordHash: hashPassword(t, "secret12"),
+			IsActive: true, Role: domain.Role{Code: domain.RoleCodeOperator, IsActive: true},
+		},
+		"b@karea.local": {
+			ID: 2, Email: "b@karea.local", PasswordHash: hashPassword(t, "secret12"),
+			IsActive: true, Role: domain.Role{Code: domain.RoleCodeOperator, IsActive: true},
+		},
+	}
+	router := loginRouterWithLimiter(t, users, usecase.NewLoginLimiter(nil))
+	for i := 0; i < 5; i++ {
+		postLogin(router, "a@karea.local", "wrong")
+	}
+	if rec := postLogin(router, "a@karea.local", "secret12"); rec.Code != http.StatusTooManyRequests {
+		t.Fatalf("a locked: %d", rec.Code)
+	}
+	if rec := postLogin(router, "b@karea.local", "secret12"); rec.Code != http.StatusOK {
+		t.Fatalf("b must not be locked by a's failures on same IP: %d %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestLogin_RateLimit_UnknownMatchesKnownMessage(t *testing.T) {
+	users := map[string]*domain.User{
+		"op@karea.local": {
+			ID: 2, Email: "op@karea.local", PasswordHash: hashPassword(t, "secret12"),
+			IsActive: true, Role: domain.Role{Code: domain.RoleCodeOperator, IsActive: true},
+		},
+	}
+	router := loginRouterWithLimiter(t, users, usecase.NewLoginLimiter(nil))
+	lockMsg := func(email string) (int, string) {
+		for i := 0; i < 5; i++ {
+			postLogin(router, email, "wrong")
+		}
+		rec := postLogin(router, email, "wrong")
+		var body map[string]any
+		_ = json.Unmarshal(rec.Body.Bytes(), &body)
+		msg, _ := body["error"].(string)
+		return rec.Code, msg
+	}
+	codeKnown, msgKnown := lockMsg("op@karea.local")
+	codeUnknown, msgUnknown := lockMsg("nosuch@karea.local")
+	if codeKnown != http.StatusTooManyRequests || codeUnknown != http.StatusTooManyRequests {
+		t.Fatalf("codes known=%d unknown=%d", codeKnown, codeUnknown)
+	}
+	if msgKnown != msgUnknown {
+		t.Fatalf("messages differ known=%q unknown=%q", msgKnown, msgUnknown)
+	}
+}
+

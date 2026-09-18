@@ -46,6 +46,7 @@ type Deps struct {
 	ShipmentReadiness  *usecase.ShipmentReadinessReader
 	Media              *usecase.MediaUploader
 	DefectCatalog      *usecase.DefectCatalogAdmin
+	LoginLimiter       *usecase.LoginLimiter
 	CORSAllowedOrigins []string
 	// AppEnv is APP_ENV. The EoL reset route 404s unless this is "development".
 	AppEnv string
@@ -232,6 +233,7 @@ func NewRouter(deps Deps) http.Handler {
 				r.Patch("/users/{id}", s.handleUserUpdate)
 				r.Delete("/users/{id}", s.handleUserDelete)
 				r.Post("/users/{id}/reset-password", s.handleUserResetPassword)
+				r.Post("/users/{id}/unlock-login", s.handleUserUnlockLogin)
 				r.Get("/rbac", s.handleRBACMatrix)
 				r.Post("/roles", s.handleRoleCreate)
 				r.Put("/roles/{id}/permissions", s.handleRolePermissionsPut)
