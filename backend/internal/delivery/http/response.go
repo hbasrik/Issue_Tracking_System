@@ -3,11 +3,11 @@ package http
 import (
 	"encoding/json"
 	"errors"
-	"log"
 	"net/http"
 	"strconv"
 
 	"github.com/karea/backend/internal/domain"
+	"github.com/karea/backend/internal/platform/applog"
 	"github.com/karea/backend/internal/platform/auth"
 )
 
@@ -17,6 +17,7 @@ import (
 // the open issues for the EOL depot-release gate.
 type errorResponse struct {
 	Error               string                      `json:"error"`
+	RequestID           string                      `json:"request_id,omitempty"`
 	BlockingItemIDs     []int                       `json:"blocking_item_ids,omitempty"`
 	MissingItemIDs      []int                       `json:"missing_item_ids,omitempty"`
 	BlockingIssues      []domain.BlockingIssue      `json:"blocking_issues,omitempty"`
@@ -27,13 +28,19 @@ type errorResponse struct {
 
 // writeJSON serializes v as JSON with the given status code.
 func writeJSON(w http.ResponseWriter, status int, v any) {
+	if status >= 400 {
+		if er, ok := v.(errorResponse); ok && er.RequestID == "" {
+			er.RequestID = w.Header().Get("X-Request-ID")
+			v = er
+		}
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	if v == nil {
 		return
 	}
 	if err := json.NewEncoder(w).Encode(v); err != nil {
-		log.Printf("http: failed to encode response: %v", err)
+		applog.Error("http response encode failed", "error", err.Error())
 	}
 }
 
@@ -151,7 +158,14 @@ func writeError(w http.ResponseWriter, err error) {
 		errors.Is(err, domain.ErrClientRequestIDInvalid):
 		writeJSON(w, http.StatusBadRequest, errorResponse{Error: err.Error()})
 	default:
-		log.Printf("http: unhandled error: %v", err)
+		reqID := ""
+		if w != nil {
+			reqID = w.Header().Get("X-Request-ID")
+		}
+		applog.Error("http unhandled error",
+			"request_id", reqID,
+			"error", err.Error(),
+		)
 		writeJSON(w, http.StatusInternalServerError, errorResponse{Error: "internal server error"})
 	}
 }

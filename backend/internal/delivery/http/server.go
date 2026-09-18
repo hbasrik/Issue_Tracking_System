@@ -53,6 +53,9 @@ type Deps struct {
 	// UploadDir is the local media root (Karar 8). Served read-only at /uploads/
 	// so clients can display attachment images from storage_path.
 	UploadDir string
+	// EnablePanicProbe registers GET /api/v1/__test/panic for recovery tests.
+	// Must stay false in production binaries.
+	EnablePanicProbe bool
 }
 
 type server struct {
@@ -69,7 +72,9 @@ func NewRouter(deps Deps) http.Handler {
 
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
-	r.Use(middleware.Recoverer)
+	r.Use(exposeRequestID)
+	r.Use(recoverPanic)
+	r.Use(logServerErrors)
 	// CORS runs as router-level middleware so it sees a preflight before chi
 	// matches methods. No route declares OPTIONS, so anything reaching the
 	// method dispatch would be answered 405 with no CORS headers — which the
@@ -79,7 +84,8 @@ func NewRouter(deps Deps) http.Handler {
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   deps.CORSAllowedOrigins,
 		AllowedMethods:   []string{"GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Authorization", "Content-Type"},
+		AllowedHeaders:   []string{"Authorization", "Content-Type", "X-Request-ID"},
+		ExposedHeaders:   []string{"X-Request-ID"},
 		AllowCredentials: true,
 		MaxAge:           300,
 	}))
@@ -87,6 +93,12 @@ func NewRouter(deps Deps) http.Handler {
 	r.Get("/health", func(w http.ResponseWriter, _ *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 	})
+
+	if deps.EnablePanicProbe {
+		r.Get("/api/v1/__test/panic", func(http.ResponseWriter, *http.Request) {
+			panic("intentional panic probe")
+		})
+	}
 
 	if deps.UploadDir != "" {
 		r.Get("/uploads/*", s.handleUploadGet)
