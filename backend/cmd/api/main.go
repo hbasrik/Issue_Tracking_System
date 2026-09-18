@@ -11,6 +11,7 @@ import (
 	"time"
 
 	deliveryhttp "github.com/karea/backend/internal/delivery/http"
+	"github.com/karea/backend/internal/platform/applog"
 	"github.com/karea/backend/internal/platform/auth"
 	"github.com/karea/backend/internal/platform/config"
 	"github.com/karea/backend/internal/platform/storage"
@@ -20,10 +21,20 @@ import (
 
 func main() {
 	cfg := config.Load()
+	if err := applog.Init(applog.Options{
+		Level:      applog.ParseLevel(cfg.LogLevel),
+		FilePath:   cfg.LogFile,
+		MaxBytes:   cfg.LogMaxBytes,
+		MaxBackups: cfg.LogMaxBackups,
+	}); err != nil {
+		log.Fatalf("failed to init logger: %v", err)
+	}
+	defer applog.Close()
 
 	ctx := context.Background()
 	pool, err := postgres.NewPool(ctx, cfg.DatabaseURL, cfg.AppEnv)
 	if err != nil {
+		applog.Error("database pool failed", "error", err.Error())
 		log.Fatalf("failed to create database pool: %v", err)
 	}
 	defer pool.Close()
@@ -83,8 +94,9 @@ func main() {
 	})
 
 	addr := ":" + cfg.Port
-	log.Printf("karea backend listening on %s", addr)
+	applog.Info("karea backend listening", "addr", addr, "log_file", cfg.LogFile, "log_level", cfg.LogLevel)
 	if err := http.ListenAndServe(addr, router); err != nil {
+		applog.Error("http server stopped", "error", err.Error())
 		log.Fatal(err)
 	}
 }
