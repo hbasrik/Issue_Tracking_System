@@ -23,11 +23,15 @@ var _ repository.AuditRepository = (*AuditRepo)(nil)
 
 // Append inserts a new audit log row.
 func (r *AuditRepo) Append(ctx context.Context, entry domain.AuditLog) error {
+	var vin any
+	if entry.VIN != "" {
+		vin = entry.VIN
+	}
 	_, err := executor(ctx, r.pool).Exec(ctx,
 		`INSERT INTO audit_logs
 		    (vin, event_type, old_value, new_value, station_id, performed_by, metadata)
 		 VALUES ($1, $2, NULLIF($3, ''), NULLIF($4, ''), $5, $6, $7)`,
-		entry.VIN, string(entry.EventType), entry.OldValue, entry.NewValue,
+		vin, string(entry.EventType), entry.OldValue, entry.NewValue,
 		entry.StationID, entry.PerformedBy, entry.Metadata)
 	return err
 }
@@ -155,7 +159,7 @@ func (r *AuditRepo) ListActivity(ctx context.Context, f domain.AuditActivityFilt
 	rows, err := r.pool.Query(ctx,
 		`SELECT a.event_at,
 		        a.event_type::text,
-		        a.vin,
+		        COALESCE(a.vin, ''),
 		        COALESCE(a.old_value, ''),
 		        COALESCE(a.new_value, ''),
 		        COALESCE(u.full_name, ''),
