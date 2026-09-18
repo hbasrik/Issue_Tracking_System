@@ -156,7 +156,8 @@ func (r *UserRepo) UpdatePassword(ctx context.Context, id int, passwordHash stri
 }
 
 // CountReferences sums shop-floor and media FKs plus work-event audit_logs
-// rows (domain.WorkAuditEventTypes). Login is not stored in audit_logs.
+// rows (domain.WorkAuditEventTypes). LOGIN_RATE_LIMITED is auth telemetry and
+// is excluded so a rate-limit row never blocks user hard-delete.
 func (r *UserRepo) CountReferences(ctx context.Context, id int) (int, error) {
 	var n int
 	err := r.pool.QueryRow(ctx, `
