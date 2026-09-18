@@ -1189,6 +1189,7 @@ export const tr = {
   'error.dbRejected': 'Veritabanı değişikliği reddetti.',
   'error.clientRequestIdInvalid': 'İstek anahtarı geçersiz.',
   'error.offline': 'Çevrimdışısınız. Bağlantı gelince tekrar deneyin.',
+  'error.requestCode': 'Hata kodu: {id}',
 } as const;
 
 export type MessageKey = keyof typeof tr;
@@ -1947,6 +1948,7 @@ export const en: Record<MessageKey, string> = {
   'error.dbRejected': 'The database rejected the change.',
   'error.clientRequestIdInvalid': 'The request key is not valid.',
   'error.offline': 'You are offline. Try again when a connection is available.',
+  'error.requestCode': 'Error code: {id}',
   'analysis.activeFilters': 'Active filters: {summary}',
   'analysis.apply': 'Apply',
   'analysis.completedSlice': 'Done',

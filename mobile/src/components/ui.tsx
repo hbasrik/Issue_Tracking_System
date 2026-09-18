@@ -208,7 +208,11 @@ export function Loading() {
 }
 
 export function ErrorText({ children }: { children: string }) {
-  return <Text style={styles.error}>{children}</Text>;
+  return (
+    <Text selectable style={styles.error}>
+      {children}
+    </Text>
+  );
 }
 
 export function InfoText({ children }: { children: string }) {

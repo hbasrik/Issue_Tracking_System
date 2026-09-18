@@ -8,8 +8,8 @@ import {
   type Issue,
 } from '../lib/api';
 import { useI18n } from '../i18n';
-import { apiErrorMessage } from '../lib/apiErrors';
 import { isNonWebImage } from '../lib/mediaKind';
+import { ApiErrorText } from './ApiErrorText';
 import { StatusBadge } from './StatusBadge';
 import { SeverityIndicator } from './SeverityIndicator';
 import { IssueActions } from './IssueActions';
@@ -165,7 +165,7 @@ export function IssueDetailPanel({
   const confirm = useConfirm();
   const { showAfterApproval } = useApprovalUndo();
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<unknown>(null);
   const [editingClassification, setEditingClassification] = useState(false);
   const canEditClassification = canEditIssueClassification(issue, user?.ID, has);
 
@@ -220,7 +220,7 @@ export function IssueDetailPanel({
       }
       onStatusChanged?.();
     } catch (err) {
-      setError(err instanceof Error ? apiErrorMessage(err, t) : t('issueDetail.statusFailed'));
+      setError(err instanceof Error ? err : new Error(t('issueDetail.statusFailed')));
     } finally {
       setBusy(false);
     }
@@ -237,11 +237,12 @@ export function IssueDetailPanel({
       <div className="flex justify-end">
         <IssueDetailPrint issue={issue} />
       </div>
-      {error && (
-        <p className="text-[13px]" style={{ color: 'var(--status-not-ok)' }}>
-          {error}
-        </p>
-      )}
+      {error ? (
+        <ApiErrorText
+          error={error}
+          className="text-[13px] text-[var(--status-not-ok)]"
+        />
+      ) : null}
       <DetailBlock>
         <VehicleIdentity vin={issue.VIN} variant="hero" />
         <div className="mt-[var(--space-4)] flex flex-wrap items-center gap-[var(--space-2)]">

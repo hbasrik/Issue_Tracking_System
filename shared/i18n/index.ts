@@ -17,7 +17,7 @@ export {
   formatDateRangeShort,
   formatShortDay,
 } from './dates';
-export { translateApiError, translatePasswordError } from './errors';
+export { translateApiError, translatePasswordError, describeApiError, serverErrorRequestId, type ApiErrorParts } from './errors';
 export {
   isAuthError,
   isClientRejection,

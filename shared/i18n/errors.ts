@@ -61,7 +61,33 @@ const EXACT: Record<string, MessageKey> = {
     'error.userInUseUnknown',
 };
 
-export function translateApiError(t: Translate, err: unknown): string {
+/** Split message + optional 5xx request id for UI that wants a copyable code. */
+export type ApiErrorParts = {
+  message: string;
+  requestId?: string;
+};
+
+type ErrorLike = {
+  status?: number;
+  body?: { request_id?: string; error?: string };
+  requestId?: string;
+  message?: string;
+};
+
+/** Request id shown to users only for unexpected server failures (5xx). */
+export function serverErrorRequestId(err: unknown): string | undefined {
+  if (!err || typeof err !== 'object') return undefined;
+  const e = err as ErrorLike;
+  const status = typeof e.status === 'number' ? e.status : 0;
+  if (status < 500) return undefined;
+  const fromBody =
+    typeof e.body?.request_id === 'string' ? e.body.request_id.trim() : '';
+  if (fromBody) return fromBody;
+  const fromField = typeof e.requestId === 'string' ? e.requestId.trim() : '';
+  return fromField || undefined;
+}
+
+function translateApiErrorMessage(t: Translate, err: unknown): string {
   if (isTransportError(err)) return t('error.offline');
 
   const msg = err instanceof Error ? err.message : '';
@@ -115,6 +141,19 @@ export function translateApiError(t: Translate, err: unknown): string {
   }
 
   return msg;
+}
+
+export function describeApiError(t: Translate, err: unknown): ApiErrorParts {
+  return {
+    message: translateApiErrorMessage(t, err),
+    requestId: serverErrorRequestId(err),
+  };
+}
+
+export function translateApiError(t: Translate, err: unknown): string {
+  const { message, requestId } = describeApiError(t, err);
+  if (!requestId) return message;
+  return `${message}\n${t('error.requestCode', { id: requestId })}`;
 }
 
 export function translatePasswordError(t: Translate, err: unknown): string {

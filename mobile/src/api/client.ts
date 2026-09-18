@@ -37,6 +37,7 @@ export interface LoginResponse {
 
 export interface ApiErrorBody {
   error: string;
+  request_id?: string;
   blocking_item_ids?: number[];
 }
 
@@ -122,6 +123,10 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
         body = (await res.json()) as ApiErrorBody;
       } catch {
         /* ignore */
+      }
+      const headerId = res.headers.get('X-Request-ID')?.trim();
+      if (headerId && !body.request_id) {
+        body = { ...body, request_id: headerId };
       }
       throw new ApiError(res.status, body);
     }

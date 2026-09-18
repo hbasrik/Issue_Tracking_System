@@ -4,10 +4,10 @@ import { Navigate } from 'react-router-dom';
 import { BRAND_NAME } from '../../../shared/brand';
 import { useAuth } from '../auth/AuthProvider';
 import { Perm } from '../auth/permissions';
+import { ApiErrorText } from '../components/ApiErrorText';
 import { Logo } from '../components/Logo';
 import { useI18n } from '../i18n';
 import { ApiError } from '../lib/api';
-import { apiErrorMessage } from '../lib/apiErrors';
 
 export default function LoginPage() {
   const { t } = useI18n();
@@ -17,7 +17,7 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [forgotHint, setForgotHint] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
 
   if (isAuthenticated && user?.MustChangePassword) {
@@ -37,7 +37,7 @@ export default function LoginPage() {
     try {
       await login(email.trim(), password, rememberMe);
     } catch (err) {
-      setError(err instanceof ApiError ? apiErrorMessage(err, t) : t('login.failed'));
+      setError(err instanceof ApiError ? err : new Error(t('login.failed')));
     } finally {
       setBusy(false);
     }
@@ -59,11 +59,7 @@ export default function LoginPage() {
           </div>
 
           <form onSubmit={onSubmit} className="login-form">
-            {error && (
-              <p className="login-error" role="alert">
-                {error}
-              </p>
-            )}
+            {error ? <ApiErrorText error={error} className="login-error" /> : null}
 
             <label className="login-field">
               <span className="login-field-inner">

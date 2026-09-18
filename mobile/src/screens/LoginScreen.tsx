@@ -10,13 +10,14 @@ import {
 } from 'react-native';
 import { BRAND_NAME } from '../../../shared/brand';
 import { useAuth } from '../auth/AuthProvider';
+import { ApiErrorText } from '../components/ApiErrorText';
 import { Logo } from '../components/Logo';
 import { EyeIcon, LockIcon, UserIcon } from '../components/LoginIcons';
 import { statusColors } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
 import { AppTextInput, PrimaryButton, Screen } from '../components/ui';
 import { useI18n } from '../i18n';
-import { apiErrorMessage } from '../lib/password';
+import { ApiError } from '../api/client';
 
 export default function LoginScreen() {
   const { login } = useAuth();
@@ -27,7 +28,7 @@ export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [keepSignedIn, setKeepSignedIn] = useState(false);
   const [forgotHint, setForgotHint] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
   const passwordRef = useRef<TextInput>(null);
 
@@ -41,7 +42,7 @@ export default function LoginScreen() {
     try {
       await login(email.trim(), password, keepSignedIn);
     } catch (err) {
-      setError(apiErrorMessage(err, t));
+      setError(err instanceof ApiError ? err : new Error(t('login.failed')));
     } finally {
       setBusy(false);
     }
@@ -83,7 +84,9 @@ export default function LoginScreen() {
             </Text>
 
             {error ? (
-              <Text style={[styles.error, { color: statusColors.notOk }]}>{error}</Text>
+              <View style={styles.errorBox}>
+                <ApiErrorText error={error} color={statusColors.notOk} />
+              </View>
             ) : null}
 
             <View
@@ -250,9 +253,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 13,
   },
-  error: {
+  errorBox: {
     marginTop: 16,
-    textAlign: 'center',
+    alignItems: 'center',
   },
   fieldRow: {
     flexDirection: 'row',
