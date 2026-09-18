@@ -285,12 +285,18 @@ export default function ActivityPage() {
                       {eventLabel(row.EventType, t)}
                     </td>
                     <td className="px-3 py-2.5">
-                      <Link
-                        to={`/vehicles/${encodeURIComponent(row.VIN)}`}
-                        className="font-mono text-[var(--accent)] hover:underline"
-                      >
-                        …{row.VIN.slice(-6)}
-                      </Link>
+                      {row.VIN ? (
+                        <Link
+                          to={`/vehicles/${encodeURIComponent(row.VIN)}`}
+                          className="font-mono text-[var(--accent)] hover:underline"
+                        >
+                          …{row.VIN.slice(-6)}
+                        </Link>
+                      ) : (
+                        <span className="font-mono" style={muted}>
+                          {t('common.emDash')}
+                        </span>
+                      )}
                     </td>
                     <td className="max-w-[18rem] truncate px-3 py-2.5" style={muted} title={detail}>
                       {detail}
