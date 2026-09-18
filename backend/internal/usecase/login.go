@@ -10,6 +10,18 @@ import (
 	"github.com/karea/backend/internal/repository"
 )
 
+// dummyPasswordHash is compared when the email is unknown so response timing
+// stays close to a real bcrypt check (user enumeration hardening).
+var dummyPasswordHash = mustDummyHash()
+
+func mustDummyHash() []byte {
+	hash, err := bcrypt.GenerateFromPassword([]byte("karea-timing-dummy"), bcrypt.DefaultCost)
+	if err != nil {
+		panic(err)
+	}
+	return hash
+}
+
 // Authenticator verifies user credentials for the login endpoint.
 type Authenticator struct {
 	users repository.UserRepository
@@ -32,6 +44,7 @@ func (a *Authenticator) Login(ctx context.Context, email, password string) (*dom
 	user, err := a.users.GetByEmail(ctx, email)
 	if err != nil {
 		if errors.Is(err, domain.ErrNotFound) {
+			_ = bcrypt.CompareHashAndPassword(dummyPasswordHash, []byte(password))
 			return nil, domain.ErrInvalidCredentials
 		}
 		return nil, err
