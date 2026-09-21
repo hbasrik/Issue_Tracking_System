@@ -1,0 +1,72 @@
+{
+  "analysis": {
+    "viewport": {
+      "w": 1920,
+      "h": 1080
+    },
+    "sidebarPx": 240,
+    "headerPx": 54,
+    "contentAreaPx": {
+      "w": 1680,
+      "h": 1027
+    },
+    "chromeFootprint": {
+      "sidebarPctOfWidth": 12.5,
+      "headerPctOfHeight": 5
+    },
+    "issueRowCount": 0,
+    "issueRowsVisibleInViewport": 0,
+    "issueRowHeightsSample": [],
+    "mainScrollHeight": 4260,
+    "mainClientHeight": 1027,
+    "canScrollMain": true,
+    "hasLastUpdated": true,
+    "pageTitle": "Analiz & KPI"
+  },
+  "issues": {
+    "viewport": {
+      "w": 1920,
+      "h": 1080
+    },
+    "sidebarPx": 240,
+    "headerPx": 54,
+    "contentAreaPx": {
+      "w": 1680,
+      "h": 1027
+    },
+    "chromeFootprint": {
+      "sidebarPctOfWidth": 12.5,
+      "headerPctOfHeight": 5
+    },
+    "issueRowCount": 24,
+    "issueRowsVisibleInViewport": 8,
+    "issueRowHeightsSample": [
+      81,
+      81,
+      81
+    ],
+    "mainScrollHeight": 2375,
+    "mainClientHeight": 1027,
+    "canScrollMain": true,
+    "hasLastUpdated": false,
+    "pageTitle": "Issues"
+  },
+  "auth401": {
+    "url": "/analysis",
+    "h1": "Analiz & KPI",
+    "bodySnippet": "Ana sayfa\nAraçlar\nIssues\nHata bildir\nAnaliz\nHareketler\nŞablonlar\nHata kataloğu\nKullanıcılar\nRoller\nMenüyü daralt\nB\nAnaliz & KPI\n\nKPI, filtreler ve grafikler\n\nSon güncelleme: —\nYazdır\nCSV dışa aktar\n\ninvalid token\n\nToplam üretim\n\n—\naraç\n\nAçık hatalar\n\n—\nadet\n\nKritik açık\n\n—\nadet\n\nKapanan hatalar\n\n—\nadet\n\nEOL tamamlanma\n\n—\n%\n\nBaşlangıç\nBitiş\nİstasyon\nTümü\nYaşam döngüsü\nTüm durumlar\nPlanlandı\nHatta\nDepoda\nSerbest Bırakıldı\nTeslim Edildi\nBeklemede\nIssue türü\nTümü\nSeverity\nTümü\nKritik\nOrta\nDüşük\nVIN'in son haneleri\nKarşılaştırma\nVarsayılan (önceki dönem)\nÖnceki gün\nÖnceki dönem\nÖnceki hafta\nÖnceki ay\nFiltreleri temizle\nUygula\n\nAktif filtreler: Filtre yok (tüm veriler)\n\nFabrikadan sevk edilen araçlar\n\nSeçili dönemde fabrika → depo sevkleri\n\nVeri yok\n\nGünlük açık stok\n\nAçık stok (kırmızı) ve kapa",
+    "hasLoginForm": false,
+    "errors": [
+      "KPI, filtreler ve grafikler",
+      "invalid token",
+      "Toplam üretim",
+      "—araç",
+      "Açık hatalar",
+      "—adet",
+      "Kritik açık",
+      "—adet",
+      "Kapanan hatalar",
+      "—adet"
+    ]
+  }
+}
