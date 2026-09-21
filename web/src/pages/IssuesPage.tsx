@@ -48,6 +48,7 @@ import {
 } from '../lib/issueExport';
 import { useI18n, type Translate } from '../i18n';
 import { isAuthError } from '../../../shared/networkError';
+import { issueReportedAtIso } from '../../../shared/issueCardLayout';
 import { IssueListPrint } from '../components/print/IssuePrint';
 type IssueStatus = Issue['Status'];
 
@@ -126,8 +127,8 @@ export default function IssuesPage() {
         api.listDefectCatalogTypes().catch(() => ({ items: [] as DefectType[] })),
       ]);
       const list = (res.items ?? []).slice().sort((a, b) => {
-        const ta = Date.parse(a.CreatedAt || a.IssueDate || '') || 0;
-        const tb = Date.parse(b.CreatedAt || b.IssueDate || '') || 0;
+        const ta = Date.parse(issueReportedAtIso(a) || '') || 0;
+        const tb = Date.parse(issueReportedAtIso(b) || '') || 0;
         if (tb !== ta) return tb - ta;
         return b.ID - a.ID;
       });

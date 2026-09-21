@@ -7,6 +7,7 @@ import ActivityPage from './pages/ActivityPage';
 import ChangePasswordPage from './pages/ChangePasswordPage';
 import HomePage from './pages/HomePage';
 import IssuesPage from './pages/IssuesPage';
+import IssueDetailPage from './pages/IssueDetailPage';
 import LoginPage from './pages/LoginPage';
 import NotAuthorizedPage from './pages/NotAuthorizedPage';
 import RolesPage from './pages/RolesPage';
@@ -32,11 +33,12 @@ export default function App() {
             <Route path="/vehicles" element={<VehiclesPage />} />
             <Route path="/vehicles/:vin" element={<VehicleDetailPage />} />
           </Route>
-          <Route element={<RequirePermission code={Perm.IssueView} />}>
-            <Route path="/issues" element={<IssuesPage />} />
-          </Route>
           <Route element={<RequirePermission code={Perm.IssueCreate} />}>
             <Route path="/issues/new" element={<ReportIssuePage />} />
+          </Route>
+          <Route element={<RequirePermission code={Perm.IssueView} />}>
+            <Route path="/issues" element={<IssuesPage />} />
+            <Route path="/issues/:id" element={<IssueDetailPage />} />
           </Route>
           <Route element={<RequirePermission code={Perm.AnalysisView} />}>
             <Route path="/analysis" element={<AnalysisPage />} />

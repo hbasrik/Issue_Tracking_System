@@ -1,24 +1,27 @@
-import { Fragment, useEffect, useState, type ReactNode } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import {
+  issueCardColumnCount,
+  ISSUE_CARD_COMPACT_MAX_PX,
+} from '../../../shared/issueCardLayout';
+import { useI18n } from '../i18n';
 import {
   api,
   formatIssueCreatedAt,
-  formatIssueListAt,
   type Issue,
 } from '../lib/api';
-import { useI18n } from '../i18n';
-import { isNonWebImage } from '../lib/mediaKind';
 import { ApiErrorText } from './ApiErrorText';
-import { AuthenticatedMediaImg } from './AuthenticatedMediaImg';
 import { StatusBadge } from './StatusBadge';
 import { SeverityIndicator } from './SeverityIndicator';
 import { IssueActions } from './IssueActions';
 import { MediaGallery } from './MediaGallery';
 import { VehicleIdentity } from './VehicleIdentity';
-import { DataCard, DataCardField } from './DataCard';
 import { IssueStatusHistory } from './IssueStatusHistory';
 import { SectionHeading } from './SectionHeading';
-import { issueStationLabel, defectLabels, reporterFallback } from '../lib/issueDetailCopy';
+import {
+  issueStationLabel,
+  defectLabels,
+  reporterFallback,
+} from '../lib/issueDetailCopy';
 import { IssueDetailPrint } from './print/IssuePrint';
 import { useConfirm } from './ConfirmDialog';
 import { useApprovalUndo } from './ApprovalUndoToast';
@@ -27,87 +30,7 @@ import {
   IssueClassificationEditor,
 } from './IssueClassificationEditor';
 import { useAuth } from '../auth/AuthProvider';
-
-function IssueThumb({ path }: { path?: string }) {
-  const { t } = useI18n();
-  if (!path) {
-    return (
-      <div
-        className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md text-[11px] text-[var(--text-secondary)]"
-        style={{ backgroundColor: 'var(--bg-surface-2)' }}
-        aria-hidden
-      >
-        {t('common.emDash')}
-      </div>
-    );
-  }
-  if (isNonWebImage(null, null, path)) {
-    return (
-      <div
-        className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md text-center text-[10px] font-semibold leading-tight text-[var(--text-secondary)]"
-        style={{ backgroundColor: 'var(--bg-surface-2)' }}
-        title={t('issueDetail.heic')}
-      >
-        HEIC
-      </div>
-    );
-  }
-  return (
-    <AuthenticatedMediaImg
-      storagePath={path}
-      thumb
-      alt=""
-      className="h-14 w-14 shrink-0 rounded-md object-cover"
-      style={{ backgroundColor: 'var(--bg-surface-2)' }}
-    />
-  );
-}
-
-/** Summary fields shared by the stacked card and the desktop table row. */
-function IssueCardSummary({
-  issue,
-  hideVin,
-}: {
-  issue: Issue;
-  hideVin?: boolean;
-}) {
-  const { t, locale } = useI18n();
-  const localeTag = locale === 'en' ? 'en-GB' : 'tr-TR';
-  return (
-    <div className="flex gap-3">
-      <IssueThumb path={issue.ReportPhotoPath} />
-      <div className="min-w-0 flex-1 space-y-1">
-        <DataCardField label={t('issue.id')}>#{issue.ID}</DataCardField>
-        <DataCardField label={t('issueDetail.reportedAt')}>
-          {formatIssueCreatedAt(issue.CreatedAt || issue.IssueDate, localeTag)}
-        </DataCardField>
-        {!hideVin && (
-          <DataCardField label={t('issue.vin')}>
-            <Link
-              to={`/vehicles/${issue.VIN}?tab=issues`}
-              className="text-[var(--accent)] hover:underline"
-              onClick={(e) => e.stopPropagation()}
-            >
-              …{issue.VIN.slice(-5)}
-            </Link>
-          </DataCardField>
-        )}
-        <DataCardField label={t('severity.label')}>
-          <SeverityIndicator severity={issue.Severity} />
-        </DataCardField>
-        <DataCardField label={t('issue.status')}>
-          <StatusBadge kind="issue" value={issue.Status} />
-        </DataCardField>
-        <DataCardField label={t('issueDetail.reporter')}>
-          {issue.ReporterName || reporterFallback(t, issue.IssueReporterID)}
-        </DataCardField>
-        <p className="text-[13px] text-[var(--text-secondary)]">
-          {defectLabels(issue, t, locale).listLine}
-        </p>
-      </div>
-    </div>
-  );
-}
+import { IssueCard } from './IssueCard';
 
 /** Label / value block — stacked on narrow, 2-column grid from sm up. */
 function IssueInfoFields({ issue }: { issue: Issue }) {
@@ -123,7 +46,7 @@ function IssueInfoFields({ issue }: { issue: Issue }) {
     [t('issueDetail.station'), issueStationLabel(issue)],
     [
       t('issueDetail.reportedAt'),
-      formatIssueCreatedAt(issue.CreatedAt || issue.IssueDate, localeTag),
+      formatIssueCreatedAt(issue.IssueDate || issue.CreatedAt, localeTag),
     ],
     [t('issue.defectZone'), defect.zone],
     [t('issue.defectPart'), defect.part],
@@ -331,168 +254,66 @@ function DetailBlock({
 }
 
 /**
- * Clickable issue cards / table. Detail always expands under the clicked
- * row (accordion) — same pattern on every viewport.
+ * Adaptive issue card grid — compact list under 600px, multi-column grid above.
+ * Detail opens at /issues/:id (not an accordion).
  */
 export function IssueList({
   items,
   emptyLabel,
   hideVin = false,
-  onStatusChanged,
 }: {
   items: Issue[];
   emptyLabel?: string;
   hideVin?: boolean;
+  /** @deprecated Detail is a route; kept for call-site compatibility. */
   onStatusChanged?: () => void;
 }) {
-  const { t, locale } = useI18n();
-  const localeTag = locale === 'en' ? 'en-GB' : 'tr-TR';
+  const { t } = useI18n();
   const empty = emptyLabel ?? t('issueDetail.none');
-  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const ref = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState(
+    typeof window !== 'undefined' ? window.innerWidth : ISSUE_CARD_COMPACT_MAX_PX,
+  );
 
   useEffect(() => {
-    if (selectedId != null && !items.some((r) => r.ID === selectedId)) {
-      setSelectedId(null);
-    }
-  }, [items, selectedId]);
+    const el = ref.current;
+    if (!el) return;
+    const ro = new ResizeObserver((entries) => {
+      const w = entries[0]?.contentRect.width;
+      if (typeof w === 'number' && w > 0) setWidth(w);
+    });
+    ro.observe(el);
+    setWidth(el.clientWidth || window.innerWidth);
+    return () => ro.disconnect();
+  }, []);
 
-  function toggle(id: number) {
-    setSelectedId((cur) => (cur === id ? null : id));
+  const cols = issueCardColumnCount(width);
+
+  if (items.length === 0) {
+    return (
+      <div ref={ref} className="min-w-0">
+        <p className="text-[15px] text-[var(--text-secondary)]">{empty}</p>
+      </div>
+    );
   }
 
-  const colCount = hideVin ? 6 : 7;
-
   return (
-    <div className="min-w-0">
-      <div className="space-y-3 lg:hidden">
-        {items.length === 0 && (
-          <p className="text-[15px] text-[var(--text-secondary)]">{empty}</p>
-        )}
-        {items.map((r) => (
-          <div key={r.ID}>
-            <DataCard selected={selectedId === r.ID} onClick={() => toggle(r.ID)}>
-              <IssueCardSummary issue={r} hideVin={hideVin} />
-            </DataCard>
-            {selectedId === r.ID && (
-              <div className="mt-2">
-                <IssueDetailPanel issue={r} onStatusChanged={onStatusChanged} />
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-
+    <div ref={ref} className="min-w-0">
       <div
-        className="hidden overflow-x-auto rounded-xl border bg-[var(--bg-surface-1)] lg:block"
-        style={{ borderColor: 'var(--border)' }}
+        className="grid gap-3"
+        style={{
+          gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
+          alignItems: 'stretch',
+        }}
       >
-        <table className="w-full min-w-[42rem] text-left text-[15px]">
-          <thead>
-            <tr
-              className="border-b text-[13px] text-[var(--text-secondary)]"
-              style={{ borderColor: 'var(--border)' }}
-            >
-              <th className="whitespace-nowrap px-3 py-3">{t('issue.photosCol')}</th>
-              <th className="whitespace-nowrap px-3 py-3">{t('issue.id')}</th>
-              <th className="whitespace-nowrap px-3 py-3">{t('issueDetail.reportedAt')}</th>
-              {!hideVin && (
-                <th className="whitespace-nowrap px-3 py-3">{t('issue.vin')}</th>
-              )}
-              <th className="whitespace-nowrap px-3 py-3">{t('severity.label')}</th>
-              <th className="whitespace-nowrap px-3 py-3">{t('issue.status')}</th>
-              <th className="whitespace-nowrap px-3 py-3">{t('issueDetail.reporter')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.length === 0 && (
-              <tr>
-                <td
-                  colSpan={colCount}
-                  className="px-3 py-6 text-[var(--text-secondary)]"
-                >
-                  {empty}
-                </td>
-              </tr>
-            )}
-            {items.map((r) => {
-              const open = selectedId === r.ID;
-              return (
-                <Fragment key={r.ID}>
-                  <tr
-                    className="cursor-pointer border-t hover:bg-[var(--bg-surface-2)]"
-                    style={{
-                      borderColor: 'var(--border)',
-                      backgroundColor: open ? 'var(--bg-surface-2)' : undefined,
-                      boxShadow: open
-                        ? 'inset 3px 0 0 var(--accent)'
-                        : undefined,
-                    }}
-                    onClick={() => toggle(r.ID)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        toggle(r.ID);
-                      }
-                    }}
-                    tabIndex={0}
-                    role="button"
-                    aria-expanded={open}
-                  >
-                    <td className="px-3 py-3">
-                      <IssueThumb path={r.ReportPhotoPath} />
-                    </td>
-                    <td className="whitespace-nowrap px-3 py-3">#{r.ID}</td>
-                    <td className="whitespace-nowrap px-3 py-3 text-[13px] tabular-nums text-[var(--text-secondary)]">
-                      {formatIssueListAt(r.CreatedAt || r.IssueDate, localeTag)}
-                    </td>
-                    {!hideVin && (
-                      <td className="whitespace-nowrap px-3 py-3">
-                        <Link
-                          to={`/vehicles/${r.VIN}?tab=issues`}
-                          className="text-[var(--accent)] hover:underline"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          …{r.VIN.slice(-5)}
-                        </Link>
-                      </td>
-                    )}
-                    <td className="whitespace-nowrap px-3 py-3">
-                      <SeverityIndicator severity={r.Severity} />
-                    </td>
-                    <td className="whitespace-nowrap px-3 py-3">
-                      <StatusBadge kind="issue" value={r.Status} />
-                    </td>
-                    <td className="whitespace-nowrap px-3 py-3 text-[13px] text-[var(--text-primary)]">
-                      {r.ReporterName || reporterFallback(t, r.IssueReporterID)}
-                    </td>
-                  </tr>
-                  {open && (
-                    <tr>
-                      <td
-                        colSpan={colCount}
-                        className="px-3 pb-3 pt-0"
-                        style={{
-                          backgroundColor: 'var(--bg-page)',
-                          borderColor: 'var(--border)',
-                        }}
-                      >
-                        <div
-                          className="pt-3"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <IssueDetailPanel
-                            issue={r}
-                            onStatusChanged={onStatusChanged}
-                          />
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                </Fragment>
-              );
-            })}
-          </tbody>
-        </table>
+        {items.map((issue) => (
+          <IssueCard
+            key={issue.ID}
+            issue={issue}
+            hideVin={hideVin}
+            layoutWidth={width}
+          />
+        ))}
       </div>
     </div>
   );
