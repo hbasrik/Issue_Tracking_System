@@ -19,6 +19,9 @@ mobile/dist/
 # Uploaded media (local-disk storage backend, Karar 8)
 backend/uploads/
 
+# Local DB + uploads backups (database/scripts/backup.sh)
+backups/
+
 # OS
 .DS_Store
 Thumbs.db

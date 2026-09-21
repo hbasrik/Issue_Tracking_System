@@ -125,8 +125,10 @@ seed'inden ayrılmalı: sadece gerçek katalog ve gerçek şablonlar.
 Şu an elle başlatılıyor, çöktüğünde kendiliğinden kalkmıyor — bu
 oturumda defalarca öldüğünü gördük. systemd veya eşdeğeri gerekli.
 
-### B5. Veritabanı yedekleme `[!]`
-Tanımlı bir yedekleme politikası yok.
+### B5. Veritabanı yedekleme `[~]`
+**Geliştirme:** `database/scripts/backup.sh` + `restore.sh` (DB dump +
+uploads arşivi, `backups/`, retention; `docs/09` §6).
+**Kalan (üretim):** otomatik zamanlama, off-site saklama, restore drill.
 
 ### B6. Üretim veritabanı kurulumu `[~]`
 Boş DB + migration yolu net; checklist gerçek içerik `database/seed/03`'te.

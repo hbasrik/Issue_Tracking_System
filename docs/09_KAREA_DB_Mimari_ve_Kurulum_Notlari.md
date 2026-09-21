@@ -133,4 +133,52 @@ GUC'unu kullanır.
 
 ---
 
+## 6. Geliştirme yedekleme / geri yükleme
+
+Yerel geliştirme için `database/scripts/backup.sh` ve `restore.sh`.
+`pg_dump` dosya sistemindeki medyayı kapsamaz; her yedek **aynı zaman
+damgasıyla** hem DB dökümü hem `backend/uploads/` arşivi üretir.
+
+Çıktı dizini: repo kökünde `backups/` (`.gitignore` — repoya girmez).
+Bağlantı bilgisi `.env` içindeki `DATABASE_URL`’den okunur; konteyner
+adı varsayılan `karea_postgres`.
+
+### Yedek al
+
+```sh
+./database/scripts/backup.sh
+# isteğe bağlı: son N çifti tut (varsayılan 7)
+BACKUP_KEEP=14 ./database/scripts/backup.sh
+```
+
+Üretilen dosyalar (örnek):
+
+- `backups/karea_20260321_131500.dump`
+- `backups/karea_20260321_131500_uploads.tar.gz`
+
+### Geri yükle
+
+Hedef veritabanı adı **zorunlu**dır; `DATABASE_URL`’deki canlı DB adına
+geri yükleme reddedilir (`ALLOW_RESTORE_TO_SOURCE=1` ile bilinçli istisna).
+
+```sh
+./database/scripts/restore.sh <hedef_db> <damga|dump_yolu> [--uploads-dir DIR]
+```
+
+Örnekler:
+
+```sh
+./database/scripts/restore.sh karea_restore_test 20260321_131500
+./database/scripts/restore.sh karea_restore_test backups/karea_20260321_131500.dump \
+  --uploads-dir /tmp/karea_uploads_test
+```
+
+Geri yükleme sonunda `vehicles`, `checklist_template_items`, `issue_list`
+ve `users` satır sayılarını yazdırır. `--uploads-dir` verilmezse arşiv
+`backend/uploads/` altına açılır (mevcut dosyaların üzerine yazar).
+
+Bu betikler **geliştirme** içindir; üretim yedekleme politikası (B5) ayrıdır.
+
+---
+
 *Bu şema onaylandıktan sonra ADIM 4'e (Cursor Master Kodlama Promptu) geçilecektir.*
