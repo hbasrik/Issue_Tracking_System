@@ -125,6 +125,15 @@ Diğer sonuçlar:
 
 **JWT_SECRET:** Boş veya 32 karakterden kısa anahtarla süreç başlamaz (`openssl rand -base64 32`). Zayıf docker-compose / `.env.example` varsayılanı yok. Bu değişiklik + `tokens_valid_from` birlikte herkesin bir kez yeniden giriş yapmasını gerektirir (beklenen).
 
+## Karar 13 — Issue listesi kart düzeni (NEW — 2026-09-21)
+
+**Karar:** Issues listesi tablo/accordion yerine tek uyarlanabilir kart
+bileşenidir. Layout sabitleri ve süre biçimlendirmesi
+`shared/issueCardLayout.ts` altında tek kaynaktır (web + mobil).
+Bildirim zamanı = `issue_list.issue_date` (`IssueDate`); açık kalma
+süresi anlık hesaplanır (kolon yok). Detay ayrı rota:
+`/issues/:id` (web), mevcut `IssueDetail` ekranı (mobil).
+
 ## Değişmeyen / Yeniden Kullanılacaklar
 
 Şunlara **dokunulmuyor**, olduğu gibi kalıyor: JWT auth + bcrypt (üstteki JWT_SECRET ve iptal sıkılaştırmaları hariç), CORS allowlist mimarisi, Unit-of-Work (pgx.Tx) transaction pattern, `.cursor/rules` (commit ve environment-check kuralları), Analysis sekmesi temel yapısı (VIN×severity kırılımı, Pie/Bar chart'lar — yeni station/EOL alanlarıyla genişleyecek ama sıfırdan kurulmayacak), Docker/migration/seed altyapısı.

@@ -91,8 +91,8 @@ Login
 │     ├─ Issues Sekmesi (araca bağlı hata kayıtları)
 │     └─ Audit Log Sekmesi (statü/checklist değişiklik geçmişi)
 ├─ Issues (Hatalar)
-│  ├─ Issue Listesi (istasyon/statü/tarih filtreli)
-│  └─ Issue Detay (kapatma aksiyonu — yalnızca Manager/Admin)
+│  ├─ Issue Listesi (filtreli uyarlanabilir kart grid — bkz. §4.3a)
+│  └─ Issue Detay (`/issues/:id`; kapatma — Manager/Admin)
 ├─ Analysis (Yerleşik Analitik Sekmesi — Power BI yerine)
 │  ├─ Filtre Paneli (tarih aralığı, faz, araç statüsü, hata türü)
 │  ├─ Grafikler (Pie Chart, Bar Chart)
@@ -176,6 +176,19 @@ Araç Detay (Faz İlerleme Ekranı)
 - **Liste:** Sıralanabilir/filtrelenebilir tablo — VIN (son 5 hane vurgulu), Model, Statü rozeti, Lokasyon, Faz (X/8), Completion %.
 - **Detay Sayfası Sekmeleri:** Overview / EoL / Shipment Checklist / Issues / Audit Log (bkz. Bölüm 2.1).
 - **Statü/Lokasyon Editörü:** Dropdown + "Kaydet" — state machine kurallarına uymayan geçişler (örn. eksik checklist ile SHIPPED) buton üzerinde devre dışı bırakılmaz, basıldığında backend hatası + eksik madde listesi modal olarak gösterilir (tutarlılık: mobildeki hard-block modalıyla aynı patern).
+
+### 4.3a Issue Listesi & Detay (web + mobil)
+- **Tek kart bileşeni:** Genişlik &lt; 600 px → kompakt liste (fotoğraf solda);
+  ≥ 600 px → grid (fotoğraf üstte, 4:3 sabit oran). Sabit CSS kırılma
+  noktası tablosu yok; sütun sayısı `floor(width / 280)` ile, azami 4.
+- Ortak sabitler: `shared/issueCardLayout.ts` (web + mobil aynı kaynak).
+- Kart alanları: fotoğraf, açıklama (2 satır), parça · kusur tipi, VIN,
+  açık kalma süresi (anlık hesap, DB kolonu yok), şiddet (renk + metin),
+  durum. Tekrarlayan etiketler yok.
+- Fotoğrafa tıklama → tam ekran; gövdeye tıklama → `/issues/:id` detay
+  sayfası (accordion / yan panel yok). Tablo görünümü kaldırıldı.
+- Açık kalma süresi ve liste sıralaması `IssueDate` kullanır (`CreatedAt`
+  yalnızca yedek).
 
 ### 4.4 Analysis Sekmesi (Detaylı)
 - **Filtre Paneli (üstte, yatay şerit):** Tarih aralığı seçici (date range picker), Faz dropdown (1-8), Araç Statüsü multi-select, Hata Türü multi-select, **VIN arama kutusu (son 5 hane, aynı typeahead mekanizması — bkz. Bölüm 3.1)**. Filtreler "Uygula" butonuna kadar biriktirilir (URL query param olarak da saklanır — paylaşılabilir link).

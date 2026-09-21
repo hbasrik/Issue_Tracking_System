@@ -109,6 +109,11 @@ Web/mobil API istemcisi 401’de oturumu temizler; giriş ekranında
 “Veri yok” boyamaz. Mobil offline kuyruk 401’de kaydı silmez
 (`shouldQueueIssueSubmit` / `queueItemAfterSendError` aynı).
 
+### A13. Issues kart listesi (görünüm) `[x]` — 2026-09-21
+Tablo/accordion kaldırıldı; tek uyarlanabilir kart (`shared/issueCardLayout`).
+Web detay rotası `/issues/:id`. Filtreler aynı. Otomatik yenileme / ses /
+kaydırma koruması sonraki tur.
+
 ---
 
 ## B — Canlıya çıkmadan önce ZORUNLU

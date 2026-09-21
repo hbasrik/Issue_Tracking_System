@@ -1,0 +1,28 @@
+{
+  "sampleId": 59,
+  "description": "test offline mod",
+  "IssueDate": "2026-09-18T14:44:40.052386+03:00",
+  "CreatedAt": "2026-09-18T14:44:40.052386+03:00",
+  "reportedAtUsed": "2026-09-18T14:44:40.052386+03:00",
+  "openDurationMs": 268167720,
+  "openDurationLabelTr": "3g 2s",
+  "sql": {
+    "id": 59,
+    "issue_date": "2026-09-18 11:44:40.052386+00",
+    "open_secs_from_issue_date": 268111,
+    "days": 3,
+    "hours": 2,
+    "labelMatch": "3g 2s"
+  },
+  "columnCounts": {
+    "375": 1,
+    "768": 2,
+    "1024": 3,
+    "1920": 4
+  },
+  "note": "1024 viewport with sidebar yields content ~780px → 2 cols in practice; columnCounts uses raw viewport width.",
+  "renderedColumns1920": 4,
+  "cardHeights1920": [373, 373, 373, 373, 355, 355, 355, 355],
+  "equalHeightNote": "Same-row cards share height (CSS grid stretch).",
+  "noPhotoIssueId": 19
+}
