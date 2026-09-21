@@ -115,6 +115,10 @@ Web detay rotası `/issues/:id` (eski `IssueDetailPanel` aynı panel). Filtreler
 aynı. Otomatik yenileme / ses / kaydırma koruması sonraki tur.
 Web DONE akışına çözüm açıklaması formu eklendi (API zorunluluğu; mobille
 hizalı — çözüm fotoğrafı MediaGallery’den).
+Şiddet renkleri `shared/brand.ts` → `severityColors` tek kaynak; kart metin
++ çubuk aynı. Medya türevleri: `?thumb=1` (192) / `?thumb=md` (800) /
+orijinal; grid kartları md kullanır. Geriye dönük:
+`go run scripts/generate-upload-thumbs.go`.
 
 ---
 

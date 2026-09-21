@@ -1,0 +1,370 @@
+{
+  "375": {
+    "measure": [
+      {
+        "btnW": 64,
+        "btnH": 64,
+        "imgW": 64,
+        "imgH": 64,
+        "imgNaturalW": 144,
+        "imgNaturalH": 192,
+        "imgSrcKind": "full"
+      },
+      {
+        "btnW": 64,
+        "btnH": 64,
+        "imgW": 64,
+        "imgH": 64,
+        "imgNaturalW": 144,
+        "imgNaturalH": 192,
+        "imgSrcKind": "full"
+      },
+      {
+        "btnW": 64,
+        "btnH": 64,
+        "imgW": 64,
+        "imgH": 64,
+        "imgNaturalW": 144,
+        "imgNaturalH": 192,
+        "imgSrcKind": "full"
+      },
+      {
+        "btnW": 64,
+        "btnH": 64,
+        "imgW": 64,
+        "imgH": 64,
+        "imgNaturalW": 144,
+        "imgNaturalH": 192,
+        "imgSrcKind": "full"
+      }
+    ],
+    "photoReqs": [
+      {
+        "url": "/uploads/issue/56/b53323519eae1a2bb64fff35b6603a56.jpg?thumb=1",
+        "status": 200,
+        "bytes": 0,
+        "thumb": true
+      },
+      {
+        "url": "/uploads/issue/57/76c43647598da6c8089493f30dc05e31.jpg?thumb=1",
+        "status": 200,
+        "bytes": 0,
+        "thumb": true
+      },
+      {
+        "url": "/uploads/issue/58/b101c79f133fd128c18d80559ce57bcb.jpg?thumb=1",
+        "status": 200,
+        "bytes": 0,
+        "thumb": true
+      },
+      {
+        "url": "/uploads/issue/49/93dca1d9ab179e1aca64c9b12c80e078.jpg?thumb=1",
+        "status": 200,
+        "bytes": 0,
+        "thumb": true
+      },
+      {
+        "url": "/uploads/issue/56/b53323519eae1a2bb64fff35b6603a56.jpg?thumb=1",
+        "status": 200,
+        "bytes": 0,
+        "thumb": true
+      },
+      {
+        "url": "/uploads/issue/57/76c43647598da6c8089493f30dc05e31.jpg?thumb=1",
+        "status": 200,
+        "bytes": 0,
+        "thumb": true
+      },
+      {
+        "url": "/uploads/issue/52/00592b96ce5695a9d96f4b2bcb09779f.png?thumb=1",
+        "status": 200,
+        "bytes": 0,
+        "thumb": true
+      },
+      {
+        "url": "/uploads/issue/58/b101c79f133fd128c18d80559ce57bcb.jpg?thumb=1",
+        "status": 200,
+        "bytes": 0,
+        "thumb": true
+      }
+    ],
+    "totalUploadBytes": 0,
+    "reqCount": 46
+  },
+  "768": {
+    "measure": [
+      {
+        "btnW": 360,
+        "btnH": 270,
+        "imgW": 360,
+        "imgH": 270,
+        "imgNaturalW": 144,
+        "imgNaturalH": 192,
+        "imgSrcKind": "full"
+      },
+      {
+        "btnW": 360,
+        "btnH": 270,
+        "imgW": 360,
+        "imgH": 270,
+        "imgNaturalW": 144,
+        "imgNaturalH": 192,
+        "imgSrcKind": "full"
+      },
+      {
+        "btnW": 360,
+        "btnH": 270,
+        "imgW": 360,
+        "imgH": 270,
+        "imgNaturalW": 144,
+        "imgNaturalH": 192,
+        "imgSrcKind": "full"
+      },
+      {
+        "btnW": 360,
+        "btnH": 270,
+        "imgW": 360,
+        "imgH": 270,
+        "imgNaturalW": 144,
+        "imgNaturalH": 192,
+        "imgSrcKind": "full"
+      }
+    ],
+    "photoReqs": [
+      {
+        "url": "/uploads/issue/59/14a14762e3c61802ef1f4346ea3deffd.jpg?thumb=1",
+        "status": 200,
+        "bytes": 0,
+        "thumb": true
+      },
+      {
+        "url": "/uploads/issue/58/b101c79f133fd128c18d80559ce57bcb.jpg?thumb=1",
+        "status": 200,
+        "bytes": 0,
+        "thumb": true
+      },
+      {
+        "url": "/uploads/issue/58/b101c79f133fd128c18d80559ce57bcb.jpg?thumb=1",
+        "status": 200,
+        "bytes": 0,
+        "thumb": true
+      },
+      {
+        "url": "/uploads/issue/59/14a14762e3c61802ef1f4346ea3deffd.jpg?thumb=1",
+        "status": 200,
+        "bytes": 0,
+        "thumb": true
+      },
+      {
+        "url": "/uploads/issue/57/76c43647598da6c8089493f30dc05e31.jpg?thumb=1",
+        "status": 200,
+        "bytes": 0,
+        "thumb": true
+      },
+      {
+        "url": "/uploads/issue/49/93dca1d9ab179e1aca64c9b12c80e078.jpg?thumb=1",
+        "status": 200,
+        "bytes": 0,
+        "thumb": true
+      },
+      {
+        "url": "/uploads/issue/52/00592b96ce5695a9d96f4b2bcb09779f.png?thumb=1",
+        "status": 200,
+        "bytes": 0,
+        "thumb": true
+      },
+      {
+        "url": "/uploads/issue/56/b53323519eae1a2bb64fff35b6603a56.jpg?thumb=1",
+        "status": 200,
+        "bytes": 0,
+        "thumb": true
+      }
+    ],
+    "totalUploadBytes": 0,
+    "reqCount": 46
+  },
+  "1024": {
+    "measure": [
+      {
+        "btnW": 360,
+        "btnH": 270,
+        "imgW": 360,
+        "imgH": 270,
+        "imgNaturalW": 144,
+        "imgNaturalH": 192,
+        "imgSrcKind": "full"
+      },
+      {
+        "btnW": 360,
+        "btnH": 270,
+        "imgW": 360,
+        "imgH": 270,
+        "imgNaturalW": 144,
+        "imgNaturalH": 192,
+        "imgSrcKind": "full"
+      },
+      {
+        "btnW": 360,
+        "btnH": 270,
+        "imgW": 360,
+        "imgH": 270,
+        "imgNaturalW": 144,
+        "imgNaturalH": 192,
+        "imgSrcKind": "full"
+      },
+      {
+        "btnW": 360,
+        "btnH": 270,
+        "imgW": 360,
+        "imgH": 270,
+        "imgNaturalW": 144,
+        "imgNaturalH": 192,
+        "imgSrcKind": "full"
+      }
+    ],
+    "photoReqs": [
+      {
+        "url": "/uploads/issue/59/14a14762e3c61802ef1f4346ea3deffd.jpg?thumb=1",
+        "status": 200,
+        "bytes": 0,
+        "thumb": true
+      },
+      {
+        "url": "/uploads/issue/57/76c43647598da6c8089493f30dc05e31.jpg?thumb=1",
+        "status": 200,
+        "bytes": 0,
+        "thumb": true
+      },
+      {
+        "url": "/uploads/issue/57/76c43647598da6c8089493f30dc05e31.jpg?thumb=1",
+        "status": 200,
+        "bytes": 0,
+        "thumb": true
+      },
+      {
+        "url": "/uploads/issue/59/14a14762e3c61802ef1f4346ea3deffd.jpg?thumb=1",
+        "status": 200,
+        "bytes": 0,
+        "thumb": true
+      },
+      {
+        "url": "/uploads/issue/38/3e2ddb9feab14682ccb6dac86c67c851.jpg?thumb=1",
+        "status": 200,
+        "bytes": 0,
+        "thumb": true
+      },
+      {
+        "url": "/uploads/issue/38/3e2ddb9feab14682ccb6dac86c67c851.jpg?thumb=1",
+        "status": 200,
+        "bytes": 0,
+        "thumb": true
+      },
+      {
+        "url": "/uploads/issue/52/00592b96ce5695a9d96f4b2bcb09779f.png?thumb=1",
+        "status": 200,
+        "bytes": 0,
+        "thumb": true
+      },
+      {
+        "url": "/uploads/issue/52/00592b96ce5695a9d96f4b2bcb09779f.png?thumb=1",
+        "status": 200,
+        "bytes": 0,
+        "thumb": true
+      }
+    ],
+    "totalUploadBytes": 0,
+    "reqCount": 46
+  },
+  "1920": {
+    "measure": [
+      {
+        "btnW": 337,
+        "btnH": 253,
+        "imgW": 337,
+        "imgH": 253,
+        "imgNaturalW": 144,
+        "imgNaturalH": 192,
+        "imgSrcKind": "full"
+      },
+      {
+        "btnW": 337,
+        "btnH": 253,
+        "imgW": 337,
+        "imgH": 253,
+        "imgNaturalW": 144,
+        "imgNaturalH": 192,
+        "imgSrcKind": "full"
+      },
+      {
+        "btnW": 337,
+        "btnH": 253,
+        "imgW": 337,
+        "imgH": 253,
+        "imgNaturalW": 144,
+        "imgNaturalH": 192,
+        "imgSrcKind": "full"
+      },
+      {
+        "btnW": 337,
+        "btnH": 253,
+        "imgW": 337,
+        "imgH": 253,
+        "imgNaturalW": 144,
+        "imgNaturalH": 192,
+        "imgSrcKind": "full"
+      }
+    ],
+    "photoReqs": [
+      {
+        "url": "/uploads/issue/49/93dca1d9ab179e1aca64c9b12c80e078.jpg?thumb=1",
+        "status": 200,
+        "bytes": 0,
+        "thumb": true
+      },
+      {
+        "url": "/uploads/issue/56/b53323519eae1a2bb64fff35b6603a56.jpg?thumb=1",
+        "status": 200,
+        "bytes": 0,
+        "thumb": true
+      },
+      {
+        "url": "/uploads/issue/49/93dca1d9ab179e1aca64c9b12c80e078.jpg?thumb=1",
+        "status": 200,
+        "bytes": 0,
+        "thumb": true
+      },
+      {
+        "url": "/uploads/issue/52/00592b96ce5695a9d96f4b2bcb09779f.png?thumb=1",
+        "status": 200,
+        "bytes": 0,
+        "thumb": true
+      },
+      {
+        "url": "/uploads/issue/57/76c43647598da6c8089493f30dc05e31.jpg?thumb=1",
+        "status": 200,
+        "bytes": 0,
+        "thumb": true
+      },
+      {
+        "url": "/uploads/issue/58/b101c79f133fd128c18d80559ce57bcb.jpg?thumb=1",
+        "status": 200,
+        "bytes": 0,
+        "thumb": true
+      },
+      {
+        "url": "/uploads/issue/56/b53323519eae1a2bb64fff35b6603a56.jpg?thumb=1",
+        "status": 200,
+        "bytes": 0,
+        "thumb": true
+      },
+      {
+        "url": "/uploads/issue/57/76c43647598da6c8089493f30dc05e31.jpg?thumb=1",
+        "status": 200,
+        "bytes": 0,
+        "thumb": true
+      }
+    ],
+    "totalUploadBytes": 0,
+    "reqCount": 46
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "displayCssPx": {
+    "375": { "photo": 64, "layout": "compact list" },
+    "768": { "photo": 360, "layout": "grid 2-col" },
+    "1024": { "photo": 360, "layout": "grid ~2-col with sidebar" },
+    "1920": { "photo": 337, "layout": "grid 4-col" }
+  },
+  "before": {
+    "request": "?thumb=1 (sm)",
+    "naturalForGridCards": "144x192",
+    "sampleIssue58": { "origBytes": 676442, "smBytes": 6153, "smPx": "144x192" }
+  },
+  "after": {
+    "compact375": { "request": "?thumb=1", "natural": "144x192" },
+    "grid1024_1920": { "request": "?thumb=md", "naturalTypical": "600x800" },
+    "sampleIssue58": { "origBytes": 676442, "smBytes": 6153, "mdBytes": 68939, "mdPx": "600x800" },
+    "pageLoadEstimate12Cards": {
+      "beforeSmBlurry": 73836,
+      "afterMdSharp": 827268,
+      "ifHadUsedOriginals": 8117304,
+      "note": "md is ~11x sm bytes but ~10x fewer than serving originals; sharp at 337–360 CSS px"
+    }
+  },
+  "mediumEdgeChoice": {
+    "maxEdgePx": 800,
+    "reason": "Max measured card photo CSS width was 360px (768/1024). At DPR 2 that is 720 device px; 800 covers retina grid cards with headroom without shipping ~0.6–2.5MB originals."
+  },
+  "missingOriginals": {
+    "issueEntityIssueAttachments": 0,
+    "note": "issue id 37 not present in DB; user-noted lost original may refer to a prior cleanup. issue/59 original is only 6317 bytes (already tiny) so md cannot upscale detail.",
+    "goDecodeFailures": [
+      "issue_resolution/68/0bf4c9223b4f0ce76c80b6ada3dc577d.jpg"
+    ]
+  },
+  "severityColors": {
+    "source": "shared/brand.ts severityColors",
+    "LOW": "#327CB2",
+    "MEDIUM": "#EAB308",
+    "CRITICAL": "#C62222",
+    "verifiedLabelMatchesBar": true
+  }
+}
