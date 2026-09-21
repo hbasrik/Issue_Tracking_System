@@ -111,8 +111,10 @@ Web/mobil API istemcisi 401’de oturumu temizler; giriş ekranında
 
 ### A13. Issues kart listesi (görünüm) `[x]` — 2026-09-21
 Tablo/accordion kaldırıldı; tek uyarlanabilir kart (`shared/issueCardLayout`).
-Web detay rotası `/issues/:id`. Filtreler aynı. Otomatik yenileme / ses /
-kaydırma koruması sonraki tur.
+Web detay rotası `/issues/:id` (eski `IssueDetailPanel` aynı panel). Filtreler
+aynı. Otomatik yenileme / ses / kaydırma koruması sonraki tur.
+Web DONE akışına çözüm açıklaması formu eklendi (API zorunluluğu; mobille
+hizalı — çözüm fotoğrafı MediaGallery’den).
 
 ---
 

@@ -591,10 +591,14 @@ export const api = {
     return request<{ items: IssueStatusHistoryEntry[] }>(`/issues/${id}/history`);
   },
 
-  updateIssueStatus(id: number, status: string) {
+  updateIssueStatus(id: number, status: string, solutionDescription?: string) {
+    const body: { status: string; solution_description?: string } = { status };
+    if (solutionDescription != null) {
+      body.solution_description = solutionDescription;
+    }
     return request<{ id: number; status: string }>(`/issues/${id}/status`, {
       method: 'PATCH',
-      body: JSON.stringify({ status }),
+      body: JSON.stringify(body),
     });
   },
 

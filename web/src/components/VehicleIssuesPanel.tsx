@@ -5,9 +5,8 @@ import { apiErrorMessage } from '../lib/apiErrors';
 import { IssueList } from './IssueList';
 
 /**
- * Vehicle Detail → Issues tab: clickable issue cards for this VIN.
- * Detail opens in the side panel on desktop and as an accordion under the
- * card on phone/tablet — same pattern as the global Issues page.
+ * Vehicle Detail → Issues tab: adaptive issue cards for this VIN.
+ * Card body opens `/issues/:id` (same detail page as the global Issues list).
  */
 export function VehicleIssuesPanel({ vin }: { vin: string }) {
   const { t } = useI18n();

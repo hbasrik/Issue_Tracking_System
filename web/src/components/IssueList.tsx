@@ -91,7 +91,16 @@ export function IssueDetailPanel({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
   const [editingClassification, setEditingClassification] = useState(false);
+  const [showDoneForm, setShowDoneForm] = useState(false);
+  const [solutionText, setSolutionText] = useState('');
   const canEditClassification = canEditIssueClassification(issue, user?.ID, has);
+
+  useEffect(() => {
+    setShowDoneForm(false);
+    setSolutionText('');
+    setEditingClassification(false);
+    setError(null);
+  }, [issue.ID, issue.Status]);
 
   useEffect(() => {
     const onUndone = (ev: Event) => {
@@ -105,6 +114,12 @@ export function IssueDetailPanel({
   }, [issue.ID, onStatusChanged]);
 
   async function transition(status: string) {
+    if (status === 'DONE') {
+      setShowDoneForm(true);
+      setError(null);
+      return;
+    }
+
     if (status === 'APPROVED' || status === 'CONDITIONAL_APPROVED') {
       const vinTail = issue.VIN.slice(-5);
       const desc =
@@ -142,6 +157,32 @@ export function IssueDetailPanel({
       if (status === 'APPROVED' || status === 'CONDITIONAL_APPROVED') {
         showAfterApproval(issue.ID, status);
       }
+      onStatusChanged?.();
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error(t('issueDetail.statusFailed')));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function completeDone() {
+    const desc = solutionText.trim();
+    if (!desc) {
+      setError(new Error(t('issueDetail.solutionDescRequired')));
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await api.listMedia('ISSUE_RESOLUTION', String(issue.ID));
+      if ((res.items ?? []).length === 0) {
+        setError(new Error(t('issueDetail.solutionPhotoRequiredHint')));
+        setBusy(false);
+        return;
+      }
+      await api.updateIssueStatus(issue.ID, 'DONE', desc);
+      setShowDoneForm(false);
+      setSolutionText('');
       onStatusChanged?.();
     } catch (err) {
       setError(err instanceof Error ? err : new Error(t('issueDetail.statusFailed')));
@@ -203,11 +244,61 @@ export function IssueDetailPanel({
           )}
         </div>
         <div className="mt-[var(--space-5)]">
-          <IssueActions
-            status={issue.Status}
-            busy={busy}
-            onTransition={(status) => void transition(status)}
-          />
+          {showDoneForm && issue.Status === 'IN_PROGRESS' ? (
+            <div
+              className="space-y-3 rounded-lg border p-3"
+              style={{ borderColor: 'var(--border)', backgroundColor: 'var(--bg-surface-1)' }}
+            >
+              <p className="text-[15px] font-semibold text-[var(--text-primary)]">
+                {t('issueDetail.completionProof')}
+              </p>
+              <p className="text-[13px] text-[var(--text-secondary)]">
+                {t('issueDetail.completionHint')}
+              </p>
+              <label className="block">
+                <span className="text-[13px] text-[var(--text-secondary)]">
+                  {t('issueDetail.solution')}
+                </span>
+                <textarea
+                  value={solutionText}
+                  onChange={(e) => setSolutionText(e.target.value)}
+                  rows={3}
+                  className="mt-1 w-full rounded-lg border bg-[var(--bg-page)] px-3 py-2 text-[15px] text-[var(--text-primary)]"
+                  style={{ borderColor: 'var(--border)' }}
+                  disabled={busy}
+                />
+              </label>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => void completeDone()}
+                  className="min-h-touch rounded-lg bg-[var(--accent)] px-4 text-[13px] text-white disabled:opacity-60"
+                >
+                  {busy ? t('common.updating') : t('status.issue.done')}
+                </button>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => {
+                    setShowDoneForm(false);
+                    setSolutionText('');
+                    setError(null);
+                  }}
+                  className="min-h-touch rounded-lg border px-4 text-[13px] disabled:opacity-60"
+                  style={{ borderColor: 'var(--border)' }}
+                >
+                  {t('common.cancel')}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <IssueActions
+              status={issue.Status}
+              busy={busy}
+              onTransition={(status) => void transition(status)}
+            />
+          )}
         </div>
       </DetailBlock>
       <DetailBlock heading={t('issueDetail.history')}>
