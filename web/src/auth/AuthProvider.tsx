@@ -3,16 +3,25 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useState,
   type ReactNode,
 } from 'react';
-import { api, setTokenGetter, type User } from '../lib/api';
+import {
+  api,
+  setTokenGetter,
+  setUnauthorizedHandler,
+  type User,
+} from '../lib/api';
 import {
   clearPersistedAuth,
   loadPersistedAuth,
   savePersistedAuth,
 } from './persistedSession';
+
+/** sessionStorage flag read by LoginPage after a 401-driven logout. */
+export const SESSION_EXPIRED_KEY = 'karea.auth.sessionExpired';
 
 interface AuthContextValue {
   user: User | null;
@@ -30,6 +39,14 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 function readInitialAuth() {
   if (typeof window === 'undefined') return null;
   return loadPersistedAuth();
+}
+
+function markSessionExpiredNotice(): void {
+  try {
+    sessionStorage.setItem(SESSION_EXPIRED_KEY, '1');
+  } catch {
+    /* private mode / quota */
+  }
 }
 
 /** Session in memory; optional localStorage when "remember me" is checked. */
@@ -53,9 +70,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     savePersistedAuth({ token, user, permissions });
   }, [persistence, token, user, permissions]);
 
+  const clearSession = useCallback(() => {
+    setPersistence('none');
+    clearPersistedAuth();
+    setToken(null);
+    setUser(null);
+    setPermissions([]);
+  }, []);
+
+  // Register before child useEffects fire API loads (avoids a 401 race).
+  useLayoutEffect(() => {
+    setUnauthorizedHandler(() => {
+      markSessionExpiredNotice();
+      clearSession();
+    });
+    return () => setUnauthorizedHandler(null);
+  }, [clearSession]);
+
   const login = useCallback(
     async (email: string, password: string, rememberMe = false) => {
       const res = await api.login(email, password);
+      try {
+        sessionStorage.removeItem(SESSION_EXPIRED_KEY);
+      } catch {
+        /* ignore */
+      }
       setToken(res.token);
       setUser(res.user);
       setPermissions(res.permissions ?? []);
@@ -75,12 +114,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const logout = useCallback(() => {
-    setPersistence('none');
-    clearPersistedAuth();
-    setToken(null);
-    setUser(null);
-    setPermissions([]);
-  }, []);
+    clearSession();
+  }, [clearSession]);
 
   const markPasswordChanged = useCallback(() => {
     setUser((current) =>
@@ -116,4 +151,13 @@ export function useAuth(): AuthContextValue {
     throw new Error('useAuth must be used within AuthProvider');
   }
   return ctx;
+}
+
+/** Non-destructive read — cleared on successful login (survives Strict Mode remount). */
+export function peekSessionExpiredNotice(): boolean {
+  try {
+    return sessionStorage.getItem(SESSION_EXPIRED_KEY) === '1';
+  } catch {
+    return false;
+  }
 }

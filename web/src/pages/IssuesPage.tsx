@@ -2,7 +2,17 @@ import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'r
 import { Archive, ChevronDown, FileSpreadsheet } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
-import { api, mediaFileUrl, type DefectPart, type DefectType, type DefectZone, type Issue, type IssueType, type MediaAttachment } from '../lib/api';
+import {
+  api,
+  ApiError,
+  mediaFileUrl,
+  type DefectPart,
+  type DefectType,
+  type DefectZone,
+  type Issue,
+  type IssueType,
+  type MediaAttachment,
+} from '../lib/api';
 import { IssueList } from '../components/IssueList';
 import { PartMultiSelect } from '../components/PartMultiSelect';
 import { issueMatchesListQuery } from '../lib/issueVinFilter';
@@ -37,8 +47,8 @@ import {
   type IssueExportPhoto,
 } from '../lib/issueExport';
 import { useI18n, type Translate } from '../i18n';
+import { isAuthError } from '../../../shared/networkError';
 import { IssueListPrint } from '../components/print/IssuePrint';
-
 type IssueStatus = Issue['Status'];
 
 const SEVERITIES: SeverityLevel[] = ['CRITICAL', 'MEDIUM', 'LOW'];
@@ -127,8 +137,11 @@ export default function IssuesPage() {
       setDefectParts(partsRes.items ?? []);
       setDefectTypes(defectTypesRes.items ?? []);
     } catch (err) {
+      // 401 clears the session and navigates to login — do not paint an empty list.
+      if (isAuthError(err) || (err instanceof ApiError && err.status === 401)) {
+        return;
+      }
       setError(err instanceof Error ? err.message : t('issue.listFailed'));
-      setItems([]);
     }
   }, [t]);
 

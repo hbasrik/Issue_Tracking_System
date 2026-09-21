@@ -46,6 +46,7 @@ import {
   type IssueType,
   type Station,
 } from '../lib/api';
+import { isAuthError } from '../../../shared/networkError';
 import { buildAnalysisCsv } from '../lib/analysisExport';
 import { AnalysisVinMultiSelect, type VinChip } from '../components/AnalysisVinMultiSelect';
 import { SeverityIndicator, severityFillColor } from '../components/SeverityIndicator';
@@ -347,6 +348,7 @@ export default function AnalysisPage() {
       setIssueTypes(typesRes.items ?? []);
       setUpdatedAt(new Date());
     } catch (err) {
+      if (isAuthError(err)) return;
       setError(err instanceof Error ? err.message : t('analysis.loadFailed'));
     } finally {
       if (silent) setRefreshing(false);
@@ -850,6 +852,9 @@ export default function AnalysisPage() {
         </p>
       )}
 
+      {/* Auth/network failure with no payload: do not paint "—" / "Veri yok" as if empty. */}
+      {error && !dash ? null : (
+      <>
       {/* 1) KPI strip */}
       <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-5">
         {KPI_DEFS.map((def) => (
@@ -1707,6 +1712,8 @@ export default function AnalysisPage() {
         )}
       </ChartCard>
 
+      </>
+      )}
     </section>
   );
 

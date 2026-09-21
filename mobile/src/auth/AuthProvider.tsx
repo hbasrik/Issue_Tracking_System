@@ -9,7 +9,12 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { api, setTokenGetter, type User } from '../api/client';
+import {
+  api,
+  setTokenGetter,
+  setUnauthorizedHandler,
+  type User,
+} from '../api/client';
 import {
   clearPersistedAuth,
   loadPersistedAuth,
@@ -23,6 +28,9 @@ interface AuthContextValue {
   isAuthenticated: boolean;
   /** False until SecureStore hydrate finishes (avoids login flash). */
   ready: boolean;
+  /** Set when a 401 cleared the session; LoginScreen shows login.sessionExpired. */
+  sessionExpiredNotice: boolean;
+  clearSessionExpiredNotice: () => void;
   has: (code: string) => boolean;
   login: (email: string, password: string, keepSignedIn?: boolean) => Promise<void>;
   logout: () => void;
@@ -44,6 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [activeStationId, setActiveStationId] = useState<number | null>(null);
   const [ready, setReady] = useState(false);
   const [persist, setPersist] = useState(false);
+  const [sessionExpiredNotice, setSessionExpiredNotice] = useState(false);
   const tokenRef = useRef<string | null>(null);
   tokenRef.current = token;
 
@@ -75,9 +84,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     void savePersistedAuth({ token, user, permissions });
   }, [persist, token, user, permissions]);
 
+  const clearSession = useCallback(() => {
+    setPersist(false);
+    void clearPersistedAuth();
+    setToken(null);
+    setUser(null);
+    setPermissions([]);
+    setActiveStationId(null);
+  }, []);
+
+  // Before child effects load data (avoids 401 racing an unset handler).
+  useLayoutEffect(() => {
+    setUnauthorizedHandler(() => {
+      setSessionExpiredNotice(true);
+      clearSession();
+    });
+    return () => setUnauthorizedHandler(null);
+  }, [clearSession]);
+
+  const clearSessionExpiredNotice = useCallback(() => {
+    setSessionExpiredNotice(false);
+  }, []);
+
   const login = useCallback(
     async (email: string, password: string, keepSignedIn = false) => {
       const res = await api.login(email, password);
+      setSessionExpiredNotice(false);
       setTokenGetter(() => res.token);
       setToken(res.token);
       setUser(res.user);
@@ -98,13 +130,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const logout = useCallback(() => {
-    setPersist(false);
-    void clearPersistedAuth();
-    setToken(null);
-    setUser(null);
-    setPermissions([]);
-    setActiveStationId(null);
-  }, []);
+    clearSession();
+  }, [clearSession]);
 
   const markPasswordChanged = useCallback(() => {
     setUser((current) =>
@@ -124,6 +151,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       permissions,
       isAuthenticated: !!token && !!user,
       ready,
+      sessionExpiredNotice,
+      clearSessionExpiredNotice,
       has,
       login,
       logout,
@@ -136,6 +165,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       token,
       permissions,
       ready,
+      sessionExpiredNotice,
+      clearSessionExpiredNotice,
       has,
       login,
       logout,

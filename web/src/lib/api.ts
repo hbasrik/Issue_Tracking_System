@@ -87,12 +87,29 @@ export class ApiError extends Error {
 }
 
 type TokenGetter = () => string | null;
+type UnauthorizedHandler = () => void;
 
 let getToken: TokenGetter = () => null;
+let onUnauthorized: UnauthorizedHandler | null = null;
 
 /** Wire the auth token source (called once from AuthProvider). */
 export function setTokenGetter(fn: TokenGetter): void {
   getToken = fn;
+}
+
+/**
+ * Called on any authenticated-request 401 (not /auth/login).
+ * AuthProvider clears the session so Require* gates send the user to login.
+ */
+export function setUnauthorizedHandler(fn: UnauthorizedHandler | null): void {
+  onUnauthorized = fn;
+}
+
+function notifyUnauthorized(path: string, status: number): void {
+  if (status !== 401) return;
+  // Wrong email/password must not clear a session that is not being used.
+  if (path === '/auth/login' || path.startsWith('/auth/login?')) return;
+  onUnauthorized?.();
 }
 
 async function request<T>(
@@ -128,6 +145,7 @@ async function request<T>(
     if (headerId && !body.request_id) {
       body = { ...body, request_id: headerId };
     }
+    notifyUnauthorized(path, res.status);
     throw new ApiError(res.status, body);
   }
 

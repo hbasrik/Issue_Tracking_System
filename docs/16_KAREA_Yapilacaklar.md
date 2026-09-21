@@ -103,6 +103,12 @@ Kodda var ama gerçek cihazda görülmedi:
 Not: JWT + iptal birlikte herkesin bir kez yeniden girişini gerektirir.
 Refresh token hâlâ D3.
 
+### A12. 401 oturum kapatma `[x]` — 2026-09-21
+Web/mobil API istemcisi 401’de oturumu temizler; giriş ekranında
+`login.sessionExpired` mesajı. Analiz/Issues auth hatasında boş
+“Veri yok” boyamaz. Mobil offline kuyruk 401’de kaydı silmez
+(`shouldQueueIssueSubmit` / `queueItemAfterSendError` aynı).
+
 ---
 
 ## B — Canlıya çıkmadan önce ZORUNLU

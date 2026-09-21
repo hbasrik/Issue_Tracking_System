@@ -20,7 +20,7 @@ import { useI18n } from '../i18n';
 import { ApiError } from '../api/client';
 
 export default function LoginScreen() {
-  const { login } = useAuth();
+  const { login, sessionExpiredNotice, clearSessionExpiredNotice } = useAuth();
   const { tokens } = useTheme();
   const { t } = useI18n();
   const [email, setEmail] = useState('');
@@ -38,6 +38,7 @@ export default function LoginScreen() {
 
   async function onSubmit() {
     setError(null);
+    clearSessionExpiredNotice();
     setBusy(true);
     try {
       await login(email.trim(), password, keepSignedIn);
@@ -82,6 +83,14 @@ export default function LoginScreen() {
             <Text style={[styles.welcomeHint, { color: tokens.textSecondary }]}>
               {t('login.welcomeHint')}
             </Text>
+
+            {sessionExpiredNotice ? (
+              <View style={styles.errorBox}>
+                <Text style={{ color: statusColors.notOk, textAlign: 'center' }}>
+                  {t('login.sessionExpired')}
+                </Text>
+              </View>
+            ) : null}
 
             {error ? (
               <View style={styles.errorBox}>

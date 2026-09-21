@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { Eye, EyeOff, Lock, User } from 'lucide-react';
 import { Navigate } from 'react-router-dom';
 import { BRAND_NAME } from '../../../shared/brand';
-import { useAuth } from '../auth/AuthProvider';
+import { peekSessionExpiredNotice, useAuth } from '../auth/AuthProvider';
 import { Perm } from '../auth/permissions';
 import { ApiErrorText } from '../components/ApiErrorText';
 import { Logo } from '../components/Logo';
@@ -19,6 +19,7 @@ export default function LoginPage() {
   const [forgotHint, setForgotHint] = useState(false);
   const [error, setError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
+  const [sessionExpired, setSessionExpired] = useState(peekSessionExpiredNotice);
 
   if (isAuthenticated && user?.MustChangePassword) {
     return <Navigate to="/change-password" replace />;
@@ -33,6 +34,7 @@ export default function LoginPage() {
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
+    setSessionExpired(false);
     setBusy(true);
     try {
       await login(email.trim(), password, rememberMe);
@@ -59,6 +61,11 @@ export default function LoginPage() {
           </div>
 
           <form onSubmit={onSubmit} className="login-form">
+            {sessionExpired ? (
+              <p className="login-error" role="status">
+                {t('login.sessionExpired')}
+              </p>
+            ) : null}
             {error ? <ApiErrorText error={error} className="login-error" /> : null}
 
             <label className="login-field">

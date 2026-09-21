@@ -134,6 +134,8 @@ export const tr = {
   'login.submit': 'Giriş Yap',
   'login.submitting': 'Giriş yapılıyor…',
   'login.failed': 'Giriş başarısız',
+  'login.sessionExpired':
+    'Oturumunuzun süresi doldu, tekrar giriş yapın',
   'login.back': 'Girişe dön',
 
   'auth.noAccessTitle': 'Yetkiniz yok',
@@ -1279,6 +1281,7 @@ export const en: Record<MessageKey, string> = {
   'login.submit': 'Sign in',
   'login.submitting': 'Signing in…',
   'login.failed': 'Sign-in failed',
+  'login.sessionExpired': 'Your session has expired; please sign in again',
   'login.back': 'Back to sign-in',
 
   'auth.noAccessTitle': 'No access',

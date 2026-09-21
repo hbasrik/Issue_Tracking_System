@@ -53,10 +53,29 @@ export class ApiError extends Error {
 }
 
 type TokenGetter = () => string | null;
+type UnauthorizedHandler = () => void;
+
 let getToken: TokenGetter = () => null;
+let onUnauthorized: UnauthorizedHandler | null = null;
 
 export function setTokenGetter(fn: TokenGetter): void {
   getToken = fn;
+}
+
+/**
+ * Fired on 401 for any path except /auth/login.
+ * AuthProvider clears the session so RootNavigator shows LoginScreen.
+ * Offline queue rows are NOT deleted here — sendFailure still classifies
+ * auth and keeps the item pending (see issueReportQueuePolicy).
+ */
+export function setUnauthorizedHandler(fn: UnauthorizedHandler | null): void {
+  onUnauthorized = fn;
+}
+
+function notifyUnauthorized(path: string, status: number): void {
+  if (status !== 401) return;
+  if (path === '/auth/login' || path.startsWith('/auth/login?')) return;
+  onUnauthorized?.();
 }
 
 const REQUEST_TIMEOUT_MS = 15_000;
@@ -128,6 +147,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
       if (headerId && !body.request_id) {
         body = { ...body, request_id: headerId };
       }
+      notifyUnauthorized(path, res.status);
       throw new ApiError(res.status, body);
     }
 
