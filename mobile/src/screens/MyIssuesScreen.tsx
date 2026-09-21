@@ -4,6 +4,7 @@ import {
   Keyboard,
   Pressable,
   Text,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -46,6 +47,7 @@ import { issueTypeChipLabel } from '../lib/issueTypeLabel';
 import { loadFailureMessage } from '../offline/userFacingError';
 import { useReferenceCache } from '../offline/ReferenceCacheProvider';
 import { isTransportError } from '../../../shared/networkError';
+import { issueCardColumnCount, issueReportedAtIso } from '../../../shared/issueCardLayout';
 import type { MainDrawerParamList, RootStackParamList } from '../navigation/types';
 
 type IssueStatus = Issue['Status'];
@@ -67,8 +69,8 @@ const STATUSES: IssueStatus[] = [
 
 const ADVANCED_FILTERS_OPEN_KEY = 'karea-issues-advanced-filters-open';
 
-function issueCreatedMs(issue: Issue): number {
-  return Date.parse(issue.CreatedAt || issue.IssueDate || '') || 0;
+function issueReportedMs(issue: Issue): number {
+  return Date.parse(issueReportedAtIso(issue) || '') || 0;
 }
 
 export default function MyIssuesScreen() {
@@ -100,6 +102,9 @@ export default function MyIssuesScreen() {
   /** Frozen at preset apply so list length matches the Home card at tap time. */
   const [homeStatNow, setHomeStatNow] = useState(() => new Date());
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  const { width: windowWidth } = useWindowDimensions();
+  const listContentWidth = Math.max(0, windowWidth - 32);
+  const columns = issueCardColumnCount(listContentWidth);
 
   useEffect(() => {
     void AsyncStorage.getItem(ADVANCED_FILTERS_OPEN_KEY).then((raw) => {
@@ -125,8 +130,8 @@ export default function MyIssuesScreen() {
         api.listDefectCatalogTypes().catch(() => ({ items: snapshot.types })),
       ]);
       const list = (issuesRes.items ?? []).slice().sort((a, b) => {
-        const ta = issueCreatedMs(a);
-        const tb = issueCreatedMs(b);
+        const ta = issueReportedMs(a);
+        const tb = issueReportedMs(b);
         if (tb !== ta) return tb - ta;
         return b.ID - a.ID;
       });
@@ -305,13 +310,25 @@ export default function MyIssuesScreen() {
   return (
     <Screen padded={false}>
       <FlatList
+        key={`issues-cols-${columns}`}
         data={filtered}
         keyExtractor={(i) => String(i.ID)}
+        numColumns={columns}
+        columnWrapperStyle={
+          columns > 1
+            ? { gap: 12, marginBottom: 12, alignItems: 'stretch' }
+            : undefined
+        }
         {...listKeyboardDismissProps}
         initialNumToRender={8}
         maxToRenderPerBatch={8}
         windowSize={5}
         contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
+        ItemSeparatorComponent={
+          columns === 1
+            ? () => <View style={{ height: 12 }} />
+            : undefined
+        }
         ListHeaderComponent={
           <Pressable onPress={Keyboard.dismiss} accessible={false} style={{ marginBottom: 12 }}>
             <Title>{t('nav.issues')}</Title>
@@ -690,13 +707,16 @@ export default function MyIssuesScreen() {
           loading ? null : <Subtitle>{t('issue.noMatch')}</Subtitle>
         }
         renderItem={({ item }) => (
-          <IssueCard
-            issue={item}
-            onPress={() => {
-              Keyboard.dismiss();
-              navigation.navigate('IssueDetail', { id: item.ID });
-            }}
-          />
+          <View style={{ flex: 1, marginBottom: columns > 1 ? 0 : 0 }}>
+            <IssueCard
+              issue={item}
+              layoutWidth={listContentWidth}
+              onPress={() => {
+                Keyboard.dismiss();
+                navigation.navigate('IssueDetail', { id: item.ID });
+              }}
+            />
+          </View>
         )}
       />
     </Screen>
