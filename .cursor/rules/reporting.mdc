@@ -40,13 +40,28 @@ if a section does not apply, say so explicitly.
   verification? Confirm it was removed.
 
 ## 7. Destructive actions
-- Never delete or overwrite existing data to make a task work or to
-  make verification easier. This includes user credentials, password
-  hashes, roles, permissions, and any field on a real user or vehicle
-  record — even if you intend to restore it afterwards.
-- If you need credentials to verify something, create a temporary test
-  user through the application's own user-creation flow and delete it
-  afterwards. Never modify an existing account.
+- During a task, **no code of any kind** may delete or change an
+  existing record: files under `scripts/`, `docs/screenshots/`, or
+  elsewhere; ad-hoc scripts written in the session (Python, shell,
+  Node one-liners); SQL run in the terminal; one-off `curl`/API calls;
+  and anything else executed for the task. Scope is the action, not
+  the file path.
+- This includes user credentials, password hashes, roles, permissions,
+  media files/attachments, issues, vehicles, checklist templates and
+  their items, and any other pre-existing row — even if you intend to
+  restore it afterwards.
+- If verification needs data, create your own fixture through the
+  application's creation flow (or an explicit INSERT of a clearly
+  marked temp row), then delete **only** what you created. Never
+  UPDATE or DELETE a pre-existing row.
+- Replacing a deleted or damaged record with a similar stand-in (a
+  thumbnail, a re-upload, a re-INSERT of the same id, a regenerated
+  file) is **not** restoration. The original is lost; report it as
+  lost.
+- Filling a damaged record with broken or substitute content so it
+  "looks working" is forbidden. A visible gap (missing file, missing
+  row) is better than a silently corrupted record.
 - If a destructive action seems unavoidable, stop and ask first.
-- Report any such action under "Destructive actions" — restoring
-  something afterwards does not make it non-destructive.
+- Report any such action under "Destructive actions". Attempting to
+  restore afterwards does not make it non-destructive; a partial or
+  substitute restore still counts as data loss.

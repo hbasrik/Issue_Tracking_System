@@ -2,6 +2,9 @@
 /**
  * Prove NULL-vin LOGIN_RATE_LIMITED audit rows do not break readers and do
  * not pollute vehicle / activity / analysis aggregates.
+ *
+ * Writes only a marker audit row tagged with a unique email string, then
+ * deletes that marker. Never updates or deletes pre-existing audit_logs.
  */
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
