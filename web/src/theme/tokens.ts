@@ -3,6 +3,11 @@
  * Surfaces follow docs/07; brand accent is Satsuma.
  */
 
+import {
+  brandColors as sharedBrandColors,
+  severityColors,
+} from '../../../shared/brand';
+
 export type ThemeMode = 'dark' | 'light';
 
 /** localStorage / AsyncStorage key — only written after an explicit user choice. */
@@ -31,16 +36,8 @@ export const breakpoints = {
   desktop: 1024,
 } as const;
 
-/** Brand & neutral palette (theme-invariant). */
-export const brandColors = {
-  /** Primary / Satsuma — buttons, active nav, focus */
-  primary: '#FF3B1E',
-  secondary: '#327CB2',
-  neutralWarm: '#C0A89B',
-  neutralOlive: '#8E9E7C',
-  neutralGray: '#B5B2B2',
-  critical: '#C62222',
-} as const;
+/** Re-export shared brand palette — do not redefine hex here. */
+export const brandColors = sharedBrandColors;
 
 /**
  * 4px spacing scale. Prefer these over ad-hoc margins so web and mobile
@@ -205,10 +202,10 @@ const statusColorBase = {
   conditionalOk: '#F59E0B',
   info: brandColors.secondary,
   pending: brandColors.neutralGray,
-  /** Issue severity — Wi-Fi bars use these fills */
-  severityCritical: brandColors.critical,
-  severityMedium: '#EAB308',
-  severityLow: brandColors.secondary,
+  /** Issue severity — from shared/brand severityColors (bars + labels). */
+  severityCritical: severityColors.CRITICAL,
+  severityMedium: severityColors.MEDIUM,
+  severityLow: severityColors.LOW,
   /** Vehicle status */
   vehicleInProduction: brandColors.secondary,
   vehicleInWarehouse: brandColors.neutralGray,

@@ -12,7 +12,11 @@ import { useI18n } from '../i18n';
 import { type Issue } from '../lib/api';
 import { defectLabels } from '../lib/issueDetailCopy';
 import { AuthenticatedMediaImg } from './AuthenticatedMediaImg';
-import { SeverityIndicator } from './SeverityIndicator';
+import {
+  SeverityIndicator,
+  normalizeSeverity,
+  severityFillColor,
+} from './SeverityIndicator';
 import { StatusBadge } from './StatusBadge';
 import { isNonWebImage } from '../lib/mediaKind';
 
@@ -47,6 +51,8 @@ export function IssueCard({
   );
   const sevKey = severityMessageKey(issue.Severity);
   const sevLabel = sevKey ? t(sevKey) : issue.Severity;
+  const sevLevel = normalizeSeverity(issue.Severity);
+  const sevColor = sevLevel ? severityFillColor(sevLevel) : undefined;
   const hasPhoto = Boolean(issue.ReportPhotoPath);
   const photoIsHeic =
     hasPhoto && isNonWebImage(null, null, issue.ReportPhotoPath);
@@ -92,7 +98,7 @@ export function IssueCard({
       {hasPhoto && !photoIsHeic ? (
         <AuthenticatedMediaImg
           storagePath={issue.ReportPhotoPath!}
-          thumb
+          variant={compact ? 'sm' : 'md'}
           alt=""
           className="h-full w-full object-cover"
         />
@@ -157,14 +163,7 @@ export function IssueCard({
           <SeverityIndicator severity={issue.Severity} decorative />
           <span
             className="font-medium"
-            style={{
-              color:
-                issue.Severity === 'CRITICAL'
-                  ? 'var(--status-not-ok)'
-                  : issue.Severity === 'MEDIUM'
-                    ? 'var(--status-rework)'
-                    : 'var(--status-ok)',
-            }}
+            style={sevColor ? { color: sevColor } : undefined}
           >
             {sevLabel}
           </span>

@@ -3,6 +3,11 @@
  * Surfaces follow docs/07; brand accent is Satsuma.
  */
 
+import {
+  brandColors as sharedBrandColors,
+  severityColors,
+} from '../../../shared/brand';
+
 export type ThemeMode = 'dark' | 'light';
 
 /** AsyncStorage key — only written after an explicit user choice. */
@@ -42,16 +47,8 @@ export function mixTowardBlack(hex: string, blackPct: number): string {
   return `rgb(${Math.round(r * (1 - t))}, ${Math.round(g * (1 - t))}, ${Math.round(b * (1 - t))})`;
 }
 
-/** Brand & neutral palette (theme-invariant). */
-export const brandColors = {
-  /** Primary / Satsuma — buttons, active nav, focus */
-  primary: '#FF3B1E',
-  secondary: '#327CB2',
-  neutralWarm: '#C0A89B',
-  neutralOlive: '#8E9E7C',
-  neutralGray: '#B5B2B2',
-  critical: '#C62222',
-} as const;
+/** Re-export shared brand palette — do not redefine hex here. */
+export const brandColors = sharedBrandColors;
 
 /**
  * 4px spacing scale. Prefer these over ad-hoc margins so web and mobile
@@ -106,9 +103,9 @@ const statusColorBase = {
   conditionalOk: '#F59E0B',
   info: brandColors.secondary,
   pending: brandColors.neutralGray,
-  severityCritical: brandColors.critical,
-  severityMedium: '#EAB308',
-  severityLow: brandColors.secondary,
+  severityCritical: severityColors.CRITICAL,
+  severityMedium: severityColors.MEDIUM,
+  severityLow: severityColors.LOW,
   issueOpen: brandColors.critical,
   /** İşlemde — existing amber (not blue, not Satsuma). */
   issueInProgress: '#F59E0B',

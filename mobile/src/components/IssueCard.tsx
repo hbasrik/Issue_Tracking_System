@@ -15,12 +15,15 @@ import {
   ISSUE_CARD_PHOTO_ASPECT,
   severityMessageKey,
 } from '../../../shared/issueCardLayout';
-import { mediaFileUrl, mediaThumbUrl, type Issue } from '../api/client';
+import { mediaFileUrl, mediaThumbUrl, mediaCardThumbUrl, type Issue } from '../api/client';
 import { useAuth } from '../auth/AuthProvider';
 import { Badge, Card } from './ui';
-import { SeverityIndicator } from './SeverityIndicator';
+import {
+  SeverityIndicator,
+  normalizeSeverity,
+  severityFillColor,
+} from './SeverityIndicator';
 import { useTheme } from '../theme/ThemeProvider';
-import { statusColors } from '../theme/tokens';
 import { useI18n } from '../i18n';
 import { issueStatusColor, issueStatusLabel } from '../lib/issueStatus';
 import { defectLabels } from '../lib/issueDetailCopy';
@@ -53,10 +56,18 @@ export function IssueCard({
   );
   const sevKey = severityMessageKey(issue.Severity);
   const sevLabel = sevKey ? t(sevKey) : issue.Severity;
+  const sevLevel = normalizeSeverity(issue.Severity);
+  const sevColor = sevLevel ? severityFillColor(sevLevel) : tokens.textPrimary;
   const hasPhoto = Boolean(issue.ReportPhotoPath);
   const authHeaders = token
     ? { Authorization: `Bearer ${token}` }
     : undefined;
+  const listImageUri =
+    hasPhoto && issue.ReportPhotoPath
+      ? compact
+        ? mediaThumbUrl(issue.ReportPhotoPath)
+        : mediaCardThumbUrl(issue.ReportPhotoPath)
+      : null;
 
   const photoBox = useMemo(() => {
     if (compact) {
@@ -90,10 +101,10 @@ export function IssueCard({
         justifyContent: 'center',
       }}
     >
-      {hasPhoto ? (
+      {hasPhoto && listImageUri ? (
         <Image
           source={{
-            uri: mediaThumbUrl(issue.ReportPhotoPath!),
+            uri: listImageUri,
             headers: authHeaders,
           }}
           style={{ width: '100%', height: '100%' }}
@@ -174,12 +185,7 @@ export function IssueCard({
           <SeverityIndicator severity={issue.Severity} />
           <Text
             style={{
-              color:
-                issue.Severity === 'CRITICAL'
-                  ? statusColors.severityCritical
-                  : issue.Severity === 'MEDIUM'
-                    ? statusColors.severityMedium
-                    : statusColors.severityLow,
+              color: sevColor,
               fontWeight: '600',
               fontSize: compact ? 12 : 13,
             }}

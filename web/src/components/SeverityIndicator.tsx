@@ -1,4 +1,5 @@
 import { statusColors } from '../theme/tokens';
+import { severityColors } from '../../../shared/brand';
 import { useI18n } from '../i18n';
 
 export type SeverityLevel = 'CRITICAL' | 'MEDIUM' | 'LOW';
@@ -18,9 +19,9 @@ const FILLED: Record<SeverityLevel, number> = {
 };
 
 const FILL_COLOR: Record<SeverityLevel, string> = {
-  LOW: statusColors.severityLow,
-  MEDIUM: statusColors.severityMedium,
-  CRITICAL: statusColors.severityCritical,
+  LOW: severityColors.LOW,
+  MEDIUM: severityColors.MEDIUM,
+  CRITICAL: severityColors.CRITICAL,
 };
 
 export function normalizeSeverity(value: string): SeverityLevel | null {
