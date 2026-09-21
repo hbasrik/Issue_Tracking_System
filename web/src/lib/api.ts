@@ -518,13 +518,6 @@ export const api = {
     );
   },
 
-  eolDocumentApprove(vin: string) {
-    return request<DocumentApproveResult>(
-      `/vehicles/${encodeURIComponent(vin)}/eol/document-approve`,
-      { method: 'POST' },
-    );
-  },
-
   listIssues(status?: string, vin?: string) {
     const params = new URLSearchParams();
     if (status) params.set('status', status);
@@ -931,12 +924,6 @@ export interface DeliverResult {
   vehicle_status: string;
 }
 
-export interface DocumentApproveResult {
-  vin: string;
-  current_stage: EOLStage;
-  vehicle_status: string;
-}
-
 export interface IssueType {
   ID: number;
   Name: string;
@@ -1032,6 +1019,21 @@ export function mediaFileUrl(storagePath: string): string {
 /** List-card URL: long-edge 192 JPEG instead of the original. */
 export function mediaThumbUrl(storagePath: string): string {
   return `${mediaFileUrl(storagePath)}?thumb=1`;
+}
+
+export async function fetchMediaBlob(
+  storagePath: string,
+  token: string,
+  thumb = false,
+): Promise<Blob> {
+  const url = thumb ? mediaThumbUrl(storagePath) : mediaFileUrl(storagePath);
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    throw new Error(`media fetch ${res.status}`);
+  }
+  return res.blob();
 }
 
 export function formatIssueCreatedAt(iso?: string, locale = 'tr-TR'): string {

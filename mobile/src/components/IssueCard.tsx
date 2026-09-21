@@ -1,5 +1,6 @@
 import { Image, Pressable, Text, View } from 'react-native';
 import { mediaThumbUrl, type Issue } from '../api/client';
+import { useAuth } from '../auth/AuthProvider';
 import { Card, Badge } from './ui';
 import { SeverityIndicator } from './SeverityIndicator';
 import { useTheme } from '../theme/ThemeProvider';
@@ -19,6 +20,7 @@ export function IssueCard({
 }) {
   const { tokens } = useTheme();
   const { t, locale } = useI18n();
+  const { token } = useAuth();
 
   return (
     <Pressable onPress={onPress} accessibilityRole="button">
@@ -26,7 +28,10 @@ export function IssueCard({
         <View style={{ flexDirection: 'row', gap: 12 }}>
           {issue.ReportPhotoPath ? (
             <Image
-              source={{ uri: mediaThumbUrl(issue.ReportPhotoPath) }}
+              source={{
+                uri: mediaThumbUrl(issue.ReportPhotoPath),
+                headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+              }}
               style={{
                 width: 64,
                 height: 64,

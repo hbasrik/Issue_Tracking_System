@@ -2,12 +2,12 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useI18n } from '../i18n';
 import {
   api,
-  mediaFileUrl,
   type MediaAttachment,
   type MediaEntityType,
 } from '../lib/api';
 import { apiErrorMessage } from '../lib/apiErrors';
 import { isNonWebImage } from '../lib/mediaKind';
+import { AuthenticatedMediaImg } from './AuthenticatedMediaImg';
 
 interface MediaGalleryProps {
   entityType: MediaEntityType;
@@ -138,8 +138,8 @@ export function MediaGallery({
                   }
                 >
                   {isImage && !unreadable ? (
-                    <img
-                      src={mediaFileUrl(item.storage_path)}
+                    <AuthenticatedMediaImg
+                      storagePath={item.storage_path}
                       alt={item.file_name}
                       className="h-24 w-full object-cover"
                     />
@@ -189,8 +189,8 @@ export function MediaGallery({
           >
             {t('common.close')}
           </button>
-          <img
-            src={mediaFileUrl(lightbox.storage_path)}
+          <AuthenticatedMediaImg
+            storagePath={lightbox.storage_path}
             alt={lightbox.file_name}
             className="max-h-[90vh] max-w-[95vw] rounded-lg object-contain"
             onClick={(e) => e.stopPropagation()}

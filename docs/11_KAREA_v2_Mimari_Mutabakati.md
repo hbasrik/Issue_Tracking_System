@@ -30,6 +30,8 @@
 
 **Güncelleme 1 (2026-08-25, migration 0011): Evrak aşaması akıştan çıkarıldı.** Gerekçe: kullanıcı kararı, "şimdilik şube ve depo yeterli". `fn_enforce_document_approval` trigger'ı kaldırıldı; `document_approved_at` / `document_approved_by` kolonları silinmedi (ileride geri açılabilsin diye duruyor). `eol.document_approve` izni katalogda duruyor ama kullanılmıyor.
 
+**Güncelleme 3 (2026-09-21): `document_approve` uykuda.** Endpoint kayıtlı kalır ama her zaman **410 Gone** döner; durum değiştirmez. İzin hiçbir role atanamaz (matris + `ReplaceGrants` reddeder). Kolonlar tarihsel kalır. Akış dışı — Karar 2 / migration 0011 ile kaldırıldı.
+
 **Güncelleme 2 (2026-08-31, migration 0013): Nihai akış — Şube → Depo → Teslim.** Aşağıdaki hâli geçerlidir:
 
 | Adım | Ön koşullar | Sonuç |
@@ -113,9 +115,19 @@ Diğer sonuçlar:
 
 **Etki:** Migration ile kolon eklenir, mevcut satırlar `entity_type`+`entity_id` üzerinden ilgili tablo join'iyle backfill edilir. Upload endpoint'leri `vin`'i de yazacak şekilde güncellenir.
 
+**Güncelleme (2026-09-21 — güvenlik):** `GET /uploads/*` artık kimlik doğrulaması ister. Giriş yetmez: çağıranın medyanın `vin`'i üzerinde `vehicle.view` yetkisi olmalıdır. Web/mobil istemciler Bearer ile yükler. Depolanan dosya adları 16 bayt `crypto/rand` hex (tahmin edilemez); sıralı değildir.
+
+## Karar 12 — Token iptali (`tokens_valid_from`) (NEW — 2026-09-21)
+
+**Gerekçe:** JWT'ler durumsuz ve 24 saat geçerliydi. Kullanıcı pasife alındığında veya şifresi değiştiğinde elindeki token süresine kadar çalışmaya devam ediyordu.
+
+**Karar:** `users.tokens_valid_from TIMESTAMPTZ NOT NULL DEFAULT now()` (migration 0029). Pasifleştirme, silme (satır kalkınca zaten geçersiz), şifre değişimi/sıfırlama ve rol değişiminde damga `now()` olur. Auth katmanı JWT `iat` damgadan eskiyse 401 döner (PK üzerinden tek satır okuma). Yenileme token'ı D3'te; bu sadece anında iptal.
+
+**JWT_SECRET:** Boş veya 32 karakterden kısa anahtarla süreç başlamaz (`openssl rand -base64 32`). Zayıf docker-compose / `.env.example` varsayılanı yok. Bu değişiklik + `tokens_valid_from` birlikte herkesin bir kez yeniden giriş yapmasını gerektirir (beklenen).
+
 ## Değişmeyen / Yeniden Kullanılacaklar
 
-Şunlara **dokunulmuyor**, olduğu gibi kalıyor: JWT auth + bcrypt, CORS allowlist mimarisi, Unit-of-Work (pgx.Tx) transaction pattern, `.cursor/rules` (commit ve environment-check kuralları), Analysis sekmesi temel yapısı (VIN×severity kırılımı, Pie/Bar chart'lar — yeni station/EOL alanlarıyla genişleyecek ama sıfırdan kurulmayacak), Docker/migration/seed altyapısı.
+Şunlara **dokunulmuyor**, olduğu gibi kalıyor: JWT auth + bcrypt (üstteki JWT_SECRET ve iptal sıkılaştırmaları hariç), CORS allowlist mimarisi, Unit-of-Work (pgx.Tx) transaction pattern, `.cursor/rules` (commit ve environment-check kuralları), Analysis sekmesi temel yapısı (VIN×severity kırılımı, Pie/Bar chart'lar — yeni station/EOL alanlarıyla genişleyecek ama sıfırdan kurulmayacak), Docker/migration/seed altyapısı.
 
 ---
 

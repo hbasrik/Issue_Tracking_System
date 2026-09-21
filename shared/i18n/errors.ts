@@ -28,6 +28,7 @@ const EXACT: Record<string, MessageKey> = {
   'email address is not valid': 'error.emailInvalid',
   'description is required for this status': 'error.descRequiredStatus',
   'description is required': 'error.descRequired',
+  'description must be at most 400 characters': 'error.descTooLong',
   'solution_description is required when marking an issue done':
     'error.solutionRequired',
   'issue severity is required': 'error.severityRequired',

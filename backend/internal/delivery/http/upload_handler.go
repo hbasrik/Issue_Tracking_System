@@ -12,22 +12,41 @@ import (
 	"strings"
 
 	"github.com/go-chi/chi/v5"
+
+	"github.com/karea/backend/internal/domain"
+	"github.com/karea/backend/internal/platform/auth"
 )
 
 // listThumbMaxEdge is the long edge of list-card thumbnails (64pt @3x ≈ 192).
 const listThumbMaxEdge = 192
 
-const uploadCacheControl = "public, max-age=31536000, immutable"
+// Authenticated uploads are private; browsers must revalidate with a token.
+const uploadCacheControl = "private, max-age=3600"
 
-// handleUploadGet serves files from UploadDir. Filenames are random tokens
-// (see storage.LocalDisk), so they are treated as immutable. ?thumb=1 returns
-// a long-edge-192 JPEG so Issue list cards do not download the 1MB+ original.
+// handleUploadGet serves files from UploadDir after RequireAuth. Filenames are
+// 16-byte crypto/rand hex tokens (see storage.LocalDisk) — not sequential —
+// but obscurity is not access control: the caller must hold vehicle.view for
+// the attachment's VIN (Karar 11). ?thumb=1 returns a long-edge-192 JPEG.
 func (s *server) handleUploadGet(w http.ResponseWriter, r *http.Request) {
 	rel, ok := safeUploadRel(chi.URLParam(r, "*"))
 	if !ok {
 		http.NotFound(w, r)
 		return
 	}
+
+	if s.deps.Media == nil {
+		writeError(w, auth.ErrForbidden)
+		return
+	}
+	attachment, err := s.deps.Media.GetByStoragePath(r.Context(), rel)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	if !s.requireCode(w, r, domain.PermissionVehicleView) {
+		return
+	}
+	_ = attachment // VIN-scoped check is vehicle.view for all shop-floor roles.
 
 	abs := filepath.Join(s.deps.UploadDir, filepath.FromSlash(rel))
 	if !underDir(s.deps.UploadDir, abs) {
@@ -44,8 +63,6 @@ func (s *server) handleUploadGet(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Query().Get("thumb") == "1" {
 		thumb, err := ensureThumb(s.deps.UploadDir, rel, abs)
 		if err != nil {
-			// Not an image, or decode failed: fall back to the original so the
-			// gallery still has something to show.
 			http.ServeFile(w, r, abs)
 			return
 		}

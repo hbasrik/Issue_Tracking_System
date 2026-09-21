@@ -935,6 +935,23 @@ func (f *fakeMediaRepo) VINForEntity(_ context.Context, entityType domain.MediaE
 	return vin, nil
 }
 
+func (f *fakeMediaRepo) GetByStoragePath(_ context.Context, storagePath string) (*domain.MediaAttachment, error) {
+	for i := range f.rows {
+		if f.rows[i].StoragePath == storagePath {
+			m := f.rows[i]
+			return &m, nil
+		}
+	}
+	return nil, domain.ErrNotFound
+}
+
+func (f *fakeMediaRepo) ChecklistTypeForProgressID(_ context.Context, progressID string) (domain.ChecklistType, error) {
+	if _, ok := f.existing[string(domain.MediaEntityChecklistItemProgress)+"|"+progressID]; !ok {
+		return "", domain.ErrNotFound
+	}
+	return domain.ChecklistTypeTest, nil
+}
+
 // fakeMediaStore records what was written instead of touching the filesystem,
 // which also lets a test assert that a rejected upload stored nothing.
 type fakeMediaStore struct {

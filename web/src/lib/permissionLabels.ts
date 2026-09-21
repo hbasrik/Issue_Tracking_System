@@ -56,7 +56,7 @@ export const PERMISSION_CATALOG: PermissionGroupDef[] = [
       { code: Perm.EOLBranchShip, labelKey: 'perm.eol.branch.ship' },
       { code: Perm.EOLDepotRelease, labelKey: 'perm.eol.depot.release' },
       { code: Perm.EOLDeliver, labelKey: 'perm.eol.deliver' },
-      { code: Perm.EOLDocumentApprove, labelKey: 'perm.eol.document.approve' },
+      // eol.document_approve is dormant (Karar 2) — not assignable, omit from matrix.
     ],
   },
   {
@@ -99,7 +99,9 @@ export function groupPermissions(
   })).filter((group) => group.items.length > 0);
 
   const known = new Set(PERMISSION_CATALOG.flatMap((g) => g.items.map((i) => i.code)));
-  const extras = fromApi.filter((p) => !known.has(p.code));
+  // Dormant permissions must never appear in the Roles matrix (Karar 2).
+  const dormant = new Set<string>([Perm.EOLDocumentApprove]);
+  const extras = fromApi.filter((p) => !known.has(p.code) && !dormant.has(p.code));
   if (extras.length > 0) {
     groups.push({
       id: 'other',

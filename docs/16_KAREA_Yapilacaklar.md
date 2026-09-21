@@ -1,6 +1,6 @@
 # KAREA — Yapılacaklar Listesi
 
-**Güncelleme:** 2026-09-18
+**Güncelleme:** 2026-09-21
 **Amaç:** Canlıya çıkmadan önce ve sonra yapılacakları ayırmak, neyin
 kimi beklediğini takip etmek.
 
@@ -93,6 +93,16 @@ Kodda var ama gerçek cihazda görülmedi:
 - Yeni sınıflandırma formu
 - Filtre düzeni
 
+### A11. Güvenlik sıkılaştırması (altı madde) `[x]` — 2026-09-21
+- `GET /uploads/*` auth + `vehicle.view` (VIN / Karar 11); web/mobil Bearer
+- `JWT_SECRET` boş/<32 → süreç başlamaz; zayıf compose varsayılanı yok
+- `POST /media` hedef varlığa yazma yetkisi ister
+- `document_approve` uykuda: 410, atanamaz izin, kolonlar tarihsel
+- Issue açıklaması max 400 + i18n + kalan karakter (web/mobil)
+- `users.tokens_valid_from` (0029): pasif/şifre/rol → anında 401
+Not: JWT + iptal birlikte herkesin bir kez yeniden girişini gerektirir.
+Refresh token hâlâ D3.
+
 ---
 
 ## B — Canlıya çıkmadan önce ZORUNLU
@@ -103,8 +113,9 @@ Bu haliyle canlıya çıkamaz. iOS tarafında ayrıca App Transport Security
 düz HTTP'yi engeller.
 
 ### B2. Sırların `.env`'den çıkarılması `[!]`
-`JWT_SECRET`, veritabanı şifresi repoda. Üretimde sunucudaki güvenli
-bir kaynaktan gelmeli.
+Geliştirmede `JWT_SECRET` bilinçli girilir (boş/<32 süreç başlamaz).
+Üretimde sırlar sunucudaki güvenli kaynaktan gelmeli; `.env` ile
+dağıtılmamalı.
 
 ### B3. Demo hesapların temizlenmesi `[!]`
 `changeme123` şifreli hesaplar repoda yazılı. Üretim seed'i geliştirme
@@ -204,7 +215,8 @@ ortamındaki dağınıklık meselesi.
 ## Önerilen sıra
 
 **Tamamlananlar:** A1 (ağ dayanıklılığı), A4 (hız sınırı),
-A5 (vardiya — gereksiz çıktı), B7'nin sunucu gerektirmeyen kısmı
+A5 (vardiya — gereksiz çıktı), A11 (güvenlik sıkılaştırması),
+B7'nin sunucu gerektirmeyen kısmı
 
 **Şimdi:** A0 (geliştirme veritabanı yedeği — bkz. aşağı) →
 **A3 (kritik bildirim)** → A6 (uçtan uca test) → A9 (kalite ekibi

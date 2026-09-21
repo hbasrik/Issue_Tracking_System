@@ -4,12 +4,12 @@ import {
   api,
   formatIssueCreatedAt,
   formatIssueListAt,
-  mediaThumbUrl,
   type Issue,
 } from '../lib/api';
 import { useI18n } from '../i18n';
 import { isNonWebImage } from '../lib/mediaKind';
 import { ApiErrorText } from './ApiErrorText';
+import { AuthenticatedMediaImg } from './AuthenticatedMediaImg';
 import { StatusBadge } from './StatusBadge';
 import { SeverityIndicator } from './SeverityIndicator';
 import { IssueActions } from './IssueActions';
@@ -53,8 +53,9 @@ function IssueThumb({ path }: { path?: string }) {
     );
   }
   return (
-    <img
-      src={mediaThumbUrl(path)}
+    <AuthenticatedMediaImg
+      storagePath={path}
+      thumb
       alt=""
       className="h-14 w-14 shrink-0 rounded-md object-cover"
       style={{ backgroundColor: 'var(--bg-surface-2)' }}

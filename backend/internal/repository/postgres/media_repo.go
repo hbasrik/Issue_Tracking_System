@@ -127,3 +127,39 @@ func (r *MediaRepo) VINForEntity(ctx context.Context, entityType domain.MediaEnt
 	}
 	return vin, nil
 }
+
+// GetByStoragePath looks up an attachment by its relative storage path.
+func (r *MediaRepo) GetByStoragePath(ctx context.Context, storagePath string) (*domain.MediaAttachment, error) {
+	row := executor(ctx, r.pool).QueryRow(ctx,
+		`SELECT `+mediaColumns+`
+		 FROM media_attachments
+		 WHERE storage_path = $1`,
+		storagePath)
+	m, err := scanMediaAttachment(row)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, domain.ErrNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &m, nil
+}
+
+// ChecklistTypeForProgressID returns the checklist type for a progress row.
+func (r *MediaRepo) ChecklistTypeForProgressID(ctx context.Context, progressID string) (domain.ChecklistType, error) {
+	var raw string
+	err := executor(ctx, r.pool).QueryRow(ctx,
+		`SELECT checklist_type FROM checklist_item_progress WHERE id = $1::bigint`,
+		progressID).Scan(&raw)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return "", domain.ErrNotFound
+	}
+	if err != nil {
+		return "", err
+	}
+	t := domain.ChecklistType(raw)
+	if !t.Valid() {
+		return "", domain.ErrInvalidEnumValue
+	}
+	return t, nil
+}

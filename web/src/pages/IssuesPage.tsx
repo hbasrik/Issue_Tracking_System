@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { Archive, ChevronDown, FileSpreadsheet } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
+import { useAuth } from '../auth/AuthProvider';
 import { api, mediaFileUrl, type DefectPart, type DefectType, type DefectZone, type Issue, type IssueType, type MediaAttachment } from '../lib/api';
 import { IssueList } from '../components/IssueList';
 import { PartMultiSelect } from '../components/PartMultiSelect';
@@ -74,6 +75,7 @@ function severityLabel(s: SeverityLevel, t: Translate): string {
 /** Issues list + detail — quality sign-off is gated on issue.transition.* permissions. */
 export default function IssuesPage() {
   const { t, locale } = useI18n();
+  const { token } = useAuth();
   const { mode } = useTheme();
   const pageBg = tokensFor(mode)['bg-page'];
   const [searchParams, setSearchParams] = useSearchParams();
@@ -357,8 +359,8 @@ export default function IssuesPage() {
         const pack = attachments.get(issue.ID) ?? { report: [], resolution: [] };
         urls.set(issue.ID, photoUrls(pack));
         photos.push(
-          ...(await fetchExportPhotos(issue.ID, 'rapor', pack.report)),
-          ...(await fetchExportPhotos(issue.ID, 'cozum', pack.resolution)),
+          ...(await fetchExportPhotos(issue.ID, 'rapor', pack.report, token)),
+          ...(await fetchExportPhotos(issue.ID, 'cozum', pack.resolution, token)),
         );
       }
       const csv = buildIssuesCsv(visible, urls, t);
@@ -774,13 +776,16 @@ async function fetchExportPhotos(
   issueId: number,
   kind: 'rapor' | 'cozum',
   items: MediaAttachment[],
+  token: string | null,
 ): Promise<IssueExportPhoto[]> {
   const out: IssueExportPhoto[] = [];
   let index = 0;
   for (const item of items) {
     index += 1;
     const url = mediaFileUrl(item.storage_path);
-    const res = await fetch(url);
+    const res = await fetch(url, {
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    });
     if (!res.ok) continue;
     out.push({
       issueId,

@@ -106,7 +106,7 @@ export default function IssueDetailScreen() {
   const route = useRoute<RouteProp<RootStackParamList, 'IssueDetail'>>();
   const insets = useSafeAreaInsets();
   const { tokens } = useTheme();
-  const { has, user } = useAuth();
+  const { has, user, token } = useAuth();
   const { t, locale } = useI18n();
   const confirm = useConfirm();
   const { showAfterApproval } = useApprovalUndo();
@@ -794,6 +794,9 @@ export default function IssueDetailScreen() {
               ) : (
                 reportPhotos.map((p) => {
                   const uri = mediaFileUrl(p.storage_path);
+                  const headers = token
+                    ? { Authorization: `Bearer ${token}` }
+                    : undefined;
                   return (
                     <Pressable
                       key={p.id}
@@ -803,7 +806,7 @@ export default function IssueDetailScreen() {
                       accessibilityLabel={t('issueDetail.enlarge', { name: p.file_name })}
                     >
                       <Image
-                        source={{ uri }}
+                        source={{ uri, headers }}
                         style={{
                           width: '100%',
                           height: 200,
@@ -834,6 +837,9 @@ export default function IssueDetailScreen() {
               ) : (
                 resolutionPhotos.map((p) => {
                   const uri = mediaFileUrl(p.storage_path);
+                  const headers = token
+                    ? { Authorization: `Bearer ${token}` }
+                    : undefined;
                   return (
                     <Pressable
                       key={p.id}
@@ -843,7 +849,7 @@ export default function IssueDetailScreen() {
                       accessibilityLabel={t('issueDetail.enlarge', { name: p.file_name })}
                     >
                       <Image
-                        source={{ uri }}
+                        source={{ uri, headers }}
                         style={{
                           width: '100%',
                           height: 200,
@@ -897,7 +903,10 @@ export default function IssueDetailScreen() {
           </Pressable>
           {viewerUri ? (
             <Image
-              source={{ uri: viewerUri }}
+              source={{
+                uri: viewerUri,
+                headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+              }}
               style={{ width: '100%', height: '80%' }}
               resizeMode="contain"
             />

@@ -108,8 +108,12 @@ func NewRouter(deps Deps) http.Handler {
 		})
 	}
 
-	if deps.UploadDir != "" {
-		r.Get("/uploads/*", s.handleUploadGet)
+	if deps.UploadDir != "" && deps.Issuer != nil {
+		r.Group(func(r chi.Router) {
+			r.Use(RequireAuth(deps.Issuer))
+			r.Use(s.requirePasswordChanged)
+			r.Get("/uploads/*", s.handleUploadGet)
+		})
 	}
 
 	r.Route("/api/v1", func(r chi.Router) {
@@ -118,6 +122,7 @@ func NewRouter(deps Deps) http.Handler {
 
 		r.Group(func(r chi.Router) {
 			r.Use(RequireAuth(deps.Issuer))
+			r.Use(s.requireValidUser)
 			r.Post("/auth/change-password", s.handleChangePassword)
 		})
 
@@ -164,12 +169,12 @@ func NewRouter(deps Deps) http.Handler {
 				r.Get("/analysis/vehicle-severity-breakdown", s.handleVehicleSeverityBreakdown)
 				r.Get("/analysis/defect-rate-per-station", s.handleDefectRatePerStation)
 
-				// Media attachments (Karar 8). Read and upload sit on
-				// vehicle.view: attaching evidence is part of the same
-				// shop-floor work as the reads above.
+				// Media list stays on vehicle.view. Upload is authorized per
+				// target entity write permission inside the handler.
 				r.Get("/media", s.handleMediaList)
-				r.Post("/media", s.handleMediaUpload)
 			})
+
+			r.Post("/media", s.handleMediaUpload)
 
 			r.Group(func(r chi.Router) {
 				r.Use(permissions.RequirePermission(domain.PermissionIssueView))
@@ -276,8 +281,8 @@ func NewRouter(deps Deps) http.Handler {
 				Post("/vehicles/{vin}/eol/depot-release", s.handleEOLDepotRelease)
 			r.With(permissions.RequirePermission(domain.PermissionEOLDeliver)).
 				Post("/vehicles/{vin}/eol/deliver", s.handleEOLDeliver)
-			r.With(permissions.RequirePermission(domain.PermissionEOLDocumentApprove)).
-				Post("/vehicles/{vin}/eol/document-approve", s.handleEOLDocumentApprove)
+			// Dormant (Karar 2): always 410; permission is not assignable.
+			r.Post("/vehicles/{vin}/eol/document-approve", s.handleEOLDocumentApprove)
 		})
 	})
 

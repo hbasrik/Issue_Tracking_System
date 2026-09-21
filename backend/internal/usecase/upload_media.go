@@ -132,6 +132,16 @@ func (u *MediaUploader) ListByVIN(ctx context.Context, vin string) ([]domain.Med
 	return attachments, nil
 }
 
+// GetByStoragePath resolves /uploads/* authorization (Karar 11 VIN + view).
+func (u *MediaUploader) GetByStoragePath(ctx context.Context, storagePath string) (*domain.MediaAttachment, error) {
+	return u.media.GetByStoragePath(ctx, storagePath)
+}
+
+// ChecklistTypeForProgressID supports media write authorization for checklist photos.
+func (u *MediaUploader) ChecklistTypeForProgressID(ctx context.Context, progressID string) (domain.ChecklistType, error) {
+	return u.media.ChecklistTypeForProgressID(ctx, progressID)
+}
+
 const imageSniffLen = 16
 
 func rejectNonWebImage(mimeType, fileName string, content io.Reader) (io.Reader, error) {

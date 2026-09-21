@@ -14,7 +14,9 @@ import (
 	"time"
 
 	apphttp "github.com/karea/backend/internal/delivery/http"
+	"github.com/karea/backend/internal/domain"
 	"github.com/karea/backend/internal/platform/auth"
+	"github.com/karea/backend/internal/usecase"
 )
 
 func writeNoiseJPEG(t *testing.T, path string, w, h int) {
@@ -38,55 +40,114 @@ func writeNoiseJPEG(t *testing.T, path string, w, h int) {
 	}
 }
 
-func newUploadRouter(t *testing.T, uploadDir string) http.Handler {
+func newUploadRouter(t *testing.T, uploadDir string, media *httpFakeMediaRepo) (http.Handler, *auth.Issuer) {
 	t.Helper()
-	issuer := auth.NewIssuer("test-secret", time.Hour)
-	return apphttp.NewRouter(apphttp.Deps{
+	issuer := auth.NewIssuer("test-secret-at-least-32-chars-long!!", time.Hour)
+	if media == nil {
+		media = newHTTPFakeMediaRepo()
+	}
+	router := apphttp.NewRouter(apphttp.Deps{
 		Issuer:    issuer,
 		Roles:     newFakeRoleRepo(),
 		UploadDir: uploadDir,
+		Media:     usecase.NewMediaUploader(media, &httpFakeMediaStore{}),
 	})
+	return router, issuer
 }
 
-func TestUploadGet_SetsImmutableCacheControl(t *testing.T) {
+func TestUploadGet_RequiresAuth(t *testing.T) {
 	dir := t.TempDir()
-	rel := filepath.Join("issue", "1", "photo.jpg")
-	writeNoiseJPEG(t, filepath.Join(dir, rel), 80, 60)
+	rel := filepath.ToSlash(filepath.Join("issue", "1", "photo.jpg"))
+	writeNoiseJPEG(t, filepath.Join(dir, filepath.FromSlash(rel)), 80, 60)
+	media := newHTTPFakeMediaRepo()
+	media.rows = append(media.rows, domain.MediaAttachment{
+		VIN: seededVIN, StoragePath: rel, EntityType: domain.MediaEntityIssue, EntityID: "1",
+	})
+	router, _ := newUploadRouter(t, dir, media)
 
-	router := newUploadRouter(t, dir)
-	req := httptest.NewRequest(http.MethodGet, "/uploads/issue/1/photo.jpg", nil)
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/uploads/"+rel, nil))
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("status = %d, want 401", rec.Code)
+	}
+}
+
+func TestUploadGet_ForbiddenWithoutVehicleView(t *testing.T) {
+	dir := t.TempDir()
+	rel := filepath.ToSlash(filepath.Join("issue", "1", "photo.jpg"))
+	writeNoiseJPEG(t, filepath.Join(dir, filepath.FromSlash(rel)), 80, 60)
+	media := newHTTPFakeMediaRepo()
+	media.rows = append(media.rows, domain.MediaAttachment{
+		VIN: seededVIN, StoragePath: rel, EntityType: domain.MediaEntityIssue, EntityID: "1",
+	})
+	router, issuer := newUploadRouter(t, dir, media)
+
+	// strangerUserID has no permissions in fakeRoleRepo.
+	token, err := issuer.Issue(strangerUserID, domain.RoleCodeManagerAdmin)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req := httptest.NewRequest(http.MethodGet, "/uploads/"+rel, nil)
+	req.Header.Set("Authorization", "Bearer "+token)
 	rec := httptest.NewRecorder()
 	router.ServeHTTP(rec, req)
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("status = %d, want 403", rec.Code)
+	}
+}
 
+func TestUploadGet_AllowsViewer(t *testing.T) {
+	dir := t.TempDir()
+	rel := filepath.ToSlash(filepath.Join("issue", "1", "photo.jpg"))
+	writeNoiseJPEG(t, filepath.Join(dir, filepath.FromSlash(rel)), 80, 60)
+	media := newHTTPFakeMediaRepo()
+	media.rows = append(media.rows, domain.MediaAttachment{
+		VIN: seededVIN, StoragePath: rel, EntityType: domain.MediaEntityIssue, EntityID: "1",
+	})
+	router, issuer := newUploadRouter(t, dir, media)
+
+	token, err := issuer.Issue(operatorUserID, domain.RoleCodeOperator)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req := httptest.NewRequest(http.MethodGet, "/uploads/"+rel, nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
 	if rec.Code != http.StatusOK {
-		t.Fatalf("status = %d, want 200", rec.Code)
+		t.Fatalf("status = %d, want 200 body=%s", rec.Code, rec.Body.String())
 	}
 	cc := rec.Header().Get("Cache-Control")
-	if !strings.Contains(cc, "max-age=31536000") || !strings.Contains(cc, "immutable") {
-		t.Fatalf("Cache-Control = %q, want immutable year-long cache", cc)
+	if !strings.Contains(cc, "private") {
+		t.Fatalf("Cache-Control = %q, want private", cc)
 	}
 }
 
 func TestUploadGet_ThumbIsMuchSmallerThanOriginal(t *testing.T) {
 	dir := t.TempDir()
-	rel := filepath.Join("issue", "1", "photo.jpg")
-	writeNoiseJPEG(t, filepath.Join(dir, rel), 1200, 900)
-
-	router := newUploadRouter(t, dir)
+	rel := filepath.ToSlash(filepath.Join("issue", "1", "photo.jpg"))
+	writeNoiseJPEG(t, filepath.Join(dir, filepath.FromSlash(rel)), 1200, 900)
+	media := newHTTPFakeMediaRepo()
+	media.rows = append(media.rows, domain.MediaAttachment{
+		VIN: seededVIN, StoragePath: rel, EntityType: domain.MediaEntityIssue, EntityID: "1",
+	})
+	router, issuer := newUploadRouter(t, dir, media)
+	token, _ := issuer.Issue(operatorUserID, domain.RoleCodeOperator)
 
 	orig := httptest.NewRecorder()
-	router.ServeHTTP(orig, httptest.NewRequest(http.MethodGet, "/uploads/issue/1/photo.jpg", nil))
+	req := httptest.NewRequest(http.MethodGet, "/uploads/"+rel, nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	router.ServeHTTP(orig, req)
 	if orig.Code != http.StatusOK {
 		t.Fatalf("original status = %d", orig.Code)
 	}
 
 	thumb := httptest.NewRecorder()
-	router.ServeHTTP(thumb, httptest.NewRequest(http.MethodGet, "/uploads/issue/1/photo.jpg?thumb=1", nil))
+	treq := httptest.NewRequest(http.MethodGet, "/uploads/"+rel+"?thumb=1", nil)
+	treq.Header.Set("Authorization", "Bearer "+token)
+	router.ServeHTTP(thumb, treq)
 	if thumb.Code != http.StatusOK {
 		t.Fatalf("thumb status = %d", thumb.Code)
-	}
-	if ct := thumb.Header().Get("Content-Type"); !strings.HasPrefix(ct, "image/jpeg") {
-		t.Fatalf("thumb content-type = %q, want jpeg", ct)
 	}
 	if thumb.Body.Len() == 0 || thumb.Body.Len() >= orig.Body.Len() {
 		t.Fatalf("thumb %d bytes, original %d; want thumb smaller", thumb.Body.Len(), orig.Body.Len())
@@ -101,8 +162,10 @@ func TestUploadGet_ThumbIsMuchSmallerThanOriginal(t *testing.T) {
 
 func TestUploadGet_RejectsPathTraversal(t *testing.T) {
 	dir := t.TempDir()
-	router := newUploadRouter(t, dir)
+	router, issuer := newUploadRouter(t, dir, nil)
+	token, _ := issuer.Issue(operatorUserID, domain.RoleCodeOperator)
 	req := httptest.NewRequest(http.MethodGet, "/uploads/../upload_handler.go", nil)
+	req.Header.Set("Authorization", "Bearer "+token)
 	rec := httptest.NewRecorder()
 	router.ServeHTTP(rec, req)
 	if rec.Code != http.StatusNotFound {

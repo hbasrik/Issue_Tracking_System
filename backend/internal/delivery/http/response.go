@@ -106,6 +106,8 @@ func writeError(w http.ResponseWriter, err error) {
 		writeJSON(w, http.StatusConflict, errorResponse{Error: err.Error()})
 	case errors.Is(err, domain.ErrNotFound):
 		writeJSON(w, http.StatusNotFound, errorResponse{Error: err.Error()})
+	case errors.Is(err, domain.ErrEndpointRetired):
+		writeJSON(w, http.StatusGone, errorResponse{Error: err.Error()})
 	case errors.Is(err, domain.ErrInvalidCredentials),
 		errors.Is(err, auth.ErrInvalidToken),
 		errors.Is(err, auth.ErrExpiredToken):
@@ -121,6 +123,7 @@ func writeError(w http.ResponseWriter, err error) {
 		writeJSON(w, http.StatusForbidden, errorResponse{Error: err.Error()})
 	case errors.Is(err, domain.ErrDescriptionRequired),
 		errors.Is(err, domain.ErrIssueDescriptionRequired),
+		errors.Is(err, domain.ErrIssueDescriptionTooLong),
 		errors.Is(err, domain.ErrSolutionDescriptionRequired),
 		errors.Is(err, domain.ErrSeverityRequired),
 		errors.Is(err, domain.ErrVINRequired),

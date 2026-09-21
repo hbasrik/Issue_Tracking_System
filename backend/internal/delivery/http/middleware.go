@@ -114,29 +114,53 @@ func bearerToken(header string) (string, bool) {
 }
 
 // requirePasswordChanged 403s authenticated requests when the user still has
-// must_change_password. Skipped when Auth is not wired (unit tests).
+// must_change_password. Also rejects inactive accounts and JWTs issued before
+// tokens_valid_from (immediate revocation after password/role/deactivate).
+// Skipped when Auth is not wired (unit tests without a user store).
 func (s *server) requirePasswordChanged(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if s.deps.Auth == nil {
+	return s.requireSession(true)(next)
+}
+
+// requireValidUser rejects inactive accounts and revoked JWTs but still allows
+// must_change_password users (used by /auth/change-password).
+func (s *server) requireValidUser(next http.Handler) http.Handler {
+	return s.requireSession(false)(next)
+}
+
+func (s *server) requireSession(rejectMustChange bool) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if s.deps.Auth == nil {
+				next.ServeHTTP(w, r)
+				return
+			}
+			claims, ok := ClaimsFromContext(r.Context())
+			if !ok {
+				writeError(w, auth.ErrInvalidToken)
+				return
+			}
+			user, err := s.deps.Auth.GetByID(r.Context(), claims.UserID)
+			if err != nil {
+				writeError(w, err)
+				return
+			}
+			// Revocation stamp first so deactivate/password/role bumps yield 401
+			// (JWT iat is Unix seconds).
+			if !user.TokensValidFrom.IsZero() && claims.IssuedAt < user.TokensValidFrom.Unix() {
+				writeError(w, auth.ErrInvalidToken)
+				return
+			}
+			if !user.IsActive {
+				writeError(w, domain.ErrAccountInactive)
+				return
+			}
+			if rejectMustChange && user.MustChangePassword {
+				writeError(w, domain.ErrMustChangePassword)
+				return
+			}
 			next.ServeHTTP(w, r)
-			return
-		}
-		claims, ok := ClaimsFromContext(r.Context())
-		if !ok {
-			writeError(w, auth.ErrInvalidToken)
-			return
-		}
-		user, err := s.deps.Auth.GetByID(r.Context(), claims.UserID)
-		if err != nil {
-			writeError(w, err)
-			return
-		}
-		if user.MustChangePassword {
-			writeError(w, domain.ErrMustChangePassword)
-			return
-		}
-		next.ServeHTTP(w, r)
-	})
+		})
+	}
 }
 
 // requireCode resolves the caller's permission set (cached per request) and

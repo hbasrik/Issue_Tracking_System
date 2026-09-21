@@ -7,10 +7,10 @@ import (
 	"github.com/karea/backend/internal/repository"
 )
 
-// EOLDocumentApprover is the unused leftover of the old document stage.
-// The live flow completes and ships at depot release. This usecase still
-// writes document_approved_* (columns retained for a possible re-enable)
-// but it does not move the vehicle to SHIPPED.
+// EOLDocumentApprover is dormant (Karar 2 / migration 0011): the document
+// stage was removed from the EOL flow. The HTTP route returns 410 and never
+// calls Approve. The usecase is retained so a future re-enable does not need
+// to rebuild the write path; document_approved_* columns stay historical.
 type EOLDocumentApprover struct {
 	vehicles repository.VehicleRepository
 	workflow repository.EOLWorkflowRepository
@@ -33,32 +33,14 @@ type DocumentApproveOutput struct {
 	VehicleStatus domain.VehicleStatus    `json:"vehicle_status"`
 }
 
-// Approve records the unused document columns if the depot has already
-// released. It does not change vehicle status; SHIPPED is written by depot
-// release.
+// Approve is dormant (Karar 2): the HTTP handler returns 410 and never
+// calls this. If invoked directly, refuse without mutating state.
 func (s *EOLDocumentApprover) Approve(ctx context.Context, vin string, actorID int) (*DocumentApproveOutput, error) {
-	vehicle, err := s.vehicles.GetByVIN(ctx, vin)
-	if err != nil {
-		return nil, err
-	}
-
-	workflow, err := s.workflow.Get(ctx, vin)
-	if err != nil {
-		return nil, err
-	}
-	if workflow.DepotReleasedAt == nil || workflow.DocumentApprovedAt != nil {
-		return nil, domain.ErrInvalidStatusTransition
-	}
-
-	if err := s.workflow.MarkDocumentApproved(ctx, vin, actorID); err != nil {
-		return nil, err
-	}
-
-	return &DocumentApproveOutput{
-		VIN:           vin,
-		CurrentStage:  domain.EOLStageCompleted,
-		VehicleStatus: vehicle.CurrentGlobalStatus,
-	}, nil
+	_ = ctx
+	_ = vin
+	_ = actorID
+	_ = s
+	return nil, domain.ErrEndpointRetired
 }
 
 // EOLWorkflowReader serves the Vehicle Detail EoL tab.

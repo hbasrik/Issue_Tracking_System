@@ -27,7 +27,8 @@ var _ repository.UserRepository = (*UserRepo)(nil)
 // userSelect joins roles because the role is a foreign key row since migration
 // 0002 (Karar 3), not an enum column on users.
 const userSelect = `SELECT u.id, u.full_name, u.email, u.password_hash,
-	   r.id, r.code, r.name, r.is_active, u.is_active, u.must_change_password, u.created_at
+	   r.id, r.code, r.name, r.is_active, u.is_active, u.must_change_password,
+	   u.tokens_valid_from, u.created_at
 	  FROM users u
 	  JOIN roles r ON r.id = u.role_id`
 
@@ -35,7 +36,7 @@ func scanUser(row pgx.Row) (*domain.User, error) {
 	var u domain.User
 	if err := row.Scan(&u.ID, &u.FullName, &u.Email, &u.PasswordHash,
 		&u.Role.ID, &u.Role.Code, &u.Role.Name, &u.Role.IsActive, &u.IsActive,
-		&u.MustChangePassword, &u.CreatedAt); err != nil {
+		&u.MustChangePassword, &u.TokensValidFrom, &u.CreatedAt); err != nil {
 		return nil, err
 	}
 	return &u, nil
@@ -83,10 +84,11 @@ func (r *UserRepo) List(ctx context.Context) ([]domain.User, error) {
 	return out, rows.Err()
 }
 
-// UpdateRoleAndActive assigns a role and is_active flag.
+// UpdateRoleAndActive assigns a role and is_active flag and bumps
+// tokens_valid_from so outstanding JWTs are rejected immediately.
 func (r *UserRepo) UpdateRoleAndActive(ctx context.Context, id, roleID int, isActive bool) error {
 	tag, err := r.pool.Exec(ctx,
-		`UPDATE users SET role_id = $2, is_active = $3 WHERE id = $1`,
+		`UPDATE users SET role_id = $2, is_active = $3, tokens_valid_from = now() WHERE id = $1`,
 		id, roleID, isActive)
 	if err != nil {
 		return err
@@ -141,10 +143,11 @@ func (r *UserRepo) Create(ctx context.Context, user *domain.User) (*domain.User,
 	return r.GetByID(ctx, id)
 }
 
-// UpdatePassword replaces the hash and the must-change flag.
+// UpdatePassword replaces the hash and the must-change flag and bumps
+// tokens_valid_from so the previous JWT stops working immediately.
 func (r *UserRepo) UpdatePassword(ctx context.Context, id int, passwordHash string, mustChange bool) error {
 	tag, err := r.pool.Exec(ctx,
-		`UPDATE users SET password_hash = $2, must_change_password = $3 WHERE id = $1`,
+		`UPDATE users SET password_hash = $2, must_change_password = $3, tokens_valid_from = now() WHERE id = $1`,
 		id, passwordHash, mustChange)
 	if err != nil {
 		return err

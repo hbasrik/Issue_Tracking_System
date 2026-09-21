@@ -48,6 +48,8 @@ const (
 	PermissionChecklistEOLEdit                  = "checklist.eol.edit"
 	PermissionEOLBranchShip                     = "eol.branch_ship"
 	PermissionEOLDepotRelease                   = "eol.depot_release"
+	// PermissionEOLDocumentApprove is dormant (Karar 2): retained in the
+	// catalogue for history but not assignable and its route returns 410.
 	PermissionEOLDocumentApprove                = "eol.document_approve"
 	PermissionEOLDeliver                        = "eol.deliver"
 	PermissionIssueView                         = "issue.view"
@@ -108,6 +110,13 @@ func (s PermissionSet) Has(code string) bool {
 	return ok
 }
 
+// IsAssignablePermission reports whether a permission may appear on the Roles
+// matrix and be granted via ReplaceGrants. Dormant permissions stay in the DB
+// catalogue but are hidden from assignment.
+func IsAssignablePermission(code string) bool {
+	return code != PermissionEOLDocumentApprove
+}
+
 // Codes returns the granted permission codes in unspecified order.
 func (s PermissionSet) Codes() []string {
 	out := make([]string, 0, len(s))
@@ -132,5 +141,9 @@ type User struct {
 	// the password. The user may authenticate, but every other API call is
 	// rejected until they change the password.
 	MustChangePassword bool
-	CreatedAt          time.Time
+	// TokensValidFrom is the earliest JWT iat this account accepts. Bumped
+	// on deactivate, delete, password change/reset, and role change so
+	// outstanding tokens die immediately instead of lasting until exp.
+	TokensValidFrom time.Time
+	CreatedAt       time.Time
 }

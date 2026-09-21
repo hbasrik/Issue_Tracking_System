@@ -6,7 +6,6 @@ import { useAuth } from '../../auth/AuthProvider';
 import { useI18n } from '../../i18n';
 import {
   api,
-  mediaFileUrl,
   type Issue,
   type IssueStatusHistoryEntry,
   type MediaAttachment,
@@ -14,6 +13,7 @@ import {
 import { issueStationLabel, defectLabels, reporterFallback } from '../../lib/issueDetailCopy';
 import { issueStatusLabel } from '../../lib/issueStatus';
 import { printSection } from '../../lib/print';
+import { AuthenticatedMediaImg } from '../AuthenticatedMediaImg';
 import { PrintButton, PrintHeader, PrintRoot } from './PrintRoot';
 
 function severityLabel(severity: string, t: { (key: 'severity.critical' | 'severity.medium' | 'severity.low'): string }): string {
@@ -246,7 +246,10 @@ function PhotoGroup({
           {items.map((item) => (
             <figure key={item.id} className="print-photo">
               {item.mime_type?.startsWith('image/') ? (
-                <img src={mediaFileUrl(item.storage_path)} alt={item.file_name} />
+                <AuthenticatedMediaImg
+                  storagePath={item.storage_path}
+                  alt={item.file_name}
+                />
               ) : null}
               <figcaption>{item.file_name}</figcaption>
             </figure>

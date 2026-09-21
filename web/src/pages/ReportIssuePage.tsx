@@ -21,6 +21,7 @@ import {
   validateDefectClassification,
 } from '../lib/issueDefectValidation';
 import { isAuthError } from '../../../shared/networkError';
+import { ISSUE_DESCRIPTION_MAX_LEN } from '../../../shared/issueLimits';
 
 const SEVERITIES = ['CRITICAL', 'MEDIUM', 'LOW'] as const;
 const DRAFT_KEY = 'karea.reportIssue.draft.v1';
@@ -250,6 +251,10 @@ export default function ReportIssuePage() {
     }
     if (!description.trim()) {
       setError(t('report.descRequired'));
+      return;
+    }
+    if ([...description.trim()].length > ISSUE_DESCRIPTION_MAX_LEN) {
+      setError(t('report.descTooLong', { max: ISSUE_DESCRIPTION_MAX_LEN }));
       return;
     }
     if (!photo) {
@@ -528,8 +533,14 @@ export default function ReportIssuePage() {
             className={`${inputClass} mt-1 min-h-[100px] py-2`}
             style={{ borderColor: 'var(--border)' }}
             value={description}
+            maxLength={ISSUE_DESCRIPTION_MAX_LEN}
             onChange={(e) => setDescription(e.target.value)}
           />
+          <span className="mt-1 block text-[11px] text-[var(--text-secondary)]">
+            {t('report.charsRemaining', {
+              n: ISSUE_DESCRIPTION_MAX_LEN - [...description].length,
+            })}
+          </span>
         </label>
 
         <label className="block text-[12px] text-[var(--text-secondary)]">

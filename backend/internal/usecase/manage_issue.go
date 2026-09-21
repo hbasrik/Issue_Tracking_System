@@ -98,6 +98,9 @@ func (m *IssueManager) Create(ctx context.Context, in CreateIssueInput) (*domain
 	if strings.TrimSpace(in.Description) == "" {
 		return nil, domain.ErrIssueDescriptionRequired
 	}
+	if len([]rune(strings.TrimSpace(in.Description))) > domain.IssueDescriptionMaxLen {
+		return nil, domain.ErrIssueDescriptionTooLong
+	}
 
 	vin := strings.TrimSpace(in.VIN)
 	if vin == "" {

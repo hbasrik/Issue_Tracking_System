@@ -48,7 +48,13 @@ func (a *RoleAdmin) Matrix(ctx context.Context) (*Matrix, error) {
 	if err != nil {
 		return nil, err
 	}
-	out := &Matrix{Roles: make([]RoleGrant, 0, len(roles)), Permissions: perms}
+	assignable := make([]domain.Permission, 0, len(perms))
+	for _, p := range perms {
+		if domain.IsAssignablePermission(p.Code) {
+			assignable = append(assignable, p)
+		}
+	}
+	out := &Matrix{Roles: make([]RoleGrant, 0, len(roles)), Permissions: assignable}
 	for _, role := range roles {
 		granted, err := a.roles.GetPermissionsForRole(ctx, role.ID)
 		if err != nil {
@@ -56,6 +62,9 @@ func (a *RoleAdmin) Matrix(ctx context.Context) (*Matrix, error) {
 		}
 		codes := make([]string, 0, len(granted))
 		for _, p := range granted {
+			if !domain.IsAssignablePermission(p.Code) {
+				continue
+			}
 			codes = append(codes, p.Code)
 		}
 		out.Roles = append(out.Roles, RoleGrant{Role: role, Permissions: codes})
@@ -105,6 +114,9 @@ func (a *RoleAdmin) ReplaceGrants(ctx context.Context, roleID int, codes []strin
 			continue
 		}
 		seen[code] = struct{}{}
+		if !domain.IsAssignablePermission(code) {
+			return domain.ErrInvalidEnumValue
+		}
 		p, ok := byCode[code]
 		if !ok {
 			return domain.ErrInvalidEnumValue

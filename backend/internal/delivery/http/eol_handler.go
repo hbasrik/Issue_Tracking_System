@@ -51,18 +51,12 @@ func (s *server) handleEOLDeliver(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, out)
 }
 
-// handleEOLDocumentApprove is the unused leftover of the document stage.
-// UI no longer calls it; depot release is what ships the vehicle.
+// handleEOLDocumentApprove is dormant (Karar 2 / migration 0011): the document
+// stage was removed from the EOL flow. The route stays registered so probes
+// get a stable 410 Gone rather than a silent 404, and never mutates state.
 func (s *server) handleEOLDocumentApprove(w http.ResponseWriter, r *http.Request) {
-	vin := chi.URLParam(r, "vin")
-	claims, _ := ClaimsFromContext(r.Context())
-
-	out, err := s.deps.EOLDocumentApprove.Approve(r.Context(), vin, claims.UserID)
-	if err != nil {
-		writeError(w, err)
-		return
-	}
-	writeJSON(w, http.StatusOK, out)
+	_ = chi.URLParam(r, "vin")
+	writeError(w, domain.ErrEndpointRetired)
 }
 
 // handleEOLWorkflowGet serves the Vehicle Detail EoL tab: the current stage

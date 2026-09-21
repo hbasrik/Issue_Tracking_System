@@ -42,6 +42,7 @@ import {
   DismissKeyboardScrollView,
 } from '../components/keyboard';
 import { prepareUploadImage } from '../lib/prepareUploadImage';
+import { ISSUE_DESCRIPTION_MAX_LEN } from '../../../shared/issueLimits';
 import { apiErrorMessage } from '../lib/password';
 import { useI18n } from '../i18n';
 import { CacheAgeHint } from '../offline/CacheAgeHint';
@@ -104,6 +105,9 @@ export default function IssueReportScreen() {
     );
     if (classMsg) return classMsg;
     if (!description.trim()) return t('report.descRequired');
+    if ([...description.trim()].length > ISSUE_DESCRIPTION_MAX_LEN) {
+      return t('report.descTooLong', { max: ISSUE_DESCRIPTION_MAX_LEN });
+    }
     if (!severity) return t('report.severityRequired');
     return null;
   }, [classification, defectParts, defectTypes, description, severity, t]);
@@ -222,6 +226,7 @@ export default function IssueReportScreen() {
           onChangeText={setDescription}
           multiline
           numberOfLines={4}
+          maxLength={ISSUE_DESCRIPTION_MAX_LEN}
           style={{
             marginTop: 6,
             minHeight: 100,
@@ -235,6 +240,11 @@ export default function IssueReportScreen() {
             textAlignVertical: 'top',
           }}
         />
+        <Text style={{ color: tokens.textSecondary, marginTop: 4, fontSize: 12 }}>
+          {t('report.charsRemaining', {
+            n: ISSUE_DESCRIPTION_MAX_LEN - [...description].length,
+          })}
+        </Text>
 
         <Text style={{ color: tokens.textSecondary, marginTop: 16, fontSize: 13 }}>
           {t('severity.label')} *

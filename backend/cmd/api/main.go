@@ -21,6 +21,9 @@ import (
 
 func main() {
 	cfg := config.Load()
+	if err := config.ValidateJWTSecret(cfg.JWTSecret); err != nil {
+		log.Fatal(err)
+	}
 	if err := applog.Init(applog.Options{
 		Level:      applog.ParseLevel(cfg.LogLevel),
 		FilePath:   cfg.LogFile,

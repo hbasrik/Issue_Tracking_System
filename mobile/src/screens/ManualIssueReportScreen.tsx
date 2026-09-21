@@ -27,6 +27,7 @@ import {
   type DefectClassificationState,
 } from '../components/DefectClassificationFields';
 import { prepareUploadImage } from '../lib/prepareUploadImage';
+import { ISSUE_DESCRIPTION_MAX_LEN } from '../../../shared/issueLimits';
 import {
   Badge,
   Card,
@@ -133,6 +134,9 @@ export default function ManualIssueReportScreen() {
     if (severity == null) return t('report.severityRequired');
     if (issueTypeId == null) return t('report.typeRequired');
     if (!description.trim()) return t('report.descRequired');
+    if ([...description.trim()].length > ISSUE_DESCRIPTION_MAX_LEN) {
+      return t('report.descTooLong', { max: ISSUE_DESCRIPTION_MAX_LEN });
+    }
     if (photo == null) return t('report.photoRequired');
     return null;
   }, [
@@ -406,6 +410,7 @@ export default function ManualIssueReportScreen() {
           onChangeText={setDescription}
           multiline
           numberOfLines={4}
+          maxLength={ISSUE_DESCRIPTION_MAX_LEN}
           placeholder={t('report.descPlaceholder')}
           placeholderTextColor={tokens.textSecondary}
           style={{
@@ -421,6 +426,11 @@ export default function ManualIssueReportScreen() {
             textAlignVertical: 'top',
           }}
         />
+        <Text style={{ color: tokens.textSecondary, marginTop: 4, fontSize: 12 }}>
+          {t('report.charsRemaining', {
+            n: ISSUE_DESCRIPTION_MAX_LEN - [...description].length,
+          })}
+        </Text>
 
         <Text style={labelStyle(tokens)}>{t('checklist.photo')} *</Text>
         <View style={{ marginTop: 8, gap: 8 }}>

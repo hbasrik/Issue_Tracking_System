@@ -61,7 +61,6 @@ func newFakeRoleRepo() *fakeRoleRepo {
 		domain.PermissionChecklistEOLEdit,
 		domain.PermissionEOLBranchShip,
 		domain.PermissionEOLDepotRelease,
-		domain.PermissionEOLDocumentApprove,
 		domain.PermissionIssueView,
 		domain.PermissionIssueCreate,
 		domain.PermissionIssueTransitionProgress,
@@ -207,8 +206,6 @@ func newPermissionRouter(issuer *auth.Issuer, roles repository.RoleRepository) h
 			Get("/eol/branch-ship", okHandler)
 		r.With(checker.RequirePermission(domain.PermissionEOLDepotRelease)).
 			Get("/eol/depot-release", okHandler)
-		r.With(checker.RequirePermission(domain.PermissionEOLDocumentApprove)).
-			Get("/eol/document-approve", okHandler)
 
 		// Stacked gates: both must pass, and both must share one lookup.
 		r.With(
@@ -293,8 +290,6 @@ func TestRBACMiddleware(t *testing.T) {
 		{"operator blocked from eol branch-ship", "/eol/branch-ship", operatorToken, http.StatusForbidden},
 		{"manager reaches eol depot-release", "/eol/depot-release", managerToken, http.StatusOK},
 		{"operator blocked from eol depot-release", "/eol/depot-release", operatorToken, http.StatusForbidden},
-		{"manager reaches eol document-approve", "/eol/document-approve", managerToken, http.StatusOK},
-		{"operator blocked from eol document-approve", "/eol/document-approve", operatorToken, http.StatusForbidden},
 
 		// A role with no rows in role_permissions is denied everywhere.
 		{"unpermissioned role blocked from vehicles", "/vehicles", strangerToken, http.StatusForbidden},

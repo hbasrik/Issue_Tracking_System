@@ -7,6 +7,7 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/karea/backend/internal/domain"
+	"github.com/karea/backend/internal/platform/auth"
 	"github.com/karea/backend/internal/usecase"
 )
 
@@ -15,12 +16,8 @@ import (
 const maxUploadMemory = 10 << 20 // 10 MiB
 
 // handleMediaUpload accepts a multipart upload (entity_type, entity_id, file)
-// and attaches it to the named entity (Karar 8). The parent entity's VIN is
-// resolved in the same existence check and written on the row (Karar 11).
-//
-// A file pointed at an entity that does not exist is rejected with 404 rather
-// than stored: media_attachments.entity_id is still polymorphic (no FK), so
-// this endpoint is where that integrity is enforced.
+// and attaches it to the named entity (Karar 8). Write access is checked per
+// target entity — vehicle.view alone is not enough.
 func (s *server) handleMediaUpload(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseMultipartForm(maxUploadMemory); err != nil {
 		badRequest(w, "request must be multipart/form-data")
@@ -29,6 +26,9 @@ func (s *server) handleMediaUpload(w http.ResponseWriter, r *http.Request) {
 
 	entityType, entityID, ok := parseMediaEntity(w, r.FormValue("entity_type"), r.FormValue("entity_id"))
 	if !ok {
+		return
+	}
+	if !s.requireMediaWriteAccess(w, r, entityType, entityID) {
 		return
 	}
 
@@ -53,6 +53,59 @@ func (s *server) handleMediaUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusCreated, attachment)
+}
+
+// requireMediaWriteAccess gates POST /media by the target entity's write permission.
+func (s *server) requireMediaWriteAccess(w http.ResponseWriter, r *http.Request, entityType domain.MediaEntityType, entityID string) bool {
+	switch entityType {
+	case domain.MediaEntityVehicle:
+		return s.requireCode(w, r, domain.PermissionAdminManageMasters)
+	case domain.MediaEntityIssue:
+		return s.requireAnyCode(w, r,
+			domain.PermissionIssueCreate,
+			domain.PermissionIssueTransitionProgress,
+			domain.PermissionIssueTransitionApprove,
+			domain.PermissionIssueTransitionConditionalApprove,
+			domain.PermissionAdminManageMasters,
+		)
+	case domain.MediaEntityIssueResolution:
+		return s.requireAnyCode(w, r,
+			domain.PermissionIssueTransitionProgress,
+			domain.PermissionIssueTransitionApprove,
+			domain.PermissionIssueTransitionConditionalApprove,
+		)
+	case domain.MediaEntityStationStepProgress:
+		return s.requireCode(w, r, domain.PermissionStationStepEdit)
+	case domain.MediaEntityChecklistItemProgress:
+		if s.deps.Media == nil {
+			writeError(w, auth.ErrForbidden)
+			return false
+		}
+		ct, err := s.deps.Media.ChecklistTypeForProgressID(r.Context(), entityID)
+		if err != nil {
+			writeError(w, err)
+			return false
+		}
+		return s.requireCode(w, r, domain.ChecklistEditPermission(ct))
+	default:
+		writeError(w, auth.ErrForbidden)
+		return false
+	}
+}
+
+func (s *server) requireAnyCode(w http.ResponseWriter, r *http.Request, codes ...string) bool {
+	_, permissions, err := s.permissions.Resolve(r.Context())
+	if err != nil {
+		writeError(w, err)
+		return false
+	}
+	for _, code := range codes {
+		if auth.Authorize(permissions, code) == nil {
+			return true
+		}
+	}
+	writeError(w, auth.ErrForbidden)
+	return false
 }
 
 // handleMediaList returns an entity's attachments for the Vehicle Detail and

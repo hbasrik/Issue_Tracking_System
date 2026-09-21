@@ -77,6 +77,23 @@ func (f *httpFakeMediaRepo) VINForEntity(_ context.Context, entityType domain.Me
 	return vin, nil
 }
 
+func (f *httpFakeMediaRepo) GetByStoragePath(_ context.Context, storagePath string) (*domain.MediaAttachment, error) {
+	for i := range f.rows {
+		if f.rows[i].StoragePath == storagePath {
+			m := f.rows[i]
+			return &m, nil
+		}
+	}
+	return nil, domain.ErrNotFound
+}
+
+func (f *httpFakeMediaRepo) ChecklistTypeForProgressID(_ context.Context, progressID string) (domain.ChecklistType, error) {
+	if _, ok := f.existing[string(domain.MediaEntityChecklistItemProgress)+"|"+progressID]; !ok {
+		return "", domain.ErrNotFound
+	}
+	return domain.ChecklistTypeTest, nil
+}
+
 type httpFakeMediaStore struct{ saved int }
 
 func (f *httpFakeMediaStore) Save(_ context.Context, entityType domain.MediaEntityType, entityID, fileName string, content io.Reader) (string, int64, error) {
@@ -135,7 +152,7 @@ func TestMediaUpload_UnknownEntityReturns404(t *testing.T) {
 	store := &httpFakeMediaStore{}
 	router, issuer := newMediaRouter(media, store)
 
-	token, err := issuer.Issue(operatorUserID, domain.RoleCodeOperator)
+	token, err := issuer.Issue(managerUserID, domain.RoleCodeManagerAdmin)
 	if err != nil {
 		t.Fatalf("issue token: %v", err)
 	}
@@ -234,7 +251,7 @@ func TestMediaUpload_ExistingEntityStoredAndListed(t *testing.T) {
 	store := &httpFakeMediaStore{}
 	router, issuer := newMediaRouter(media, store)
 
-	token, err := issuer.Issue(operatorUserID, domain.RoleCodeOperator)
+	token, err := issuer.Issue(managerUserID, domain.RoleCodeManagerAdmin)
 	if err != nil {
 		t.Fatalf("issue token: %v", err)
 	}
@@ -258,8 +275,8 @@ func TestMediaUpload_ExistingEntityStoredAndListed(t *testing.T) {
 	if created.ID == 0 || created.FileName != "damage.jpg" {
 		t.Errorf("created = %+v", created)
 	}
-	if created.UploadedBy == nil || *created.UploadedBy != operatorUserID {
-		t.Errorf("uploaded by = %v, want %d", created.UploadedBy, operatorUserID)
+	if created.UploadedBy == nil || *created.UploadedBy != managerUserID {
+		t.Errorf("uploaded by = %v, want %d", created.UploadedBy, managerUserID)
 	}
 	if created.VIN != seededVIN {
 		t.Errorf("vin = %q, want %q", created.VIN, seededVIN)
@@ -360,7 +377,7 @@ func TestVehicleMediaList_IncludesUploadedPhoto(t *testing.T) {
 	media := newHTTPFakeMediaRepo()
 	router, issuer := newMediaRouter(media, &httpFakeMediaStore{})
 
-	token, err := issuer.Issue(operatorUserID, domain.RoleCodeOperator)
+	token, err := issuer.Issue(managerUserID, domain.RoleCodeManagerAdmin)
 	if err != nil {
 		t.Fatalf("issue token: %v", err)
 	}
@@ -402,7 +419,7 @@ func TestMediaUpload_HEICReturns400(t *testing.T) {
 	store := &httpFakeMediaStore{}
 	router, issuer := newMediaRouter(media, store)
 
-	token, err := issuer.Issue(operatorUserID, domain.RoleCodeOperator)
+	token, err := issuer.Issue(managerUserID, domain.RoleCodeManagerAdmin)
 	if err != nil {
 		t.Fatalf("issue token: %v", err)
 	}

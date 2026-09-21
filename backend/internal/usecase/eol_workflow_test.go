@@ -219,9 +219,9 @@ func TestEOLDepotRelease_SucceedsWhenNoOpenIssues(t *testing.T) {
 	}
 }
 
-// TestEOLDocumentApprove_DoesNotShip proves the leftover document endpoint
-// still writes its columns but is no longer the SHIPPED transition.
-func TestEOLDocumentApprove_DoesNotShip(t *testing.T) {
+// TestEOLDocumentApprove_Dormant proves the leftover document usecase
+// refuses to mutate EOL state (Karar 2 — endpoint returns 410).
+func TestEOLDocumentApprove_Dormant(t *testing.T) {
 	f := newEOLFixture(t)
 	ctx := context.Background()
 	if _, err := f.branchShip.Ship(ctx, eolTestVIN, 7); err != nil {
@@ -231,26 +231,28 @@ func TestEOLDocumentApprove_DoesNotShip(t *testing.T) {
 		t.Fatalf("depot release: %v", err)
 	}
 
-	out, err := f.documentApprove.Approve(ctx, eolTestVIN, 9)
-	if err != nil {
-		t.Fatalf("document approve: %v", err)
-	}
-	if out.CurrentStage != domain.EOLStageCompleted {
-		t.Errorf("stage = %q, want %q", out.CurrentStage, domain.EOLStageCompleted)
-	}
-	if got := f.vehicles.vehicles[eolTestVIN].CurrentGlobalStatus; got != domain.VehicleStatusInWarehouse {
-		t.Errorf("vehicle status = %q, want it to stay %q", got, domain.VehicleStatusInWarehouse)
-	}
-
-	workflow, err := f.workflow.Get(ctx, eolTestVIN)
+	before, err := f.workflow.Get(ctx, eolTestVIN)
 	if err != nil {
 		t.Fatalf("get workflow: %v", err)
 	}
-	if workflow.DocumentApprovedAt == nil {
-		t.Error("document_approved_at was not written")
+
+	_, err = f.documentApprove.Approve(ctx, eolTestVIN, 9)
+	if !errors.Is(err, domain.ErrEndpointRetired) {
+		t.Fatalf("document approve: got %v, want ErrEndpointRetired", err)
 	}
-	if workflow.DocumentApprovedBy == nil || *workflow.DocumentApprovedBy != 9 {
-		t.Errorf("document_approved_by = %v, want 9", workflow.DocumentApprovedBy)
+
+	after, err := f.workflow.Get(ctx, eolTestVIN)
+	if err != nil {
+		t.Fatalf("get workflow after: %v", err)
+	}
+	if after.DocumentApprovedAt != nil {
+		t.Error("document_approved_at must not be written")
+	}
+	if after.CurrentStage != before.CurrentStage {
+		t.Errorf("stage changed from %q to %q", before.CurrentStage, after.CurrentStage)
+	}
+	if got := f.vehicles.vehicles[eolTestVIN].CurrentGlobalStatus; got != domain.VehicleStatusInWarehouse {
+		t.Errorf("vehicle status = %q, want %q", got, domain.VehicleStatusInWarehouse)
 	}
 }
 
@@ -268,14 +270,14 @@ func TestEOLStagesMustRunInOrder(t *testing.T) {
 		}
 	})
 
-	t.Run("document approve before depot release", func(t *testing.T) {
+	t.Run("document approve is dormant", func(t *testing.T) {
 		f := newEOLFixture(t)
 		if _, err := f.branchShip.Ship(ctx, eolTestVIN, 7); err != nil {
 			t.Fatalf("branch ship: %v", err)
 		}
 		_, err := f.documentApprove.Approve(ctx, eolTestVIN, 7)
-		if !errors.Is(err, domain.ErrInvalidStatusTransition) {
-			t.Errorf("expected ErrInvalidStatusTransition, got %v", err)
+		if !errors.Is(err, domain.ErrEndpointRetired) {
+			t.Errorf("expected ErrEndpointRetired, got %v", err)
 		}
 	})
 

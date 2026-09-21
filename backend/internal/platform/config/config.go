@@ -2,6 +2,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -54,6 +55,22 @@ func Load() Config {
 		LogMaxBytes:         envInt64OrDefault("LOG_MAX_BYTES", 10<<20),
 		LogMaxBackups:       envIntOrDefault("LOG_MAX_BACKUPS", 5),
 	}
+}
+
+// MinJWTSecretLen is the minimum accepted JWT_SECRET length. Shorter secrets
+// are rejected at process start so tokens cannot be forged with an empty key.
+const MinJWTSecretLen = 32
+
+// ValidateJWTSecret fails closed when JWT_SECRET is missing or too short.
+// There is no auto-generate escape hatch — operators must set a real secret.
+func ValidateJWTSecret(secret string) error {
+	if len(secret) < MinJWTSecretLen {
+		return fmt.Errorf(
+			"JWT_SECRET must be at least %d characters (got %d). Generate one with: openssl rand -base64 32",
+			MinJWTSecretLen, len(secret),
+		)
+	}
+	return nil
 }
 
 // dotEnvSearchDepth is how far up the tree to look for a .env: the README has

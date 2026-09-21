@@ -258,6 +258,11 @@ type MediaRepository interface {
 	// entity_id still has no FK; this lookup is that missing check and also
 	// supplies the denormalized vin written on insert (Karar 11).
 	VINForEntity(ctx context.Context, entityType domain.MediaEntityType, entityID string) (string, error)
+	// GetByStoragePath returns the attachment row for a relative storage path
+	// (as used under /uploads/*), or domain.ErrNotFound.
+	GetByStoragePath(ctx context.Context, storagePath string) (*domain.MediaAttachment, error)
+	// ChecklistTypeForProgressID returns the checklist_type for a progress row.
+	ChecklistTypeForProgressID(ctx context.Context, progressID string) (domain.ChecklistType, error)
 }
 
 // RoleRepository reads the table-driven RBAC catalogue (Karar 3).

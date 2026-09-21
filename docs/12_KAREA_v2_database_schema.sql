@@ -154,6 +154,8 @@ CREATE TABLE users (
     password_hash  VARCHAR(255) NOT NULL,  -- bcrypt hash, never store or return plaintext
     role_id        INT NOT NULL REFERENCES roles(id),
     is_active      BOOLEAN NOT NULL DEFAULT TRUE,
+    -- JWT iat must be >= this stamp (migration 0029). Bumped on password/role/deactivate.
+    tokens_valid_from TIMESTAMPTZ NOT NULL DEFAULT now(),
     created_at     TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -407,8 +409,8 @@ CREATE TABLE vehicle_eol_workflow (
     depot_released_at         TIMESTAMPTZ,  -- hard-block gate: open issues must be zero
     depot_released_by         INT REFERENCES users(id),
 
-    -- TARIHSEL: evrak asamasi migration 0011'de akistan cikarildi.
-    -- Kolonlar silinmedi, ileride geri acilabilsin diye duruyor.
+    -- TARIHSEL / KULLANILMIYOR: evrak asamasi migration 0011'de akistan cikarildi
+    -- (Karar 2). Endpoint 410 Gone; kolonlar silinmedi, yazilmaz.
     document_approved_at      TIMESTAMPTZ,
     document_approved_by      INT REFERENCES users(id),
 
@@ -1118,7 +1120,8 @@ INSERT INTO permissions (code, description) VALUES
     ('issue.transition.conditional_approve', 'Move an issue DONE -> CONDITIONAL_APPROVED'),
     ('eol.branch_ship', 'Mark EOL branch as shipped to depot'),
     ('eol.depot_release', 'Release a vehicle from depot (hard-block gate)'),
-    ('eol.document_approve', 'Approve the EOL document phase'),
+    -- Dormant (Karar 2): retained in catalogue, not assignable, endpoint returns 410.
+    ('eol.document_approve', 'Approve the EOL document phase (dormant — historical)'),
     ('analysis.view', 'View the Analysis tab'),
     ('admin.manage_masters', 'Manage master data (stations, templates, roles)');
 

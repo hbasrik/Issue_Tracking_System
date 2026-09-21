@@ -8,6 +8,9 @@ import (
 	"time"
 )
 
+// IssueDescriptionMaxLen is the hard cap for issue description text.
+const IssueDescriptionMaxLen = 400
+
 // Sentinel domain errors. These are transport-agnostic; the delivery layer
 // maps them to HTTP status codes.
 var (
@@ -18,6 +21,10 @@ var (
 	ErrDescriptionRequired = errors.New("description is required for this status")
 	// ErrIssueDescriptionRequired indicates an issue create omitted description.
 	ErrIssueDescriptionRequired = errors.New("description is required")
+	// ErrIssueDescriptionTooLong indicates description exceeds IssueDescriptionMaxLen.
+	ErrIssueDescriptionTooLong = errors.New("description must be at most 400 characters")
+	// ErrEndpointRetired is returned for soft-retired routes (HTTP 410).
+	ErrEndpointRetired = errors.New("this endpoint has been retired")
 	// ErrSolutionDescriptionRequired indicates IN_PROGRESS->DONE omitted the
 	// resolution note operators must record when finishing a repair.
 	ErrSolutionDescriptionRequired = errors.New("solution_description is required when marking an issue done")
