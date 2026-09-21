@@ -297,6 +297,11 @@ export const tr = {
   'issue.id': 'ID',
   'issue.listSubtitle': 'Tüm issue’lar — VIN veya bildiren adıyla süz',
   'issue.noMatch': 'Filtreye uyan issue yok',
+  'issue.noPhoto': 'Fotoğraf yok',
+  'issue.photoFullscreen': 'Fotoğrafı tam ekran aç',
+  'issue.openDuration': 'Açık kalma süresi',
+  'issue.detailNotFound': 'Issue bulunamadı',
+  'issue.detailFailed': 'Issue detayı yüklenemedi',
 
   'home.title': 'Ana Sayfa',
   'home.subtitle': 'Üretim, montaj ve kalite operasyonlarının anlık görünümü',
@@ -1416,6 +1421,11 @@ export const en: Record<MessageKey, string> = {
   'issue.vin': 'VIN',
   'issue.status': 'Status',
   'issue.id': 'ID',
+  'issue.noPhoto': 'No photo',
+  'issue.photoFullscreen': 'Open photo fullscreen',
+  'issue.openDuration': 'Open duration',
+  'issue.detailNotFound': 'Issue not found',
+  'issue.detailFailed': 'Could not load issue detail',
 
   'home.title': 'Home',
   'home.subtitle': 'Live view of production, assembly, and quality operations',
