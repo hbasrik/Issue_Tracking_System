@@ -4,13 +4,29 @@
 -- Reference: 11_KAREA_v2_Mimari_Mutabakati.md (Karar 1-8)
 -- Supersedes 08_KAREA_database_schema.sql (v1.0).
 -- All identifiers and comments are in English per Clean Code convention.
+--
+-- ---------------------------------------------------------------------
+-- !! SOURCE OF TRUTH: database/migrations/ — NOT this file.
+--
+-- This file is a hand-maintained reading aid: it shows the intended
+-- shape of the schema in one place, with the reasoning behind each
+-- decision. It is NOT executable against a real database and must not
+-- be used to create one. Migrations 0001-0028 are authoritative.
+--
+-- Known limitation of this file: it is validated with a SQL parser,
+-- which checks syntax only. A parser cannot tell that a view selects a
+-- column that no longer exists — that exact drift happened once
+-- (vw_vehicle_full_overview still selected vehicle_number after
+-- Karar 10 removed it). Treat any discrepancy between this file and
+-- the migrations as an error in THIS file.
+-- ---------------------------------------------------------------------
 -- =====================================================================
 
 -- =====================================================================
 -- SECTION 0: EXTENSIONS
 -- =====================================================================
 
-CREATE EXTENSION IF NOT EXISTS pg_trgm;      -- trigram search for partial VIN / vehicle_number lookup
+CREATE EXTENSION IF NOT EXISTS pg_trgm;      -- trigram search for partial VIN lookup
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";  -- reserved for future UUID-based entities
 
 -- =====================================================================
@@ -99,7 +115,9 @@ CREATE TYPE audit_event_enum AS ENUM (
     'CHECKLIST_ITEM_UPDATE',
     'ISSUE_STATUS_CHANGE',
     'EOL_WORKFLOW_STAGE_CHANGE',  -- new: branch shipped / depot released / document approved
-    'MEDIA_UPLOADED'              -- new: Karar 8
+    'MEDIA_UPLOADED',             -- new: Karar 8
+    'ISSUE_CLASSIFICATION_CHANGE',-- migration 0019: quality corrects part / defect type
+    'LOGIN_RATE_LIMITED'          -- migration 0028: blocked login attempt (vin IS NULL)
     -- PHASE_ENTER / PHASE_EXIT (v1) removed — superseded by STATION_ENTER / STATION_EXIT
 );
 
@@ -416,7 +434,10 @@ COMMENT ON TABLE vehicle_eol_workflow IS
 
 CREATE TABLE audit_logs (
     id             BIGSERIAL PRIMARY KEY,
-    vin            VARCHAR(17) NOT NULL REFERENCES vehicles(vin) ON DELETE CASCADE,
+    -- NULLable since migration 0028: not every audited event belongs to a
+    -- vehicle. Login rate-limit blocks (LOGIN_RATE_LIMITED) have no VIN.
+    -- The FK still applies whenever vin is present.
+    vin            VARCHAR(17) REFERENCES vehicles(vin) ON DELETE CASCADE,
     event_type     audit_event_enum NOT NULL,
     old_value      TEXT,
     new_value      TEXT,
@@ -699,9 +720,12 @@ CREATE TRIGGER trg_recalculate_vehicle_progress
     FOR EACH ROW EXECUTE FUNCTION fn_recalculate_vehicle_progress();
 
 -- --- Karar 2, stage 1: Branch shipment -----------------------------------
--- 2026-08-31 (migration 0013): artik UC checklist'in tamami tamamlanmadan
+-- 2026-08-31 (migration 0013): UC checklist'in tamami tamamlanmadan
 -- subeden depoya sevk YAPILAMAZ — EOL BRANCH + TEST + SHIPMENT maddelerinin
 -- hepsi OK/CONDITIONAL_OK olmali (Karar 4'te ertelenen sorunun cevabi).
+-- 2026-09-03 (migration 0014): DORDUNCU kapi — tum istasyon adimlari da
+-- OK olmali (Karar 1'in soft-warning kurali bu kapida kaldirildi;
+-- montaji bitmemis arac depoya sevk edilemez).
 -- Acik issue kurali degismedi: hala sadece UYARI (soft-warning), sevki
 -- bloklamiyor, sayisi audit icin kaydediliyor.
 CREATE OR REPLACE FUNCTION fn_enforce_branch_shipment()
@@ -709,9 +733,19 @@ RETURNS TRIGGER AS $$
 DECLARE
     v_open_issue_count INT;
     v_incomplete_count INT;
+    v_station_steps_remaining INT;
 BEGIN
     IF NEW.branch_shipped_at IS NOT NULL AND OLD.branch_shipped_at IS NULL THEN
-        -- Hard-block: EOL BRANCH + TEST + SHIPMENT maddelerinin tamami bitmeli
+        -- Hard-block 1: tum istasyon adimlari tamamlanmis olmali (0014)
+        SELECT count(*) INTO v_station_steps_remaining
+        FROM vehicle_station_step_progress
+        WHERE vin = NEW.vin AND status <> 'OK';
+
+        IF v_station_steps_remaining > 0 THEN
+            RAISE EXCEPTION 'Cannot ship vehicle % to depot — % station step(s) still incomplete', NEW.vin, v_station_steps_remaining;
+        END IF;
+
+        -- Hard-block 2: EOL BRANCH + TEST + SHIPMENT maddelerinin tamami bitmeli
         SELECT count(*) INTO v_incomplete_count
         FROM checklist_item_progress cip
         JOIN checklist_template_items cti ON cti.id = cip.check_item_id
@@ -1021,7 +1055,6 @@ GROUP BY current_stage;
 CREATE OR REPLACE VIEW vw_vehicle_full_overview AS
 SELECT
     v.vin,
-    v.vehicle_number,
     v.vehicle_model_id,
     v.current_global_status,
     s.name AS current_station_name,

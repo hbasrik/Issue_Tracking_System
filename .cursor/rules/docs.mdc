@@ -1,0 +1,19 @@
+---
+description: Documentation source-of-truth and update requirements for docs/
+alwaysApply: true
+---
+
+# Documentation rules
+
+- `docs/` is the single source of truth for project documentation.
+- When an architectural decision, schema change, or flow change is
+  made, the related document is updated in the **same commit**:
+  - Schema change → `docs/12_KAREA_v2_database_schema.sql` (and/or a
+    note that migrations are authoritative — see below)
+  - Architectural / flow decision → `docs/11_KAREA_v2_Mimari_Mutabakati.md`
+  - Completed or newly added work → `docs/16_KAREA_Yapilacaklar.md`
+- `docs/12` is **not** an executable bootstrap. The real schema source
+  is `database/migrations/`. If the two disagree, `docs/12` is wrong.
+- Work is not “done” until the relevant doc is updated. In the task
+  report’s **Files** section, state which documentation file(s) were
+  updated (or explicitly that no doc update was required and why).

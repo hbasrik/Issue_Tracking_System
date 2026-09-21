@@ -1,6 +1,6 @@
 # KAREA — Yapılacaklar Listesi
 
-**Güncelleme:** 2026-09-15
+**Güncelleme:** 2026-09-18
 **Amaç:** Canlıya çıkmadan önce ve sonra yapılacakları ayırmak, neyin
 kimi beklediğini takip etmek.
 
@@ -9,6 +9,16 @@ Durum işaretleri: `[ ]` yapılmadı · `[~]` kısmen · `[x]` tamam · `[!]` en
 ---
 
 ## A — Şimdi yapılabilir (kod işi, dış bağımlılık yok)
+
+### A0. Geliştirme veritabanının yedeği `[ ]` **öncelik: en yüksek**
+Checklist şablonları, hata kodu kataloğu, roller ve izin matrisi,
+500 VIN — bunların hepsi **tek bir bilgisayardaki tek bir Postgres
+örneğinde** duruyor. Bunlar kod değil, veri; git'te yok. Disk
+giderse haftaların yapılandırma emeği gider.
+
+Yapılacak: düzenli `pg_dump`, dosya bilgisayar dışında bir yerde
+(bulut disk yeterli). B5'ten farklı — B5 üretim yedekleme
+politikası, bu ise bugünkü emeği kaybetmemek.
 
 ### A1. Mobilde ağ kesintisi dayanıklılığı `[ ]` **öncelik: yüksek**
 Fabrika Wi-Fi'ı kesintili. Operatör formu doldurup fotoğraf çekip
@@ -33,14 +43,26 @@ Kritik bir hata açıldığında kimsenin haberi olmuyor.
 - SMTP gelince mail bildirimi eklenir
 **Neden önemli:** Sistemin var oluş sebebi tam da bunu yakalamak.
 
-### A4. Giriş denemelerinde hız sınırı `[ ]` **öncelik: yüksek**
-Kaba kuvvet saldırısına tamamen açık. IP/hesap başına dakikada N deneme
-sınırı. Kod işi, şimdi yapılabilir.
+### A4. Giriş denemelerinde hız sınırı `[x]`
+Hesap bazlı kademeli kilit (5 hata → 1 dk, 10 → 5 dk, 15 → 15 dk),
+IP başına dakikada 100 tavan. Ortak fabrika IP'si arkasındaki
+kullanıcıların birbirini kilitlemediği testle kanıtlandı. Var olmayan
+kullanıcıya dummy bcrypt (zamanlama sızıntısı yok). Yöneticiye
+"giriş kilidini aç" butonu. Migration 0028 + `LOGIN_RATE_LIMITED`
+audit olayı; `audit_logs.vin` artık NULL olabiliyor.
 
-### A5. Vardiya kavramı `[ ]` **öncelik: orta — ama zamanlaması kritik**
-"Hangi vardiya daha çok hata üretiyor" sorusu sorulacaksa vardiya
-bilgisi kayıt anında tutulmalı. **Sonradan geriye dönük eklenemez.**
-Şimdi karar verilmeli: gerekli mi, değil mi?
+Mobil giriş ekranının da kalan süreyi iki dilde gösterdiği ayrıca
+doğrulandı.
+
+**Kabul edilen sınır:** Sayaçlar bellekte. Backend yeniden başlayınca
+kilitler sıfırlanır. Bkz. B8.
+
+### A5. Vardiya kavramı `[x]` — kapatıldı, ayrı alan gerekmiyor
+Önceki değerlendirmem "sonradan eklenemez" yönündeydi; **yanlıştı.**
+Vardiya, kaydın oluşturulma saatinden türetilebilir (vardiya saat
+aralıkları tanımlandığı sürece geriye dönük de hesaplanır). Ayrı bir
+kolon ve operatöre ek soru gerekmiyor. Analiz tarafında istendiğinde
+saatten gruplanarak eklenir.
 
 ### A6. Uçtan uca test `[ ]` **öncelik: orta**
 Kritik akışları kapsayan otomatik testler: giriş, hata bildirme,
@@ -95,22 +117,36 @@ oturumda defalarca öldüğünü gördük. systemd veya eşdeğeri gerekli.
 ### B5. Veritabanı yedekleme `[!]`
 Tanımlı bir yedekleme politikası yok.
 
-### B6. Üretim veritabanı kurulumu `[~]`
+### B6. Üretim veritabanı kurulumu `[ ]`
 Boş DB, migration'ların kontrollü çalıştırılması, 500 VIN'in yüklenmesi.
-Migration'ların idempotent olması (0013/0020 dirty durumunun tekrarını
-önlemek için).
+Migration'ların idempotent olması (0013'te yaşadığımız dirty durumun
+tekrarını önlemek için).
 
-**Durum (2026-09-15):**
-- Additive migration'lar idempotent hale getirildi (`IF NOT EXISTS`,
-  guarded `RENAME VALUE`, `DROP TRIGGER IF EXISTS` öncesi create).
-- Doğrulama: `database/scripts/verify_migrations.sh` — temiz DB'de
-  `migrate up`, ikinci `migrate up` (no-op), ardından additive SQL'lerin
-  ikinci kez `psql` ile uygulanması.
-- Bootstrap (0001/0002) hâlâ büyük ölçüde tek seferlik; boş DB üzerinde
-  `migrate up` ile doğrulanır, kısmi 0001/0002 yeniden koşusu desteklenmez.
+### B7. Hata izleme ve log toplama `[~]` — sunucu gerektirmeyen kısım yapıldı
+**Yapıldı:**
+- Panik kurtarma (`recoverPanic`): beklenmeyen çökme süreci öldürmüyor,
+  istemciye 500 dönüyor, stack yalnızca loga yazılıyor. Doğrulama için
+  panik probe'u eklendi; üretimde 404, kayıtlıyken kimlik doğrulama
+  zorunlu (iki testle kanıtlandı).
+- Loglar dosyaya yazılıyor, boyut bazlı döndürme, seviye ayarı,
+  şifre/token maskeleme (`applog.Redact`).
+- Her isteğe request id; 5xx yanıtlarında kullanıcıya "Hata kodu"
+  olarak gösteriliyor (4xx'te gösterilmiyor), logdaki id ile aynı
+  olduğu testle kanıtlandı.
 
-### B7. Hata izleme ve log toplama `[ ]`
-Canlıda bir şey patlarsa kimsenin haberi olmuyor.
+**Kalan (sunucu gelince):** Sentry veya eşdeğeri dış izleme, merkezi
+log toplama, uyarı kuralları. Ayrıca `LOGIN_RATE_LIMITED` audit
+olayları şu an hiçbir ekranda görünmüyor — yönetici için güvenlik
+olayları görünümü burada ele alınacak.
+
+### B8. Giriş hız sınırı sayaçlarının kalıcı olması `[ ]`
+A4'te sayaçlar bellekte tutuluyor. İki koşulda yetersiz kalır:
+- Backend birden fazla örnek olarak çalışırsa sınır örnek sayısı
+  kadar katlanır (her örneğin kendi sayacı olur)
+- Backend sık yeniden başlarsa kilitler sürekli sıfırlanır (B4
+  çözülene kadar backend elle başlatılıyor ve düşüyor)
+Tek örnek + kararlı servis ile kabul edilebilir; ikisinden biri
+değişirse sayaç tabloya taşınmalı.
 
 ---
 
@@ -167,8 +203,14 @@ ortamındaki dağınıklık meselesi.
 
 ## Önerilen sıra
 
-**Şimdi:** A1 (ağ dayanıklılığı) → A2 (eski veri aktarımı) → A4 (hız
-sınırı) → A3 (kritik bildirim)
+**Tamamlananlar:** A1 (ağ dayanıklılığı), A4 (hız sınırı),
+A5 (vardiya — gereksiz çıktı), B7'nin sunucu gerektirmeyen kısmı
+
+**Şimdi:** A0 (geliştirme veritabanı yedeği — bkz. aşağı) →
+**A3 (kritik bildirim)** → A6 (uçtan uca test) → A9 (kalite ekibi
+katalog gözden geçirmesi)
+
+**Beklemede:** A2 (veri elde yok)
 
 **Paralel olarak başlat:** C1, C2, C4 (IT talepleri — haftalar sürer,
 kod hazır olunca beklemek istemezsin)
