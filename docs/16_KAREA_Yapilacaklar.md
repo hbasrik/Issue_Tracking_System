@@ -128,10 +128,11 @@ oturumda defalarca öldüğünü gördük. systemd veya eşdeğeri gerekli.
 ### B5. Veritabanı yedekleme `[!]`
 Tanımlı bir yedekleme politikası yok.
 
-### B6. Üretim veritabanı kurulumu `[ ]`
-Boş DB, migration'ların kontrollü çalıştırılması, 500 VIN'in yüklenmesi.
-Migration'ların idempotent olması (0013'te yaşadığımız dirty durumun
-tekrarını önlemek için).
+### B6. Üretim veritabanı kurulumu `[~]`
+Boş DB + migration yolu net; checklist gerçek içerik `database/seed/03`'te.
+500 VIN: `database/scripts/reset_and_load_vins.sql` (seed değil; `docs/09`
+§5 üretim adımlarında). Kalan: kontrollü prod koşumu, B3 kullanıcı ayrımı,
+migration dirty-state prosedürü.
 
 ### B7. Hata izleme ve log toplama `[~]` — sunucu gerektirmeyen kısım yapıldı
 **Yapıldı:**

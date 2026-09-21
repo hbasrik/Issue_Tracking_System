@@ -1,6 +1,21 @@
 -- KAREA — full data reset + clean 500-VIN load (sorted 000001 -> 000500)
--- Run as a single script in TablePlus. Wrapped in a transaction:
--- if anything fails, nothing is applied.
+--
+-- Location: database/scripts/ (NOT under database/seed/).
+-- Do NOT run via `make seed` — ~52k progress rows and a long runtime.
+-- Intended for production / staging VIN bootstrap (or a deliberate local reset).
+--
+-- Prerequisites: migrations applied; reference seed loaded
+--   (stations, checklist templates/items, defect catalog). Skip
+--   database/seed/06_test_vehicles.sql in production.
+--
+-- Destructive: TRUNCATE clears vehicles and dependent operational tables
+--   (issues, media, checklist/station progress, EOL workflow, audit_logs).
+--   Reference data (templates, stations, users, defect catalog) is kept.
+--
+-- Run once, consciously:
+--   psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f database/scripts/reset_and_load_vins.sql
+--
+-- Wrapped in a transaction: if anything fails, nothing is applied.
 
 BEGIN;
 

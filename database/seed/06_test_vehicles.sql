@@ -404,8 +404,8 @@ BEGIN
         'OPEN', op1, now() - interval '2 days'
     );
 
-    -- 10050: BRANCH EoL items all OK; TEST item OPEN so warning still fires.
-    PERFORM pg_temp.tick_checklist_range('N7V1K1SA1TK000009', 'EOL', 1, 9, op1, now() - interval '2 days');
+    -- 10050: BRANCH EoL items all OK (1–10); TEST item OPEN so warning still fires.
+    PERFORM pg_temp.tick_checklist_range('N7V1K1SA1TK000009', 'EOL', 1, 10, op1, now() - interval '2 days');
     PERFORM pg_temp.tick_checklist_item(
         'N7V1K1SA1TK000009', 'TEST', 2, 'NOT_OK', op2, now() - interval '2 days',
         'Service brake stopping distance above limit on first run.'
@@ -421,12 +421,13 @@ BEGIN
     -- 10051/10052: no open issues (depot-release should succeed).
     -- 10053: OPEN + IN_PROGRESS issues (depot-release must hard-block).
     -- ============================================================
+    -- Real EOL seed: BRANCH items 1–10, DEPOT items 11–15.
     FOREACH v_vin IN ARRAY depot_ready LOOP
         PERFORM pg_temp.mark_all_stations_ok(v_vin, op1, now() - interval '4 days');
-        PERFORM pg_temp.tick_checklist_range(v_vin, 'EOL', 1, 9, op1, now() - interval '3 days');
+        PERFORM pg_temp.tick_checklist_range(v_vin, 'EOL', 1, 10, op1, now() - interval '3 days');
     END LOOP;
     PERFORM pg_temp.mark_all_stations_ok('N7V1K1SA1TK000012', op2, now() - interval '4 days');
-    PERFORM pg_temp.tick_checklist_range('N7V1K1SA1TK000012', 'EOL', 1, 9, op2, now() - interval '3 days');
+    PERFORM pg_temp.tick_checklist_range('N7V1K1SA1TK000012', 'EOL', 1, 10, op2, now() - interval '3 days');
 
     -- Closed historical issues on 10051 (do not block depot-release).
     PERFORM pg_temp.add_station_issue(
@@ -438,6 +439,8 @@ BEGIN
         p_approve_by => mgr, p_approve_at => now() - interval '2 days 12 hours',
         p_solution => 'Spot repaired, recleared, and signed off by quality.'
     );
+    -- DEPOT phase (after BRANCH 1–10): items 11–13 OK, 14 conditional, 15 OK.
+    PERFORM pg_temp.tick_checklist_range('N7V1K1SA8TK000010', 'EOL', 11, 13, op2, now() - interval '20 hours');
     PERFORM pg_temp.tick_checklist_item(
         'N7V1K1SA8TK000010', 'EOL', 14, 'CONDITIONAL_OK', op1, now() - interval '2 days',
         'Tool kit missing wheel chock; accepted for depot with note.'
@@ -450,6 +453,9 @@ BEGIN
         p_finish_by => op2, p_finish_at => now() - interval '36 hours',
         p_cond_by => mgr, p_cond_at => now() - interval '30 hours',
         p_solution => 'Ship with note; chock to be added at dealer PDI.'
+    );
+    PERFORM pg_temp.tick_checklist_item(
+        'N7V1K1SA8TK000010', 'EOL', 15, 'OK', op2, now() - interval '20 hours', NULL
     );
     PERFORM pg_temp.tick_checklist_item(
         'N7V1K1SA8TK000010', 'TEST', 13, 'OK', op2, now() - interval '2 days', NULL
@@ -475,10 +481,28 @@ BEGIN
         p_approve_by => mgr, p_approve_at => now() - interval '32 hours',
         p_solution => 'Inflated to spec and rechecked.'
     );
-    PERFORM pg_temp.tick_checklist_range('N7V1K1SA8TK000010', 'EOL', 10, 13, op2, now() - interval '20 hours');
-    PERFORM pg_temp.tick_checklist_range('N7V1K1SAXTK000011', 'EOL', 10, 16, op1, now() - interval '20 hours');
+    PERFORM pg_temp.tick_checklist_range('N7V1K1SAXTK000011', 'EOL', 11, 15, op1, now() - interval '20 hours');
 
-    -- 10053: the hard-block vehicle — leave OPEN + IN_PROGRESS.
+    -- Branch-ship gate (0022): EOL BRANCH + full TEST + full SHIPMENT must be OK.
+    FOREACH v_vin IN ARRAY depot_ready LOOP
+        PERFORM pg_temp.tick_all_checklist(v_vin, 'TEST', op1, now() - interval '26 hours');
+        PERFORM pg_temp.tick_all_checklist(v_vin, 'SHIPMENT', op1, now() - interval '26 hours');
+    END LOOP;
+    PERFORM pg_temp.tick_all_checklist('N7V1K1SA1TK000012', 'TEST', op2, now() - interval '26 hours');
+    PERFORM pg_temp.tick_all_checklist('N7V1K1SA1TK000012', 'SHIPMENT', op2, now() - interval '26 hours');
+
+    FOREACH v_vin IN ARRAY depot_ready LOOP
+        UPDATE vehicle_eol_workflow
+        SET branch_shipped_at = now() - interval '22 hours',
+            branch_shipped_by = mgr
+        WHERE vehicle_eol_workflow.vin = v_vin;
+    END LOOP;
+    UPDATE vehicle_eol_workflow
+    SET branch_shipped_at = now() - interval '22 hours',
+        branch_shipped_by = mgr
+    WHERE vin = 'N7V1K1SA1TK000012';
+
+    -- 10053: after branch ship, leave OPEN + IN_PROGRESS at depot (blocks depot-release).
     PERFORM pg_temp.tick_checklist_item(
         'N7V1K1SA1TK000012', 'EOL', 12, 'NOT_OK', op2, now() - interval '20 hours',
         'Visible coolant weep at water-pump housing.'
@@ -499,24 +523,14 @@ BEGIN
         p_process_by => op2, p_process_at => now() - interval '12 hours'
     );
 
-    FOREACH v_vin IN ARRAY depot_ready LOOP
-        UPDATE vehicle_eol_workflow
-        SET branch_shipped_at = now() - interval '22 hours',
-            branch_shipped_by = mgr
-        WHERE vehicle_eol_workflow.vin = v_vin;
-    END LOOP;
-    UPDATE vehicle_eol_workflow
-    SET branch_shipped_at = now() - interval '22 hours',
-        branch_shipped_by = mgr
-    WHERE vin = 'N7V1K1SA1TK000012';
-
     -- ============================================================
     -- Bucket 5: depot released → DOCUMENT. No open issues.
     -- ============================================================
     FOREACH v_vin IN ARRAY document_vins LOOP
         PERFORM pg_temp.mark_all_stations_ok(v_vin, op1, now() - interval '3 days');
         PERFORM pg_temp.tick_all_checklist(v_vin, 'EOL', op2, now() - interval '2 days');
-        PERFORM pg_temp.tick_checklist_range(v_vin, 'TEST', 1, 20, op1, now() - interval '2 days');
+        PERFORM pg_temp.tick_all_checklist(v_vin, 'TEST', op1, now() - interval '2 days');
+        PERFORM pg_temp.tick_all_checklist(v_vin, 'SHIPMENT', op1, now() - interval '2 days');
     END LOOP;
 
     -- Closed shipment issue on 10054 so Analysis has another CONDITIONAL_APPROVED.
@@ -554,14 +568,12 @@ BEGIN
     FOREACH v_vin IN ARRAY shipped LOOP
         PERFORM pg_temp.mark_all_stations_ok(v_vin, op2, now() - interval '2 days');
         PERFORM pg_temp.tick_all_checklist(v_vin, 'EOL', op1, now() - interval '36 hours');
-        PERFORM pg_temp.tick_checklist_range(v_vin, 'TEST', 1, 45, op2, now() - interval '30 hours');
+        PERFORM pg_temp.tick_all_checklist(v_vin, 'TEST', op2, now() - interval '30 hours');
+        PERFORM pg_temp.tick_all_checklist(v_vin, 'SHIPMENT', op1, now() - interval '28 hours');
         UPDATE vehicle_eol_workflow
         SET branch_shipped_at = now() - interval '30 hours',
             branch_shipped_by = mgr
         WHERE vehicle_eol_workflow.vin = v_vin;
-        -- Shipment after branch-ship so IN_WAREHOUSE can flip to WITH_CUSTOMER
-        -- before document approval overwrites the status to SHIPPED.
-        PERFORM pg_temp.tick_checklist_range(v_vin, 'SHIPMENT', 1, 43, op1, now() - interval '28 hours');
         UPDATE vehicle_eol_workflow
         SET depot_released_at = now() - interval '20 hours',
             depot_released_by = mgr

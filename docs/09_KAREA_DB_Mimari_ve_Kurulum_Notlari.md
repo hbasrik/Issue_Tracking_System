@@ -99,23 +99,37 @@ GUC'unu kullanır.
 
 ## 4. Migration & Seed Veri Stratejisi
 
-- **Migration aracı önerisi:** `golang-migrate` veya `atlas` (Go backend ile doğal uyum). Her değişiklik `NNNN_description.up.sql` / `.down.sql` çifti olarak versiyonlanır.
-- **İlk migration:** `08_KAREA_database_schema.sql` bu deponun `0001_init.up.sql` dosyası olacaktır.
-- **Seed veri sırası:** `phases` (1-8) → `stations` → `checkpoints` (her faz için 7-8 madde) → `vehicle_models` → `checklist_templates` + `checklist_template_items` (13 EoL + 43 Sevk maddesi, varsayılan şablon) → `users` (ilk Manager/Admin hesabı).
-- **Test verisi:** VIN üretimi için gerçekçi 17 haneli sahte VIN'ler + `pgbench`/`k6` ile 1M+ satırlık `issue_list`/`audit_logs` yük testi (TC-013'teki P95 < 100ms hedefini doğrulamak için).
+- **Migration aracı:** `golang-migrate` (`make migrate-up`). Her değişiklik `NNNN_description.up.sql` / `.down.sql` çifti olarak versiyonlanır.
+- **Geliştirme seed sırası** (`make seed` → `database/seed/01`…`06`): stations → station_steps → checklist template items → users → defect catalog → (dev-only) 18 fixture vehicles.
+- **Checklist maddeleri:** `database/seed/03_checklist_templates.sql` canlı üretim içeriğinin aktif maddelerini taşır (EOL / SHIPMENT / TEST). İngilizce yer tutucu metinler kaldırılmıştır; script idempotenttir.
+- **500 VIN yüklemesi seed değildir.** Dosya: `database/scripts/reset_and_load_vins.sql`. Operasyonel tabloları truncate edip 500 PLANNED VIN yazar; `make seed` bunu çalıştırmaz (kurulumu yavaşlatır, ~52k progress satırı üretir). Üretim/staging’de bilinçli ayrı adım.
+- **Üretimde `06_test_vehicles.sql` çalıştırılmaz** (demo araçlar / `changeme123` kullanıcı seed’i B3 ile ayrılmalıdır).
+- **Yük testi:** `pgbench`/`k6` ile 1M+ `issue_list`/`audit_logs` (TC-013 P95 < 100ms).
 
 ---
 
 ## 5. Kurulum To-Do Checklist
 
-- [ ] PostgreSQL 15+ instance kurulumu (yerel/staging)
-- [ ] `pg_trgm` ve `uuid-ossp` uzantılarının aktif edildiğinin doğrulanması
-- [ ] `0001_init.up.sql` (bu şema) migration olarak çalıştırılması
-- [ ] Referans veri seed'lerinin yüklenmesi (phases, stations, checkpoints, checklist_templates/items, vehicle_models)
-- [ ] İlk Manager/Admin kullanıcısının oluşturulması
-- [ ] Trigger davranışlarının entegrasyon testleri: TC-002 (faz→%50), TC-007/007b/007c (EoL hard-block), TC-008/009 (sevk hard-block), TC-013 (VIN arama performansı)
-- [ ] `EXPLAIN ANALYZE` ile kritik sorguların (VIN arama, Daily Pending Issues, VIN×Severity) index kullandığının doğrulanması
-- [ ] Staging ortamında 1M+ satırlık yük testi ile P95 < 100ms hedefinin doğrulanması
+### Geliştirme
+
+- [ ] PostgreSQL 15+ instance
+- [ ] `make migrate-up`
+- [ ] `make seed` (01–06; checklist gerçek içerik + 18 fixture araç)
+
+### Üretim / staging veritabanı
+
+- [ ] PostgreSQL 15+ instance kurulumu
+- [ ] `pg_trgm` (ve gerekli uzantılar) aktif
+- [ ] `make migrate-up` (veya eşdeğeri; tüm `database/migrations/*.up.sql`)
+- [ ] Referans seed: `01_stations` → `02_stations_and_steps` → `03_checklist_templates` → `05_defect_catalog` (üretimde `04_users` / `06_test_vehicles` yerine güvenli admin hesabı — B3)
+- [ ] **500 VIN yükleme (bilinçli adım, seed değil):**
+  ```sh
+  psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f database/scripts/reset_and_load_vins.sql
+  ```
+  Bu script `vehicles` ve bağlı operasyonel tabloları truncate eder, ardından 500 PLANNED VIN ekler. Referans veri (şablon, istasyon, katalog) silinmez. Boş/yeni kurulumda veya bilinçli sıfırlamada bir kez çalıştırılır; günlük seed’e dahil edilmez.
+- [ ] Trigger / kapı doğrulamaları: TC-002, TC-007/007b/007c, TC-008/009, TC-013
+- [ ] `EXPLAIN ANALYZE` ile kritik sorguların index kullandığının doğrulanması
+- [ ] Staging’de yük testi (P95 < 100ms)
 
 ---
 
