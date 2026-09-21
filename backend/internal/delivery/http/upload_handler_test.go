@@ -158,6 +158,20 @@ func TestUploadGet_ThumbIsMuchSmallerThanOriginal(t *testing.T) {
 			t.Fatalf("content-length %d != body %d", n, thumb.Body.Len())
 		}
 	}
+
+	md := httptest.NewRecorder()
+	mreq := httptest.NewRequest(http.MethodGet, "/uploads/"+rel+"?thumb=md", nil)
+	mreq.Header.Set("Authorization", "Bearer "+token)
+	router.ServeHTTP(md, mreq)
+	if md.Code != http.StatusOK {
+		t.Fatalf("md thumb status = %d", md.Code)
+	}
+	if md.Body.Len() == 0 || md.Body.Len() >= orig.Body.Len() {
+		t.Fatalf("md %d bytes, original %d; want md smaller", md.Body.Len(), orig.Body.Len())
+	}
+	if md.Body.Len() <= thumb.Body.Len() {
+		t.Fatalf("md %d bytes should be larger than sm thumb %d", md.Body.Len(), thumb.Body.Len())
+	}
 }
 
 func TestUploadGet_RejectsPathTraversal(t *testing.T) {

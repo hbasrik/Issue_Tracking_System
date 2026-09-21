@@ -1,9 +1,20 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../auth/AuthProvider';
-import { mediaFileUrl, mediaThumbUrl } from '../lib/api';
+import {
+  mediaFileUrl,
+  mediaThumbUrl,
+  mediaCardThumbUrl,
+} from '../lib/api';
+import type { MediaImageVariant } from '../../../shared/mediaThumbs';
 
 type Props = {
   storagePath: string;
+  /**
+   * Image derivative: sm (list), md (grid card), original (fullscreen).
+   * Legacy `thumb` maps to sm when variant is omitted.
+   */
+  variant?: MediaImageVariant;
+  /** @deprecated Prefer variant="sm". */
   thumb?: boolean;
   alt?: string;
   className?: string;
@@ -11,12 +22,24 @@ type Props = {
   onClick?: (e: React.MouseEvent<HTMLImageElement>) => void;
 };
 
+function resolveUrl(
+  storagePath: string,
+  variant: MediaImageVariant | undefined,
+  thumb: boolean | undefined,
+): string {
+  const v = variant ?? (thumb ? 'sm' : 'original');
+  if (v === 'sm') return mediaThumbUrl(storagePath);
+  if (v === 'md') return mediaCardThumbUrl(storagePath);
+  return mediaFileUrl(storagePath);
+}
+
 /**
  * Loads /uploads/* with the session Bearer token (browser <img> cannot).
  * Revokes the object URL on unmount / path change.
  */
 export function AuthenticatedMediaImg({
   storagePath,
+  variant,
   thumb,
   alt = '',
   className,
@@ -31,7 +54,7 @@ export function AuthenticatedMediaImg({
       setSrc(null);
       return;
     }
-    const url = thumb ? mediaThumbUrl(storagePath) : mediaFileUrl(storagePath);
+    const url = resolveUrl(storagePath, variant, thumb);
     let objectUrl: string | null = null;
     let cancelled = false;
     (async () => {
@@ -52,7 +75,7 @@ export function AuthenticatedMediaImg({
       cancelled = true;
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [storagePath, thumb, token]);
+  }, [storagePath, variant, thumb, token]);
 
   if (!src) {
     return (

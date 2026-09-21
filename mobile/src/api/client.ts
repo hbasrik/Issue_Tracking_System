@@ -728,7 +728,12 @@ export function mediaFileUrl(storagePath: string): string {
   return `${origin}/uploads/${path}`;
 }
 
-/** List-card URL: long-edge 192 JPEG instead of the 1MB+ original. */
+/** Compact list thumbnail: long-edge 192 JPEG (`?thumb=1`). */
 export function mediaThumbUrl(storagePath: string): string {
   return `${mediaFileUrl(storagePath)}?thumb=1`;
+}
+
+/** Grid-card thumbnail: long-edge 800 JPEG (`?thumb=md`). */
+export function mediaCardThumbUrl(storagePath: string): string {
+  return `${mediaFileUrl(storagePath)}?thumb=md`;
 }

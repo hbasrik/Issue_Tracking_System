@@ -1038,17 +1038,29 @@ export function mediaFileUrl(storagePath: string): string {
   return `${origin}/uploads/${path}`;
 }
 
-/** List-card URL: long-edge 192 JPEG instead of the original. */
+/** Compact list thumbnail: long-edge 192 JPEG (`?thumb=1`). */
 export function mediaThumbUrl(storagePath: string): string {
   return `${mediaFileUrl(storagePath)}?thumb=1`;
+}
+
+/** Grid-card thumbnail: long-edge 800 JPEG (`?thumb=md`). */
+export function mediaCardThumbUrl(storagePath: string): string {
+  return `${mediaFileUrl(storagePath)}?thumb=md`;
 }
 
 export async function fetchMediaBlob(
   storagePath: string,
   token: string,
-  thumb = false,
+  opts: boolean | { variant?: 'original' | 'sm' | 'md' } = false,
 ): Promise<Blob> {
-  const url = thumb ? mediaThumbUrl(storagePath) : mediaFileUrl(storagePath);
+  let url = mediaFileUrl(storagePath);
+  if (typeof opts === 'boolean') {
+    if (opts) url = mediaThumbUrl(storagePath);
+  } else if (opts.variant === 'sm') {
+    url = mediaThumbUrl(storagePath);
+  } else if (opts.variant === 'md') {
+    url = mediaCardThumbUrl(storagePath);
+  }
   const res = await fetch(url, {
     headers: { Authorization: `Bearer ${token}` },
   });

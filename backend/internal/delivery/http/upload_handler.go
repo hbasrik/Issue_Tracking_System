@@ -17,8 +17,15 @@ import (
 	"github.com/karea/backend/internal/platform/auth"
 )
 
-// listThumbMaxEdge is the long edge of list-card thumbnails (64pt @3x ≈ 192).
-const listThumbMaxEdge = 192
+// Thumbnail long-edge sizes — keep aligned with shared/mediaThumbs.ts.
+//
+// sm (thumb=1): phone compact list (64 CSS px @3x ≈ 192).
+// md (thumb=md): grid card photo. Measured display ~337–360 CSS px; @2x ≈ 720,
+// so 800 covers retina grid cards without shipping multi‑MB originals.
+const (
+	listThumbMaxEdge = 192
+	cardThumbMaxEdge = 800
+)
 
 // Authenticated uploads are private; browsers must revalidate with a token.
 const uploadCacheControl = "private, max-age=3600"
@@ -26,7 +33,12 @@ const uploadCacheControl = "private, max-age=3600"
 // handleUploadGet serves files from UploadDir after RequireAuth. Filenames are
 // 16-byte crypto/rand hex tokens (see storage.LocalDisk) — not sequential —
 // but obscurity is not access control: the caller must hold vehicle.view for
-// the attachment's VIN (Karar 11). ?thumb=1 returns a long-edge-192 JPEG.
+// the attachment's VIN (Karar 11).
+//
+// Query:
+//   - (none)     → original file
+//   - ?thumb=1   → long-edge-192 JPEG (list / compact)
+//   - ?thumb=md  → long-edge-800 JPEG (grid card)
 func (s *server) handleUploadGet(w http.ResponseWriter, r *http.Request) {
 	rel, ok := safeUploadRel(chi.URLParam(r, "*"))
 	if !ok {
@@ -60,8 +72,17 @@ func (s *server) handleUploadGet(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Cache-Control", uploadCacheControl)
 
-	if r.URL.Query().Get("thumb") == "1" {
-		thumb, err := ensureThumb(s.deps.UploadDir, rel, abs)
+	switch r.URL.Query().Get("thumb") {
+	case "1":
+		thumb, err := ensureThumb(s.deps.UploadDir, rel, abs, listThumbMaxEdge, ".jpg")
+		if err != nil {
+			http.ServeFile(w, r, abs)
+			return
+		}
+		http.ServeFile(w, r, thumb)
+		return
+	case "md":
+		thumb, err := ensureThumb(s.deps.UploadDir, rel, abs, cardThumbMaxEdge, ".md.jpg")
 		if err != nil {
 			http.ServeFile(w, r, abs)
 			return
@@ -95,8 +116,11 @@ func underDir(root, abs string) bool {
 	return fileAbs == rootAbs || strings.HasPrefix(fileAbs, rootAbs+sep)
 }
 
-func ensureThumb(uploadDir, rel, src string) (string, error) {
-	thumb := filepath.Join(uploadDir, ".thumbs", filepath.FromSlash(rel)+".jpg")
+// ensureThumb writes a JPEG derivative under .thumbs/ without modifying the
+// original. suffix is appended to the storage-relative path (e.g. ".jpg" or
+// ".md.jpg"). Existing derivatives are reused when not older than the source.
+func ensureThumb(uploadDir, rel, src string, maxEdge int, suffix string) (string, error) {
+	thumb := filepath.Join(uploadDir, ".thumbs", filepath.FromSlash(rel)+suffix)
 	srcInfo, err := os.Stat(src)
 	if err != nil {
 		return "", err
@@ -125,7 +149,11 @@ func ensureThumb(uploadDir, rel, src string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	encErr := jpeg.Encode(out, resizeMaxEdge(img, listThumbMaxEdge), &jpeg.Options{Quality: 70})
+	quality := 70
+	if maxEdge >= cardThumbMaxEdge {
+		quality = 78
+	}
+	encErr := jpeg.Encode(out, resizeMaxEdge(img, maxEdge), &jpeg.Options{Quality: quality})
 	closeErr := out.Close()
 	if encErr != nil {
 		os.Remove(tmp)
