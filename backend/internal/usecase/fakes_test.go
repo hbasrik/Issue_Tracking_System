@@ -446,41 +446,67 @@ func (f *fakeIssueRepo) ListForUser(_ context.Context, userID int, status *domai
 	return out, nil
 }
 
-func (f *fakeIssueRepo) ListAll(_ context.Context, status *domain.IssueStatus) ([]domain.Issue, error) {
-	var out []domain.Issue
-	for _, issue := range f.issues {
-		if status != nil && issue.Status != *status {
-			continue
-		}
-		out = append(out, *issue)
-	}
-	sort.Slice(out, func(i, j int) bool {
-		if !out[i].CreatedAt.Equal(out[j].CreatedAt) {
-			return out[i].CreatedAt.After(out[j].CreatedAt)
-		}
-		return out[i].ID > out[j].ID
-	})
-	return out, nil
+func (f *fakeIssueRepo) ListAll(_ context.Context, q domain.IssueListQuery) (domain.IssueListPage, error) {
+	return paginateFakeIssues(f.issues, "", q), nil
 }
 
-func (f *fakeIssueRepo) ListByVIN(_ context.Context, vin string, status *domain.IssueStatus) ([]domain.Issue, error) {
+func (f *fakeIssueRepo) ListByVIN(_ context.Context, vin string, q domain.IssueListQuery) (domain.IssueListPage, error) {
+	return paginateFakeIssues(f.issues, vin, q), nil
+}
+
+func paginateFakeIssues(all map[int64]*domain.Issue, vin string, q domain.IssueListQuery) domain.IssueListPage {
+	statusSet := map[domain.IssueStatus]struct{}{}
+	for _, s := range q.Statuses {
+		statusSet[s] = struct{}{}
+	}
 	var out []domain.Issue
-	for _, issue := range f.issues {
-		if issue.VIN != vin {
+	for _, issue := range all {
+		if vin != "" && issue.VIN != vin {
 			continue
 		}
-		if status != nil && issue.Status != *status {
-			continue
+		if len(statusSet) > 0 {
+			if _, ok := statusSet[issue.Status]; !ok {
+				continue
+			}
 		}
 		out = append(out, *issue)
 	}
 	sort.Slice(out, func(i, j int) bool {
-		if !out[i].CreatedAt.Equal(out[j].CreatedAt) {
-			return out[i].CreatedAt.After(out[j].CreatedAt)
+		if !out[i].IssueDate.Equal(out[j].IssueDate) {
+			return out[i].IssueDate.After(out[j].IssueDate)
 		}
 		return out[i].ID > out[j].ID
 	})
-	return out, nil
+	if q.BeforeDate != nil && q.BeforeID != nil {
+		filtered := out[:0]
+		for _, issue := range out {
+			if issue.IssueDate.Before(*q.BeforeDate) ||
+				(issue.IssueDate.Equal(*q.BeforeDate) && issue.ID < *q.BeforeID) {
+				filtered = append(filtered, issue)
+			}
+		}
+		out = filtered
+	} else if q.Offset > 0 {
+		if q.Offset >= len(out) {
+			out = nil
+		} else {
+			out = out[q.Offset:]
+		}
+	}
+	page := domain.IssueListPage{Items: out, NextOffset: q.Offset}
+	if q.Limit > 0 && len(out) > q.Limit {
+		page.HasMore = true
+		page.Items = out[:q.Limit]
+	}
+	page.NextOffset = q.Offset + len(page.Items)
+	if n := len(page.Items); n > 0 {
+		last := page.Items[n-1]
+		d := last.IssueDate
+		id := last.ID
+		page.NextBeforeDate = &d
+		page.NextBeforeID = &id
+	}
+	return page
 }
 
 func (f *fakeIssueRepo) ListOpenByVIN(_ context.Context, vin string) ([]domain.Issue, error) {

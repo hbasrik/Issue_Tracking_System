@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"errors"
+	"strconv"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -165,46 +166,90 @@ func (r *IssueRepo) ListForUser(ctx context.Context, userID int, status *domain.
 		 `+issueFrom+`
 		 WHERE (i.issue_reporter_id = $1 OR i.process_reporter_id = $1 OR i.finish_reporter_id = $1)
 		   AND ($2::issue_status_enum IS NULL OR i.status = $2::issue_status_enum)
-		 ORDER BY i.created_at DESC, i.id DESC`, userID, statusArg)
+		 ORDER BY i.issue_date DESC, i.id DESC`, userID, statusArg)
 	if err != nil {
 		return nil, err
 	}
 	return collectIssues(rows)
 }
 
-// ListAll returns every issue, optionally filtered by status.
-func (r *IssueRepo) ListAll(ctx context.Context, status *domain.IssueStatus) ([]domain.Issue, error) {
-	var statusArg any
-	if status != nil {
-		statusArg = string(*status)
-	}
-	rows, err := r.pool.Query(ctx,
-		`SELECT `+issueColumns+`
-		 `+issueFrom+`
-		 WHERE ($1::issue_status_enum IS NULL OR i.status = $1::issue_status_enum)
-		 ORDER BY i.created_at DESC, i.id DESC`, statusArg)
-	if err != nil {
-		return nil, err
-	}
-	return collectIssues(rows)
+// ListAll returns a page of issues for the board list (optional status filter
+// and limit/offset or keyset pagination).
+func (r *IssueRepo) ListAll(ctx context.Context, q domain.IssueListQuery) (domain.IssueListPage, error) {
+	return r.listIssues(ctx, "", q)
 }
 
-// ListByVIN returns every issue for a vehicle, optionally filtered by status.
-func (r *IssueRepo) ListByVIN(ctx context.Context, vin string, status *domain.IssueStatus) ([]domain.Issue, error) {
+// ListByVIN returns a page of issues for one vehicle.
+func (r *IssueRepo) ListByVIN(ctx context.Context, vin string, q domain.IssueListQuery) (domain.IssueListPage, error) {
+	return r.listIssues(ctx, vin, q)
+}
+
+func (r *IssueRepo) listIssues(ctx context.Context, vin string, q domain.IssueListQuery) (domain.IssueListPage, error) {
+	statuses := make([]string, 0, len(q.Statuses))
+	for _, s := range q.Statuses {
+		statuses = append(statuses, string(s))
+	}
 	var statusArg any
-	if status != nil {
-		statusArg = string(*status)
+	if len(statuses) > 0 {
+		statusArg = statuses
 	}
-	rows, err := r.pool.Query(ctx,
-		`SELECT `+issueColumns+`
-		 `+issueFrom+`
-		 WHERE i.vin = $1
-		   AND ($2::issue_status_enum IS NULL OR i.status = $2::issue_status_enum)
-		 ORDER BY i.created_at DESC, i.id DESC`, vin, statusArg)
+
+	limit := q.Limit
+	fetchLimit := 0
+	if limit > 0 {
+		fetchLimit = limit + 1 // probe one extra row for HasMore
+	}
+
+	useKeyset := q.BeforeDate != nil && q.BeforeID != nil
+	args := []any{statusArg}
+	argN := 2
+	where := `WHERE ($1::issue_status_enum[] IS NULL OR i.status = ANY($1::issue_status_enum[]))`
+	if vin != "" {
+		where += ` AND i.vin = $` + strconv.Itoa(argN)
+		args = append(args, vin)
+		argN++
+	}
+	if useKeyset {
+		where += ` AND (i.issue_date, i.id) < ($` + strconv.Itoa(argN) + `::timestamptz, $` + strconv.Itoa(argN+1) + `::bigint)`
+		args = append(args, *q.BeforeDate, *q.BeforeID)
+		argN += 2
+	}
+
+	query := `SELECT ` + issueColumns + ` ` + issueFrom + ` ` + where +
+		` ORDER BY i.issue_date DESC, i.id DESC`
+	if fetchLimit > 0 {
+		query += ` LIMIT $` + strconv.Itoa(argN)
+		args = append(args, fetchLimit)
+		argN++
+	}
+	if !useKeyset && q.Offset > 0 {
+		query += ` OFFSET $` + strconv.Itoa(argN)
+		args = append(args, q.Offset)
+	}
+
+	rows, err := executor(ctx, r.pool).Query(ctx, query, args...)
 	if err != nil {
-		return nil, err
+		return domain.IssueListPage{}, err
 	}
-	return collectIssues(rows)
+	items, err := collectIssues(rows)
+	if err != nil {
+		return domain.IssueListPage{}, err
+	}
+
+	page := domain.IssueListPage{Items: items, NextOffset: q.Offset}
+	if limit > 0 && len(items) > limit {
+		page.HasMore = true
+		page.Items = items[:limit]
+	}
+	page.NextOffset = q.Offset + len(page.Items)
+	if n := len(page.Items); n > 0 {
+		last := page.Items[n-1]
+		d := last.IssueDate
+		id := last.ID
+		page.NextBeforeDate = &d
+		page.NextBeforeID = &id
+	}
+	return page, nil
 }
 
 // ListOpenByVIN returns the vehicle's not-yet-closed issues. The status set

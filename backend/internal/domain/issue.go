@@ -189,3 +189,24 @@ type IssueType struct {
 	ID   int
 	Name string
 }
+
+// IssueListQuery paginates GET /issues. Limit 0 means "no LIMIT" (legacy full
+// list for Home KPIs / vehicle panels). Offset and keyset (Before*) are
+// mutually useful; when BeforeDate+BeforeID are set the repo prefers keyset.
+type IssueListQuery struct {
+	Statuses   []IssueStatus
+	Limit      int
+	Offset     int
+	BeforeDate *time.Time
+	BeforeID   *int64
+}
+
+// IssueListPage is one chunk of the issues board list.
+type IssueListPage struct {
+	Items      []Issue
+	HasMore    bool
+	NextOffset int
+	// NextBefore* support keyset "load more" without rescanning earlier rows.
+	NextBeforeDate *time.Time
+	NextBeforeID   *int64
+}

@@ -225,23 +225,38 @@ func (m *IssueManager) ListForUser(ctx context.Context, userID int, status *doma
 	return m.issues.ListForUser(ctx, userID, status)
 }
 
-// ListAll returns every issue for the web Issues queue and mobile Hatalar list.
-func (m *IssueManager) ListAll(ctx context.Context, status *domain.IssueStatus) ([]domain.Issue, error) {
-	if status != nil && !status.Valid() {
-		return nil, domain.ErrInvalidEnumValue
+// ListAll returns a page of issues for the web Issues queue and mobile Hatalar list.
+func (m *IssueManager) ListAll(ctx context.Context, q domain.IssueListQuery) (domain.IssueListPage, error) {
+	if err := validateIssueListQuery(q); err != nil {
+		return domain.IssueListPage{}, err
 	}
-	return m.issues.ListAll(ctx, status)
+	return m.issues.ListAll(ctx, q)
 }
 
-// ListByVIN returns every issue for a vehicle (Vehicle Detail Issues tab).
-func (m *IssueManager) ListByVIN(ctx context.Context, vin string, status *domain.IssueStatus) ([]domain.Issue, error) {
+// ListByVIN returns a page of issues for a vehicle (Vehicle Detail Issues tab).
+func (m *IssueManager) ListByVIN(ctx context.Context, vin string, q domain.IssueListQuery) (domain.IssueListPage, error) {
 	if vin == "" {
-		return nil, domain.ErrNotFound
+		return domain.IssueListPage{}, domain.ErrNotFound
 	}
-	if status != nil && !status.Valid() {
-		return nil, domain.ErrInvalidEnumValue
+	if err := validateIssueListQuery(q); err != nil {
+		return domain.IssueListPage{}, err
 	}
-	return m.issues.ListByVIN(ctx, vin, status)
+	return m.issues.ListByVIN(ctx, vin, q)
+}
+
+func validateIssueListQuery(q domain.IssueListQuery) error {
+	for _, s := range q.Statuses {
+		if !s.Valid() {
+			return domain.ErrInvalidEnumValue
+		}
+	}
+	if q.Limit < 0 || q.Offset < 0 {
+		return domain.ErrInvalidEnumValue
+	}
+	if (q.BeforeDate == nil) != (q.BeforeID == nil) {
+		return domain.ErrInvalidEnumValue
+	}
+	return nil
 }
 
 // GetByID returns a single issue by id (any authenticated caller).

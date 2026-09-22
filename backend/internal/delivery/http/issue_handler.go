@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 
@@ -86,40 +87,118 @@ func (s *server) handleIssueTypeList(w http.ResponseWriter, r *http.Request) {
 //
 // Scope (gated on issue.view, not analysis.view — a shop-floor role needs
 // the full queue to pick up someone else's OPEN issue):
-//   - ?vin=… → every issue for that vehicle
-//   - no vin → every issue (web Issues + mobile Hatalar)
+//   - ?vin=… → issues for that vehicle
+//   - no vin → board list (web Issues + mobile Hatalar)
+//
+// Pagination (optional):
+//   - ?limit=&offset= — offset paging (board uses limit=50)
+//   - ?limit=&before_date=&before_id= — keyset paging (stable under inserts)
+//   - omit limit → full list (Home KPIs / vehicle panels)
+// Multi-status: ?status=OPEN,IN_PROGRESS (comma-separated).
 func (s *server) handleIssueList(w http.ResponseWriter, r *http.Request) {
-	var status *domain.IssueStatus
-	if raw := r.URL.Query().Get("status"); raw != "" {
-		st := domain.IssueStatus(raw)
-		if !st.Valid() {
-			badRequest(w, "invalid status filter")
-			return
-		}
-		status = &st
+	q, err := parseIssueListQuery(r)
+	if err != nil {
+		badRequest(w, err.Error())
+		return
 	}
 
 	vin := strings.TrimSpace(r.URL.Query().Get("vin"))
 
-	var (
-		items []domain.Issue
-		err   error
-	)
+	var page domain.IssueListPage
 	switch {
 	case vin != "":
-		items, err = s.deps.Issues.ListByVIN(r.Context(), vin, status)
+		page, err = s.deps.Issues.ListByVIN(r.Context(), vin, q)
 	default:
-		items, err = s.deps.Issues.ListAll(r.Context(), status)
+		page, err = s.deps.Issues.ListAll(r.Context(), q)
 	}
 	if err != nil {
 		writeError(w, err)
 		return
 	}
-	if items == nil {
-		items = []domain.Issue{}
+	if page.Items == nil {
+		page.Items = []domain.Issue{}
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"items": items})
+	resp := map[string]any{
+		"items":       page.Items,
+		"has_more":    page.HasMore,
+		"next_offset": page.NextOffset,
+	}
+	if page.NextBeforeDate != nil && page.NextBeforeID != nil {
+		resp["next_before_date"] = page.NextBeforeDate.UTC().Format(time.RFC3339Nano)
+		resp["next_before_id"] = *page.NextBeforeID
+	}
+	writeJSON(w, http.StatusOK, resp)
 }
+
+func parseIssueListQuery(r *http.Request) (domain.IssueListQuery, error) {
+	var q domain.IssueListQuery
+	rawStatus := strings.TrimSpace(r.URL.Query().Get("status"))
+	if rawStatus != "" {
+		for _, part := range strings.Split(rawStatus, ",") {
+			part = strings.TrimSpace(part)
+			if part == "" {
+				continue
+			}
+			st := domain.IssueStatus(part)
+			if !st.Valid() {
+				return q, errInvalidStatusFilter
+			}
+			q.Statuses = append(q.Statuses, st)
+		}
+	}
+
+	if raw := r.URL.Query().Get("limit"); raw != "" {
+		n, err := strconv.Atoi(raw)
+		if err != nil || n < 0 {
+			return q, errInvalidLimit
+		}
+		const maxLimit = 200
+		if n > maxLimit {
+			n = maxLimit
+		}
+		q.Limit = n
+	}
+	if raw := r.URL.Query().Get("offset"); raw != "" {
+		n, err := strconv.Atoi(raw)
+		if err != nil || n < 0 {
+			return q, errInvalidOffset
+		}
+		q.Offset = n
+	}
+
+	beforeDateRaw := strings.TrimSpace(r.URL.Query().Get("before_date"))
+	beforeIDRaw := strings.TrimSpace(r.URL.Query().Get("before_id"))
+	if beforeDateRaw != "" || beforeIDRaw != "" {
+		if beforeDateRaw == "" || beforeIDRaw == "" {
+			return q, errInvalidCursor
+		}
+		t, err := time.Parse(time.RFC3339Nano, beforeDateRaw)
+		if err != nil {
+			t, err = time.Parse(time.RFC3339, beforeDateRaw)
+		}
+		if err != nil {
+			return q, errInvalidCursor
+		}
+		id, err := strconv.ParseInt(beforeIDRaw, 10, 64)
+		if err != nil || id <= 0 {
+			return q, errInvalidCursor
+		}
+		q.BeforeDate = &t
+		q.BeforeID = &id
+	}
+	return q, nil
+}
+
+var (
+	errInvalidStatusFilter = errString("invalid status filter")
+	errInvalidLimit        = errString("limit must be a non-negative integer")
+	errInvalidOffset       = errString("offset must be a non-negative integer")
+	errInvalidCursor       = errString("before_date and before_id must both be set (RFC3339 + id)")
+)
+
+type errString string
+
+func (e errString) Error() string { return string(e) }
 
 // handleIssueGet returns a single issue by id (issue.view).
 func (s *server) handleIssueGet(w http.ResponseWriter, r *http.Request) {

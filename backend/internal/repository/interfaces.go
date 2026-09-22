@@ -133,12 +133,13 @@ type IssueRepository interface {
 	// ListForUser returns issues where the user is issue, process, or finish
 	// reporter. When status is non-nil, results are filtered to that status.
 	ListForUser(ctx context.Context, userID int, status *domain.IssueStatus) ([]domain.Issue, error)
-	// ListAll returns every issue, optionally filtered by status. Used by the
-	// web Issues queue and mobile Hatalar list (vehicle.view, not analysis.view).
-	ListAll(ctx context.Context, status *domain.IssueStatus) ([]domain.Issue, error)
-	// ListByVIN returns every issue for a vehicle (all statuses), optionally
-	// filtered by status. Powers the Vehicle Detail Issues tab.
-	ListByVIN(ctx context.Context, vin string, status *domain.IssueStatus) ([]domain.Issue, error)
+	// ListAll returns issues for the web Issues queue and mobile Hatalar list
+	// (vehicle.view, not analysis.view). Supports multi-status and limit/offset
+	// or keyset pagination via IssueListQuery.
+	ListAll(ctx context.Context, q domain.IssueListQuery) (domain.IssueListPage, error)
+	// ListByVIN returns issues for a vehicle. Powers the Vehicle Detail Issues
+	// tab; same pagination/filter options as ListAll.
+	ListByVIN(ctx context.Context, vin string, q domain.IssueListQuery) (domain.IssueListPage, error)
 	// ListOpenByVIN returns the vehicle's issues that are not yet closed
 	// (OPEN/IN_PROGRESS/DONE), which is what the EOL gates are evaluated
 	// against.

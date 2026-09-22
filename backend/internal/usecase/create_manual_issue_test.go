@@ -214,11 +214,11 @@ func (f *createIssueFakeRepo) GetByClientRequestID(_ context.Context, clientRequ
 func (f *createIssueFakeRepo) ListForUser(context.Context, int, *domain.IssueStatus) ([]domain.Issue, error) {
 	return nil, nil
 }
-func (f *createIssueFakeRepo) ListAll(context.Context, *domain.IssueStatus) ([]domain.Issue, error) {
-	return nil, nil
+func (f *createIssueFakeRepo) ListAll(context.Context, domain.IssueListQuery) (domain.IssueListPage, error) {
+	return domain.IssueListPage{}, nil
 }
-func (f *createIssueFakeRepo) ListByVIN(context.Context, string, *domain.IssueStatus) ([]domain.Issue, error) {
-	return nil, nil
+func (f *createIssueFakeRepo) ListByVIN(context.Context, string, domain.IssueListQuery) (domain.IssueListPage, error) {
+	return domain.IssueListPage{}, nil
 }
 func (f *createIssueFakeRepo) ListOpenByVIN(context.Context, string) ([]domain.Issue, error) {
 	return nil, nil
