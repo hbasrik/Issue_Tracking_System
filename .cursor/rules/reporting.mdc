@@ -37,7 +37,13 @@ if a section does not apply, say so explicitly.
 
 ## 6. Cleanup
 - Was any temporary data, test record or throwaway entity created for
-  verification? Confirm it was removed.
+  verification? Confirm it was **removed from the database** (DELETE),
+  not merely closed, approved, archived, or filtered out of a UI list.
+- Approving or otherwise transitioning a fixture into a “real-looking”
+  terminal status (e.g. APPROVED) so it disappears from an open queue
+  is **not** cleanup — those rows still skew analysis metrics (closure
+  rate, MTTR, closed counts). Delete the fixture and its dependents
+  (media, audit rows, related FKs) instead.
 
 ## 7. Destructive actions
 - During a task, **no code of any kind** may delete or change an
@@ -54,6 +60,10 @@ if a section does not apply, say so explicitly.
   application's creation flow (or an explicit INSERT of a clearly
   marked temp row), then delete **only** what you created. Never
   UPDATE or DELETE a pre-existing row.
+- **Your own clearly marked temp fixtures are the exception:** delete
+  them completely when the task ends (issue row + media + audit + any
+  dependent links). Do not “clean up” by moving them to APPROVED /
+  DONE / similar — that leaves fake history in metrics.
 - Replacing a deleted or damaged record with a similar stand-in (a
   thumbnail, a re-upload, a re-INSERT of the same id, a regenerated
   file) is **not** restoration. The original is lost; report it as
