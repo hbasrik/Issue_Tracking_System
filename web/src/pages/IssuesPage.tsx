@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
-import { Archive, ChevronDown, FileSpreadsheet } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { Archive, ChevronDown, FileSpreadsheet, Volume2 } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import {
@@ -49,7 +49,20 @@ import {
 import { useI18n, type Translate } from '../i18n';
 import { isAuthError } from '../../../shared/networkError';
 import { issueReportedAtIso } from '../../../shared/issueCardLayout';
+import { detectNewCriticalIds } from '../../../shared/newCriticalIds';
+import { localeTag } from '../../../shared/i18n';
 import { IssueListPrint } from '../components/print/IssuePrint';
+import {
+  playCriticalAlert,
+  unlockCriticalAudio,
+} from '../lib/criticalAlertSound';
+import {
+  readAppScrollTop,
+  readIssuesBoardUI,
+  restoreAppScrollTop,
+  writeIssuesBoardUI,
+} from '../lib/issuesBoardState';
+
 type IssueStatus = Issue['Status'];
 
 const SEVERITIES: SeverityLevel[] = ['CRITICAL', 'MEDIUM', 'LOW'];
@@ -63,6 +76,8 @@ const STATUSES: IssueStatus[] = [
 ];
 
 const ADVANCED_FILTERS_OPEN_KEY = 'karea-issues-advanced-filters-open';
+const AUTO_REFRESH_MS = 30_000;
+const HIGHLIGHT_MS = 6_000;
 
 function readAdvancedFiltersOpen(): boolean {
   try {
@@ -83,6 +98,37 @@ function severityLabel(s: SeverityLevel, t: Translate): string {
   }
 }
 
+function initialBoardFilters() {
+  const saved = readIssuesBoardUI();
+  if (!saved) {
+    return {
+      listQuery: '',
+      typeIds: new Set<number>(),
+      defectZoneIds: new Set<number>(),
+      defectPartIds: new Set<number>(),
+      defectTypeIds: new Set<number>(),
+      severities: new Set<SeverityLevel>(),
+      statuses: new Set<string>(),
+      advancedOpen: readAdvancedFiltersOpen(),
+      scrollTop: 0,
+    };
+  }
+  return {
+    listQuery: saved.listQuery ?? '',
+    typeIds: new Set(saved.typeIds ?? []),
+    defectZoneIds: new Set(saved.defectZoneIds ?? []),
+    defectPartIds: new Set(saved.defectPartIds ?? []),
+    defectTypeIds: new Set(saved.defectTypeIds ?? []),
+    severities: new Set(saved.severities ?? []),
+    statuses: new Set(saved.statuses ?? []),
+    advancedOpen:
+      typeof saved.advancedOpen === 'boolean'
+        ? saved.advancedOpen
+        : readAdvancedFiltersOpen(),
+    scrollTop: saved.scrollTop ?? 0,
+  };
+}
+
 /** Issues list + detail — quality sign-off is gated on issue.transition.* permissions. */
 export default function IssuesPage() {
   const { t, locale } = useI18n();
@@ -99,56 +145,231 @@ export default function IssuesPage() {
   const analysisFrom = searchParams.get('from') ?? undefined;
   const analysisTo = searchParams.get('to') ?? undefined;
 
-  const [listQuery, setListQuery] = useState('');
+  const boot = useMemo(() => initialBoardFilters(), []);
+  const [listQuery, setListQuery] = useState(boot.listQuery);
   const [issueTypes, setIssueTypes] = useState<IssueType[]>([]);
   const [defectZones, setDefectZones] = useState<DefectZone[]>([]);
   const [defectParts, setDefectParts] = useState<DefectPart[]>([]);
   const [defectTypes, setDefectTypes] = useState<DefectType[]>([]);
-  const [typeIds, setTypeIds] = useState<Set<number>>(new Set());
-  const [defectZoneIds, setDefectZoneIds] = useState<Set<number>>(new Set());
-  const [defectPartIds, setDefectPartIds] = useState<Set<number>>(new Set());
-  const [defectTypeIds, setDefectTypeIds] = useState<Set<number>>(new Set());
-  const [severities, setSeverities] = useState<Set<SeverityLevel>>(new Set());
-  const [statuses, setStatuses] = useState<Set<string>>(new Set());
+  const [typeIds, setTypeIds] = useState<Set<number>>(boot.typeIds);
+  const [defectZoneIds, setDefectZoneIds] = useState<Set<number>>(boot.defectZoneIds);
+  const [defectPartIds, setDefectPartIds] = useState<Set<number>>(boot.defectPartIds);
+  const [defectTypeIds, setDefectTypeIds] = useState<Set<number>>(boot.defectTypeIds);
+  const [severities, setSeverities] = useState<Set<SeverityLevel>>(boot.severities);
+  const [statuses, setStatuses] = useState<Set<string>>(boot.statuses);
   const [items, setItems] = useState<Issue[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [staleWarning, setStaleWarning] = useState<string | null>(null);
+  const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
+  const [soundUnlockNeeded, setSoundUnlockNeeded] = useState(false);
+  const [highlightedIds, setHighlightedIds] = useState<Set<number>>(new Set());
   const [homeStatNow] = useState(() => new Date());
   const [exporting, setExporting] = useState<'csv' | 'zip' | null>(null);
-  const [advancedOpen, setAdvancedOpen] = useState(readAdvancedFiltersOpen);
+  const [advancedOpen, setAdvancedOpen] = useState(boot.advancedOpen);
+  const knownIdsRef = useRef<Set<number> | null>(null);
+  const highlightTimersRef = useRef<number[]>([]);
+  const pendingScrollRef = useRef(boot.scrollTop);
 
-  const load = useCallback(async () => {
-    setError(null);
-    try {
-      const [res, typesRes, zonesRes, partsRes, defectTypesRes] = await Promise.all([
-        api.listIssues(),
-        api.listIssueTypes().catch(() => ({ items: [] as IssueType[] })),
-        api.listDefectCatalogZones().catch(() => ({ items: [] as DefectZone[] })),
-        api.listDefectCatalogParts().catch(() => ({ items: [] as DefectPart[] })),
-        api.listDefectCatalogTypes().catch(() => ({ items: [] as DefectType[] })),
-      ]);
-      const list = (res.items ?? []).slice().sort((a, b) => {
-        const ta = Date.parse(issueReportedAtIso(a) || '') || 0;
-        const tb = Date.parse(issueReportedAtIso(b) || '') || 0;
-        if (tb !== ta) return tb - ta;
-        return b.ID - a.ID;
+  const persistBoardUI = useCallback(() => {
+    const liveTop = readAppScrollTop();
+    const prev = readIssuesBoardUI();
+    writeIssuesBoardUI({
+      listQuery,
+      typeIds: [...typeIds],
+      defectZoneIds: [...defectZoneIds],
+      defectPartIds: [...defectPartIds],
+      defectTypeIds: [...defectTypeIds],
+      severities: [...severities],
+      statuses: [...statuses],
+      advancedOpen,
+      // Unmount often sees scrollTop=0 after the route already swapped — keep
+      // any non-zero value flushed by IssueCard / the scroll listener.
+      scrollTop: liveTop > 0 ? liveTop : (prev?.scrollTop ?? 0),
+    });
+  }, [
+    listQuery,
+    typeIds,
+    defectZoneIds,
+    defectPartIds,
+    defectTypeIds,
+    severities,
+    statuses,
+    advancedOpen,
+  ]);
+
+  useEffect(() => {
+    return () => {
+      persistBoardUI();
+      for (const id of highlightTimersRef.current) window.clearTimeout(id);
+    };
+  }, [persistBoardUI]);
+
+  const flashCritical = useCallback((ids: number[]) => {
+    if (ids.length === 0) return;
+    setHighlightedIds((prev) => {
+      const next = new Set(prev);
+      for (const id of ids) next.add(id);
+      return next;
+    });
+    const timer = window.setTimeout(() => {
+      setHighlightedIds((prev) => {
+        const next = new Set(prev);
+        for (const id of ids) next.delete(id);
+        return next;
       });
-      setItems(list);
-      setIssueTypes(typesRes.items ?? []);
-      setDefectZones(zonesRes.items ?? []);
-      setDefectParts(partsRes.items ?? []);
-      setDefectTypes(defectTypesRes.items ?? []);
-    } catch (err) {
-      // 401 clears the session and navigates to login — do not paint an empty list.
-      if (isAuthError(err) || (err instanceof ApiError && err.status === 401)) {
-        return;
+    }, HIGHLIGHT_MS);
+    highlightTimersRef.current.push(timer);
+  }, []);
+
+  const load = useCallback(
+    async (opts?: { silent?: boolean }) => {
+      const silent = opts?.silent === true;
+      if (!silent) setError(null);
+      try {
+        const [res, typesRes, zonesRes, partsRes, defectTypesRes] =
+          await Promise.all([
+            api.listIssues(),
+            api.listIssueTypes().catch(() => ({ items: [] as IssueType[] })),
+            api
+              .listDefectCatalogZones()
+              .catch(() => ({ items: [] as DefectZone[] })),
+            api
+              .listDefectCatalogParts()
+              .catch(() => ({ items: [] as DefectPart[] })),
+            api
+              .listDefectCatalogTypes()
+              .catch(() => ({ items: [] as DefectType[] })),
+          ]);
+        const list = (res.items ?? []).slice().sort((a, b) => {
+          const ta = Date.parse(issueReportedAtIso(a) || '') || 0;
+          const tb = Date.parse(issueReportedAtIso(b) || '') || 0;
+          if (tb !== ta) return tb - ta;
+          return b.ID - a.ID;
+        });
+        const { knownIds, newCriticalIds } = detectNewCriticalIds(
+          knownIdsRef.current,
+          list,
+        );
+        knownIdsRef.current = knownIds;
+        setItems(list);
+        setIssueTypes(typesRes.items ?? []);
+        setDefectZones(zonesRes.items ?? []);
+        setDefectParts(partsRes.items ?? []);
+        setDefectTypes(defectTypesRes.items ?? []);
+        setUpdatedAt(new Date());
+        setStaleWarning(null);
+        if (newCriticalIds.length > 0) {
+          flashCritical(newCriticalIds);
+          const play = await playCriticalAlert();
+          if (!play.ok && play.blocked) setSoundUnlockNeeded(true);
+        }
+      } catch (err) {
+        // 401 clears the session and navigates to login — do not paint an empty list.
+        if (isAuthError(err) || (err instanceof ApiError && err.status === 401)) {
+          return;
+        }
+        const msg = err instanceof Error ? err.message : t('issue.listFailed');
+        if (silent) {
+          setStaleWarning(msg || t('issue.refreshStale'));
+        } else {
+          setError(msg);
+        }
       }
-      setError(err instanceof Error ? err.message : t('issue.listFailed'));
+    },
+    [t, flashCritical],
+  );
+
+  useEffect(() => {
+    const prev = window.history.scrollRestoration;
+    try {
+      window.history.scrollRestoration = 'manual';
+    } catch {
+      /* */
     }
-  }, [t]);
+    return () => {
+      try {
+        window.history.scrollRestoration = prev;
+      } catch {
+        /* */
+      }
+    };
+  }, []);
 
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      void load({ silent: true });
+    }, AUTO_REFRESH_MS);
+    return () => window.clearInterval(id);
+  }, [load]);
+
+  // Restore scroll after the list has painted (not mid-fetch while height ≈ 0).
+  useEffect(() => {
+    if (items.length === 0) return;
+    const top = pendingScrollRef.current;
+    if (top <= 0) return;
+    pendingScrollRef.current = 0;
+    const t0 = window.requestAnimationFrame(() => restoreAppScrollTop(top));
+    const t1 = window.setTimeout(() => restoreAppScrollTop(top), 50);
+    const t2 = window.setTimeout(() => restoreAppScrollTop(top), 250);
+    return () => {
+      window.cancelAnimationFrame(t0);
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+    };
+  }, [items]);
+
+  // Keep scroll position fresh in sessionStorage so detail navigation cannot
+  // race an unmount cleanup that already sees scrollTop=0.
+  useEffect(() => {
+    const node = document.querySelector('[data-app-scroll]');
+    if (!(node instanceof HTMLElement)) return;
+    const scrollEl = node;
+    let timer = 0;
+    function onScroll() {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        try {
+          const raw = sessionStorage.getItem('karea-issues-board-ui');
+          const prev = raw ? JSON.parse(raw) : {};
+          sessionStorage.setItem(
+            'karea-issues-board-ui',
+            JSON.stringify({
+              ...prev,
+              listQuery,
+              typeIds: [...typeIds],
+              defectZoneIds: [...defectZoneIds],
+              defectPartIds: [...defectPartIds],
+              defectTypeIds: [...defectTypeIds],
+              severities: [...severities],
+              statuses: [...statuses],
+              advancedOpen,
+              scrollTop: scrollEl.scrollTop,
+            }),
+          );
+        } catch {
+          /* */
+        }
+      }, 100);
+    }
+    scrollEl.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      scrollEl.removeEventListener('scroll', onScroll);
+      window.clearTimeout(timer);
+    };
+  }, [
+    listQuery,
+    typeIds,
+    defectZoneIds,
+    defectPartIds,
+    defectTypeIds,
+    severities,
+    statuses,
+    advancedOpen,
+  ]);
 
   function clearHomeStat() {
     setSearchParams(
@@ -452,7 +673,20 @@ export default function IssuesPage() {
   return (
     <section>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-xl font-semibold sm:text-2xl">{t('nav.issues')}</h1>
+        <div className="min-w-0">
+          <h1 className="text-xl font-semibold sm:text-2xl">{t('nav.issues')}</h1>
+          {updatedAt ? (
+            <p className="mt-0.5 text-[12px] text-[var(--text-secondary)]">
+              {t('home.lastUpdated', {
+                time: updatedAt.toLocaleTimeString(localeTag(locale), {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  second: '2-digit',
+                }),
+              })}
+            </p>
+          ) : null}
+        </div>
         <div className="flex flex-wrap gap-2">
           <IssueListPrint issues={visible} filters={printFilters} />
           <button
@@ -480,6 +714,48 @@ export default function IssuesPage() {
           </button>
         </div>
       </div>
+
+      {staleWarning ? (
+        <div
+          role="alert"
+          className="mt-3 rounded-lg border px-3 py-2 text-[13px] font-medium"
+          style={{
+            borderColor: 'color-mix(in srgb, #C62222 55%, var(--border))',
+            backgroundColor: 'color-mix(in srgb, #C62222 12%, var(--bg-surface-1))',
+            color: 'var(--text-primary)',
+          }}
+        >
+          {t('issue.refreshStale')}
+          {staleWarning && staleWarning !== t('issue.refreshStale')
+            ? ` (${staleWarning})`
+            : null}
+        </div>
+      ) : null}
+
+      {soundUnlockNeeded ? (
+        <div
+          className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2"
+          style={{ borderColor: 'var(--border)' }}
+        >
+          <p className="text-[13px] text-[var(--text-secondary)]">
+            {t('issue.soundUnlockHint')}
+          </p>
+          <button
+            type="button"
+            className="inline-flex min-h-touch items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[13px] font-medium hover:bg-[var(--bg-surface-2)]"
+            style={{ borderColor: 'var(--border)' }}
+            onClick={() => {
+              void (async () => {
+                const ok = await unlockCriticalAudio();
+                if (ok) setSoundUnlockNeeded(false);
+              })();
+            }}
+          >
+            <Volume2 size={15} aria-hidden />
+            {t('issue.soundUnlock')}
+          </button>
+        </div>
+      ) : null}
 
       {(homeStat || analysisStat) && (
         <div
@@ -732,7 +1008,11 @@ export default function IssuesPage() {
       )}
 
       <div className="mt-4">
-        <IssueList items={visible} onStatusChanged={() => void load()} />
+        <IssueList
+          items={visible}
+          highlightedIds={highlightedIds}
+          onStatusChanged={() => void load()}
+        />
       </div>
     </section>
   );

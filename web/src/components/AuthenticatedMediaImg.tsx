@@ -33,9 +33,23 @@ function resolveUrl(
   return mediaFileUrl(storagePath);
 }
 
+function cacheKey(
+  storagePath: string,
+  variant: MediaImageVariant | undefined,
+  thumb: boolean | undefined,
+  token: string,
+): string {
+  const v = variant ?? (thumb ? 'sm' : 'original');
+  return `${token}|${v}|${storagePath}`;
+}
+
+/** Session-lifetime blob URLs so Issues auto-refresh does not re-fetch. */
+const blobUrlCache = new Map<string, string>();
+
 /**
  * Loads /uploads/* with the session Bearer token (browser <img> cannot).
- * Revokes the object URL on unmount / path change.
+ * Uses HTTP cache (force-cache) plus an in-memory blob map so remounts /
+ * silent list refreshes do not re-download immutable media.
  */
 export function AuthenticatedMediaImg({
   storagePath,
@@ -47,25 +61,35 @@ export function AuthenticatedMediaImg({
   onClick,
 }: Props) {
   const { token } = useAuth();
-  const [src, setSrc] = useState<string | null>(null);
+  const [src, setSrc] = useState<string | null>(() => {
+    if (!token || !storagePath) return null;
+    return blobUrlCache.get(cacheKey(storagePath, variant, thumb, token)) ?? null;
+  });
 
   useEffect(() => {
     if (!token || !storagePath) {
       setSrc(null);
       return;
     }
+    const key = cacheKey(storagePath, variant, thumb, token);
+    const cached = blobUrlCache.get(key);
+    if (cached) {
+      setSrc(cached);
+      return;
+    }
     const url = resolveUrl(storagePath, variant, thumb);
-    let objectUrl: string | null = null;
     let cancelled = false;
     (async () => {
       try {
         const res = await fetch(url, {
           headers: { Authorization: `Bearer ${token}` },
+          cache: 'force-cache',
         });
         if (!res.ok) throw new Error(`media ${res.status}`);
         const blob = await res.blob();
         if (cancelled) return;
-        objectUrl = URL.createObjectURL(blob);
+        const objectUrl = URL.createObjectURL(blob);
+        blobUrlCache.set(key, objectUrl);
         setSrc(objectUrl);
       } catch {
         if (!cancelled) setSrc(null);
@@ -73,7 +97,7 @@ export function AuthenticatedMediaImg({
     })();
     return () => {
       cancelled = true;
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      // Do not revoke — other cards / refreshes reuse the blob URL.
     };
   }, [storagePath, variant, thumb, token]);
 

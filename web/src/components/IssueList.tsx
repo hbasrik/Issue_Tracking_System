@@ -352,10 +352,12 @@ export function IssueList({
   items,
   emptyLabel,
   hideVin = false,
+  highlightedIds,
 }: {
   items: Issue[];
   emptyLabel?: string;
   hideVin?: boolean;
+  highlightedIds?: ReadonlySet<number>;
   /** @deprecated Detail is a route; kept for call-site compatibility. */
   onStatusChanged?: () => void;
 }) {
@@ -403,6 +405,7 @@ export function IssueList({
             issue={issue}
             hideVin={hideVin}
             layoutWidth={width}
+            highlighted={highlightedIds?.has(issue.ID) === true}
           />
         ))}
       </div>

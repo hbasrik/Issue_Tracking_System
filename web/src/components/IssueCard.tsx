@@ -19,6 +19,7 @@ import {
 } from './SeverityIndicator';
 import { StatusBadge } from './StatusBadge';
 import { isNonWebImage } from '../lib/mediaKind';
+import { patchBoardScrollTop, readAppScrollTop } from '../lib/issuesBoardState';
 
 type Props = {
   issue: Issue;
@@ -26,6 +27,8 @@ type Props = {
   /** Container width drives compact vs grid layout (shared threshold). */
   layoutWidth: number;
   className?: string;
+  /** Brief visual emphasis for a newly appeared CRITICAL (board alert). */
+  highlighted?: boolean;
 };
 
 /**
@@ -37,6 +40,7 @@ export function IssueCard({
   hideVin = false,
   layoutWidth,
   className = '',
+  highlighted = false,
 }: Props) {
   const { t, locale } = useI18n();
   const navigate = useNavigate();
@@ -67,6 +71,7 @@ export function IssueCard({
   }, [lightbox]);
 
   function openDetail() {
+    patchBoardScrollTop(readAppScrollTop());
     navigate(`/issues/${issue.ID}`);
   }
 
@@ -176,10 +181,19 @@ export function IssueCard({
   return (
     <>
       <article
-        className={`flex h-full overflow-hidden rounded-xl border bg-[var(--bg-surface-1)] ${
+        className={`flex h-full overflow-hidden rounded-xl border bg-[var(--bg-surface-1)] transition-[box-shadow,border-color] duration-300 ${
           compact ? 'flex-row items-stretch gap-3 p-3' : 'flex-col'
-        } ${className}`}
-        style={{ borderColor: 'var(--border)' }}
+        } ${highlighted ? 'ring-2 ring-offset-2 ring-offset-[var(--bg-page)]' : ''} ${className}`}
+        style={{
+          borderColor: highlighted
+            ? sevColor || 'var(--border)'
+            : 'var(--border)',
+          boxShadow: highlighted
+            ? `0 0 0 3px color-mix(in srgb, ${sevColor || '#C62222'} 45%, transparent)`
+            : undefined,
+          ['--tw-ring-color' as string]: sevColor || '#C62222',
+        }}
+        data-highlighted={highlighted ? '1' : undefined}
       >
         {photo}
         {body}

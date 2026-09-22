@@ -182,7 +182,7 @@ export function AppShell() {
           </div>
         </header>
 
-        <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain">
+        <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain" data-app-scroll>
           <main className="mx-auto w-full max-w-[1440px] p-3 sm:p-4 lg:p-6">
             <Outlet />
           </main>
