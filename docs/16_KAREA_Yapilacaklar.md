@@ -112,13 +112,26 @@ Web/mobil API istemcisi 401’de oturumu temizler; giriş ekranında
 ### A13. Issues kart listesi (görünüm) `[x]` — 2026-09-21
 Tablo/accordion kaldırıldı; tek uyarlanabilir kart (`shared/issueCardLayout`).
 Web detay rotası `/issues/:id` (eski `IssueDetailPanel` aynı panel). Filtreler
-aynı. Otomatik yenileme / ses / kaydırma koruması sonraki tur.
-Web DONE akışına çözüm açıklaması formu eklendi (API zorunluluğu; mobille
+aynı. Web DONE akışına çözüm açıklaması formu eklendi (API zorunluluğu; mobille
 hizalı — çözüm fotoğrafı MediaGallery’den).
 Şiddet renkleri `shared/brand.ts` → `severityColors` tek kaynak; kart metin
 + çubuk aynı. Medya türevleri: `?thumb=1` (192) / `?thumb=md` (800) /
 orijinal; grid kartları md kullanır. Geriye dönük:
 `go run scripts/generate-upload-thumbs.go`.
+
+### A14. Issues pano canlılığı `[x]` — 2026-09-22
+Mevcut Issues sayfasına (yeni sayfa yok):
+- 30 sn sessiz yenileme; “Son güncelleme”; yenileme hatasında görünür uyarı
+- `/uploads` `Cache-Control: private, max-age=31536000, immutable` + web
+  `AuthenticatedMediaImg` HTTP/`force-cache` + oturum blob önbelleği
+- Yeni CRITICAL: ses + kısa vurgu (`shared/newCriticalIds` — ilk yükleme /
+  mevcut / filtre alt kümesi tetiklemez). Web: önce çal, engelde “Sesi aç”.
+  Mobil: Profil “Sesli uyarı” varsayılan KAPALI, AsyncStorage
+- Detaydan dönüşte kaydırma + filtreler (web sessionStorage; mobil ekran
+  state + sessiz focus yenileme)
+- Yüklemede `image.Decode` — çözülemeyen JPEG/PNG reddi
+  (`ErrUndecodableImage`). Bilinen bozuk dosya
+  `backend/uploads/issue_resolution/68/…jpg` silinmedi (Rule 7).
 
 ---
 

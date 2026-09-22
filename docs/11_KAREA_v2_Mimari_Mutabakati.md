@@ -134,6 +134,13 @@ Bildirim zamanı = `issue_list.issue_date` (`IssueDate`); açık kalma
 süresi anlık hesaplanır (kolon yok). Detay ayrı rota:
 `/issues/:id` (web), mevcut `IssueDetail` ekranı (mobil).
 
+**Güncelleme (2026-09-22 — pano canlılığı):** Aynı Issues sayfasında 30 sn
+sessiz yenileme, bayat-veri uyarısı, uzun ömürlü `/uploads` önbelleği,
+yalnızca gerçekten yeni CRITICAL kayıt için ses+vurgu, detay dönüşünde
+kaydırma/filtre korunumu. Yüklemede görsel `image.Decode` doğrulaması
+(`ErrUndecodableImage`). Medya dosya adları içerik-adresli kaldığı için
+`Cache-Control: private, max-age=31536000, immutable`.
+
 ## Değişmeyen / Yeniden Kullanılacaklar
 
 Şunlara **dokunulmuyor**, olduğu gibi kalıyor: JWT auth + bcrypt (üstteki JWT_SECRET ve iptal sıkılaştırmaları hariç), CORS allowlist mimarisi, Unit-of-Work (pgx.Tx) transaction pattern, `.cursor/rules` (commit ve environment-check kuralları), Analysis sekmesi temel yapısı (VIN×severity kırılımı, Pie/Bar chart'lar — yeni station/EOL alanlarıyla genişleyecek ama sıfırdan kurulmayacak), Docker/migration/seed altyapısı.
