@@ -35,12 +35,15 @@ export function IssueCard({
   /** Override width (e.g. list container). Defaults to window width. */
   layoutWidth,
   highlighted = false,
+  /** When false, defer photo network until the row is viewable. */
+  loadPhoto = true,
 }: {
   issue: Issue;
   onPress: () => void;
   hideVin?: boolean;
   layoutWidth?: number;
   highlighted?: boolean;
+  loadPhoto?: boolean;
 }) {
   const { tokens } = useTheme();
   const { t, locale } = useI18n();
@@ -103,7 +106,7 @@ export function IssueCard({
         justifyContent: 'center',
       }}
     >
-      {hasPhoto && listImageUri ? (
+      {hasPhoto && listImageUri && loadPhoto ? (
         <Image
           source={{
             uri: listImageUri,
@@ -122,7 +125,7 @@ export function IssueCard({
               textAlign: 'center',
             }}
           >
-            {t('issue.noPhoto')}
+            {hasPhoto && !loadPhoto ? '…' : t('issue.noPhoto')}
           </Text>
         </View>
       )}

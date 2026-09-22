@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../auth/AuthProvider';
 import {
   mediaFileUrl,
@@ -20,6 +20,11 @@ type Props = {
   className?: string;
   style?: React.CSSProperties;
   onClick?: (e: React.MouseEvent<HTMLImageElement>) => void;
+  /**
+   * When false, skip network fetch until the element intersects the viewport
+   * (Issues board first paint). Default true for lightbox / detail callers.
+   */
+  lazy?: boolean;
 };
 
 function resolveUrl(
@@ -50,6 +55,7 @@ const blobUrlCache = new Map<string, string>();
  * Loads /uploads/* with the session Bearer token (browser <img> cannot).
  * Uses HTTP cache (force-cache) plus an in-memory blob map so remounts /
  * silent list refreshes do not re-download immutable media.
+ * With lazy=true, fetch waits until the placeholder enters the viewport.
  */
 export function AuthenticatedMediaImg({
   storagePath,
@@ -59,16 +65,39 @@ export function AuthenticatedMediaImg({
   className,
   style,
   onClick,
+  lazy = false,
 }: Props) {
   const { token } = useAuth();
+  const rootRef = useRef<HTMLSpanElement | HTMLImageElement | null>(null);
+  const [inView, setInView] = useState(!lazy);
   const [src, setSrc] = useState<string | null>(() => {
     if (!token || !storagePath) return null;
     return blobUrlCache.get(cacheKey(storagePath, variant, thumb, token)) ?? null;
   });
 
   useEffect(() => {
-    if (!token || !storagePath) {
-      setSrc(null);
+    if (!lazy || inView) return;
+    const el = rootRef.current;
+    if (!el || typeof IntersectionObserver === 'undefined') {
+      setInView(true);
+      return;
+    }
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          setInView(true);
+          io.disconnect();
+        }
+      },
+      { root: null, rootMargin: '120px 0px', threshold: 0.01 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [lazy, inView]);
+
+  useEffect(() => {
+    if (!token || !storagePath || !inView) {
+      if (!token || !storagePath) setSrc(null);
       return;
     }
     const key = cacheKey(storagePath, variant, thumb, token);
@@ -97,19 +126,24 @@ export function AuthenticatedMediaImg({
     })();
     return () => {
       cancelled = true;
-      // Do not revoke — other cards / refreshes reuse the blob URL.
     };
-  }, [storagePath, variant, thumb, token]);
+  }, [storagePath, variant, thumb, token, inView]);
 
   if (!src) {
     return (
-      <span className={className} style={style} aria-hidden>
+      <span
+        ref={rootRef as React.RefObject<HTMLSpanElement>}
+        className={className}
+        style={style}
+        aria-hidden
+      >
         …
       </span>
     );
   }
   return (
     <img
+      ref={rootRef as React.RefObject<HTMLImageElement>}
       src={src}
       alt={alt}
       className={className}

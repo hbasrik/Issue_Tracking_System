@@ -219,8 +219,20 @@ async function main() {
 
   await page.waitForTimeout(3000);
   const afterLoad = { reqs: uploadStats.reqs, bytes: uploadStats.bytes };
-  console.log('network AFTER first paint /uploads:', afterLoad);
-  assert(afterLoad.reqs > 0, 'expected some photo downloads on first paint');
+  console.log('network AFTER first paint /uploads (lazy):', afterLoad);
+  // Before lazy-load: ~46 req / ~3.1 MB for full board. After: only viewport cards.
+  assert(afterLoad.reqs < 30, `expected fewer than 30 first-paint uploads, got ${afterLoad.reqs}`);
+  assert(
+    afterLoad.bytes < 2_000_000,
+    `expected under ~2MB first-paint uploads, got ${afterLoad.bytes}`,
+  );
+  console.log(
+    'lazy-load improvement vs prior ~46 req / 3157214 B →',
+    afterLoad.reqs,
+    'req /',
+    afterLoad.bytes,
+    'B',
+  );
 
   // Settling window — no extra downloads
   await page.waitForTimeout(3000);

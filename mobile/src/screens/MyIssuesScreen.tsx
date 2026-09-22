@@ -8,6 +8,7 @@ import {
   View,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
+  type ViewToken,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
@@ -119,6 +120,27 @@ export default function MyIssuesScreen() {
   const listRef = useRef<FlatList<Issue>>(null);
   const scrollOffsetRef = useRef(0);
   const highlightTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const [photoReadyIds, setPhotoReadyIds] = useState<Set<number>>(() => new Set());
+  const viewabilityConfig = useRef({
+    itemVisiblePercentThreshold: 12,
+    minimumViewTime: 40,
+  }).current;
+  const onViewableItemsChanged = useRef(
+    ({ viewableItems }: { viewableItems: ViewToken[] }) => {
+      setPhotoReadyIds((prev) => {
+        let changed = false;
+        const next = new Set(prev);
+        for (const token of viewableItems) {
+          const id = (token.item as Issue | undefined)?.ID;
+          if (typeof id === 'number' && !next.has(id)) {
+            next.add(id);
+            changed = true;
+          }
+        }
+        return changed ? next : prev;
+      });
+    },
+  ).current;
 
   useEffect(() => {
     void AsyncStorage.getItem(ADVANCED_FILTERS_OPEN_KEY).then((raw) => {
@@ -385,14 +407,16 @@ export default function MyIssuesScreen() {
             : undefined
         }
         {...listKeyboardDismissProps}
-        initialNumToRender={8}
-        maxToRenderPerBatch={8}
+        initialNumToRender={6}
+        maxToRenderPerBatch={6}
         windowSize={5}
         contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
         onScroll={(e: NativeSyntheticEvent<NativeScrollEvent>) => {
           scrollOffsetRef.current = e.nativeEvent.contentOffset.y;
         }}
         scrollEventThrottle={16}
+        onViewableItemsChanged={onViewableItemsChanged}
+        viewabilityConfig={viewabilityConfig}
         ItemSeparatorComponent={
           columns === 1
             ? () => <View style={{ height: 12 }} />
@@ -809,6 +833,7 @@ export default function MyIssuesScreen() {
               issue={item}
               layoutWidth={listContentWidth}
               highlighted={highlightedIds.has(item.ID)}
+              loadPhoto={photoReadyIds.has(item.ID)}
               onPress={() => {
                 Keyboard.dismiss();
                 navigation.navigate('IssueDetail', { id: item.ID });

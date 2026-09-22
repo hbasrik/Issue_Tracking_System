@@ -104,6 +104,7 @@ export function IssueCard({
         <AuthenticatedMediaImg
           storagePath={issue.ReportPhotoPath!}
           variant={compact ? 'sm' : 'md'}
+          lazy
           alt=""
           className="h-full w-full object-cover"
         />
