@@ -124,14 +124,19 @@ Mevcut Issues sayfasına (yeni sayfa yok):
 - 30 sn sessiz yenileme; “Son güncelleme”; yenileme hatasında görünür uyarı
 - `/uploads` `Cache-Control: private, max-age=31536000, immutable` + web
   `AuthenticatedMediaImg` HTTP/`force-cache` + oturum blob önbelleği
+- Kart fotoğrafları tembel yükleme (IntersectionObserver / FlatList
+  viewability) — ilk açılışta yalnızca görüş alanındakiler
 - Yeni CRITICAL: ses + kısa vurgu (`shared/newCriticalIds` — ilk yükleme /
   mevcut / filtre alt kümesi tetiklemez). Web: önce çal, engelde “Sesi aç”.
-  Mobil: Profil “Sesli uyarı” varsayılan KAPALI, AsyncStorage
+  Mobil: Profil “Sesli uyarı” varsayılan KAPALI, AsyncStorage; ses
+  `expo-audio` (SDK 57; `expo-av` kaldırıldı)
 - Detaydan dönüşte kaydırma + filtreler (web sessionStorage; mobil ekran
   state + sessiz focus yenileme)
 - Yüklemede `image.Decode` — çözülemeyen JPEG/PNG reddi
   (`ErrUndecodableImage`). Bilinen bozuk dosya
   `backend/uploads/issue_resolution/68/…jpg` silinmedi (Rule 7).
+- Doğrulama fixture’ları (TEMPBOARD 61–65) APPROVED’a çekilmek yerine
+  satır + audit ile silindi (metrik kirletmesin).
 
 ---
 
