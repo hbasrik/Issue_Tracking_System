@@ -34,11 +34,13 @@ export function IssueCard({
   hideVin = false,
   /** Override width (e.g. list container). Defaults to window width. */
   layoutWidth,
+  highlighted = false,
 }: {
   issue: Issue;
   onPress: () => void;
   hideVin?: boolean;
   layoutWidth?: number;
+  highlighted?: boolean;
 }) {
   const { tokens } = useTheme();
   const { t, locale } = useI18n();
@@ -209,6 +211,12 @@ export function IssueCard({
           padding: compact ? 12 : 0,
           marginTop: 0,
           overflow: 'hidden',
+          borderWidth: highlighted ? 2 : undefined,
+          borderColor: highlighted ? sevColor : undefined,
+          shadowColor: highlighted ? sevColor : undefined,
+          shadowOpacity: highlighted ? 0.45 : undefined,
+          shadowRadius: highlighted ? 8 : undefined,
+          elevation: highlighted ? 4 : undefined,
         }}
       >
         <View

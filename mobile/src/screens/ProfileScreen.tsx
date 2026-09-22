@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthProvider';
 import { Badge, Card, PrimaryButton, Screen, Subtitle, Title } from '../components/ui';
@@ -7,18 +8,33 @@ import { roleDisplayName } from '../lib/roleLabels';
 import ChangePasswordScreen from './ChangePasswordScreen';
 import { useReferenceCache } from '../offline/ReferenceCacheProvider';
 import { formatCacheAge } from '../offline/referenceCache';
+import {
+  getCriticalSoundEnabled,
+  setCriticalSoundEnabled,
+} from '../lib/criticalAlertSound';
 
 export default function ProfileScreen() {
   const { user, logout } = useAuth();
   const { tokens, mode, toggle } = useTheme();
   const { t, locale, setLocale } = useI18n();
   const { snapshot } = useReferenceCache();
+  const [soundOn, setSoundOn] = useState(false);
   const cacheLine = snapshot.fetchedAt
     ? t('offline.cacheSummary', {
         n: snapshot.vehicles.length,
         age: formatCacheAge(snapshot.fetchedAt, Date.now(), t),
       })
     : t('offline.cacheEmpty');
+
+  useEffect(() => {
+    void getCriticalSoundEnabled().then(setSoundOn);
+  }, []);
+
+  async function toggleSound() {
+    const next = !soundOn;
+    setSoundOn(next);
+    await setCriticalSoundEnabled(next);
+  }
 
   return (
     <Screen>
@@ -73,6 +89,35 @@ export default function ProfileScreen() {
               }}
             >
               {t('settings.langEn')}
+            </Text>
+          </Pressable>
+        </View>
+      </Card>
+      <Card>
+        <View
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: 12,
+          }}
+        >
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: tokens.textPrimary, fontSize: 15 }}>
+              {t('settings.soundAlerts')}
+            </Text>
+            <Text style={{ color: tokens.textSecondary, fontSize: 12, marginTop: 4 }}>
+              {t('settings.soundAlertsHint')}
+            </Text>
+          </View>
+          <Pressable
+            onPress={() => void toggleSound()}
+            accessibilityRole="switch"
+            accessibilityState={{ checked: soundOn }}
+            style={{ minHeight: 44, justifyContent: 'center' }}
+          >
+            <Text style={{ color: tokens.accent, fontWeight: '600' }}>
+              {soundOn ? t('settings.soundAlertsOn') : t('settings.soundAlertsOff')}
             </Text>
           </Pressable>
         </View>

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   FlatList,
   Keyboard,
@@ -6,6 +6,8 @@ import {
   Text,
   useWindowDimensions,
   View,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
@@ -48,6 +50,8 @@ import { loadFailureMessage } from '../offline/userFacingError';
 import { useReferenceCache } from '../offline/ReferenceCacheProvider';
 import { isTransportError } from '../../../shared/networkError';
 import { issueCardColumnCount, issueReportedAtIso } from '../../../shared/issueCardLayout';
+import { detectNewCriticalIds } from '../../../shared/newCriticalIds';
+import { playCriticalAlertIfEnabled } from '../lib/criticalAlertSound';
 import type { MainDrawerParamList, RootStackParamList } from '../navigation/types';
 
 type IssueStatus = Issue['Status'];
@@ -68,6 +72,8 @@ const STATUSES: IssueStatus[] = [
 ];
 
 const ADVANCED_FILTERS_OPEN_KEY = 'karea-issues-advanced-filters-open';
+const AUTO_REFRESH_MS = 30_000;
+const HIGHLIGHT_MS = 6_000;
 
 function issueReportedMs(issue: Issue): number {
   return Date.parse(issueReportedAtIso(issue) || '') || 0;
@@ -102,9 +108,17 @@ export default function MyIssuesScreen() {
   /** Frozen at preset apply so list length matches the Home card at tap time. */
   const [homeStatNow, setHomeStatNow] = useState(() => new Date());
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
+  const [staleWarning, setStaleWarning] = useState<string | null>(null);
+  const [highlightedIds, setHighlightedIds] = useState<Set<number>>(new Set());
   const { width: windowWidth } = useWindowDimensions();
   const listContentWidth = Math.max(0, windowWidth - 32);
   const columns = issueCardColumnCount(listContentWidth);
+  const knownIdsRef = useRef<Set<number> | null>(null);
+  const hasLoadedRef = useRef(false);
+  const listRef = useRef<FlatList<Issue>>(null);
+  const scrollOffsetRef = useRef(0);
+  const highlightTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   useEffect(() => {
     void AsyncStorage.getItem(ADVANCED_FILTERS_OPEN_KEY).then((raw) => {
@@ -112,15 +126,41 @@ export default function MyIssuesScreen() {
     });
   }, []);
 
+  useEffect(() => {
+    return () => {
+      for (const id of highlightTimersRef.current) clearTimeout(id);
+    };
+  }, []);
+
   function setAdvancedFiltersOpen(next: boolean) {
     setAdvancedOpen(next);
     void AsyncStorage.setItem(ADVANCED_FILTERS_OPEN_KEY, next ? '1' : '0');
   }
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    setOfflineHint(null);
+  const flashCritical = useCallback((ids: number[]) => {
+    if (ids.length === 0) return;
+    setHighlightedIds((prev) => {
+      const next = new Set(prev);
+      for (const id of ids) next.add(id);
+      return next;
+    });
+    const timer = setTimeout(() => {
+      setHighlightedIds((prev) => {
+        const next = new Set(prev);
+        for (const id of ids) next.delete(id);
+        return next;
+      });
+    }, HIGHLIGHT_MS);
+    highlightTimersRef.current.push(timer);
+  }, []);
+
+  const load = useCallback(async (opts?: { silent?: boolean }) => {
+    const silent = opts?.silent === true;
+    if (!silent) {
+      setLoading(true);
+      setError(null);
+      setOfflineHint(null);
+    }
     try {
       const [issuesRes, typesRes, zonesRes, partsRes, defectTypesRes] = await Promise.all([
         api.listIssues(),
@@ -135,17 +175,31 @@ export default function MyIssuesScreen() {
         if (tb !== ta) return tb - ta;
         return b.ID - a.ID;
       });
+      const { knownIds, newCriticalIds } = detectNewCriticalIds(
+        knownIdsRef.current,
+        list,
+      );
+      knownIdsRef.current = knownIds;
       setItems(list);
       setIssueTypes(typesRes.items ?? snapshot.issueTypes);
       setDefectZones(zonesRes.items ?? snapshot.zones);
       setDefectParts(partsRes.items ?? snapshot.parts);
       setDefectTypes(defectTypesRes.items ?? snapshot.types);
+      setUpdatedAt(new Date());
+      setStaleWarning(null);
+      hasLoadedRef.current = true;
+      if (newCriticalIds.length > 0) {
+        flashCritical(newCriticalIds);
+        void playCriticalAlertIfEnabled();
+      }
     } catch (err) {
       setIssueTypes(snapshot.issueTypes);
       setDefectZones(snapshot.zones);
       setDefectParts(snapshot.parts);
       setDefectTypes(snapshot.types);
-      if (isTransportError(err)) {
+      if (silent) {
+        setStaleWarning(t('issue.refreshStale'));
+      } else if (isTransportError(err)) {
         setOfflineHint(t('offline.liveUnavailable'));
       } else {
         const split = loadFailureMessage(err, t);
@@ -153,13 +207,23 @@ export default function MyIssuesScreen() {
         setOfflineHint(split.offlineHint);
       }
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
-  }, [t, snapshot]);
+  }, [t, snapshot, flashCritical]);
 
   useFocusEffect(
     useCallback(() => {
-      void load();
+      void load({ silent: hasLoadedRef.current });
+      const id = setInterval(() => {
+        void load({ silent: true });
+      }, AUTO_REFRESH_MS);
+      const offset = scrollOffsetRef.current;
+      if (offset > 0) {
+        requestAnimationFrame(() => {
+          listRef.current?.scrollToOffset({ offset, animated: false });
+        });
+      }
+      return () => clearInterval(id);
     }, [load]),
   );
 
@@ -310,6 +374,7 @@ export default function MyIssuesScreen() {
   return (
     <Screen padded={false}>
       <FlatList
+        ref={listRef}
         key={`issues-cols-${columns}`}
         data={filtered}
         keyExtractor={(i) => String(i.ID)}
@@ -324,6 +389,10 @@ export default function MyIssuesScreen() {
         maxToRenderPerBatch={8}
         windowSize={5}
         contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
+        onScroll={(e: NativeSyntheticEvent<NativeScrollEvent>) => {
+          scrollOffsetRef.current = e.nativeEvent.contentOffset.y;
+        }}
+        scrollEventThrottle={16}
         ItemSeparatorComponent={
           columns === 1
             ? () => <View style={{ height: 12 }} />
@@ -333,6 +402,32 @@ export default function MyIssuesScreen() {
           <Pressable onPress={Keyboard.dismiss} accessible={false} style={{ marginBottom: 12 }}>
             <Title>{t('nav.issues')}</Title>
             <Subtitle>{t('issue.listSubtitle')}</Subtitle>
+            {updatedAt ? (
+              <Text style={{ color: tokens.textSecondary, fontSize: 12, marginTop: 4 }}>
+                {t('home.lastUpdated', {
+                  time: updatedAt.toLocaleTimeString(locale === 'en' ? 'en-GB' : 'tr-TR', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                  }),
+                })}
+              </Text>
+            ) : null}
+            {staleWarning ? (
+              <Text
+                style={{
+                  color: tokens.textPrimary,
+                  fontSize: 13,
+                  fontWeight: '600',
+                  marginTop: 8,
+                  padding: 10,
+                  borderRadius: 8,
+                  backgroundColor: mixColors('#C62222', tokens.bgSurface1, 12),
+                }}
+              >
+                {staleWarning}
+              </Text>
+            ) : null}
 
             {homeStat ? (
               <View
@@ -700,17 +795,20 @@ export default function MyIssuesScreen() {
 
             {error ? <ErrorText>{error}</ErrorText> : null}
             {offlineHint ? <InfoText>{offlineHint}</InfoText> : null}
-            {loading ? <Loading /> : null}
+            {loading && !hasLoadedRef.current ? <Loading /> : null}
           </Pressable>
         }
         ListEmptyComponent={
-          loading ? null : <Subtitle>{t('issue.noMatch')}</Subtitle>
+          loading && !hasLoadedRef.current ? null : (
+            <Subtitle>{t('issue.noMatch')}</Subtitle>
+          )
         }
         renderItem={({ item }) => (
           <View style={{ flex: 1, marginBottom: columns > 1 ? 0 : 0 }}>
             <IssueCard
               issue={item}
               layoutWidth={listContentWidth}
+              highlighted={highlightedIds.has(item.ID)}
               onPress={() => {
                 Keyboard.dismiss();
                 navigation.navigate('IssueDetail', { id: item.ID });
