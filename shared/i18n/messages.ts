@@ -302,6 +302,16 @@ export const tr = {
   'issue.openDuration': 'Açık kalma süresi',
   'issue.detailNotFound': 'Issue bulunamadı',
   'issue.detailFailed': 'Issue detayı yüklenemedi',
+  'issue.refreshStale':
+    'Liste yenilenemedi — ekrandaki veriler güncel olmayabilir.',
+  'issue.soundUnlock': 'Sesi aç',
+  'issue.soundUnlockHint':
+    'Yeni kritik hatalarda ses çalmak için tıklayın',
+  'settings.soundAlerts': 'Sesli uyarı',
+  'settings.soundAlertsHint':
+    'Yeni kritik hata geldiğinde cihaz sesi çalsın (varsayılan kapalı)',
+  'settings.soundAlertsOn': 'Açık',
+  'settings.soundAlertsOff': 'Kapalı',
 
   'home.title': 'Ana Sayfa',
   'home.subtitle': 'Üretim, montaj ve kalite operasyonlarının anlık görünümü',
@@ -1426,6 +1436,15 @@ export const en: Record<MessageKey, string> = {
   'issue.openDuration': 'Open duration',
   'issue.detailNotFound': 'Issue not found',
   'issue.detailFailed': 'Could not load issue detail',
+  'issue.refreshStale':
+    'Could not refresh the list — data on screen may be stale.',
+  'issue.soundUnlock': 'Enable sound',
+  'issue.soundUnlockHint': 'Tap to allow sound for new critical issues',
+  'settings.soundAlerts': 'Sound alerts',
+  'settings.soundAlertsHint':
+    'Play a sound when a new critical issue appears (off by default)',
+  'settings.soundAlertsOn': 'On',
+  'settings.soundAlertsOff': 'Off',
 
   'home.title': 'Home',
   'home.subtitle': 'Live view of production, assembly, and quality operations',
