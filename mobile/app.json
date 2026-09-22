@@ -34,7 +34,8 @@
           "image": "./assets/logo.png",
           "imageWidth": 160
         }
-      ]
+      ],
+      "expo-audio"
     ]
   }
 }

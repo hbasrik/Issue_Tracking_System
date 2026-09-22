@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Audio } from 'expo-av';
+import { createAudioPlayer, setAudioModeAsync } from 'expo-audio';
 
 export const CRITICAL_SOUND_PREF_KEY = 'karea-critical-sound-alerts';
 
@@ -16,35 +16,28 @@ export async function setCriticalSoundEnabled(enabled: boolean): Promise<void> {
   await AsyncStorage.setItem(CRITICAL_SOUND_PREF_KEY, enabled ? '1' : '0');
 }
 
-let sound: Audio.Sound | null = null;
+type Player = ReturnType<typeof createAudioPlayer>;
+let player: Player | null = null;
 
 /** Plays only when the Profile toggle is on. Never throws to callers. */
 export async function playCriticalAlertIfEnabled(): Promise<boolean> {
   try {
     if (!(await getCriticalSoundEnabled())) return false;
-    await Audio.setAudioModeAsync({
-      playsInSilentModeIOS: true,
-      allowsRecordingIOS: false,
-      staysActiveInBackground: false,
-      shouldDuckAndroid: true,
-      playThroughEarpieceAndroid: false,
+    await setAudioModeAsync({
+      playsInSilentMode: true,
+      allowsRecording: false,
+      shouldPlayInBackground: false,
+      interruptionMode: 'duckOthers',
     });
-    if (sound) {
-      await sound.unloadAsync().catch(() => undefined);
-      sound = null;
+    if (player) {
+      player.remove();
+      player = null;
     }
-    const created = await Audio.Sound.createAsync(
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      require('../../assets/critical-beep.wav'),
-      { shouldPlay: true, volume: 1 },
-    );
-    sound = created.sound;
-    sound.setOnPlaybackStatusUpdate((status) => {
-      if (status.isLoaded && status.didJustFinish) {
-        void sound?.unloadAsync().catch(() => undefined);
-        sound = null;
-      }
-    });
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    player = createAudioPlayer(require('../../assets/critical-beep.wav'));
+    player.volume = 1;
+    player.seekTo(0);
+    player.play();
     return true;
   } catch {
     return false;
