@@ -4,6 +4,9 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"image"
+	"image/color"
+	"image/jpeg"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -20,6 +23,17 @@ import (
 )
 
 const seededVIN = "1HGCM82633A004352"
+
+func tinyJPEGBytes(t *testing.T) []byte {
+	t.Helper()
+	img := image.NewRGBA(image.Rect(0, 0, 1, 1))
+	img.Set(0, 0, color.RGBA{R: 200, G: 10, B: 10, A: 255})
+	var buf bytes.Buffer
+	if err := jpeg.Encode(&buf, img, &jpeg.Options{Quality: 90}); err != nil {
+		t.Fatal(err)
+	}
+	return buf.Bytes()
+}
 
 // httpFakeMediaRepo is an in-memory media_attachments table whose existing set
 // decides which entity ids the application considers real (value is the VIN).
@@ -119,7 +133,7 @@ func newMediaRouter(media repository.MediaRepository, store usecase.MediaStore) 
 }
 
 // multipartUpload builds a POST /api/v1/media body.
-func multipartUpload(t *testing.T, entityType, entityID, fileName, content string) (*bytes.Buffer, string) {
+func multipartUpload(t *testing.T, entityType, entityID, fileName string, content []byte) (*bytes.Buffer, string) {
 	t.Helper()
 
 	var body bytes.Buffer
@@ -134,7 +148,7 @@ func multipartUpload(t *testing.T, entityType, entityID, fileName, content strin
 	if err != nil {
 		t.Fatalf("create file part: %v", err)
 	}
-	if _, err := part.Write([]byte(content)); err != nil {
+	if _, err := part.Write(content); err != nil {
 		t.Fatalf("write file part: %v", err)
 	}
 	if err := form.Close(); err != nil {
@@ -157,7 +171,7 @@ func TestMediaUpload_UnknownEntityReturns404(t *testing.T) {
 		t.Fatalf("issue token: %v", err)
 	}
 
-	body, contentType := multipartUpload(t, "VEHICLE", "NOSUCHVIN00000000", "damage.jpg", "bytes")
+	body, contentType := multipartUpload(t, "VEHICLE", "NOSUCHVIN00000000", "damage.jpg", []byte("bytes"))
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/media", body)
 	req.Header.Set("Content-Type", contentType)
 	req.Header.Set("Authorization", "Bearer "+token)
@@ -188,7 +202,7 @@ func TestMediaUpload_UnknownEntityTypeReturns400(t *testing.T) {
 		t.Fatalf("issue token: %v", err)
 	}
 
-	body, contentType := multipartUpload(t, "SUPPLIER", "12", "damage.jpg", "bytes")
+	body, contentType := multipartUpload(t, "SUPPLIER", "12", "damage.jpg", []byte("bytes"))
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/media", body)
 	req.Header.Set("Content-Type", contentType)
 	req.Header.Set("Authorization", "Bearer "+token)
@@ -256,7 +270,7 @@ func TestMediaUpload_ExistingEntityStoredAndListed(t *testing.T) {
 		t.Fatalf("issue token: %v", err)
 	}
 
-	body, contentType := multipartUpload(t, "VEHICLE", seededVIN, "damage.jpg", "some bytes")
+	body, contentType := multipartUpload(t, "VEHICLE", seededVIN, "damage.jpg", tinyJPEGBytes(t))
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/media", body)
 	req.Header.Set("Content-Type", contentType)
 	req.Header.Set("Authorization", "Bearer "+token)
@@ -382,7 +396,7 @@ func TestVehicleMediaList_IncludesUploadedPhoto(t *testing.T) {
 		t.Fatalf("issue token: %v", err)
 	}
 
-	body, contentType := multipartUpload(t, "VEHICLE", seededVIN, "damage.jpg", "some bytes")
+	body, contentType := multipartUpload(t, "VEHICLE", seededVIN, "damage.jpg", tinyJPEGBytes(t))
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/media", body)
 	req.Header.Set("Content-Type", contentType)
 	req.Header.Set("Authorization", "Bearer "+token)
@@ -424,7 +438,7 @@ func TestMediaUpload_HEICReturns400(t *testing.T) {
 		t.Fatalf("issue token: %v", err)
 	}
 
-	body, contentType := multipartUpload(t, "VEHICLE", seededVIN, "IMG_001.HEIC", "not-a-jpeg")
+	body, contentType := multipartUpload(t, "VEHICLE", seededVIN, "IMG_001.HEIC", []byte("not-a-jpeg"))
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/media", body)
 	req.Header.Set("Content-Type", contentType)
 	req.Header.Set("Authorization", "Bearer "+token)

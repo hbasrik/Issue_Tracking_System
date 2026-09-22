@@ -3,8 +3,13 @@ package usecase
 import (
 	"bytes"
 	"context"
+	"image"
+	_ "image/gif"
+	_ "image/jpeg"
+	_ "image/png"
 	"io"
 	"path/filepath"
+	"strings"
 
 	"github.com/karea/backend/internal/domain"
 	"github.com/karea/backend/internal/repository"
@@ -144,18 +149,48 @@ func (u *MediaUploader) ChecklistTypeForProgressID(ctx context.Context, progress
 
 const imageSniffLen = 16
 
+// rejectNonWebImage refuses HEIC/HEIF (sniff) and any image that image.Decode
+// cannot read. Truncated JPEG headers that look like JFIF but fail Go's
+// decoder (see issue_resolution/68) must not enter media_attachments.
+// Non-image MIME types pass through unchanged (e.g. future PDF attachments).
 func rejectNonWebImage(mimeType, fileName string, content io.Reader) (io.Reader, error) {
-	head := make([]byte, imageSniffLen)
-	n, err := io.ReadFull(content, head)
-	if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
+	data, err := io.ReadAll(content)
+	if err != nil {
 		return nil, err
 	}
-	head = head[:n]
+	head := data
+	if len(head) > imageSniffLen {
+		head = head[:imageSniffLen]
+	}
 	if domain.IsNonWebImage(mimeType, fileName, head) {
 		return nil, domain.ErrUnsupportedImageFormat
 	}
-	if n == 0 {
-		return content, nil
+	if looksLikeImageUpload(mimeType, fileName, data) {
+		if _, _, err := image.Decode(bytes.NewReader(data)); err != nil {
+			return nil, domain.ErrUndecodableImage
+		}
 	}
-	return io.MultiReader(bytes.NewReader(head), content), nil
+	return bytes.NewReader(data), nil
+}
+
+func looksLikeImageUpload(mimeType, fileName string, data []byte) bool {
+	mt := strings.ToLower(strings.TrimSpace(mimeType))
+	if strings.HasPrefix(mt, "image/") {
+		return true
+	}
+	ext := strings.ToLower(filepath.Ext(fileName))
+	switch ext {
+	case ".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp":
+		return true
+	}
+	if len(data) >= 3 && data[0] == 0xff && data[1] == 0xd8 && data[2] == 0xff {
+		return true
+	}
+	if len(data) >= 8 && string(data[0:8]) == "\x89PNG\r\n\x1a\n" {
+		return true
+	}
+	if len(data) >= 6 && (string(data[0:6]) == "GIF87a" || string(data[0:6]) == "GIF89a") {
+		return true
+	}
+	return false
 }

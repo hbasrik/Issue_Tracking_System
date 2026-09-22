@@ -47,6 +47,10 @@ var (
 	// container browsers will not render). Rejected rather than stored as a
 	// silently broken gallery image.
 	ErrUnsupportedImageFormat = errors.New("image format is not displayable in the browser; upload JPEG or PNG")
+	// ErrUndecodableImage indicates the bytes look like an image container
+	// (or claim to be JPEG/PNG) but image.Decode cannot read them. Prevents
+	// truncated / corrupt files from entering media_attachments.
+	ErrUndecodableImage = errors.New("image file could not be decoded; upload a valid JPEG or PNG")
 	// ErrInvalidEnumValue indicates an enum field carried an unknown value.
 	ErrInvalidEnumValue = errors.New("invalid enum value")
 	// ErrInvalidStatusTransition indicates a requested status change is not

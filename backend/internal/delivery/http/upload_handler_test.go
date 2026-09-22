@@ -174,6 +174,30 @@ func TestUploadGet_ThumbIsMuchSmallerThanOriginal(t *testing.T) {
 	}
 }
 
+func TestUploadGet_CacheControlLongLived(t *testing.T) {
+	dir := t.TempDir()
+	rel := filepath.ToSlash(filepath.Join("issue", "1", "photo.jpg"))
+	writeNoiseJPEG(t, filepath.Join(dir, filepath.FromSlash(rel)), 40, 30)
+	media := newHTTPFakeMediaRepo()
+	media.rows = append(media.rows, domain.MediaAttachment{
+		VIN: seededVIN, StoragePath: rel, EntityType: domain.MediaEntityIssue, EntityID: "1",
+	})
+	router, issuer := newUploadRouter(t, dir, media)
+	token, _ := issuer.Issue(operatorUserID, domain.RoleCodeOperator)
+
+	req := httptest.NewRequest(http.MethodGet, "/uploads/"+rel+"?thumb=md", nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d", rec.Code)
+	}
+	cc := rec.Header().Get("Cache-Control")
+	if !strings.Contains(cc, "max-age=31536000") || !strings.Contains(cc, "immutable") {
+		t.Fatalf("Cache-Control = %q, want private long-lived immutable", cc)
+	}
+}
+
 func TestUploadGet_RejectsPathTraversal(t *testing.T) {
 	dir := t.TempDir()
 	router, issuer := newUploadRouter(t, dir, nil)

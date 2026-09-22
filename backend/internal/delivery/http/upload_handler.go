@@ -27,8 +27,11 @@ const (
 	cardThumbMaxEdge = 800
 )
 
-// Authenticated uploads are private; browsers must revalidate with a token.
-const uploadCacheControl = "private, max-age=3600"
+// Authenticated uploads are private (Authorization required) but content-
+// addressed: filenames are crypto/rand hex and never rewritten in place.
+// Long-lived private cache keeps Issues board auto-refresh from re-downloading
+// the same card photos every 30s on factory Wi‑Fi.
+const uploadCacheControl = "private, max-age=31536000, immutable"
 
 // handleUploadGet serves files from UploadDir after RequireAuth. Filenames are
 // 16-byte crypto/rand hex tokens (see storage.LocalDisk) — not sequential —

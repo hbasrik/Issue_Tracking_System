@@ -56,7 +56,7 @@ func TestMediaUpload_OperatorCannotAttachToVehicleEntity(t *testing.T) {
 	media := newHTTPFakeMediaRepo()
 	router, issuer := newMediaRouter(media, &httpFakeMediaStore{})
 	token, _ := issuer.Issue(operatorUserID, domain.RoleCodeOperator)
-	body, contentType := multipartUpload(t, "VEHICLE", seededVIN, "damage.jpg", "bytes")
+	body, contentType := multipartUpload(t, "VEHICLE", seededVIN, "damage.jpg", []byte("bytes"))
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/media", body)
 	req.Header.Set("Content-Type", contentType)
 	req.Header.Set("Authorization", "Bearer "+token)

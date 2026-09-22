@@ -132,6 +132,7 @@ func writeError(w http.ResponseWriter, err error) {
 		errors.Is(err, domain.ErrInvalidManualSource),
 		errors.Is(err, domain.ErrInvalidEnumValue),
 		errors.Is(err, domain.ErrUnsupportedImageFormat),
+		errors.Is(err, domain.ErrUndecodableImage),
 		errors.Is(err, domain.ErrTemplateItemTextRequired),
 		errors.Is(err, domain.ErrTemplateItemTextTooLong),
 		errors.Is(err, domain.ErrEOLPhaseRequired),

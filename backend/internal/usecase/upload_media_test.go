@@ -1,14 +1,31 @@
 package usecase_test
 
 import (
+	"bytes"
 	"context"
 	"errors"
+	"image"
+	"image/color"
+	"image/jpeg"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/karea/backend/internal/domain"
 	"github.com/karea/backend/internal/usecase"
 )
+
+func tinyJPEG(t *testing.T) []byte {
+	t.Helper()
+	img := image.NewRGBA(image.Rect(0, 0, 1, 1))
+	img.Set(0, 0, color.RGBA{R: 200, G: 10, B: 10, A: 255})
+	var buf bytes.Buffer
+	if err := jpeg.Encode(&buf, img, &jpeg.Options{Quality: 90}); err != nil {
+		t.Fatal(err)
+	}
+	return buf.Bytes()
+}
 
 // TestUploadMedia_UnknownEntityRejected is the core guarantee of Karar 8's
 // polymorphic table: because media_attachments has no foreign key, an upload
@@ -98,7 +115,7 @@ func TestUploadMedia_ExistingEntityAccepted(t *testing.T) {
 		EntityID:   vin,
 		FileName:   "/tmp/client/path/damage.jpg",
 		MimeType:   "image/jpeg",
-		Content:    strings.NewReader("twelve bytes"),
+		Content:    bytes.NewReader(tinyJPEG(t)),
 		UploadedBy: 7,
 	})
 	if err != nil {
@@ -112,8 +129,9 @@ func TestUploadMedia_ExistingEntityAccepted(t *testing.T) {
 	if attachment.FileName != "damage.jpg" {
 		t.Errorf("file name = %q, want %q", attachment.FileName, "damage.jpg")
 	}
-	if attachment.FileSize != int64(len("twelve bytes")) {
-		t.Errorf("file size = %d, want %d", attachment.FileSize, len("twelve bytes"))
+	wantSize := int64(len(tinyJPEG(t)))
+	if attachment.FileSize != wantSize {
+		t.Errorf("file size = %d, want %d", attachment.FileSize, wantSize)
 	}
 	if attachment.UploadedBy == nil || *attachment.UploadedBy != 7 {
 		t.Errorf("uploaded by = %v, want 7", attachment.UploadedBy)
@@ -166,7 +184,8 @@ func TestListMedia_ReturnsOnlyMatchingEntity(t *testing.T) {
 			EntityType: entityType,
 			EntityID:   "41",
 			FileName:   "photo.jpg",
-			Content:    strings.NewReader("bytes"),
+			MimeType:   "image/jpeg",
+			Content:    bytes.NewReader(tinyJPEG(t)),
 			UploadedBy: 7,
 		}); err != nil {
 			t.Fatalf("upload for %s: %v", entityType, err)
@@ -199,7 +218,8 @@ func TestUploadMedia_WritesVINFromEntityContext(t *testing.T) {
 		EntityType: domain.MediaEntityIssue,
 		EntityID:   "41",
 		FileName:   "photo.jpg",
-		Content:    strings.NewReader("bytes"),
+		MimeType:   "image/jpeg",
+		Content:    bytes.NewReader(tinyJPEG(t)),
 		UploadedBy: 7,
 	})
 	if err != nil {
@@ -208,7 +228,7 @@ func TestUploadMedia_WritesVINFromEntityContext(t *testing.T) {
 	if attachment.VIN != vin {
 		t.Fatalf("vin = %q, want %q", attachment.VIN, vin)
 	}
-	if attachment.VIN != vin {
+	if media.rows[0].VIN != vin {
 		t.Fatalf("stored vin = %q, want %q", media.rows[0].VIN, vin)
 	}
 }
@@ -245,6 +265,67 @@ func TestUploadMedia_RejectsHEIC(t *testing.T) {
 	}
 }
 
+// Truncated JFIF that may still sniff as JPEG but Go's decoder rejects —
+// mirrors backend/uploads/issue_resolution/68/…jpg (Rule 7: leave that file).
+func TestUploadMedia_RejectsUndecodableJPEG(t *testing.T) {
+	const vin = "1HGCM82633A004352"
+	media := newFakeMediaRepo()
+	media.seedEntity(domain.MediaEntityVehicle, vin)
+	store := &fakeMediaStore{}
+	uploader := usecase.NewMediaUploader(media, store)
+
+	corrupt := []byte{
+		0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10,
+		'J', 'F', 'I', 'F', 0x00, 0x01, 0x01, 0x00, 0x00, 0x01,
+		0x00, 0x01, 0x00, 0x00,
+		0x00, 0x01, 0x02, 0x03,
+	}
+	_, err := uploader.Upload(context.Background(), usecase.UploadMediaInput{
+		EntityType: domain.MediaEntityVehicle,
+		EntityID:   vin,
+		FileName:   "broken.jpg",
+		MimeType:   "image/jpeg",
+		Content:    bytes.NewReader(corrupt),
+		UploadedBy: 7,
+	})
+	if !errors.Is(err, domain.ErrUndecodableImage) {
+		t.Fatalf("err = %v, want ErrUndecodableImage", err)
+	}
+	if len(store.saved) != 0 {
+		t.Errorf("stored files = %v, want none", store.saved)
+	}
+}
+
+// Real on-disk corrupt resolution photo (read-only; do not delete — Rule 7).
+func TestUploadMedia_RejectsKnownCorruptIssueResolution68(t *testing.T) {
+	path := filepath.Join("..", "..", "uploads", "issue_resolution", "68",
+		"0bf4c9223b4f0ce76c80b6ada3dc577d.jpg")
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		t.Skipf("fixture not present: %v", err)
+	}
+	const vin = "1HGCM82633A004352"
+	media := newFakeMediaRepo()
+	media.seedEntity(domain.MediaEntityVehicle, vin)
+	store := &fakeMediaStore{}
+	uploader := usecase.NewMediaUploader(media, store)
+
+	_, err = uploader.Upload(context.Background(), usecase.UploadMediaInput{
+		EntityType: domain.MediaEntityVehicle,
+		EntityID:   vin,
+		FileName:   "0bf4c9223b4f0ce76c80b6ada3dc577d.jpg",
+		MimeType:   "image/jpeg",
+		Content:    bytes.NewReader(raw),
+		UploadedBy: 7,
+	})
+	if !errors.Is(err, domain.ErrUndecodableImage) {
+		t.Fatalf("err = %v, want ErrUndecodableImage (corrupt issue_resolution/68)", err)
+	}
+	if len(store.saved) != 0 {
+		t.Errorf("stored files = %v, want none", store.saved)
+	}
+}
+
 // TestListMediaByVIN_ReturnsEveryEntityType is the Vehicle Detail "all photos"
 // query: issue, checklist and vehicle attachments for one VIN come back together.
 func TestListMediaByVIN_ReturnsEveryEntityType(t *testing.T) {
@@ -256,11 +337,12 @@ func TestListMediaByVIN_ReturnsEveryEntityType(t *testing.T) {
 	media.seedEntityVIN(domain.MediaEntityIssue, "99", "N7V1K1SA9SK000002")
 	uploader := usecase.NewMediaUploader(media, &fakeMediaStore{})
 
+	jpg := tinyJPEG(t)
 	ctx := context.Background()
 	for _, in := range []usecase.UploadMediaInput{
-		{EntityType: domain.MediaEntityVehicle, EntityID: vin, FileName: "v.jpg", Content: strings.NewReader("a"), UploadedBy: 7},
-		{EntityType: domain.MediaEntityIssue, EntityID: "41", FileName: "i.jpg", Content: strings.NewReader("b"), UploadedBy: 7},
-		{EntityType: domain.MediaEntityIssue, EntityID: "99", FileName: "other.jpg", Content: strings.NewReader("c"), UploadedBy: 7},
+		{EntityType: domain.MediaEntityVehicle, EntityID: vin, FileName: "v.jpg", MimeType: "image/jpeg", Content: bytes.NewReader(jpg), UploadedBy: 7},
+		{EntityType: domain.MediaEntityIssue, EntityID: "41", FileName: "i.jpg", MimeType: "image/jpeg", Content: bytes.NewReader(jpg), UploadedBy: 7},
+		{EntityType: domain.MediaEntityIssue, EntityID: "99", FileName: "other.jpg", MimeType: "image/jpeg", Content: bytes.NewReader(jpg), UploadedBy: 7},
 	} {
 		if _, err := uploader.Upload(ctx, in); err != nil {
 			t.Fatalf("upload %s/%s: %v", in.EntityType, in.EntityID, err)
