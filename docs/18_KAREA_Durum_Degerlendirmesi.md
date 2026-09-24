@@ -1,6 +1,9 @@
 # KAREA — Durum Değerlendirmesi
 
 **Tarih:** 2026-09-18
+**Not (2026-09-24):** Bu dosya 18 Eylül anlık değerlendirmesidir.
+O tarihten sonraki tamamlanan işler, açık maddeler ve öncelik sırası
+için **`docs/16_KAREA_Yapilacaklar.md`** bakın; burayı yeniden yazmayın.
 **Kapsam:** Uygulamanın bugünkü hali, açıklar, riskler ve öncelik önerisi.
 **Kaynak:** Bu değerlendirme, Cursor'un raporları ve mimari kararlar
 üzerinden yazıldı. Kod tabanı bağımsız olarak taranmadı — bölüm 7'deki

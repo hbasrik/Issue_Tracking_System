@@ -20,14 +20,16 @@ Yapılacak: düzenli `pg_dump`, dosya bilgisayar dışında bir yerde
 (bulut disk yeterli). B5'ten farklı — B5 üretim yedekleme
 politikası, bu ise bugünkü emeği kaybetmemek.
 
-### A1. Mobilde ağ kesintisi dayanıklılığı `[ ]` **öncelik: yüksek**
-Fabrika Wi-Fi'ı kesintili. Operatör formu doldurup fotoğraf çekip
-kaydete bastığında istek başarısız olursa veri kayboluyor.
-- Başarısız kayıtlar cihazda kuyruğa alınsın
-- Bağlantı gelince otomatik gönderilsin
-- Kullanıcıya "bekleyen kayıt var" göstergesi
-- Fotoğraflar da kuyrukta saklanmalı
-**Neden önemli:** Sistemin sahada benimsenip benimsenmemesini belirler.
+### A1. Mobilde ağ kesintisi dayanıklılığı `[x]` — cihazda doğrulandı
+Fabrika Wi-Fi kesintisinde operatör kaydı kaybolmaz:
+- Başarısız issue gönderimi cihaz kuyruğuna alınır (fotoğraf dahil);
+  bağlantı gelince otomatik gönderilir; “bekleyen kayıt” göstergesi
+- Referans önbelleği (katalog / istasyon vb.) offline okunabilir
+- Idempotency: `client_request_id` ile çift gönderim engellenir
+- Taşıma hatası kuyruğa alınır; iş kuralı / 4xx ret ayrımı yapılır
+- 401’de kuyruk kaydı silinmez (yeniden giriş sonrası tekrar dener)
+Kod: `mobile` offline kuyruk + `shared/networkError` / queue policy.
+
 
 ### A2. Eski 1619 kaydın aktarılması `[ ]` **öncelik: yüksek**
 Analiz sayfası şu an boş sayılır; sistemde birkaç test kaydı var.
@@ -324,19 +326,23 @@ ortamındaki dağınıklık meselesi.
 
 ## Önerilen sıra
 
-**Tamamlananlar:** A1 (ağ dayanıklılığı), A4 (hız sınırı),
-A5 (vardiya — gereksiz çıktı), A11 (güvenlik sıkılaştırması),
-B7'nin sunucu gerektirmeyen kısmı
+**Tamamlananlar (kod):** A1 (mobil offline kuyruk — cihazda doğrulandı),
+A4, A5, A11–A18, B7’nin sunucu gerektirmeyen kısmı.
 
-**Şimdi:** A0 (geliştirme veritabanı yedeği — bkz. aşağı) →
-**A3 (kritik bildirim)** → A6 (uçtan uca test) → A9 (kalite ekibi
-katalog gözden geçirmesi)
+**Şimdi (kod, dış bağımlılık yok):**
+1. **A0** — geliştirme DB yedeği (en yüksek; veri git’te yok)
+2. **A3** — kritik hata bildirimi
+3. **A6** — uçtan uca otomatik test
+4. **A9** — kalite ekibi katalog gözden geçirmesi
+5. **A10** — kalan mobil cihaz doğrulamaları (kısmen açık)
+6. A7 / A8 — ihtiyaç doğunca (yorum; ayrı izinler)
 
-**Beklemede:** A2 (veri elde yok)
+**Beklemede:** A2 (eski 1619 kayıt — veri elde yok).
 
-**Paralel olarak başlat:** C1, C2, C4 (IT talepleri — haftalar sürer,
-kod hazır olunca beklemek istemezsin)
+**Paralel (IT, haftalar sürer):** C1 SMTP, C2 sunucu/DB, C3 Apple,
+C4 HTTPS sertifikası.
 
-**Karar ver:** A5 (vardiya) — sonradan eklenemez, şimdi karar gerekiyor
+**Canlıdan hemen önce:** B1–B4 engelleyiciler + B5/B6 üretim yedekleme
+ve kurulum + B8 (çok örnek / sık restart olursa rate-limit kalıcılığı).
 
-**Canlıdan hemen önce:** B1–B7
+**Canlı sonrası / opsiyonel:** D1–D7.

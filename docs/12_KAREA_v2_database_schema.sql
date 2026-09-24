@@ -11,7 +11,7 @@
 -- This file is a hand-maintained reading aid: it shows the intended
 -- shape of the schema in one place, with the reasoning behind each
 -- decision. It is NOT executable against a real database and must not
--- be used to create one. Migrations 0001-0028 are authoritative.
+-- be used to create one. Migrations 0001-0030 are authoritative.
 --
 -- Known limitation of this file: it is validated with a SQL parser,
 -- which checks syntax only. A parser cannot tell that a view selects a
@@ -507,6 +507,7 @@ CREATE INDEX idx_issue_list_open_by_vin
     WHERE status IN ('OPEN', 'IN_PROGRESS', 'DONE');
 
 CREATE INDEX idx_issue_list_status_date ON issue_list (status, issue_date);
+-- Board list: reporter filter + keyset ORDER BY (migration 0030).
 CREATE INDEX idx_issue_list_reporter ON issue_list (issue_reporter_id);
 CREATE INDEX idx_issue_list_issue_date ON issue_list (issue_date DESC, id DESC);
 CREATE INDEX idx_issue_list_station ON issue_list (station_id);
