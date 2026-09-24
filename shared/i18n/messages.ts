@@ -602,6 +602,10 @@ export const tr = {
     'Aşama geçişi (sevk / depo çıkışı) web panelinden yapılır.',
   'checklist.progressCount': '{done} / {total} tamamlandı',
   'checklist.conditionalShort': 'COND.',
+  'checklist.inactiveSection': 'Artık gerekli olmayan maddeler ({n})',
+  'checklist.inactiveBadge': 'Pasif',
+  'checklist.inactiveHint':
+    'Şablondan kaldırıldı; geçmiş işaretler korunur, kapıyı etkilemez.',
 
   'eol.title': 'EoL iş akışı',
   'eol.loading': 'EoL yükleniyor…',
@@ -2100,6 +2104,10 @@ export const en: Record<MessageKey, string> = {
   'checklist.evaluated': '{done}/{total} evaluated',
   'checklist.itemsMissing': '{n} items remaining',
   'checklist.itemsRemaining': '{n} items remaining',
+  'checklist.inactiveSection': 'No longer required ({n})',
+  'checklist.inactiveBadge': 'Inactive',
+  'checklist.inactiveHint':
+    'Removed from the template; past ticks are kept and do not affect gates.',
   'checklist.missingItems': 'Missing items',
   'checklist.progress': '{done} / {total} complete',
   'checklist.progressCount': '{done} / {total} complete',
