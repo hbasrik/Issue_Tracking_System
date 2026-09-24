@@ -154,7 +154,10 @@ Web Issues panosu:
 - `homeStat` / `analysisStat` drill-down: limitsiz tam liste (davranış aynı)
 - Kart grid satır sanallaştırması (`@tanstack/react-virtual`, scroll =
   AppShell `[data-app-scroll]`)
-- Dışa aktarma / yazdırma: ekranda yüklü + filtrelenmiş küme (`visible`)
+- Dışa aktarma / yazdırma: **aktif filtreyle eşleşen tüm kayıtlar**
+  (`listIssues({ unlimited: true })` + istemci filtreleri); yüklü sayfa
+  değil. Düğme sayısı = `matchTotal`. ZIP: onay (≥80) + sert tavan 500
+  kayıt (tarayıcı belleği); CSV/yazdırma sınırsız + ilerleme metni.
 
 Mobil `MyIssuesScreen` (aynı API sözleşmesi):
 - Varsayılan filtresiz; board UI AsyncStorage (`karea-issues-board-ui-v2`);
@@ -222,11 +225,15 @@ Fabrika/Depo **madde** satırları; “Tamamlandı” araç çubuğu çıkarıld
   filtre özeti + temizle. ≥600px web: önceki yerleşim (durum+şiddet görünür).
 - Ana ekran / analiz `homeStat`·`analysisStat` yönlendirmelerine dokunulmadı.
 - Liste yazdırma: isteğe bağlı “Fotoğraflarla yazdır” (≈2,4 cm thumb);
-  yazdırmadan önce `preloadAuthenticatedMedia` ile tüm satır fotoğrafları
-  yüklenir (tembel yükleme tuzağı yok). Fotoğrafsız satırda boş kutu yer tutar.
-- Yazdırma kapsamı = CSV ile aynı: yüklü sayfalar ∩ istemci filtresi (`visible`),
-  DB’deki tüm eşleşen kayıtlar değil (sayfalı board’da kaydırılmamış sayfalar
-  çıkmaz; drill-down’da limitsiz liste tamdır).
+  yazdırmadan önce tam filtre kümesi çekilir + `preloadAuthenticatedMedia`
+  (tembel yükleme tuzağı yok). Fotoğrafsız satırda boş kutu yer tutar.
+- Yazdırma / CSV / ZIP kapsamı (2026-09-24 düzeltme): sunucudan
+  `unlimited` tam liste ∩ istemci filtreleri — yüklü sayfa değil.
+  Kanıt (ayrı DB `karea_export_verify`, sonra DROP): 2024 unlimited /
+  50 `limit=50` / 1013 `OPEN,IN_PROGRESS`. ZIP tavanı 500 + boyut onayı.
+- `listIssues({ unlimited: true })` Home / araç panelleri / dışa aktarma;
+  API testi `TestIssueList_OmitLimitReturnsFullList` (limit yok → 250 satır).
+  docs/08’e yanlışlıkla eklenen 0030 index satırları geri alındı (v1 dondurulmuş).
 
 ---
 
