@@ -1,8 +1,18 @@
 /**
  * Split vehicle checklist API rows into work queue (active) vs historical
  * inactive ticks. Gates already ignore inactive (migration 0022); UI counts
- * must use the same active-only set so "n remaining" matches the main list.
+ * and fleet aggregates (Home / Analysis stage performance, EOL completion %)
+ * must use the same active-only set so ratios match the operator work queue.
  */
+
+/**
+ * SQL predicate matching {@link isChecklistItemActive}. Fleet aggregates in
+ * `analysis_repo.go` (stagePerformance, KPI CompletionPercent,
+ * EOLChecklistCounts) MUST use this — not the old
+ * `NOT (is_active = false AND status = 'PENDING')` partial filter, which still
+ * counted inactive evaluated rows in the denominator.
+ */
+export const CHECKLIST_ACTIVE_SQL = 'cti.is_active = true';
 
 export type ChecklistActivityItem = {
   ItemID: number;

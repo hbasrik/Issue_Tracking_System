@@ -156,10 +156,10 @@ type HomeEOLStageCount struct {
 }
 
 // HomeEOLChecklistCount is passing vs total EOL checklist progress rows for
-// one phase. Total/Done are real checklist_item_progress row counts (not
-// vehicle×catalogue). VehicleCount is distinct VINs; UniqueItemCount is how
-// many distinct catalogue items appear in those rows (may exceed any single
-// vehicle's row count when inactive items linger on some VINs only).
+// one phase. Only active catalogue items are counted (same rule as
+// shared/checklistActive.ts / gates). Total/Done are progress-row counts, not
+// vehicle×catalogue. VehicleCount is distinct VINs; UniqueItemCount is distinct
+// active catalogue items in those rows.
 type HomeEOLChecklistCount struct {
 	Phase           string
 	Done            int64

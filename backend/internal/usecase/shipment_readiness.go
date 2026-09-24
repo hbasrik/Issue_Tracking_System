@@ -76,6 +76,9 @@ func (r *ShipmentReadinessReader) checklistWarnings(ctx context.Context, vin str
 	}
 	var incomplete []domain.ChecklistItemView
 	for _, it := range items {
+		if !it.IsActive {
+			continue
+		}
 		if !it.Status.IsPassing() {
 			incomplete = append(incomplete, it)
 		}

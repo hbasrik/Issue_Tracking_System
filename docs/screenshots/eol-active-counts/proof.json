@@ -1,0 +1,55 @@
+{
+  "metric": "stage_performance_and_home_eol_checklist",
+  "sql_filter_before": "NOT (cti.is_active = false AND p.check_status = 'PENDING')",
+  "sql_filter_after": "cti.is_active = true  -- shared/checklistActive.ts CHECKLIST_ACTIVE_SQL",
+  "before": {
+    "BRANCH": {
+      "done": 28,
+      "total": 49
+    },
+    "DEPOT": {
+      "done": 21,
+      "total": 31
+    }
+  },
+  "after": {
+    "BRANCH": {
+      "done": 28,
+      "total": 49
+    },
+    "DEPOT": {
+      "done": 15,
+      "total": 25
+    }
+  },
+  "completed_vehicles": {
+    "done": 2,
+    "total": 5,
+    "note": "vehicle workflow counts \u2014 not checklist items"
+  },
+  "kpi_completion_percent": {
+    "before": 61.3,
+    "after": 58.1,
+    "done_before": 49,
+    "total_before": 80,
+    "done_after": 43,
+    "total_after": 74
+  },
+  "inactive_depot_rows_excluded": {
+    "OK": 6,
+    "PENDING": 4,
+    "note": "PENDING already excluded by old filter; OK rows inflated before totals"
+  },
+  "api_home_overview_after": {
+    "BRANCH": {
+      "Done": 28,
+      "Total": 49
+    },
+    "DEPOT": {
+      "Done": 15,
+      "Total": 25
+    }
+  },
+  "vehicle_detail_progress": "TotalProgressPercentage is station-step progress (not EOL checklist) \u2014 unchanged",
+  "mobile_home": "no EOL stage-performance chart on mobile HomeScreen"
+}

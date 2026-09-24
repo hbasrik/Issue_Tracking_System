@@ -823,7 +823,7 @@ func (r *AnalysisRepo) kpiCards(ctx context.Context, f domain.AnalysisFilter) (d
 		 WHERE p.checklist_type = 'EOL'
 		   AND v.current_global_status <> 'PLANNED'
 		   AND cti.eol_phase IN ('BRANCH','DEPOT')
-		   AND NOT (cti.is_active = false AND p.check_status = 'PENDING')
+		   AND cti.is_active = true
 		   `+vinClause("p.vin", 1, 4)+`
 		   AND ($2 = '' OR v.current_global_status::text = $2)
 		   `+eolStageWhere(3),
@@ -944,7 +944,7 @@ func (r *AnalysisRepo) stagePerformance(ctx context.Context, f domain.AnalysisFi
 		 WHERE p.checklist_type = 'EOL'
 		   AND v.current_global_status <> 'PLANNED'
 		   AND cti.eol_phase IN ('BRANCH','DEPOT')
-		   AND NOT (cti.is_active = false AND p.check_status = 'PENDING')
+		   AND cti.is_active = true
 		   `+vinClause("p.vin", 1, 4)+`
 		   AND ($2 = '' OR v.current_global_status::text = $2)
 		   `+eolStageWhere(3)+`
@@ -1390,9 +1390,9 @@ func (r *AnalysisRepo) EOLStageCounts(ctx context.Context) ([]domain.HomeEOLStag
 }
 
 // EOLChecklistCounts returns passing vs total EOL progress rows per phase
-// for vehicles that are not PLANNED. Totals are real progress-row counts;
-// per-vehicle item counts are not assumed uniform (inactive catalogue items
-// may still have evaluated rows on some VINs).
+// for vehicles that are not PLANNED. Only active catalogue items count
+// (shared/checklistActive.ts isChecklistItemActive / CHECKLIST_ACTIVE_SQL).
+// Inactive historical ticks stay in the DB but are excluded from ratios.
 func (r *AnalysisRepo) EOLChecklistCounts(ctx context.Context) ([]domain.HomeEOLChecklistCount, error) {
 	rows, err := r.pool.Query(ctx, `
 		SELECT cti.eol_phase::text,
@@ -1406,9 +1406,7 @@ func (r *AnalysisRepo) EOLChecklistCounts(ctx context.Context) ([]domain.HomeEOL
 		 WHERE p.checklist_type = 'EOL'
 		   AND v.current_global_status <> 'PLANNED'
 		   AND cti.eol_phase IN ('BRANCH', 'DEPOT')
-		   -- Inactive catalogue items keep evaluated history; PENDING leftovers
-		   -- must not inflate live totals (deactivate is supposed to remove them).
-		   AND NOT (cti.is_active = false AND p.check_status = 'PENDING')
+		   AND cti.is_active = true
 		 GROUP BY cti.eol_phase`)
 	if err != nil {
 		return nil, err

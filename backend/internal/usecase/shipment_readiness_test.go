@@ -45,14 +45,14 @@ func TestShipmentReadiness_ListsIncompleteChecklistsAndOpenIssues(t *testing.T) 
 	}
 	checklists := newFakeChecklistRepo()
 	checklists.views[vin+"|SHIPMENT"] = []domain.ChecklistItemView{
-		{ItemID: 10, ItemNo: 1, ItemText: "Battery disconnect", Status: domain.CheckStatusPending},
-		{ItemID: 11, ItemNo: 2, ItemText: "Keys handed over", Status: domain.CheckStatusOK},
+		{ItemID: 10, ItemNo: 1, ItemText: "Battery disconnect", Status: domain.CheckStatusPending, IsActive: true},
+		{ItemID: 11, ItemNo: 2, ItemText: "Keys handed over", Status: domain.CheckStatusOK, IsActive: true},
 	}
 	checklists.views[vin+"|TEST"] = []domain.ChecklistItemView{
-		{ItemID: 20, ItemNo: 1, ItemText: "Road test", Status: domain.CheckStatusOK},
+		{ItemID: 20, ItemNo: 1, ItemText: "Road test", Status: domain.CheckStatusOK, IsActive: true},
 	}
 	checklists.views[vin+"|EOL"] = []domain.ChecklistItemView{
-		{ItemID: 1, ItemNo: 1, ItemText: "Paint finish", Status: domain.CheckStatusPending},
+		{ItemID: 1, ItemNo: 1, ItemText: "Paint finish", Status: domain.CheckStatusPending, IsActive: true},
 	}
 	issues := newFakeIssueRepo()
 	_, _ = issues.Create(context.Background(), &domain.Issue{
