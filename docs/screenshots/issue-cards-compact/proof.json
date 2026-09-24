@@ -1,0 +1,22 @@
+{
+  "contrast": {
+    "border_on_card": 2.75,
+    "border_on_page": 2.6,
+    "card_on_page": 1.06,
+    "border": "rgb(155, 156, 158)",
+    "bgPage": "#F7F9FB",
+    "bgSurface1": "#FFFFFF"
+  },
+  "card": {
+    "height": 111,
+    "slackBelowContentPx": 13,
+    "borderColor": "rgb(155, 156, 158)",
+    "backgroundColor": "rgb(255, 255, 255)",
+    "cssVars": {
+      "pageBg": "#F7F9FB",
+      "surface": "#FFFFFF",
+      "border": "rgb(155, 156, 158)"
+    }
+  },
+  "cards": 6
+}

@@ -193,6 +193,18 @@ Doğrulama (VIN `N7V1K1SA6TK000068`, Depo): API 7 satır → shared 5 aktif +
 simülasyonu (Rule 7, DB yazılmaz) remaining 1. Ekran görüntüleri:
 `docs/screenshots/checklist-inactive/`.
 
+### A17. EOL filo sayıları + kart yüzeyi `[x]` — 2026-09-24
+Home / Analiz EOL madde oranları (Aşama performansı, tamamlanma %,
+home checklist donut) artık yalnız `cti.is_active = true` sayıyor —
+`shared/checklistActive.ts` `CHECKLIST_ACTIVE_SQL` ile aynı kural.
+Önceki kısmi filtre (`NOT (pasif AND PENDING)`) pasif OK satırlarını
+paydaya sokuyordu. SQL kanıt: Depo **21/31 → 15/25**; Fabrika 28/49
+aynı; KPI %61.3 → %58.1. Tamamlandı 2/5 araç sayısı (madde değil).
+
+Kart yüzey renkleri `shared/surfaces.ts` (web+mobil); açık kenarlık
+kontrastı ~1.88 → ~2.75. Sıkışık yerleşimde (&lt;600px) kart yüksekliği
+içeriğe göre; ızgarada eşit yükseklik korunur.
+
 ---
 
 ## B — Canlıya çıkmadan önce ZORUNLU
