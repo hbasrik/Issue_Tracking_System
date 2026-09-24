@@ -1,4 +1,13 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import {
   issueCardColumnCount,
   ISSUE_CARD_COMPACT_MAX_PX,
@@ -31,6 +40,10 @@ import {
 } from './IssueClassificationEditor';
 import { useAuth } from '../auth/AuthProvider';
 import { IssueCard } from './IssueCard';
+
+const ESTIMATED_ROW_HEIGHT_PX = 280;
+const ROW_GAP_PX = 12;
+const ROW_OVERSCAN = 3;
 
 /** Label / value block — stacked on narrow, 2-column grid from sm up. */
 function IssueInfoFields({ issue }: { issue: Issue }) {
@@ -346,7 +359,8 @@ function DetailBlock({
 
 /**
  * Adaptive issue card grid — compact list under 600px, multi-column grid above.
- * Detail opens at /issues/:id (not an accordion).
+ * Virtualizes rows against AppShell `[data-app-scroll]` so off-screen cards
+ * are placeholders. Detail opens at /issues/:id (not an accordion).
  */
 export function IssueList({
   items,
@@ -363,13 +377,20 @@ export function IssueList({
 }) {
   const { t } = useI18n();
   const empty = emptyLabel ?? t('issueDetail.none');
-  const ref = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(
     typeof window !== 'undefined' ? window.innerWidth : ISSUE_CARD_COMPACT_MAX_PX,
   );
+  const [scrollEl, setScrollEl] = useState<HTMLElement | null>(null);
+  const [scrollMargin, setScrollMargin] = useState(0);
 
   useEffect(() => {
-    const el = ref.current;
+    const el = document.querySelector('[data-app-scroll]');
+    setScrollEl(el instanceof HTMLElement ? el : null);
+  }, []);
+
+  useEffect(() => {
+    const el = listRef.current;
     if (!el) return;
     const ro = new ResizeObserver((entries) => {
       const w = entries[0]?.contentRect.width;
@@ -382,32 +403,98 @@ export function IssueList({
 
   const cols = issueCardColumnCount(width);
 
+  const rows = useMemo(() => {
+    const out: Issue[][] = [];
+    for (let i = 0; i < items.length; i += cols) {
+      out.push(items.slice(i, i + cols));
+    }
+    return out;
+  }, [items, cols]);
+
+  const measureScrollMargin = useCallback(() => {
+    const list = listRef.current;
+    const scroller = scrollEl;
+    if (!list || !scroller) return;
+    const listRect = list.getBoundingClientRect();
+    const scrollRect = scroller.getBoundingClientRect();
+    setScrollMargin(listRect.top - scrollRect.top + scroller.scrollTop);
+  }, [scrollEl]);
+
+  useLayoutEffect(() => {
+    measureScrollMargin();
+  }, [measureScrollMargin, rows.length, cols, width]);
+
+  useEffect(() => {
+    if (!scrollEl) return;
+    const onResize = () => measureScrollMargin();
+    window.addEventListener('resize', onResize);
+    const ro = new ResizeObserver(onResize);
+    ro.observe(scrollEl);
+    if (listRef.current) ro.observe(listRef.current);
+    return () => {
+      window.removeEventListener('resize', onResize);
+      ro.disconnect();
+    };
+  }, [scrollEl, measureScrollMargin]);
+
+  const rowVirtualizer = useVirtualizer({
+    count: rows.length,
+    getScrollElement: () => scrollEl,
+    estimateSize: () => ESTIMATED_ROW_HEIGHT_PX,
+    overscan: ROW_OVERSCAN,
+    gap: ROW_GAP_PX,
+    scrollMargin,
+  });
+
   if (items.length === 0) {
     return (
-      <div ref={ref} className="min-w-0">
+      <div ref={listRef} className="min-w-0">
         <p className="text-[15px] text-[var(--text-secondary)]">{empty}</p>
       </div>
     );
   }
 
+  const virtualRows = rowVirtualizer.getVirtualItems();
+  const totalSize = rowVirtualizer.getTotalSize();
+
   return (
-    <div ref={ref} className="min-w-0">
+    <div ref={listRef} className="min-w-0">
       <div
-        className="grid gap-3"
-        style={{
-          gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
-          alignItems: 'stretch',
-        }}
+        className="relative w-full"
+        style={{ height: totalSize }}
       >
-        {items.map((issue) => (
-          <IssueCard
-            key={issue.ID}
-            issue={issue}
-            hideVin={hideVin}
-            layoutWidth={width}
-            highlighted={highlightedIds?.has(issue.ID) === true}
-          />
-        ))}
+        {virtualRows.map((virtualRow) => {
+          const row = rows[virtualRow.index] ?? [];
+          return (
+            <div
+              key={virtualRow.key}
+              data-index={virtualRow.index}
+              ref={rowVirtualizer.measureElement}
+              className="absolute left-0 top-0 w-full"
+              style={{
+                transform: `translateY(${virtualRow.start - scrollMargin}px)`,
+              }}
+            >
+              <div
+                className="grid gap-3"
+                style={{
+                  gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
+                  alignItems: 'stretch',
+                }}
+              >
+                {row.map((issue) => (
+                  <IssueCard
+                    key={issue.ID}
+                    issue={issue}
+                    hideVin={hideVin}
+                    layoutWidth={width}
+                    highlighted={highlightedIds?.has(issue.ID) === true}
+                  />
+                ))}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

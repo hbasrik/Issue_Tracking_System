@@ -78,6 +78,41 @@ const STATUSES: IssueStatus[] = [
 const ADVANCED_FILTERS_OPEN_KEY = 'karea-issues-advanced-filters-open';
 const AUTO_REFRESH_MS = 30_000;
 const HIGHLIGHT_MS = 6_000;
+const PAGE_SIZE = 50;
+const DEFAULT_BOARD_STATUSES = ['OPEN', 'IN_PROGRESS'] as const;
+const SCROLL_LOAD_THRESHOLD_PX = 480;
+
+function sortIssuesNewestFirst(list: Issue[]): Issue[] {
+  return list.slice().sort((a, b) => {
+    const ta = Date.parse(issueReportedAtIso(a) || '') || 0;
+    const tb = Date.parse(issueReportedAtIso(b) || '') || 0;
+    if (tb !== ta) return tb - ta;
+    return b.ID - a.ID;
+  });
+}
+
+/** Silent 30s refresh: replace first page, keep later pages, dedupe by id. */
+function mergeFirstPage(existing: Issue[], firstPage: Issue[]): Issue[] {
+  const firstIds = new Set(firstPage.map((i) => i.ID));
+  // Keep anything not in the fresh first page (do not assume len === PAGE_SIZE).
+  const later = existing.filter((i) => !firstIds.has(i.ID));
+  return sortIssuesNewestFirst([...firstPage, ...later]);
+}
+
+function statusQueryParam(statuses: Set<string>): string | undefined {
+  if (statuses.size === 0) return undefined;
+  return [...statuses].join(',');
+}
+
+function resolveInitialStatuses(
+  saved: ReturnType<typeof readIssuesBoardUI>,
+): Set<string> {
+  if (!saved) return new Set(DEFAULT_BOARD_STATUSES);
+  if (Object.prototype.hasOwnProperty.call(saved, 'statuses')) {
+    return new Set(saved.statuses ?? []);
+  }
+  return new Set(DEFAULT_BOARD_STATUSES);
+}
 
 function readAdvancedFiltersOpen(): boolean {
   try {
@@ -108,7 +143,7 @@ function initialBoardFilters() {
       defectPartIds: new Set<number>(),
       defectTypeIds: new Set<number>(),
       severities: new Set<SeverityLevel>(),
-      statuses: new Set<string>(),
+      statuses: new Set<string>(DEFAULT_BOARD_STATUSES),
       advancedOpen: readAdvancedFiltersOpen(),
       scrollTop: 0,
     };
@@ -120,7 +155,7 @@ function initialBoardFilters() {
     defectPartIds: new Set(saved.defectPartIds ?? []),
     defectTypeIds: new Set(saved.defectTypeIds ?? []),
     severities: new Set(saved.severities ?? []),
-    statuses: new Set(saved.statuses ?? []),
+    statuses: resolveInitialStatuses(saved),
     advancedOpen:
       typeof saved.advancedOpen === 'boolean'
         ? saved.advancedOpen
@@ -158,6 +193,8 @@ export default function IssuesPage() {
   const [severities, setSeverities] = useState<Set<SeverityLevel>>(boot.severities);
   const [statuses, setStatuses] = useState<Set<string>>(boot.statuses);
   const [items, setItems] = useState<Issue[]>([]);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [staleWarning, setStaleWarning] = useState<string | null>(null);
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
@@ -169,6 +206,21 @@ export default function IssuesPage() {
   const knownIdsRef = useRef<Set<number> | null>(null);
   const highlightTimersRef = useRef<number[]>([]);
   const pendingScrollRef = useRef(boot.scrollTop);
+  const itemsRef = useRef<Issue[]>([]);
+  const hasMoreRef = useRef(false);
+  const loadingMoreRef = useRef(false);
+  const catalogsLoadedRef = useRef(false);
+  const fetchGenRef = useRef(0);
+  const cursorRef = useRef<{
+    beforeDate?: string;
+    beforeId?: number;
+    nextOffset?: number;
+  } | null>(null);
+
+  itemsRef.current = items;
+  hasMoreRef.current = hasMore;
+
+  const drillDown = Boolean(homeStat || analysisStat);
 
   const persistBoardUI = useCallback(() => {
     const liveTop = readAppScrollTop();
@@ -221,41 +273,92 @@ export default function IssuesPage() {
     highlightTimersRef.current.push(timer);
   }, []);
 
+  const applyPageMeta = useCallback(
+    (res: {
+      has_more?: boolean;
+      next_offset?: number;
+      next_before_date?: string;
+      next_before_id?: number;
+    }) => {
+      const more = res.has_more === true;
+      setHasMore(more);
+      hasMoreRef.current = more;
+      if (more) {
+        cursorRef.current = {
+          beforeDate: res.next_before_date,
+          beforeId: res.next_before_id,
+          nextOffset: res.next_offset,
+        };
+      } else {
+        cursorRef.current = null;
+      }
+    },
+    [],
+  );
+
+  const loadCatalogs = useCallback(async () => {
+    const [typesRes, zonesRes, partsRes, defectTypesRes] = await Promise.all([
+      api.listIssueTypes().catch(() => ({ items: [] as IssueType[] })),
+      api.listDefectCatalogZones().catch(() => ({ items: [] as DefectZone[] })),
+      api.listDefectCatalogParts().catch(() => ({ items: [] as DefectPart[] })),
+      api.listDefectCatalogTypes().catch(() => ({ items: [] as DefectType[] })),
+    ]);
+    setIssueTypes(typesRes.items ?? []);
+    setDefectZones(zonesRes.items ?? []);
+    setDefectParts(partsRes.items ?? []);
+    setDefectTypes(defectTypesRes.items ?? []);
+    catalogsLoadedRef.current = true;
+  }, []);
+
+  const boardStatusParam = useCallback(() => {
+    if (homeStat || analysisStat) return undefined;
+    return statusQueryParam(statuses);
+  }, [homeStat, analysisStat, statuses]);
+
   const load = useCallback(
     async (opts?: { silent?: boolean }) => {
       const silent = opts?.silent === true;
       if (!silent) setError(null);
+      const status = boardStatusParam();
+      const isDrill = Boolean(homeStat || analysisStat);
+      const gen = silent ? fetchGenRef.current : ++fetchGenRef.current;
       try {
-        const [res, typesRes, zonesRes, partsRes, defectTypesRes] =
-          await Promise.all([
-            api.listIssues(),
-            api.listIssueTypes().catch(() => ({ items: [] as IssueType[] })),
-            api
-              .listDefectCatalogZones()
-              .catch(() => ({ items: [] as DefectZone[] })),
-            api
-              .listDefectCatalogParts()
-              .catch(() => ({ items: [] as DefectPart[] })),
-            api
-              .listDefectCatalogTypes()
-              .catch(() => ({ items: [] as DefectType[] })),
-          ]);
-        const list = (res.items ?? []).slice().sort((a, b) => {
-          const ta = Date.parse(issueReportedAtIso(a) || '') || 0;
-          const tb = Date.parse(issueReportedAtIso(b) || '') || 0;
-          if (tb !== ta) return tb - ta;
-          return b.ID - a.ID;
-        });
+        const issuesPromise = isDrill
+          ? api.listIssues({ status })
+          : api.listIssues({
+              status,
+              limit: PAGE_SIZE,
+              offset: 0,
+            });
+        const catalogPromise =
+          !catalogsLoadedRef.current || !silent
+            ? loadCatalogs()
+            : Promise.resolve();
+        const [res] = await Promise.all([issuesPromise, catalogPromise]);
+        if (gen !== fetchGenRef.current) return;
+        const page = sortIssuesNewestFirst(res.items ?? []);
+
+        let nextList: Issue[];
+        if (silent && !isDrill) {
+          nextList = mergeFirstPage(itemsRef.current, page);
+        } else {
+          nextList = page;
+          if (!isDrill) {
+            applyPageMeta(res);
+          } else {
+            setHasMore(false);
+            hasMoreRef.current = false;
+            cursorRef.current = null;
+          }
+        }
+
         const { knownIds, newCriticalIds } = detectNewCriticalIds(
           knownIdsRef.current,
-          list,
+          nextList,
         );
         knownIdsRef.current = knownIds;
-        setItems(list);
-        setIssueTypes(typesRes.items ?? []);
-        setDefectZones(zonesRes.items ?? []);
-        setDefectParts(partsRes.items ?? []);
-        setDefectTypes(defectTypesRes.items ?? []);
+        setItems(nextList);
+        itemsRef.current = nextList;
         setUpdatedAt(new Date());
         setStaleWarning(null);
         if (newCriticalIds.length > 0) {
@@ -264,6 +367,7 @@ export default function IssuesPage() {
           if (!play.ok && play.blocked) setSoundUnlockNeeded(true);
         }
       } catch (err) {
+        if (gen !== fetchGenRef.current) return;
         // 401 clears the session and navigates to login — do not paint an empty list.
         if (isAuthError(err) || (err instanceof ApiError && err.status === 401)) {
           return;
@@ -276,8 +380,67 @@ export default function IssuesPage() {
         }
       }
     },
-    [t, flashCritical],
+    [
+      t,
+      flashCritical,
+      boardStatusParam,
+      homeStat,
+      analysisStat,
+      loadCatalogs,
+      applyPageMeta,
+    ],
   );
+
+  const loadMore = useCallback(async () => {
+    if (homeStat || analysisStat) return;
+    if (!hasMoreRef.current || loadingMoreRef.current) return;
+    const cursor = cursorRef.current;
+    if (!cursor) return;
+
+    const gen = fetchGenRef.current;
+    loadingMoreRef.current = true;
+    setLoadingMore(true);
+    try {
+      const status = boardStatusParam();
+      const useKeyset =
+        cursor.beforeDate != null && cursor.beforeId != null;
+      const res = await api.listIssues(
+        useKeyset
+          ? {
+              status,
+              limit: PAGE_SIZE,
+              beforeDate: cursor.beforeDate,
+              beforeId: cursor.beforeId,
+            }
+          : {
+              status,
+              limit: PAGE_SIZE,
+              offset: cursor.nextOffset ?? itemsRef.current.length,
+            },
+      );
+      if (gen !== fetchGenRef.current) return;
+      const page = sortIssuesNewestFirst(res.items ?? []);
+      const existingIds = new Set(itemsRef.current.map((i) => i.ID));
+      const appended = page.filter((i) => !existingIds.has(i.ID));
+      const nextList = [...itemsRef.current, ...appended];
+      setItems(nextList);
+      itemsRef.current = nextList;
+      applyPageMeta(res);
+      setStaleWarning(null);
+    } catch (err) {
+      if (gen !== fetchGenRef.current) return;
+      if (isAuthError(err) || (err instanceof ApiError && err.status === 401)) {
+        return;
+      }
+      const msg = err instanceof Error ? err.message : t('issue.listFailed');
+      setStaleWarning(msg || t('issue.refreshStale'));
+    } finally {
+      if (gen === fetchGenRef.current) {
+        loadingMoreRef.current = false;
+        setLoadingMore(false);
+      }
+    }
+  }, [homeStat, analysisStat, boardStatusParam, applyPageMeta, t]);
 
   useEffect(() => {
     const prev = window.history.scrollRestoration;
@@ -295,7 +458,12 @@ export default function IssuesPage() {
     };
   }, []);
 
+  // Reset + fetch page 1 when server-side query inputs change.
   useEffect(() => {
+    knownIdsRef.current = null;
+    cursorRef.current = null;
+    setHasMore(false);
+    hasMoreRef.current = false;
     void load();
   }, [load]);
 
@@ -305,6 +473,25 @@ export default function IssuesPage() {
     }, AUTO_REFRESH_MS);
     return () => window.clearInterval(id);
   }, [load]);
+
+  // Infinite scroll against AppShell [data-app-scroll].
+  useEffect(() => {
+    if (drillDown) return;
+    const node = document.querySelector('[data-app-scroll]');
+    if (!(node instanceof HTMLElement)) return;
+    const scrollEl = node;
+    function onScroll() {
+      if (!hasMoreRef.current || loadingMoreRef.current) return;
+      const remaining =
+        scrollEl.scrollHeight - scrollEl.scrollTop - scrollEl.clientHeight;
+      if (remaining <= SCROLL_LOAD_THRESHOLD_PX) {
+        void loadMore();
+      }
+    }
+    scrollEl.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => scrollEl.removeEventListener('scroll', onScroll);
+  }, [drillDown, loadMore, items.length]);
 
   // Restore scroll after the list has painted (not mid-fetch while height ≈ 0).
   useEffect(() => {
@@ -1013,6 +1200,14 @@ export default function IssuesPage() {
           highlightedIds={highlightedIds}
           onStatusChanged={() => void load()}
         />
+        {loadingMore ? (
+          <p
+            className="mt-3 text-center text-[13px] text-[var(--text-secondary)]"
+            aria-live="polite"
+          >
+            {t('issue.loadingMore')}
+          </p>
+        ) : null}
       </div>
     </section>
   );

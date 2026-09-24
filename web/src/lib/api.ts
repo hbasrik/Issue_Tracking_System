@@ -536,12 +536,27 @@ export const api = {
     );
   },
 
-  listIssues(status?: string, vin?: string) {
+  /**
+   * List issues. Call as listIssues(status?, vin?) or listIssues({ status, vin, limit, … }).
+   * Omit limit for the full list (Home / vehicle panels). Board uses limit + keyset/offset.
+   */
+  listIssues(
+    statusOrOpts?: string | ListIssuesOptions,
+    vin?: string,
+  ) {
+    const opts: ListIssuesOptions =
+      statusOrOpts != null && typeof statusOrOpts === 'object'
+        ? statusOrOpts
+        : { status: statusOrOpts, vin };
     const params = new URLSearchParams();
-    if (status) params.set('status', status);
-    if (vin) params.set('vin', vin);
+    if (opts.status) params.set('status', opts.status);
+    if (opts.vin) params.set('vin', opts.vin);
+    if (opts.limit != null) params.set('limit', String(opts.limit));
+    if (opts.offset != null) params.set('offset', String(opts.offset));
+    if (opts.beforeDate) params.set('before_date', opts.beforeDate);
+    if (opts.beforeId != null) params.set('before_id', String(opts.beforeId));
     const q = params.toString();
-    return request<{ items: Issue[] }>(`/issues${q ? `?${q}` : ''}`);
+    return request<IssueListResponse>(`/issues${q ? `?${q}` : ''}`);
   },
 
   listIssueTypes() {
@@ -949,6 +964,23 @@ export interface DeliverResult {
 export interface IssueType {
   ID: number;
   Name: string;
+}
+
+export interface ListIssuesOptions {
+  status?: string;
+  vin?: string;
+  limit?: number;
+  offset?: number;
+  beforeDate?: string;
+  beforeId?: number;
+}
+
+export interface IssueListResponse {
+  items: Issue[];
+  has_more?: boolean;
+  next_offset?: number;
+  next_before_date?: string;
+  next_before_id?: number;
 }
 
 export interface Issue {

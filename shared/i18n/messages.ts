@@ -304,6 +304,7 @@ export const tr = {
   'issue.detailFailed': 'Issue detayı yüklenemedi',
   'issue.refreshStale':
     'Liste yenilenemedi — ekrandaki veriler güncel olmayabilir.',
+  'issue.loadingMore': 'Daha fazla yükleniyor…',
   'issue.soundUnlock': 'Sesi aç',
   'issue.soundUnlockHint':
     'Yeni kritik hatalarda ses çalmak için tıklayın',
@@ -1438,6 +1439,7 @@ export const en: Record<MessageKey, string> = {
   'issue.detailFailed': 'Could not load issue detail',
   'issue.refreshStale':
     'Could not refresh the list — data on screen may be stale.',
+  'issue.loadingMore': 'Loading more…',
   'issue.soundUnlock': 'Enable sound',
   'issue.soundUnlockHint': 'Tap to allow sound for new critical issues',
   'settings.soundAlerts': 'Sound alerts',
