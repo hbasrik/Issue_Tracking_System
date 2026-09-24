@@ -1,8 +1,25 @@
 {
-  "border_on_card": 2.75,
-  "border_on_page": 2.6,
-  "card_on_page": 1.06,
-  "border": "rgb(155, 156, 158)",
-  "bgPage": "#F7F9FB",
-  "bgSurface1": "#FFFFFF"
+  "min_required": 3,
+  "light": {
+    "before": {
+      "border_on_card": 2.75,
+      "border_on_page": 2.6
+    },
+    "after": {
+      "border_on_card": 3.29,
+      "border_on_page": 3.12,
+      "border": "rgb(140, 142, 144)"
+    }
+  },
+  "dark": {
+    "before": {
+      "border_on_card": 2.69,
+      "border_on_page": 2.92
+    },
+    "after": {
+      "border_on_card": 3.07,
+      "border_on_page": 3.34,
+      "border": "rgb(94, 103, 111)"
+    }
+  }
 }

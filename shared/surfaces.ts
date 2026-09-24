@@ -30,15 +30,15 @@ export function mixTowardBlack(hex: string, blackPct: number): string {
 export const lightInk = '#101418';
 
 /**
- * Light surfaces. Border is ink mixed 58% toward white (~rgb(155,156,158)) so
- * card edges separate from page (#F7F9FB) and white fill on device pixels.
- * Previous platform value (72% → ~1.88:1 on white) was too faint on mobile.
+ * Light surfaces. Border is ink mixed 52% toward white so card edges meet
+ * WCAG 3:1 non-text contrast against both bgSurface1 and bgPage
+ * (was 58% → ~2.75:1 on white).
  */
 export const lightSurfaces = {
   bgPage: '#F7F9FB',
   bgSurface1: '#FFFFFF',
   bgSurface2: '#F1F5F9',
-  border: mixTowardWhite(lightInk, 58),
+  border: mixTowardWhite(lightInk, 52),
   textPrimary: lightInk,
   textSecondary: '#5B6672',
   accent: BRAND_PRIMARY,
@@ -48,7 +48,8 @@ export const darkSurfaces = {
   bgPage: '#0B0F14',
   bgSurface1: '#131920',
   bgSurface2: mixTowardWhite('#131920', 16),
-  border: mixTowardWhite('#26313C', 22),
+  /** Lightened enough for ≥3:1 against surface-1 and page (was 22% → ~2.69). */
+  border: mixTowardWhite('#26313C', 26),
   textPrimary: '#F5F7FA',
   textSecondary: mixTowardWhite('#8B98A5', 14),
   accent: BRAND_PRIMARY,
