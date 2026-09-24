@@ -116,6 +116,9 @@ Tablo/accordion kaldırıldı; tek uyarlanabilir kart (`shared/issueCardLayout`)
 Web detay rotası `/issues/:id` (eski `IssueDetailPanel` aynı panel). Filtreler
 aynı. Web DONE akışına çözüm açıklaması formu eklendi (API zorunluluğu; mobille
 hizalı — çözüm fotoğrafı MediaGallery’den).
+Kartın tamamı detaya gider (hover/active veya basılı opaklık); tek istisna
+fotoğraf → tam ekran (`stopPropagation` / iç Pressable). Sıkışık yerleşimde
+açıklama + sınıflandırma tek satır kırpılır (`truncate` / `numberOfLines={1}`).
 Şiddet renkleri `shared/brand.ts` → `severityColors` tek kaynak; kart metin
 + çubuk aynı. Medya türevleri: `?thumb=1` (192) / `?thumb=md` (800) /
 orijinal; grid kartları md kullanır. Geriye dönük:
@@ -142,18 +145,19 @@ Mevcut Issues sayfasına (yeni sayfa yok):
 
 ### A15. Issues pano sayfalama + sanallaştırma `[x]` — 2026-09-22
 Web Issues panosu:
-- Varsayılan durum filtresi OPEN+IN_PROGRESS (kayıtlı board UI’deki
-  `statuses` — boş dizi dahil — korunur)
+- Varsayılan durum filtresi yok (tüm durumlar; board UI `karea-issues-board-ui-v2`,
+  kayıtlı `statuses` — boş dizi dahil — korunur). Eski OPEN+IN_PROGRESS
+  varsayılanı kaldırıldı (2026-09-24).
 - `GET /issues` `limit=50` + keyset (`before_date`/`before_id`) ile sonsuz
   kaydırma; 30 sn yenileme yalnız ilk sayfayı alır ve mevcut listeye merge
   eder (sonraki sayfalar korunur, id ile dedupe)
-- `homeStat` / `analysisStat` drill-down: limitsiz tam liste
+- `homeStat` / `analysisStat` drill-down: limitsiz tam liste (davranış aynı)
 - Kart grid satır sanallaştırması (`@tanstack/react-virtual`, scroll =
   AppShell `[data-app-scroll]`)
-- Dışa aktarma: ekranda yüklü + filtrelenmiş küme (görünenle aynı)
+- Dışa aktarma / yazdırma: ekranda yüklü + filtrelenmiş küme (`visible`)
 
 Mobil `MyIssuesScreen` (aynı API sözleşmesi):
-- Varsayılan OPEN+IN_PROGRESS; board UI AsyncStorage (`karea-issues-board-ui`);
+- Varsayılan filtresiz; board UI AsyncStorage (`karea-issues-board-ui-v2`);
   kayıtlı boş `statuses` = tüm durumlar
 - Sayfa boyutu 50 + keyset sonsuz kaydırma; footer `issue.loadingMore`;
   30 sn yalnız ilk sayfa merge
@@ -211,6 +215,18 @@ içeriğe göre; ızgarada eşit yükseklik korunur.
 Kenarlık WCAG 3:1 (açık/koyu, kart+sayfa). Aşama performansı yalnız
 Fabrika/Depo **madde** satırları; “Tamamlandı” araç çubuğu çıkarıldı
 (EOL hunisi araç sayar). Hint metinleri güncellendi.
+
+### A19. Issues filtre paneli + yazdırma fotoğraf `[x]` — 2026-09-24
+- Mobil + web &lt;600px: durum / şiddet / gelişmiş filtreler tek katlanabilir
+  blok (varsayılan kapalı); VIN/bildiren arama açıkta. Kapalıyken aktif
+  filtre özeti + temizle. ≥600px web: önceki yerleşim (durum+şiddet görünür).
+- Ana ekran / analiz `homeStat`·`analysisStat` yönlendirmelerine dokunulmadı.
+- Liste yazdırma: isteğe bağlı “Fotoğraflarla yazdır” (≈2,4 cm thumb);
+  yazdırmadan önce `preloadAuthenticatedMedia` ile tüm satır fotoğrafları
+  yüklenir (tembel yükleme tuzağı yok). Fotoğrafsız satırda boş kutu yer tutar.
+- Yazdırma kapsamı = CSV ile aynı: yüklü sayfalar ∩ istemci filtresi (`visible`),
+  DB’deki tüm eşleşen kayıtlar değil (sayfalı board’da kaydırılmamış sayfalar
+  çıkmaz; drill-down’da limitsiz liste tamdır).
 
 ---
 
@@ -327,7 +343,7 @@ ortamındaki dağınıklık meselesi.
 ## Önerilen sıra
 
 **Tamamlananlar (kod):** A1 (mobil offline kuyruk — cihazda doğrulandı),
-A4, A5, A11–A18, B7’nin sunucu gerektirmeyen kısmı.
+A4, A5, A11–A19, B7’nin sunucu gerektirmeyen kısmı.
 
 **Şimdi (kod, dış bağımlılık yok):**
 1. **A0** — geliştirme DB yedeği (en yüksek; veri git’te yok)
