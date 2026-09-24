@@ -913,6 +913,7 @@ export interface ChecklistItem {
   EolPhase?: 'BRANCH' | 'DEPOT' | null;
   SectionKey?: string | null;
   SectionSort?: number | null;
+  IsActive?: boolean;
   ProgressID?: number | null;
   CheckerName?: string;
   CheckDate?: string | null;

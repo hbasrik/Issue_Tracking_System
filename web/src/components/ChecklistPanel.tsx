@@ -15,6 +15,12 @@ import { useAuth } from '../auth/AuthProvider';
 import { Perm } from '../auth/permissions';
 import { ChecklistPrint } from './print/ChecklistPrint';
 import { groupItemsBySectionKey } from '../../../shared/checklistSections';
+import {
+  countActiveChecklistProgress,
+  filterByEolPhase,
+  splitChecklistByActive,
+} from '../../../shared/checklistActive';
+import { ActiveBadge } from './ActiveBadge';
 
 interface ChecklistPanelProps {
   vin: string;
@@ -114,25 +120,33 @@ export function ChecklistPanel({
     void load();
   }, [load, controlled]);
 
-  const visible = useMemo(() => {
-    if (!eolPhase) return items;
-    return items.filter((item) => item.EolPhase === eolPhase);
-  }, [items, eolPhase]);
+  const phaseItems = useMemo(
+    () => filterByEolPhase(items, eolPhase),
+    [items, eolPhase],
+  );
+  const { active: activeItems, inactiveHistorical } = useMemo(
+    () => splitChecklistByActive(phaseItems),
+    [phaseItems],
+  );
+  const counts = useMemo(
+    () => countActiveChecklistProgress(activeItems),
+    [activeItems],
+  );
 
   const grouped = useMemo(() => {
-    const hasSection = visible.some((i) => Boolean(i.SectionKey?.trim()));
+    const hasSection = activeItems.some((i) => Boolean(i.SectionKey?.trim()));
     if (!hasSection) {
-      return [{ title: null as string | null, items: visible }];
+      return [{ title: null as string | null, items: activeItems }];
     }
-    return groupItemsBySectionKey(visible, t).map((g) => ({
+    return groupItemsBySectionKey(activeItems, t).map((g) => ({
       title: g.title as string | null,
       items: g.items,
     }));
-  }, [visible, t]);
+  }, [activeItems, t]);
 
-  const done = visible.filter((item) => PASSING.has(item.Status)).length;
   const editor = type === 'eol' ? 'eol' : 'yesno';
   const readOnly = locked || !canEdit;
+  const [inactiveOpen, setInactiveOpen] = useState(false);
 
   return (
     <div
@@ -141,16 +155,24 @@ export function ChecklistPanel({
         borderColor: 'var(--border)',
         opacity: readOnly ? 0.55 : 1,
       }}
+      data-checklist-active-total={counts.total}
+      data-checklist-active-remaining={counts.remaining}
+      data-checklist-inactive-count={inactiveHistorical.length}
     >
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-lg font-semibold">{title}</h2>
         <div className="flex flex-wrap items-center gap-2">
           <p className="text-[13px] text-[var(--text-secondary)]">
-            {visible.length === 0
+            {counts.total === 0
               ? t('checklist.none')
-              : t('checklist.passing', { done, total: visible.length })}
+              : t('checklist.passing', {
+                  done: counts.passing,
+                  total: counts.total,
+                })}
           </p>
-          {!eolPhase ? <ChecklistPrint vin={vin} type={type} items={visible} /> : null}
+          {!eolPhase ? (
+            <ChecklistPrint vin={vin} type={type} items={activeItems} />
+          ) : null}
         </div>
       </div>
       {hint && (
@@ -174,6 +196,7 @@ export function ChecklistPanel({
           borderColor: 'var(--border)',
           pointerEvents: readOnly ? 'none' : undefined,
         }}
+        data-checklist-active-list
       >
         {grouped.map((g) => (
           <li key={g.title ?? '__flat'} className="list-none">
@@ -207,11 +230,46 @@ export function ChecklistPanel({
           </li>
         ))}
       </ul>
-      {visible.length === 0 && !error && (
+      {activeItems.length === 0 && !error && (
         <p className="mt-3 text-[13px] text-[var(--text-secondary)]">
           {t('checklist.emptyStage')}
         </p>
       )}
+      {inactiveHistorical.length > 0 ? (
+        <details
+          className="mt-4 rounded-lg border"
+          style={{ borderColor: 'var(--border)' }}
+          open={inactiveOpen}
+          onToggle={(e) => setInactiveOpen((e.target as HTMLDetailsElement).open)}
+          data-checklist-inactive-section
+        >
+          <summary className="cursor-pointer select-none px-3 py-2 text-[13px] font-semibold text-[var(--text-secondary)]">
+            {t('checklist.inactiveSection', { n: inactiveHistorical.length })}
+          </summary>
+          <p className="border-t px-3 py-2 text-[12px] text-[var(--text-secondary)]" style={{ borderColor: 'var(--border)' }}>
+            {t('checklist.inactiveHint')}
+          </p>
+          <ul className="divide-y border-t" style={{ borderColor: 'var(--border)' }}>
+            {inactiveHistorical.map((item) => (
+              <li
+                key={item.ItemID}
+                className="flex flex-col gap-1 px-3 py-3 opacity-70"
+                data-checklist-inactive-item={item.ItemID}
+              >
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-[14px] text-[var(--text-primary)]">
+                    {item.ItemNo}. {item.ItemText}
+                  </span>
+                  <ActiveBadge active={false} />
+                </div>
+                <p className="text-[12px] text-[var(--text-secondary)]">
+                  {item.Status}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </details>
+      ) : null}
     </div>
   );
 }
@@ -284,7 +342,7 @@ function EolItemRow({
   }
 
   return (
-    <li className="py-3 text-[15px]">
+    <li className="py-3 text-[15px]" data-checklist-active-item={item.ItemID}>
       <div className="flex flex-wrap items-start justify-between gap-2">
         <span className="min-w-0 flex-1 break-words">
           <span className="mr-2 text-[13px] text-[var(--text-secondary)]">
@@ -414,7 +472,7 @@ function YesNoItemRow({
   }
 
   return (
-    <li className="py-3 text-[15px]">
+    <li className="py-3 text-[15px]" data-checklist-active-item={item.ItemID}>
       <div className="flex flex-wrap items-start justify-between gap-2">
         <label className="flex min-h-touch flex-1 items-center gap-3">
           <input
