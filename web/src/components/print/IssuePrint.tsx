@@ -13,7 +13,10 @@ import {
 import { issueStationLabel, defectLabels, reporterFallback } from '../../lib/issueDetailCopy';
 import { issueStatusLabel } from '../../lib/issueStatus';
 import { printSection } from '../../lib/print';
-import { AuthenticatedMediaImg } from '../AuthenticatedMediaImg';
+import {
+  AuthenticatedMediaImg,
+  preloadAuthenticatedMedia,
+} from '../AuthenticatedMediaImg';
 import { PrintButton, PrintHeader, PrintRoot } from './PrintRoot';
 
 function severityLabel(severity: string, t: { (key: 'severity.critical' | 'severity.medium' | 'severity.low'): string }): string {
@@ -31,23 +34,64 @@ export function IssueListPrint({
   filters: string[];
 }) {
   const { t, locale } = useI18n();
-  const { user } = useAuth();
+  const { user, token } = useAuth();
+  const [includePhotos, setIncludePhotos] = useState(true);
+  /** Mount thumbs only for an active print pass (avoids fetching every board open). */
+  const [photosMounted, setPhotosMounted] = useState(false);
+  const [printing, setPrinting] = useState(false);
   const [printedAt, setPrintedAt] = useState(() =>
     formatDateTime(new Date().toISOString(), locale),
   );
   const filterText = filters.length > 0 ? filters.join(' · ') : t('print.filterNone');
 
+  async function onPrint() {
+    setPrinting(true);
+    try {
+      const withPhotos = includePhotos;
+      flushSync(() => {
+        setPrintedAt(formatDateTime(new Date().toISOString(), locale));
+        setPhotosMounted(withPhotos);
+      });
+      if (withPhotos && token) {
+        const paths = issues
+          .map((i) => i.ReportPhotoPath)
+          .filter((p): p is string => Boolean(p));
+        await preloadAuthenticatedMedia(
+          token,
+          paths.map((storagePath) => ({ storagePath, variant: 'sm' as const })),
+        );
+        // Remount/paint img nodes from warm cache, then let printSection wait on load.
+        flushSync(() => setPhotosMounted(true));
+        await new Promise<void>((r) => {
+          requestAnimationFrame(() => requestAnimationFrame(() => r()));
+        });
+      }
+      await printSection('issues-list');
+    } finally {
+      setPhotosMounted(false);
+      setPrinting(false);
+    }
+  }
+
   return (
     <>
-      <PrintButton
-        label={t('common.print')}
-        icon={<Printer size={15} aria-hidden />}
-        disabled={issues.length === 0}
-        onClick={() => {
-          flushSync(() => setPrintedAt(formatDateTime(new Date().toISOString(), locale)));
-          void printSection('issues-list');
-        }}
-      />
+      <div className="inline-flex flex-wrap items-center gap-2">
+        <label className="inline-flex min-h-touch cursor-pointer items-center gap-2 text-[13px] text-[var(--text-primary)]">
+          <input
+            type="checkbox"
+            checked={includePhotos}
+            onChange={(e) => setIncludePhotos(e.target.checked)}
+            className="h-4 w-4 accent-[var(--accent)]"
+          />
+          {t('print.withPhotos')}
+        </label>
+        <PrintButton
+          label={t('common.print')}
+          icon={<Printer size={15} aria-hidden />}
+          disabled={issues.length === 0 || printing}
+          onClick={() => void onPrint()}
+        />
+      </div>
       <PrintRoot id="issues-list">
         <PrintHeader
           title={t('print.issueList')}
@@ -63,6 +107,7 @@ export function IssueListPrint({
         <table className="print-table">
           <thead>
             <tr>
+              {includePhotos ? <th className="print-col-photo">{t('print.photo')}</th> : null}
               <th>{t('issue.id')}</th>
               <th>{t('issue.vin')}</th>
               <th>{t('issue.type')}</th>
@@ -76,6 +121,22 @@ export function IssueListPrint({
           <tbody>
             {issues.map((issue) => (
               <tr key={issue.ID}>
+                {includePhotos ? (
+                  <td className="print-col-photo">
+                    <div className="print-list-thumb">
+                      {photosMounted && issue.ReportPhotoPath ? (
+                        <AuthenticatedMediaImg
+                          storagePath={issue.ReportPhotoPath}
+                          variant="sm"
+                          lazy={false}
+                          alt=""
+                        />
+                      ) : (
+                        <span className="print-list-thumb-empty" aria-hidden />
+                      )}
+                    </div>
+                  </td>
+                ) : null}
                 <td>#{issue.ID}</td>
                 <td>{issue.VIN}</td>
                 <td>{issue.IssueTypeName || t('common.emDash')}</td>

@@ -52,6 +52,37 @@ function cacheKey(
 const blobUrlCache = new Map<string, string>();
 
 /**
+ * Eagerly fetch media into the blob cache (print / export). Call before
+ * rendering print roots so AuthenticatedMediaImg can paint without waiting
+ * for IntersectionObserver (lazy list thumbs never loaded off-screen).
+ */
+export async function preloadAuthenticatedMedia(
+  token: string,
+  items: { storagePath: string; variant?: MediaImageVariant }[],
+): Promise<void> {
+  if (!token || items.length === 0) return;
+  await Promise.all(
+    items.map(async ({ storagePath, variant }) => {
+      if (!storagePath) return;
+      const key = cacheKey(storagePath, variant, undefined, token);
+      if (blobUrlCache.has(key)) return;
+      try {
+        const res = await fetch(resolveUrl(storagePath, variant, undefined), {
+          headers: { Authorization: `Bearer ${token}` },
+          cache: 'force-cache',
+        });
+        if (!res.ok) return;
+        const blob = await res.blob();
+        const objectUrl = URL.createObjectURL(blob);
+        blobUrlCache.set(key, objectUrl);
+      } catch {
+        /* leave missing; print cell shows empty slot */
+      }
+    }),
+  );
+}
+
+/**
  * Loads /uploads/* with the session Bearer token (browser <img> cannot).
  * Uses HTTP cache (force-cache) plus an in-memory blob map so remounts /
  * silent list refreshes do not re-download immutable media.

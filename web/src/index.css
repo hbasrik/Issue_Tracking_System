@@ -616,6 +616,34 @@ tr.cursor-pointer:focus:not(:focus-visible) {
     page-break-inside: avoid;
   }
 
+  .print-col-photo {
+    width: 2.6cm;
+    max-width: 2.6cm;
+  }
+
+  .print-list-thumb {
+    width: 2.4cm;
+    height: 2.4cm;
+    overflow: hidden;
+    border: 0.5pt solid #111111;
+    background: #f3f3f3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .print-list-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .print-list-thumb-empty {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
   .print-photos {
     display: grid;
     grid-template-columns: 1fr 1fr;
