@@ -7,6 +7,13 @@ import {
   brandColors as sharedBrandColors,
   severityColors,
 } from '../../../shared/brand';
+import {
+  darkSurfaces,
+  lightInk,
+  lightSurfaces,
+  mixTowardBlack,
+  mixTowardWhite,
+} from '../../../shared/surfaces';
 
 export type ThemeMode = 'dark' | 'light';
 
@@ -39,6 +46,9 @@ export const breakpoints = {
 /** Re-export shared brand palette — do not redefine hex here. */
 export const brandColors = sharedBrandColors;
 
+/** Re-export shared mix helpers — single implementation in shared/surfaces. */
+export { mixTowardWhite, mixTowardBlack };
+
 /**
  * 4px spacing scale. Prefer these over ad-hoc margins so web and mobile
  * share the same rhythm (Tailwind `p-4` = space[4] = 16).
@@ -62,29 +72,6 @@ export const sidebarTokens = {
   bg: mixTowardBlack(brandColors.primary, 16),
   text: mixTowardWhite(brandColors.primary, 100),
 } as const;
-
-/**
- * Lighten an existing token toward white. Function declarations are hoisted
- * so surface tokens and statusColors can call them at module init.
- */
-export function mixTowardWhite(hex: string, whitePct: number): string {
-  const h = hex.replace('#', '');
-  const r = Number.parseInt(h.slice(0, 2), 16);
-  const g = Number.parseInt(h.slice(2, 4), 16);
-  const b = Number.parseInt(h.slice(4, 6), 16);
-  const t = Math.min(100, Math.max(0, whitePct)) / 100;
-  return `rgb(${Math.round(r + (255 - r) * t)}, ${Math.round(g + (255 - g) * t)}, ${Math.round(b + (255 - b) * t)})`;
-}
-
-/** Darken an existing token toward black — light-theme contrast without a new hex. */
-export function mixTowardBlack(hex: string, blackPct: number): string {
-  const h = hex.replace('#', '');
-  const r = Number.parseInt(h.slice(0, 2), 16);
-  const g = Number.parseInt(h.slice(2, 4), 16);
-  const b = Number.parseInt(h.slice(4, 6), 16);
-  const t = Math.min(100, Math.max(0, blackPct)) / 100;
-  return `rgb(${Math.round(r * (1 - t))}, ${Math.round(g * (1 - t))}, ${Math.round(b * (1 - t))})`;
-}
 
 function srgbChannel(c: number): number {
   const s = c / 255;
@@ -169,30 +156,24 @@ export function readableOn(fg: string, bg: string): string {
 }
 
 export const darkTokens = {
-  'bg-page': '#0B0F14',
-  'bg-surface-1': '#131920',
-  /** Lifted further from surface-1 so hover:bg-surface-2 reads on dark chrome. */
-  'bg-surface-2': mixTowardWhite('#131920', 16),
-  /** Stronger edge against page/surface than raw #26313C. */
-  border: mixTowardWhite('#26313C', 22),
-  'text-primary': '#F5F7FA',
-  /** Slightly brighter labels/axes for charts and captions. */
-  'text-secondary': mixTowardWhite('#8B98A5', 14),
-  accent: brandColors.primary,
+  'bg-page': darkSurfaces.bgPage,
+  'bg-surface-1': darkSurfaces.bgSurface1,
+  'bg-surface-2': darkSurfaces.bgSurface2,
+  border: darkSurfaces.border,
+  'text-primary': darkSurfaces.textPrimary,
+  'text-secondary': darkSurfaces.textSecondary,
+  accent: darkSurfaces.accent,
 } as const;
 
-const lightInk = '#101418';
-
 export const lightTokens = {
-  'bg-page': '#F7F9FB',
-  'bg-surface-1': '#FFFFFF',
-  'bg-surface-2': '#F1F5F9',
-  /** Derived from text-primary — stronger than a near-white slate so cards read. */
-  border: mixTowardWhite(lightInk, 72),
-  'text-primary': lightInk,
-  'text-secondary': '#5B6672',
-  accent: brandColors.primary,
-};
+  'bg-page': lightSurfaces.bgPage,
+  'bg-surface-1': lightSurfaces.bgSurface1,
+  'bg-surface-2': lightSurfaces.bgSurface2,
+  border: lightSurfaces.border,
+  'text-primary': lightSurfaces.textPrimary,
+  'text-secondary': lightSurfaces.textSecondary,
+  accent: lightSurfaces.accent,
+} as const;
 
 /** Semantic status colors. Şartlı Onay / empty bars follow the bound theme. */
 const statusColorBase = {

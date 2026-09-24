@@ -7,6 +7,13 @@ import {
   brandColors as sharedBrandColors,
   severityColors,
 } from '../../../shared/brand';
+import {
+  darkSurfaces,
+  lightInk,
+  lightSurfaces,
+  mixTowardBlack,
+  mixTowardWhite,
+} from '../../../shared/surfaces';
 
 export type ThemeMode = 'dark' | 'light';
 
@@ -24,28 +31,8 @@ export function bindThemeMode(mode: ThemeMode): void {
   currentMode = mode;
 }
 
-/**
- * Lighten an existing token toward white. Declared before surface/status
- * tokens so Metro/Hermes does not hit a TDZ ReferenceError at import.
- */
-export function mixTowardWhite(hex: string, whitePct: number): string {
-  const h = hex.replace('#', '');
-  const r = Number.parseInt(h.slice(0, 2), 16);
-  const g = Number.parseInt(h.slice(2, 4), 16);
-  const b = Number.parseInt(h.slice(4, 6), 16);
-  const t = Math.min(100, Math.max(0, whitePct)) / 100;
-  return `rgb(${Math.round(r + (255 - r) * t)}, ${Math.round(g + (255 - g) * t)}, ${Math.round(b + (255 - b) * t)})`;
-}
-
-/** Darken an existing token toward black — light-theme contrast, no new hex. */
-export function mixTowardBlack(hex: string, blackPct: number): string {
-  const h = hex.replace('#', '');
-  const r = Number.parseInt(h.slice(0, 2), 16);
-  const g = Number.parseInt(h.slice(2, 4), 16);
-  const b = Number.parseInt(h.slice(4, 6), 16);
-  const t = Math.min(100, Math.max(0, blackPct)) / 100;
-  return `rgb(${Math.round(r * (1 - t))}, ${Math.round(g * (1 - t))}, ${Math.round(b * (1 - t))})`;
-}
+/** Re-export shared mix helpers — do not redefine hex math here. */
+export { mixTowardWhite, mixTowardBlack };
 
 /** Re-export shared brand palette — do not redefine hex here. */
 export const brandColors = sharedBrandColors;
@@ -74,27 +61,10 @@ export const sidebarTokens = {
   text: mixTowardWhite(brandColors.primary, 100),
 } as const;
 
-export const darkTokens = {
-  bgPage: '#0B0F14',
-  bgSurface1: '#131920',
-  bgSurface2: '#1B232C',
-  border: '#26313C',
-  textPrimary: '#F5F7FA',
-  textSecondary: '#8B98A5',
-  accent: brandColors.primary,
-} as const;
+/** Surfaces from shared/surfaces.ts — no platform-local hex. */
+export const darkTokens = { ...darkSurfaces } as const;
 
-const lightInk = '#101418';
-
-export const lightTokens = {
-  bgPage: '#F7F9FB',
-  bgSurface1: '#FFFFFF',
-  bgSurface2: '#F1F5F9',
-  border: mixTowardWhite(lightInk, 72),
-  textPrimary: lightInk,
-  textSecondary: '#5B6672',
-  accent: brandColors.primary,
-};
+export const lightTokens = { ...lightSurfaces } as const;
 
 const statusColorBase = {
   ok: '#22C55E',
