@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { Archive, ChevronDown, FileSpreadsheet, Volume2 } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
+import { ISSUE_CARD_COMPACT_MAX_PX } from '../../../shared/issueCardLayout';
 import { useAuth } from '../auth/AuthProvider';
 import {
   api,
@@ -79,7 +80,8 @@ const ADVANCED_FILTERS_OPEN_KEY = 'karea-issues-advanced-filters-open';
 const AUTO_REFRESH_MS = 30_000;
 const HIGHLIGHT_MS = 6_000;
 const PAGE_SIZE = 50;
-const DEFAULT_BOARD_STATUSES = ['OPEN', 'IN_PROGRESS'] as const;
+/** Empty = no status filter (all statuses). Old OPEN+IN_PROGRESS default removed. */
+const DEFAULT_BOARD_STATUSES: readonly string[] = [];
 const SCROLL_LOAD_THRESHOLD_PX = 480;
 
 function sortIssuesNewestFirst(list: Issue[]): Issue[] {
@@ -203,6 +205,12 @@ export default function IssuesPage() {
   const [homeStatNow] = useState(() => new Date());
   const [exporting, setExporting] = useState<'csv' | 'zip' | null>(null);
   const [advancedOpen, setAdvancedOpen] = useState(boot.advancedOpen);
+  /** Narrow layout: status/severity/advanced collapsed by default. */
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [viewportW, setViewportW] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth : 1024,
+  );
+  const compactFilters = viewportW < ISSUE_CARD_COMPACT_MAX_PX;
   const knownIdsRef = useRef<Set<number> | null>(null);
   const highlightTimersRef = useRef<number[]>([]);
   const pendingScrollRef = useRef(boot.scrollTop);
@@ -221,6 +229,14 @@ export default function IssuesPage() {
   hasMoreRef.current = hasMore;
 
   const drillDown = Boolean(homeStat || analysisStat);
+
+  useEffect(() => {
+    function onResize() {
+      setViewportW(window.innerWidth);
+    }
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
 
   const persistBoardUI = useCallback(() => {
     const liveTop = readAppScrollTop();
@@ -629,6 +645,51 @@ export default function IssuesPage() {
     return n;
   }, [typeIds, defectZoneIds, defectPartIds, defectTypeIds]);
 
+  const boardFilterActive =
+    statuses.size > 0 ||
+    severities.size > 0 ||
+    typeIds.size > 0 ||
+    defectZoneIds.size > 0 ||
+    defectPartIds.size > 0 ||
+    defectTypeIds.size > 0;
+
+  const filterSummary = useMemo(() => {
+    const parts: string[] = [];
+    if (homeStat) parts.push(homeIssueStatLabel(homeStat, t));
+    if (analysisStat) parts.push(analysisIssueStatLabel(analysisStat, t));
+    if (!homeStat && !analysisStat) {
+      if (statuses.size > 0) {
+        parts.push(
+          [...statuses].map((s) => issueStatusLabel(s as IssueStatus, t)).join(', '),
+        );
+      }
+      if (severities.size > 0) {
+        parts.push([...severities].map((s) => severityLabel(s, t)).join(', '));
+      }
+      if (advancedActiveCount > 0) {
+        parts.push(t('issue.advancedFiltersActive', { n: advancedActiveCount }));
+      }
+    }
+    return parts.filter(Boolean).join(' · ');
+  }, [
+    homeStat,
+    analysisStat,
+    statuses,
+    severities,
+    advancedActiveCount,
+    t,
+  ]);
+
+  function clearBoardFilters() {
+    setStatuses(new Set());
+    setSeverities(new Set());
+    setTypeIds(new Set());
+    setDefectZoneIds(new Set());
+    setDefectPartIds(new Set());
+    setDefectTypeIds(new Set());
+    if (homeStat || analysisStat) clearHomeStat();
+  }
+
   function toggleDefectType(id: number) {
     if (homeStat || analysisStat) clearHomeStat();
     setDefectTypeIds((prev) => {
@@ -997,6 +1058,45 @@ export default function IssuesPage() {
             />
           </div>
 
+          {compactFilters ? (
+            <div className="min-w-0 space-y-2">
+              <button
+                type="button"
+                onClick={() => setFiltersOpen((o) => !o)}
+                className="focus-ring-quiet flex min-h-touch w-full items-center justify-between gap-2 rounded-lg px-1 py-1 text-left text-[13px] font-semibold hover:bg-[var(--bg-surface-2)]"
+                style={{ color: 'var(--text-primary)' }}
+                aria-expanded={filtersOpen}
+              >
+                <span>{t('issue.filters')}</span>
+                <ChevronDown
+                  className={`h-4 w-4 shrink-0 text-[var(--text-secondary)] transition-transform ${
+                    filtersOpen ? 'rotate-180' : ''
+                  }`}
+                  aria-hidden
+                />
+              </button>
+              {!filtersOpen && (boardFilterActive || drillDown) && filterSummary ? (
+                <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2"
+                  style={{ borderColor: 'var(--border)' }}
+                >
+                  <p className="min-w-0 flex-1 text-[12px] text-[var(--text-secondary)]">
+                    {t('issue.filtersActive', { summary: filterSummary })}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={clearBoardFilters}
+                    className="min-h-touch shrink-0 rounded-lg border px-3 py-1 text-[12px] font-medium hover:bg-[var(--bg-surface-2)]"
+                    style={{ borderColor: 'var(--border)' }}
+                  >
+                    {t('issue.clearFilters')}
+                  </button>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+
+          {(!compactFilters || filtersOpen) ? (
+            <>
           <div className="flex min-w-0 flex-wrap gap-x-6 gap-y-4">
             <div className="min-w-0 max-w-full">
               <p
@@ -1055,7 +1155,6 @@ export default function IssuesPage() {
               </div>
             </div>
           </div>
-        </div>
 
         <div className="min-w-0 border-t pt-3" style={{ borderColor: 'var(--border)' }}>
           <button
@@ -1184,6 +1283,9 @@ export default function IssuesPage() {
                 </div>
               </div>
             </div>
+          ) : null}
+        </div>
+            </>
           ) : null}
         </div>
       </div>

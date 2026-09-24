@@ -1,6 +1,6 @@
 import type { SeverityLevel } from '../components/SeverityIndicator';
 
-const BOARD_UI_KEY = 'karea-issues-board-ui';
+const BOARD_UI_KEY = 'karea-issues-board-ui-v2';
 
 export type IssuesBoardUIState = {
   listQuery: string;

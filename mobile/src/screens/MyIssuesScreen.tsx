@@ -80,7 +80,8 @@ const ADVANCED_FILTERS_OPEN_KEY = 'karea-issues-advanced-filters-open';
 const AUTO_REFRESH_MS = 30_000;
 const HIGHLIGHT_MS = 6_000;
 const PAGE_SIZE = 50;
-const DEFAULT_BOARD_STATUSES: IssueStatus[] = ['OPEN', 'IN_PROGRESS'];
+/** Empty = no status filter (all statuses). Old OPEN+IN_PROGRESS default removed. */
+const DEFAULT_BOARD_STATUSES: IssueStatus[] = [];
 
 function sortIssuesNewestFirst(list: Issue[]): Issue[] {
   return list.slice().sort((a, b) => {
@@ -148,6 +149,8 @@ export default function MyIssuesScreen() {
   /** Frozen at preset apply so list length matches the Home card at tap time. */
   const [homeStatNow, setHomeStatNow] = useState(() => new Date());
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  /** Status / severity / advanced — collapsed by default on mobile. */
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
   const [staleWarning, setStaleWarning] = useState<string | null>(null);
   const [highlightedIds, setHighlightedIds] = useState<Set<number>>(new Set());
@@ -580,6 +583,43 @@ export default function MyIssuesScreen() {
     return n;
   }, [typeIds, defectZoneIds, defectPartIds, defectTypeIds]);
 
+  const boardFilterActive =
+    statuses.size > 0 ||
+    severities.size > 0 ||
+    typeIds.size > 0 ||
+    defectZoneIds.size > 0 ||
+    defectPartIds.size > 0 ||
+    defectTypeIds.size > 0;
+
+  const filterSummary = useMemo(() => {
+    const parts: string[] = [];
+    if (homeStat) parts.push(homeIssueStatLabel(homeStat, t));
+    if (!homeStat) {
+      if (statuses.size > 0) {
+        parts.push(
+          [...statuses].map((s) => issueStatusLabel(s, t)).join(', '),
+        );
+      }
+      if (severities.size > 0) {
+        parts.push([...severities].map((s) => severityLabel(s, t)).join(', '));
+      }
+      if (advancedActiveCount > 0) {
+        parts.push(t('issue.advancedFiltersActive', { n: advancedActiveCount }));
+      }
+    }
+    return parts.filter(Boolean).join(' · ');
+  }, [homeStat, statuses, severities, advancedActiveCount, t]);
+
+  function clearBoardFilters() {
+    setStatuses(new Set());
+    setSeverities(new Set());
+    setTypeIds(new Set());
+    setDefectZoneIds(new Set());
+    setDefectPartIds(new Set());
+    setDefectTypeIds(new Set());
+    if (homeStat) clearHomeStat();
+  }
+
   const filtered = useMemo(() => {
     return items.filter((issue) => {
       if (homeStat) {
@@ -714,7 +754,67 @@ export default function MyIssuesScreen() {
         }}
       />
 
-      <View style={{ marginTop: 12, gap: 12 }}>
+      <Pressable
+        onPress={() => setFiltersOpen((o) => !o)}
+        accessibilityRole="button"
+        accessibilityState={{ expanded: filtersOpen }}
+        style={{
+          marginTop: 12,
+          minHeight: 44,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          paddingVertical: 8,
+        }}
+      >
+        <Text
+          style={{
+            color: tokens.textPrimary,
+            fontWeight: '700',
+            fontSize: 13,
+          }}
+        >
+          {t('issue.filters')}
+        </Text>
+        <Text style={{ color: tokens.textSecondary, fontSize: 16 }}>
+          {filtersOpen ? '▴' : '▾'}
+        </Text>
+      </Pressable>
+
+      {!filtersOpen && (boardFilterActive || homeStat) && filterSummary ? (
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 8,
+            paddingVertical: 8,
+            paddingHorizontal: 10,
+            borderRadius: 8,
+            borderWidth: 1,
+            borderColor: tokens.border,
+          }}
+        >
+          <Text
+            style={{
+              color: tokens.textSecondary,
+              fontSize: 12,
+              flex: 1,
+            }}
+            numberOfLines={2}
+          >
+            {t('issue.filtersActive', { summary: filterSummary })}
+          </Text>
+          <OutlineButton
+            label={t('issue.clearFilters')}
+            onPress={clearBoardFilters}
+          />
+        </View>
+      ) : null}
+
+      {filtersOpen ? (
+      <>
+      <View style={{ marginTop: 4, gap: 12 }}>
         <View>
           <Text
             style={{
@@ -1016,6 +1116,8 @@ export default function MyIssuesScreen() {
             </View>
           </View>
         </View>
+      ) : null}
+      </>
       ) : null}
 
       {error ? <ErrorText>{error}</ErrorText> : null}
