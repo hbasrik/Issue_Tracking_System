@@ -218,6 +218,12 @@ içeriğe göre; ızgarada eşit yükseklik korunur.
 Kenarlık WCAG 3:1 (açık/koyu, kart+sayfa). Aşama performansı yalnız
 Fabrika/Depo **madde** satırları; “Tamamlandı” araç çubuğu çıkarıldı
 (EOL hunisi araç sayar). Hint metinleri güncellendi.
+2026-09-24 (kart ayrışma): mobilde `IssueCard` vurgusuz halde
+`borderWidth: undefined` geçiyordu — `Card`’ın 1px kenarı ezilebiliyordu;
+artık her zaman `borderWidth: 1` + `tokens.border`. Fill/page ~1.06:1
+olduğu için kenar şart; `shared/surfaces` border güçlendirildi (açık
+3.29→3.70 kart üstü) + hafif `lightCardElevation`/`darkCardElevation`.
+Meta satır: sol VIN+süre, sağ şiddet+durum. Filtre bloğu altında ayırıcı.
 
 ### A19. Issues filtre paneli + yazdırma fotoğraf `[x]` — 2026-09-24
 - Mobil + web &lt;600px: durum / şiddet / gelişmiş filtreler tek katlanabilir
