@@ -92,7 +92,11 @@ export function IssueCard({
 
   const photo = (
     <Pressable
-      onPress={openPhoto}
+      onPress={(e) => {
+        // Keep the touch on the photo — do not open the issue detail.
+        e?.stopPropagation?.();
+        openPhoto();
+      }}
       disabled={!hasPhoto}
       accessibilityRole="button"
       accessibilityLabel={
@@ -104,6 +108,7 @@ export function IssueCard({
         overflow: 'hidden',
         alignItems: 'center',
         justifyContent: 'center',
+        flexShrink: 0,
       }}
     >
       {hasPhoto && listImageUri && loadPhoto ? (
@@ -133,11 +138,9 @@ export function IssueCard({
   );
 
   const body = (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
+    <View
       style={{
-        flex: compact ? undefined : 1,
+        flex: 1,
         minWidth: 0,
         padding: compact ? 0 : 12,
         gap: compact ? 4 : 6,
@@ -150,11 +153,16 @@ export function IssueCard({
           fontWeight: '600',
           lineHeight: compact ? 18 : 20,
         }}
-        numberOfLines={2}
+        numberOfLines={1}
+        ellipsizeMode="tail"
       >
         {issue.Description?.trim() || t('common.emDash')}
       </Text>
-      <Text style={{ color: tokens.textSecondary, fontSize: 12 }} numberOfLines={1}>
+      <Text
+        style={{ color: tokens.textSecondary, fontSize: 12, minWidth: 0 }}
+        numberOfLines={1}
+        ellipsizeMode="tail"
+      >
         {defect.listLine}
       </Text>
       <View
@@ -163,6 +171,7 @@ export function IssueCard({
           flexWrap: 'wrap',
           alignItems: 'center',
           gap: 8,
+          minWidth: 0,
         }}
       >
         {!hideVin ? (
@@ -172,7 +181,10 @@ export function IssueCard({
               fontWeight: '700',
               fontFamily: 'monospace',
               fontSize: compact ? 12 : 13,
+              maxWidth: '100%',
             }}
+            numberOfLines={1}
+            ellipsizeMode="middle"
           >
             …{issue.VIN.slice(-5)}
           </Text>
@@ -183,6 +195,7 @@ export function IssueCard({
             fontSize: compact ? 12 : 13,
             fontVariant: ['tabular-nums'],
           }}
+          numberOfLines={1}
         >
           {duration}
         </Text>
@@ -194,6 +207,7 @@ export function IssueCard({
               fontWeight: '600',
               fontSize: compact ? 12 : 13,
             }}
+            numberOfLines={1}
           >
             {sevLabel}
           </Text>
@@ -203,37 +217,45 @@ export function IssueCard({
           color={issueStatusColor(issue.Status)}
         />
       </View>
-    </Pressable>
+    </View>
   );
 
   return (
     <>
-      <Card
-        style={{
-          flex: compact ? undefined : 1,
-          padding: compact ? 12 : 0,
-          marginTop: 0,
-          overflow: 'hidden',
-          borderWidth: highlighted ? 2 : undefined,
-          borderColor: highlighted ? sevColor : undefined,
-          shadowColor: highlighted ? sevColor : undefined,
-          shadowOpacity: highlighted ? 0.45 : undefined,
-          shadowRadius: highlighted ? 8 : undefined,
-          elevation: highlighted ? 4 : undefined,
-        }}
+      <Pressable
+        onPress={onPress}
+        accessibilityRole="button"
+        style={({ pressed }) => ({
+          opacity: pressed ? 0.82 : 1,
+        })}
       >
-        <View
+        <Card
           style={{
-            flexDirection: compact ? 'row' : 'column',
-            gap: compact ? 12 : 0,
-            alignItems: compact ? 'flex-start' : undefined,
             flex: compact ? undefined : 1,
+            padding: compact ? 12 : 0,
+            marginTop: 0,
+            overflow: 'hidden',
+            borderWidth: highlighted ? 2 : undefined,
+            borderColor: highlighted ? sevColor : undefined,
+            shadowColor: highlighted ? sevColor : undefined,
+            shadowOpacity: highlighted ? 0.45 : undefined,
+            shadowRadius: highlighted ? 8 : undefined,
+            elevation: highlighted ? 4 : undefined,
           }}
         >
-          {photo}
-          {body}
-        </View>
-      </Card>
+          <View
+            style={{
+              flexDirection: compact ? 'row' : 'column',
+              gap: compact ? 12 : 0,
+              alignItems: compact ? 'flex-start' : undefined,
+              flex: compact ? undefined : 1,
+            }}
+          >
+            {photo}
+            {body}
+          </View>
+        </Card>
+      </Pressable>
 
       <Modal
         visible={lightbox}

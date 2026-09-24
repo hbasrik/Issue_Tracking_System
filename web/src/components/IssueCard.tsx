@@ -1,4 +1,4 @@
-import { useEffect, useState, type MouseEvent } from 'react';
+import { useEffect, useState, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ImageOff } from 'lucide-react';
 import {
@@ -33,7 +33,7 @@ type Props = {
 
 /**
  * Single issue card — compact list (&lt;600px) or grid photo-top (≥600px).
- * Photo click → fullscreen; body click → /issues/:id.
+ * Whole card → /issues/:id; photo click → fullscreen (does not navigate).
  */
 export function IssueCard({
   issue,
@@ -73,6 +73,13 @@ export function IssueCard({
   function openDetail() {
     patchBoardScrollTop(readAppScrollTop());
     navigate(`/issues/${issue.ID}`);
+  }
+
+  function onCardKeyDown(e: ReactKeyboardEvent) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      openDetail();
+    }
   }
 
   function onPhotoClick(e: MouseEvent) {
@@ -117,43 +124,26 @@ export function IssueCard({
   );
 
   const body = (
-    <div
-      className={`min-w-0 ${compact ? 'space-y-1' : 'flex-1 space-y-2 p-3'}`}
-      onClick={openDetail}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          openDetail();
-        }
-      }}
-      role="link"
-      tabIndex={0}
-    >
+    <div className={`min-w-0 flex-1 ${compact ? 'space-y-1' : 'space-y-2 p-3'}`}>
       <p
-        className={`font-medium text-[var(--text-primary)] ${
+        className={`truncate font-medium text-[var(--text-primary)] ${
           compact ? 'text-[14px] leading-snug' : 'text-[15px] leading-snug'
         }`}
-        style={{
-          display: '-webkit-box',
-          WebkitLineClamp: 2,
-          WebkitBoxOrient: 'vertical',
-          overflow: 'hidden',
-        }}
       >
         {issue.Description?.trim() || t('common.emDash')}
       </p>
-      <p className="text-[12px] text-[var(--text-secondary)]">
+      <p className="truncate text-[12px] text-[var(--text-secondary)]">
         {defect.listLine}
       </p>
       <div
-        className={`flex flex-wrap items-center gap-x-2 gap-y-1 ${
+        className={`flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 ${
           compact ? 'text-[12px]' : 'text-[13px]'
         }`}
       >
         {!hideVin ? (
           <Link
             to={`/vehicles/${issue.VIN}?tab=issues`}
-            className="font-mono font-semibold text-[var(--accent)] hover:underline"
+            className="max-w-full truncate font-mono font-semibold text-[var(--accent)] hover:underline"
             onClick={(e) => e.stopPropagation()}
           >
             …{issue.VIN.slice(-5)}
@@ -182,7 +172,11 @@ export function IssueCard({
   return (
     <>
       <article
-        className={`flex overflow-hidden rounded-xl border bg-[var(--bg-surface-1)] transition-[box-shadow,border-color] duration-300 ${
+        role="link"
+        tabIndex={0}
+        onClick={openDetail}
+        onKeyDown={onCardKeyDown}
+        className={`flex cursor-pointer overflow-hidden rounded-xl border bg-[var(--bg-surface-1)] transition-[box-shadow,border-color,background-color,opacity] duration-150 hover:bg-[color-mix(in_srgb,var(--bg-surface-2)_55%,var(--bg-surface-1))] active:opacity-90 ${
           compact
             ? 'flex-row items-start gap-3 p-3'
             : 'h-full flex-col'
