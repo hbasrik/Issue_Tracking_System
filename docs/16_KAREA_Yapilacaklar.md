@@ -205,6 +205,11 @@ Kart yüzey renkleri `shared/surfaces.ts` (web+mobil); açık kenarlık
 kontrastı ~1.88 → ~2.75. Sıkışık yerleşimde (&lt;600px) kart yüksekliği
 içeriğe göre; ızgarada eşit yükseklik korunur.
 
+### A18. Kart 3:1 kenarlık + aşama grafiği birimleri `[x]` — 2026-09-24
+Kenarlık WCAG 3:1 (açık/koyu, kart+sayfa). Aşama performansı yalnız
+Fabrika/Depo **madde** satırları; “Tamamlandı” araç çubuğu çıkarıldı
+(EOL hunisi araç sayar). Hint metinleri güncellendi.
+
 ---
 
 ## B — Canlıya çıkmadan önce ZORUNLU

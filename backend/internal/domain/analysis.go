@@ -387,7 +387,9 @@ type SeverityCount struct {
 	Count    int64
 }
 
-// StagePerformance is completed/total for one EOL stage (no Evrak/DOCUMENT).
+// StagePerformance is completed/total active EOL checklist-item progress
+// rows for one phase (BRANCH or DEPOT only). Vehicle-stage counts belong in
+// EOLFunnel — never mix item rows and vehicles on the same chart axis.
 type StagePerformance struct {
 	Stage     string
 	Completed int64

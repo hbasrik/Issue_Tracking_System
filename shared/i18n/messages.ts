@@ -757,9 +757,11 @@ export const tr = {
   'analysis.dailyTrendCombinedHint': 'Açık stok (kırmızı) ve kapanan hatalar (yeşil)',
   'analysis.severityMix': 'Severity dağılımı',
   'analysis.eolFunnel': 'EOL hunisi (anlık)',
+  'analysis.eolFunnelHint':
+    'Araç sayısı: EOL akışındaki canlı aşama (Fabrika / Depo / Tamamlandı).',
   'analysis.stagePerformance': 'Aşama performansı',
   'analysis.stagePerformanceHint':
-    'Tamamlanan / toplam gerçek EOL madde kayıtlarıdır; araç başına madde sayısı aynı olmayabilir.',
+    'Fabrika ve Depo: tamamlanan / toplam aktif EOL madde kayıtları. Tamamlanan araç sayısı için EOL hunisine bakın.',
   'analysis.openAge': 'Açık hata yaşı',
   'analysis.age.0_1': '0–1 gün',
   'analysis.age.1_3': '1–3 gün',
@@ -2039,9 +2041,11 @@ export const en: Record<MessageKey, string> = {
   'analysis.dailyTrendCombinedHint': 'Open stock (red) and closed defects (green)',
   'analysis.severityMix': 'Severity mix',
   'analysis.eolFunnel': 'EOL funnel (live)',
+  'analysis.eolFunnelHint':
+    'Vehicle counts by live EOL stage (Factory / Depot / Completed).',
   'analysis.stagePerformance': 'Stage performance',
   'analysis.stagePerformanceHint':
-    'Completed / total are real EOL item rows; items per vehicle may differ.',
+    'Factory and Depot: completed / total active EOL item rows. See the EOL funnel for vehicle counts.',
   'analysis.openAge': 'Open defect age',
   'analysis.age.0_1': '0–1 days',
   'analysis.age.1_3': '1–3 days',

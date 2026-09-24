@@ -933,6 +933,8 @@ func (r *AnalysisRepo) eolFunnel(ctx context.Context, f domain.AnalysisFilter) (
 
 func (r *AnalysisRepo) stagePerformance(ctx context.Context, f domain.AnalysisFilter) ([]domain.StagePerformance, error) {
 	b := bounds(f)
+	// Active catalogue items only (CHECKLIST_ACTIVE_SQL). BRANCH + DEPOT item
+	// ticks — never append COMPLETED vehicle counts here.
 	rows, err := r.pool.Query(ctx, `
 		SELECT cti.eol_phase::text,
 		       count(*) FILTER (WHERE p.check_status IN ('OK','CONDITIONAL_OK'))::bigint,
@@ -968,23 +970,9 @@ func (r *AnalysisRepo) stagePerformance(ctx context.Context, f domain.AnalysisFi
 		{Stage: "BRANCH", Completed: found["BRANCH"].Completed, Total: found["BRANCH"].Total},
 		{Stage: "DEPOT", Completed: found["DEPOT"].Completed, Total: found["DEPOT"].Total},
 	}
-	var completedN, funnelN int64
-	_ = r.pool.QueryRow(ctx, `
-		SELECT count(*) FILTER (
-		         WHERE CASE WHEN w.current_stage = 'DOCUMENT' THEN 'DEPOT' ELSE w.current_stage::text END = 'COMPLETED'
-		       )::bigint,
-		       count(*)::bigint
-		  FROM vehicle_eol_workflow w
-		  JOIN vehicles v ON v.vin = w.vin
-		 WHERE v.current_global_status <> 'PLANNED'
-		   `+vinClause("w.vin", 1, 4)+`
-		   AND ($2 = '' OR v.current_global_status::text = $2)
-		   `+eolStageWhere(3),
-		b.suffix, b.status, b.eolStage, b.vins,
-	).Scan(&completedN, &funnelN)
-	out = append(out, domain.StagePerformance{
-		Stage: "COMPLETED", Completed: completedN, Total: funnelN,
-	})
+	// COMPLETED is intentionally omitted: it would be vehicle counts
+	// (workflow stage), not checklist-item rows. Vehicle-by-stage lives in
+	// EOLFunnel so this chart stays a single unit (active EOL item ticks).
 	return out, nil
 }
 

@@ -1,55 +1,35 @@
 {
-  "metric": "stage_performance_and_home_eol_checklist",
-  "sql_filter_before": "NOT (cti.is_active = false AND p.check_status = 'PENDING')",
-  "sql_filter_after": "cti.is_active = true  -- shared/checklistActive.ts CHECKLIST_ACTIVE_SQL",
-  "before": {
-    "BRANCH": {
-      "done": 28,
-      "total": 49
+  "border_contrast": {
+    "standard": "WCAG 3:1 non-text UI boundaries",
+    "source": "shared/surfaces.ts",
+    "light": {
+      "before": { "mix_toward_white": 58, "border_on_card": 2.75, "border_on_page": 2.6 },
+      "after": { "mix_toward_white": 52, "border_on_card": 3.29, "border_on_page": 3.12 }
     },
-    "DEPOT": {
-      "done": 21,
-      "total": 31
+    "dark": {
+      "before": { "mix_toward_white_of_26313C": 22, "border_on_card": 2.69, "border_on_page": 2.92 },
+      "after": { "mix_toward_white_of_26313C": 26, "border_on_card": 3.07, "border_on_page": 3.34 }
     }
   },
-  "after": {
-    "BRANCH": {
-      "done": 28,
-      "total": 49
+  "stage_performance_units": {
+    "decision": "Keep BRANCH+DEPOT item bars only; remove COMPLETED vehicle bar (EOL funnel already shows vehicles).",
+    "sql": {
+      "BRANCH": { "unit": "active checklist_item_progress rows", "completed": 28, "total": 49 },
+      "DEPOT": { "unit": "active checklist_item_progress rows", "completed": 15, "total": 25 },
+      "COMPLETED_removed_from_chart": {
+        "unit": "vehicle_eol_workflow rows",
+        "completed": 2,
+        "total": 5,
+        "now_shown_in": "analysis.eolFunnel"
+      }
     },
-    "DEPOT": {
-      "done": 15,
-      "total": 25
-    }
-  },
-  "completed_vehicles": {
-    "done": 2,
-    "total": 5,
-    "note": "vehicle workflow counts \u2014 not checklist items"
-  },
-  "kpi_completion_percent": {
-    "before": 61.3,
-    "after": 58.1,
-    "done_before": 49,
-    "total_before": 80,
-    "done_after": 43,
-    "total_after": 74
-  },
-  "inactive_depot_rows_excluded": {
-    "OK": 6,
-    "PENDING": 4,
-    "note": "PENDING already excluded by old filter; OK rows inflated before totals"
-  },
-  "api_home_overview_after": {
-    "BRANCH": {
-      "Done": 28,
-      "Total": 49
-    },
-    "DEPOT": {
-      "Done": 15,
-      "Total": 25
-    }
-  },
-  "vehicle_detail_progress": "TotalProgressPercentage is station-step progress (not EOL checklist) \u2014 unchanged",
-  "mobile_home": "no EOL stage-performance chart on mobile HomeScreen"
+    "other_charts_unit_audit": [
+      { "chart": "EOL funnel", "unit": "vehicles by stage", "mixed": false },
+      { "chart": "KPI CompletionPercent", "unit": "active EOL item rows", "mixed": false },
+      { "chart": "Home EOL checklist table", "unit": "active EOL item rows per phase", "mixed": false },
+      { "chart": "Home production / EOL stage table", "unit": "vehicles", "mixed": false },
+      { "chart": "Severity / status / open-age / reporter", "unit": "issues", "mixed": false },
+      { "chart": "Cumulative flow / daily trends", "unit": "issues over time", "mixed": false }
+    ]
+  }
 }

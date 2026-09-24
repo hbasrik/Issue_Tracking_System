@@ -1272,7 +1272,7 @@ export default function AnalysisPage() {
         <ChartCard
           title={t('analysis.eolFunnel')}
           icon={<Building2 size={16} />}
-          filterNote={vehicleFilterNote}
+          filterNote={vehicleFilterNote ?? t('analysis.eolFunnelHint')}
         >
           {eolFunnelRows.every((r) => r.Count === 0) ? (
             <EmptyChart />
