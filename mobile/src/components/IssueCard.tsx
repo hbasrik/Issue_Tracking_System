@@ -168,54 +168,75 @@ export function IssueCard({
       <View
         style={{
           flexDirection: 'row',
-          flexWrap: 'wrap',
           alignItems: 'center',
+          justifyContent: 'space-between',
           gap: 8,
           minWidth: 0,
         }}
       >
-        {!hideVin ? (
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 8,
+            flexShrink: 1,
+            minWidth: 0,
+          }}
+        >
+          {!hideVin ? (
+            <Text
+              style={{
+                color: tokens.accent,
+                fontWeight: '700',
+                fontFamily: 'monospace',
+                fontSize: compact ? 12 : 13,
+                flexShrink: 1,
+              }}
+              numberOfLines={1}
+              ellipsizeMode="middle"
+            >
+              …{issue.VIN.slice(-5)}
+            </Text>
+          ) : null}
           <Text
             style={{
-              color: tokens.accent,
-              fontWeight: '700',
-              fontFamily: 'monospace',
+              color: tokens.textSecondary,
               fontSize: compact ? 12 : 13,
-              maxWidth: '100%',
+              fontVariant: ['tabular-nums'],
+              flexShrink: 1,
             }}
             numberOfLines={1}
-            ellipsizeMode="middle"
+            ellipsizeMode="tail"
           >
-            …{issue.VIN.slice(-5)}
+            {duration}
           </Text>
-        ) : null}
-        <Text
+        </View>
+        <View
           style={{
-            color: tokens.textSecondary,
-            fontSize: compact ? 12 : 13,
-            fontVariant: ['tabular-nums'],
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 6,
+            flexShrink: 0,
           }}
-          numberOfLines={1}
         >
-          {duration}
-        </Text>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           <SeverityIndicator severity={issue.Severity} />
           <Text
             style={{
               color: sevColor,
               fontWeight: '600',
               fontSize: compact ? 12 : 13,
+              maxWidth: 72,
             }}
             numberOfLines={1}
+            ellipsizeMode="tail"
           >
             {sevLabel}
           </Text>
+          <Badge
+            label={issueStatusLabel(issue.Status, t)}
+            color={issueStatusColor(issue.Status)}
+          />
         </View>
-        <Badge
-          label={issueStatusLabel(issue.Status, t)}
-          color={issueStatusColor(issue.Status)}
-        />
       </View>
     </View>
   );
@@ -235,12 +256,18 @@ export function IssueCard({
             padding: compact ? 12 : 0,
             marginTop: 0,
             overflow: 'hidden',
-            borderWidth: highlighted ? 2 : undefined,
-            borderColor: highlighted ? sevColor : undefined,
-            shadowColor: highlighted ? sevColor : undefined,
-            shadowOpacity: highlighted ? 0.45 : undefined,
-            shadowRadius: highlighted ? 8 : undefined,
-            elevation: highlighted ? 4 : undefined,
+            // Always keep a 1px edge — never pass borderWidth: undefined
+            // (can wipe StyleSheet.card border on some RN flatten paths).
+            borderWidth: highlighted ? 2 : 1,
+            borderColor: highlighted ? sevColor : tokens.border,
+            ...(highlighted
+              ? {
+                  shadowColor: sevColor,
+                  shadowOpacity: 0.45,
+                  shadowRadius: 8,
+                  elevation: 4,
+                }
+              : null),
           }}
         >
           <View

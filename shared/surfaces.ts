@@ -30,15 +30,15 @@ export function mixTowardBlack(hex: string, blackPct: number): string {
 export const lightInk = '#101418';
 
 /**
- * Light surfaces. Border is ink mixed 52% toward white so card edges meet
- * WCAG 3:1 non-text contrast against both bgSurface1 and bgPage
- * (was 58% → ~2.75:1 on white).
+ * Light surfaces. Border is ink mixed 48% toward white so card edges meet
+ * WCAG 3:1 non-text contrast against both bgSurface1 and bgPage on CSS and
+ * React Native (was 52% → ~3.29:1 on white; still looked soft on device fill).
  */
 export const lightSurfaces = {
   bgPage: '#F7F9FB',
   bgSurface1: '#FFFFFF',
   bgSurface2: '#F1F5F9',
-  border: mixTowardWhite(lightInk, 52),
+  border: mixTowardWhite(lightInk, 48),
   textPrimary: lightInk,
   textSecondary: '#5B6672',
   accent: BRAND_PRIMARY,
@@ -48,14 +48,36 @@ export const darkSurfaces = {
   bgPage: '#0B0F14',
   bgSurface1: '#131920',
   bgSurface2: mixTowardWhite('#131920', 16),
-  /** Lightened enough for ≥3:1 against surface-1 and page (was 22% → ~2.69). */
-  border: mixTowardWhite('#26313C', 26),
+  /** Lightened enough for ≥3:1 against surface-1 and page. */
+  border: mixTowardWhite('#26313C', 28),
   textPrimary: '#F5F7FA',
   textSecondary: mixTowardWhite('#8B98A5', 14),
   accent: BRAND_PRIMARY,
 } as const;
 
 export type SurfaceTokens = typeof lightSurfaces;
+
+/**
+ * Subtle card lift — use with the border, not instead of it.
+ * Keep opacity low so light + dark stay calm.
+ */
+export const lightCardElevation = {
+  shadowColor: lightInk,
+  shadowOpacity: 0.1,
+  shadowRadius: 3,
+  shadowOffset: { width: 0, height: 1 } as const,
+  elevation: 2,
+  cssBoxShadow: '0 1px 3px rgba(16, 20, 24, 0.10)',
+} as const;
+
+export const darkCardElevation = {
+  shadowColor: '#000000',
+  shadowOpacity: 0.45,
+  shadowRadius: 4,
+  shadowOffset: { width: 0, height: 1 } as const,
+  elevation: 3,
+  cssBoxShadow: '0 1px 4px rgba(0, 0, 0, 0.45)',
+} as const;
 
 function srgbChannel(c: number): number {
   const s = c / 255;

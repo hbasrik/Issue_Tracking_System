@@ -13,6 +13,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { multilineDoneInputProps } from './keyboard';
 import { useTheme } from '../theme/ThemeProvider';
 import { inkOn, statusColors } from '../theme/tokens';
+import {
+  darkCardElevation,
+  lightCardElevation,
+} from '../../../shared/surfaces';
 
 export function Screen({
   children,
@@ -116,12 +120,22 @@ export function Card({
   children: React.ReactNode;
   style?: ViewStyle;
 }) {
-  const { tokens } = useTheme();
+  const { tokens, mode } = useTheme();
+  const elev = mode === 'dark' ? darkCardElevation : lightCardElevation;
   return (
     <View
       style={[
         styles.card,
-        { backgroundColor: tokens.bgSurface1, borderColor: tokens.border },
+        {
+          backgroundColor: tokens.bgSurface1,
+          borderColor: tokens.border,
+          borderWidth: 1,
+          shadowColor: elev.shadowColor,
+          shadowOpacity: elev.shadowOpacity,
+          shadowRadius: elev.shadowRadius,
+          shadowOffset: elev.shadowOffset,
+          elevation: elev.elevation,
+        },
         style,
       ]}
     >

@@ -1123,6 +1123,15 @@ export default function MyIssuesScreen() {
       {error ? <ErrorText>{error}</ErrorText> : null}
       {offlineHint ? <InfoText>{offlineHint}</InfoText> : null}
       {loading && !hasLoadedRef.current ? <Loading /> : null}
+
+      <View
+        style={{
+          marginTop: 14,
+          borderBottomWidth: 1,
+          borderBottomColor: tokens.border,
+        }}
+        accessibilityRole="none"
+      />
     </Pressable>
   );
 

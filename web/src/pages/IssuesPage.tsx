@@ -1402,6 +1402,12 @@ export default function IssuesPage() {
         </div>
       </div>
 
+      <div
+        className="mt-4 border-b"
+        style={{ borderColor: 'var(--border)' }}
+        aria-hidden
+      />
+
       {error && (
         <p className="mt-3 text-[13px]" style={{ color: 'var(--status-not-ok)' }}>
           {error}

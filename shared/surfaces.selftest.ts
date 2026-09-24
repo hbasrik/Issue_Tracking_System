@@ -12,8 +12,8 @@ import {
 
 const MIN_UI = 3;
 
-const prevLightBorder = mixTowardWhite(lightInk, 58);
-const prevDarkBorder = mixTowardWhite('#26313C', 22);
+const prevLightBorder = mixTowardWhite(lightInk, 52);
+const prevDarkBorder = mixTowardWhite('#26313C', 26);
 
 const light = {
   border_on_card: contrastRatio(lightSurfaces.border, lightSurfaces.bgSurface1),
@@ -43,10 +43,10 @@ for (const [name, ratio] of [
 }
 
 if (light.border_on_card <= light.before_on_card) {
-  throw new Error('light border must improve on previous 58% mix');
+  throw new Error('light border must improve on previous 52% mix');
 }
 if (dark.border_on_card <= dark.before_on_card) {
-  throw new Error('dark border must improve on previous 22% mix');
+  throw new Error('dark border must improve on previous 26% mix');
 }
 
 const report = {

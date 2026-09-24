@@ -20,6 +20,11 @@ import {
 import { StatusBadge } from './StatusBadge';
 import { isNonWebImage } from '../lib/mediaKind';
 import { patchBoardScrollTop, readAppScrollTop } from '../lib/issuesBoardState';
+import { useTheme } from '../theme/ThemeProvider';
+import {
+  darkCardElevation,
+  lightCardElevation,
+} from '../../../shared/surfaces';
 
 type Props = {
   issue: Issue;
@@ -43,8 +48,10 @@ export function IssueCard({
   highlighted = false,
 }: Props) {
   const { t, locale } = useI18n();
+  const { mode } = useTheme();
   const navigate = useNavigate();
   const compact = issueCardIsCompact(layoutWidth);
+  const elev = mode === 'dark' ? darkCardElevation : lightCardElevation;
   const [lightbox, setLightbox] = useState(false);
   const [now] = useState(() => Date.now());
 
@@ -136,35 +143,37 @@ export function IssueCard({
         {defect.listLine}
       </p>
       <div
-        className={`flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 ${
+        className={`flex min-w-0 items-center justify-between gap-2 ${
           compact ? 'text-[12px]' : 'text-[13px]'
         }`}
       >
-        {!hideVin ? (
-          <Link
-            to={`/vehicles/${issue.VIN}?tab=issues`}
-            className="max-w-full truncate font-mono font-semibold text-[var(--accent)] hover:underline"
-            onClick={(e) => e.stopPropagation()}
+        <div className="flex min-w-0 flex-shrink items-center gap-2 overflow-hidden">
+          {!hideVin ? (
+            <Link
+              to={`/vehicles/${issue.VIN}?tab=issues`}
+              className="min-w-0 truncate font-mono font-semibold text-[var(--accent)] hover:underline"
+              onClick={(e) => e.stopPropagation()}
+            >
+              …{issue.VIN.slice(-5)}
+            </Link>
+          ) : null}
+          <span
+            className="min-w-0 truncate tabular-nums text-[var(--text-secondary)]"
+            title={t('issue.openDuration')}
           >
-            …{issue.VIN.slice(-5)}
-          </Link>
-        ) : null}
-        <span
-          className="tabular-nums text-[var(--text-secondary)]"
-          title={t('issue.openDuration')}
-        >
-          {duration}
-        </span>
-        <span className="inline-flex items-center gap-1.5">
+            {duration}
+          </span>
+        </div>
+        <div className="flex shrink-0 items-center gap-1.5">
           <SeverityIndicator severity={issue.Severity} decorative />
           <span
-            className="font-medium"
+            className="max-w-[4.5rem] truncate font-medium"
             style={sevColor ? { color: sevColor } : undefined}
           >
             {sevLabel}
           </span>
-        </span>
-        <StatusBadge kind="issue" value={issue.Status} />
+          <StatusBadge kind="issue" value={issue.Status} />
+        </div>
       </div>
     </div>
   );
@@ -185,9 +194,10 @@ export function IssueCard({
           borderColor: highlighted
             ? sevColor || 'var(--border)'
             : 'var(--border)',
+          borderWidth: highlighted ? 2 : 1,
           boxShadow: highlighted
             ? `0 0 0 3px color-mix(in srgb, ${sevColor || '#C62222'} 45%, transparent)`
-            : undefined,
+            : elev.cssBoxShadow,
           ['--tw-ring-color' as string]: sevColor || '#C62222',
         }}
         data-highlighted={highlighted ? '1' : undefined}
