@@ -118,7 +118,7 @@ export function IssueCard({
 
   const body = (
     <div
-      className={`min-w-0 flex-1 ${compact ? 'space-y-1' : 'space-y-2 p-3'}`}
+      className={`min-w-0 ${compact ? 'space-y-1' : 'flex-1 space-y-2 p-3'}`}
       onClick={openDetail}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
@@ -182,8 +182,10 @@ export function IssueCard({
   return (
     <>
       <article
-        className={`flex h-full overflow-hidden rounded-xl border bg-[var(--bg-surface-1)] transition-[box-shadow,border-color] duration-300 ${
-          compact ? 'flex-row items-stretch gap-3 p-3' : 'flex-col'
+        className={`flex overflow-hidden rounded-xl border bg-[var(--bg-surface-1)] transition-[box-shadow,border-color] duration-300 ${
+          compact
+            ? 'flex-row items-start gap-3 p-3'
+            : 'h-full flex-col'
         } ${highlighted ? 'ring-2 ring-offset-2 ring-offset-[var(--bg-page)]' : ''} ${className}`}
         style={{
           borderColor: highlighted

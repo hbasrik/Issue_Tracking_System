@@ -81,8 +81,6 @@ const AUTO_REFRESH_MS = 30_000;
 const HIGHLIGHT_MS = 6_000;
 const PAGE_SIZE = 50;
 const DEFAULT_BOARD_STATUSES: IssueStatus[] = ['OPEN', 'IN_PROGRESS'];
-/** FlashList v2 auto-measures; kept as a card-size hint for layout tuning. */
-const ESTIMATED_CARD_SIZE = 168;
 
 function sortIssuesNewestFirst(list: Issue[]): Issue[] {
   return list.slice().sort((a, b) => {
@@ -1071,11 +1069,9 @@ export default function MyIssuesScreen() {
         renderItem={({ item }) => (
           <View
             style={{
-              flex: 1,
+              flex: columns > 1 ? 1 : undefined,
               marginBottom: 12,
               paddingHorizontal: columns > 1 ? 6 : 0,
-              // Hint for card height (FlashList v2 measures; constant documents intent).
-              minHeight: columns === 1 ? ESTIMATED_CARD_SIZE : undefined,
             }}
           >
             <IssueCard

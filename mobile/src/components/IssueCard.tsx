@@ -137,7 +137,7 @@ export function IssueCard({
       onPress={onPress}
       accessibilityRole="button"
       style={{
-        flex: 1,
+        flex: compact ? undefined : 1,
         minWidth: 0,
         padding: compact ? 0 : 12,
         gap: compact ? 4 : 6,
@@ -210,7 +210,7 @@ export function IssueCard({
     <>
       <Card
         style={{
-          flex: 1,
+          flex: compact ? undefined : 1,
           padding: compact ? 12 : 0,
           marginTop: 0,
           overflow: 'hidden',
@@ -226,8 +226,8 @@ export function IssueCard({
           style={{
             flexDirection: compact ? 'row' : 'column',
             gap: compact ? 12 : 0,
-            alignItems: compact ? 'stretch' : undefined,
-            flex: 1,
+            alignItems: compact ? 'flex-start' : undefined,
+            flex: compact ? undefined : 1,
           }}
         >
           {photo}

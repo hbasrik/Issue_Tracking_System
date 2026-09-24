@@ -479,7 +479,7 @@ export function IssueList({
                 className="grid gap-3"
                 style={{
                   gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
-                  alignItems: 'stretch',
+                  alignItems: cols === 1 ? 'start' : 'stretch',
                 }}
               >
                 {row.map((issue) => (
