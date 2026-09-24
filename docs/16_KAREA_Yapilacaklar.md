@@ -1,6 +1,6 @@
 # KAREA — Yapılacaklar Listesi
 
-**Güncelleme:** 2026-09-21
+**Güncelleme:** 2026-09-22
 **Amaç:** Canlıya çıkmadan önce ve sonra yapılacakları ayırmak, neyin
 kimi beklediğini takip etmek.
 
@@ -137,6 +137,46 @@ Mevcut Issues sayfasına (yeni sayfa yok):
   `backend/uploads/issue_resolution/68/…jpg` silinmedi (Rule 7).
 - Doğrulama fixture’ları (TEMPBOARD 61–65) APPROVED’a çekilmek yerine
   satır + audit ile silindi (metrik kirletmesin).
+
+### A15. Issues pano sayfalama + sanallaştırma `[x]` — 2026-09-22
+Web Issues panosu:
+- Varsayılan durum filtresi OPEN+IN_PROGRESS (kayıtlı board UI’deki
+  `statuses` — boş dizi dahil — korunur)
+- `GET /issues` `limit=50` + keyset (`before_date`/`before_id`) ile sonsuz
+  kaydırma; 30 sn yenileme yalnız ilk sayfayı alır ve mevcut listeye merge
+  eder (sonraki sayfalar korunur, id ile dedupe)
+- `homeStat` / `analysisStat` drill-down: limitsiz tam liste
+- Kart grid satır sanallaştırması (`@tanstack/react-virtual`, scroll =
+  AppShell `[data-app-scroll]`)
+- Dışa aktarma: ekranda yüklü + filtrelenmiş küme (görünenle aynı)
+
+Mobil `MyIssuesScreen` (aynı API sözleşmesi):
+- Varsayılan OPEN+IN_PROGRESS; board UI AsyncStorage (`karea-issues-board-ui`);
+  kayıtlı boş `statuses` = tüm durumlar
+- Sayfa boyutu 50 + keyset sonsuz kaydırma; footer `issue.loadingMore`;
+  30 sn yalnız ilk sayfa merge
+- `homeStat`: limitsiz tam liste
+- Liste: `@shopify/flash-list` (numColumns korunur; v2 otomatik ölçü)
+
+Index (migration 0030, idempotent): `idx_issue_list_reporter`
+(`issue_reporter_id`), `idx_issue_list_issue_date` (`issue_date DESC, id DESC`).
+
+Yük testi (Rule 7): `backup.sh` → restore `karea_issues_loadtest` → +2000
+`LOADTEST_SCALE_*` satır → ölçüm → `DROP DATABASE`. Canlı `issue_list` = 24
+değişmedi. Web/mobil aynı `/issues` uçlarını kullanır (ağ ölçümü ortak).
+
+| Senaryo | İstek | Toplam bayt | Süre (ms) | Not |
+|---|---:|---:|---:|---|
+| Canlı 24 — ilk açılış | 5 | 28 390 | 70 | issues+katalog |
+| Canlı 24 — 30 sn yenileme | 1 | 17 444 | 11 | yalnız ilk sayfa |
+| Loadtest 2024 — ilk açılış | 5 | 71 174 | 93 | 50 kayıt, has_more |
+| Loadtest 2024 — 30 sn yenileme | 1 | 60 228 | 11 | yalnız ilk sayfa |
+| Loadtest — +3 sayfa kaydırma | 3 | 180 921 | 36 | keyset ~12 ms/sayfa |
+| Loadtest — eski full list | 1 | 2 442 898 | 36 | limitsiz (karşıt) |
+
+EXPLAIN: board sırası `idx_issue_list_issue_date`; bildiren
+`idx_issue_list_reporter`. Kaydırma akıcılığı: API ~12 ms/sayfa; DOM
+sanallaştırma (web virtual rows / mobil FlashList). Cihaz FPS ölçülmedi.
 
 ---
 

@@ -141,6 +141,14 @@ kaydırma/filtre korunumu. Yüklemede görsel `image.Decode` doğrulaması
 (`ErrUndecodableImage`). Medya dosya adları içerik-adresli kaldığı için
 `Cache-Control: private, max-age=31536000, immutable`.
 
+**Güncelleme (2026-09-22 — ölçek):** `GET /issues` limit/offset + keyset
+(`before_date`/`before_id`); pano ilk parça 50; 30 sn yenileme yalnız ilk
+parçayı tazeler. Varsayılan filtre OPEN+IN_PROGRESS. Web satır
+sanallaştırma (`@tanstack/react-virtual`); mobil `@shopify/flash-list`.
+Index’ler: `idx_issue_list_reporter`, `idx_issue_list_issue_date`
+(migration 0030). Sıra `issue_date DESC, id DESC` (kart `IssueDate` ile
+hizalı).
+
 ## Değişmeyen / Yeniden Kullanılacaklar
 
 Şunlara **dokunulmuyor**, olduğu gibi kalıyor: JWT auth + bcrypt (üstteki JWT_SECRET ve iptal sıkılaştırmaları hariç), CORS allowlist mimarisi, Unit-of-Work (pgx.Tx) transaction pattern, `.cursor/rules` (commit ve environment-check kuralları), Analysis sekmesi temel yapısı (VIN×severity kırılımı, Pie/Bar chart'lar — yeni station/EOL alanlarıyla genişleyecek ama sıfırdan kurulmayacak), Docker/migration/seed altyapısı.

@@ -342,9 +342,9 @@ tekillik. *Tekilliği koşula bağlamayı sağlar.*
 **Index** — Bir kolonda arama yapmayı hızlandıran yapı. *Tablo
 büyüdükçe sorguların yavaşlamasını engeller.* Bedeli: yazma biraz
 yavaşlar, disk kullanır.
-**Bizde:** Hata tablosunda bildiren kişi kolonunda index yok —
-denetimde yüksek öncelikli bulgu; operatör adıyla arama özelliğini
-yeni eklemiştik.
+**Bizde:** `issue_list.issue_reporter_id` → `idx_issue_list_reporter`
+(migration 0030); `issue_date DESC, id DESC` → `idx_issue_list_issue_date`
+(pano sırası / keyset sayfalama).
 
 **GIN / trigram index** — Metin içinde parça arama için özel index tipi.
 **Bizde:** `pg_trgm` eklentisi ile VIN'in son hanelerinden arama.

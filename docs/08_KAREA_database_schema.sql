@@ -330,6 +330,8 @@ CREATE INDEX idx_issue_list_open_by_vin
     WHERE status IN ('OPEN', 'IN_PROGRESS');
 
 CREATE INDEX idx_issue_list_status_date ON issue_list (status, issue_date);
+CREATE INDEX idx_issue_list_reporter ON issue_list (issue_reporter_id);
+CREATE INDEX idx_issue_list_issue_date ON issue_list (issue_date DESC, id DESC);
 CREATE INDEX idx_issue_list_station ON issue_list (station_id);
 CREATE INDEX idx_issue_list_severity ON issue_list (severity);
 
