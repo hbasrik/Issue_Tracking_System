@@ -27,18 +27,23 @@ function severityLabel(severity: string, t: { (key: 'severity.critical' | 'sever
 }
 
 export function IssueListPrint({
-  issues,
+  matchTotal,
   filters,
+  fetchIssues,
+  disabled = false,
 }: {
-  issues: Issue[];
+  matchTotal: number;
   filters: string[];
+  fetchIssues: () => Promise<Issue[]>;
+  disabled?: boolean;
 }) {
   const { t, locale } = useI18n();
   const { user, token } = useAuth();
   const [includePhotos, setIncludePhotos] = useState(true);
-  /** Mount thumbs only for an active print pass (avoids fetching every board open). */
   const [photosMounted, setPhotosMounted] = useState(false);
   const [printing, setPrinting] = useState(false);
+  const [printProgress, setPrintProgress] = useState<string | null>(null);
+  const [printIssues, setPrintIssues] = useState<Issue[]>([]);
   const [printedAt, setPrintedAt] = useState(() =>
     formatDateTime(new Date().toISOString(), locale),
   );
@@ -46,21 +51,23 @@ export function IssueListPrint({
 
   async function onPrint() {
     setPrinting(true);
+    setPrintProgress(t('print.preparing'));
     try {
       const withPhotos = includePhotos;
+      const rows = await fetchIssues();
       flushSync(() => {
+        setPrintIssues(rows);
         setPrintedAt(formatDateTime(new Date().toISOString(), locale));
         setPhotosMounted(withPhotos);
       });
       if (withPhotos && token) {
-        const paths = issues
+        const paths = rows
           .map((i) => i.ReportPhotoPath)
           .filter((p): p is string => Boolean(p));
         await preloadAuthenticatedMedia(
           token,
           paths.map((storagePath) => ({ storagePath, variant: 'sm' as const })),
         );
-        // Remount/paint img nodes from warm cache, then let printSection wait on load.
         flushSync(() => setPhotosMounted(true));
         await new Promise<void>((r) => {
           requestAnimationFrame(() => requestAnimationFrame(() => r()));
@@ -70,6 +77,7 @@ export function IssueListPrint({
     } finally {
       setPhotosMounted(false);
       setPrinting(false);
+      setPrintProgress(null);
     }
   }
 
@@ -86,11 +94,20 @@ export function IssueListPrint({
           {t('print.withPhotos')}
         </label>
         <PrintButton
-          label={t('common.print')}
+          label={
+            printing
+              ? t('print.preparing')
+              : `${t('common.print')} (${matchTotal})`
+          }
           icon={<Printer size={15} aria-hidden />}
-          disabled={issues.length === 0 || printing}
+          disabled={disabled || matchTotal === 0 || printing}
           onClick={() => void onPrint()}
         />
+        {printProgress ? (
+          <span className="text-[12px] text-[var(--text-secondary)]" aria-live="polite">
+            {printProgress}
+          </span>
+        ) : null}
       </div>
       <PrintRoot id="issues-list">
         <PrintHeader
@@ -119,7 +136,7 @@ export function IssueListPrint({
             </tr>
           </thead>
           <tbody>
-            {issues.map((issue) => (
+            {printIssues.map((issue) => (
               <tr key={issue.ID}>
                 {includePhotos ? (
                   <td className="print-col-photo">

@@ -294,6 +294,15 @@ export const tr = {
   'issue.searchLabel': 'VIN / bildiren',
   'issue.exportingCsv': 'CSV…',
   'issue.exportingZip': 'ZIP…',
+  'issue.exportFetching': 'Kayıtlar yükleniyor…',
+  'issue.exportAttachments': 'Ekler toplanıyor… ({done}/{total})',
+  'issue.exportBuilding': 'Dosya oluşturuluyor…',
+  'issue.exportCounting': 'Toplam hesaplanıyor…',
+  'issue.zipTooLarge':
+    'ZIP en fazla {max} kayıt için (şu an {n}). CSV veya yazdırmayı kullanın.',
+  'issue.zipConfirm':
+    '{n} kayıt dışa aktarılacak (tahmini ~{mb} MB fotoğraf). Devam?',
+  'print.preparing': 'Yazdırma hazırlanıyor…',
   'issue.analysisFilter': 'Analiz filtresi: {label} · {n} kayıt',
   'issue.analysisFilterRange': 'Analiz filtresi: {label} · {range} · {n} kayıt',
   'issue.id': 'ID',
@@ -2279,6 +2288,15 @@ export const en: Record<MessageKey, string> = {
   'issue.analysisFilterRange': 'Analysis filter: {label} · {range} · {n} records',
   'issue.exportingCsv': 'CSV…',
   'issue.exportingZip': 'ZIP…',
+  'issue.exportFetching': 'Loading records…',
+  'issue.exportAttachments': 'Collecting attachments… ({done}/{total})',
+  'issue.exportBuilding': 'Building file…',
+  'issue.exportCounting': 'Counting matches…',
+  'issue.zipTooLarge':
+    'ZIP supports at most {max} records (currently {n}). Use CSV or print.',
+  'issue.zipConfirm':
+    'Export {n} records (approx. ~{mb} MB of photos). Continue?',
+  'print.preparing': 'Preparing print…',
   'issue.listSubtitle': 'All Issues — filter by VIN or reporter name',
   'issue.noMatch': 'No Issues match the filter',
   'issue.searchLabel': 'VIN / reporter',

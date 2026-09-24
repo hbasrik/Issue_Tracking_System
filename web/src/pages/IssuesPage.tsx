@@ -83,6 +83,11 @@ const PAGE_SIZE = 50;
 /** Empty = no status filter (all statuses). Old OPEN+IN_PROGRESS default removed. */
 const DEFAULT_BOARD_STATUSES: readonly string[] = [];
 const SCROLL_LOAD_THRESHOLD_PX = 480;
+/** ZIP hard cap — browser memory; CSV/print stay unlimited with progress. */
+const ZIP_HARD_MAX_ISSUES = 500;
+const ZIP_CONFIRM_MIN = 80;
+/** Rough MB per issue with photos (for pre-ZIP estimate). */
+const ZIP_MB_PER_ISSUE_EST = 0.35;
 
 function sortIssuesNewestFirst(list: Issue[]): Issue[] {
   return list.slice().sort((a, b) => {
@@ -204,6 +209,10 @@ export default function IssuesPage() {
   const [highlightedIds, setHighlightedIds] = useState<Set<number>>(new Set());
   const [homeStatNow] = useState(() => new Date());
   const [exporting, setExporting] = useState<'csv' | 'zip' | null>(null);
+  const [exportProgress, setExportProgress] = useState<string | null>(null);
+  /** Full filter match count (server full list ∩ client filters), not loaded pages. */
+  const [matchTotal, setMatchTotal] = useState<number | null>(null);
+  const [matchCounting, setMatchCounting] = useState(false);
   const [advancedOpen, setAdvancedOpen] = useState(boot.advancedOpen);
   /** Narrow layout: status/severity/advanced collapsed by default. */
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -340,7 +349,7 @@ export default function IssuesPage() {
       const gen = silent ? fetchGenRef.current : ++fetchGenRef.current;
       try {
         const issuesPromise = isDrill
-          ? api.listIssues({ status })
+          ? api.listIssues({ status, unlimited: true })
           : api.listIssues({
               status,
               limit: PAGE_SIZE,
@@ -720,9 +729,9 @@ export default function IssuesPage() {
     });
   }
 
-  const visible = useMemo(
-    () =>
-      items.filter((issue) => {
+  const applyClientFilters = useCallback(
+    (list: Issue[]): Issue[] =>
+      list.filter((issue) => {
         if (homeStat) {
           return matchesHomeIssueStat(issue, homeStat, homeStatNow);
         }
@@ -766,7 +775,6 @@ export default function IssuesPage() {
         return true;
       }),
     [
-      items,
       listQuery,
       homeStat,
       homeStatNow,
@@ -782,13 +790,52 @@ export default function IssuesPage() {
     ],
   );
 
-  async function attachmentsFor(issues: Issue[]) {
+  const visible = useMemo(
+    () => applyClientFilters(items),
+    [items, applyClientFilters],
+  );
+
+  /** Server full list for current status param, then client filters. */
+  const fetchMatchingIssues = useCallback(async (): Promise<Issue[]> => {
+    const status = boardStatusParam();
+    const res = await api.listIssues({ status, unlimited: true });
+    return applyClientFilters(sortIssuesNewestFirst(res.items ?? []));
+  }, [boardStatusParam, applyClientFilters]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setMatchCounting(true);
+    void fetchMatchingIssues()
+      .then((rows) => {
+        if (!cancelled) setMatchTotal(rows.length);
+      })
+      .catch(() => {
+        if (!cancelled) setMatchTotal(null);
+      })
+      .finally(() => {
+        if (!cancelled) setMatchCounting(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchMatchingIssues]);
+
+  async function attachmentsFor(
+    issues: Issue[],
+    onProgress?: (done: number, total: number) => void,
+  ) {
     const byId = new Map<
       number,
       { report: MediaAttachment[]; resolution: MediaAttachment[] }
     >();
-    await Promise.all(
-      issues.map(async (issue) => {
+    let done = 0;
+    const total = issues.length;
+    const concurrency = 8;
+    let next = 0;
+    async function worker() {
+      while (next < issues.length) {
+        const i = next++;
+        const issue = issues[i]!;
         const [report, resolution] = await Promise.all([
           api.listMedia('ISSUE', String(issue.ID)),
           api.listMedia('ISSUE_RESOLUTION', String(issue.ID)),
@@ -797,7 +844,15 @@ export default function IssuesPage() {
           report: report.items ?? [],
           resolution: resolution.items ?? [],
         });
-      }),
+        done += 1;
+        onProgress?.(done, total);
+      }
+    }
+    await Promise.all(
+      Array.from(
+        { length: Math.min(concurrency, Math.max(1, issues.length)) },
+        () => worker(),
+      ),
     );
     return byId;
   }
@@ -814,12 +869,24 @@ export default function IssuesPage() {
     setExporting('csv');
     setError(null);
     try {
-      const attachments = await attachmentsFor(visible);
+      setExportProgress(t('issue.exportFetching'));
+      const rows = await fetchMatchingIssues();
+      setMatchTotal(rows.length);
+      setExportProgress(
+        t('issue.exportAttachments', { done: 0, total: rows.length }),
+      );
+      const attachments = await attachmentsFor(rows, (done, total) => {
+        setExportProgress(t('issue.exportAttachments', { done, total }));
+      });
+      setExportProgress(t('issue.exportBuilding'));
       const urls = new Map<number, string[]>();
-      for (const issue of visible) {
-        urls.set(issue.ID, photoUrls(attachments.get(issue.ID) ?? { report: [], resolution: [] }));
+      for (const issue of rows) {
+        urls.set(
+          issue.ID,
+          photoUrls(attachments.get(issue.ID) ?? { report: [], resolution: [] }),
+        );
       }
-      const csv = buildIssuesCsv(visible, urls, t);
+      const csv = buildIssuesCsv(rows, urls, t);
       downloadBlob(
         new Blob([csv], { type: 'text/csv;charset=utf-8' }),
         `issues-${exportStamp()}.csv`,
@@ -828,6 +895,7 @@ export default function IssuesPage() {
       setError(err instanceof Error ? err.message : t('issue.exportCsvFailed'));
     } finally {
       setExporting(null);
+      setExportProgress(null);
     }
   }
 
@@ -835,10 +903,32 @@ export default function IssuesPage() {
     setExporting('zip');
     setError(null);
     try {
-      const attachments = await attachmentsFor(visible);
+      setExportProgress(t('issue.exportFetching'));
+      const rows = await fetchMatchingIssues();
+      setMatchTotal(rows.length);
+      if (rows.length > ZIP_HARD_MAX_ISSUES) {
+        setError(
+          t('issue.zipTooLarge', { max: ZIP_HARD_MAX_ISSUES, n: rows.length }),
+        );
+        return;
+      }
+      if (rows.length >= ZIP_CONFIRM_MIN) {
+        const mb = Math.max(1, Math.round(rows.length * ZIP_MB_PER_ISSUE_EST));
+        const ok = window.confirm(
+          t('issue.zipConfirm', { n: rows.length, mb }),
+        );
+        if (!ok) return;
+      }
+      setExportProgress(
+        t('issue.exportAttachments', { done: 0, total: rows.length }),
+      );
+      const attachments = await attachmentsFor(rows, (done, total) => {
+        setExportProgress(t('issue.exportAttachments', { done, total }));
+      });
+      setExportProgress(t('issue.exportBuilding'));
       const urls = new Map<number, string[]>();
       const photos: IssueExportPhoto[] = [];
-      for (const issue of visible) {
+      for (const issue of rows) {
         const pack = attachments.get(issue.ID) ?? { report: [], resolution: [] };
         urls.set(issue.ID, photoUrls(pack));
         photos.push(
@@ -846,7 +936,7 @@ export default function IssuesPage() {
           ...(await fetchExportPhotos(issue.ID, 'cozum', pack.resolution, token)),
         );
       }
-      const csv = buildIssuesCsv(visible, urls, t);
+      const csv = buildIssuesCsv(rows, urls, t);
       const zip = buildIssuesZip(csv, photos);
       downloadBlob(
         new Blob([zip as BlobPart], { type: 'application/zip' }),
@@ -856,8 +946,12 @@ export default function IssuesPage() {
       setError(err instanceof Error ? err.message : t('issue.exportZipFailed'));
     } finally {
       setExporting(null);
+      setExportProgress(null);
     }
   }
+
+  const exportCount = matchTotal ?? visible.length;
+  const exportBusy = exporting !== null;
 
   const analysisBanner = analysisStat
     ? analysisFrom || analysisTo
@@ -867,11 +961,11 @@ export default function IssuesPage() {
             from: analysisFrom || '…',
             to: analysisTo || '…',
           }),
-          n: visible.length,
+          n: exportCount,
         })
       : t('issue.analysisFilter', {
           label: analysisIssueStatLabel(analysisStat, t),
-          n: visible.length,
+          n: exportCount,
         })
     : null;
 
@@ -935,11 +1029,16 @@ export default function IssuesPage() {
             </p>
           ) : null}
         </div>
-        <div className="flex flex-wrap gap-2">
-          <IssueListPrint issues={visible} filters={printFilters} />
+        <div className="flex flex-wrap items-center gap-2">
+          <IssueListPrint
+            matchTotal={exportCount}
+            filters={printFilters}
+            fetchIssues={fetchMatchingIssues}
+            disabled={exportBusy || exportCount === 0}
+          />
           <button
             type="button"
-            disabled={exporting !== null || visible.length === 0}
+            disabled={exportBusy || exportCount === 0}
             onClick={() => void exportCsv()}
             className="inline-flex min-h-touch items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[13px] font-medium hover:bg-[var(--bg-surface-2)] disabled:opacity-40"
             style={{ borderColor: 'var(--border)' }}
@@ -947,21 +1046,34 @@ export default function IssuesPage() {
             <FileSpreadsheet size={15} aria-hidden />
             {exporting === 'csv'
               ? t('issue.exportingCsv')
-              : t('issue.csvN', { n: visible.length })}
+              : matchCounting
+                ? t('issue.exportCounting')
+                : t('issue.csvN', { n: exportCount })}
           </button>
           <button
             type="button"
-            disabled={exporting !== null || visible.length === 0}
+            disabled={exportBusy || exportCount === 0}
             onClick={() => void exportZip()}
             className="inline-flex min-h-touch items-center gap-1.5 rounded-lg bg-[var(--accent)] px-3 py-1.5 text-[13px] font-medium text-white hover:brightness-110 disabled:opacity-40"
           >
             <Archive size={15} aria-hidden />
             {exporting === 'zip'
               ? t('issue.exportingZip')
-              : t('issue.zipN', { n: visible.length })}
+              : matchCounting
+                ? t('issue.exportCounting')
+                : t('issue.zipN', { n: exportCount })}
           </button>
         </div>
       </div>
+
+      {exportProgress ? (
+        <p
+          className="mt-2 text-[13px] text-[var(--text-secondary)]"
+          aria-live="polite"
+        >
+          {exportProgress}
+        </p>
+      ) : null}
 
       {staleWarning ? (
         <div
@@ -1014,7 +1126,7 @@ export default function IssuesPage() {
             {homeStat
               ? t('issue.homeFilter', {
                   label: homeIssueStatLabel(homeStat, t),
-                  n: visible.length,
+                  n: exportCount,
                 })
               : analysisBanner}
           </p>
