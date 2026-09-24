@@ -47,6 +47,12 @@ import {
   deliverGateReasons,
   depotReleaseGateReasons,
 } from '../../../shared/eolGates';
+import {
+  activeIncompleteChecklistItems,
+  countActiveChecklistProgress,
+  filterByEolPhase,
+  splitChecklistByActive,
+} from '../../../shared/checklistActive';
 import type { MessageKey, Translate } from '../../../shared/i18n';
 
 const STATUS_KEYS = [
@@ -64,10 +70,6 @@ function stageLabel(stage: EOLStage, t: Translate): string {
     COMPLETED: 'status.eolStage.completed',
   };
   return t(keys[stage]);
-}
-
-function isPassing(s: ChecklistItem['Status']): boolean {
-  return s === 'OK' || s === 'CONDITIONAL_OK';
 }
 
 function needsDesc(s: ChecklistItem['Status']): boolean {
@@ -93,6 +95,7 @@ export default function EOLChecklistScreen() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [inactiveOpen, setInactiveOpen] = useState(false);
 
   const load = useCallback(async () => {
     setError(null);
@@ -135,28 +138,30 @@ export default function EOLChecklistScreen() {
   const stage = workflow?.current_stage ?? 'BRANCH';
   const operatorStage = stage === 'BRANCH' || stage === 'DEPOT';
 
-  const stageItems = useMemo(
-    () =>
-      operatorStage
-        ? items.filter((it) => !it.EolPhase || it.EolPhase === stage)
-        : [],
-    [items, stage, operatorStage],
+  const stageItems = useMemo(() => {
+    if (!operatorStage) return [] as ChecklistItem[];
+    return filterByEolPhase(items, stage as 'BRANCH' | 'DEPOT');
+  }, [items, stage, operatorStage]);
+
+  const { active: activeItems, inactiveHistorical } = useMemo(
+    () => splitChecklistByActive(stageItems),
+    [stageItems],
   );
+
+  const counts = useMemo(() => {
+    const base = countActiveChecklistProgress(activeItems);
+    const evaluated = activeItems.filter((it) => {
+      const s = drafts[it.ItemID]?.status || it.Status;
+      return Boolean(s && s !== 'PENDING');
+    }).length;
+    return { ...base, evaluated };
+  }, [activeItems, drafts]);
 
   const blocking = useMemo(
     () =>
-      stageItems.filter((it) => {
-        const d = drafts[it.ItemID];
-        const status = (d?.status || it.Status) as ChecklistItem['Status'];
-        return !status || status === 'PENDING' || !isPassing(status);
-      }),
-    [stageItems, drafts],
+      activeIncompleteChecklistItems(activeItems, (it) => drafts[it.ItemID]?.status),
+    [activeItems, drafts],
   );
-
-  const evaluated = stageItems.filter((it) => {
-    const s = drafts[it.ItemID]?.status || it.Status;
-    return s && s !== 'PENDING';
-  }).length;
 
   const canShip = has(Perm.EOLBranchShip) && Boolean(workflow?.gates?.branch_ship.ready);
   const shipReasons = branchShipGateReasons(
@@ -333,13 +338,17 @@ export default function EOLChecklistScreen() {
       <DismissKeyboardScrollView contentContainerStyle={{ padding: 16, paddingBottom: 120 }}>
         <Title>{t('nav.eolChecklist')}</Title>
         <Subtitle>
-          {stageLabel(stage, t)} · {t('checklist.evaluated', { done: evaluated, total: stageItems.length })}
+          {stageLabel(stage, t)} ·{' '}
+          {t('checklist.evaluated', {
+            done: counts.evaluated,
+            total: counts.total,
+          })}
         </Subtitle>
         {renderStageActions()}
         {error ? <ErrorText>{error}</ErrorText> : null}
         {offlineHint ? <InfoText>{offlineHint}</InfoText> : null}
 
-        {stageItems.map((item) => {
+        {activeItems.map((item) => {
           const d = drafts[item.ItemID] ?? { status: '', desc: '' };
           return (
             <Card key={item.ItemID}>
@@ -412,6 +421,62 @@ export default function EOLChecklistScreen() {
             </Card>
           );
         })}
+
+        {inactiveHistorical.length > 0 ? (
+          <Card>
+            <Pressable
+              onPress={() => setInactiveOpen((o) => !o)}
+              accessibilityRole="button"
+              testID="checklist-inactive-toggle"
+            >
+              <Text style={{ color: tokens.textSecondary, fontWeight: '600', fontSize: 14 }}>
+                {t('checklist.inactiveSection', { n: inactiveHistorical.length })}
+                {inactiveOpen ? ' ▾' : ' ▸'}
+              </Text>
+            </Pressable>
+            {inactiveOpen ? (
+              <View style={{ marginTop: 8 }}>
+                <Text style={{ color: tokens.textSecondary, fontSize: 12, marginBottom: 8 }}>
+                  {t('checklist.inactiveHint')}
+                </Text>
+                {inactiveHistorical.map((item) => (
+                  <View
+                    key={item.ItemID}
+                    style={{
+                      marginTop: 8,
+                      paddingVertical: 8,
+                      borderTopWidth: 1,
+                      borderTopColor: tokens.border,
+                      opacity: 0.7,
+                    }}
+                    testID={`checklist-inactive-${item.ItemID}`}
+                  >
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+                      <Text style={{ color: tokens.textPrimary, fontSize: 14, flex: 1 }}>
+                        {item.ItemNo}. {item.ItemText}
+                      </Text>
+                      <View
+                        style={{
+                          paddingHorizontal: 8,
+                          paddingVertical: 2,
+                          borderRadius: 999,
+                          backgroundColor: tokens.border,
+                        }}
+                      >
+                        <Text style={{ color: tokens.textSecondary, fontSize: 11, fontWeight: '700' }}>
+                          {t('checklist.inactiveBadge')}
+                        </Text>
+                      </View>
+                    </View>
+                    <Text style={{ color: tokens.textSecondary, fontSize: 12, marginTop: 4 }}>
+                      {item.Status}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            ) : null}
+          </Card>
+        ) : null}
       </DismissKeyboardScrollView>
 
       <View

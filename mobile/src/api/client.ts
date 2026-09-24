@@ -227,6 +227,7 @@ export interface ChecklistItem {
   EolPhase?: EOLItemPhase | null;
   SectionKey?: string | null;
   SectionSort?: number | null;
+  IsActive?: boolean;
   ProgressID?: number | null;
   CheckerName?: string;
   CheckDate?: string | null;

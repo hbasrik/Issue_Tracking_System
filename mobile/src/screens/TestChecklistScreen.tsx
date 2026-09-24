@@ -20,15 +20,16 @@ import { checklistActorLines } from '../lib/actionStamp';
 import { apiErrorMessage } from '../lib/password';
 import { loadFailureMessage } from '../offline/userFacingError';
 import { isTransportError } from '../../../shared/networkError';
+import {
+  countActiveChecklistProgress,
+  isChecklistStatusPassing,
+  splitChecklistByActive,
+} from '../../../shared/checklistActive';
 import { useI18n } from '../i18n';
 import { useTheme } from '../theme/ThemeProvider';
 import { statusColors } from '../theme/tokens';
 import type { RootStackParamList } from '../navigation/types';
 import { groupChecklistSections } from '../lib/checklistSections';
-
-function isDone(s: ChecklistItem['Status']): boolean {
-  return s === 'OK' || s === 'CONDITIONAL_OK';
-}
 
 /**
  * Test checklist (Karar 4) — the third checklist alongside EoL and Shipment.
@@ -45,6 +46,7 @@ export default function TestChecklistScreen() {
   const [error, setError] = useState<string | null>(null);
   const [offlineHint, setOfflineHint] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<number | null>(null);
+  const [inactiveOpen, setInactiveOpen] = useState(false);
 
   const load = useCallback(async () => {
     setError(null);
@@ -69,12 +71,18 @@ export default function TestChecklistScreen() {
     }, [load]),
   );
 
-  const total = items.length;
-  const completed = items.filter((i) => isDone(i.Status)).length;
-  const remaining = total - completed;
+  const { active: activeItems, inactiveHistorical } = useMemo(
+    () => splitChecklistByActive(items),
+    [items],
+  );
+  const counts = useMemo(
+    () => countActiveChecklistProgress(activeItems),
+    [activeItems],
+  );
+  const { total, passing: completed, remaining } = counts;
 
   async function toggle(item: ChecklistItem) {
-    if (isDone(item.Status)) return;
+    if (isChecklistStatusPassing(item.Status)) return;
     setBusyId(item.ItemID);
     setError(null);
     try {
@@ -88,8 +96,8 @@ export default function TestChecklistScreen() {
   }
 
   const grouped = useMemo(
-    () => groupChecklistSections(items, t),
-    [items, t],
+    () => groupChecklistSections(activeItems, t),
+    [activeItems, t],
   );
 
   if (!items.length && !error && !offlineHint) return <Loading />;
@@ -129,7 +137,7 @@ export default function TestChecklistScreen() {
               {g.title}
             </Text>
             {g.items.map((item) => {
-              const checked = isDone(item.Status);
+              const checked = isChecklistStatusPassing(item.Status);
               return (
                 <Pressable
                   key={item.ItemID}
@@ -159,6 +167,61 @@ export default function TestChecklistScreen() {
             })}
           </View>
         ))}
+
+        {inactiveHistorical.length > 0 ? (
+          <Card>
+            <Pressable
+              onPress={() => setInactiveOpen((o) => !o)}
+              accessibilityRole="button"
+              testID="checklist-inactive-toggle"
+            >
+              <Text style={{ color: tokens.textSecondary, fontWeight: '600', fontSize: 14 }}>
+                {t('checklist.inactiveSection', { n: inactiveHistorical.length })}
+                {inactiveOpen ? ' ▾' : ' ▸'}
+              </Text>
+            </Pressable>
+            {inactiveOpen ? (
+              <View style={{ marginTop: 8 }}>
+                <Text style={{ color: tokens.textSecondary, fontSize: 12, marginBottom: 8 }}>
+                  {t('checklist.inactiveHint')}
+                </Text>
+                {inactiveHistorical.map((item) => (
+                  <View
+                    key={item.ItemID}
+                    style={{
+                      marginTop: 8,
+                      paddingVertical: 8,
+                      borderTopWidth: 1,
+                      borderTopColor: tokens.border,
+                      opacity: 0.7,
+                    }}
+                  >
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+                      <Text style={{ color: tokens.textPrimary, fontSize: 14, flex: 1 }}>
+                        {item.ItemNo}. {item.ItemText}
+                      </Text>
+                      <View
+                        style={{
+                          paddingHorizontal: 8,
+                          paddingVertical: 2,
+                          borderRadius: 999,
+                          backgroundColor: tokens.border,
+                        }}
+                      >
+                        <Text style={{ color: tokens.textSecondary, fontSize: 11, fontWeight: '700' }}>
+                          {t('checklist.inactiveBadge')}
+                        </Text>
+                      </View>
+                    </View>
+                    <Text style={{ color: tokens.textSecondary, fontSize: 12, marginTop: 4 }}>
+                      {item.Status}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            ) : null}
+          </Card>
+        ) : null}
       </ScrollView>
 
       <View
