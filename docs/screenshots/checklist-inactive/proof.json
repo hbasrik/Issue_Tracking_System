@@ -1,0 +1,16 @@
+{
+  "vin": "N7V1K1SA6TK000068",
+  "api_depot_rows": 7,
+  "shared_active": 5,
+  "shared_inactive": 2,
+  "shared_counts": {
+    "total": 5,
+    "passing": 5,
+    "remaining": 0,
+    "evaluated": 5
+  },
+  "pending_simulation_remaining": 1,
+  "gate_depot_eol_remaining": 0,
+  "gate_depot_eol_missing": 0,
+  "note": "PENDING remaining uses in-memory Status flip on first active item only — no DB write (Rule 7)."
+}

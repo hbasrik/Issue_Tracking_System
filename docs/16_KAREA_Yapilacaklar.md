@@ -1,6 +1,6 @@
 # KAREA — Yapılacaklar Listesi
 
-**Güncelleme:** 2026-09-22
+**Güncelleme:** 2026-09-24
 **Amaç:** Canlıya çıkmadan önce ve sonra yapılacakları ayırmak, neyin
 kimi beklediğini takip etmek.
 
@@ -177,6 +177,21 @@ değişmedi. Web/mobil aynı `/issues` uçlarını kullanır (ağ ölçümü ort
 EXPLAIN: board sırası `idx_issue_list_issue_date`; bildiren
 `idx_issue_list_reporter`. Kaydırma akıcılığı: API ~12 ms/sayfa; DOM
 sanallaştırma (web virtual rows / mobil FlashList). Cihaz FPS ölçülmedi.
+
+### A16. Pasif checklist maddeleri (UI) `[x]` — 2026-09-24
+API, progress’i olan pasif maddeleri bilerek listede tutuyor (geçmiş);
+kapılar zaten yalnız aktiflere bakıyor (migration 0022). UI artık aynı
+ayırımı gösteriyor:
+- Ana liste = aktif maddeler (operatör işi)
+- Altta varsayılan kapalı: “Artık gerekli olmayan maddeler (n)” + Pasif rozeti
+- Tüm sayılar / ilerleme `shared/checklistActive.ts` üzerinden yalnız
+  aktif kümeden (web `ChecklistPanel`, mobil EoL/Shipment/Test)
+- Mobil `ChecklistItem.IsActive` tipi eklendi
+
+Doğrulama (VIN `N7V1K1SA6TK000068`, Depo): API 7 satır → shared 5 aktif +
+2 pasif; kapı `depot_eol_remaining=0` (pasif OK’ler etkilemez); PENDING
+simülasyonu (Rule 7, DB yazılmaz) remaining 1. Ekran görüntüleri:
+`docs/screenshots/checklist-inactive/`.
 
 ---
 
