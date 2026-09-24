@@ -504,3 +504,60 @@ func TestIssueCreate_IdempotencyKeyReplaysSameIssue(t *testing.T) {
 		t.Fatalf("rows = %d, want 1", len(repo.issues))
 	}
 }
+
+// TestIssueList_OmitLimitReturnsFullList pins the contract Home KPIs rely on:
+// omitting ?limit= must not silently page (fake repo has 250 issues).
+func TestIssueList_OmitLimitReturnsFullList(t *testing.T) {
+	const n = 250
+	issues := make([]domain.Issue, 0, n)
+	base := time.Date(2026, 1, 1, 12, 0, 0, 0, time.UTC)
+	for i := 1; i <= n; i++ {
+		issues = append(issues, domain.Issue{
+			ID:              int64(i),
+			VIN:             "N7V1K1SA9SK000001",
+			Status:          domain.IssueStatusOpen,
+			IssueReporterID: managerUserID,
+			IssueDate:       base.Add(time.Duration(i) * time.Minute),
+			Description:     "bulk",
+		})
+	}
+	router, issuer := newIssueRouter(newHTTPFakeIssueRepo(issues...))
+	token, err := issuer.Issue(managerUserID, domain.RoleCodeManagerAdmin)
+	if err != nil {
+		t.Fatalf("issue token: %v", err)
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/issues", nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d body=%s", rec.Code, rec.Body.String())
+	}
+	var payload struct {
+		Items   []domain.Issue `json:"items"`
+		HasMore bool           `json:"has_more"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &payload); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if len(payload.Items) != n {
+		t.Fatalf("omit limit returned %d items, want %d (silent default page size?)", len(payload.Items), n)
+	}
+	if payload.HasMore {
+		t.Fatalf("has_more=true on unlimited list")
+	}
+
+	req2 := httptest.NewRequest(http.MethodGet, "/api/v1/issues?limit=50", nil)
+	req2.Header.Set("Authorization", "Bearer "+token)
+	rec2 := httptest.NewRecorder()
+	router.ServeHTTP(rec2, req2)
+	var paged struct {
+		Items   []domain.Issue `json:"items"`
+		HasMore bool           `json:"has_more"`
+	}
+	_ = json.Unmarshal(rec2.Body.Bytes(), &paged)
+	if len(paged.Items) != 50 || !paged.HasMore {
+		t.Fatalf("limit=50 → %d has_more=%v, want 50/true", len(paged.Items), paged.HasMore)
+	}
+}

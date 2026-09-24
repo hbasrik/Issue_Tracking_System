@@ -336,7 +336,7 @@ export default function MyIssuesScreen() {
       const gen = silent ? fetchGenRef.current : ++fetchGenRef.current;
       try {
         const issuesPromise = isDrill
-          ? api.listIssues({ status })
+          ? api.listIssues({ status, unlimited: true })
           : api.listIssues({
               status,
               limit: PAGE_SIZE,

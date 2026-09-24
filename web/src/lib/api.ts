@@ -538,7 +538,8 @@ export const api = {
 
   /**
    * List issues. Call as listIssues(status?, vin?) or listIssues({ status, vin, limit, … }).
-   * Omit limit for the full list (Home / vehicle panels). Board uses limit + keyset/offset.
+   * Pass `unlimited: true` for Home / vehicle panels / export (omits limit).
+   * Board uses limit + keyset/offset.
    */
   listIssues(
     statusOrOpts?: string | ListIssuesOptions,
@@ -551,7 +552,9 @@ export const api = {
     const params = new URLSearchParams();
     if (opts.status) params.set('status', opts.status);
     if (opts.vin) params.set('vin', opts.vin);
-    if (opts.limit != null) params.set('limit', String(opts.limit));
+    if (!opts.unlimited && opts.limit != null) {
+      params.set('limit', String(opts.limit));
+    }
     if (opts.offset != null) params.set('offset', String(opts.offset));
     if (opts.beforeDate) params.set('before_date', opts.beforeDate);
     if (opts.beforeId != null) params.set('before_id', String(opts.beforeId));
@@ -970,6 +973,12 @@ export interface IssueType {
 export interface ListIssuesOptions {
   status?: string;
   vin?: string;
+  /**
+   * Explicit full-list request (Home KPIs, vehicle panels, export/print).
+   * Must not send `limit` — if the API ever adds a default page size, callers
+   * that omit this flag are the ones we expect to break loudly in review.
+   */
+  unlimited?: boolean;
   limit?: number;
   offset?: number;
   beforeDate?: string;

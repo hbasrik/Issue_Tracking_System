@@ -16,7 +16,7 @@ export function VehicleIssuesPanel({ vin }: { vin: string }) {
   const load = useCallback(async () => {
     setError(null);
     try {
-      const res = await api.listIssues(undefined, vin);
+      const res = await api.listIssues({ vin, unlimited: true });
       setItems(res.items ?? []);
     } catch (err) {
       setError(err instanceof Error ? apiErrorMessage(err, t) : t('issue.listFailed'));

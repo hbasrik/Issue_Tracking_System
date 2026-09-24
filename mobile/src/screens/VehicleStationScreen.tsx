@@ -150,7 +150,7 @@ export default function VehicleStationScreen() {
         api.getVehicle(vin),
         api.getStationSteps(vin),
         has(Perm.IssueView)
-          ? api.listIssues(undefined, vin).catch(() => ({ items: [] as Issue[] }))
+          ? api.listIssues({ vin, unlimited: true }).catch(() => ({ items: [] as Issue[] }))
           : Promise.resolve({ items: [] as Issue[] }),
         has(Perm.ChecklistShipmentView)
           ? api.shipmentReadiness(vin).catch(() => null)

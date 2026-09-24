@@ -116,7 +116,7 @@ export default function HomePage() {
     setLoading(true);
     try {
       const issueReq = canIssues
-        ? api.listIssues()
+        ? api.listIssues({ unlimited: true })
         : Promise.resolve({ items: [] as Issue[] });
       const vehicleReq = canIssues
         ? api.vehicleSeverityBreakdown({})

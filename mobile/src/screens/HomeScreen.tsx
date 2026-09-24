@@ -91,7 +91,7 @@ export default function HomeScreen() {
   const loadStats = useCallback(async () => {
     if (!token || !has(Perm.IssueView)) return;
     try {
-      const res = await api.listIssues();
+      const res = await api.listIssues({ unlimited: true });
       const items = res.items ?? [];
       const now = new Date();
       const next = {

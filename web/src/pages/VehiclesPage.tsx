@@ -124,7 +124,7 @@ export default function VehiclesPage() {
     }
     const [stationRes, issueRes] = await Promise.all([
       api.listStations().catch(() => ({ items: [] as Station[] })),
-      api.listIssues().catch(() => ({ items: [] })),
+      api.listIssues({ unlimited: true }).catch(() => ({ items: [] })),
     ]);
     const stations = stationRes.items ?? [];
     const byStation = new Map(stations.map((s) => [s.ID, s.Name]));
