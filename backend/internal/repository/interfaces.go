@@ -206,6 +206,9 @@ type UserRepository interface {
 	Create(ctx context.Context, user *domain.User) (*domain.User, error)
 	// UpdatePassword replaces password_hash and must_change_password.
 	UpdatePassword(ctx context.Context, id int, passwordHash string, mustChange bool) error
+	// UpdatePasswordHash replaces only password_hash (silent bcrypt cost
+	// upgrade). Does not bump tokens_valid_from or must_change_password.
+	UpdatePasswordHash(ctx context.Context, id int, passwordHash string) error
 	// CountReferences sums shop-floor FKs plus work-event audit_logs rows
 	// (see domain.WorkAuditEventTypes). Zero means hard-delete is safe.
 	CountReferences(ctx context.Context, id int) (int, error)

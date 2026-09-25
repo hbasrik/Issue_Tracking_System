@@ -76,13 +76,23 @@ func (f *loginUserRepo) UpdatePassword(_ context.Context, id int, hash string, m
 	return domain.ErrNotFound
 }
 
+func (f *loginUserRepo) UpdatePasswordHash(_ context.Context, id int, hash string) error {
+	for _, u := range f.byEmail {
+		if u.ID == id {
+			u.PasswordHash = hash
+			return nil
+		}
+	}
+	return domain.ErrNotFound
+}
+
 func (f *loginUserRepo) CountReferences(context.Context, int) (int, error) { return 0, nil }
 
 func (f *loginUserRepo) Delete(context.Context, int) error { return nil }
 
 func hashPassword(t *testing.T, password string) string {
 	t.Helper()
-	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), 12)
 	if err != nil {
 		t.Fatalf("hash password: %v", err)
 	}

@@ -16,6 +16,8 @@ const EXACT: Record<string, MessageKey> = {
   'invalid credentials': 'error.invalidCredentials',
   'password must be at least 8 characters': 'error.passwordTooShort',
   'password must contain at least one letter and one digit': 'error.passwordTooWeak',
+  'password is too common or easy to guess': 'error.passwordTooCommon',
+  'password must not be based on your name or email': 'error.passwordPersonal',
   'new password and confirmation do not match': 'error.passwordMismatch',
   'email is already in use': 'error.emailTaken',
   'you cannot reset your own password this way': 'error.cannotResetOwn',

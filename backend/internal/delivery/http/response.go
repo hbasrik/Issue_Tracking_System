@@ -148,6 +148,8 @@ func writeError(w http.ResponseWriter, err error) {
 		errors.Is(err, domain.ErrEmailRequired),
 		errors.Is(err, domain.ErrPasswordTooShort),
 		errors.Is(err, domain.ErrPasswordTooWeak),
+		errors.Is(err, domain.ErrPasswordTooCommon),
+		errors.Is(err, domain.ErrPasswordPersonal),
 		errors.Is(err, domain.ErrPasswordMismatch),
 		errors.Is(err, domain.ErrDefectPartRequired),
 		errors.Is(err, domain.ErrDefectTypeRequired),

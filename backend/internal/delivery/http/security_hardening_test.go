@@ -217,5 +217,8 @@ func (m *mapUserRepo) Create(_ context.Context, u *domain.User) (*domain.User, e
 func (m *mapUserRepo) UpdatePassword(context.Context, int, string, bool) error {
 	return nil
 }
+func (m *mapUserRepo) UpdatePasswordHash(context.Context, int, string) error {
+	return nil
+}
 func (m *mapUserRepo) CountReferences(context.Context, int) (int, error) { return 0, nil }
 func (m *mapUserRepo) Delete(context.Context, int) error                 { return nil }

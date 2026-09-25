@@ -148,6 +148,10 @@ var (
 	ErrPasswordTooShort = errors.New("password must be at least 8 characters")
 	// ErrPasswordTooWeak indicates a new password lacks a letter or a digit.
 	ErrPasswordTooWeak = errors.New("password must contain at least one letter and one digit")
+	// ErrPasswordTooCommon indicates the password matches a denylisted pattern.
+	ErrPasswordTooCommon = errors.New("password is too common or easy to guess")
+	// ErrPasswordPersonal indicates the password reuses the user's email or name.
+	ErrPasswordPersonal = errors.New("password must not be based on your name or email")
 	// ErrPasswordMismatch indicates new_password and confirmation differ.
 	ErrPasswordMismatch = errors.New("new password and confirmation do not match")
 	// ErrMustChangePassword indicates the JWT is valid but the user must

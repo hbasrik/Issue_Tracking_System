@@ -130,6 +130,15 @@ func (r *adminUserRepo) UpdatePassword(_ context.Context, id int, hash string, m
 	return nil
 }
 
+func (r *adminUserRepo) UpdatePasswordHash(_ context.Context, id int, hash string) error {
+	user, ok := r.users[id]
+	if !ok {
+		return domain.ErrNotFound
+	}
+	user.PasswordHash = hash
+	return nil
+}
+
 func (r *adminUserRepo) CountReferences(_ context.Context, id int) (int, error) {
 	if r.refs == nil {
 		return 0, nil
@@ -355,7 +364,7 @@ func TestUserAdmin_CreateGeneratesPasswordAndFlagsMustChange(t *testing.T) {
 	if created.TemporaryPassword == "" {
 		t.Fatal("temporary password must be returned once")
 	}
-	if err := domain.ValidatePassword(created.TemporaryPassword); err != nil {
+	if err := domain.ValidatePassword(created.TemporaryPassword, "", ""); err != nil {
 		t.Fatalf("generated password rejected: %v", err)
 	}
 	if created.User.Email != "new.op@karea.local" {
@@ -401,7 +410,7 @@ func TestUserAdmin_ResetPasswordSetsMustChange(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ResetPassword: %v", err)
 	}
-	if err := domain.ValidatePassword(plain); err != nil {
+	if err := domain.ValidatePassword(plain, "", ""); err != nil {
 		t.Fatalf("generated password: %v", err)
 	}
 	got, err := admin.List(context.Background())

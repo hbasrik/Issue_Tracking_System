@@ -158,6 +158,21 @@ func (r *UserRepo) UpdatePassword(ctx context.Context, id int, passwordHash stri
 	return nil
 }
 
+// UpdatePasswordHash upgrades the stored bcrypt hash without revoking JWTs or
+// flipping must_change_password (login-time cost migration).
+func (r *UserRepo) UpdatePasswordHash(ctx context.Context, id int, passwordHash string) error {
+	tag, err := r.pool.Exec(ctx,
+		`UPDATE users SET password_hash = $2 WHERE id = $1`,
+		id, passwordHash)
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		return domain.ErrNotFound
+	}
+	return nil
+}
+
 // CountReferences sums shop-floor and media FKs plus work-event audit_logs
 // rows (domain.WorkAuditEventTypes). LOGIN_RATE_LIMITED is auth telemetry and
 // is excluded so a rate-limit row never blocks user hard-delete.

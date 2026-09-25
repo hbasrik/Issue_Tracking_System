@@ -125,6 +125,8 @@ Diğer sonuçlar:
 
 **JWT_SECRET:** Boş veya 32 karakterden kısa anahtarla süreç başlamaz (`openssl rand -base64 32`). Zayıf docker-compose / `.env.example` varsayılanı yok. Bu değişiklik + `tokens_valid_from` birlikte herkesin bir kez yeniden giriş yapmasını gerektirir (beklenen).
 
+**Güncelleme (2026-09-25 — bcrypt cost + parola kuralı):** Yeni hash'ler bcrypt cost **12** (`usecase.bcryptCost`). Eski cost-10 hash'ler girişte sessizce yeniden hash'lenir (`UpdatePasswordHash` — `tokens_valid_from` / `must_change_password` dokunulmaz). Parola kuralı: min 8 + harf/rakam; yaygın/kolay tahmin (denylist: password, karea, sifre, parola, 123456, …) ve e-posta yerel kısmı / ad yasak; create, reset ve self-change aynı `ValidatePassword` yolunu kullanır. Min uzunluk bilinçli yükseltilmedi (yenileme token'ı yok).
+
 ## Karar 13 — Issue listesi kart düzeni (NEW — 2026-09-21)
 
 **Karar:** Issues listesi tablo/accordion yerine tek uyarlanabilir kart

@@ -15,7 +15,7 @@ import (
 var dummyPasswordHash = mustDummyHash()
 
 func mustDummyHash() []byte {
-	hash, err := bcrypt.GenerateFromPassword([]byte("karea-timing-dummy"), bcrypt.DefaultCost)
+	hash, err := bcrypt.GenerateFromPassword([]byte("karea-timing-dummy"), bcryptCost)
 	if err != nil {
 		panic(err)
 	}
@@ -40,6 +40,10 @@ func NewAuthenticator(users repository.UserRepository) *Authenticator {
 // correct password on a deactivated user or role returns
 // domain.ErrAccountInactive instead, so the failure is not mistaken for a
 // credential error and no token is issued.
+//
+// After a successful check, if the stored hash cost is below bcryptCost the
+// password is re-hashed at the current cost and saved without changing
+// must_change_password or revoking JWTs (silent upgrade).
 func (a *Authenticator) Login(ctx context.Context, email, password string) (*domain.User, error) {
 	user, err := a.users.GetByEmail(ctx, email)
 	if err != nil {
@@ -55,7 +59,25 @@ func (a *Authenticator) Login(ctx context.Context, email, password string) (*dom
 	if !user.IsActive || !user.Role.IsActive {
 		return nil, domain.ErrAccountInactive
 	}
+	a.maybeRehashPassword(ctx, user, password)
 	return user, nil
+}
+
+// maybeRehashPassword upgrades a stale bcrypt cost after a successful login.
+// Failures are ignored so login never fails because of the upgrade path.
+func (a *Authenticator) maybeRehashPassword(ctx context.Context, user *domain.User, password string) {
+	cost, err := bcrypt.Cost([]byte(user.PasswordHash))
+	if err != nil || cost >= bcryptCost {
+		return
+	}
+	hash, err := hashPassword(password)
+	if err != nil {
+		return
+	}
+	if err := a.users.UpdatePasswordHash(ctx, user.ID, hash); err != nil {
+		return
+	}
+	user.PasswordHash = hash
 }
 
 // ChangePassword replaces the caller's password after verifying the current
@@ -64,11 +86,11 @@ func (a *Authenticator) ChangePassword(ctx context.Context, userID int, current,
 	if newPassword != confirm {
 		return domain.ErrPasswordMismatch
 	}
-	if err := domain.ValidatePassword(newPassword); err != nil {
-		return err
-	}
 	user, err := a.users.GetByID(ctx, userID)
 	if err != nil {
+		return err
+	}
+	if err := domain.ValidatePassword(newPassword, user.Email, user.FullName); err != nil {
 		return err
 	}
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(current)); err != nil {

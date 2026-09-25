@@ -165,6 +165,9 @@ func (a *UserAdmin) Create(ctx context.Context, in CreateUserInput) (*CreatedUse
 	if err != nil {
 		return nil, err
 	}
+	if err := domain.ValidatePassword(plain, email, name); err != nil {
+		return nil, err
+	}
 	hash, err := hashPassword(plain)
 	if err != nil {
 		return nil, err
@@ -190,11 +193,15 @@ func (a *UserAdmin) ResetPassword(ctx context.Context, actorID, targetID int) (s
 	if actorID == targetID {
 		return "", domain.ErrCannotResetOwnPassword
 	}
-	if _, err := a.users.GetByID(ctx, targetID); err != nil {
+	target, err := a.users.GetByID(ctx, targetID)
+	if err != nil {
 		return "", err
 	}
 	plain, err := generateTemporaryPassword()
 	if err != nil {
+		return "", err
+	}
+	if err := domain.ValidatePassword(plain, target.Email, target.FullName); err != nil {
 		return "", err
 	}
 	hash, err := hashPassword(plain)

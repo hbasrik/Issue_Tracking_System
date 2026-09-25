@@ -1,6 +1,6 @@
 # KAREA — Yapılacaklar Listesi
 
-**Güncelleme:** 2026-09-24
+**Güncelleme:** 2026-09-25
 **Amaç:** Canlıya çıkmadan önce ve sonra yapılacakları ayırmak, neyin
 kimi beklediğini takip etmek.
 
@@ -240,6 +240,12 @@ Meta satır: sol VIN+süre, sağ şiddet+durum. Filtre bloğu altında ayırıc�
 - `listIssues({ unlimited: true })` Home / araç panelleri / dışa aktarma;
   API testi `TestIssueList_OmitLimitReturnsFullList` (limit yok → 250 satır).
   docs/08’e yanlışlıkla eklenen 0030 index satırları geri alındı (v1 dondurulmuş).
+
+### A20. Şifre: bcrypt cost 12 + kolay tahmin engeli `[x]` — 2026-09-25
+- Yeni hash cost **12**; girişte cost &lt; 12 ise sessiz rehash
+  (`UpdatePasswordHash`, JWT iptal yok).
+- Denylist (password/karea/sifre/parola/123456…) + e-posta yerel kısmı / ad;
+  create, reset, self-change. Min uzunluk hâlâ 8. i18n TR/EN.
 
 ---
 

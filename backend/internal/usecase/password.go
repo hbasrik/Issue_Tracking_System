@@ -11,7 +11,9 @@ import (
 	"github.com/karea/backend/internal/domain"
 )
 
-const bcryptCost = bcrypt.DefaultCost
+// bcryptCost is the work factor for new hashes (and silent rehash on login).
+// Existing cost-10 hashes keep working until the next successful login.
+const bcryptCost = 12
 
 const tempPasswordLen = 12
 
@@ -62,7 +64,7 @@ func generateTemporaryPassword() (string, error) {
 		out[1] = '2'
 	}
 	plain := string(out)
-	if err := domain.ValidatePassword(plain); err != nil {
+	if err := domain.ValidatePassword(plain, "", ""); err != nil {
 		return "", err
 	}
 	return plain, nil

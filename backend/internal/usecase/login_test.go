@@ -69,13 +69,23 @@ func (f *fakeUserRepo) UpdatePassword(_ context.Context, id int, hash string, mu
 	return domain.ErrNotFound
 }
 
+func (f *fakeUserRepo) UpdatePasswordHash(_ context.Context, id int, hash string) error {
+	for _, u := range f.byEmail {
+		if u.ID == id {
+			u.PasswordHash = hash
+			return nil
+		}
+	}
+	return domain.ErrNotFound
+}
+
 func (f *fakeUserRepo) CountReferences(context.Context, int) (int, error) { return 0, nil }
 
 func (f *fakeUserRepo) Delete(context.Context, int) error { return nil }
 
 func mustHash(t *testing.T, password string) string {
 	t.Helper()
-	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), 12)
 	if err != nil {
 		t.Fatalf("hash password: %v", err)
 	}
@@ -207,6 +217,7 @@ func TestChangePassword_ClearsMustChange(t *testing.T) {
 		"op@karea.local": {
 			ID:                 1,
 			Email:              "op@karea.local",
+			FullName:           "Assembly Operator",
 			PasswordHash:       mustHash(t, "secret12"),
 			IsActive:           true,
 			MustChangePassword: true,
@@ -223,5 +234,75 @@ func TestChangePassword_ClearsMustChange(t *testing.T) {
 	}
 	if got.MustChangePassword {
 		t.Fatal("must_change_password should be cleared")
+	}
+}
+
+func TestChangePassword_RejectsCommonPassword(t *testing.T) {
+	repo := &fakeUserRepo{byEmail: map[string]*domain.User{
+		"op@karea.local": {
+			ID:           1,
+			Email:        "op@karea.local",
+			FullName:     "Assembly Operator",
+			PasswordHash: mustHash(t, "secret12"),
+			IsActive:     true,
+			Role:         domain.Role{Code: domain.RoleCodeOperator, IsActive: true},
+		},
+	}}
+	authn := usecase.NewAuthenticator(repo)
+	err := authn.ChangePassword(context.Background(), 1, "secret12", "password1", "password1")
+	if !errors.Is(err, domain.ErrPasswordTooCommon) {
+		t.Fatalf("err = %v, want ErrPasswordTooCommon", err)
+	}
+}
+
+func TestChangePassword_RejectsPersonalPassword(t *testing.T) {
+	repo := &fakeUserRepo{byEmail: map[string]*domain.User{
+		"basri@karea.local": {
+			ID:           1,
+			Email:        "basri@karea.local",
+			FullName:     "Basri Test",
+			PasswordHash: mustHash(t, "secret12"),
+			IsActive:     true,
+			Role:         domain.Role{Code: domain.RoleCodeOperator, IsActive: true},
+		},
+	}}
+	authn := usecase.NewAuthenticator(repo)
+	err := authn.ChangePassword(context.Background(), 1, "secret12", "basri999", "basri999")
+	if !errors.Is(err, domain.ErrPasswordPersonal) {
+		t.Fatalf("err = %v, want ErrPasswordPersonal", err)
+	}
+}
+
+func TestLogin_RehashesStaleCost(t *testing.T) {
+	stale, err := bcrypt.GenerateFromPassword([]byte("secret12"), 10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	repo := &fakeUserRepo{byEmail: map[string]*domain.User{
+		"op@karea.local": {
+			ID:           1,
+			Email:        "op@karea.local",
+			PasswordHash: string(stale),
+			IsActive:     true,
+			Role:         domain.Role{Code: domain.RoleCodeOperator, IsActive: true},
+		},
+	}}
+	authn := usecase.NewAuthenticator(repo)
+	if _, err := authn.Login(context.Background(), "op@karea.local", "secret12"); err != nil {
+		t.Fatalf("Login: %v", err)
+	}
+	got, err := repo.GetByID(context.Background(), 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	cost, err := bcrypt.Cost([]byte(got.PasswordHash))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cost != 12 {
+		t.Fatalf("cost after login = %d, want 12", cost)
+	}
+	if err := bcrypt.CompareHashAndPassword([]byte(got.PasswordHash), []byte("secret12")); err != nil {
+		t.Fatalf("old password must still verify: %v", err)
 	}
 }

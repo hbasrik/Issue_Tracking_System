@@ -131,6 +131,15 @@ func (r *httpAdminUserRepo) UpdatePassword(_ context.Context, id int, hash strin
 	return nil
 }
 
+func (r *httpAdminUserRepo) UpdatePasswordHash(_ context.Context, id int, hash string) error {
+	user, ok := r.users[id]
+	if !ok {
+		return domain.ErrNotFound
+	}
+	user.PasswordHash = hash
+	return nil
+}
+
 func (r *httpAdminUserRepo) CountReferences(_ context.Context, id int) (int, error) {
 	if r.refs == nil {
 		return 0, nil
