@@ -323,16 +323,50 @@ Kanıt: `backend/internal/repository/postgres/stage_applicability_test.go`
 (`TEST_DATABASE_URL`, `*_test` veritabanı, rollback); `karea_test` üzerinde
 eski/yeni API karşılaştırması (rapor).
 
-### A26. Aşamasını geçmiş araçlardaki eski PENDING satırları: sil mi, "uygulanmaz" mı? `[ ]` **karar bekliyor**
+### A26. Aşamasını geçmiş araçlardaki eski PENDING satırları: sil mi, "uygulanmaz" mı? `[x]` — kapatıldı, **aksiyon alınmayacak** (2026-09-28)
 - Canlıda örnek: N7V1K1SA0TK000003 — 4 PENDING satır (madde 210, 221, 222,
-  225). A25 sonrası bu satırlar uyarıda ve ilerlemede görünmez; aciliyet yok.
-- Öneri: silmek yerine işaretlemek (yeni durum veya bayrak + gerekçe + audit),
-  çünkü silmek geçmişi yeniden yazar.
-- Checklist sekmesi aşaması geçmiş eksik maddeleri hâlâ "Bekliyor" listeliyor;
-  bu karara bağlı.
-- Kapsam ile aşama kuralı arasındaki boşluk da bu kararla birlikte ele
-  alınmalı. `not_started` varsayılanı, checklist'e başlamış hat aracına yeni
-  maddeyi yazmıyor, ama kapı eksik maddeyi yine bekliyor.
+  225).
+- Karar: satırlar silinmez, ayrı durum veya bayrak da eklenmez. Karar 15'in
+  "aşaması kapandı" kuralı (A27) bu satırları zaten doğru ele alıyor:
+  - Uyarı, ilerleme %, checklist sayaçları, kapılar (Go + depo sıralama
+    tetikleyicisi 0031) ve analiz oranları bu satırları saymıyor.
+  - Checklist sekmesi bu satırları kapalı "Bu aşama tamamlandı (n)"
+    bölümünde gösteriyor, iş gibi görünmüyorlar.
+  - Aynı sorun tekrar oluşamaz: A25 dağıtımı aşaması geçmiş araca satır
+    yazmıyor.
+- Ayrı bir işaret veri modeline ikinci bir doğruluk kaynağı eklerdi ve
+  geçmişi değiştirirdi. Kayıt olduğu gibi korunuyor.
+- Kapsam ile aşama kuralı arasındaki boşluk bu karardan bağımsız; A28'de
+  açık kalıyor.
+
+### A27. İlerleme etiketi ne saydığını söyler; aşaması kapanan maddeler ayrı ve kapalı bölümde `[x]` — 2026-09-28
+- İlerleme etiketi web ve mobilde "Araç ilerlemesi" oldu (ortak i18n, TR/EN).
+  Altında kapsam satırı var: "İstasyon adımları ve checklist maddeleri,
+  depodan serbest bırakılmaya kadar".
+- Aynı etiket şu yerlerde de kullanılıyor: araç listesi, liste çıktısı ve
+  mobil başlık.
+- Analizdeki "EOL tamamlanma" farklı bir metrik olduğu için adı değişmedi.
+- Checklist sekmesinde, aşaması geçilmiş araçta artık tamamlanamayan maddeler
+  (`StageClosed`, Karar 15) ana listeden çıktı. Pasif maddelerle aynı düzende,
+  varsayılan kapalı "Bu aşama tamamlandı (n)" bölümünde, "Uygulanmaz" rozetiyle
+  ve düğmesiz gösteriliyor.
+- Bu maddeler hiçbir sayıya girmiyor:
+  - checklist sayacı ve kapı sayaçları (`branch_eol_remaining` …);
+  - Go depo sıralaması;
+  - DB tetikleyicisi `fn_enforce_eol_depot_after_branch` (migration 0031);
+  - analiz oranları.
+- Hattaki araçta hiçbir şey değişmedi.
+- Mevcut satırlara dokunulmadı.
+Kanıt: `docs/screenshots/stage-closed-checklist/` (ekran görüntüleri,
+`dom-facts.json`, eski/yeni API karşılaştırması `api-compare.txt`, depo
+girişi `depot-write.txt`, `analysis-diff.txt`);
+`stage_applicability_test.go` (`*_test` veritabanı); `checklist_gate_test.go`.
+Canlı DB'ye 0031 uygulanması ayrı adım (rapor).
+
+### A28. Kapsam (`not_started`) ile aşama kuralı arasındaki boşluk `[ ]`
+- `not_started` varsayılanı, checklist'e başlamış hat aracına yeni maddeyi
+  yazmıyor. Buna rağmen kapı bu eksik maddeyi bekliyor.
+- Hangisinin kazanacağına karar verilmeli: kapsam mı, uygulanabilir küme mi?
 
 ---
 
