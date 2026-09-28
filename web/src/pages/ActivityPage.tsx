@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { api, type HomeActivityEntry } from '../lib/api';
 import { activityDetailLine } from '../lib/activityDetail';
+import { LoadErrorState } from '../components/LoadErrorState';
 import { useI18n } from '../i18n';
 import { localeTag } from '../../../shared/i18n';
 import { statusColors } from '../theme/tokens';
@@ -85,7 +86,7 @@ export default function ActivityPage() {
   const [items, setItems] = useState<HomeActivityEntry[]>([]);
   const [total, setTotal] = useState(0);
   const [offset, setOffset] = useState(0);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<unknown>(null);
   const [loading, setLoading] = useState(true);
   const [eventType, setEventType] = useState('');
   const [vinSuffix, setVinSuffix] = useState('');
@@ -109,11 +110,11 @@ export default function ActivityPage() {
       setItems(page.Items ?? []);
       setTotal(page.Total ?? 0);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('activity.loadFailed'));
+      setError(err);
     } finally {
       setLoading(false);
     }
-  }, [eventType, vinSuffix, actor, from, to, offset, t]);
+  }, [eventType, vinSuffix, actor, from, to, offset]);
 
   useEffect(() => {
     void load();
@@ -212,12 +213,16 @@ export default function ActivityPage() {
         </label>
       </div>
 
-      {error && (
-        <p className="mt-3 text-[13px]" style={{ color: 'var(--status-not-ok)' }}>
-          {error}
-        </p>
-      )}
-
+      {error != null ? (
+        <LoadErrorState
+          className="mt-4"
+          title={t('activity.loadFailed')}
+          error={error}
+          onRetry={() => void load()}
+          retrying={loading}
+        />
+      ) : (
+      <>
       <div
         className="mt-4 overflow-x-auto rounded-xl border bg-[var(--bg-surface-1)]"
         style={{ borderColor: 'var(--border)' }}
@@ -332,6 +337,8 @@ export default function ActivityPage() {
           {t('common.next')}
         </button>
       </div>
+      </>
+      )}
     </section>
   );
 }
