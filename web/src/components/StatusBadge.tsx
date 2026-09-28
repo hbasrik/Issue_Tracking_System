@@ -66,7 +66,7 @@ function resolve(
       if (v === 'CONDITIONAL_OK') {
         return { color: statusColors.conditionalOk, label: t('status.eol.conditionalOk') };
       }
-      return { color: statusColors.pending, label: v || t('status.eol.pending') };
+      return { color: statusColors.pending, label: t('status.eol.pending') };
 
     case 'shipment':
       if (v === 'OK' || v === 'CHECKED' || v === 'CONDITIONAL_OK') {

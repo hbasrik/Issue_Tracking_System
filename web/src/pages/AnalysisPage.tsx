@@ -443,7 +443,10 @@ export default function AnalysisPage() {
     applied.vins &&
       t('analysis.vinMultiFilter', { n: applied.vins.split(',').filter(Boolean).length }),
     applied.vin_suffix && t('analysis.vinFilter', { suffix: applied.vin_suffix }),
-    applied.severity && t('analysis.severityFilter', { severity: applied.severity }),
+    applied.severity &&
+      t('analysis.severityFilter', {
+        severity: t(`severity.${applied.severity.toLowerCase()}` as 'severity.critical'),
+      }),
     applied.compare && compareLabel(applied.compare, t),
   ]
     .filter(Boolean)

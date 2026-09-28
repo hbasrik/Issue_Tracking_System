@@ -7,7 +7,7 @@ import {
 } from '../lib/api';
 import { apiErrorMessage } from '../lib/apiErrors';
 import { useI18n } from '../i18n';
-import { checklistRecordLabel } from '../lib/vehicleStatus';
+import { checklistRecordLabel, checklistStatusLabel } from '../lib/vehicleStatus';
 import { StatusBadge } from './StatusBadge';
 import { ActionStamp } from './ActionStamp';
 import { checklistActorLines } from '../lib/actionStamp';
@@ -419,7 +419,7 @@ function EolItemRow({
                 backgroundColor: selected ? `${color}22` : 'transparent',
               }}
             >
-              {value === 'CONDITIONAL_OK' ? 'CONDITIONAL' : value}
+              {checklistStatusLabel(value, t)}
             </button>
           );
         })}
