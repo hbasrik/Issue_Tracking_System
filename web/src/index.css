@@ -804,6 +804,7 @@ tr.cursor-pointer:focus:not(:focus-visible) {
 
 .api-error-message {
   margin: 0;
+  white-space: pre-line;
 }
 
 .api-error-request-code {
@@ -825,6 +826,68 @@ tr.cursor-pointer:focus:not(:focus-visible) {
 .api-error-request-code:hover {
   opacity: 0.95;
   text-decoration: underline;
+}
+
+.load-error-state {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  border-radius: 10px;
+  color: var(--status-not-ok);
+  background: color-mix(in srgb, var(--status-not-ok) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--status-not-ok) 28%, transparent);
+  line-height: 1.4;
+}
+
+.load-error-state--block {
+  margin-top: 0.75rem;
+  padding: 1rem 1.125rem;
+  font-size: 0.8125rem;
+}
+
+.load-error-state--inline {
+  margin-top: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.75rem;
+}
+
+.load-error-state__icon {
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+.load-error-state__title {
+  margin: 0 0 0.15rem;
+  font-weight: 600;
+}
+
+.load-error-state__message {
+  color: var(--text-primary);
+}
+
+.load-error-state__retry {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.375rem;
+  height: 2rem;
+  padding: 0 0.75rem;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--status-not-ok) 35%, transparent);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.load-error-state__retry:hover:not(:disabled) {
+  background: var(--bg-surface-2);
+}
+
+.load-error-state__retry:disabled {
+  opacity: 0.6;
+  cursor: default;
 }
 
 .login-error {
