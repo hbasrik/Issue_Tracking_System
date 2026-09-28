@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react';
 import { X } from 'lucide-react';
 import { useI18n } from '../i18n';
 import { api, type Vehicle } from '../lib/api';
+import { AnchoredPopover } from './AnchoredPopover';
 
 export type VinChip = Pick<Vehicle, 'VIN'>;
 
@@ -14,7 +15,8 @@ interface AnalysisVinMultiSelectProps {
 
 /**
  * Analysis filter VIN multi-select — typeahead by suffix, chips for picks.
- * Identity is VIN only (no separate vehicle number).
+ * Identity is VIN only (no separate vehicle number). Suggestions are portaled
+ * because the filter bar scrolls horizontally (overflow-x-auto clips y too).
  */
 export function AnalysisVinMultiSelect({
   selected,
@@ -23,11 +25,14 @@ export function AnalysisVinMultiSelect({
   placeholder,
 }: AnalysisVinMultiSelectProps) {
   const { t } = useI18n();
-  const rootRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+  const listboxId = useId();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
 
   useEffect(() => {
     if (query.trim().length < 2) {
@@ -52,12 +57,15 @@ export function AnalysisVinMultiSelect({
   }, [query, selected]);
 
   useEffect(() => {
-    function onDoc(e: MouseEvent) {
-      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
-    }
-    document.addEventListener('mousedown', onDoc);
-    return () => document.removeEventListener('mousedown', onDoc);
-  }, []);
+    setActiveIndex(0);
+  }, [results]);
+
+  useEffect(() => {
+    if (!open) return;
+    listRef.current
+      ?.querySelector<HTMLElement>(`[data-index="${activeIndex}"]`)
+      ?.scrollIntoView({ block: 'nearest' });
+  }, [activeIndex, open]);
 
   function add(v: Vehicle) {
     if (selected.some((s) => s.VIN === v.VIN)) return;
@@ -71,25 +79,69 @@ export function AnalysisVinMultiSelect({
     onChange(selected.filter((s) => s.VIN !== vin));
   }
 
+  const showList = open && query.trim().length >= 2;
+
+  function onKeyDown(e: KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (!showList && results.length > 0) {
+        setOpen(true);
+        return;
+      }
+      if (results.length > 0) setActiveIndex((i) => (i + 1) % results.length);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (results.length > 0) {
+        setActiveIndex((i) => (i - 1 + results.length) % results.length);
+      }
+    } else if (e.key === 'Enter') {
+      if (!showList) return;
+      e.preventDefault();
+      const v = results[activeIndex];
+      if (v) add(v);
+    } else if (e.key === 'Escape') {
+      setOpen(false);
+    }
+  }
+
+  const activeId =
+    showList && results[activeIndex] ? `${listboxId}-opt-${activeIndex}` : undefined;
+
   return (
-    <div ref={rootRef} className={`relative ${className}`}>
+    <div className={`relative ${className}`}>
       <input
+        ref={inputRef}
         type="text"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         onFocus={() => {
           if (results.length > 0) setOpen(true);
         }}
+        onKeyDown={onKeyDown}
         placeholder={placeholder ?? t('analysis.vinSuffixPlaceholder')}
         className="min-h-9 w-full rounded-lg border bg-[var(--bg-page)] px-1.5 text-[12px] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]"
         style={{ borderColor: 'var(--border)' }}
         aria-label={t('analysis.vinMultiAria')}
-        aria-expanded={open}
+        role="combobox"
+        aria-expanded={showList}
+        aria-controls={showList ? listboxId : undefined}
+        aria-activedescendant={activeId}
+        aria-autocomplete="list"
       />
-      {open && query.trim().length >= 2 && (
+      <AnchoredPopover
+        anchorRef={inputRef}
+        open={showList}
+        onClose={() => setOpen(false)}
+        minWidth={224}
+        maxHeight={192}
+        className="bg-[var(--bg-surface-1)]"
+      >
         <div
-          className="absolute z-30 mt-1 max-h-48 w-full min-w-[14rem] overflow-auto rounded-lg border bg-[var(--bg-surface-1)] shadow-lg"
-          style={{ borderColor: 'var(--border)' }}
+          ref={listRef}
+          id={listboxId}
+          role="listbox"
+          aria-label={t('analysis.vinMultiAria')}
+          className="min-h-0 flex-1 overflow-auto overscroll-contain"
         >
           {loading && (
             <p className="px-2 py-1.5 text-[12px] text-[var(--text-secondary)]">
@@ -101,11 +153,20 @@ export function AnalysisVinMultiSelect({
               {t('common.noMatches')}
             </p>
           )}
-          {results.map((v) => (
-            <button
+          {results.map((v, index) => (
+            <div
               key={v.VIN}
-              type="button"
-              className="flex w-full items-center justify-between gap-2 px-2 py-1.5 text-left text-[12px] hover:bg-[var(--bg-surface-2)]"
+              id={`${listboxId}-opt-${index}`}
+              data-index={index}
+              role="option"
+              aria-selected={index === activeIndex}
+              className="flex w-full cursor-pointer items-center justify-between gap-2 px-2 py-1.5 text-left text-[12px] hover:bg-[var(--bg-surface-2)]"
+              style={{
+                backgroundColor: index === activeIndex ? 'var(--bg-surface-2)' : undefined,
+                boxShadow: index === activeIndex ? 'inset 2px 0 0 var(--accent)' : undefined,
+              }}
+              onMouseDown={(e) => e.preventDefault()}
+              onMouseEnter={() => setActiveIndex(index)}
               onClick={() => add(v)}
             >
               <span className="font-mono font-semibold text-[var(--accent)]">
@@ -114,10 +175,10 @@ export function AnalysisVinMultiSelect({
               <span className="truncate text-[11px] text-[var(--text-secondary)]">
                 {v.VIN}
               </span>
-            </button>
+            </div>
           ))}
         </div>
-      )}
+      </AnchoredPopover>
       {selected.length > 0 && (
         <ul className="mt-1 flex flex-wrap gap-1">
           {selected.map((v) => (
