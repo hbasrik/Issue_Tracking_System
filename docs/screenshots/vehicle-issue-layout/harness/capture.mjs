@@ -66,7 +66,7 @@ for (const width of [375, 390, 430]) {
 }
 
 for (const theme of ['light', 'dark']) {
-  const page = await browser.newPage({ viewport: { width: 380, height: 150 }, deviceScaleFactor: 3 });
+  const page = await browser.newPage({ viewport: { width: 400, height: 210 }, deviceScaleFactor: 3 });
   await page.goto(url(`view=severity&theme=${theme}`));
   await page.waitForSelector('text=CRITICAL · 3 · md');
   const out = path.join(outDir, `${prefix}-severity-${theme}.png`);

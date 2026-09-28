@@ -1,24 +1,16 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { statusColors } from '../theme/tokens';
 import { severityColors } from '../../../shared/brand';
+import {
+  SEVERITY_BAR,
+  SEVERITY_BAR_MD_SCALE,
+  SEVERITY_FILLED_BARS as FILLED,
+  type SeverityBarLevel,
+} from '../../../shared/severityBars';
 import { useI18n } from '../i18n';
 import type { Translate } from '../../../shared/i18n';
 
-export type SeverityLevel = 'CRITICAL' | 'MEDIUM' | 'LOW';
-
-/** Shared bar geometry — keep in sync with web SeverityIndicator. */
-export const SEVERITY_BAR = {
-  widths: [3, 3, 3] as const,
-  heights: [6, 10, 14] as const,
-  gap: 2,
-  radius: 1,
-} as const;
-
-const FILLED: Record<SeverityLevel, number> = {
-  LOW: 1,
-  MEDIUM: 2,
-  CRITICAL: 3,
-};
+export type SeverityLevel = SeverityBarLevel;
 
 const FILL_COLOR: Record<SeverityLevel, string> = {
   LOW: severityColors.LOW,
@@ -56,8 +48,8 @@ interface SeverityIndicatorProps {
 
 /**
  * Wi-Fi-style severity bars (short → tall, left → right).
- * LOW = 1 bar (blue), MEDIUM = 2 (amber), CRITICAL = 3 (red).
- * Geometry matches web/src/components/SeverityIndicator.tsx.
+ * LOW = 1 solid bar (blue), MEDIUM = 2 (amber), CRITICAL = 3 (red);
+ * remaining bars are hollow outlines. Geometry: shared/severityBars.ts.
  */
 export function SeverityIndicator({
   severity,
@@ -69,7 +61,7 @@ export function SeverityIndicator({
   const filled = level ? FILLED[level] : 0;
   const fill = level ? FILL_COLOR[level] : statusColors.severityEmpty;
   const empty = statusColors.severityEmpty;
-  const scale = size === 'md' ? 1.35 : 1;
+  const scale = size === 'md' ? SEVERITY_BAR_MD_SCALE : 1;
   const a11y = level ? severityLabel(level, t) : severity;
 
   return (
@@ -85,8 +77,9 @@ export function SeverityIndicator({
             width: SEVERITY_BAR.widths[i] * scale,
             height: h * scale,
             borderRadius: SEVERITY_BAR.radius,
-            backgroundColor: i < filled ? fill : empty,
-            opacity: i < filled ? 1 : 0.45,
+            backgroundColor: i < filled ? fill : 'transparent',
+            borderWidth: i < filled ? 0 : SEVERITY_BAR.emptyBorder,
+            borderColor: empty,
             marginRight: i < 2 ? SEVERITY_BAR.gap * scale : 0,
           }}
         />

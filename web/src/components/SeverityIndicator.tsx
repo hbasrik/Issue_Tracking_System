@@ -1,22 +1,14 @@
 import { statusColors } from '../theme/tokens';
 import { severityColors } from '../../../shared/brand';
+import {
+  SEVERITY_BAR,
+  SEVERITY_BAR_MD_SCALE,
+  SEVERITY_FILLED_BARS as FILLED,
+  type SeverityBarLevel,
+} from '../../../shared/severityBars';
 import { useI18n } from '../i18n';
 
-export type SeverityLevel = 'CRITICAL' | 'MEDIUM' | 'LOW';
-
-/** Shared bar geometry — keep in sync with mobile SeverityIndicator. */
-export const SEVERITY_BAR = {
-  widths: [3, 3, 3] as const,
-  heights: [6, 10, 14] as const,
-  gap: 2,
-  radius: 1,
-} as const;
-
-const FILLED: Record<SeverityLevel, number> = {
-  LOW: 1,
-  MEDIUM: 2,
-  CRITICAL: 3,
-};
+export type SeverityLevel = SeverityBarLevel;
 
 const FILL_COLOR: Record<SeverityLevel, string> = {
   LOW: severityColors.LOW,
@@ -45,11 +37,13 @@ interface SeverityIndicatorProps {
   ink?: string;
   /** Parent already names the control — hide bars from the accessibility tree. */
   decorative?: boolean;
+  size?: 'sm' | 'md';
 }
 
 /**
  * Wi-Fi-style severity bars (short → tall, left → right).
- * LOW = 1 bar (blue), MEDIUM = 2 (amber), CRITICAL = 3 (red).
+ * LOW = 1 solid bar (blue), MEDIUM = 2 (amber), CRITICAL = 3 (red);
+ * remaining bars are hollow outlines. Geometry: shared/severityBars.ts.
  */
 export function SeverityIndicator({
   severity,
@@ -58,6 +52,7 @@ export function SeverityIndicator({
   label,
   ink,
   decorative = false,
+  size = 'sm',
 }: SeverityIndicatorProps) {
   const { t } = useI18n();
   const level = normalizeSeverity(severity);
@@ -65,7 +60,7 @@ export function SeverityIndicator({
   const tone = level ? FILL_COLOR[level] : statusColors.severityEmpty;
   const fill = ink ?? tone;
   const empty = ink
-    ? `color-mix(in srgb, ${fill} 35%, transparent)`
+    ? `color-mix(in srgb, ${fill} 60%, transparent)`
     : statusColors.severityEmpty;
   const translated =
     level === 'CRITICAL'
@@ -76,33 +71,36 @@ export function SeverityIndicator({
           ? t('severity.low')
           : severity;
   const aria = label ?? translated;
+  const scale = size === 'md' ? SEVERITY_BAR_MD_SCALE : 1;
 
   return (
     <span
-      className={`inline-flex items-end gap-0.5 align-middle ${className}`}
-      style={{ gap: SEVERITY_BAR.gap }}
+      className={`inline-flex shrink-0 items-end align-middle ${className}`}
+      style={{ gap: SEVERITY_BAR.gap * scale }}
       role={decorative ? undefined : 'img'}
       aria-hidden={decorative || undefined}
       aria-label={decorative ? undefined : aria}
       title={decorative ? undefined : aria}
+      data-severity-bars={filled}
     >
       {SEVERITY_BAR.heights.map((h, i) => (
         <span
           key={i}
           style={{
             display: 'inline-block',
-            width: SEVERITY_BAR.widths[i],
-            height: h,
+            boxSizing: 'border-box',
+            width: SEVERITY_BAR.widths[i] * scale,
+            height: h * scale,
             borderRadius: SEVERITY_BAR.radius,
-            backgroundColor: i < filled ? fill : empty,
-            opacity: i < filled ? 1 : 0.45,
+            backgroundColor: i < filled ? fill : 'transparent',
+            border: i < filled ? 'none' : `${SEVERITY_BAR.emptyBorder}px solid ${empty}`,
           }}
         />
       ))}
       {count !== undefined && (
         <span
           className="ml-1.5 text-[12px] font-medium tabular-nums"
-          style={{ color: fill, lineHeight: `${SEVERITY_BAR.heights[2]}px` }}
+          style={{ color: fill, lineHeight: `${SEVERITY_BAR.heights[2] * scale}px` }}
         >
           {count}
         </span>
