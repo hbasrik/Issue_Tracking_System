@@ -364,7 +364,7 @@ export default function VehicleDetailPage() {
                 </div>
               </div>
             </div>
-            <StationStepsPanel vin={vehicle.VIN} />
+            <StationStepsPanel vin={vehicle.VIN} currentStationId={vehicle.CurrentStationID} />
             <div
               className="rounded-xl border bg-[var(--bg-surface-1)] p-5"
               style={{ borderColor: 'var(--border)' }}

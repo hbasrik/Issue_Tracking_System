@@ -1,12 +1,37 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Circle, CircleCheck, CircleDot, type LucideIcon } from 'lucide-react';
+import {
+  STATION_PROGRESS_MESSAGE_KEYS,
+  stationProgress,
+  type StationProgress,
+} from '../../../shared/stationProgress';
+import { statusColors } from '../theme/tokens';
 import { useI18n } from '../i18n';
 import { api, type StationStepItem } from '../lib/api';
 import { apiErrorMessage } from '../lib/apiErrors';
 import { ActionStamp } from './ActionStamp';
 import { StatusBadge } from './StatusBadge';
 
+const STATION_PROGRESS_ICON: Record<StationProgress, LucideIcon> = {
+  DONE: CircleCheck,
+  IN_PROGRESS: CircleDot,
+  NOT_STARTED: Circle,
+};
+
+function stationProgressColor(progress: StationProgress): string {
+  if (progress === 'DONE') return statusColors.ok;
+  if (progress === 'IN_PROGRESS') return statusColors.issueInProgress;
+  return statusColors.pending;
+}
+
 /** Per-vehicle station steps with the last operator who ticked each row. */
-export function StationStepsPanel({ vin }: { vin: string }) {
+export function StationStepsPanel({
+  vin,
+  currentStationId = null,
+}: {
+  vin: string;
+  currentStationId?: number | null;
+}) {
   const { t } = useI18n();
   const [items, setItems] = useState<StationStepItem[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -65,11 +90,23 @@ export function StationStepsPanel({ vin }: { vin: string }) {
         <p className="mt-2 text-[13px] text-[var(--text-secondary)]">{t('vehicles.noSteps')}</p>
       )}
       <ul className="mt-4 space-y-4">
-        {groups.map((group) => (
+        {groups.map((group) => {
+          const progress = stationProgress(group.steps, group.id === currentStationId);
+          const color = stationProgressColor(progress);
+          const Icon = STATION_PROGRESS_ICON[progress];
+          return (
           <li key={group.id}>
-            <h3 className="text-[13px] font-medium text-[var(--text-secondary)]">
-              {group.name}
-            </h3>
+            <div className="flex min-w-0 items-center gap-2.5" data-station-row>
+              <Icon size={24} strokeWidth={2.25} className="shrink-0" style={{ color }} aria-hidden />
+              <div className="min-w-0 flex-1">
+                <h3 className="break-words text-[14px] font-semibold text-[var(--text-primary)]">
+                  {group.name}
+                </h3>
+                <p className="text-[12px] font-semibold" style={{ color }}>
+                  {t(STATION_PROGRESS_MESSAGE_KEYS[progress])}
+                </p>
+              </div>
+            </div>
             <ul className="mt-2 divide-y" style={{ borderColor: 'var(--border)' }}>
               {group.steps.map((step) => (
                 <li key={step.ID} className="py-2">
@@ -86,7 +123,8 @@ export function StationStepsPanel({ vin }: { vin: string }) {
               ))}
             </ul>
           </li>
-        ))}
+          );
+        })}
       </ul>
     </div>
   );
