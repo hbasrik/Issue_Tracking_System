@@ -1231,7 +1231,52 @@ export const tr = {
     '{vin} için depo çıkışı engellendi: {n} açık issue kaldı (issue no: {ids}).',
   'error.dbRejected': 'Veritabanı değişikliği reddetti.',
   'error.clientRequestIdInvalid': 'İstek anahtarı geçersiz.',
-  'error.offline': 'Çevrimdışısınız. Bağlantı gelince tekrar deneyin.',
+  'error.offline':
+    'Sunucuya bağlanılamadı. İnternet bağlantınızı kontrol edip tekrar deneyin.',
+  'error.timeout':
+    'Sunucu zamanında yanıt vermedi. Bağlantınızı kontrol edip tekrar deneyin.',
+  'error.server':
+    'Sunucuda beklenmeyen bir hata oluştu. Tekrar deneyin; sürerse hata kodunu iletin.',
+  'error.badRequest':
+    'İstek işlenemedi. Sayfayı yenileyip tekrar deneyin.',
+  'error.conflict':
+    'İşlem kaydın güncel durumuyla çakışıyor. Sayfayı yenileyip tekrar deneyin.',
+  'error.tooLarge': 'Dosya veya istek çok büyük.',
+  'error.tooManyRequests': 'Çok fazla deneme yapıldı. Biraz bekleyip tekrar deneyin.',
+  'error.endpointRetired':
+    'Bu işlem artık desteklenmiyor. Sayfayı yenileyin.',
+  'error.undecodableImage':
+    'Görsel okunamadı; geçerli bir JPEG veya PNG yükleyin.',
+  'error.holdReasonRequired': 'Bekletme nedeni gerekli.',
+  'error.notOnHold': 'Araç bekletmede değil.',
+  'error.holdNotAllowed': 'Araç mevcut durumunda bekletmeye alınamaz.',
+  'error.catalogFieldsRequired': 'Kod, Türkçe ad ve İngilizce ad gerekli.',
+  'error.catalogCodeTooLong': 'Kod çok uzun.',
+  'error.catalogNameTooLong': 'Ad çok uzun.',
+  'error.catalogCodeTaken': 'Bu kod zaten kullanılıyor.',
+  'error.catalogReorderInvalid':
+    'Sıralama listesi geçersiz. Sayfayı yenileyip tekrar deneyin.',
+  'error.zoneRequired': 'Bölge seçilmeli.',
+  'error.defectPartRequired': 'Parça seçilmeli.',
+  'error.defectTypeRequired': 'Kusur tipi seçilmeli.',
+  'error.customPartNameRequired': '“Diğer” seçildiğinde parça adı yazılmalı.',
+  'error.customDefectNameRequired': '“Diğer” seçildiğinde kusur adı yazılmalı.',
+  'error.catalogItemInactive': 'Seçilen katalog maddesi pasif.',
+  'error.processRequired': 'Sorumlu süreç seçilmeli.',
+  'error.processInactive': 'Seçilen süreç pasif.',
+  'error.promoteKindInvalid':
+    'Kataloğa yalnızca parça veya kusur tipi eklenebilir.',
+  'error.promoteNameRequired': 'Kataloğa eklenecek ad boş olamaz.',
+  'error.templateItemNoConflict': 'Bu madde numarası zaten kullanılıyor.',
+  'error.catalogInUse':
+    'Bu katalog maddesi {n} kayıtta kullanılmış, silinemez — pasife çekebilirsiniz.',
+  'error.propagationEmpty':
+    'Madde eklendi ancak seçilen kapsamda araç bulunamadı; {n} araçta hâlâ eksik. “Tamamlanmamış” kapsamını seçin.',
+  'error.gateBlockedGeneric': '{type} geçişi engellendi: tamamlanmamış maddeler var.',
+  'error.branchShipBlocked':
+    '{vin} şubeden sevk edilemez: {n} kontrol tamamlanmadı.',
+  'error.dbVehicleGate':
+    '{vin} için bu adım şu an yapılamaz; kontrol listesi veya iş akışı koşulları tamamlanmadı.',
   'error.requestCode': 'Hata kodu: {id}',
 } as const;
 
@@ -2014,7 +2059,52 @@ export const en: Record<MessageKey, string> = {
     'Depot release blocked for {vin}: {n} open Issue(s) remain (issue ids: {ids}).',
   'error.dbRejected': 'The database rejected the change.',
   'error.clientRequestIdInvalid': 'The request key is not valid.',
-  'error.offline': 'You are offline. Try again when a connection is available.',
+  'error.offline':
+    'Could not reach the server. Check your internet connection and try again.',
+  'error.timeout':
+    'The server did not respond in time. Check your connection and try again.',
+  'error.server':
+    'Something went wrong on the server. Try again; if it persists, share the error code.',
+  'error.badRequest':
+    'The request could not be processed. Refresh the page and try again.',
+  'error.conflict':
+    'This conflicts with the current state of the record. Refresh the page and try again.',
+  'error.tooLarge': 'The file or request is too large.',
+  'error.tooManyRequests': 'Too many attempts. Wait a moment and try again.',
+  'error.endpointRetired':
+    'This action is no longer supported. Refresh the page.',
+  'error.undecodableImage':
+    'The image could not be read; upload a valid JPEG or PNG.',
+  'error.holdReasonRequired': 'A hold reason is required.',
+  'error.notOnHold': 'The vehicle is not on hold.',
+  'error.holdNotAllowed': 'The vehicle cannot be put on hold in its current status.',
+  'error.catalogFieldsRequired': 'Code, Turkish name and English name are required.',
+  'error.catalogCodeTooLong': 'Code is too long.',
+  'error.catalogNameTooLong': 'Name is too long.',
+  'error.catalogCodeTaken': 'This code is already in use.',
+  'error.catalogReorderInvalid':
+    'The order list is not valid. Refresh the page and try again.',
+  'error.zoneRequired': 'Select a zone.',
+  'error.defectPartRequired': 'Select a part.',
+  'error.defectTypeRequired': 'Select a defect type.',
+  'error.customPartNameRequired': 'Enter a part name when “Other” is selected.',
+  'error.customDefectNameRequired': 'Enter a defect name when “Other” is selected.',
+  'error.catalogItemInactive': 'The selected catalogue item is inactive.',
+  'error.processRequired': 'Select the responsible process.',
+  'error.processInactive': 'The selected process is inactive.',
+  'error.promoteKindInvalid':
+    'Only a part or a defect type can be added to the catalogue.',
+  'error.promoteNameRequired': 'The name to add to the catalogue is required.',
+  'error.templateItemNoConflict': 'This item number is already in use.',
+  'error.catalogInUse':
+    'This catalogue item is used in {n} record(s) and cannot be deleted — deactivate it instead.',
+  'error.propagationEmpty':
+    'Item created, but no vehicle matched the chosen scope; {n} vehicle(s) still lack it. Choose “incomplete”.',
+  'error.gateBlockedGeneric': '{type} gate is blocked: some items are incomplete.',
+  'error.branchShipBlocked':
+    '{vin} cannot be shipped from the branch: {n} check(s) incomplete.',
+  'error.dbVehicleGate':
+    'This step is not possible for {vin} yet; checklist or workflow conditions are incomplete.',
   'error.requestCode': 'Error code: {id}',
   'analysis.activeFilters': 'Active filters: {summary}',
   'analysis.apply': 'Apply',

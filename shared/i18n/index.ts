@@ -22,6 +22,8 @@ export {
   isAuthError,
   isClientRejection,
   isPayloadRejection,
+  isServerError,
+  isTimeoutError,
   isTransportError,
   shouldQueueIssueSubmit,
   classifyQueueSendError,

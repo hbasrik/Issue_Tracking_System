@@ -1,4 +1,9 @@
-import { isTransportError } from '../networkError';
+import {
+  errorStatus,
+  isServerError,
+  isTimeoutError,
+  isTransportError,
+} from '../networkError';
 import type { MessageKey } from './messages';
 import type { Translate } from './translate';
 
@@ -62,7 +67,48 @@ const EXACT: Record<string, MessageKey> = {
   'client_request_id must be a uuid': 'error.clientRequestIdInvalid',
   'bu kullanıcı kayıtlarda kullanılmış, silinemez — pasife çekebilirsiniz':
     'error.userInUseUnknown',
+  'this endpoint has been retired': 'error.endpointRetired',
+  'image file could not be decoded; upload a valid JPEG or PNG':
+    'error.undecodableImage',
+  'hold reason is required': 'error.holdReasonRequired',
+  'vehicle is not on hold': 'error.notOnHold',
+  'vehicle cannot be placed on hold from its current status':
+    'error.holdNotAllowed',
+  'code, name_tr and name_en are required': 'error.catalogFieldsRequired',
+  'code is too long': 'error.catalogCodeTooLong',
+  'name_tr or name_en is too long': 'error.catalogNameTooLong',
+  'catalogue code already exists': 'error.catalogCodeTaken',
+  'reorder id list is invalid': 'error.catalogReorderInvalid',
+  'zone_id is required': 'error.zoneRequired',
+  'defect part is required': 'error.defectPartRequired',
+  'defect type is required': 'error.defectTypeRequired',
+  'custom part name is required for Other': 'error.customPartNameRequired',
+  'custom defect name is required for Other': 'error.customDefectNameRequired',
+  'selected catalogue item is inactive': 'error.catalogItemInactive',
+  'responsible process is required': 'error.processRequired',
+  'selected process is inactive': 'error.processInactive',
+  'promote kind must be part or type': 'error.promoteKindInvalid',
+  'custom name to promote is required': 'error.promoteNameRequired',
+  'template item_no conflict': 'error.templateItemNoConflict',
+  'internal server error': 'error.server',
 };
+
+/**
+ * Anything the backend sends that is not in the catalogue (malformed-input
+ * 400s, middleware errors, raw trigger text) is technical; show a generic
+ * sentence for the status instead of the English payload.
+ */
+function genericForStatus(t: Translate, status: number): string {
+  if (status === 401) return t('error.invalidToken');
+  if (status === 403) return t('error.forbidden');
+  if (status === 404) return t('error.notFound');
+  if (status === 409) return t('error.conflict');
+  if (status === 410) return t('error.endpointRetired');
+  if (status === 413) return t('error.tooLarge');
+  if (status === 429) return t('error.tooManyRequests');
+  if (status >= 400 && status < 500) return t('error.badRequest');
+  return t('common.error');
+}
 
 /** Split message + optional 5xx request id for UI that wants a copyable code. */
 export type ApiErrorParts = {
@@ -91,13 +137,23 @@ export function serverErrorRequestId(err: unknown): string | undefined {
 }
 
 function translateApiErrorMessage(t: Translate, err: unknown): string {
+  if (isTimeoutError(err)) return t('error.timeout');
+  if (isServerError(err)) return t('error.server');
   if (isTransportError(err)) return t('error.offline');
 
+  const status = errorStatus(err);
   const msg = err instanceof Error ? err.message : '';
-  if (!msg) return t('common.error');
+  if (!msg) return status != null ? genericForStatus(t, status) : t('common.error');
 
   const exact = EXACT[msg];
   if (exact) return t(exact);
+
+  // Wrapped sentinels: "invalid status transition: vehicle status changes …"
+  const colon = msg.indexOf(':');
+  if (colon > 0) {
+    const wrapped = EXACT[msg.slice(0, colon)];
+    if (wrapped) return t(wrapped);
+  }
 
   if (msg.startsWith('email domain is not allowed')) {
     const listed = msg.split('accepted domains:')[1]?.trim();
@@ -113,9 +169,7 @@ function translateApiErrorMessage(t: Translate, err: unknown): string {
     return t('error.loginRateLimited', { minutes: loginLimited[1] });
   }
 
-  const templateInUse = msg.match(
-    /^bu madde (\d+) araçta kullanılmış, silinemez/,
-  );
+  const templateInUse = msg.match(/^bu madde (\d+) araçta /);
   if (templateInUse) {
     return t('error.templateItemInUse', { n: templateInUse[1] });
   }
@@ -125,12 +179,34 @@ function translateApiErrorMessage(t: Translate, err: unknown): string {
   if (userInUse) {
     return t('error.userInUse', { n: userInUse[1] });
   }
+  const catalogInUse = msg.match(
+    /^(?:bu (?:bölge|parça|kusur tipi|süreç)|katalog maddesi) (\d+) kayıtta kullanılmış/,
+  );
+  if (catalogInUse) {
+    return t('error.catalogInUse', { n: catalogInUse[1] });
+  }
+  const propagationEmpty = msg.match(
+    /^catalogue item created but scope "[^"]*" matched 0 vehicles; (\d+) assigned/,
+  );
+  if (propagationEmpty) {
+    return t('error.propagationEmpty', { n: propagationEmpty[1] });
+  }
 
   const gate = msg.match(
     /^(\S+) gate blocked: (\d+) item\(s\) not OK\/CONDITIONAL_OK \(item ids: ([^)]+)\)/,
   );
   if (gate) {
     return t('error.gateBlocked', { type: gate[1], n: gate[2], ids: gate[3] });
+  }
+  const gateAny = msg.match(/^(\S+) gate blocked/);
+  if (gateAny) {
+    return t('error.gateBlockedGeneric', { type: gateAny[1] });
+  }
+  const branchShip = msg.match(
+    /^branch ship blocked for (\S+): (\d+) gate\(s\) incomplete/,
+  );
+  if (branchShip) {
+    return t('error.branchShipBlocked', { vin: branchShip[1], n: branchShip[2] });
   }
   const depot = msg.match(
     /^depot release blocked for (\S+): (\d+) open issue\(s\) remain \(issue ids: ([^)]+)\)/,
@@ -142,8 +218,14 @@ function translateApiErrorMessage(t: Translate, err: unknown): string {
       ids: depot[3],
     });
   }
+  const dbGate = msg.match(/^Cannot (?:move|ship|release|mark) vehicle (\S+)/);
+  if (dbGate) {
+    return t('error.dbVehicleGate', { vin: dbGate[1] });
+  }
 
-  return msg;
+  // Errors built on the client already carry translated copy.
+  if (status == null) return msg;
+  return genericForStatus(t, status);
 }
 
 export function describeApiError(t: Translate, err: unknown): ApiErrorParts {

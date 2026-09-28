@@ -61,6 +61,21 @@ export function isTransportError(err: unknown): boolean {
   );
 }
 
+/** Server answered with 5xx: reachable, but the request failed on its side. */
+export function isServerError(err: unknown): boolean {
+  const status = errorStatus(err);
+  return status != null && status >= 500;
+}
+
+/** Request gave up waiting (client timeout wrapper or HTTP 408). */
+export function isTimeoutError(err: unknown): boolean {
+  const status = errorStatus(err);
+  if (status === 408) return true;
+  if (status != null && status !== 0) return false;
+  if (err instanceof Error && err.name === 'TimeoutError') return true;
+  return errorMessageOf(err).toLowerCase().includes('timed out');
+}
+
 /** @deprecated use isPayloadRejection; 401/403 are not payload rejections. */
 export function isClientRejection(err: unknown): boolean {
   return isPayloadRejection(err);
