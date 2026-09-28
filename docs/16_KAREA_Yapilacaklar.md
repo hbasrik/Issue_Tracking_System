@@ -309,6 +309,31 @@ detay lightbox orijinal bayt/çözünürlük karşılaştırması),
 `harness/verify-mobile-card-press.mjs` (mobil, 375/430, 6 nokta),
 `docs/screenshots/card-photo-navigation/`.
 
+### A25. Yeni şablon maddesi yalnız aşamasını geçmemiş araca; sevk uyarısı ve ilerleme aynı küme `[x]` — 2026-09-28
+- Kural `docs/11` Karar 15: madde, kapısının aşaması (şubeden sevk / depodan
+  serbest bırakma) geçilmemiş araçlara dağıtılır; teslim edilmiş ve şubeye
+  sevk edilmiş araç yeni SHIPMENT maddesi almaz. Etki önizlemesi EOL fazını da
+  gönderir (`eol_phase`).
+- Sevk öncesi uyarı aynı uygulanabilir kümeden gelir; `DELIVERED` araçta uyarı
+  yok (web banner + mobil kart gizli). Açık istasyon adımları uyarıya eklendi.
+- İlerleme % = geçen / uygulanabilir (istasyon adımları + checklist). `%100 ⇔
+  açık madde yok`.
+- Migration yok; mevcut satırlara dokunulmadı.
+Kanıt: `backend/internal/repository/postgres/stage_applicability_test.go`
+(`TEST_DATABASE_URL`, `*_test` veritabanı, rollback); `karea_test` üzerinde
+eski/yeni API karşılaştırması (rapor).
+
+### A26. Aşamasını geçmiş araçlardaki eski PENDING satırları: sil mi, "uygulanmaz" mı? `[ ]` **karar bekliyor**
+- Canlıda örnek: N7V1K1SA0TK000003 — 4 PENDING satır (madde 210, 221, 222,
+  225). A25 sonrası bu satırlar uyarıda ve ilerlemede görünmez; aciliyet yok.
+- Öneri: silmek yerine işaretlemek (yeni durum veya bayrak + gerekçe + audit),
+  çünkü silmek geçmişi yeniden yazar.
+- Checklist sekmesi aşaması geçmiş eksik maddeleri hâlâ "Bekliyor" listeliyor;
+  bu karara bağlı.
+- Kapsam ile aşama kuralı arasındaki boşluk da bu kararla birlikte ele
+  alınmalı. `not_started` varsayılanı, checklist'e başlamış hat aracına yeni
+  maddeyi yazmıyor, ama kapı eksik maddeyi yine bekliyor.
+
 ---
 
 ## B — Canlıya çıkmadan önce ZORUNLU
