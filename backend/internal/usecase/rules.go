@@ -46,11 +46,12 @@ func ComputeProgress(items []domain.VehicleStationStepProgress) (percentage floa
 
 // EvaluateChecklistGate reports whether a hard-block quality gate is open.
 // Only active catalogue items count: a missing progress row blocks the gate
-// (it is not treated as passed). Inactive items with leftover progress are
-// ignored. Returns separate ID lists for "not yet on vehicle" vs "not OK".
+// (it is not treated as passed). Inactive items with leftover progress and
+// items whose stage is closed are ignored. Returns separate ID lists for "not
+// yet on vehicle" vs "not OK".
 func EvaluateChecklistGate(items []domain.ChecklistItemView) (open bool, blockingItemIDs, missingItemIDs []int) {
 	for _, it := range items {
-		if !it.IsActive {
+		if !it.IsActive || it.StageClosed {
 			continue
 		}
 		if it.ProgressID == nil {
@@ -109,8 +110,9 @@ func ValidateChecklistDescription(checklistType domain.ChecklistType, status dom
 
 // EnforceEOLDepotSequencing rejects a Depot-phase EoL update while any
 // Branch-phase item for the same vehicle is not yet OK or CONDITIONAL_OK.
-// Unknown / non-Depot items are ignored so callers can fail open to the
-// database trigger when the view list is empty.
+// Branch items whose stage is closed never block (they can no longer be
+// completed). Unknown / non-Depot items are ignored so callers can fail open
+// to the database trigger when the view list is empty.
 func EnforceEOLDepotSequencing(items []domain.ChecklistItemView, itemID int) error {
 	var target *domain.ChecklistItemView
 	for i := range items {
@@ -123,7 +125,7 @@ func EnforceEOLDepotSequencing(items []domain.ChecklistItemView, itemID int) err
 		return nil
 	}
 	for _, it := range items {
-		if it.EolPhase != nil && *it.EolPhase == domain.EOLItemPhaseBranch && !it.Status.IsPassing() {
+		if it.EolPhase != nil && *it.EolPhase == domain.EOLItemPhaseBranch && !it.StageClosed && !it.Status.IsPassing() {
 			return domain.ErrDepotChecklistLocked
 		}
 	}

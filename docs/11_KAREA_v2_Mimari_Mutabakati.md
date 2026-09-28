@@ -226,9 +226,24 @@ aşama geçilmiştir.
   `vw_vehicle_completion_split` view'ı hâlâ kolonu okur (uygulama kodu bu view'ı
   kullanmıyor).
 
-**Mevcut yanlış satırlar:** Bu kararla dokunulmadı. Uygulanabilir kümeye
-girmedikleri için uyarıda ve ilerlemede görünmezler. Silme / "uygulanmaz"
-işaretleme kararı açık (bkz. `docs/16`).
+- **Checklist sekmesi:** `GET /vehicles/{vin}/checklist/{type}` her aktif
+  maddeye `StageClosed` bayrağı ekler (uygulanabilir kümenin tam tümleyeni).
+  Web ve mobil bu maddeleri ana listeden çıkarır; altta varsayılan kapalı
+  "Bu aşama tamamlandı (n)" bölümünde, işaretlenemez hâlde gösterir. Pasif
+  maddeler bölümüyle aynı düzendedir. Sayaç, ilerleme çubuğu ve "n madde kaldı"
+  bu maddeleri saymaz (`shared/checklistActive.ts` `splitChecklistByActive`).
+- **Kapılar ve oranlar:** Go kapı sayaçları (`EvaluateChecklistGate`,
+  `branch_eol_remaining` vb.) ve depo sıralaması (`EnforceEOLDepotSequencing`)
+  `StageClosed` maddeleri atlar. DB'deki depo sıralama trigger'ı da aynı şeyi
+  yapar (migration 0031). Analiz/ana ekran EOL oranları (`CompletionPercent`,
+  `stagePerformance`, `EOLChecklistCounts`) da bu satırları dışlar. Şube ve
+  depo kapısı trigger'ları (0022) değişmedi: yalnız aşama geçişinde çalışırlar
+  ve o anda kapanmış madde olamaz.
+
+**Mevcut yanlış satırlar:** Silinmez, işaretlenmez; ayrı durum veya bayrak
+eklenmez. Kural onları uyarıdan, ilerlemeden, sayaçlardan ve kapılardan
+dışlar, checklist sekmesinde kapalı bölümde gösterir. Yeni dağıtım da
+aşamayı geçmiş araca yazmadığı için tekrar oluşmazlar (`docs/16` A26).
 
 ## Değişmeyen / Yeniden Kullanılacaklar
 

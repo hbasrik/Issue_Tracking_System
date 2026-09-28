@@ -239,6 +239,11 @@ type ChecklistItemView struct {
 	SectionSort     *int16  `json:"SectionSort,omitempty"`
 	ProgressID      *int64
 	IsActive        bool
+	// StageClosed marks an active item the vehicle can no longer complete:
+	// its stage is passed and it was never evaluated (or the vehicle is
+	// delivered and it is not passing). It counts in no total, gate or
+	// warning; the row is kept as history.
+	StageClosed     bool
 	CheckerName     string     `json:"CheckerName,omitempty"`
 	CheckDate       *time.Time `json:"CheckDate,omitempty"`
 	RejectedByName  string     `json:"RejectedByName,omitempty"`

@@ -91,7 +91,8 @@ func (r *ChecklistProgressRepo) ResolveDefaultTemplateID(ctx context.Context, ch
 // ListItemsWithProgress returns every active catalogue item for the template
 // (LEFT JOIN progress — missing rows appear as PENDING with nil ProgressID)
 // plus inactive items that already have progress so historical ticks stay
-// visible. Gates must ignore inactive rows (IsActive=false).
+// visible. Gates must ignore inactive rows (IsActive=false) and rows whose
+// stage is closed (StageClosed, stage_applicability.go).
 func (r *ChecklistProgressRepo) ListItemsWithProgress(ctx context.Context, vin string, checklistType domain.ChecklistType, templateID int) ([]domain.ChecklistItemView, error) {
 	rows, err := executor(ctx, r.pool).Query(ctx,
 		`SELECT cti.id, cti.item_no,
@@ -102,8 +103,12 @@ func (r *ChecklistProgressRepo) ListItemsWithProgress(ctx context.Context, vin s
 		        cti.section_key, cti.section_sort,
 		        p.check_date, COALESCE(checker.full_name, ''),
 		        p.rejected_date, COALESCE(rej.full_name, ''),
-		        p.approved_date, COALESCE(appr.full_name, '')
+		        p.approved_date, COALESCE(appr.full_name, ''),
+		        COALESCE(`+checklistStageClosedSQL("v", "w", "t.type", "cti.eol_phase", "p")+`, false)
 		 FROM checklist_template_items cti
+		 JOIN checklist_templates t ON t.id = cti.template_id
+		 LEFT JOIN vehicles v ON v.vin = $1
+		 LEFT JOIN vehicle_eol_workflow w ON w.vin = $1
 		 LEFT JOIN checklist_item_progress p
 		   ON p.check_item_id = cti.id AND p.vin = $1 AND p.checklist_type = $2
 		 LEFT JOIN users checker ON checker.id = p.checker_id
@@ -120,7 +125,8 @@ func (r *ChecklistProgressRepo) ListItemsWithProgress(ctx context.Context, vin s
 		        cti.section_key, cti.section_sort,
 		        p.check_date, COALESCE(checker.full_name, ''),
 		        p.rejected_date, COALESCE(rej.full_name, ''),
-		        p.approved_date, COALESCE(appr.full_name, '')
+		        p.approved_date, COALESCE(appr.full_name, ''),
+		        false
 		 FROM checklist_item_progress p
 		 JOIN checklist_template_items cti ON cti.id = p.check_item_id
 		 LEFT JOIN users checker ON checker.id = p.checker_id
@@ -148,6 +154,7 @@ func (r *ChecklistProgressRepo) ListItemsWithProgress(ctx context.Context, vin s
 			&item.CheckDate, &item.CheckerName,
 			&item.RejectedAt, &item.RejectedByName,
 			&item.ApprovedAt, &item.ApprovedByName,
+			&item.StageClosed,
 		); err != nil {
 			return nil, err
 		}

@@ -35,10 +35,21 @@ func checklistStagePassedSQL(v, w, typ, phase string) string {
 	    END)`, vehicleTerminalSQL(v), w, typ, phase)
 }
 
+// checklistStageClosedSQL is true when an item (progress alias p, LEFT JOIN,
+// may be NULL) is outside the applicable set: its stage is passed and it was
+// never evaluated, or the vehicle is terminal and the row is not passing.
+// Such items count nowhere — no progress, no gate, no warning.
+func checklistStageClosedSQL(v, w, typ, phase, p string) string {
+	return fmt.Sprintf(`(%[1]s AND (
+	        %[2]s.id IS NULL
+	        OR %[2]s.check_status = 'PENDING'
+	        OR (%[3]s AND %[2]s.check_status NOT IN ('OK', 'CONDITIONAL_OK'))
+	  ))`, checklistStagePassedSQL(v, w, typ, phase), p, vehicleTerminalSQL(v))
+}
+
 // applicableChecklistItemsSQL selects the applicable checklist items of the
 // vehicle whose VIN is vinExpr (a parameter or an outer column).
 func applicableChecklistItemsSQL(vinExpr string) string {
-	passed := checklistStagePassedSQL("av", "aw", "t.type", "cti.eol_phase")
 	return fmt.Sprintf(`
 		SELECT t.type::text AS checklist_type, cti.id AS item_id, cti.item_no,
 		       COALESCE(NULLIF(trim(p.item_text_snapshot), ''), cti.item_text) AS item_text,
@@ -52,11 +63,7 @@ func applicableChecklistItemsSQL(vinExpr string) string {
 		LEFT JOIN vehicle_eol_workflow aw ON aw.vin = av.vin
 		LEFT JOIN checklist_item_progress p ON p.check_item_id = cti.id AND p.vin = av.vin
 		WHERE av.vin = %[1]s
-		  AND NOT (%[2]s AND (
-		        p.id IS NULL
-		        OR p.check_status = 'PENDING'
-		        OR (%[3]s AND p.check_status NOT IN ('OK', 'CONDITIONAL_OK'))
-		  ))`, vinExpr, passed, vehicleTerminalSQL("av"))
+		  AND NOT %[2]s`, vinExpr, checklistStageClosedSQL("av", "aw", "t.type", "cti.eol_phase", "p"))
 }
 
 // applicableStationStepsSQL selects the applicable station-step rows (status)
