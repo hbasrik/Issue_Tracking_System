@@ -35,6 +35,11 @@ LEFT JOIN vehicle_eol_workflow w ON w.vin = v.vin`
 
 const vehicleEOLJoin = `LEFT JOIN vehicle_eol_workflow w ON w.vin = v.vin`
 
+// eolRowStageClosed excludes EOL progress rows (p, item cti, vehicle v,
+// workflow w) whose stage is closed — they count in no ratio
+// (stage_applicability.go).
+var eolRowStageClosed = checklistStageClosedSQL("v", "w", "p.checklist_type", "cti.eol_phase", "p")
+
 // vinClause applies exact VIN list when vinsParam (text[]) is non-empty;
 // otherwise keeps the ILIKE suffix on $suffixParam. col is the VIN column.
 // Use CAST($n AS text[]) — `$n::text[]` is parsed as `($n::text)[]` and errors.
@@ -824,6 +829,7 @@ func (r *AnalysisRepo) kpiCards(ctx context.Context, f domain.AnalysisFilter) (d
 		   AND v.current_global_status <> 'PLANNED'
 		   AND cti.eol_phase IN ('BRANCH','DEPOT')
 		   AND cti.is_active = true
+		   AND NOT `+eolRowStageClosed+`
 		   `+vinClause("p.vin", 1, 4)+`
 		   AND ($2 = '' OR v.current_global_status::text = $2)
 		   `+eolStageWhere(3),
@@ -947,6 +953,7 @@ func (r *AnalysisRepo) stagePerformance(ctx context.Context, f domain.AnalysisFi
 		   AND v.current_global_status <> 'PLANNED'
 		   AND cti.eol_phase IN ('BRANCH','DEPOT')
 		   AND cti.is_active = true
+		   AND NOT `+eolRowStageClosed+`
 		   `+vinClause("p.vin", 1, 4)+`
 		   AND ($2 = '' OR v.current_global_status::text = $2)
 		   `+eolStageWhere(3)+`
@@ -1391,10 +1398,12 @@ func (r *AnalysisRepo) EOLChecklistCounts(ctx context.Context) ([]domain.HomeEOL
 		  FROM checklist_item_progress p
 		  JOIN checklist_template_items cti ON cti.id = p.check_item_id
 		  JOIN vehicles v ON v.vin = p.vin
+		  `+vehicleEOLJoin+`
 		 WHERE p.checklist_type = 'EOL'
 		   AND v.current_global_status <> 'PLANNED'
 		   AND cti.eol_phase IN ('BRANCH', 'DEPOT')
 		   AND cti.is_active = true
+		   AND NOT `+eolRowStageClosed+`
 		 GROUP BY cti.eol_phase`)
 	if err != nil {
 		return nil, err
