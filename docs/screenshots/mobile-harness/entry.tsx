@@ -5,6 +5,7 @@ import VehicleStationScreen from '../../../mobile/src/screens/VehicleStationScre
 import ShipmentChecklistScreen from '../../../mobile/src/screens/ShipmentChecklistScreen';
 import TestChecklistScreen from '../../../mobile/src/screens/TestChecklistScreen';
 import EOLChecklistScreen from '../../../mobile/src/screens/EOLChecklistScreen';
+import MyIssuesScreen from '../../../mobile/src/screens/MyIssuesScreen';
 import { activeScene, type ScreenMap } from './scenes';
 
 const params = new URLSearchParams(location.search);
@@ -20,6 +21,7 @@ const screens: ScreenMap = {
   shipment: ShipmentChecklistScreen,
   test: TestChecklistScreen,
   eol: EOLChecklistScreen,
+  'my-issues': MyIssuesScreen,
 };
 const Screen = screens[activeScene().screen];
 

@@ -26,6 +26,7 @@ export async function build(outdir) {
     /\/auth\/AuthProvider$/,
     /\/offline\/ReferenceCacheProvider$/,
     /\/api\/client$/,
+    /\/lib\/criticalAlertSound$/,
   ];
   const fromMobile = /^(react|react-dom|react-native-web|react-native-svg|lucide-react-native)(\/.*)?$/;
 

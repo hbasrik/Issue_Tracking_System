@@ -74,7 +74,11 @@ const record = (name: string) => async (...args: unknown[]) => {
 export const api = {
   getVehicle: async () => scene.api.vehicle,
   getStationSteps: async () => scene.api.stationSteps ?? { Items: [], OpenIssuesByStation: {} },
-  listIssues: async () => ({ items: scene.api.issues ?? [] }),
+  listIssues: async () => ({ items: scene.api.issues ?? [], has_more: false }),
+  listIssueTypes: async () => ({ items: [] }),
+  listDefectCatalogZones: async () => ({ items: [] }),
+  listDefectCatalogParts: async () => ({ items: [] }),
+  listDefectCatalogTypes: async () => ({ items: [] }),
   shipmentReadiness: async () => scene.api.readiness ?? null,
   getVehicleStatusHistory: async () => ({ items: [] }),
   getChecklist: async (_vin: string, type: 'eol' | 'shipment' | 'test') => ({
@@ -93,6 +97,9 @@ export const mediaFileUrl = (p: string) => p;
 export const mediaThumbUrl = (p: string) => p;
 export const mediaCardThumbUrl = (p: string) => p;
 export class ApiError extends Error {}
+
+// --- ../lib/criticalAlertSound (expo-audio has no web build here)
+export const playCriticalAlertIfEnabled = async () => false;
 
 // --- @react-native/assets-registry/registry (react-native-svg image assets)
 export const getAssetByID = () => null;

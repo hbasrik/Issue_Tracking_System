@@ -7,7 +7,7 @@ import type { ComponentType } from 'react';
 
 type Status = 'PENDING' | 'OK' | 'NOT_OK' | 'REWORK' | 'CONDITIONAL_OK';
 
-export type SceneScreen = 'vehicle-station' | 'shipment' | 'test' | 'eol';
+export type SceneScreen = 'vehicle-station' | 'shipment' | 'test' | 'eol' | 'my-issues';
 
 export interface Scene {
   id: string;
@@ -138,7 +138,57 @@ const stationSteps = {
   OpenIssuesByStation: {},
 };
 
+const ISSUE_VIN = 'KAREA0LAYOUT00042';
+const PHOTO =
+  'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="192" height="144"><rect width="192" height="144" fill="#8E9E7C"/><circle cx="96" cy="72" r="40" fill="#C0A89B"/></svg>';
+const issue = (id: number, severity: string, status: string, description: string, h: number, extra: Record<string, unknown> = {}) => ({
+  ID: id,
+  VIN: ISSUE_VIN,
+  SourceType: 'STATION',
+  IssueReporterID: 1,
+  Severity: severity,
+  Status: status,
+  Description: description,
+  IssueDate: ago(h),
+  ...extra,
+});
+const issues = [
+  issue(101, 'CRITICAL', 'OPEN', 'Sol ön kapı menteşesinde boşluk', 50, {
+    ReportPhotoPath: PHOTO,
+    DefectPartNameTR: 'Ön kapı', DefectPartNameEN: 'Front door', DefectTypeNameTR: 'Boşluk', DefectTypeNameEN: 'Gap',
+  }),
+  issue(102, 'MEDIUM', 'CONDITIONAL_APPROVED',
+    'Arka tampon sağ alt köşesinde boya akıntısı ve hafif portakallanma, müşteri görünür bölgede, tekrar boya kabinine gönderilmeli mi değerlendirilecek',
+    30, {
+      ConditionalApproveDate: ago(4),
+      DefectPartID: 99,
+      DefectTypeID: 99,
+      CustomPartName: 'Arka tampon sağ alt köşe bağlantı braketi ve plastik koruma kapağı montaj bölgesi',
+      CustomDefectName: 'Boya akıntısı / portakallanma / renk tonu farkı',
+    }),
+  issue(103, 'LOW', 'APPROVED', 'Torpido kapağı hafif gıcırtı', 6, {
+    ApproveDate: ago(1),
+    DefectPartNameTR: 'Torpido', DefectPartNameEN: 'Glovebox', DefectTypeNameTR: 'Ses', DefectTypeNameEN: 'Noise',
+  }),
+  issue(104, 'MEDIUM', 'IN_PROGRESS', 'Bagaj contası tam oturmuyor', 0.3),
+  issue(105, 'CRITICAL', 'DONE',
+    'Soğutmasuyupompagövdesibağlantısızdırmazlıkcontasıkontrolü_uzun_kelime_bölünmeden_devam_ediyor ve ardından normal cümle',
+    75, { ReportPhotoPath: PHOTO }),
+];
+
 export const SCENES: Scene[] = [
+  {
+    id: 'issues-list',
+    screen: 'my-issues',
+    params: {},
+    api: { issues },
+  },
+  {
+    id: 'vehicle-issues',
+    screen: 'vehicle-station',
+    params: { vin: ISSUE_VIN },
+    api: { vehicle: vehicle(ISSUE_VIN, 'IN_PRODUCTION', null, 38), stationSteps, issues },
+  },
   {
     id: 'station-line',
     screen: 'vehicle-station',

@@ -15,15 +15,18 @@ import { pathToFileURL } from 'node:url';
 import { build } from './build.mjs';
 import { chromium } from '../../../web/node_modules/playwright/index.mjs';
 
-const WIDTHS = [375, 390, 430];
 const TOGGLES = ['checklist-stage-closed-toggle', 'checklist-inactive-toggle'];
 const RAW_STATUS = /\b(PENDING|NOT_OK|CONDITIONAL_OK)\b/;
 
 const args = process.argv.slice(2);
-const localeIdx = args.indexOf('--locales');
-const locales = localeIdx >= 0 ? args[localeIdx + 1].split(',') : ['tr'];
-const positional = args.filter((a, i) => !a.startsWith('--') && !(localeIdx >= 0 && i === localeIdx + 1));
-if (!positional[0]) throw new Error('usage: run.mjs <outDir> [scene,scene] [--locales tr,en]');
+const option = (name) => {
+  const i = args.indexOf(name);
+  return i >= 0 ? args[i + 1].split(',') : null;
+};
+const locales = option('--locales') ?? ['tr'];
+const WIDTHS = (option('--widths') ?? ['375', '390', '430']).map(Number);
+const positional = args.filter((a, i) => !a.startsWith('--') && !(i > 0 && args[i - 1].startsWith('--')));
+if (!positional[0]) throw new Error('usage: run.mjs <outDir> [scene,scene] [--locales tr,en] [--widths 375,1280]');
 const outDir = path.resolve(positional[0]);
 const sceneArg = positional[1];
 
@@ -43,6 +46,49 @@ async function fitAndShoot(page, width, file) {
   await page.setViewportSize({ width, height: Math.min(h, 5000) });
   await page.waitForTimeout(150);
   await page.screenshot({ path: path.join(outDir, file) });
+}
+
+// Runs in the page: layout facts for every IssueCard on screen.
+function issueCardFacts() {
+  const rect = (el) => {
+    if (!el) return null;
+    const r = el.getBoundingClientRect();
+    return { top: r.top, right: r.right, bottom: r.bottom, left: r.left };
+  };
+  const cards = [...document.querySelectorAll('[data-testid="issue-card-photo"]')]
+    .map((p) => p.closest('[role="button"]'))
+    .filter(Boolean);
+  return cards.map((card) => {
+    const box = card.getBoundingClientRect();
+    const sev = card.querySelector('[role="img"][aria-label]');
+    const status = rect(card.querySelector('[data-testid="issue-card-status"]'));
+    const bars = rect(sev);
+    const meta = rect(card.querySelector('[data-testid="issue-card-meta"]'));
+    const outside = [...card.querySelectorAll('div,span')].filter((el) => {
+      const r = el.getBoundingClientRect();
+      return r.width > 0 && r.height > 0 &&
+        (r.right > box.right + 1 || r.left < box.left - 1 || r.bottom > box.bottom + 1 || r.top < box.top - 1);
+    }).length;
+    const layout = status && bars && meta
+      ? {
+          status_top_right: status.top - box.top <= 16 && box.right - status.right <= 40,
+          severity_below_status: bars.top >= status.bottom - 0.5 && bars.top - status.bottom <= 12,
+          severity_right_aligned: Math.abs(bars.right - status.right) <= 1.5,
+          meta_bottom_left: meta.left < status.left && meta.top > status.bottom,
+        }
+      : null;
+    return {
+      text: card.innerText,
+      severity_word_visible: /\b(Kritik|Orta|Düşük|Critical|Medium|Low)\b/.test(card.innerText),
+      severity_aria: sev ? sev.getAttribute('aria-label') : null,
+      card_aria: card.getAttribute('aria-label'),
+      outside,
+      status,
+      bars,
+      meta,
+      layout,
+    };
+  });
 }
 
 async function sectionTexts(page) {
@@ -86,8 +132,12 @@ for (const scene of scenes) {
         }).length;
       });
       const raw = Object.entries(texts).filter(([, v]) => v && RAW_STATUS.test(v)).map(([k]) => k);
-      facts[key] = { sections: texts, overflow, raw_status_in_sections: raw, errors, calls: await page.evaluate(() => window.__calls) };
+      const issueCards = await page.evaluate(issueCardFacts);
+      facts[key] = { sections: texts, overflow, raw_status_in_sections: raw, issue_cards: issueCards, errors, calls: await page.evaluate(() => window.__calls) };
       if (errors.length || overflow || raw.length) failed = true;
+      if (process.env.EXPECT_ISSUE_LAYOUT === '1' && issueCards.some((c) =>
+        c.severity_word_visible || !c.severity_aria || c.outside ||
+        !c.layout || Object.values(c.layout).includes(false))) failed = true;
       await page.close();
     }
   }
@@ -96,7 +146,13 @@ for (const scene of scenes) {
 await browser.close();
 fs.writeFileSync(path.join(outDir, 'facts.json'), JSON.stringify(facts, null, 1));
 for (const [k, v] of Object.entries(facts)) {
-  console.log(k, `overflow=${v.overflow}`, `errors=${v.errors.length}`, `raw=${v.raw_status_in_sections.length}`);
+  const cards = v.issue_cards.length
+    ? ` cards=${v.issue_cards.length} sevText=${v.issue_cards.filter((c) => c.severity_word_visible).length}` +
+      ` aria=${v.issue_cards.map((c) => c.severity_aria).join('|')}` +
+      ` layoutOk=${v.issue_cards.filter((c) => c.layout && !Object.values(c.layout).includes(false)).length}` +
+      ` cardOverflow=${v.issue_cards.reduce((n, c) => n + c.outside, 0)}`
+    : '';
+  console.log(k, `overflow=${v.overflow}`, `errors=${v.errors.length}`, `raw=${v.raw_status_in_sections.length}${cards}`);
 }
 fs.rmSync(bundle, { recursive: true, force: true });
 if (failed) {
