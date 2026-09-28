@@ -12,7 +12,6 @@ import {
   issueCardIsCompact,
   issueOpenDurationMs,
   ISSUE_CARD_PHOTO_ASPECT,
-  severityMessageKey,
 } from '../../../shared/issueCardLayout';
 import { mediaThumbUrl, mediaCardThumbUrl, type Issue } from '../api/client';
 import { useAuth } from '../auth/AuthProvider';
@@ -21,6 +20,7 @@ import {
   SeverityIndicator,
   normalizeSeverity,
   severityFillColor,
+  severityLabel,
 } from './SeverityIndicator';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n';
@@ -36,8 +36,6 @@ export function IssueCard({
   highlighted = false,
   /** When false, defer photo network until the row is viewable. */
   loadPhoto = true,
-  /** False → severity shows as the bar icon only (vehicle issue list). */
-  showSeverityLabel = true,
 }: {
   issue: Issue;
   onPress: () => void;
@@ -45,7 +43,6 @@ export function IssueCard({
   layoutWidth?: number;
   highlighted?: boolean;
   loadPhoto?: boolean;
-  showSeverityLabel?: boolean;
 }) {
   const { tokens } = useTheme();
   const { t, locale } = useI18n();
@@ -60,10 +57,23 @@ export function IssueCard({
     issueOpenDurationMs(issue, now),
     locale,
   );
-  const sevKey = severityMessageKey(issue.Severity);
-  const sevLabel = sevKey ? t(sevKey) : issue.Severity;
   const sevLevel = normalizeSeverity(issue.Severity);
   const sevColor = sevLevel ? severityFillColor(sevLevel) : tokens.textPrimary;
+  const description = issue.Description?.trim() || t('common.emDash');
+  const statusLabel = issueStatusLabel(issue.Status, t);
+  const vinTail = `…${issue.VIN.slice(-5)}`;
+  const durationA11y = `${t('issue.openDuration')}: ${duration}`;
+  // The bars carry the level visually; screen readers get it by name.
+  const cardA11y = [
+    description,
+    statusLabel,
+    `${t('severity.label')}: ${sevLevel ? severityLabel(sevLevel, t) : issue.Severity}`,
+    defect.listLine,
+    hideVin ? null : vinTail,
+    durationA11y,
+  ]
+    .filter(Boolean)
+    .join(', ');
   const hasPhoto = Boolean(issue.ReportPhotoPath);
   const authHeaders = token
     ? { Authorization: `Bearer ${token}` }
@@ -129,7 +139,8 @@ export function IssueCard({
 
   const metaSize = compact ? 12 : 13;
 
-  // Corners: description ↖ status ↗, classification + open time ↙ severity ↘.
+  // Description ↖, status ↗ with the severity bars right under it;
+  // classification, then VIN + open time along the bottom.
   const body = (
     <View
       style={{
@@ -152,13 +163,13 @@ export function IssueCard({
           numberOfLines={2}
           ellipsizeMode="tail"
         >
-          {issue.Description?.trim() || t('common.emDash')}
+          {description}
         </Text>
-        <View style={{ flexShrink: 0 }}>
-          <Badge
-            label={issueStatusLabel(issue.Status, t)}
-            color={issueStatusColor(issue.Status)}
-          />
+        <View style={{ flexShrink: 0, alignItems: 'flex-end', gap: 6 }}>
+          <View testID="issue-card-status">
+            <Badge label={statusLabel} color={issueStatusColor(issue.Status)} />
+          </View>
+          <SeverityIndicator severity={issue.Severity} size="md" />
         </View>
       </View>
       <Text
@@ -169,81 +180,47 @@ export function IssueCard({
         {defect.listLine}
       </Text>
       <View
+        testID="issue-card-meta"
         style={{
           flexDirection: 'row',
           alignItems: 'center',
-          justifyContent: 'space-between',
           gap: 8,
           minWidth: 0,
         }}
       >
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 8,
-            flexShrink: 1,
-            minWidth: 0,
-          }}
-        >
-          {!hideVin ? (
-            <Text
-              style={{
-                color: tokens.accent,
-                fontWeight: '700',
-                fontFamily: 'monospace',
-                fontSize: metaSize,
-                flexShrink: 1,
-              }}
-              numberOfLines={1}
-              ellipsizeMode="middle"
-            >
-              …{issue.VIN.slice(-5)}
-            </Text>
-          ) : null}
-          <View
-            style={{ flexDirection: 'row', alignItems: 'center', gap: 4, flexShrink: 1, minWidth: 0 }}
-            accessible
-            accessibilityLabel={`${t('issue.openDuration')}: ${duration}`}
+        {!hideVin ? (
+          <Text
+            style={{
+              color: tokens.accent,
+              fontWeight: '700',
+              fontFamily: 'monospace',
+              fontSize: metaSize,
+              flexShrink: 1,
+            }}
+            numberOfLines={1}
+            ellipsizeMode="middle"
           >
-            <Clock size={metaSize + 1} color={tokens.textSecondary} strokeWidth={2} />
-            <Text
-              style={{
-                color: tokens.textSecondary,
-                fontSize: metaSize,
-                fontVariant: ['tabular-nums'],
-                flexShrink: 1,
-              }}
-              numberOfLines={1}
-              ellipsizeMode="tail"
-            >
-              {duration}
-            </Text>
-          </View>
-        </View>
+            {vinTail}
+          </Text>
+        ) : null}
         <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 6,
-            flexShrink: 0,
-          }}
+          style={{ flexDirection: 'row', alignItems: 'center', gap: 4, flexShrink: 1, minWidth: 0 }}
+          accessible
+          accessibilityLabel={durationA11y}
         >
-          <SeverityIndicator severity={issue.Severity} size="md" />
-          {showSeverityLabel ? (
-            <Text
-              style={{
-                color: sevColor,
-                fontWeight: '600',
-                fontSize: metaSize,
-                maxWidth: 72,
-              }}
-              numberOfLines={1}
-              ellipsizeMode="tail"
-            >
-              {sevLabel}
-            </Text>
-          ) : null}
+          <Clock size={metaSize + 1} color={tokens.textSecondary} strokeWidth={2} />
+          <Text
+            style={{
+              color: tokens.textSecondary,
+              fontSize: metaSize,
+              fontVariant: ['tabular-nums'],
+              flexShrink: 1,
+            }}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
+            {duration}
+          </Text>
         </View>
       </View>
     </View>
@@ -265,6 +242,7 @@ export function IssueCard({
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
+      accessibilityLabel={cardA11y}
       style={({ pressed }) => ({
         opacity: pressed ? 0.82 : 1,
       })}

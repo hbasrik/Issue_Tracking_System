@@ -453,7 +453,6 @@ export default function VehicleStationScreen() {
                   key={issue.ID}
                   issue={issue}
                   hideVin
-                  showSeverityLabel={false}
                   onPress={() => navigation.navigate('IssueDetail', { id: issue.ID })}
                 />
               ))}
