@@ -372,7 +372,11 @@ export default function VehicleStationScreen() {
         ) : null}
 
         <View style={{ gap: 8, marginBottom: 16, marginTop: manageHold ? 12 : 0 }}>
-          {readiness && !readiness.ready && readiness.warnings.length > 0 ? (
+          {readiness &&
+          !readiness.ready &&
+          readiness.warnings.length > 0 &&
+          vehicle?.CurrentGlobalStatus !== 'DELIVERED' &&
+          vehicle?.CurrentGlobalStatus !== 'SHIPPED' ? (
             <Card>
               <Text style={{ color: statusColors.conditionalOk, fontWeight: '600', fontSize: 15 }}>
                 {t('vehicles.readinessTitle')}

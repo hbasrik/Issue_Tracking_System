@@ -238,7 +238,9 @@ export default function VehicleDetailPage() {
         </div>
       </div>
 
-      {vehicle.CurrentGlobalStatus !== 'SHIPPED' && has(Perm.ChecklistShipmentView) ? (
+      {vehicle.CurrentGlobalStatus !== 'SHIPPED' &&
+      vehicle.CurrentGlobalStatus !== 'DELIVERED' &&
+      has(Perm.ChecklistShipmentView) ? (
         <div className="mt-5">
           <ShipmentReadinessBanner readiness={readiness} />
         </div>
