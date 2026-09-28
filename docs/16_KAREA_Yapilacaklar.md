@@ -297,6 +297,18 @@ Kanıt: `scripts/verify-api-error-copy.mjs`, `scripts/verify-web-errors.mjs`,
 Kanıt: `docs/screenshots/vehicle-issue-layout/` (önce/sonra 375-390-430,
 şiddet karşılaştırması, `harness/` betikleri).
 
+### A24. Kart fotoğrafı detaya gider; tam ekran yalnız detayda `[x]` — 2026-09-28
+- Issue kartında (web + mobil; Issues listesi ve araç detayı listesi, ortak
+  `IssueCard`) fotoğrafın ayrı dokunma davranışı ve tam ekran görüntüleyici
+  kaldırıldı. Fotoğraf dahil kartın tamamı `/issues/:id` / `IssueDetail`'e gider.
+- Kart türevleri değişmedi: kompakt `?thumb=1` (192 px), geniş `?thumb=md`
+  (800 px). Tam ekran yalnız detayda ve orijinal dosya (`mediaFileUrl`, thumb yok).
+- Kullanılmayan `issue.photoFullscreen` metni kaldırıldı.
+Kanıt: `scripts/verify-card-photo-navigation.mjs` (web, 390/1280, 5 nokta;
+detay lightbox orijinal bayt/çözünürlük karşılaştırması),
+`harness/verify-mobile-card-press.mjs` (mobil, 375/430, 6 nokta),
+`docs/screenshots/card-photo-navigation/`.
+
 ---
 
 ## B — Canlıya çıkmadan önce ZORUNLU
