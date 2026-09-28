@@ -113,7 +113,11 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   }
 
   const timeout = new AbortController();
-  const timer = setTimeout(() => timeout.abort(), REQUEST_TIMEOUT_MS);
+  let timedOut = false;
+  const timer = setTimeout(() => {
+    timedOut = true;
+    timeout.abort();
+  }, REQUEST_TIMEOUT_MS);
   if (options.signal) {
     if (options.signal.aborted) timeout.abort();
     else {
@@ -164,7 +168,9 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     }
     if (err instanceof Error && err.name === 'AbortError') {
       noteTransportFailure();
-      throw new ApiError(0, { error: 'network unavailable' });
+      throw new ApiError(0, {
+        error: timedOut ? 'request timed out' : 'network unavailable',
+      });
     }
     if (isTransportError(err)) {
       noteTransportFailure();
