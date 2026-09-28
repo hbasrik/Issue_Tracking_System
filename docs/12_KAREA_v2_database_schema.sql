@@ -11,7 +11,7 @@
 -- This file is a hand-maintained reading aid: it shows the intended
 -- shape of the schema in one place, with the reasoning behind each
 -- decision. It is NOT executable against a real database and must not
--- be used to create one. Migrations 0001-0030 are authoritative.
+-- be used to create one. Migrations 0001-0031 are authoritative.
 --
 -- Known limitation of this file: it is validated with a SQL parser,
 -- which checks syntax only. A parser cannot tell that a view selects a
@@ -792,6 +792,9 @@ CREATE TRIGGER trg_enforce_branch_shipment
 -- EOL item for the same vehicle is OK or CONDITIONAL_OK. This is a
 -- checklist-sequencing rule, independent of the Ship-to-Depot soft-warning
 -- transition above (which only concerns open issues, not item completion).
+-- Migration 0031 (real name fn_enforce_eol_depot_after_branch): branch rows
+-- whose stage is closed never block — branch shipped (or delivered) and never
+-- evaluated, or delivered and not passing (Karar 15).
 CREATE OR REPLACE FUNCTION fn_enforce_depot_item_sequence()
 RETURNS TRIGGER AS $$
 DECLARE
@@ -813,9 +816,17 @@ BEGIN
         SELECT 1
         FROM checklist_item_progress cip
         JOIN checklist_template_items cti ON cti.id = cip.check_item_id
+        JOIN vehicles v ON v.vin = cip.vin
+        LEFT JOIN vehicle_eol_workflow w ON w.vin = cip.vin
         WHERE cip.vin = NEW.vin AND cip.checklist_type = 'EOL'
           AND cti.eol_phase = 'BRANCH'
           AND cip.check_status NOT IN ('OK', 'CONDITIONAL_OK')
+          AND NOT (
+                (v.current_global_status IN ('DELIVERED', 'SHIPPED')
+                 OR w.branch_shipped_at IS NOT NULL)
+            AND (cip.check_status = 'PENDING'
+                 OR v.current_global_status IN ('DELIVERED', 'SHIPPED'))
+          )
     ) INTO v_branch_incomplete;
 
     IF v_branch_incomplete THEN
