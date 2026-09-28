@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { ChevronDown, X } from 'lucide-react';
 import { useI18n } from '../i18n';
 import type { DefectPart } from '../lib/api';
+import { AnchoredPopover } from './AnchoredPopover';
 
 type PartOption = Pick<DefectPart, 'ID' | 'ZoneID' | 'NameTR' | 'NameEN'>;
 
@@ -21,7 +22,8 @@ function partLabel(p: PartOption, locale: string): string {
 /**
  * Multi-select for defect parts — dropdown list + removable tags.
  * Zone filter narrows the option list; selections outside the zone are hidden
- * from chips until the parent prunes them.
+ * from chips until the parent prunes them. The list is portaled (see
+ * AnchoredPopover) so filter cards with overflow clipping cannot cut it off.
  */
 export function PartMultiSelect({
   parts,
@@ -31,9 +33,12 @@ export function PartMultiSelect({
   disabled = false,
 }: PartMultiSelectProps) {
   const { t, locale } = useI18n();
-  const rootRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+  const listboxId = useId();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
+  const [activeIndex, setActiveIndex] = useState(0);
 
   const options = useMemo(() => {
     const scoped =
@@ -51,19 +56,16 @@ export function PartMultiSelect({
   );
 
   useEffect(() => {
-    function onDoc(e: MouseEvent) {
-      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
-    }
-    function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') setOpen(false);
-    }
-    document.addEventListener('mousedown', onDoc);
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('mousedown', onDoc);
-      document.removeEventListener('keydown', onKey);
-    };
-  }, []);
+    setActiveIndex(0);
+  }, [query, open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const el = listRef.current?.querySelector<HTMLElement>(
+      `[data-index="${activeIndex}"]`,
+    );
+    el?.scrollIntoView({ block: 'nearest' });
+  }, [activeIndex, open]);
 
   function toggle(id: number) {
     const next = new Set(selectedIds);
@@ -78,8 +80,51 @@ export function PartMultiSelect({
     onChange(next);
   }
 
+  function close(refocus = false) {
+    setOpen(false);
+    setQuery('');
+    if (refocus) triggerRef.current?.focus();
+  }
+
+  function onTriggerKeyDown(e: KeyboardEvent<HTMLButtonElement>) {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      setOpen(true);
+    }
+  }
+
+  function onSearchKeyDown(e: KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (options.length > 0) setActiveIndex((i) => (i + 1) % options.length);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (options.length > 0) {
+        setActiveIndex((i) => (i - 1 + options.length) % options.length);
+      }
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      setActiveIndex(0);
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      setActiveIndex(Math.max(options.length - 1, 0));
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      const opt = options[activeIndex];
+      if (opt) toggle(opt.ID);
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      close(true);
+    } else if (e.key === 'Tab') {
+      close();
+    }
+  }
+
+  const activeId =
+    open && options[activeIndex] ? `${listboxId}-opt-${options[activeIndex].ID}` : undefined;
+
   return (
-    <div ref={rootRef} className="relative w-full min-w-0">
+    <div className="relative w-full min-w-0">
       {selectedParts.length > 0 ? (
         <div className="mb-2 flex w-full max-w-full flex-wrap gap-1.5">
           {selectedParts.map((p) => (
@@ -108,13 +153,16 @@ export function PartMultiSelect({
       ) : null}
 
       <button
+        ref={triggerRef}
         type="button"
         disabled={disabled}
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => (open ? close() : setOpen(true))}
+        onKeyDown={onTriggerKeyDown}
         className="flex min-h-9 w-full items-center justify-between gap-2 rounded-lg border bg-[var(--bg-page)] px-3 py-2 text-left text-[14px] text-[var(--text-primary)]"
         style={{ borderColor: 'var(--border)' }}
         aria-expanded={open}
         aria-haspopup="listbox"
+        aria-controls={open ? listboxId : undefined}
       >
         <span className="truncate text-[var(--text-secondary)]">
           {t('issue.partFilterPlaceholder')}
@@ -127,72 +175,87 @@ export function PartMultiSelect({
         />
       </button>
 
-      {open ? (
+      <AnchoredPopover
+        anchorRef={triggerRef}
+        open={open}
+        onClose={() => close()}
+        minWidth={224}
+        maxHeight={320}
+        className="bg-[var(--bg-surface-1)]"
+      >
+        <div className="shrink-0 border-b p-2" style={{ borderColor: 'var(--border)' }}>
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={onSearchKeyDown}
+            placeholder={t('issue.partFilterSearch')}
+            className="w-full rounded-md border bg-[var(--bg-page)] px-2 py-1.5 text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]"
+            style={{ borderColor: 'var(--border)' }}
+            role="combobox"
+            aria-expanded
+            aria-controls={listboxId}
+            aria-activedescendant={activeId}
+            aria-autocomplete="list"
+            autoFocus
+          />
+        </div>
         <div
-          className="absolute left-0 right-0 z-30 mt-1 min-w-[14rem] overflow-hidden rounded-lg border bg-[var(--bg-surface-1)] shadow-lg"
-          style={{ borderColor: 'var(--border)' }}
+          ref={listRef}
+          id={listboxId}
           role="listbox"
           aria-multiselectable
+          aria-label={t('issue.filterPart')}
+          className="min-h-0 flex-1 overflow-auto overscroll-contain"
         >
-          <div className="border-b p-2" style={{ borderColor: 'var(--border)' }}>
-            <input
-              type="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder={t('issue.partFilterSearch')}
-              className="w-full rounded-md border bg-[var(--bg-page)] px-2 py-1.5 text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]"
-              style={{ borderColor: 'var(--border)' }}
-              autoFocus
-            />
-          </div>
-          <div className="max-h-56 overflow-auto">
-            {options.length === 0 ? (
-              <p className="px-3 py-2 text-[13px] text-[var(--text-secondary)]">
-                {t('issue.partFilterNone')}
-              </p>
-            ) : (
-              options.map((p) => {
-                const selected = selectedIds.has(p.ID);
-                return (
-                  <button
-                    key={p.ID}
-                    type="button"
-                    role="option"
-                    aria-selected={selected}
-                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] hover:bg-[var(--bg-surface-2)]"
-                    style={{
-                      color: selected
-                        ? 'var(--text-primary)'
-                        : 'var(--text-secondary)',
-                      fontWeight: selected ? 600 : 500,
-                      backgroundColor: selected
+          {options.length === 0 ? (
+            <p className="px-3 py-2 text-[13px] text-[var(--text-secondary)]">
+              {t('issue.partFilterNone')}
+            </p>
+          ) : (
+            options.map((p, index) => {
+              const selected = selectedIds.has(p.ID);
+              const active = index === activeIndex;
+              return (
+                <div
+                  key={p.ID}
+                  id={`${listboxId}-opt-${p.ID}`}
+                  data-index={index}
+                  role="option"
+                  aria-selected={selected}
+                  className="flex w-full cursor-pointer items-center gap-2 px-3 py-2 text-left text-[13px] hover:bg-[var(--bg-surface-2)]"
+                  style={{
+                    color: selected ? 'var(--text-primary)' : 'var(--text-secondary)',
+                    fontWeight: selected ? 600 : 500,
+                    backgroundColor: active
+                      ? 'var(--bg-surface-2)'
+                      : selected
                         ? 'color-mix(in srgb, var(--text-primary) 10%, transparent)'
                         : undefined,
+                    boxShadow: active ? 'inset 2px 0 0 var(--accent)' : undefined,
+                  }}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onMouseEnter={() => setActiveIndex(index)}
+                  onClick={() => toggle(p.ID)}
+                >
+                  <span
+                    className="flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[10px]"
+                    style={{
+                      borderColor: 'var(--border)',
+                      backgroundColor: selected ? 'var(--text-primary)' : 'var(--bg-page)',
+                      color: selected ? 'var(--bg-page)' : 'transparent',
                     }}
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => toggle(p.ID)}
+                    aria-hidden
                   >
-                    <span
-                      className="flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[10px]"
-                      style={{
-                        borderColor: 'var(--border)',
-                        backgroundColor: selected
-                          ? 'var(--text-primary)'
-                          : 'var(--bg-page)',
-                        color: selected ? 'var(--bg-page)' : 'transparent',
-                      }}
-                      aria-hidden
-                    >
-                      ✓
-                    </span>
-                    <span className="truncate">{partLabel(p, locale)}</span>
-                  </button>
-                );
-              })
-            )}
-          </div>
+                    ✓
+                  </span>
+                  <span className="truncate">{partLabel(p, locale)}</span>
+                </div>
+              );
+            })
+          )}
         </div>
-      ) : null}
+      </AnchoredPopover>
     </div>
   );
 }
