@@ -56,7 +56,7 @@ export const tr = {
   'print.filterAnalysis': 'Analiz: {label}',
   'print.filterSearch': 'Arama: {q}',
   'print.filterTypes': 'Tür: {list}',
-  'print.filterSeverities': 'Severity: {list}',
+  'print.filterSeverities': 'Şiddet: {list}',
   'print.filterStatuses': 'Durum: {list}',
   'print.filterHome': '{label}',
   'print.filterRange': '{from} – {to}',
@@ -195,11 +195,11 @@ export const tr = {
   'status.station.pending': 'Bekliyor',
   'status.station.inProgress': 'Devam ediyor',
   'status.station.notStarted': 'Başlanmadı',
-  'status.eol.ok': 'OK',
-  'status.eol.notOk': 'NOT OK',
-  'status.eol.rework': 'REWORK',
-  'status.eol.conditionalOk': 'CONDITIONAL OK',
-  'status.eol.pending': 'PENDING',
+  'status.eol.ok': 'Uygun',
+  'status.eol.notOk': 'Uygun değil',
+  'status.eol.rework': 'Yeniden işlem',
+  'status.eol.conditionalOk': 'Şartlı uygun',
+  'status.eol.pending': 'Bekliyor',
   'status.shipment.checked': 'İşaretli',
   'status.shipment.unchecked': 'İşaretsiz',
   'status.vehicle.planned': 'Planlandı',
@@ -222,7 +222,7 @@ export const tr = {
   'severity.critical': 'Kritik',
   'severity.medium': 'Orta',
   'severity.low': 'Düşük',
-  'severity.label': 'Severity',
+  'severity.label': 'Şiddet',
 
   'stamp.reject': 'Red',
   'stamp.approve': 'Onay',
@@ -252,7 +252,7 @@ export const tr = {
   'issueDetail.solutionPhotoRequired': 'Çözüm fotoğrafı zorunlu',
   'issueDetail.solutionPhotoRequiredHint':
     'Çözüm fotoğrafı zorunlu — kamera veya galeriden ekleyin',
-  'issueDetail.solutionDescRequired': 'Açıklama (solution_description) zorunlu',
+  'issueDetail.solutionDescRequired': 'Çözüm açıklaması zorunlu',
   'issueDetail.uploadFailed': 'yükleme başarısız',
   'issueDetail.photoUploaded': 'Fotoğraf yüklendi — durumu kaydedebilirsiniz',
   'issueDetail.photoPicked': 'Fotoğraf seçildi — henüz yüklenmedi',
@@ -469,7 +469,7 @@ export const tr = {
 
   'vehicles.title': 'Araçlar',
   'vehicles.loadFailed': 'Araçlar yüklenemedi',
-  'vehicles.inProductionNow': 'Hattaki araçlar (IN_PRODUCTION, anlık)',
+  'vehicles.inProductionNow': 'Hattaki araçlar (anlık)',
   'vehicles.shippedToday': 'Bugün sevk',
   'vehicles.shippedWeek': 'Haftalık sevk',
   'vehicles.depotRelease': 'Depo serbest',
@@ -556,7 +556,7 @@ export const tr = {
   'checklist.lockHint': 'Önce fabrika kontrol listesini tamamlayın',
   'checklist.viewOnly': 'Yalnızca görüntüleme — düzenleme yetkiniz yok',
   'checklist.emptyStage': 'Bu aşamada madde yok',
-  'checklist.pickStatus': 'OK, NOT_OK, REWORK veya CONDITIONAL_OK seçin',
+  'checklist.pickStatus': 'Uygun, Uygun değil, Yeniden işlem veya Şartlı uygun seçin',
   'checklist.descRequired': 'Bu durum için açıklama gerekli',
   'checklist.descPlaceholder': 'Bu durum için açıklama zorunlu',
   'checklist.saveFailed': 'Kayıt başarısız',
@@ -564,8 +564,8 @@ export const tr = {
     'Madde kaydedildi ama fotoğraf yüklemesi için ilerleme kimliği yok',
   'checklist.photo': 'Fotoğraf',
   'checklist.chooseFile': 'Dosya seç',
-  'checklist.yesOk': 'Evet (OK)',
-  'checklist.noNotOk': 'Hayır (NOT_OK)',
+  'checklist.yesOk': 'Evet',
+  'checklist.noNotOk': 'Hayır',
   'checklist.branch': 'Fabrika',
   'checklist.depot': 'Depo',
   'checklist.branchTitle': 'Fabrika kontrol listesi',
@@ -585,9 +585,9 @@ export const tr = {
   'checklist.shipmentRemaining':
     '{n} madde kaldı — göndermeden önce tüm maddeleri tamamlayın',
   'checklist.operatorHint':
-    'Operatör yalnızca maddeleri işaretler; WITH_CUSTOMER/SHIPPED durumunu yönetici web panelinden verir',
+    'Operatör yalnızca maddeleri işaretler; teslim ve sevk durumunu yönetici web panelinden verir',
   'checklist.allTestsDone': 'Tüm testler tamam',
-  'checklist.shipmentLink': 'Shipment Checklist',
+  'checklist.shipmentLink': 'Sevk Checklist',
   'checklist.testLink': 'Test Checklist',
   'checklist.eolLink': 'EoL Checklist',
   'checklist.shipFromBranch': 'Fabrikadan sevk',
@@ -624,7 +624,6 @@ export const tr = {
   'checklist.stageAdvanceHint':
     'Aşama geçişi (sevk / depo çıkışı) web panelinden yapılır.',
   'checklist.progressCount': '{done} / {total} tamamlandı',
-  'checklist.conditionalShort': 'COND.',
   'checklist.inactiveSection': 'Artık gerekli olmayan maddeler ({n})',
   'checklist.inactiveBadge': 'Pasif',
   'checklist.inactiveHint':
@@ -640,11 +639,11 @@ export const tr = {
   'eol.loading': 'EoL yükleniyor…',
   'eol.loadFailed': 'EoL iş akışı yüklenemedi',
   'eol.resetConfirm':
-    'Bu aracın EoL iş akışını Fabrika / IN_PRODUCTION durumuna sıfırla? Yalnızca geliştirme — production’da yok.',
+    'Bu aracın EoL iş akışı Fabrika aşamasına, araç durumu Hatta olarak sıfırlansın mı? Yalnızca geliştirme ortamında var.',
   'eol.resetConfirmTitle': 'EoL iş akışını sıfırla',
   'eol.resetFailed': 'EoL sıfırlanamadı',
   'eol.resetHint':
-    'Yalnızca geliştirme — EoL’u Fabrika’ya ve araç durumunu IN_PRODUCTION’a sıfırlar. APP_ENV=development dışında gizli ve 404.',
+    'Yalnızca geliştirme — EoL’u Fabrika’ya, araç durumunu Hatta’ya sıfırlar. Geliştirme ortamı dışında görünmez ve çalışmaz.',
   'eol.resetButton': 'EoL iş akışını sıfırla',
   'eol.shippedOpen':
     'sevk edildi; {n} açık sorun hâlâ çözülmedi',
@@ -678,7 +677,7 @@ export const tr = {
   'media.unreadable': 'Tarayıcıda açılamaz',
   'media.unreadableAria': '{name} (tarayıcıda açılamaz)',
   'media.viewer': 'Fotoğraf görüntüleyici',
-  'media.file': 'FILE',
+  'media.file': 'DOSYA',
 
   'analysis.title': 'Analiz & KPI',
   'analysis.loadFailed': 'Analiz yüklenemedi',
@@ -746,21 +745,21 @@ export const tr = {
   'analysis.completedSlice': 'Biten',
   'analysis.vehicleBreakdown': 'Araç Bazlı Açık Hata Dağılımı',
   'analysis.vehicleBreakdownHint':
-    'VIN × severity — toplam açık hataya göre sıralı',
+    'VIN × şiddet — toplam açık hataya göre sıralı',
   'analysis.noOpenRows': 'Mevcut filtrelerde açık hata satırı yok',
   'analysis.apply': 'Uygula',
   'analysis.exporting': 'Dışa aktarılıyor…',
   'analysis.doneShort': 'Biten',
   'analysis.vehicleSeverity': 'Araç Bazlı Açık Hata Dağılımı',
   'analysis.vehicleSeverityHint':
-    'VIN × severity — toplam açık hatalara göre sıralı',
+    'VIN × şiddet — toplam açık hatalara göre sıralı',
   'analysis.total': 'Toplam',
   'analysis.openBreakdown':
     '{open} açık — {critical} kritik, {medium} orta, {low} düşük',
   'analysis.exportCsv': 'CSV dışa aktar',
   'analysis.exportCsvFailed': 'CSV dışa aktarma başarısız',
   'analysis.clearFilters': 'Filtreleri temizle',
-  'analysis.severity': 'Severity',
+  'analysis.severity': 'Şiddet',
   'analysis.eolStage': 'EOL aşaması',
   'analysis.compare': 'Karşılaştırma',
   'analysis.compare.none': 'Varsayılan (önceki dönem)',
@@ -768,7 +767,7 @@ export const tr = {
   'analysis.compare.previousWeek': 'Önceki hafta',
   'analysis.compare.previousMonth': 'Önceki ay',
   'analysis.compare.vs': '{period} karşı',
-  'analysis.severityFilter': 'severity {severity}',
+  'analysis.severityFilter': 'şiddet {severity}',
   'analysis.eolStageFilter': 'EOL {stage}',
   'analysis.kpiSection': 'KPI kartları',
   'analysis.kpi.production': 'Toplam üretim',
@@ -843,7 +842,7 @@ export const tr = {
   'analysis.defectOccurrences': 'Adet',
   'analysis.ageBucket': 'Yaş aralığı',
   'analysis.subtitle': 'KPI, filtreler ve grafikler',
-  'analysis.filterNote.severity': 'severity',
+  'analysis.filterNote.severity': 'şiddet',
   'analysis.filterNote.issueType': 'issue türü',
   'analysis.filterNote.station': 'istasyon',
   'analysis.filterNote.unaffected':
@@ -909,8 +908,8 @@ export const tr = {
   'templates.sectionNone': 'Diğer maddeler (bölümsüz)',
   'templates.sectionCustom': 'Özel anahtar…',
   'templates.eolPhaseItem': 'Madde {n} için EoL aşaması',
-  'templates.branch': 'BRANCH',
-  'templates.depot': 'DEPOT',
+  'templates.branch': 'Fabrika',
+  'templates.depot': 'Depo',
   'templates.hint':
     'Yeni/aktif maddeler seçtiğiniz kapsamdaki araçlara eklenir; tamamlanmış checklist geçmişi korunur. Silmek yerine pasife çekin.',
   'templates.hideInactive': 'Pasif maddeleri gizle',
@@ -920,9 +919,9 @@ export const tr = {
   'templates.confirmActivate':
     'Bu madde {affected} başlamamış araca eklenecek, {protected} araç çalışmaya başladığı için etkilenmeyecek. Onaylıyor musunuz?',
   'templates.confirmCreate':
-    'Yeni madde {affected} başlamamış araca PENDING olarak eklenecek, {protected} araç çalışmaya başladığı için etkilenmeyecek. Onaylıyor musunuz?',
+    'Yeni madde {affected} başlamamış araca bekleyen madde olarak eklenecek, {protected} araç çalışmaya başladığı için etkilenmeyecek. Onaylıyor musunuz?',
   'templates.confirmDelete':
-    'Bu madde kalıcı silinecek ({affected} PENDING kayıt temizlenecek). Bu işlem geri alınamaz. Onaylıyor musunuz?',
+    'Bu madde kalıcı silinecek ({affected} bekleyen kayıt temizlenecek). Bu işlem geri alınamaz. Onaylıyor musunuz?',
   'templates.confirmCreateTitle': 'Madde ekle',
   'templates.confirmActivateTitle': 'Maddeyi aktife al',
   'templates.confirmDeactivateTitle': 'Maddeyi pasife çek',
@@ -1227,11 +1226,11 @@ export const tr = {
   'error.mustChangePassword':
     'Devam etmek için şifrenizi değiştirmeniz gerekiyor.',
   'error.depotLocked':
-    'Fabrika maddeleri OK veya CONDITIONAL_OK olmadan depo maddeleri güncellenemez.',
+    'Fabrika maddelerinin tümü Uygun veya Şartlı uygun olmadan depo maddeleri güncellenemez.',
   'error.itemTextRequired': 'Madde metni gerekli.',
   'error.itemTextTooLong': 'Madde metni en fazla 250 karakter olabilir.',
-  'error.eolPhaseRequired': 'EOL maddeleri için eol_phase gerekli.',
-  'error.eolPhaseNotAllowed': 'eol_phase yalnızca EOL maddelerinde geçerlidir.',
+  'error.eolPhaseRequired': 'EOL maddeleri için aşama (Fabrika / Depo) seçilmeli.',
+  'error.eolPhaseNotAllowed': 'Aşama (Fabrika / Depo) yalnızca EOL maddelerinde seçilebilir.',
   'error.reorderInvalid':
     'Sıralama, şablondaki her maddeyi tam bir kez listelemelidir.',
   'error.invalidToken': 'Oturum geçersiz.',
@@ -1244,7 +1243,7 @@ export const tr = {
   'error.userInUseUnknown':
     'Bu kullanıcı kayıtlarda kullanılmış, silinemez — pasife çekebilirsiniz.',
   'error.gateBlocked':
-    '{type} geçişi engellendi: {n} madde OK/CONDITIONAL_OK değil (madde no: {ids}).',
+    '{type} geçişi engellendi: {n} madde Uygun / Şartlı uygun değil (madde no: {ids}).',
   'error.depotReleaseBlocked':
     '{vin} için depo çıkışı engellendi: {n} açık issue kaldı (issue no: {ids}).',
   'error.dbRejected': 'Veritabanı değişikliği reddetti.',
@@ -1441,10 +1440,10 @@ export const en: Record<MessageKey, string> = {
   'status.station.inProgress': 'In progress',
   'status.station.notStarted': 'Not started',
   'status.eol.ok': 'OK',
-  'status.eol.notOk': 'NOT OK',
-  'status.eol.rework': 'REWORK',
-  'status.eol.conditionalOk': 'CONDITIONAL OK',
-  'status.eol.pending': 'PENDING',
+  'status.eol.notOk': 'Not OK',
+  'status.eol.rework': 'Rework',
+  'status.eol.conditionalOk': 'Conditional OK',
+  'status.eol.pending': 'Pending',
   'status.shipment.checked': 'Checked',
   'status.shipment.unchecked': 'Unchecked',
   'status.vehicle.planned': 'Planned',
@@ -1585,7 +1584,7 @@ export const en: Record<MessageKey, string> = {
 
   'vehicles.title': 'Vehicles',
   'vehicles.loadFailed': 'Could not load vehicles',
-  'vehicles.inProductionNow': 'Vehicles on line (IN_PRODUCTION, live)',
+  'vehicles.inProductionNow': 'Vehicles on line (live)',
   'vehicles.shippedToday': 'Shipped today',
   'vehicles.shippedWeek': 'Shipped this week',
   'vehicles.depotRelease': 'Depot release',
@@ -1642,7 +1641,7 @@ export const en: Record<MessageKey, string> = {
   'checklist.lockHint': 'Complete the Factory checklist first',
   'checklist.viewOnly': 'View only — checklist.edit is not granted',
   'checklist.emptyStage': 'No items for this stage',
-  'checklist.pickStatus': 'Select OK, NOT_OK, REWORK, or CONDITIONAL_OK',
+  'checklist.pickStatus': 'Select OK, Not OK, Rework, or Conditional OK',
   'checklist.descRequired': 'A description is required for this status',
   'checklist.descPlaceholder': 'Description required for this status',
   'checklist.saveFailed': 'Save failed',
@@ -1650,8 +1649,8 @@ export const en: Record<MessageKey, string> = {
     'Item saved but has no progress id for photo upload',
   'checklist.photo': 'Photo',
   'checklist.chooseFile': 'Choose file',
-  'checklist.yesOk': 'Yes (OK)',
-  'checklist.noNotOk': 'No (NOT_OK)',
+  'checklist.yesOk': 'Yes',
+  'checklist.noNotOk': 'No',
   'checklist.branch': 'Factory',
   'checklist.depot': 'Depot',
   'checklist.branchTitle': 'Factory checklist',
@@ -1671,7 +1670,7 @@ export const en: Record<MessageKey, string> = {
   'checklist.shipmentRemaining':
     '{n} items remaining — complete all items before submit',
   'checklist.operatorHint':
-    'Operators mark items only; WITH_CUSTOMER/SHIPPED is set by a manager on web',
+    'Operators mark items only; delivery and shipment status are set by a manager on web',
   'checklist.allTestsDone': 'All tests complete',
   'checklist.shipmentLink': 'Shipment Checklist',
   'checklist.testLink': 'Test Checklist',
@@ -1702,11 +1701,11 @@ export const en: Record<MessageKey, string> = {
   'eol.loading': 'Loading EoL…',
   'eol.loadFailed': 'Could not load EoL workflow',
   'eol.resetConfirm':
-    'Reset this vehicle’s EoL workflow to Factory / IN_PRODUCTION? Test-only — not available outside development.',
+    'Reset this vehicle’s EoL workflow to Factory and its status to On line? Test-only — not available outside development.',
   'eol.resetConfirmTitle': 'Reset EoL workflow',
   'eol.resetFailed': 'Could not reset EoL',
   'eol.resetHint':
-    'Test-only — resets EoL to Factory and vehicle status to IN_PRODUCTION. Hidden and 404 outside APP_ENV=development.',
+    'Test-only — resets EoL to Factory and vehicle status to On line. Hidden and unavailable outside development.',
   'eol.resetButton': 'Reset EoL workflow',
   'eol.shippedOpen':
     'shipped with {n} open issue(s) still unresolved',
@@ -1853,8 +1852,8 @@ export const en: Record<MessageKey, string> = {
   'templates.sectionNone': 'Other items (unsectioned)',
   'templates.sectionCustom': 'Custom key…',
   'templates.eolPhaseItem': 'EoL phase for item {n}',
-  'templates.branch': 'BRANCH',
-  'templates.depot': 'DEPOT',
+  'templates.branch': 'Factory',
+  'templates.depot': 'Depot',
 
   'users.title': 'Users',
   'users.loadFailed': 'Could not load users',
@@ -2056,13 +2055,13 @@ export const en: Record<MessageKey, string> = {
   'error.accountInactive': 'Account or role is inactive.',
   'error.mustChangePassword': 'You must change your password before continuing.',
   'error.depotLocked':
-    'Depot-phase EoL items cannot be updated until every Factory-phase item is OK or CONDITIONAL_OK.',
+    'Depot-phase EoL items cannot be updated until every Factory-phase item is OK or Conditional OK.',
   'error.itemTextRequired': 'Item text is required.',
   'error.itemTextTooLong': 'Item text must be at most 250 characters.',
-  'error.eolPhaseRequired': 'eol_phase is required for EOL template items.',
-  'error.eolPhaseNotAllowed': 'eol_phase is only valid on EOL template items.',
+  'error.eolPhaseRequired': 'A phase (Factory / Depot) is required for EOL template items.',
+  'error.eolPhaseNotAllowed': 'A phase (Factory / Depot) is only valid on EOL template items.',
   'error.reorderInvalid':
-    'item_ids must list every item on the template exactly once.',
+    'The new order must list every item on the template exactly once.',
   'error.invalidToken': 'Invalid session.',
   'error.tokenExpired': 'Session expired.',
   'error.permissionDenied': 'Permission not granted.',
@@ -2073,7 +2072,7 @@ export const en: Record<MessageKey, string> = {
   'error.userInUseUnknown':
     'This user appears in records and cannot be deleted — deactivate instead.',
   'error.gateBlocked':
-    '{type} gate blocked: {n} item(s) not OK/CONDITIONAL_OK (item ids: {ids}).',
+    '{type} gate blocked: {n} item(s) not OK / Conditional OK (item ids: {ids}).',
   'error.depotReleaseBlocked':
     'Depot release blocked for {vin}: {n} open Issue(s) remain (issue ids: {ids}).',
   'error.dbRejected': 'The database rejected the change.',
@@ -2233,7 +2232,6 @@ export const en: Record<MessageKey, string> = {
   'analysis.filterNote.station': 'station',
   'analysis.filterNote.unaffected':
     'This metric is not affected by the selected defect filters: {filters}',
-  'checklist.conditionalShort': 'COND.',
   'checklist.eolComplete': 'EoL workflow is complete.',
   'checklist.evaluated': '{done}/{total} evaluated',
   'checklist.itemsMissing': '{n} items remaining',
@@ -2544,9 +2542,9 @@ export const en: Record<MessageKey, string> = {
   'templates.confirmActivate':
     'This item will be added to {affected} not-started vehicles; {protected} vehicles already started and stay unchanged. Continue?',
   'templates.confirmCreate':
-    'The new item will be added as PENDING on {affected} not-started vehicles; {protected} vehicles already started and stay unchanged. Continue?',
+    'The new item will be added as pending on {affected} not-started vehicles; {protected} vehicles already started and stay unchanged. Continue?',
   'templates.confirmDelete':
-    'This item will be permanently deleted ({affected} PENDING rows cleaned up). This cannot be undone. Continue?',
+    'This item will be permanently deleted ({affected} pending rows cleaned up). This cannot be undone. Continue?',
   'templates.confirmCreateTitle': 'Add item',
   'templates.confirmActivateTitle': 'Activate item',
   'templates.confirmDeactivateTitle': 'Deactivate item',

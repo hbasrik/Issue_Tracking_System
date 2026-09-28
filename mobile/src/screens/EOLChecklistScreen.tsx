@@ -60,7 +60,7 @@ const STATUS_KEYS = [
   { value: 'OK', key: 'status.eol.ok' as const, color: statusColors.ok },
   { value: 'NOT_OK', key: 'status.eol.notOk' as const, color: statusColors.notOk },
   { value: 'REWORK', key: 'status.eol.rework' as const, color: statusColors.rework },
-  { value: 'CONDITIONAL_OK', key: 'checklist.conditionalShort' as const, color: statusColors.conditionalOk },
+  { value: 'CONDITIONAL_OK', key: 'status.eol.conditionalOk' as const, color: statusColors.conditionalOk },
 ];
 
 function stageLabel(stage: EOLStage, t: Translate): string {
