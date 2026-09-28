@@ -52,4 +52,18 @@ assert.equal(
   1,
 );
 
+{
+  const split = splitChecklistByActive([
+    { ItemID: 20, Status: 'OK', IsActive: true },
+    { ItemID: 21, Status: 'PENDING', IsActive: true, StageClosed: true },
+    { ItemID: 22, Status: 'PENDING', IsActive: false },
+  ]);
+  assert.deepEqual(split.active.map((i) => i.ItemID), [20]);
+  assert.deepEqual(split.stageClosed.map((i) => i.ItemID), [21]);
+  assert.deepEqual(split.inactiveHistorical.map((i) => i.ItemID), [22]);
+  const c = countActiveChecklistProgress(split.active);
+  assert.equal(c.total, 1);
+  assert.equal(c.remaining, 0);
+}
+
 console.log('shared/checklistActive.ts ok');

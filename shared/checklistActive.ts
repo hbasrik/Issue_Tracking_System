@@ -19,11 +19,21 @@ export type ChecklistActivityItem = {
   Status: string;
   /** Catalogue flag from API. Missing/undefined treated as active. */
   IsActive?: boolean;
+  /**
+   * Active item the vehicle can no longer complete: its stage is passed and
+   * it was never evaluated (docs/11 Karar 15). Counts nowhere.
+   */
+  StageClosed?: boolean;
   EolPhase?: string | null;
 };
 
 export function isChecklistItemActive(item: ChecklistActivityItem): boolean {
   return item.IsActive !== false;
+}
+
+/** Active and still completable — the operator work queue. */
+export function isChecklistItemWorkable(item: ChecklistActivityItem): boolean {
+  return isChecklistItemActive(item) && item.StageClosed !== true;
 }
 
 export function isChecklistStatusPassing(status: string): boolean {
@@ -38,11 +48,11 @@ export function filterByEolPhase<T extends ChecklistActivityItem>(
   return items.filter((item) => item.EolPhase === eolPhase);
 }
 
-/** Active catalogue items (operator work queue). */
+/** Active, completable catalogue items (operator work queue). */
 export function activeChecklistItems<T extends ChecklistActivityItem>(
   items: T[],
 ): T[] {
-  return items.filter(isChecklistItemActive);
+  return items.filter(isChecklistItemWorkable);
 }
 
 /**
@@ -56,7 +66,10 @@ export function inactiveHistoricalChecklistItems<T extends ChecklistActivityItem
 }
 
 export type ChecklistActiveSplit<T extends ChecklistActivityItem> = {
+  /** Work queue: counters, progress bar and "n remaining" use only these. */
   active: T[];
+  /** Stage passed, never completed — collapsed "stage completed" section. */
+  stageClosed: T[];
   inactiveHistorical: T[];
 };
 
@@ -64,12 +77,14 @@ export function splitChecklistByActive<T extends ChecklistActivityItem>(
   items: T[],
 ): ChecklistActiveSplit<T> {
   const active: T[] = [];
+  const stageClosed: T[] = [];
   const inactiveHistorical: T[] = [];
   for (const item of items) {
-    if (isChecklistItemActive(item)) active.push(item);
-    else inactiveHistorical.push(item);
+    if (!isChecklistItemActive(item)) inactiveHistorical.push(item);
+    else if (item.StageClosed === true) stageClosed.push(item);
+    else active.push(item);
   }
-  return { active, inactiveHistorical };
+  return { active, stageClosed, inactiveHistorical };
 }
 
 export type ChecklistActiveCounts = {
