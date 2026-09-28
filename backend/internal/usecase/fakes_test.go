@@ -132,6 +132,11 @@ func (f *fakeVehicleRepo) SearchByVINSuffix(_ context.Context, suffix string, li
 
 func (f *fakeVehicleRepo) UpdateProgress(_ context.Context, vin string, percentage float64, stationID *int) error {
 	f.progressUpdate = &progressUpdate{vin: vin, percentage: percentage, stationID: stationID}
+	if v, ok := f.vehicles[vin]; ok {
+		// No checklist rows in these fixtures: station-only equals the
+		// applicable-set percentage GetByVIN returns in Postgres.
+		v.TotalProgressPercentage = percentage
+	}
 	return nil
 }
 
@@ -199,6 +204,8 @@ func (f *fakeVehicleRepo) BulkInsertPlanned(_ context.Context, vins []string) ([
 // (vin, stationStepID).
 type fakeStationStepRepo struct {
 	rows map[string][]domain.VehicleStationStepProgress
+	// openApplicable is returned by CountApplicableOpen per VIN.
+	openApplicable map[string]int
 }
 
 func newFakeStationStepRepo() *fakeStationStepRepo {
@@ -215,6 +222,10 @@ func (f *fakeStationStepRepo) ListCatalogueWithProgress(_ context.Context, _ str
 
 func (f *fakeStationStepRepo) CountOpenIssuesByStation(_ context.Context, _ string) (map[int]int, error) {
 	return map[int]int{}, nil
+}
+
+func (f *fakeStationStepRepo) CountApplicableOpen(_ context.Context, vin string) (int, error) {
+	return f.openApplicable[vin], nil
 }
 
 func (f *fakeStationStepRepo) SaveResult(_ context.Context, vin string, stationStepID int, status domain.StationStepStatus, checkedBy int) error {
@@ -274,6 +285,12 @@ func (f *fakeChecklistRepo) ResolveDefaultTemplateID(_ context.Context, typ doma
 		}
 	}
 	return 1, nil
+}
+
+// ListApplicableItems serves the same fixture views; the stage filter itself
+// is SQL and is covered by the postgres integration test.
+func (f *fakeChecklistRepo) ListApplicableItems(ctx context.Context, vin string, t domain.ChecklistType) ([]domain.ChecklistItemView, error) {
+	return f.ListItemsWithProgress(ctx, vin, t, 0)
 }
 
 func (f *fakeChecklistRepo) ListItemsWithProgress(_ context.Context, vin string, t domain.ChecklistType, templateID int) ([]domain.ChecklistItemView, error) {
@@ -359,7 +376,7 @@ func (f *fakeChecklistRepo) CountIssueLinkedVINs(_ context.Context, _ int) (int,
 func (f *fakeChecklistRepo) DeactivateImpact(_ context.Context, _ int) (int, int, error) {
 	return 0, 0, nil
 }
-func (f *fakeChecklistRepo) CreateImpact(_ context.Context, _ int, _ domain.ChecklistType) (int, int, int, int, error) {
+func (f *fakeChecklistRepo) CreateImpact(_ context.Context, _ int, _ domain.ChecklistType, _ *domain.EOLItemPhase) (int, int, int, int, error) {
 	return 0, 0, 0, 0, nil
 }
 func (f *fakeChecklistRepo) DeletePendingProgressForItem(_ context.Context, _ int) (int64, error) {

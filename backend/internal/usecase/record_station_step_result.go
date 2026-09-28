@@ -61,8 +61,15 @@ func (r *StationStepResultRecorder) Record(ctx context.Context, in RecordStation
 		return nil, err
 	}
 
+	// Report the same percentage vehicle reads return (station steps plus
+	// applicable checklist items), not the station-only stored value.
+	vehicle, err := r.vehicles.GetByVIN(ctx, in.VIN)
+	if err != nil {
+		return nil, err
+	}
+
 	return &RecordStationStepOutput{
-		TotalProgressPercentage: percentage,
+		TotalProgressPercentage: vehicle.TotalProgressPercentage,
 		CurrentStationID:        currentStationID,
 	}, nil
 }

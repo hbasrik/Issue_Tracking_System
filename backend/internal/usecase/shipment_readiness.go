@@ -14,22 +14,28 @@ const shipmentWarningListCap = 8
 // ShipmentReadinessReader builds the soft pre-shipment warning list. It does
 // not change depot-release hard-block rules.
 type ShipmentReadinessReader struct {
-	vehicles   repository.VehicleRepository
-	checklists *ChecklistResultRecorder
-	issues     repository.IssueRepository
+	vehicles     repository.VehicleRepository
+	checklists   *ChecklistResultRecorder
+	issues       repository.IssueRepository
+	stationSteps repository.StationStepProgressRepository
 }
 
-// NewShipmentReadinessReader wires the reader.
+// NewShipmentReadinessReader wires the reader. stationSteps may be nil (no
+// station-step warning).
 func NewShipmentReadinessReader(
 	vehicles repository.VehicleRepository,
 	checklists *ChecklistResultRecorder,
 	issues repository.IssueRepository,
+	stationSteps repository.StationStepProgressRepository,
 ) *ShipmentReadinessReader {
-	return &ShipmentReadinessReader{vehicles: vehicles, checklists: checklists, issues: issues}
+	return &ShipmentReadinessReader{vehicles: vehicles, checklists: checklists, issues: issues, stationSteps: stationSteps}
 }
 
 // ForVIN returns warnings that should be shown before shipping the vehicle.
-// A SHIPPED vehicle is treated as already past this check (ready, no warnings).
+// Items come from the applicable set (stage rule), the same set the vehicle
+// progress percentage counts: items of a stage the vehicle already passed
+// and never evaluated are not listed. A delivered (or legacy SHIPPED)
+// vehicle is past every stage: ready, no warnings.
 func (r *ShipmentReadinessReader) ForVIN(ctx context.Context, vin string) (*domain.ShipmentReadiness, error) {
 	vehicle, err := r.vehicles.GetByVIN(ctx, vin)
 	if err != nil {
@@ -41,11 +47,25 @@ func (r *ShipmentReadinessReader) ForVIN(ctx context.Context, vin string) (*doma
 		Status:   vehicle.CurrentGlobalStatus,
 		Warnings: []domain.ShipmentWarning{},
 	}
-	if vehicle.CurrentGlobalStatus == domain.VehicleStatusShipped {
+	if vehicle.CurrentGlobalStatus == domain.VehicleStatusShipped ||
+		vehicle.CurrentGlobalStatus == domain.VehicleStatusDelivered {
 		out.Ready = true
 		return out, nil
 	}
 
+	if r.stationSteps != nil {
+		open, err := r.stationSteps.CountApplicableOpen(ctx, vin)
+		if err != nil {
+			return nil, err
+		}
+		if open > 0 {
+			out.Warnings = append(out.Warnings, domain.ShipmentWarning{
+				Code:           domain.ShipmentWarningStationSteps,
+				Message:        fmt.Sprintf("%d istasyon adımı tamamlanmadı", open),
+				RemainingCount: open,
+			})
+		}
+	}
 	out.Warnings = append(out.Warnings, r.checklistWarnings(ctx, vin, domain.ChecklistTypeShipment)...)
 	out.Warnings = append(out.Warnings, r.checklistWarnings(ctx, vin, domain.ChecklistTypeTest)...)
 	out.Warnings = append(out.Warnings, r.checklistWarnings(ctx, vin, domain.ChecklistTypeEOL)...)
@@ -69,7 +89,7 @@ func (r *ShipmentReadinessReader) ForVIN(ctx context.Context, vin string) (*doma
 }
 
 func (r *ShipmentReadinessReader) checklistWarnings(ctx context.Context, vin string, typ domain.ChecklistType) []domain.ShipmentWarning {
-	items, err := r.checklists.ListForVehicle(ctx, vin, typ)
+	items, err := r.checklists.ListApplicableForVehicle(ctx, vin, typ)
 	if err != nil {
 		// Internal error text stays in the log; clients get a typed flag.
 		applog.Warn("shipment readiness checklist read failed",

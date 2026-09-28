@@ -111,6 +111,16 @@ func (r *StationStepProgressRepo) ListCatalogueWithProgress(ctx context.Context,
 	return out, rows.Err()
 }
 
+// CountApplicableOpen counts the vehicle's applicable station steps that are
+// not OK (stage_applicability.go) — the steps the progress percentage misses.
+func (r *StationStepProgressRepo) CountApplicableOpen(ctx context.Context, vin string) (int, error) {
+	var n int
+	err := executor(ctx, r.pool).QueryRow(ctx,
+		`SELECT count(*)::int FROM (`+applicableStationStepsSQL("$1")+`) st WHERE st.status <> 'OK'`,
+		vin).Scan(&n)
+	return n, err
+}
+
 // CountOpenIssuesByStation counts issues in OPEN, IN_PROGRESS, or DONE status
 // grouped by the station of their source station step.
 func (r *StationStepProgressRepo) CountOpenIssuesByStation(ctx context.Context, vin string) (map[int]int, error) {

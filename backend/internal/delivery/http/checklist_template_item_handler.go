@@ -186,7 +186,16 @@ func (s *server) handleChecklistTemplateItemCreateImpact(w http.ResponseWriter, 
 		badRequest(w, "action must be create")
 		return
 	}
-	impact, err := s.deps.Checklists.PreviewTemplateItemImpact(r.Context(), templateID, 0, action)
+	var rawPhase *string
+	if p := strings.TrimSpace(r.URL.Query().Get("eol_phase")); p != "" {
+		rawPhase = &p
+	}
+	phase, err := parseOptionalEOLPhase(rawPhase)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	impact, err := s.deps.Checklists.PreviewTemplateItemImpact(r.Context(), templateID, 0, action, phase)
 	if err != nil {
 		writeError(w, err)
 		return
@@ -211,7 +220,7 @@ func (s *server) handleChecklistTemplateItemImpact(w http.ResponseWriter, r *htt
 		badRequest(w, "action must be deactivate, activate or delete")
 		return
 	}
-	impact, err := s.deps.Checklists.PreviewTemplateItemImpact(r.Context(), templateID, itemID, action)
+	impact, err := s.deps.Checklists.PreviewTemplateItemImpact(r.Context(), templateID, itemID, action, nil)
 	if err != nil {
 		writeError(w, err)
 		return

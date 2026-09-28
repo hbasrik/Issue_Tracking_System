@@ -59,10 +59,14 @@ func TestShipmentReadiness_ListsIncompleteChecklistsAndOpenIssues(t *testing.T) 
 		VIN: vin, Status: domain.IssueStatusOpen, Description: "scratch on door",
 	})
 
+	steps := newFakeStationStepRepo()
+	steps.openApplicable = map[string]int{vin: 3}
+
 	reader := usecase.NewShipmentReadinessReader(
 		vehicles,
 		usecase.NewChecklistResultRecorder(vehicles, checklists, nil, nil),
 		issues,
+		steps,
 	)
 	got, err := reader.ForVIN(context.Background(), vin)
 	if err != nil {
@@ -70,6 +74,10 @@ func TestShipmentReadiness_ListsIncompleteChecklistsAndOpenIssues(t *testing.T) 
 	}
 	if got.Ready {
 		t.Fatal("expected not ready")
+	}
+	if len(got.Warnings) == 0 || got.Warnings[0].Code != domain.ShipmentWarningStationSteps ||
+		got.Warnings[0].RemainingCount != 3 {
+		t.Errorf("first warning should be 3 open station steps: %+v", got.Warnings)
 	}
 	joined := ""
 	for _, w := range got.Warnings {
@@ -120,6 +128,7 @@ func TestShipmentReadiness_ReadFailureDoesNotLeakError(t *testing.T) {
 		vehicles,
 		usecase.NewChecklistResultRecorder(vehicles, checklists, nil, nil),
 		newFakeIssueRepo(),
+		nil,
 	)
 	got, err := reader.ForVIN(context.Background(), vin)
 	if err != nil {
@@ -149,6 +158,7 @@ func TestShipmentReadiness_ShippedIsReady(t *testing.T) {
 		vehicles,
 		usecase.NewChecklistResultRecorder(vehicles, newFakeChecklistRepo(), nil, nil),
 		newFakeIssueRepo(),
+		newFakeStationStepRepo(),
 	)
 	got, err := reader.ForVIN(context.Background(), vin)
 	if err != nil {
@@ -156,5 +166,40 @@ func TestShipmentReadiness_ShippedIsReady(t *testing.T) {
 	}
 	if !got.Ready || len(got.Warnings) != 0 {
 		t.Fatalf("shipped vehicle should skip warnings: %+v", got)
+	}
+}
+
+// A delivered vehicle is past every stage: even with pending-looking items
+// and an open issue in the fixtures, no "complete these" warning is built.
+func TestShipmentReadiness_DeliveredIsReady(t *testing.T) {
+	vin := "N7V1K1SA9SK000001"
+	vehicles := newFakeVehicleRepo()
+	vehicles.vehicles[vin] = &domain.Vehicle{
+		VIN:                 vin,
+		CurrentGlobalStatus: domain.VehicleStatusDelivered,
+	}
+	checklists := newFakeChecklistRepo()
+	checklists.views[vin+"|SHIPMENT"] = []domain.ChecklistItemView{
+		{ItemID: 210, ItemNo: 44, ItemText: "Direksiyon kolonu", Status: domain.CheckStatusPending, IsActive: true},
+	}
+	issues := newFakeIssueRepo()
+	_, _ = issues.Create(context.Background(), &domain.Issue{
+		VIN: vin, Status: domain.IssueStatusOpen, Description: "reported after delivery",
+	})
+	steps := newFakeStationStepRepo()
+	steps.openApplicable = map[string]int{vin: 2}
+
+	reader := usecase.NewShipmentReadinessReader(
+		vehicles,
+		usecase.NewChecklistResultRecorder(vehicles, checklists, nil, nil),
+		issues,
+		steps,
+	)
+	got, err := reader.ForVIN(context.Background(), vin)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !got.Ready || len(got.Warnings) != 0 {
+		t.Fatalf("delivered vehicle should have no pre-shipment warning: %+v", got)
 	}
 }

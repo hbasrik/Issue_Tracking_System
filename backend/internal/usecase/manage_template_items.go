@@ -255,9 +255,11 @@ func (r *ChecklistResultRecorder) deleteTemplateItemTx(ctx context.Context, temp
 }
 
 // PreviewTemplateItemImpact returns how many vehicles a catalogue change
-// would touch versus leave alone (history preserved).
+// would touch versus leave alone (history preserved). createPhase is the EOL
+// phase of the item about to be created (ignored for other actions: activate
+// uses the stored item's phase).
 func (r *ChecklistResultRecorder) PreviewTemplateItemImpact(
-	ctx context.Context, templateID, itemID int, action string,
+	ctx context.Context, templateID, itemID int, action string, createPhase *domain.EOLItemPhase,
 ) (*domain.TemplateItemPropagationImpact, error) {
 	tmpl, err := r.checklist.GetTemplate(ctx, templateID)
 	if err != nil {
@@ -266,7 +268,27 @@ func (r *ChecklistResultRecorder) PreviewTemplateItemImpact(
 	out := &domain.TemplateItemPropagationImpact{Action: action}
 	switch action {
 	case "create", "activate":
-		nsA, nsP, incA, incP, cerr := r.checklist.CreateImpact(ctx, templateID, tmpl.Type)
+		phase := createPhase
+		if action == "activate" {
+			if itemID < 1 {
+				return nil, domain.ErrNotFound
+			}
+			item, gerr := r.checklist.GetTemplateItem(ctx, itemID)
+			if gerr != nil {
+				return nil, gerr
+			}
+			if item.TemplateID != templateID {
+				return nil, domain.ErrNotFound
+			}
+			phase = item.EolPhase
+		}
+		if tmpl.Type != domain.ChecklistTypeEOL {
+			phase = nil
+		} else if phase == nil {
+			p := domain.EOLItemPhaseBranch
+			phase = &p
+		}
+		nsA, nsP, incA, incP, cerr := r.checklist.CreateImpact(ctx, templateID, tmpl.Type, phase)
 		if cerr != nil {
 			return nil, cerr
 		}

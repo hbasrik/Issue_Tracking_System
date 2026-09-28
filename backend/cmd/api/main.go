@@ -87,7 +87,7 @@ func main() {
 		EOLDeliver:         usecase.NewEOLDeliverer(vehicleRepo, eolRepo, uow),
 		EOLDocumentApprove: usecase.NewEOLDocumentApprover(vehicleRepo, eolRepo, uow),
 		EOLReset:           eolReset,
-		ShipmentReadiness:  usecase.NewShipmentReadinessReader(vehicleRepo, checklists, issueRepo),
+		ShipmentReadiness:  usecase.NewShipmentReadinessReader(vehicleRepo, checklists, issueRepo, stationStepRepo),
 		Media:              usecase.NewMediaUploader(mediaRepo, mediaStore),
 		DefectCatalog:      usecase.NewDefectCatalogAdmin(defectCatalogRepo, issueRepo, auditRepo, uow),
 		LoginLimiter:       loginLimiter,

@@ -58,6 +58,9 @@ func (f *httpFakeChecklistRepo) ResolveDefaultTemplateID(context.Context, domain
 func (f *httpFakeChecklistRepo) ListItemsWithProgress(context.Context, string, domain.ChecklistType, int) ([]domain.ChecklistItemView, error) {
 	return nil, nil
 }
+func (f *httpFakeChecklistRepo) ListApplicableItems(context.Context, string, domain.ChecklistType) ([]domain.ChecklistItemView, error) {
+	return nil, nil
+}
 func (f *httpFakeChecklistRepo) SaveResult(context.Context, domain.ChecklistProgress) error {
 	return nil
 }
@@ -177,7 +180,7 @@ func (f *httpFakeChecklistRepo) CountIssueLinkedVINs(_ context.Context, _ int) (
 func (f *httpFakeChecklistRepo) DeactivateImpact(_ context.Context, itemID int) (int, int, error) {
 	return f.pending[itemID], f.evaluated[itemID], nil
 }
-func (f *httpFakeChecklistRepo) CreateImpact(_ context.Context, _ int, _ domain.ChecklistType) (int, int, int, int, error) {
+func (f *httpFakeChecklistRepo) CreateImpact(_ context.Context, _ int, _ domain.ChecklistType, _ *domain.EOLItemPhase) (int, int, int, int, error) {
 	return 4, 1, 5, 0, nil
 }
 func (f *httpFakeChecklistRepo) DeletePendingProgressForItem(_ context.Context, itemID int) (int64, error) {

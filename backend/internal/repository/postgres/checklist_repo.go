@@ -169,6 +169,37 @@ func (r *ChecklistProgressRepo) ListItemsWithProgress(ctx context.Context, vin s
 	return out, rows.Err()
 }
 
+// ListApplicableItems returns the vehicle's applicable items of one checklist
+// type (stage_applicability.go): the same set the progress percentage counts.
+func (r *ChecklistProgressRepo) ListApplicableItems(ctx context.Context, vin string, checklistType domain.ChecklistType) ([]domain.ChecklistItemView, error) {
+	rows, err := executor(ctx, r.pool).Query(ctx,
+		`SELECT a.item_id, a.item_no, a.item_text, a.status, a.eol_phase, a.progress_id
+		 FROM (`+applicableChecklistItemsSQL("$1")+`) a
+		 WHERE a.checklist_type = $2
+		 ORDER BY a.item_no`, vin, string(checklistType))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var out []domain.ChecklistItemView
+	for rows.Next() {
+		item := domain.ChecklistItemView{IsActive: true}
+		var status string
+		var eolPhase *string
+		if err := rows.Scan(&item.ItemID, &item.ItemNo, &item.ItemText, &status, &eolPhase, &item.ProgressID); err != nil {
+			return nil, err
+		}
+		item.Status = domain.CheckStatus(status)
+		if eolPhase != nil && *eolPhase != "" {
+			p := domain.EOLItemPhase(*eolPhase)
+			item.EolPhase = &p
+		}
+		out = append(out, item)
+	}
+	return out, rows.Err()
+}
+
 // SaveResult updates a pre-materialized checklist progress row. Actor stamps
 // follow the new status: OK/CONDITIONAL_OK write approved_*; NOT_OK writes
 // rejected_*; any other status clears both so a later NOT_OK cannot keep an
@@ -463,47 +494,65 @@ func (r *ChecklistProgressRepo) DeactivateImpact(ctx context.Context, itemID int
 	return affected, protected, err
 }
 
-// CreateImpact counts not-started and incomplete vehicle sets for a template.
-// Completed checklists (progress exists and no PENDING remains) are always
-// in the protected/incomplete-protected bucket — never affected.
-func (r *ChecklistProgressRepo) CreateImpact(ctx context.Context, templateID int, checklistType domain.ChecklistType) (
+// CreateImpact counts not-started and incomplete vehicle sets for a template
+// item of the given EOL phase (nil for SHIPMENT/TEST). Only vehicles that
+// have not passed the item's stage can be affected; vehicles past it and
+// completed checklists (progress exists and no PENDING remains) are always
+// in the protected bucket.
+func (r *ChecklistProgressRepo) CreateImpact(
+	ctx context.Context, templateID int, checklistType domain.ChecklistType, eolPhase *domain.EOLItemPhase,
+) (
 	notStartedAffected, notStartedProtected, incompleteAffected, incompleteProtected int, err error,
 ) {
 	col, err := vehicleTemplateColumn(checklistType)
 	if err != nil {
 		return 0, 0, 0, 0, err
 	}
+	var phase *string
+	if eolPhase != nil {
+		s := string(*eolPhase)
+		phase = &s
+	}
 	q := fmt.Sprintf(`
 		WITH assigned AS (
-		  SELECT vin FROM vehicles WHERE %s = $1
+		  SELECT v.vin, %s AS stage_passed
+		  FROM vehicles v
+		  LEFT JOIN vehicle_eol_workflow w ON w.vin = v.vin
+		  WHERE v.%s = $1
+		),
+		eligible AS (
+		  SELECT vin FROM assigned WHERE NOT stage_passed
 		),
 		started AS (
 		  SELECT DISTINCT p.vin
 		  FROM checklist_item_progress p
-		  JOIN assigned a ON a.vin = p.vin
+		  JOIN eligible e ON e.vin = p.vin
 		  WHERE p.checklist_type = $2 AND p.check_status <> 'PENDING'
 		),
 		completed AS (
-		  SELECT a.vin
-		  FROM assigned a
+		  SELECT e.vin
+		  FROM eligible e
 		  WHERE EXISTS (
 		    SELECT 1 FROM checklist_item_progress p
-		    WHERE p.vin = a.vin AND p.checklist_type = $2
+		    WHERE p.vin = e.vin AND p.checklist_type = $2
 		  )
 		  AND NOT EXISTS (
 		    SELECT 1 FROM checklist_item_progress p
-		    WHERE p.vin = a.vin AND p.checklist_type = $2 AND p.check_status = 'PENDING'
+		    WHERE p.vin = e.vin AND p.checklist_type = $2 AND p.check_status = 'PENDING'
 		  )
+		),
+		counts AS (
+		  SELECT
+		    (SELECT COUNT(*)::int FROM assigned) AS total,
+		    (SELECT COUNT(*)::int FROM eligible e
+		      WHERE NOT EXISTS (SELECT 1 FROM started s WHERE s.vin = e.vin)) AS ns_affected,
+		    (SELECT COUNT(*)::int FROM eligible e
+		      WHERE NOT EXISTS (SELECT 1 FROM completed c WHERE c.vin = e.vin)) AS inc_affected
 		)
-		SELECT
-		  (SELECT COUNT(*)::int FROM assigned a
-		    WHERE NOT EXISTS (SELECT 1 FROM started s WHERE s.vin = a.vin)),
-		  (SELECT COUNT(*)::int FROM started),
-		  (SELECT COUNT(*)::int FROM assigned a
-		    WHERE NOT EXISTS (SELECT 1 FROM completed c WHERE c.vin = a.vin)),
-		  (SELECT COUNT(*)::int FROM completed)
-	`, col)
-	err = executor(ctx, r.pool).QueryRow(ctx, q, templateID, string(checklistType)).Scan(
+		SELECT ns_affected, total - ns_affected, inc_affected, total - inc_affected
+		FROM counts
+	`, checklistStagePassedSQL("v", "w", "$2::checklist_type_enum", "$3::text"), col)
+	err = executor(ctx, r.pool).QueryRow(ctx, q, templateID, string(checklistType), phase).Scan(
 		&notStartedAffected, &notStartedProtected, &incompleteAffected, &incompleteProtected,
 	)
 	return notStartedAffected, notStartedProtected, incompleteAffected, incompleteProtected, err
@@ -527,7 +576,8 @@ func (r *ChecklistProgressRepo) DeletePendingProgressForItem(ctx context.Context
 }
 
 // InsertPendingForVehicles backfills PENDING onto vehicles selected by scope.
-// Completed checklists are never included.
+// Only vehicles that have not yet passed the item's stage are eligible
+// (stage_applicability.go); completed checklists are never included.
 func (r *ChecklistProgressRepo) InsertPendingForVehicles(
 	ctx context.Context, itemID, templateID int, checklistType domain.ChecklistType, scope domain.TemplateItemPropagationScope,
 ) (int64, error) {
@@ -569,13 +619,17 @@ func (r *ChecklistProgressRepo) InsertPendingForVehicles(
 		INSERT INTO checklist_item_progress (vin, checklist_type, check_item_id, check_status)
 		SELECT v.vin, $2::checklist_type_enum, $3, 'PENDING'
 		FROM vehicles v
+		JOIN checklist_template_items ci ON ci.id = $3
+		LEFT JOIN vehicle_eol_workflow w ON w.vin = v.vin
 		WHERE v.%s = $1
+		  AND NOT %s
 		  AND NOT EXISTS (
 		    SELECT 1 FROM checklist_item_progress p
 		    WHERE p.vin = v.vin AND p.check_item_id = $3
 		  )
 		  %s
-		ON CONFLICT (vin, check_item_id) DO NOTHING`, col, whereExtra)
+		ON CONFLICT (vin, check_item_id) DO NOTHING`,
+		col, checklistStagePassedSQL("v", "w", "$2::checklist_type_enum", "ci.eol_phase"), whereExtra)
 	tag, err := executor(ctx, r.pool).Exec(ctx, q, templateID, string(checklistType), itemID)
 	if err != nil {
 		return 0, err
@@ -583,7 +637,8 @@ func (r *ChecklistProgressRepo) InsertPendingForVehicles(
 	return tag.RowsAffected(), nil
 }
 
-// ListVehiclesMissingTemplateItem returns assigned VINs without this item.
+// ListVehiclesMissingTemplateItem returns assigned VINs without this item
+// that should have it: vehicles past the item's stage are not missing it.
 func (r *ChecklistProgressRepo) ListVehiclesMissingTemplateItem(
 	ctx context.Context, templateID, itemID int, checklistType domain.ChecklistType, limit int,
 ) ([]domain.TemplateItemMissingVehicle, int, error) {
@@ -594,28 +649,23 @@ func (r *ChecklistProgressRepo) ListVehiclesMissingTemplateItem(
 	if limit <= 0 || limit > 500 {
 		limit = 100
 	}
-	countQ := fmt.Sprintf(`
-		SELECT COUNT(*)::int
+	from := fmt.Sprintf(`
 		FROM vehicles v
+		JOIN checklist_template_items ci ON ci.id = $2
+		LEFT JOIN vehicle_eol_workflow w ON w.vin = v.vin
 		WHERE v.%s = $1
+		  AND NOT %s
 		  AND NOT EXISTS (
 		    SELECT 1 FROM checklist_item_progress p
 		    WHERE p.vin = v.vin AND p.check_item_id = $2
-		  )`, col)
+		  )`, col, checklistStagePassedSQL("v", "w", "'"+string(checklistType)+"'", "ci.eol_phase"))
 	var total int
-	if err := executor(ctx, r.pool).QueryRow(ctx, countQ, templateID, itemID).Scan(&total); err != nil {
+	if err := executor(ctx, r.pool).QueryRow(ctx, `SELECT COUNT(*)::int`+from, templateID, itemID).Scan(&total); err != nil {
 		return nil, 0, err
 	}
-	listQ := fmt.Sprintf(`
-		SELECT v.vin, v.current_global_status::text
-		FROM vehicles v
-		WHERE v.%s = $1
-		  AND NOT EXISTS (
-		    SELECT 1 FROM checklist_item_progress p
-		    WHERE p.vin = v.vin AND p.check_item_id = $2
-		  )
+	listQ := `SELECT v.vin, v.current_global_status::text` + from + `
 		ORDER BY v.vin
-		LIMIT $3`, col)
+		LIMIT $3`
 	rows, err := executor(ctx, r.pool).Query(ctx, listQ, templateID, itemID, limit)
 	if err != nil {
 		return nil, 0, err

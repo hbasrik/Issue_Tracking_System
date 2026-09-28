@@ -188,6 +188,15 @@ func (r *ChecklistResultRecorder) ListForVehicle(ctx context.Context, vin string
 	return r.checklist.ListItemsWithProgress(ctx, vin, checklistType, resolved)
 }
 
+// ListApplicableForVehicle returns the vehicle's applicable items of one type
+// (stage rule): the set behind both the pre-shipment warning and progress %.
+func (r *ChecklistResultRecorder) ListApplicableForVehicle(ctx context.Context, vin string, checklistType domain.ChecklistType) ([]domain.ChecklistItemView, error) {
+	if !checklistType.Valid() {
+		return nil, domain.ErrInvalidEnumValue
+	}
+	return r.checklist.ListApplicableItems(ctx, vin, checklistType)
+}
+
 func (r *ChecklistResultRecorder) appendChecklistAudit(ctx context.Context, in RecordChecklistInput, old domain.CheckStatus) error {
 	if r == nil || r.audit == nil {
 		return nil

@@ -22,6 +22,8 @@ type templateCatalogueFake struct {
 	deletedPending map[int]int64
 	insertedPending map[int]int64
 	createConflicts int
+	// impactPhases records the EOL phase passed to each CreateImpact call.
+	impactPhases []*domain.EOLItemPhase
 }
 
 var _ repository.ChecklistProgressRepository = (*templateCatalogueFake)(nil)
@@ -60,6 +62,9 @@ func (f *templateCatalogueFake) ResolveDefaultTemplateID(context.Context, domain
 	return 0, domain.ErrNotFound
 }
 func (f *templateCatalogueFake) ListItemsWithProgress(context.Context, string, domain.ChecklistType, int) ([]domain.ChecklistItemView, error) {
+	return nil, nil
+}
+func (f *templateCatalogueFake) ListApplicableItems(context.Context, string, domain.ChecklistType) ([]domain.ChecklistItemView, error) {
 	return nil, nil
 }
 func (f *templateCatalogueFake) SaveResult(context.Context, domain.ChecklistProgress) error {
@@ -160,7 +165,8 @@ func (f *templateCatalogueFake) CountIssueLinkedVINs(_ context.Context, itemID i
 func (f *templateCatalogueFake) DeactivateImpact(_ context.Context, itemID int) (int, int, error) {
 	return f.pendingVINs[itemID], f.evaluated[itemID] + f.issueLinked[itemID], nil
 }
-func (f *templateCatalogueFake) CreateImpact(_ context.Context, _ int, _ domain.ChecklistType) (int, int, int, int, error) {
+func (f *templateCatalogueFake) CreateImpact(_ context.Context, _ int, _ domain.ChecklistType, phase *domain.EOLItemPhase) (int, int, int, int, error) {
+	f.impactPhases = append(f.impactPhases, phase)
 	return f.createAff, f.createProt, f.createAff+2, f.createProt-1, nil
 }
 func (f *templateCatalogueFake) DeletePendingProgressForItem(_ context.Context, itemID int) (int64, error) {
@@ -356,12 +362,49 @@ func TestDeleteTemplateItem_Unused(t *testing.T) {
 func TestPreviewTemplateItemImpact_Deactivate(t *testing.T) {
 	fake := newTemplateCatalogueFake()
 	svc := NewChecklistResultRecorder(nil, fake, nil, nil)
-	got, err := svc.PreviewTemplateItemImpact(context.Background(), 1, 10, "deactivate")
+	got, err := svc.PreviewTemplateItemImpact(context.Background(), 1, 10, "deactivate", nil)
 	if err != nil {
 		t.Fatalf("impact: %v", err)
 	}
 	if got.Affected != 5 || got.Protected != 3 || got.Action != "deactivate" {
 		t.Fatalf("impact = %+v", got)
+	}
+}
+
+// The create/activate preview must count with the item's stage: EOL phase
+// from the request on create (BRANCH when omitted), the stored item's phase
+// on activate, and no phase for SHIPMENT/TEST.
+func TestPreviewTemplateItemImpact_PassesItemStage(t *testing.T) {
+	fake := newTemplateCatalogueFake()
+	svc := NewChecklistResultRecorder(nil, fake, nil, nil)
+	ctx := context.Background()
+	depot := domain.EOLItemPhaseDepot
+
+	if _, err := svc.PreviewTemplateItemImpact(ctx, 1, 0, "create", &depot); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := svc.PreviewTemplateItemImpact(ctx, 1, 0, "create", nil); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := svc.PreviewTemplateItemImpact(ctx, 1, 10, "activate", &depot); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := svc.PreviewTemplateItemImpact(ctx, 2, 0, "create", &depot); err != nil {
+		t.Fatal(err)
+	}
+
+	want := []string{"DEPOT", "BRANCH", "BRANCH", "<nil>"}
+	if len(fake.impactPhases) != len(want) {
+		t.Fatalf("CreateImpact calls = %d, want %d", len(fake.impactPhases), len(want))
+	}
+	for i, p := range fake.impactPhases {
+		got := "<nil>"
+		if p != nil {
+			got = string(*p)
+		}
+		if got != want[i] {
+			t.Errorf("call %d phase = %s, want %s", i, got, want[i])
+		}
 	}
 }
 

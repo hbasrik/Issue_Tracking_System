@@ -8,6 +8,9 @@ const (
 	ShipmentWarningTestIncomplete     ShipmentWarningCode = "TEST_INCOMPLETE"
 	ShipmentWarningEOLIncomplete      ShipmentWarningCode = "EOL_INCOMPLETE"
 	ShipmentWarningOpenIssue          ShipmentWarningCode = "OPEN_ISSUE"
+	// ShipmentWarningStationSteps carries RemainingCount = applicable station
+	// steps not yet OK.
+	ShipmentWarningStationSteps ShipmentWarningCode = "STATION_STEPS_INCOMPLETE"
 )
 
 // ShipmentWarning is one blocking item for the soft pre-shipment warning

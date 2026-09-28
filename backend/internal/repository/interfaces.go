@@ -48,6 +48,9 @@ type StationStepProgressRepository interface {
 	// CountOpenIssuesByStation counts open/in-progress/done issues per station
 	// for the VIN (keyed by station id).
 	CountOpenIssuesByStation(ctx context.Context, vin string) (map[int]int, error)
+	// CountApplicableOpen counts applicable (stage rule) station steps that
+	// are not OK — the same set the vehicle progress percentage uses.
+	CountApplicableOpen(ctx context.Context, vin string) (int, error)
 	// SaveResult updates the status (and checker/timestamp) of a single
 	// pre-materialized station step progress row.
 	SaveResult(ctx context.Context, vin string, stationStepID int, status domain.StationStepStatus, checkedBy int) error
@@ -68,6 +71,10 @@ type ChecklistProgressRepository interface {
 	// progress (missing → PENDING, nil ProgressID) plus inactive items that
 	// already have progress so historical ticks remain visible.
 	ListItemsWithProgress(ctx context.Context, vin string, checklistType domain.ChecklistType, templateID int) ([]domain.ChecklistItemView, error)
+	// ListApplicableItems returns the vehicle's applicable items of one type:
+	// items of a stage the vehicle already passed and never evaluated are
+	// excluded. Same set as the vehicle progress percentage.
+	ListApplicableItems(ctx context.Context, vin string, checklistType domain.ChecklistType) ([]domain.ChecklistItemView, error)
 	// SaveResult updates a single pre-materialized checklist progress row.
 	SaveResult(ctx context.Context, result domain.ChecklistProgress) error
 	// ListTemplates returns every checklist template with a live count of its
@@ -102,20 +109,23 @@ type ChecklistProgressRepository interface {
 	DeactivateImpact(ctx context.Context, itemID int) (affected, protected int, err error)
 	// CreateImpact counts vehicles for both create/activate scopes:
 	// not_started (no evaluated rows) and incomplete (still has PENDING / not
-	// fully finished). Completed checklists are never in the affected set.
-	CreateImpact(ctx context.Context, templateID int, checklistType domain.ChecklistType) (
+	// fully finished). Vehicles past the item's stage (eolPhase for EOL) and
+	// completed checklists are never in the affected set.
+	CreateImpact(ctx context.Context, templateID int, checklistType domain.ChecklistType, eolPhase *domain.EOLItemPhase) (
 		notStartedAffected, notStartedProtected, incompleteAffected, incompleteProtected int, err error,
 	)
 	// DeletePendingProgressForItem removes PENDING progress rows for the item
 	// that are not issue-linked. Evaluated rows are left intact.
 	DeletePendingProgressForItem(ctx context.Context, itemID int) (int64, error)
 	// InsertPendingForVehicles adds PENDING progress for the item onto
-	// vehicles selected by scope. Completed checklists are never touched.
+	// vehicles selected by scope that have not yet passed the item's stage
+	// (on line gets a shipment item; branch-shipped/delivered do not).
+	// Completed checklists are never touched.
 	InsertPendingForVehicles(
 		ctx context.Context, itemID, templateID int, checklistType domain.ChecklistType, scope domain.TemplateItemPropagationScope,
 	) (int64, error)
-	// ListVehiclesMissingTemplateItem returns assigned VINs that have no
-	// progress row for the catalogue item.
+	// ListVehiclesMissingTemplateItem returns assigned VINs that have not
+	// passed the item's stage and have no progress row for it.
 	ListVehiclesMissingTemplateItem(
 		ctx context.Context, templateID, itemID int, checklistType domain.ChecklistType, limit int,
 	) ([]domain.TemplateItemMissingVehicle, int, error)
