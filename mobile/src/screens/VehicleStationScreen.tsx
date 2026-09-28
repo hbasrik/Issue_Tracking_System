@@ -306,13 +306,30 @@ export default function VehicleStationScreen() {
   return (
     <Screen padded={false}>
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
-        <Title>{t('nav.stationProgress')}</Title>
+        <Title>{t('vehicles.progressTitle')}</Title>
         <Subtitle>
           {vin}
         </Subtitle>
 
         <View style={{ alignItems: 'center', marginVertical: 20 }}>
-          <ProgressRing percent={vehicle?.TotalProgressPercentage ?? 0} />
+          <ProgressRing
+            percent={vehicle?.TotalProgressPercentage ?? 0}
+            accessibilityLabel={t('vehicles.progressAria', {
+              n: Math.round(vehicle?.TotalProgressPercentage ?? 0),
+            })}
+          />
+          <Text
+            style={{
+              color: tokens.textSecondary,
+              marginTop: 8,
+              fontSize: 12,
+              textAlign: 'center',
+              maxWidth: 260,
+            }}
+            testID="vehicle-progress-scope"
+          >
+            {t('vehicles.progressScope')}
+          </Text>
           <Text style={{ color: tokens.textSecondary, marginTop: 8, fontSize: 13 }}>
             …{vinTail(vin)}
             {currentStationName !== t('common.emDash') ? ` · ${currentStationName}` : ''}

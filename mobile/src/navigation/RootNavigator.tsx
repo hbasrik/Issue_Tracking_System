@@ -159,7 +159,7 @@ export function RootNavigator() {
             <Stack.Screen
               name="VehicleStation"
               component={VehicleStationScreen}
-              options={() => ({ title: t('nav.stationProgress') })}
+              options={() => ({ title: t('vehicles.progressTitle') })}
             />
             <Stack.Screen
               name="IssueReport"

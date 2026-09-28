@@ -291,7 +291,7 @@ export default function VehiclesPage() {
                 <DataCardField label={t('vehicles.station')}>
                   {v.CurrentStationID ?? t('common.emDash')}
                 </DataCardField>
-                <DataCardField label={t('vehicles.completion')}>
+                <DataCardField label={t('vehicles.progressTitle')}>
                   {Number(v.TotalProgressPercentage).toFixed(1)}%
                 </DataCardField>
               </DataCard>
@@ -309,7 +309,7 @@ export default function VehiclesPage() {
                 <th className="px-4 py-3 font-medium">{t('issue.vin')}</th>
                 <th className="px-4 py-3 font-medium">{t('vehicles.lifecycle')}</th>
                 <th className="px-4 py-3 font-medium">{t('vehicles.station')}</th>
-                <th className="px-4 py-3 font-medium">{t('vehicles.completionPct')}</th>
+                <th className="px-4 py-3 font-medium">{t('vehicles.progressPct')}</th>
               </tr>
             </thead>
             <tbody>

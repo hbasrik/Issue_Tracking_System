@@ -70,7 +70,7 @@ export function VehicleListPrint({
               <th>{t('issue.vin')}</th>
               <th>{t('issue.status')}</th>
               <th>{t('vehicles.station')}</th>
-              <th>{t('vehicles.completionPct')}</th>
+              <th>{t('vehicles.progressPct')}</th>
               <th>{t('print.openIssues')}</th>
             </tr>
           </thead>

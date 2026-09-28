@@ -6,9 +6,11 @@ import { useTheme } from '../theme/ThemeProvider';
 export function ProgressRing({
   percent,
   size = 140,
+  accessibilityLabel,
 }: {
   percent: number;
   size?: number;
+  accessibilityLabel?: string;
 }) {
   const { tokens } = useTheme();
   const stroke = 10;
@@ -18,7 +20,11 @@ export function ProgressRing({
   const offset = c * (1 - clamped / 100);
 
   return (
-    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
+    <View
+      style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}
+      accessible={accessibilityLabel !== undefined}
+      accessibilityLabel={accessibilityLabel}
+    >
       <Svg width={size} height={size} style={StyleSheet.absoluteFill}>
         <Circle
           cx={size / 2}

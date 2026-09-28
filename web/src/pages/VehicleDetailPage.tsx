@@ -213,10 +213,20 @@ export default function VehicleDetailPage() {
         {t('vehicles.backToList')}
       </Link>
       <div className="mt-4 flex flex-wrap items-start gap-4 sm:gap-6">
-        <ProgressRing
-          percentage={pct}
-          ariaLabel={t('common.percentComplete', { n: pct.toFixed(0) })}
-        />
+        <figure className="m-0 flex w-[9.5rem] shrink-0 flex-col items-center text-center" data-vehicle-progress>
+          <ProgressRing
+            percentage={pct}
+            ariaLabel={t('vehicles.progressAria', { n: pct.toFixed(0) })}
+          />
+          <figcaption className="mt-1">
+            <span className="block text-[13px] font-semibold text-[var(--text-primary)]">
+              {t('vehicles.progressTitle')}
+            </span>
+            <span className="mt-0.5 block text-[11px] leading-snug text-[var(--text-secondary)]">
+              {t('vehicles.progressScope')}
+            </span>
+          </figcaption>
+        </figure>
         <div className="min-w-0 flex-1">
           <VehicleIdentity vin={vehicle.VIN} />
           <div className="mt-2 flex flex-wrap items-center gap-2">
