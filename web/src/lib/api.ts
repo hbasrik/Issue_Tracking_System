@@ -112,16 +112,17 @@ function notifyUnauthorized(path: string, status: number): void {
   onUnauthorized?.();
 }
 
+const REQUEST_TIMEOUT_MS = 15_000;
+/** Photo uploads on a slow line legitimately take longer than a JSON call. */
+const UPLOAD_TIMEOUT_MS = 120_000;
+
 async function request<T>(
   path: string,
   options: RequestInit = {},
 ): Promise<T> {
   const headers = new Headers(options.headers);
-  if (
-    !headers.has('Content-Type') &&
-    options.body &&
-    !(options.body instanceof FormData)
-  ) {
+  const isUpload = options.body instanceof FormData;
+  if (!headers.has('Content-Type') && options.body && !isUpload) {
     headers.set('Content-Type', 'application/json');
   }
   const token = getToken();
@@ -129,10 +130,36 @@ async function request<T>(
     headers.set('Authorization', `Bearer ${token}`);
   }
 
-  const res = await fetch(`${API_BASE_URL}${path}`, {
-    ...options,
-    headers,
-  });
+  const controller = new AbortController();
+  let timedOut = false;
+  const timer = setTimeout(
+    () => {
+      timedOut = true;
+      controller.abort();
+    },
+    isUpload ? UPLOAD_TIMEOUT_MS : REQUEST_TIMEOUT_MS,
+  );
+  const callerSignal = options.signal;
+  if (callerSignal) {
+    if (callerSignal.aborted) controller.abort();
+    else callerSignal.addEventListener('abort', () => controller.abort(), { once: true });
+  }
+
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE_URL}${path}`, {
+      ...options,
+      headers,
+      signal: controller.signal,
+    });
+  } catch (err) {
+    clearTimeout(timer);
+    if (timedOut) throw new ApiError(0, { error: 'request timed out' });
+    // Caller cancelled on purpose: keep the AbortError so it can be ignored.
+    if (callerSignal?.aborted) throw err;
+    throw new ApiError(0, { error: 'network unavailable' });
+  }
+  clearTimeout(timer);
 
   if (!res.ok) {
     let body: ApiErrorBody = { error: res.statusText };
@@ -1107,7 +1134,7 @@ export async function fetchMediaBlob(
     headers: { Authorization: `Bearer ${token}` },
   });
   if (!res.ok) {
-    throw new Error(`media fetch ${res.status}`);
+    throw new ApiError(res.status, { error: res.statusText });
   }
   return res.blob();
 }
