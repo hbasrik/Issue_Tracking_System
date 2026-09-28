@@ -5,8 +5,11 @@ import { ApiErrorText } from './ApiErrorText';
 type Props = {
   /** What could not be loaded, e.g. t('vehicles.loadFailed'). */
   title: string;
-  /** Raw API/transport error (translated here) or an already-translated string. */
-  error: unknown;
+  /**
+   * Raw API/transport error (translated here) or an already-translated string.
+   * Omit when the title alone explains the failure.
+   */
+  error?: unknown;
   onRetry?: () => void;
   retrying?: boolean;
   /**
@@ -35,11 +38,14 @@ export function LoadErrorState({
     <div
       className={`load-error-state ${block ? 'load-error-state--block' : 'load-error-state--inline'} ${className}`}
       data-testid="load-error-state"
+      role={error != null ? undefined : 'alert'}
     >
       <AlertTriangle size={block ? 20 : 16} aria-hidden className="load-error-state__icon" />
       <div className="min-w-0 flex-1">
         <p className="load-error-state__title">{title}</p>
-        <ApiErrorText error={error} className="load-error-state__message" />
+        {error != null ? (
+          <ApiErrorText error={error} className="load-error-state__message" />
+        ) : null}
       </div>
       {onRetry ? (
         <button

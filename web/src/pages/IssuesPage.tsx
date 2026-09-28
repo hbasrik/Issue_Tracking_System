@@ -15,6 +15,7 @@ import {
   type MediaAttachment,
 } from '../lib/api';
 import { IssueList } from '../components/IssueList';
+import { LoadErrorState } from '../components/LoadErrorState';
 import { PartMultiSelect } from '../components/PartMultiSelect';
 import { issueMatchesListQuery } from '../lib/issueVinFilter';
 import { issueTypeChipLabel } from '../lib/issueTypeLabel';
@@ -48,7 +49,7 @@ import {
   type IssueExportPhoto,
 } from '../lib/issueExport';
 import { useI18n, type Translate } from '../i18n';
-import { isAuthError } from '../../../shared/networkError';
+import { isAuthError, isTransportError } from '../../../shared/networkError';
 import { issueReportedAtIso } from '../../../shared/issueCardLayout';
 import { detectNewCriticalIds } from '../../../shared/newCriticalIds';
 import { localeTag } from '../../../shared/i18n';
@@ -202,8 +203,13 @@ export default function IssuesPage() {
   const [items, setItems] = useState<Issue[]>([]);
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [staleWarning, setStaleWarning] = useState<string | null>(null);
+  /** Non-silent list load failed: the list on screen would be wrong or empty. */
+  const [listError, setListError] = useState<unknown>(null);
+  /** Silent refresh / load-more failed: rows on screen are kept but may be stale. */
+  const [staleError, setStaleError] = useState<unknown>(null);
+  const [exportError, setExportError] = useState<{ title: string; error?: unknown } | null>(
+    null,
+  );
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
   const [soundUnlockNeeded, setSoundUnlockNeeded] = useState(false);
   const [highlightedIds, setHighlightedIds] = useState<Set<number>>(new Set());
@@ -343,7 +349,7 @@ export default function IssuesPage() {
   const load = useCallback(
     async (opts?: { silent?: boolean }) => {
       const silent = opts?.silent === true;
-      if (!silent) setError(null);
+      if (!silent) setListError(null);
       const status = boardStatusParam();
       const isDrill = Boolean(homeStat || analysisStat);
       const gen = silent ? fetchGenRef.current : ++fetchGenRef.current;
@@ -385,7 +391,8 @@ export default function IssuesPage() {
         setItems(nextList);
         itemsRef.current = nextList;
         setUpdatedAt(new Date());
-        setStaleWarning(null);
+        setStaleError(null);
+        setListError(null);
         if (newCriticalIds.length > 0) {
           flashCritical(newCriticalIds);
           const play = await playCriticalAlert();
@@ -397,16 +404,17 @@ export default function IssuesPage() {
         if (isAuthError(err) || (err instanceof ApiError && err.status === 401)) {
           return;
         }
-        const msg = err instanceof Error ? err.message : t('issue.listFailed');
         if (silent) {
-          setStaleWarning(msg || t('issue.refreshStale'));
+          setStaleError(err);
         } else {
-          setError(msg);
+          // Rows from the previous filter must not pose as this filter's result.
+          setItems([]);
+          itemsRef.current = [];
+          setListError(err);
         }
       }
     },
     [
-      t,
       flashCritical,
       boardStatusParam,
       homeStat,
@@ -451,21 +459,20 @@ export default function IssuesPage() {
       setItems(nextList);
       itemsRef.current = nextList;
       applyPageMeta(res);
-      setStaleWarning(null);
+      setStaleError(null);
     } catch (err) {
       if (gen !== fetchGenRef.current) return;
       if (isAuthError(err) || (err instanceof ApiError && err.status === 401)) {
         return;
       }
-      const msg = err instanceof Error ? err.message : t('issue.listFailed');
-      setStaleWarning(msg || t('issue.refreshStale'));
+      setStaleError(err);
     } finally {
       if (gen === fetchGenRef.current) {
         loadingMoreRef.current = false;
         setLoadingMore(false);
       }
     }
-  }, [homeStat, analysisStat, boardStatusParam, applyPageMeta, t]);
+  }, [homeStat, analysisStat, boardStatusParam, applyPageMeta]);
 
   useEffect(() => {
     const prev = window.history.scrollRestoration;
@@ -867,7 +874,7 @@ export default function IssuesPage() {
 
   async function exportCsv() {
     setExporting('csv');
-    setError(null);
+    setExportError(null);
     try {
       setExportProgress(t('issue.exportFetching'));
       const rows = await fetchMatchingIssues();
@@ -892,7 +899,7 @@ export default function IssuesPage() {
         `issues-${exportStamp()}.csv`,
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('issue.exportCsvFailed'));
+      setExportError(exportFailure(t('issue.exportCsvFailed'), err));
     } finally {
       setExporting(null);
       setExportProgress(null);
@@ -901,15 +908,15 @@ export default function IssuesPage() {
 
   async function exportZip() {
     setExporting('zip');
-    setError(null);
+    setExportError(null);
     try {
       setExportProgress(t('issue.exportFetching'));
       const rows = await fetchMatchingIssues();
       setMatchTotal(rows.length);
       if (rows.length > ZIP_HARD_MAX_ISSUES) {
-        setError(
-          t('issue.zipTooLarge', { max: ZIP_HARD_MAX_ISSUES, n: rows.length }),
-        );
+        setExportError({
+          title: t('issue.zipTooLarge', { max: ZIP_HARD_MAX_ISSUES, n: rows.length }),
+        });
         return;
       }
       if (rows.length >= ZIP_CONFIRM_MIN) {
@@ -943,7 +950,7 @@ export default function IssuesPage() {
         `issues-${exportStamp()}.zip`,
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('issue.exportZipFailed'));
+      setExportError(exportFailure(t('issue.exportZipFailed'), err));
     } finally {
       setExporting(null);
       setExportProgress(null);
@@ -951,6 +958,8 @@ export default function IssuesPage() {
   }
 
   const exportCount = matchTotal ?? visible.length;
+  /** Unknown after a failed load — "0 kayıt" would read as a real result. */
+  const countLabel: number | string = listError != null ? t('common.emDash') : exportCount;
   const exportBusy = exporting !== null;
 
   const analysisBanner = analysisStat
@@ -961,11 +970,11 @@ export default function IssuesPage() {
             from: analysisFrom || '…',
             to: analysisTo || '…',
           }),
-          n: exportCount,
+          n: countLabel,
         })
       : t('issue.analysisFilter', {
           label: analysisIssueStatLabel(analysisStat, t),
-          n: exportCount,
+          n: countLabel,
         })
     : null;
 
@@ -1048,7 +1057,7 @@ export default function IssuesPage() {
               ? t('issue.exportingCsv')
               : matchCounting
                 ? t('issue.exportCounting')
-                : t('issue.csvN', { n: exportCount })}
+                : t('issue.csvN', { n: countLabel })}
           </button>
           <button
             type="button"
@@ -1061,7 +1070,7 @@ export default function IssuesPage() {
               ? t('issue.exportingZip')
               : matchCounting
                 ? t('issue.exportCounting')
-                : t('issue.zipN', { n: exportCount })}
+                : t('issue.zipN', { n: countLabel })}
           </button>
         </div>
       </div>
@@ -1075,21 +1084,21 @@ export default function IssuesPage() {
         </p>
       ) : null}
 
-      {staleWarning ? (
-        <div
-          role="alert"
-          className="mt-3 rounded-lg border px-3 py-2 text-[13px] font-medium"
-          style={{
-            borderColor: 'color-mix(in srgb, #C62222 55%, var(--border))',
-            backgroundColor: 'color-mix(in srgb, #C62222 12%, var(--bg-surface-1))',
-            color: 'var(--text-primary)',
-          }}
-        >
-          {t('issue.refreshStale')}
-          {staleWarning && staleWarning !== t('issue.refreshStale')
-            ? ` (${staleWarning})`
-            : null}
-        </div>
+      {exportError ? (
+        <LoadErrorState
+          variant="inline"
+          title={exportError.title}
+          error={exportError.error}
+        />
+      ) : null}
+
+      {staleError != null && listError == null ? (
+        <LoadErrorState
+          variant="inline"
+          title={t('issue.refreshStale')}
+          error={staleError}
+          onRetry={() => void load({ silent: true })}
+        />
       ) : null}
 
       {soundUnlockNeeded ? (
@@ -1126,7 +1135,7 @@ export default function IssuesPage() {
             {homeStat
               ? t('issue.homeFilter', {
                   label: homeIssueStatLabel(homeStat, t),
-                  n: exportCount,
+                  n: countLabel,
                 })
               : analysisBanner}
           </p>
@@ -1408,27 +1417,30 @@ export default function IssuesPage() {
         aria-hidden
       />
 
-      {error && (
-        <p className="mt-3 text-[13px]" style={{ color: 'var(--status-not-ok)' }}>
-          {error}
-        </p>
-      )}
-
-      <div className="mt-4">
-        <IssueList
-          items={visible}
-          highlightedIds={highlightedIds}
-          onStatusChanged={() => void load()}
+      {listError != null ? (
+        <LoadErrorState
+          className="mt-4"
+          title={t('issue.listFailed')}
+          error={listError}
+          onRetry={() => void load()}
         />
-        {loadingMore ? (
-          <p
-            className="mt-3 text-center text-[13px] text-[var(--text-secondary)]"
-            aria-live="polite"
-          >
-            {t('issue.loadingMore')}
-          </p>
-        ) : null}
-      </div>
+      ) : (
+        <div className="mt-4">
+          <IssueList
+            items={visible}
+            highlightedIds={highlightedIds}
+            onStatusChanged={() => void load()}
+          />
+          {loadingMore ? (
+            <p
+              className="mt-3 text-center text-[13px] text-[var(--text-secondary)]"
+              aria-live="polite"
+            >
+              {t('issue.loadingMore')}
+            </p>
+          ) : null}
+        </div>
+      )}
     </section>
   );
 }
@@ -1473,6 +1485,11 @@ function severityChipStyle(selected: boolean, color: string): CSSProperties {
       ? `color-mix(in srgb, ${color} 22%, var(--bg-surface-1))`
       : 'transparent',
   };
+}
+
+/** Server/network failures get a translated reason; a local build error only the title. */
+function exportFailure(title: string, err: unknown): { title: string; error?: unknown } {
+  return err instanceof ApiError || isTransportError(err) ? { title, error: err } : { title };
 }
 
 function exportStamp(): string {
