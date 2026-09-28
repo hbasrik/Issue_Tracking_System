@@ -169,6 +169,16 @@ export function checklistStatusLabel(status: string, t: Translate): string {
   }
 }
 
+/**
+ * Status line for items outside the work queue (stage closed / inactive).
+ * An unevaluated row reads "not evaluated", never "pending": nobody is
+ * expected to act on it.
+ */
+export function checklistRecordLabel(status: string, t: Translate): string {
+  if (status === 'PENDING' || status === '') return t('checklist.record.notEvaluated');
+  return t('checklist.record.last', { status: checklistStatusLabel(status, t) });
+}
+
 export function isOpenIssueStatus(status: string): boolean {
   return status === 'OPEN' || status === 'IN_PROGRESS' || status === 'DONE';
 }

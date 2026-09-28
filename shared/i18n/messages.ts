@@ -633,6 +633,8 @@ export const tr = {
   'checklist.stageClosedBadge': 'Uygulanmaz',
   'checklist.stageClosedHint':
     'Araç bu aşamayı geçti; bu maddeler artık tamamlanamaz. Hiçbir sayıya, ilerlemeye veya kapıya dahil değildir; kayıt korunur.',
+  'checklist.record.notEvaluated': 'Değerlendirilmedi',
+  'checklist.record.last': 'Son kayıt: {status}',
 
   'eol.title': 'EoL iş akışı',
   'eol.loading': 'EoL yükleniyor…',
@@ -2244,6 +2246,8 @@ export const en: Record<MessageKey, string> = {
   'checklist.stageClosedBadge': 'Not applicable',
   'checklist.stageClosedHint':
     'The vehicle has passed this stage; these items can no longer be completed. They count in no total, progress or gate; the record is kept.',
+  'checklist.record.notEvaluated': 'Not evaluated',
+  'checklist.record.last': 'Last record: {status}',
   'checklist.missingItems': 'Missing items',
   'checklist.progress': '{done} / {total} complete',
   'checklist.progressCount': '{done} / {total} complete',

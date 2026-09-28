@@ -7,6 +7,7 @@ import {
 } from '../lib/api';
 import { apiErrorMessage } from '../lib/apiErrors';
 import { useI18n } from '../i18n';
+import { checklistRecordLabel } from '../lib/vehicleStatus';
 import { StatusBadge } from './StatusBadge';
 import { ActionStamp } from './ActionStamp';
 import { checklistActorLines } from '../lib/actionStamp';
@@ -267,6 +268,7 @@ function CollapsedItemsSection({
   badge: ReactNode;
   items: ChecklistItem[];
 }) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   if (items.length === 0) return null;
   return (
@@ -297,7 +299,7 @@ function CollapsedItemsSection({
               {badge}
             </div>
             <p className="text-[12px] text-[var(--text-secondary)]">
-              {item.Status}
+              {checklistRecordLabel(item.Status, t)}
             </p>
           </li>
         ))}

@@ -3,6 +3,8 @@ import { Pressable, Text, View } from 'react-native';
 import type { ChecklistItem } from '../api/client';
 import { Card } from './ui';
 import { useTheme } from '../theme/ThemeProvider';
+import { useI18n } from '../i18n';
+import { checklistRecordLabel } from '../lib/vehicleStatus';
 
 /**
  * Read-only, collapsed-by-default list of checklist items outside the work
@@ -25,6 +27,7 @@ export function ChecklistCollapsedSection({
   itemTestIDPrefix?: string;
 }) {
   const { tokens } = useTheme();
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   if (items.length === 0) return null;
   return (
@@ -70,7 +73,7 @@ export function ChecklistCollapsedSection({
                 </View>
               </View>
               <Text style={{ color: tokens.textSecondary, fontSize: 12, marginTop: 4 }}>
-                {item.Status}
+                {checklistRecordLabel(item.Status, t)}
               </Text>
             </View>
           ))}

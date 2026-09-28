@@ -4,6 +4,7 @@ export {
   VEHICLE_LIFECYCLE_FILTER_VALUES,
   VEHICLE_STATUS_EDITOR_VALUES,
   VEHICLE_STATUS_FILTER_VALUES,
+  checklistRecordLabel,
   checklistStatusLabel,
   deriveVehicleLifecycle,
   eolStageLabel,
