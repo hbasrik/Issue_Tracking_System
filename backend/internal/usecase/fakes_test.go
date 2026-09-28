@@ -239,6 +239,8 @@ type fakeChecklistRepo struct {
 	lastResolveModel *int
 	lastResolveType  domain.ChecklistType
 	lastListTemplateID int
+	// listErr, when set, is returned by ListItemsWithProgress.
+	listErr error
 }
 
 func newFakeChecklistRepo() *fakeChecklistRepo {
@@ -276,6 +278,9 @@ func (f *fakeChecklistRepo) ResolveDefaultTemplateID(_ context.Context, typ doma
 
 func (f *fakeChecklistRepo) ListItemsWithProgress(_ context.Context, vin string, t domain.ChecklistType, templateID int) ([]domain.ChecklistItemView, error) {
 	f.lastListTemplateID = templateID
+	if f.listErr != nil {
+		return nil, f.listErr
+	}
 	if items, ok := f.views[vin+"|"+string(t)]; ok {
 		return items, nil
 	}

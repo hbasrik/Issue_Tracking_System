@@ -87,6 +87,55 @@ func TestShipmentReadiness_ListsIncompleteChecklistsAndOpenIssues(t *testing.T) 
 	if !strings.Contains(joined, "Açık hata") || !strings.Contains(joined, "scratch on door") {
 		t.Errorf("missing open issue: %s", joined)
 	}
+
+	// Structured fields let clients localize the line instead of showing Message.
+	var sawItem, sawIssue bool
+	for _, w := range got.Warnings {
+		if w.Code == domain.ShipmentWarningShipmentIncomplete && w.ItemID == 10 {
+			sawItem = w.ItemNo == 1 && w.ItemText == "Battery disconnect" &&
+				w.ItemStatus == domain.CheckStatusPending && w.ChecklistType == domain.ChecklistTypeShipment
+		}
+		if w.Code == domain.ShipmentWarningOpenIssue {
+			sawIssue = w.IssueDescription == "scratch on door" && w.IssueStatus == domain.IssueStatusOpen
+		}
+	}
+	if !sawItem {
+		t.Errorf("shipment item warning lacks structured fields: %+v", got.Warnings)
+	}
+	if !sawIssue {
+		t.Errorf("open issue warning lacks structured fields: %+v", got.Warnings)
+	}
+}
+
+func TestShipmentReadiness_ReadFailureDoesNotLeakError(t *testing.T) {
+	vin := "N7V1K1SA9SK000002"
+	vehicles := newFakeVehicleRepo()
+	vehicles.vehicles[vin] = &domain.Vehicle{
+		VIN:                 vin,
+		CurrentGlobalStatus: domain.VehicleStatusInProduction,
+	}
+	checklists := newFakeChecklistRepo()
+	checklists.listErr = errors.New("pq: relation \"checklist_progress\" does not exist")
+	reader := usecase.NewShipmentReadinessReader(
+		vehicles,
+		usecase.NewChecklistResultRecorder(vehicles, checklists, nil, nil),
+		newFakeIssueRepo(),
+	)
+	got, err := reader.ForVIN(context.Background(), vin)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Ready || len(got.Warnings) != 3 {
+		t.Fatalf("want 3 read-failed warnings, got %+v", got)
+	}
+	for _, w := range got.Warnings {
+		if !w.ReadFailed || w.ChecklistType == "" {
+			t.Errorf("warning not flagged as read failure: %+v", w)
+		}
+		if strings.Contains(w.Message, "pq:") || strings.Contains(w.Message, "relation") {
+			t.Errorf("internal error leaked into message: %q", w.Message)
+		}
+	}
 }
 
 func TestShipmentReadiness_ShippedIsReady(t *testing.T) {

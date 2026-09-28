@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/karea/backend/internal/domain"
+	"github.com/karea/backend/internal/platform/applog"
 	"github.com/karea/backend/internal/repository"
 )
 
@@ -55,10 +56,11 @@ func (r *ShipmentReadinessReader) ForVIN(ctx context.Context, vin string) (*doma
 	}
 	for _, issue := range open {
 		out.Warnings = append(out.Warnings, domain.ShipmentWarning{
-			Code:        domain.ShipmentWarningOpenIssue,
-			Message:     fmt.Sprintf("Açık hata #%d (%s): %s", issue.ID, issue.Status, issue.Description),
-			IssueID:     issue.ID,
-			IssueStatus: issue.Status,
+			Code:             domain.ShipmentWarningOpenIssue,
+			Message:          fmt.Sprintf("Açık hata #%d (%s): %s", issue.ID, issue.Status, issue.Description),
+			IssueID:          issue.ID,
+			IssueStatus:      issue.Status,
+			IssueDescription: issue.Description,
 		})
 	}
 
@@ -69,9 +71,17 @@ func (r *ShipmentReadinessReader) ForVIN(ctx context.Context, vin string) (*doma
 func (r *ShipmentReadinessReader) checklistWarnings(ctx context.Context, vin string, typ domain.ChecklistType) []domain.ShipmentWarning {
 	items, err := r.checklists.ListForVehicle(ctx, vin, typ)
 	if err != nil {
+		// Internal error text stays in the log; clients get a typed flag.
+		applog.Warn("shipment readiness checklist read failed",
+			"vin", vin,
+			"checklist_type", string(typ),
+			"error", err.Error(),
+		)
 		return []domain.ShipmentWarning{{
-			Code:    codeForChecklist(typ),
-			Message: fmt.Sprintf("%s checklist okunamadı: %s", typ, err.Error()),
+			Code:          codeForChecklist(typ),
+			Message:       fmt.Sprintf("%s okunamadı", checklistLabel(typ)),
+			ChecklistType: typ,
+			ReadFailed:    true,
 		}}
 	}
 	var incomplete []domain.ChecklistItemView
@@ -101,6 +111,8 @@ func (r *ShipmentReadinessReader) checklistWarnings(ctx context.Context, vin str
 			Message:       fmt.Sprintf("%s maddesi %d “%s” %s", label, it.ItemNo, it.ItemText, it.Status),
 			ChecklistType: typ,
 			ItemID:        it.ItemID,
+			ItemNo:        int(it.ItemNo),
+			ItemText:      it.ItemText,
 			ItemStatus:    it.Status,
 		})
 	}

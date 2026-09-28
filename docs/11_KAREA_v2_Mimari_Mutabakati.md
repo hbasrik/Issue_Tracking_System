@@ -151,6 +151,35 @@ Index’ler: `idx_issue_list_reporter`, `idx_issue_list_issue_date`
 (migration 0030). Sıra `issue_date DESC, id DESC` (kart `IssueDate` ile
 hizalı).
 
+## Karar 14 — Kullanıcıya gösterilen hata metni (NEW — 2026-09-28)
+
+**Gerekçe:** Web, backend'in İngilizce `error` metnini ve tarayıcının
+`Failed to fetch` gibi teknik mesajlarını olduğu gibi gösteriyordu; 5xx
+hataları da "çevrimdışısınız" diye yanlış sınıflanıyordu.
+
+**Karar:** İstemci (web + mobil) hiçbir zaman ham backend/tarayıcı
+metni göstermez. Tek yol `shared/i18n/errors.ts` (`describeApiError` /
+`translateApiError`) ve web/mobil `ApiErrorText`:
+- Sınıflama `shared/networkError.ts`: zaman aşımı (`isTimeoutError`,
+  istemci 15 sn / web yüklemede 120 sn → `ApiError(0, "request timed out")`),
+  bağlantı yok (`ApiError(0, "network unavailable")`), sunucu (`isServerError`,
+  ≥500). Kuyruk mantığı için `isTransportError` anlamı değişmedi.
+- Bilinen backend sentinel'leri ve dinamik mesajlar TR/EN anahtara eşlenir;
+  eşlenmeyen HTTP hatası duruma göre genel metne düşer (400/422 → istek
+  işlenemedi, 404, 409, 413, 429 …). Yalnızca istemcide üretilmiş (status'suz)
+  hata metni olduğu gibi geçer — bunlar zaten çevrilmiş olur.
+- `request_id` yalnız 5xx'te "Hata kodu" olarak gösterilir; 4xx'te gösterilmez.
+- 401 mevcut davranış: oturum temizlenir, girişe yönlendirilir.
+- Liste/panel yüklemesi başarısızsa ekran "veri yok" veya sıfır göstermez;
+  web `LoadErrorState` (başlık + çevrilmiş neden + Tekrar dene) gösterir.
+  Veri ekrandayken yenileme başarısızsa "güncel olmayabilir" uyarısı çıkar.
+
+**Sevk öncesi uyarılar:** `GET /vehicles/{vin}/shipment-readiness`
+uyarılarına `item_no`, `item_text`, `issue_description`, `read_failed`
+alanları eklendi; istemciler satırı bu alanlardan çevirerek kurar.
+`message` eski istemciler için Türkçe yedek olarak kalır; checklist okuma
+hatasının iç metni artık yanıtta değil, yalnız logda.
+
 ## Değişmeyen / Yeniden Kullanılacaklar
 
 Şunlara **dokunulmuyor**, olduğu gibi kalıyor: JWT auth + bcrypt (üstteki JWT_SECRET ve iptal sıkılaştırmaları hariç), CORS allowlist mimarisi, Unit-of-Work (pgx.Tx) transaction pattern, `.cursor/rules` (commit ve environment-check kuralları), Analysis sekmesi temel yapısı (VIN×severity kırılımı, Pie/Bar chart'lar — yeni station/EOL alanlarıyla genişleyecek ama sıfırdan kurulmayacak), Docker/migration/seed altyapısı.
