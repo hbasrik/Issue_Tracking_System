@@ -16,6 +16,8 @@ export const tr = {
   'common.back': 'Geri',
   'common.logout': 'Çıkış',
   'common.retry': 'Tekrar dene',
+  'common.refreshStale':
+    'Veriler yenilenemedi — ekranda son yüklenen veriler var, güncel olmayabilir.',
   'common.emDash': '—',
   'common.userFallback': 'kullanıcı #{id}',
   'common.modelN': 'Model #{id}',
@@ -1300,6 +1302,8 @@ export const en: Record<MessageKey, string> = {
   'common.back': 'Back',
   'common.logout': 'Log out',
   'common.retry': 'Retry',
+  'common.refreshStale':
+    'Could not refresh — the last loaded data is shown and may be out of date.',
   'common.emDash': '—',
   'common.userFallback': 'user #{id}',
   'common.modelN': 'Model #{id}',

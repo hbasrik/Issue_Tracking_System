@@ -57,6 +57,7 @@ import {
   type DeltaPolarity,
 } from '../lib/homeDashboard';
 import type { HomeIssueStatKey } from '../lib/homeIssueStats';
+import { LoadErrorState } from '../components/LoadErrorState';
 import { SeverityIndicator } from '../components/SeverityIndicator';
 import { VehicleStatusDisplay } from '../components/VehicleStatusDisplay';
 import { brandColors, statusColors } from '../theme/tokens';
@@ -105,7 +106,7 @@ export default function HomePage() {
   const [vehicles, setVehicles] = useState<VehicleSeverityBreakdown[]>([]);
   const [stations, setStations] = useState<Station[]>([]);
   const [overview, setOverview] = useState<HomeOverview | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<unknown>(null);
   const [loading, setLoading] = useState(true);
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
   const [now, setNow] = useState(() => new Date());
@@ -141,11 +142,11 @@ export default function HomePage() {
       setUpdatedAt(stamp);
       setNow(stamp);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('home.loadFailed'));
+      setError(err);
     } finally {
       setLoading(false);
     }
-  }, [canIssues, canVehicles, t]);
+  }, [canIssues, canVehicles]);
 
   useEffect(() => {
     void load();
@@ -257,18 +258,25 @@ export default function HomePage() {
         </div>
       </div>
 
-      {error && (
-        <p className="mt-2 text-[13px]" style={{ color: 'var(--status-not-ok)' }}>
-          {error}
-        </p>
+      {error != null && (
+        <LoadErrorState
+          title={updatedAt ? t('common.refreshStale') : t('home.loadFailed')}
+          error={error}
+          onRetry={() => void load()}
+          retrying={loading}
+          variant={updatedAt ? 'inline' : 'block'}
+        />
       )}
 
-      {loading && !error && (
+      {loading && error == null && !updatedAt && (
         <p className="mt-2 text-[13px]" style={mutedCaption}>
           {t('home.metricsLoading')}
         </p>
       )}
 
+      {/* Zeros from an unloaded dashboard would read as real numbers. */}
+      {updatedAt && (
+      <>
       {canIssues && (
         <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard
@@ -938,6 +946,8 @@ export default function HomePage() {
         </ChartCard>
       </div>
         </>
+      )}
+      </>
       )}
     </section>
   );
