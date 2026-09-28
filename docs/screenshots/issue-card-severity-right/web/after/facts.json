@@ -1,0 +1,3202 @@
+{
+ "issues-tr-375": {
+  "docOverflow": false,
+  "cards": [
+   {
+    "text": "Fotoğraf yok\n\nBagaj contası tam oturmuyor\n\nİşlemde\n\nSınıflandırılmamış\n\n…00042\nAçık kalma süresi:\n18dk",
+    "severity_word_visible": false,
+    "severity_aria": "Orta",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 435,
+     "right": 363,
+     "bottom": 557,
+     "left": 12
+    },
+    "body_top": 435,
+    "status": {
+     "top": 448,
+     "right": 320,
+     "bottom": 470,
+     "left": 254.765625
+    },
+    "bars": {
+     "top": 476,
+     "right": 320,
+     "bottom": 496,
+     "left": 300
+    },
+    "meta": {
+     "top": 526,
+     "right": 320,
+     "bottom": 544,
+     "left": 101
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   },
+   {
+    "text": "Fotoğraf yok\n\nTorpido kapağı hafif gıcırtı\n\nKalite Onay\n\nTorpido · Ses\n\n…00042\nAçık kalma süresi:\n5s",
+    "severity_word_visible": false,
+    "severity_aria": "Düşük",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 569,
+     "right": 363,
+     "bottom": 691,
+     "left": 12
+    },
+    "body_top": 569,
+    "status": {
+     "top": 582,
+     "right": 320,
+     "bottom": 604,
+     "left": 234.421875
+    },
+    "bars": {
+     "top": 610,
+     "right": 320,
+     "bottom": 630,
+     "left": 300
+    },
+    "meta": {
+     "top": 660,
+     "right": 320,
+     "bottom": 678,
+     "left": 101
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   },
+   {
+    "text": "Fotoğraf yok\n\nArka tampon sağ alt köşesinde boya akıntısı ve hafif portakallanma, müşteri görünür bölgede, tekrar boya kabinine gönderilmeli mi değerlendirilecek\n\nŞartlı Onay\n\nArka tampon sağ alt köşe bağlantı braketi ve plastik koruma kapağı montaj bölgesi · Boya akıntısı / portakallanma / renk tonu farkı\n\n…00042\nAçık kalma süresi:\n1g 2s",
+    "severity_word_visible": false,
+    "severity_aria": "Orta",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 703,
+     "right": 363,
+     "bottom": 825,
+     "left": 12
+    },
+    "body_top": 703,
+    "status": {
+     "top": 716,
+     "right": 320,
+     "bottom": 738,
+     "left": 236.578125
+    },
+    "bars": {
+     "top": 744,
+     "right": 320,
+     "bottom": 764,
+     "left": 300
+    },
+    "meta": {
+     "top": 794,
+     "right": 320,
+     "bottom": 812,
+     "left": 101
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   },
+   {
+    "text": "Sol ön kapı menteşesinde boşluk\n\nAçık\n\nÖn kapı · Boşluk\n\n…00042\nAçık kalma süresi:\n2g 2s",
+    "severity_word_visible": false,
+    "severity_aria": "Kritik",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 837,
+     "right": 363,
+     "bottom": 959,
+     "left": 12
+    },
+    "body_top": 837,
+    "status": {
+     "top": 850,
+     "right": 320,
+     "bottom": 872,
+     "left": 275.328125
+    },
+    "bars": {
+     "top": 878,
+     "right": 320,
+     "bottom": 898,
+     "left": 300
+    },
+    "meta": {
+     "top": 928,
+     "right": 320,
+     "bottom": 946,
+     "left": 101
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   },
+   {
+    "text": "Soğutmasuyupompagövdesibağlantısızdırmazlıkcontasıkontrolü_uzun_kelime_bölünmeden_devam_ediyor ve ardından normal cümle\n\nTamamlandı\n\nSınıflandırılmamış\n\n…00042\nAçık kalma süresi:\n3g 3s",
+    "severity_word_visible": false,
+    "severity_aria": "Kritik",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 971,
+     "right": 363,
+     "bottom": 1093,
+     "left": 12
+    },
+    "body_top": 971,
+    "status": {
+     "top": 984,
+     "right": 320,
+     "bottom": 1006,
+     "left": 230.75
+    },
+    "bars": {
+     "top": 1012,
+     "right": 320,
+     "bottom": 1032,
+     "left": 300
+    },
+    "meta": {
+     "top": 1062,
+     "right": 320,
+     "bottom": 1080,
+     "left": 101
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   }
+  ]
+ },
+ "vehicle-tr-375": {
+  "docOverflow": false,
+  "cards": [
+   {
+    "text": "Sol ön kapı menteşesinde boşluk\n\nAçık\n\nÖn kapı · Boşluk\n\nAçık kalma süresi:\n2g 2s",
+    "severity_word_visible": false,
+    "severity_aria": "Kritik",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 450,
+     "right": 363,
+     "bottom": 572,
+     "left": 12
+    },
+    "body_top": 450,
+    "status": {
+     "top": 463,
+     "right": 320,
+     "bottom": 485,
+     "left": 275.328125
+    },
+    "bars": {
+     "top": 491,
+     "right": 320,
+     "bottom": 511,
+     "left": 300
+    },
+    "meta": {
+     "top": 541,
+     "right": 320,
+     "bottom": 559,
+     "left": 101
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   },
+   {
+    "text": "Fotoğraf yok\n\nArka tampon sağ alt köşesinde boya akıntısı ve hafif portakallanma, müşteri görünür bölgede, tekrar boya kabinine gönderilmeli mi değerlendirilecek\n\nŞartlı Onay\n\nArka tampon sağ alt köşe bağlantı braketi ve plastik koruma kapağı montaj bölgesi · Boya akıntısı / portakallanma / renk tonu farkı\n\nAçık kalma süresi:\n1g 2s",
+    "severity_word_visible": false,
+    "severity_aria": "Orta",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 584,
+     "right": 363,
+     "bottom": 706,
+     "left": 12
+    },
+    "body_top": 584,
+    "status": {
+     "top": 597,
+     "right": 320,
+     "bottom": 619,
+     "left": 236.578125
+    },
+    "bars": {
+     "top": 625,
+     "right": 320,
+     "bottom": 645,
+     "left": 300
+    },
+    "meta": {
+     "top": 675,
+     "right": 320,
+     "bottom": 693,
+     "left": 101
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   },
+   {
+    "text": "Fotoğraf yok\n\nTorpido kapağı hafif gıcırtı\n\nKalite Onay\n\nTorpido · Ses\n\nAçık kalma süresi:\n5s",
+    "severity_word_visible": false,
+    "severity_aria": "Düşük",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 718,
+     "right": 363,
+     "bottom": 840,
+     "left": 12
+    },
+    "body_top": 718,
+    "status": {
+     "top": 731,
+     "right": 320,
+     "bottom": 753,
+     "left": 234.421875
+    },
+    "bars": {
+     "top": 759,
+     "right": 320,
+     "bottom": 779,
+     "left": 300
+    },
+    "meta": {
+     "top": 809,
+     "right": 320,
+     "bottom": 827,
+     "left": 101
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   },
+   {
+    "text": "Fotoğraf yok\n\nBagaj contası tam oturmuyor\n\nİşlemde\n\nSınıflandırılmamış\n\nAçık kalma süresi:\n18dk",
+    "severity_word_visible": false,
+    "severity_aria": "Orta",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 852,
+     "right": 363,
+     "bottom": 974,
+     "left": 12
+    },
+    "body_top": 852,
+    "status": {
+     "top": 865,
+     "right": 320,
+     "bottom": 887,
+     "left": 254.765625
+    },
+    "bars": {
+     "top": 893,
+     "right": 320,
+     "bottom": 913,
+     "left": 300
+    },
+    "meta": {
+     "top": 943,
+     "right": 320,
+     "bottom": 961,
+     "left": 101
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   },
+   {
+    "text": "Soğutmasuyupompagövdesibağlantısızdırmazlıkcontasıkontrolü_uzun_kelime_bölünmeden_devam_ediyor ve ardından normal cümle\n\nTamamlandı\n\nSınıflandırılmamış\n\nAçık kalma süresi:\n3g 3s",
+    "severity_word_visible": false,
+    "severity_aria": "Kritik",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 986,
+     "right": 363,
+     "bottom": 1108,
+     "left": 12
+    },
+    "body_top": 986,
+    "status": {
+     "top": 999,
+     "right": 320,
+     "bottom": 1021,
+     "left": 230.75
+    },
+    "bars": {
+     "top": 1027,
+     "right": 320,
+     "bottom": 1047,
+     "left": 300
+    },
+    "meta": {
+     "top": 1077,
+     "right": 320,
+     "bottom": 1095,
+     "left": 101
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   }
+  ]
+ },
+ "issues-tr-390": {
+  "docOverflow": false,
+  "cards": [
+   {
+    "text": "Fotoğraf yok\n\nBagaj contası tam oturmuyor\n\nİşlemde\n\nSınıflandırılmamış\n\n…00042\nAçık kalma süresi:\n18dk",
+    "severity_word_visible": false,
+    "severity_aria": "Orta",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 435,
+     "right": 378,
+     "bottom": 557,
+     "left": 12
+    },
+    "body_top": 435,
+    "status": {
+     "top": 448,
+     "right": 335,
+     "bottom": 470,
+     "left": 269.765625
+    },
+    "bars": {
+     "top": 476,
+     "right": 335,
+     "bottom": 496,
+     "left": 315
+    },
+    "meta": {
+     "top": 526,
+     "right": 335,
+     "bottom": 544,
+     "left": 101
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   },
+   {
+    "text": "Fotoğraf yok\n\nTorpido kapağı hafif gıcırtı\n\nKalite Onay\n\nTorpido · Ses\n\n…00042\nAçık kalma süresi:\n5s",
+    "severity_word_visible": false,
+    "severity_aria": "Düşük",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 569,
+     "right": 378,
+     "bottom": 691,
+     "left": 12
+    },
+    "body_top": 569,
+    "status": {
+     "top": 582,
+     "right": 335,
+     "bottom": 604,
+     "left": 249.421875
+    },
+    "bars": {
+     "top": 610,
+     "right": 335,
+     "bottom": 630,
+     "left": 315
+    },
+    "meta": {
+     "top": 660,
+     "right": 335,
+     "bottom": 678,
+     "left": 101
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   },
+   {
+    "text": "Fotoğraf yok\n\nArka tampon sağ alt köşesinde boya akıntısı ve hafif portakallanma, müşteri görünür bölgede, tekrar boya kabinine gönderilmeli mi değerlendirilecek\n\nŞartlı Onay\n\nArka tampon sağ alt köşe bağlantı braketi ve plastik koruma kapağı montaj bölgesi · Boya akıntısı / portakallanma / renk tonu farkı\n\n…00042\nAçık kalma süresi:\n1g 2s",
+    "severity_word_visible": false,
+    "severity_aria": "Orta",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 703,
+     "right": 378,
+     "bottom": 825,
+     "left": 12
+    },
+    "body_top": 703,
+    "status": {
+     "top": 716,
+     "right": 335,
+     "bottom": 738,
+     "left": 251.578125
+    },
+    "bars": {
+     "top": 744,
+     "right": 335,
+     "bottom": 764,
+     "left": 315
+    },
+    "meta": {
+     "top": 794,
+     "right": 335,
+     "bottom": 812,
+     "left": 101
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   },
+   {
+    "text": "Sol ön kapı menteşesinde boşluk\n\nAçık\n\nÖn kapı · Boşluk\n\n…00042\nAçık kalma süresi:\n2g 2s",
+    "severity_word_visible": false,
+    "severity_aria": "Kritik",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 837,
+     "right": 378,
+     "bottom": 959,
+     "left": 12
+    },
+    "body_top": 837,
+    "status": {
+     "top": 850,
+     "right": 335,
+     "bottom": 872,
+     "left": 290.328125
+    },
+    "bars": {
+     "top": 878,
+     "right": 335,
+     "bottom": 898,
+     "left": 315
+    },
+    "meta": {
+     "top": 928,
+     "right": 335,
+     "bottom": 946,
+     "left": 101
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   },
+   {
+    "text": "Soğutmasuyupompagövdesibağlantısızdırmazlıkcontasıkontrolü_uzun_kelime_bölünmeden_devam_ediyor ve ardından normal cümle\n\nTamamlandı\n\nSınıflandırılmamış\n\n…00042\nAçık kalma süresi:\n3g 3s",
+    "severity_word_visible": false,
+    "severity_aria": "Kritik",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 971,
+     "right": 378,
+     "bottom": 1093,
+     "left": 12
+    },
+    "body_top": 971,
+    "status": {
+     "top": 984,
+     "right": 335,
+     "bottom": 1006,
+     "left": 245.75
+    },
+    "bars": {
+     "top": 1012,
+     "right": 335,
+     "bottom": 1032,
+     "left": 315
+    },
+    "meta": {
+     "top": 1062,
+     "right": 335,
+     "bottom": 1080,
+     "left": 101
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   }
+  ]
+ },
+ "vehicle-tr-390": {
+  "docOverflow": false,
+  "cards": [
+   {
+    "text": "Sol ön kapı menteşesinde boşluk\n\nAçık\n\nÖn kapı · Boşluk\n\nAçık kalma süresi:\n2g 2s",
+    "severity_word_visible": false,
+    "severity_aria": "Kritik",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 450,
+     "right": 378,
+     "bottom": 572,
+     "left": 12
+    },
+    "body_top": 450,
+    "status": {
+     "top": 463,
+     "right": 335,
+     "bottom": 485,
+     "left": 290.328125
+    },
+    "bars": {
+     "top": 491,
+     "right": 335,
+     "bottom": 511,
+     "left": 315
+    },
+    "meta": {
+     "top": 541,
+     "right": 335,
+     "bottom": 559,
+     "left": 101
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   },
+   {
+    "text": "Fotoğraf yok\n\nArka tampon sağ alt köşesinde boya akıntısı ve hafif portakallanma, müşteri görünür bölgede, tekrar boya kabinine gönderilmeli mi değerlendirilecek\n\nŞartlı Onay\n\nArka tampon sağ alt köşe bağlantı braketi ve plastik koruma kapağı montaj bölgesi · Boya akıntısı / portakallanma / renk tonu farkı\n\nAçık kalma süresi:\n1g 2s",
+    "severity_word_visible": false,
+    "severity_aria": "Orta",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 584,
+     "right": 378,
+     "bottom": 706,
+     "left": 12
+    },
+    "body_top": 584,
+    "status": {
+     "top": 597,
+     "right": 335,
+     "bottom": 619,
+     "left": 251.578125
+    },
+    "bars": {
+     "top": 625,
+     "right": 335,
+     "bottom": 645,
+     "left": 315
+    },
+    "meta": {
+     "top": 675,
+     "right": 335,
+     "bottom": 693,
+     "left": 101
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   },
+   {
+    "text": "Fotoğraf yok\n\nTorpido kapağı hafif gıcırtı\n\nKalite Onay\n\nTorpido · Ses\n\nAçık kalma süresi:\n5s",
+    "severity_word_visible": false,
+    "severity_aria": "Düşük",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 718,
+     "right": 378,
+     "bottom": 840,
+     "left": 12
+    },
+    "body_top": 718,
+    "status": {
+     "top": 731,
+     "right": 335,
+     "bottom": 753,
+     "left": 249.421875
+    },
+    "bars": {
+     "top": 759,
+     "right": 335,
+     "bottom": 779,
+     "left": 315
+    },
+    "meta": {
+     "top": 809,
+     "right": 335,
+     "bottom": 827,
+     "left": 101
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   },
+   {
+    "text": "Fotoğraf yok\n\nBagaj contası tam oturmuyor\n\nİşlemde\n\nSınıflandırılmamış\n\nAçık kalma süresi:\n18dk",
+    "severity_word_visible": false,
+    "severity_aria": "Orta",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 852,
+     "right": 378,
+     "bottom": 974,
+     "left": 12
+    },
+    "body_top": 852,
+    "status": {
+     "top": 865,
+     "right": 335,
+     "bottom": 887,
+     "left": 269.765625
+    },
+    "bars": {
+     "top": 893,
+     "right": 335,
+     "bottom": 913,
+     "left": 315
+    },
+    "meta": {
+     "top": 943,
+     "right": 335,
+     "bottom": 961,
+     "left": 101
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   },
+   {
+    "text": "Soğutmasuyupompagövdesibağlantısızdırmazlıkcontasıkontrolü_uzun_kelime_bölünmeden_devam_ediyor ve ardından normal cümle\n\nTamamlandı\n\nSınıflandırılmamış\n\nAçık kalma süresi:\n3g 3s",
+    "severity_word_visible": false,
+    "severity_aria": "Kritik",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 986,
+     "right": 378,
+     "bottom": 1108,
+     "left": 12
+    },
+    "body_top": 986,
+    "status": {
+     "top": 999,
+     "right": 335,
+     "bottom": 1021,
+     "left": 245.75
+    },
+    "bars": {
+     "top": 1027,
+     "right": 335,
+     "bottom": 1047,
+     "left": 315
+    },
+    "meta": {
+     "top": 1077,
+     "right": 335,
+     "bottom": 1095,
+     "left": 101
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   }
+  ]
+ },
+ "issues-tr-430": {
+  "docOverflow": false,
+  "cards": [
+   {
+    "text": "Fotoğraf yok\n\nBagaj contası tam oturmuyor\n\nİşlemde\n\nSınıflandırılmamış\n\n…00042\nAçık kalma süresi:\n18dk",
+    "severity_word_visible": false,
+    "severity_aria": "Orta",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 435,
+     "right": 418,
+     "bottom": 557,
+     "left": 12
+    },
+    "body_top": 435,
+    "status": {
+     "top": 448,
+     "right": 375,
+     "bottom": 470,
+     "left": 309.765625
+    },
+    "bars": {
+     "top": 476,
+     "right": 375,
+     "bottom": 496,
+     "left": 355
+    },
+    "meta": {
+     "top": 526,
+     "right": 375,
+     "bottom": 544,
+     "left": 101
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   },
+   {
+    "text": "Fotoğraf yok\n\nTorpido kapağı hafif gıcırtı\n\nKalite Onay\n\nTorpido · Ses\n\n…00042\nAçık kalma süresi:\n5s",
+    "severity_word_visible": false,
+    "severity_aria": "Düşük",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 569,
+     "right": 418,
+     "bottom": 691,
+     "left": 12
+    },
+    "body_top": 569,
+    "status": {
+     "top": 582,
+     "right": 375,
+     "bottom": 604,
+     "left": 289.421875
+    },
+    "bars": {
+     "top": 610,
+     "right": 375,
+     "bottom": 630,
+     "left": 355
+    },
+    "meta": {
+     "top": 660,
+     "right": 375,
+     "bottom": 678,
+     "left": 101
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   },
+   {
+    "text": "Fotoğraf yok\n\nArka tampon sağ alt köşesinde boya akıntısı ve hafif portakallanma, müşteri görünür bölgede, tekrar boya kabinine gönderilmeli mi değerlendirilecek\n\nŞartlı Onay\n\nArka tampon sağ alt köşe bağlantı braketi ve plastik koruma kapağı montaj bölgesi · Boya akıntısı / portakallanma / renk tonu farkı\n\n…00042\nAçık kalma süresi:\n1g 2s",
+    "severity_word_visible": false,
+    "severity_aria": "Orta",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 703,
+     "right": 418,
+     "bottom": 825,
+     "left": 12
+    },
+    "body_top": 703,
+    "status": {
+     "top": 716,
+     "right": 375,
+     "bottom": 738,
+     "left": 291.578125
+    },
+    "bars": {
+     "top": 744,
+     "right": 375,
+     "bottom": 764,
+     "left": 355
+    },
+    "meta": {
+     "top": 794,
+     "right": 375,
+     "bottom": 812,
+     "left": 101
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   },
+   {
+    "text": "Sol ön kapı menteşesinde boşluk\n\nAçık\n\nÖn kapı · Boşluk\n\n…00042\nAçık kalma süresi:\n2g 2s",
+    "severity_word_visible": false,
+    "severity_aria": "Kritik",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 837,
+     "right": 418,
+     "bottom": 959,
+     "left": 12
+    },
+    "body_top": 837,
+    "status": {
+     "top": 850,
+     "right": 375,
+     "bottom": 872,
+     "left": 330.328125
+    },
+    "bars": {
+     "top": 878,
+     "right": 375,
+     "bottom": 898,
+     "left": 355
+    },
+    "meta": {
+     "top": 928,
+     "right": 375,
+     "bottom": 946,
+     "left": 101
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   },
+   {
+    "text": "Soğutmasuyupompagövdesibağlantısızdırmazlıkcontasıkontrolü_uzun_kelime_bölünmeden_devam_ediyor ve ardından normal cümle\n\nTamamlandı\n\nSınıflandırılmamış\n\n…00042\nAçık kalma süresi:\n3g 3s",
+    "severity_word_visible": false,
+    "severity_aria": "Kritik",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 971,
+     "right": 418,
+     "bottom": 1093,
+     "left": 12
+    },
+    "body_top": 971,
+    "status": {
+     "top": 984,
+     "right": 375,
+     "bottom": 1006,
+     "left": 285.75
+    },
+    "bars": {
+     "top": 1012,
+     "right": 375,
+     "bottom": 1032,
+     "left": 355
+    },
+    "meta": {
+     "top": 1062,
+     "right": 375,
+     "bottom": 1080,
+     "left": 101
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   }
+  ]
+ },
+ "vehicle-tr-430": {
+  "docOverflow": false,
+  "cards": [
+   {
+    "text": "Sol ön kapı menteşesinde boşluk\n\nAçık\n\nÖn kapı · Boşluk\n\nAçık kalma süresi:\n2g 2s",
+    "severity_word_visible": false,
+    "severity_aria": "Kritik",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 450,
+     "right": 418,
+     "bottom": 572,
+     "left": 12
+    },
+    "body_top": 450,
+    "status": {
+     "top": 463,
+     "right": 375,
+     "bottom": 485,
+     "left": 330.328125
+    },
+    "bars": {
+     "top": 491,
+     "right": 375,
+     "bottom": 511,
+     "left": 355
+    },
+    "meta": {
+     "top": 541,
+     "right": 375,
+     "bottom": 559,
+     "left": 101
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   },
+   {
+    "text": "Fotoğraf yok\n\nArka tampon sağ alt köşesinde boya akıntısı ve hafif portakallanma, müşteri görünür bölgede, tekrar boya kabinine gönderilmeli mi değerlendirilecek\n\nŞartlı Onay\n\nArka tampon sağ alt köşe bağlantı braketi ve plastik koruma kapağı montaj bölgesi · Boya akıntısı / portakallanma / renk tonu farkı\n\nAçık kalma süresi:\n1g 2s",
+    "severity_word_visible": false,
+    "severity_aria": "Orta",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 584,
+     "right": 418,
+     "bottom": 706,
+     "left": 12
+    },
+    "body_top": 584,
+    "status": {
+     "top": 597,
+     "right": 375,
+     "bottom": 619,
+     "left": 291.578125
+    },
+    "bars": {
+     "top": 625,
+     "right": 375,
+     "bottom": 645,
+     "left": 355
+    },
+    "meta": {
+     "top": 675,
+     "right": 375,
+     "bottom": 693,
+     "left": 101
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   },
+   {
+    "text": "Fotoğraf yok\n\nTorpido kapağı hafif gıcırtı\n\nKalite Onay\n\nTorpido · Ses\n\nAçık kalma süresi:\n5s",
+    "severity_word_visible": false,
+    "severity_aria": "Düşük",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 718,
+     "right": 418,
+     "bottom": 840,
+     "left": 12
+    },
+    "body_top": 718,
+    "status": {
+     "top": 731,
+     "right": 375,
+     "bottom": 753,
+     "left": 289.421875
+    },
+    "bars": {
+     "top": 759,
+     "right": 375,
+     "bottom": 779,
+     "left": 355
+    },
+    "meta": {
+     "top": 809,
+     "right": 375,
+     "bottom": 827,
+     "left": 101
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   },
+   {
+    "text": "Fotoğraf yok\n\nBagaj contası tam oturmuyor\n\nİşlemde\n\nSınıflandırılmamış\n\nAçık kalma süresi:\n18dk",
+    "severity_word_visible": false,
+    "severity_aria": "Orta",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 852,
+     "right": 418,
+     "bottom": 974,
+     "left": 12
+    },
+    "body_top": 852,
+    "status": {
+     "top": 865,
+     "right": 375,
+     "bottom": 887,
+     "left": 309.765625
+    },
+    "bars": {
+     "top": 893,
+     "right": 375,
+     "bottom": 913,
+     "left": 355
+    },
+    "meta": {
+     "top": 943,
+     "right": 375,
+     "bottom": 961,
+     "left": 101
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   },
+   {
+    "text": "Soğutmasuyupompagövdesibağlantısızdırmazlıkcontasıkontrolü_uzun_kelime_bölünmeden_devam_ediyor ve ardından normal cümle\n\nTamamlandı\n\nSınıflandırılmamış\n\nAçık kalma süresi:\n3g 3s",
+    "severity_word_visible": false,
+    "severity_aria": "Kritik",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 986,
+     "right": 418,
+     "bottom": 1108,
+     "left": 12
+    },
+    "body_top": 986,
+    "status": {
+     "top": 999,
+     "right": 375,
+     "bottom": 1021,
+     "left": 285.75
+    },
+    "bars": {
+     "top": 1027,
+     "right": 375,
+     "bottom": 1047,
+     "left": 355
+    },
+    "meta": {
+     "top": 1077,
+     "right": 375,
+     "bottom": 1095,
+     "left": 101
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   }
+  ]
+ },
+ "issues-tr-1280": {
+  "docOverflow": false,
+  "cards": [
+   {
+    "text": "Fotoğraf yok\n\nBagaj contası tam oturmuyor\n\nİşlemde\n\nSınıflandırılmamış\n\n…00042\nAçık kalma süresi:\n18dk",
+    "severity_word_visible": false,
+    "severity_aria": "Orta",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 440,
+     "right": 586.65625,
+     "bottom": 808,
+     "left": 264
+    },
+    "body_top": 681.484375,
+    "status": {
+     "top": 693.484375,
+     "right": 547.65625,
+     "bottom": 715.484375,
+     "left": 482.421875
+    },
+    "bars": {
+     "top": 721.484375,
+     "right": 547.65625,
+     "bottom": 741.484375,
+     "left": 527.65625
+    },
+    "meta": {
+     "top": 775.484375,
+     "right": 547.65625,
+     "bottom": 794.984375,
+     "left": 277
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   },
+   {
+    "text": "Fotoğraf yok\n\nTorpido kapağı hafif gıcırtı\n\nKalite Onay\n\nTorpido · Ses\n\n…00042\nAçık kalma süresi:\n5s",
+    "severity_word_visible": false,
+    "severity_aria": "Düşük",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 440,
+     "right": 921.328125,
+     "bottom": 808,
+     "left": 598.65625
+    },
+    "body_top": 681.5,
+    "status": {
+     "top": 693.5,
+     "right": 882.328125,
+     "bottom": 715.5,
+     "left": 796.75
+    },
+    "bars": {
+     "top": 721.5,
+     "right": 882.328125,
+     "bottom": 741.5,
+     "left": 862.328125
+    },
+    "meta": {
+     "top": 775.5,
+     "right": 882.328125,
+     "bottom": 795,
+     "left": 611.65625
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   },
+   {
+    "text": "Fotoğraf yok\n\nArka tampon sağ alt köşesinde boya akıntısı ve hafif portakallanma, müşteri görünür bölgede, tekrar boya kabinine gönderilmeli mi değerlendirilecek\n\nŞartlı Onay\n\nArka tampon sağ alt köşe bağlantı braketi ve plastik koruma kapağı montaj bölgesi · Boya akıntısı / portakallanma / renk tonu farkı\n\n…00042\nAçık kalma süresi:\n1g 2s",
+    "severity_word_visible": false,
+    "severity_aria": "Orta",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 440,
+     "right": 1255.984375,
+     "bottom": 808,
+     "left": 933.328125
+    },
+    "body_top": 681.484375,
+    "status": {
+     "top": 693.484375,
+     "right": 1216.984375,
+     "bottom": 715.484375,
+     "left": 1133.5625
+    },
+    "bars": {
+     "top": 721.484375,
+     "right": 1216.984375,
+     "bottom": 741.484375,
+     "left": 1196.984375
+    },
+    "meta": {
+     "top": 775.484375,
+     "right": 1216.984375,
+     "bottom": 794.984375,
+     "left": 946.328125
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   },
+   {
+    "text": "Sol ön kapı menteşesinde boşluk\n\nAçık\n\nÖn kapı · Boşluk\n\n…00042\nAçık kalma süresi:\n2g 2s",
+    "severity_word_visible": false,
+    "severity_aria": "Kritik",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 820,
+     "right": 586.65625,
+     "bottom": 1188,
+     "left": 264
+    },
+    "body_top": 1061.484375,
+    "status": {
+     "top": 1073.484375,
+     "right": 547.65625,
+     "bottom": 1095.484375,
+     "left": 502.984375
+    },
+    "bars": {
+     "top": 1101.484375,
+     "right": 547.65625,
+     "bottom": 1121.484375,
+     "left": 527.65625
+    },
+    "meta": {
+     "top": 1155.484375,
+     "right": 547.65625,
+     "bottom": 1174.984375,
+     "left": 277
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   },
+   {
+    "text": "Soğutmasuyupompagövdesibağlantısızdırmazlıkcontasıkontrolü_uzun_kelime_bölünmeden_devam_ediyor ve ardından normal cümle\n\nTamamlandı\n\nSınıflandırılmamış\n\n…00042\nAçık kalma süresi:\n3g 3s",
+    "severity_word_visible": false,
+    "severity_aria": "Kritik",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 820,
+     "right": 921.328125,
+     "bottom": 1188,
+     "left": 598.65625
+    },
+    "body_top": 1061.5,
+    "status": {
+     "top": 1073.5,
+     "right": 882.328125,
+     "bottom": 1095.5,
+     "left": 793.078125
+    },
+    "bars": {
+     "top": 1101.5,
+     "right": 882.328125,
+     "bottom": 1121.5,
+     "left": 862.328125
+    },
+    "meta": {
+     "top": 1155.5,
+     "right": 882.328125,
+     "bottom": 1175,
+     "left": 611.65625
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   }
+  ]
+ },
+ "vehicle-tr-1280": {
+  "docOverflow": false,
+  "cards": [
+   {
+    "text": "Sol ön kapı menteşesinde boşluk\n\nAçık\n\nÖn kapı · Boşluk\n\nAçık kalma süresi:\n2g 2s",
+    "severity_word_visible": false,
+    "severity_aria": "Kritik",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 458.5,
+     "right": 586.65625,
+     "bottom": 826.5,
+     "left": 264
+    },
+    "body_top": 699.984375,
+    "status": {
+     "top": 711.984375,
+     "right": 547.65625,
+     "bottom": 733.984375,
+     "left": 502.984375
+    },
+    "bars": {
+     "top": 739.984375,
+     "right": 547.65625,
+     "bottom": 759.984375,
+     "left": 527.65625
+    },
+    "meta": {
+     "top": 793.984375,
+     "right": 547.65625,
+     "bottom": 813.484375,
+     "left": 277
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   },
+   {
+    "text": "Fotoğraf yok\n\nArka tampon sağ alt köşesinde boya akıntısı ve hafif portakallanma, müşteri görünür bölgede, tekrar boya kabinine gönderilmeli mi değerlendirilecek\n\nŞartlı Onay\n\nArka tampon sağ alt köşe bağlantı braketi ve plastik koruma kapağı montaj bölgesi · Boya akıntısı / portakallanma / renk tonu farkı\n\nAçık kalma süresi:\n1g 2s",
+    "severity_word_visible": false,
+    "severity_aria": "Orta",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 458.5,
+     "right": 921.328125,
+     "bottom": 826.5,
+     "left": 598.65625
+    },
+    "body_top": 700,
+    "status": {
+     "top": 712,
+     "right": 882.328125,
+     "bottom": 734,
+     "left": 798.90625
+    },
+    "bars": {
+     "top": 740,
+     "right": 882.328125,
+     "bottom": 760,
+     "left": 862.328125
+    },
+    "meta": {
+     "top": 794,
+     "right": 882.328125,
+     "bottom": 813.5,
+     "left": 611.65625
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   },
+   {
+    "text": "Fotoğraf yok\n\nTorpido kapağı hafif gıcırtı\n\nKalite Onay\n\nTorpido · Ses\n\nAçık kalma süresi:\n5s",
+    "severity_word_visible": false,
+    "severity_aria": "Düşük",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 458.5,
+     "right": 1255.984375,
+     "bottom": 826.5,
+     "left": 933.328125
+    },
+    "body_top": 699.984375,
+    "status": {
+     "top": 711.984375,
+     "right": 1216.984375,
+     "bottom": 733.984375,
+     "left": 1131.40625
+    },
+    "bars": {
+     "top": 739.984375,
+     "right": 1216.984375,
+     "bottom": 759.984375,
+     "left": 1196.984375
+    },
+    "meta": {
+     "top": 793.984375,
+     "right": 1216.984375,
+     "bottom": 813.484375,
+     "left": 946.328125
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   },
+   {
+    "text": "Fotoğraf yok\n\nBagaj contası tam oturmuyor\n\nİşlemde\n\nSınıflandırılmamış\n\nAçık kalma süresi:\n18dk",
+    "severity_word_visible": false,
+    "severity_aria": "Orta",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 838.5,
+     "right": 586.65625,
+     "bottom": 1206.5,
+     "left": 264
+    },
+    "body_top": 1079.984375,
+    "status": {
+     "top": 1091.984375,
+     "right": 547.65625,
+     "bottom": 1113.984375,
+     "left": 482.421875
+    },
+    "bars": {
+     "top": 1119.984375,
+     "right": 547.65625,
+     "bottom": 1139.984375,
+     "left": 527.65625
+    },
+    "meta": {
+     "top": 1173.984375,
+     "right": 547.65625,
+     "bottom": 1193.484375,
+     "left": 277
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   },
+   {
+    "text": "Soğutmasuyupompagövdesibağlantısızdırmazlıkcontasıkontrolü_uzun_kelime_bölünmeden_devam_ediyor ve ardından normal cümle\n\nTamamlandı\n\nSınıflandırılmamış\n\nAçık kalma süresi:\n3g 3s",
+    "severity_word_visible": false,
+    "severity_aria": "Kritik",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 838.5,
+     "right": 921.328125,
+     "bottom": 1206.5,
+     "left": 598.65625
+    },
+    "body_top": 1080,
+    "status": {
+     "top": 1092,
+     "right": 882.328125,
+     "bottom": 1114,
+     "left": 793.078125
+    },
+    "bars": {
+     "top": 1120,
+     "right": 882.328125,
+     "bottom": 1140,
+     "left": 862.328125
+    },
+    "meta": {
+     "top": 1174,
+     "right": 882.328125,
+     "bottom": 1193.5,
+     "left": 611.65625
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   }
+  ]
+ },
+ "issues-en-375": {
+  "docOverflow": false,
+  "cards": [
+   {
+    "text": "No photo\n\nBagaj contası tam oturmuyor\n\nIn progress\n\nUnclassified\n\n…00042\nOpen duration:\n18m",
+    "severity_word_visible": false,
+    "severity_aria": "Medium",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 435,
+     "right": 363,
+     "bottom": 557,
+     "left": 12
+    },
+    "body_top": 435,
+    "status": {
+     "top": 448,
+     "right": 320,
+     "bottom": 470,
+     "left": 234.984375
+    },
+    "bars": {
+     "top": 476,
+     "right": 320,
+     "bottom": 496,
+     "left": 300
+    },
+    "meta": {
+     "top": 526,
+     "right": 320,
+     "bottom": 544,
+     "left": 101
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   },
+   {
+    "text": "No photo\n\nTorpido kapağı hafif gıcırtı\n\nQuality approved\n\nGlovebox · Noise\n\n…00042\nOpen duration:\n5h",
+    "severity_word_visible": false,
+    "severity_aria": "Low",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 569,
+     "right": 363,
+     "bottom": 691,
+     "left": 12
+    },
+    "body_top": 569,
+    "status": {
+     "top": 582,
+     "right": 320,
+     "bottom": 604,
+     "left": 201.609375
+    },
+    "bars": {
+     "top": 610,
+     "right": 320,
+     "bottom": 630,
+     "left": 300
+    },
+    "meta": {
+     "top": 660,
+     "right": 320,
+     "bottom": 678,
+     "left": 101
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   },
+   {
+    "text": "No photo\n\nArka tampon sağ alt köşesinde boya akıntısı ve hafif portakallanma, müşteri görünür bölgede, tekrar boya kabinine gönderilmeli mi değerlendirilecek\n\nConditional approved\n\nArka tampon sağ alt köşe bağlantı braketi ve plastik koruma kapağı montaj bölgesi · Boya akıntısı / portakallanma / renk tonu farkı\n\n…00042\nOpen duration:\n1d 2h",
+    "severity_word_visible": false,
+    "severity_aria": "Medium",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 703,
+     "right": 363,
+     "bottom": 825,
+     "left": 12
+    },
+    "body_top": 703,
+    "status": {
+     "top": 716,
+     "right": 320,
+     "bottom": 738,
+     "left": 176.734375
+    },
+    "bars": {
+     "top": 744,
+     "right": 320,
+     "bottom": 764,
+     "left": 300
+    },
+    "meta": {
+     "top": 794,
+     "right": 320,
+     "bottom": 812,
+     "left": 101
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   },
+   {
+    "text": "Sol ön kapı menteşesinde boşluk\n\nOpen\n\nFront door · Gap\n\n…00042\nOpen duration:\n2d 2h",
+    "severity_word_visible": false,
+    "severity_aria": "Critical",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 837,
+     "right": 363,
+     "bottom": 959,
+     "left": 12
+    },
+    "body_top": 837,
+    "status": {
+     "top": 850,
+     "right": 320,
+     "bottom": 872,
+     "left": 269.0625
+    },
+    "bars": {
+     "top": 878,
+     "right": 320,
+     "bottom": 898,
+     "left": 300
+    },
+    "meta": {
+     "top": 928,
+     "right": 320,
+     "bottom": 946,
+     "left": 101
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   },
+   {
+    "text": "Soğutmasuyupompagövdesibağlantısızdırmazlıkcontasıkontrolü_uzun_kelime_bölünmeden_devam_ediyor ve ardından normal cümle\n\nDone\n\nUnclassified\n\n…00042\nOpen duration:\n3d 3h",
+    "severity_word_visible": false,
+    "severity_aria": "Critical",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 971,
+     "right": 363,
+     "bottom": 1093,
+     "left": 12
+    },
+    "body_top": 971,
+    "status": {
+     "top": 984,
+     "right": 320,
+     "bottom": 1006,
+     "left": 269.828125
+    },
+    "bars": {
+     "top": 1012,
+     "right": 320,
+     "bottom": 1032,
+     "left": 300
+    },
+    "meta": {
+     "top": 1062,
+     "right": 320,
+     "bottom": 1080,
+     "left": 101
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   }
+  ]
+ },
+ "vehicle-en-375": {
+  "docOverflow": false,
+  "cards": [
+   {
+    "text": "Sol ön kapı menteşesinde boşluk\n\nOpen\n\nFront door · Gap\n\nOpen duration:\n2d 2h",
+    "severity_word_visible": false,
+    "severity_aria": "Critical",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 419.75,
+     "right": 363,
+     "bottom": 541.75,
+     "left": 12
+    },
+    "body_top": 419.75,
+    "status": {
+     "top": 432.75,
+     "right": 320,
+     "bottom": 454.75,
+     "left": 269.0625
+    },
+    "bars": {
+     "top": 460.75,
+     "right": 320,
+     "bottom": 480.75,
+     "left": 300
+    },
+    "meta": {
+     "top": 510.75,
+     "right": 320,
+     "bottom": 528.75,
+     "left": 101
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   },
+   {
+    "text": "No photo\n\nArka tampon sağ alt köşesinde boya akıntısı ve hafif portakallanma, müşteri görünür bölgede, tekrar boya kabinine gönderilmeli mi değerlendirilecek\n\nConditional approved\n\nArka tampon sağ alt köşe bağlantı braketi ve plastik koruma kapağı montaj bölgesi · Boya akıntısı / portakallanma / renk tonu farkı\n\nOpen duration:\n1d 2h",
+    "severity_word_visible": false,
+    "severity_aria": "Medium",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 553.75,
+     "right": 363,
+     "bottom": 675.75,
+     "left": 12
+    },
+    "body_top": 553.75,
+    "status": {
+     "top": 566.75,
+     "right": 320,
+     "bottom": 588.75,
+     "left": 176.734375
+    },
+    "bars": {
+     "top": 594.75,
+     "right": 320,
+     "bottom": 614.75,
+     "left": 300
+    },
+    "meta": {
+     "top": 644.75,
+     "right": 320,
+     "bottom": 662.75,
+     "left": 101
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   },
+   {
+    "text": "No photo\n\nTorpido kapağı hafif gıcırtı\n\nQuality approved\n\nGlovebox · Noise\n\nOpen duration:\n5h",
+    "severity_word_visible": false,
+    "severity_aria": "Low",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 687.75,
+     "right": 363,
+     "bottom": 809.75,
+     "left": 12
+    },
+    "body_top": 687.75,
+    "status": {
+     "top": 700.75,
+     "right": 320,
+     "bottom": 722.75,
+     "left": 201.609375
+    },
+    "bars": {
+     "top": 728.75,
+     "right": 320,
+     "bottom": 748.75,
+     "left": 300
+    },
+    "meta": {
+     "top": 778.75,
+     "right": 320,
+     "bottom": 796.75,
+     "left": 101
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   },
+   {
+    "text": "No photo\n\nBagaj contası tam oturmuyor\n\nIn progress\n\nUnclassified\n\nOpen duration:\n18m",
+    "severity_word_visible": false,
+    "severity_aria": "Medium",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 821.75,
+     "right": 363,
+     "bottom": 943.75,
+     "left": 12
+    },
+    "body_top": 821.75,
+    "status": {
+     "top": 834.75,
+     "right": 320,
+     "bottom": 856.75,
+     "left": 234.984375
+    },
+    "bars": {
+     "top": 862.75,
+     "right": 320,
+     "bottom": 882.75,
+     "left": 300
+    },
+    "meta": {
+     "top": 912.75,
+     "right": 320,
+     "bottom": 930.75,
+     "left": 101
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   },
+   {
+    "text": "Soğutmasuyupompagövdesibağlantısızdırmazlıkcontasıkontrolü_uzun_kelime_bölünmeden_devam_ediyor ve ardından normal cümle\n\nDone\n\nUnclassified\n\nOpen duration:\n3d 3h",
+    "severity_word_visible": false,
+    "severity_aria": "Critical",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 955.75,
+     "right": 363,
+     "bottom": 1077.75,
+     "left": 12
+    },
+    "body_top": 955.75,
+    "status": {
+     "top": 968.75,
+     "right": 320,
+     "bottom": 990.75,
+     "left": 269.828125
+    },
+    "bars": {
+     "top": 996.75,
+     "right": 320,
+     "bottom": 1016.75,
+     "left": 300
+    },
+    "meta": {
+     "top": 1046.75,
+     "right": 320,
+     "bottom": 1064.75,
+     "left": 101
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   }
+  ]
+ },
+ "issues-en-390": {
+  "docOverflow": false,
+  "cards": [
+   {
+    "text": "No photo\n\nBagaj contası tam oturmuyor\n\nIn progress\n\nUnclassified\n\n…00042\nOpen duration:\n18m",
+    "severity_word_visible": false,
+    "severity_aria": "Medium",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 435,
+     "right": 378,
+     "bottom": 557,
+     "left": 12
+    },
+    "body_top": 435,
+    "status": {
+     "top": 448,
+     "right": 335,
+     "bottom": 470,
+     "left": 249.984375
+    },
+    "bars": {
+     "top": 476,
+     "right": 335,
+     "bottom": 496,
+     "left": 315
+    },
+    "meta": {
+     "top": 526,
+     "right": 335,
+     "bottom": 544,
+     "left": 101
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   },
+   {
+    "text": "No photo\n\nTorpido kapağı hafif gıcırtı\n\nQuality approved\n\nGlovebox · Noise\n\n…00042\nOpen duration:\n5h",
+    "severity_word_visible": false,
+    "severity_aria": "Low",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 569,
+     "right": 378,
+     "bottom": 691,
+     "left": 12
+    },
+    "body_top": 569,
+    "status": {
+     "top": 582,
+     "right": 335,
+     "bottom": 604,
+     "left": 216.609375
+    },
+    "bars": {
+     "top": 610,
+     "right": 335,
+     "bottom": 630,
+     "left": 315
+    },
+    "meta": {
+     "top": 660,
+     "right": 335,
+     "bottom": 678,
+     "left": 101
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   },
+   {
+    "text": "No photo\n\nArka tampon sağ alt köşesinde boya akıntısı ve hafif portakallanma, müşteri görünür bölgede, tekrar boya kabinine gönderilmeli mi değerlendirilecek\n\nConditional approved\n\nArka tampon sağ alt köşe bağlantı braketi ve plastik koruma kapağı montaj bölgesi · Boya akıntısı / portakallanma / renk tonu farkı\n\n…00042\nOpen duration:\n1d 2h",
+    "severity_word_visible": false,
+    "severity_aria": "Medium",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 703,
+     "right": 378,
+     "bottom": 825,
+     "left": 12
+    },
+    "body_top": 703,
+    "status": {
+     "top": 716,
+     "right": 335,
+     "bottom": 738,
+     "left": 191.734375
+    },
+    "bars": {
+     "top": 744,
+     "right": 335,
+     "bottom": 764,
+     "left": 315
+    },
+    "meta": {
+     "top": 794,
+     "right": 335,
+     "bottom": 812,
+     "left": 101
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   },
+   {
+    "text": "Sol ön kapı menteşesinde boşluk\n\nOpen\n\nFront door · Gap\n\n…00042\nOpen duration:\n2d 2h",
+    "severity_word_visible": false,
+    "severity_aria": "Critical",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 837,
+     "right": 378,
+     "bottom": 959,
+     "left": 12
+    },
+    "body_top": 837,
+    "status": {
+     "top": 850,
+     "right": 335,
+     "bottom": 872,
+     "left": 284.0625
+    },
+    "bars": {
+     "top": 878,
+     "right": 335,
+     "bottom": 898,
+     "left": 315
+    },
+    "meta": {
+     "top": 928,
+     "right": 335,
+     "bottom": 946,
+     "left": 101
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   },
+   {
+    "text": "Soğutmasuyupompagövdesibağlantısızdırmazlıkcontasıkontrolü_uzun_kelime_bölünmeden_devam_ediyor ve ardından normal cümle\n\nDone\n\nUnclassified\n\n…00042\nOpen duration:\n3d 3h",
+    "severity_word_visible": false,
+    "severity_aria": "Critical",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 971,
+     "right": 378,
+     "bottom": 1093,
+     "left": 12
+    },
+    "body_top": 971,
+    "status": {
+     "top": 984,
+     "right": 335,
+     "bottom": 1006,
+     "left": 284.828125
+    },
+    "bars": {
+     "top": 1012,
+     "right": 335,
+     "bottom": 1032,
+     "left": 315
+    },
+    "meta": {
+     "top": 1062,
+     "right": 335,
+     "bottom": 1080,
+     "left": 101
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   }
+  ]
+ },
+ "vehicle-en-390": {
+  "docOverflow": false,
+  "cards": [
+   {
+    "text": "Sol ön kapı menteşesinde boşluk\n\nOpen\n\nFront door · Gap\n\nOpen duration:\n2d 2h",
+    "severity_word_visible": false,
+    "severity_aria": "Critical",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 419.75,
+     "right": 378,
+     "bottom": 541.75,
+     "left": 12
+    },
+    "body_top": 419.75,
+    "status": {
+     "top": 432.75,
+     "right": 335,
+     "bottom": 454.75,
+     "left": 284.0625
+    },
+    "bars": {
+     "top": 460.75,
+     "right": 335,
+     "bottom": 480.75,
+     "left": 315
+    },
+    "meta": {
+     "top": 510.75,
+     "right": 335,
+     "bottom": 528.75,
+     "left": 101
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   },
+   {
+    "text": "No photo\n\nArka tampon sağ alt köşesinde boya akıntısı ve hafif portakallanma, müşteri görünür bölgede, tekrar boya kabinine gönderilmeli mi değerlendirilecek\n\nConditional approved\n\nArka tampon sağ alt köşe bağlantı braketi ve plastik koruma kapağı montaj bölgesi · Boya akıntısı / portakallanma / renk tonu farkı\n\nOpen duration:\n1d 2h",
+    "severity_word_visible": false,
+    "severity_aria": "Medium",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 553.75,
+     "right": 378,
+     "bottom": 675.75,
+     "left": 12
+    },
+    "body_top": 553.75,
+    "status": {
+     "top": 566.75,
+     "right": 335,
+     "bottom": 588.75,
+     "left": 191.734375
+    },
+    "bars": {
+     "top": 594.75,
+     "right": 335,
+     "bottom": 614.75,
+     "left": 315
+    },
+    "meta": {
+     "top": 644.75,
+     "right": 335,
+     "bottom": 662.75,
+     "left": 101
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   },
+   {
+    "text": "No photo\n\nTorpido kapağı hafif gıcırtı\n\nQuality approved\n\nGlovebox · Noise\n\nOpen duration:\n5h",
+    "severity_word_visible": false,
+    "severity_aria": "Low",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 687.75,
+     "right": 378,
+     "bottom": 809.75,
+     "left": 12
+    },
+    "body_top": 687.75,
+    "status": {
+     "top": 700.75,
+     "right": 335,
+     "bottom": 722.75,
+     "left": 216.609375
+    },
+    "bars": {
+     "top": 728.75,
+     "right": 335,
+     "bottom": 748.75,
+     "left": 315
+    },
+    "meta": {
+     "top": 778.75,
+     "right": 335,
+     "bottom": 796.75,
+     "left": 101
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   },
+   {
+    "text": "No photo\n\nBagaj contası tam oturmuyor\n\nIn progress\n\nUnclassified\n\nOpen duration:\n18m",
+    "severity_word_visible": false,
+    "severity_aria": "Medium",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 821.75,
+     "right": 378,
+     "bottom": 943.75,
+     "left": 12
+    },
+    "body_top": 821.75,
+    "status": {
+     "top": 834.75,
+     "right": 335,
+     "bottom": 856.75,
+     "left": 249.984375
+    },
+    "bars": {
+     "top": 862.75,
+     "right": 335,
+     "bottom": 882.75,
+     "left": 315
+    },
+    "meta": {
+     "top": 912.75,
+     "right": 335,
+     "bottom": 930.75,
+     "left": 101
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   },
+   {
+    "text": "Soğutmasuyupompagövdesibağlantısızdırmazlıkcontasıkontrolü_uzun_kelime_bölünmeden_devam_ediyor ve ardından normal cümle\n\nDone\n\nUnclassified\n\nOpen duration:\n3d 3h",
+    "severity_word_visible": false,
+    "severity_aria": "Critical",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 955.75,
+     "right": 378,
+     "bottom": 1077.75,
+     "left": 12
+    },
+    "body_top": 955.75,
+    "status": {
+     "top": 968.75,
+     "right": 335,
+     "bottom": 990.75,
+     "left": 284.828125
+    },
+    "bars": {
+     "top": 996.75,
+     "right": 335,
+     "bottom": 1016.75,
+     "left": 315
+    },
+    "meta": {
+     "top": 1046.75,
+     "right": 335,
+     "bottom": 1064.75,
+     "left": 101
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   }
+  ]
+ },
+ "issues-en-430": {
+  "docOverflow": false,
+  "cards": [
+   {
+    "text": "No photo\n\nBagaj contası tam oturmuyor\n\nIn progress\n\nUnclassified\n\n…00042\nOpen duration:\n18m",
+    "severity_word_visible": false,
+    "severity_aria": "Medium",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 435,
+     "right": 418,
+     "bottom": 557,
+     "left": 12
+    },
+    "body_top": 435,
+    "status": {
+     "top": 448,
+     "right": 375,
+     "bottom": 470,
+     "left": 289.984375
+    },
+    "bars": {
+     "top": 476,
+     "right": 375,
+     "bottom": 496,
+     "left": 355
+    },
+    "meta": {
+     "top": 526,
+     "right": 375,
+     "bottom": 544,
+     "left": 101
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   },
+   {
+    "text": "No photo\n\nTorpido kapağı hafif gıcırtı\n\nQuality approved\n\nGlovebox · Noise\n\n…00042\nOpen duration:\n5h",
+    "severity_word_visible": false,
+    "severity_aria": "Low",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 569,
+     "right": 418,
+     "bottom": 691,
+     "left": 12
+    },
+    "body_top": 569,
+    "status": {
+     "top": 582,
+     "right": 375,
+     "bottom": 604,
+     "left": 256.609375
+    },
+    "bars": {
+     "top": 610,
+     "right": 375,
+     "bottom": 630,
+     "left": 355
+    },
+    "meta": {
+     "top": 660,
+     "right": 375,
+     "bottom": 678,
+     "left": 101
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   },
+   {
+    "text": "No photo\n\nArka tampon sağ alt köşesinde boya akıntısı ve hafif portakallanma, müşteri görünür bölgede, tekrar boya kabinine gönderilmeli mi değerlendirilecek\n\nConditional approved\n\nArka tampon sağ alt köşe bağlantı braketi ve plastik koruma kapağı montaj bölgesi · Boya akıntısı / portakallanma / renk tonu farkı\n\n…00042\nOpen duration:\n1d 2h",
+    "severity_word_visible": false,
+    "severity_aria": "Medium",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 703,
+     "right": 418,
+     "bottom": 825,
+     "left": 12
+    },
+    "body_top": 703,
+    "status": {
+     "top": 716,
+     "right": 375,
+     "bottom": 738,
+     "left": 231.734375
+    },
+    "bars": {
+     "top": 744,
+     "right": 375,
+     "bottom": 764,
+     "left": 355
+    },
+    "meta": {
+     "top": 794,
+     "right": 375,
+     "bottom": 812,
+     "left": 101
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   },
+   {
+    "text": "Sol ön kapı menteşesinde boşluk\n\nOpen\n\nFront door · Gap\n\n…00042\nOpen duration:\n2d 2h",
+    "severity_word_visible": false,
+    "severity_aria": "Critical",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 837,
+     "right": 418,
+     "bottom": 959,
+     "left": 12
+    },
+    "body_top": 837,
+    "status": {
+     "top": 850,
+     "right": 375,
+     "bottom": 872,
+     "left": 324.0625
+    },
+    "bars": {
+     "top": 878,
+     "right": 375,
+     "bottom": 898,
+     "left": 355
+    },
+    "meta": {
+     "top": 928,
+     "right": 375,
+     "bottom": 946,
+     "left": 101
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   },
+   {
+    "text": "Soğutmasuyupompagövdesibağlantısızdırmazlıkcontasıkontrolü_uzun_kelime_bölünmeden_devam_ediyor ve ardından normal cümle\n\nDone\n\nUnclassified\n\n…00042\nOpen duration:\n3d 3h",
+    "severity_word_visible": false,
+    "severity_aria": "Critical",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 971,
+     "right": 418,
+     "bottom": 1093,
+     "left": 12
+    },
+    "body_top": 971,
+    "status": {
+     "top": 984,
+     "right": 375,
+     "bottom": 1006,
+     "left": 324.828125
+    },
+    "bars": {
+     "top": 1012,
+     "right": 375,
+     "bottom": 1032,
+     "left": 355
+    },
+    "meta": {
+     "top": 1062,
+     "right": 375,
+     "bottom": 1080,
+     "left": 101
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   }
+  ]
+ },
+ "vehicle-en-430": {
+  "docOverflow": false,
+  "cards": [
+   {
+    "text": "Sol ön kapı menteşesinde boşluk\n\nOpen\n\nFront door · Gap\n\nOpen duration:\n2d 2h",
+    "severity_word_visible": false,
+    "severity_aria": "Critical",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 419.75,
+     "right": 418,
+     "bottom": 541.75,
+     "left": 12
+    },
+    "body_top": 419.75,
+    "status": {
+     "top": 432.75,
+     "right": 375,
+     "bottom": 454.75,
+     "left": 324.0625
+    },
+    "bars": {
+     "top": 460.75,
+     "right": 375,
+     "bottom": 480.75,
+     "left": 355
+    },
+    "meta": {
+     "top": 510.75,
+     "right": 375,
+     "bottom": 528.75,
+     "left": 101
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   },
+   {
+    "text": "No photo\n\nArka tampon sağ alt köşesinde boya akıntısı ve hafif portakallanma, müşteri görünür bölgede, tekrar boya kabinine gönderilmeli mi değerlendirilecek\n\nConditional approved\n\nArka tampon sağ alt köşe bağlantı braketi ve plastik koruma kapağı montaj bölgesi · Boya akıntısı / portakallanma / renk tonu farkı\n\nOpen duration:\n1d 2h",
+    "severity_word_visible": false,
+    "severity_aria": "Medium",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 553.75,
+     "right": 418,
+     "bottom": 675.75,
+     "left": 12
+    },
+    "body_top": 553.75,
+    "status": {
+     "top": 566.75,
+     "right": 375,
+     "bottom": 588.75,
+     "left": 231.734375
+    },
+    "bars": {
+     "top": 594.75,
+     "right": 375,
+     "bottom": 614.75,
+     "left": 355
+    },
+    "meta": {
+     "top": 644.75,
+     "right": 375,
+     "bottom": 662.75,
+     "left": 101
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   },
+   {
+    "text": "No photo\n\nTorpido kapağı hafif gıcırtı\n\nQuality approved\n\nGlovebox · Noise\n\nOpen duration:\n5h",
+    "severity_word_visible": false,
+    "severity_aria": "Low",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 687.75,
+     "right": 418,
+     "bottom": 809.75,
+     "left": 12
+    },
+    "body_top": 687.75,
+    "status": {
+     "top": 700.75,
+     "right": 375,
+     "bottom": 722.75,
+     "left": 256.609375
+    },
+    "bars": {
+     "top": 728.75,
+     "right": 375,
+     "bottom": 748.75,
+     "left": 355
+    },
+    "meta": {
+     "top": 778.75,
+     "right": 375,
+     "bottom": 796.75,
+     "left": 101
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   },
+   {
+    "text": "No photo\n\nBagaj contası tam oturmuyor\n\nIn progress\n\nUnclassified\n\nOpen duration:\n18m",
+    "severity_word_visible": false,
+    "severity_aria": "Medium",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 821.75,
+     "right": 418,
+     "bottom": 943.75,
+     "left": 12
+    },
+    "body_top": 821.75,
+    "status": {
+     "top": 834.75,
+     "right": 375,
+     "bottom": 856.75,
+     "left": 289.984375
+    },
+    "bars": {
+     "top": 862.75,
+     "right": 375,
+     "bottom": 882.75,
+     "left": 355
+    },
+    "meta": {
+     "top": 912.75,
+     "right": 375,
+     "bottom": 930.75,
+     "left": 101
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   },
+   {
+    "text": "Soğutmasuyupompagövdesibağlantısızdırmazlıkcontasıkontrolü_uzun_kelime_bölünmeden_devam_ediyor ve ardından normal cümle\n\nDone\n\nUnclassified\n\nOpen duration:\n3d 3h",
+    "severity_word_visible": false,
+    "severity_aria": "Critical",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 955.75,
+     "right": 418,
+     "bottom": 1077.75,
+     "left": 12
+    },
+    "body_top": 955.75,
+    "status": {
+     "top": 968.75,
+     "right": 375,
+     "bottom": 990.75,
+     "left": 324.828125
+    },
+    "bars": {
+     "top": 996.75,
+     "right": 375,
+     "bottom": 1016.75,
+     "left": 355
+    },
+    "meta": {
+     "top": 1046.75,
+     "right": 375,
+     "bottom": 1064.75,
+     "left": 101
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   }
+  ]
+ },
+ "issues-en-1280": {
+  "docOverflow": false,
+  "cards": [
+   {
+    "text": "No photo\n\nBagaj contası tam oturmuyor\n\nIn progress\n\nUnclassified\n\n…00042\nOpen duration:\n18m",
+    "severity_word_visible": false,
+    "severity_aria": "Medium",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 440,
+     "right": 586.65625,
+     "bottom": 808,
+     "left": 264
+    },
+    "body_top": 681.484375,
+    "status": {
+     "top": 693.484375,
+     "right": 547.65625,
+     "bottom": 715.484375,
+     "left": 462.640625
+    },
+    "bars": {
+     "top": 721.484375,
+     "right": 547.65625,
+     "bottom": 741.484375,
+     "left": 527.65625
+    },
+    "meta": {
+     "top": 775.484375,
+     "right": 547.65625,
+     "bottom": 794.984375,
+     "left": 277
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   },
+   {
+    "text": "No photo\n\nTorpido kapağı hafif gıcırtı\n\nQuality approved\n\nGlovebox · Noise\n\n…00042\nOpen duration:\n5h",
+    "severity_word_visible": false,
+    "severity_aria": "Low",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 440,
+     "right": 921.328125,
+     "bottom": 808,
+     "left": 598.65625
+    },
+    "body_top": 681.5,
+    "status": {
+     "top": 693.5,
+     "right": 882.328125,
+     "bottom": 715.5,
+     "left": 763.9375
+    },
+    "bars": {
+     "top": 721.5,
+     "right": 882.328125,
+     "bottom": 741.5,
+     "left": 862.328125
+    },
+    "meta": {
+     "top": 775.5,
+     "right": 882.328125,
+     "bottom": 795,
+     "left": 611.65625
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   },
+   {
+    "text": "No photo\n\nArka tampon sağ alt köşesinde boya akıntısı ve hafif portakallanma, müşteri görünür bölgede, tekrar boya kabinine gönderilmeli mi değerlendirilecek\n\nConditional approved\n\nArka tampon sağ alt köşe bağlantı braketi ve plastik koruma kapağı montaj bölgesi · Boya akıntısı / portakallanma / renk tonu farkı\n\n…00042\nOpen duration:\n1d 2h",
+    "severity_word_visible": false,
+    "severity_aria": "Medium",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 440,
+     "right": 1255.984375,
+     "bottom": 808,
+     "left": 933.328125
+    },
+    "body_top": 681.484375,
+    "status": {
+     "top": 693.484375,
+     "right": 1216.984375,
+     "bottom": 715.484375,
+     "left": 1073.71875
+    },
+    "bars": {
+     "top": 721.484375,
+     "right": 1216.984375,
+     "bottom": 741.484375,
+     "left": 1196.984375
+    },
+    "meta": {
+     "top": 775.484375,
+     "right": 1216.984375,
+     "bottom": 794.984375,
+     "left": 946.328125
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   },
+   {
+    "text": "Sol ön kapı menteşesinde boşluk\n\nOpen\n\nFront door · Gap\n\n…00042\nOpen duration:\n2d 2h",
+    "severity_word_visible": false,
+    "severity_aria": "Critical",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 820,
+     "right": 586.65625,
+     "bottom": 1188,
+     "left": 264
+    },
+    "body_top": 1061.484375,
+    "status": {
+     "top": 1073.484375,
+     "right": 547.65625,
+     "bottom": 1095.484375,
+     "left": 496.71875
+    },
+    "bars": {
+     "top": 1101.484375,
+     "right": 547.65625,
+     "bottom": 1121.484375,
+     "left": 527.65625
+    },
+    "meta": {
+     "top": 1155.484375,
+     "right": 547.65625,
+     "bottom": 1174.984375,
+     "left": 277
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   },
+   {
+    "text": "Soğutmasuyupompagövdesibağlantısızdırmazlıkcontasıkontrolü_uzun_kelime_bölünmeden_devam_ediyor ve ardından normal cümle\n\nDone\n\nUnclassified\n\n…00042\nOpen duration:\n3d 3h",
+    "severity_word_visible": false,
+    "severity_aria": "Critical",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 820,
+     "right": 921.328125,
+     "bottom": 1188,
+     "left": 598.65625
+    },
+    "body_top": 1061.5,
+    "status": {
+     "top": 1073.5,
+     "right": 882.328125,
+     "bottom": 1095.5,
+     "left": 832.15625
+    },
+    "bars": {
+     "top": 1101.5,
+     "right": 882.328125,
+     "bottom": 1121.5,
+     "left": 862.328125
+    },
+    "meta": {
+     "top": 1155.5,
+     "right": 882.328125,
+     "bottom": 1175,
+     "left": 611.65625
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   }
+  ]
+ },
+ "vehicle-en-1280": {
+  "docOverflow": false,
+  "cards": [
+   {
+    "text": "Sol ön kapı menteşesinde boşluk\n\nOpen\n\nFront door · Gap\n\nOpen duration:\n2d 2h",
+    "severity_word_visible": false,
+    "severity_aria": "Critical",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 428.25,
+     "right": 586.65625,
+     "bottom": 796.25,
+     "left": 264
+    },
+    "body_top": 669.734375,
+    "status": {
+     "top": 681.734375,
+     "right": 547.65625,
+     "bottom": 703.734375,
+     "left": 496.71875
+    },
+    "bars": {
+     "top": 709.734375,
+     "right": 547.65625,
+     "bottom": 729.734375,
+     "left": 527.65625
+    },
+    "meta": {
+     "top": 763.734375,
+     "right": 547.65625,
+     "bottom": 783.234375,
+     "left": 277
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   },
+   {
+    "text": "No photo\n\nArka tampon sağ alt köşesinde boya akıntısı ve hafif portakallanma, müşteri görünür bölgede, tekrar boya kabinine gönderilmeli mi değerlendirilecek\n\nConditional approved\n\nArka tampon sağ alt köşe bağlantı braketi ve plastik koruma kapağı montaj bölgesi · Boya akıntısı / portakallanma / renk tonu farkı\n\nOpen duration:\n1d 2h",
+    "severity_word_visible": false,
+    "severity_aria": "Medium",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 428.25,
+     "right": 921.328125,
+     "bottom": 796.25,
+     "left": 598.65625
+    },
+    "body_top": 669.75,
+    "status": {
+     "top": 681.75,
+     "right": 882.328125,
+     "bottom": 703.75,
+     "left": 739.0625
+    },
+    "bars": {
+     "top": 709.75,
+     "right": 882.328125,
+     "bottom": 729.75,
+     "left": 862.328125
+    },
+    "meta": {
+     "top": 763.75,
+     "right": 882.328125,
+     "bottom": 783.25,
+     "left": 611.65625
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   },
+   {
+    "text": "No photo\n\nTorpido kapağı hafif gıcırtı\n\nQuality approved\n\nGlovebox · Noise\n\nOpen duration:\n5h",
+    "severity_word_visible": false,
+    "severity_aria": "Low",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 428.25,
+     "right": 1255.984375,
+     "bottom": 796.25,
+     "left": 933.328125
+    },
+    "body_top": 669.734375,
+    "status": {
+     "top": 681.734375,
+     "right": 1216.984375,
+     "bottom": 703.734375,
+     "left": 1098.59375
+    },
+    "bars": {
+     "top": 709.734375,
+     "right": 1216.984375,
+     "bottom": 729.734375,
+     "left": 1196.984375
+    },
+    "meta": {
+     "top": 763.734375,
+     "right": 1216.984375,
+     "bottom": 783.234375,
+     "left": 946.328125
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   },
+   {
+    "text": "No photo\n\nBagaj contası tam oturmuyor\n\nIn progress\n\nUnclassified\n\nOpen duration:\n18m",
+    "severity_word_visible": false,
+    "severity_aria": "Medium",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 808.25,
+     "right": 586.65625,
+     "bottom": 1176.25,
+     "left": 264
+    },
+    "body_top": 1049.734375,
+    "status": {
+     "top": 1061.734375,
+     "right": 547.65625,
+     "bottom": 1083.734375,
+     "left": 462.640625
+    },
+    "bars": {
+     "top": 1089.734375,
+     "right": 547.65625,
+     "bottom": 1109.734375,
+     "left": 527.65625
+    },
+    "meta": {
+     "top": 1143.734375,
+     "right": 547.65625,
+     "bottom": 1163.234375,
+     "left": 277
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   },
+   {
+    "text": "Soğutmasuyupompagövdesibağlantısızdırmazlıkcontasıkontrolü_uzun_kelime_bölünmeden_devam_ediyor ve ardından normal cümle\n\nDone\n\nUnclassified\n\nOpen duration:\n3d 3h",
+    "severity_word_visible": false,
+    "severity_aria": "Critical",
+    "severity_role": "img",
+    "severity_aria_hidden": null,
+    "outside": 0,
+    "box": {
+     "top": 808.25,
+     "right": 921.328125,
+     "bottom": 1176.25,
+     "left": 598.65625
+    },
+    "body_top": 1049.75,
+    "status": {
+     "top": 1061.75,
+     "right": 882.328125,
+     "bottom": 1083.75,
+     "left": 832.15625
+    },
+    "bars": {
+     "top": 1089.75,
+     "right": 882.328125,
+     "bottom": 1109.75,
+     "left": 862.328125
+    },
+    "meta": {
+     "top": 1143.75,
+     "right": 882.328125,
+     "bottom": 1163.25,
+     "left": 611.65625
+    },
+    "layout": {
+     "status_top_right": true,
+     "severity_below_status": true,
+     "severity_right_aligned": true,
+     "meta_bottom_left": true
+    }
+   }
+  ]
+ }
+}

@@ -1,0 +1,34 @@
+# 1) card components: every severity-name reference (expect none rendered as visible text)
+$ rg -n "sevLabel|showSeverityLabel|severityMessageKey|severity\.(critical|medium|low)|severityLabel" web/src/components/IssueCard.tsx mobile/src/components/IssueCard.tsx
+mobile/src/components/IssueCard.tsx:23:  severityLabel,
+mobile/src/components/IssueCard.tsx:70:    `${t('severity.label')}: ${sevLevel ? severityLabel(sevLevel, t) : issue.Severity}`,
+
+# 2) showSeverityLabel prop anywhere in web/mobile/shared (expect no matches)
+$ rg -n "showSeverityLabel|severityMessageKey" web/src mobile/src shared
+(no matches)
+
+# 3) screen-reader label sources kept
+$ rg -n "aria-label|accessibilityLabel" web/src/components/SeverityIndicator.tsx mobile/src/components/SeverityIndicator.tsx mobile/src/components/IssueCard.tsx
+mobile/src/components/SeverityIndicator.tsx:71:      accessibilityLabel={a11y}
+web/src/components/SeverityIndicator.tsx:82:      aria-label={decorative ? undefined : aria}
+mobile/src/components/IssueCard.tsx:209:          accessibilityLabel={durationA11y}
+mobile/src/components/IssueCard.tsx:245:      accessibilityLabel={cardA11y}
+
+# 4) IssueCard call sites (Issues list + vehicle detail, both platforms)
+mobile/src/screens/VehicleStationScreen.tsx:452:                <IssueCard
+mobile/src/screens/VehicleStationScreen.tsx-453-                  key={issue.ID}
+mobile/src/screens/VehicleStationScreen.tsx-454-                  issue={issue}
+mobile/src/screens/VehicleStationScreen.tsx-455-                  hideVin
+mobile/src/screens/VehicleStationScreen.tsx-456-                  onPress={() => navigation.navigate('IssueDetail', { id: issue.ID })}
+--
+mobile/src/screens/MyIssuesScreen.tsx:1188:            <IssueCard
+mobile/src/screens/MyIssuesScreen.tsx-1189-              issue={item}
+mobile/src/screens/MyIssuesScreen.tsx-1190-              layoutWidth={listContentWidth}
+mobile/src/screens/MyIssuesScreen.tsx-1191-              highlighted={highlightedIds.has(item.ID)}
+mobile/src/screens/MyIssuesScreen.tsx-1192-              loadPhoto={photoReadyIds.has(item.ID)}
+--
+web/src/components/IssueList.tsx:486:                  <IssueCard
+web/src/components/IssueList.tsx-487-                    key={issue.ID}
+web/src/components/IssueList.tsx-488-                    issue={issue}
+web/src/components/IssueList.tsx-489-                    hideVin={hideVin}
+web/src/components/IssueList.tsx-490-                    layoutWidth={width}
