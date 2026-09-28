@@ -8,6 +8,7 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
+import { ChevronRight, Clock } from 'lucide-react-native';
 import {
   formatIssueOpenDuration,
   issueCardIsCompact,
@@ -37,6 +38,8 @@ export function IssueCard({
   highlighted = false,
   /** When false, defer photo network until the row is viewable. */
   loadPhoto = true,
+  /** False → severity shows as the bar icon only (vehicle issue list). */
+  showSeverityLabel = true,
 }: {
   issue: Issue;
   onPress: () => void;
@@ -44,6 +47,7 @@ export function IssueCard({
   layoutWidth?: number;
   highlighted?: boolean;
   loadPhoto?: boolean;
+  showSeverityLabel?: boolean;
 }) {
   const { tokens } = useTheme();
   const { t, locale } = useI18n();
@@ -137,27 +141,40 @@ export function IssueCard({
     </Pressable>
   );
 
+  const metaSize = compact ? 12 : 13;
+
+  // Corners: description ↖ status ↗, classification + open time ↙ severity ↘.
   const body = (
     <View
       style={{
         flex: 1,
         minWidth: 0,
         padding: compact ? 0 : 12,
-        gap: compact ? 4 : 6,
+        gap: compact ? 6 : 8,
       }}
     >
-      <Text
-        style={{
-          color: tokens.textPrimary,
-          fontSize: compact ? 14 : 15,
-          fontWeight: '600',
-          lineHeight: compact ? 18 : 20,
-        }}
-        numberOfLines={1}
-        ellipsizeMode="tail"
-      >
-        {issue.Description?.trim() || t('common.emDash')}
-      </Text>
+      <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
+        <Text
+          style={{
+            flex: 1,
+            minWidth: 0,
+            color: tokens.textPrimary,
+            fontSize: compact ? 14 : 15,
+            fontWeight: '600',
+            lineHeight: compact ? 19 : 20,
+          }}
+          numberOfLines={2}
+          ellipsizeMode="tail"
+        >
+          {issue.Description?.trim() || t('common.emDash')}
+        </Text>
+        <View style={{ flexShrink: 0 }}>
+          <Badge
+            label={issueStatusLabel(issue.Status, t)}
+            color={issueStatusColor(issue.Status)}
+          />
+        </View>
+      </View>
       <Text
         style={{ color: tokens.textSecondary, fontSize: 12, minWidth: 0 }}
         numberOfLines={1}
@@ -189,7 +206,7 @@ export function IssueCard({
                 color: tokens.accent,
                 fontWeight: '700',
                 fontFamily: 'monospace',
-                fontSize: compact ? 12 : 13,
+                fontSize: metaSize,
                 flexShrink: 1,
               }}
               numberOfLines={1}
@@ -198,18 +215,25 @@ export function IssueCard({
               …{issue.VIN.slice(-5)}
             </Text>
           ) : null}
-          <Text
-            style={{
-              color: tokens.textSecondary,
-              fontSize: compact ? 12 : 13,
-              fontVariant: ['tabular-nums'],
-              flexShrink: 1,
-            }}
-            numberOfLines={1}
-            ellipsizeMode="tail"
+          <View
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 4, flexShrink: 1, minWidth: 0 }}
+            accessible
+            accessibilityLabel={`${t('issue.openDuration')}: ${duration}`}
           >
-            {duration}
-          </Text>
+            <Clock size={metaSize + 1} color={tokens.textSecondary} strokeWidth={2} />
+            <Text
+              style={{
+                color: tokens.textSecondary,
+                fontSize: metaSize,
+                fontVariant: ['tabular-nums'],
+                flexShrink: 1,
+              }}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
+              {duration}
+            </Text>
+          </View>
         </View>
         <View
           style={{
@@ -219,25 +243,35 @@ export function IssueCard({
             flexShrink: 0,
           }}
         >
-          <SeverityIndicator severity={issue.Severity} />
-          <Text
-            style={{
-              color: sevColor,
-              fontWeight: '600',
-              fontSize: compact ? 12 : 13,
-              maxWidth: 72,
-            }}
-            numberOfLines={1}
-            ellipsizeMode="tail"
-          >
-            {sevLabel}
-          </Text>
-          <Badge
-            label={issueStatusLabel(issue.Status, t)}
-            color={issueStatusColor(issue.Status)}
-          />
+          <SeverityIndicator severity={issue.Severity} size="md" />
+          {showSeverityLabel ? (
+            <Text
+              style={{
+                color: sevColor,
+                fontWeight: '600',
+                fontSize: metaSize,
+                maxWidth: 72,
+              }}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
+              {sevLabel}
+            </Text>
+          ) : null}
         </View>
       </View>
+    </View>
+  );
+
+  const chevron = (
+    <View
+      style={{
+        alignSelf: 'center',
+        paddingRight: compact ? 0 : 8,
+        flexShrink: 0,
+      }}
+    >
+      <ChevronRight size={18} color={tokens.textSecondary} strokeWidth={2} />
     </View>
   );
 
@@ -279,7 +313,17 @@ export function IssueCard({
             }}
           >
             {photo}
-            {body}
+            {compact ? (
+              <>
+                {body}
+                {chevron}
+              </>
+            ) : (
+              <View style={{ flexDirection: 'row', flex: 1 }}>
+                {body}
+                {chevron}
+              </View>
+            )}
           </View>
         </Card>
       </Pressable>
