@@ -274,3 +274,164 @@ func TestApplicableSet_ProgressMatchesOpenItems(t *testing.T) {
 		t.Fatal("fixture needs a delivered vehicle")
 	}
 }
+
+// The checklist tab marks StageClosed exactly on the active items outside
+// the applicable set: every other active item is applicable, a line vehicle
+// has none closed, and a passed vehicle's never-evaluated item is closed.
+func TestListItemsWithProgress_StageClosedIsApplicableComplement(t *testing.T) {
+	ctx, tx := stageTestTx(t)
+	repo := &ChecklistProgressRepo{}
+	vehicles := loadStageVehicles(ctx, t, tx)
+
+	shipTmpl := templateOf(ctx, t, tx, "shipment_template_id")
+	late, err := repo.CreateTemplateItem(ctx, &domain.ChecklistTemplateItem{TemplateID: shipTmpl, ItemText: "TMP_STAGE_RULE late"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	cols := map[domain.ChecklistType]string{
+		domain.ChecklistTypeShipment: "shipment_template_id",
+		domain.ChecklistTypeTest:     "test_template_id",
+		domain.ChecklistTypeEOL:      "eol_template_id",
+	}
+	var closedOnPassed, lineChecked int
+	for _, v := range vehicles {
+		for typ, col := range cols {
+			var tmpl *int
+			if err := tx.QueryRow(ctx, `SELECT `+col+` FROM vehicles WHERE vin = $1`, v.vin).Scan(&tmpl); err != nil {
+				t.Fatal(err)
+			}
+			if tmpl == nil {
+				continue
+			}
+			all, err := repo.ListItemsWithProgress(ctx, v.vin, typ, *tmpl)
+			if err != nil {
+				t.Fatal(err)
+			}
+			applicable, err := repo.ListApplicableItems(ctx, v.vin, typ)
+			if err != nil {
+				t.Fatal(err)
+			}
+			inApplicable := map[int]bool{}
+			for _, it := range applicable {
+				inApplicable[it.ItemID] = true
+			}
+			open := 0
+			for _, it := range all {
+				if !it.IsActive {
+					if it.StageClosed {
+						t.Errorf("%s item %d: inactive rows are never StageClosed", v.vin, it.ItemID)
+					}
+					continue
+				}
+				if it.StageClosed == inApplicable[it.ItemID] {
+					t.Errorf("%s (%s) %s item %d: StageClosed=%v but applicable=%v",
+						v.vin, v.status, typ, it.ItemID, it.StageClosed, inApplicable[it.ItemID])
+				}
+				if it.StageClosed && v.passed(domain.EOLItemPhaseBranch) {
+					closedOnPassed++
+				}
+				if !v.passed(domain.EOLItemPhaseBranch) && it.StageClosed {
+					t.Errorf("line vehicle %s: item %d must not be closed", v.vin, it.ItemID)
+				}
+				if !it.StageClosed && !it.Status.IsPassing() {
+					open++
+				}
+			}
+			if !v.passed(domain.EOLItemPhaseBranch) {
+				lineChecked++
+			}
+			// Gate / counters ignore closed items: the Go gate sees only open ones.
+			_, blocking, missing := evaluateGate(all)
+			if blocking+missing != open {
+				t.Errorf("%s %s: gate counts %d, open applicable %d", v.vin, typ, blocking+missing, open)
+			}
+			if typ == domain.ChecklistTypeShipment && v.passed(domain.EOLItemPhaseBranch) {
+				for _, it := range all {
+					if it.ItemID == late.ID && !it.StageClosed {
+						t.Errorf("%s (%s): late item on a passed stage is not closed", v.vin, v.status)
+					}
+				}
+			}
+		}
+	}
+	if closedOnPassed == 0 || lineChecked == 0 {
+		t.Fatalf("fixture too thin: closedOnPassed=%d lineChecked=%d", closedOnPassed, lineChecked)
+	}
+}
+
+// evaluateGate mirrors usecase.EvaluateChecklistGate (not importable here).
+func evaluateGate(items []domain.ChecklistItemView) (open bool, blocking, missing int) {
+	for _, it := range items {
+		if !it.IsActive || it.StageClosed {
+			continue
+		}
+		if it.ProgressID == nil {
+			missing++
+		} else if !it.Status.IsPassing() {
+			blocking++
+		}
+	}
+	return blocking == 0 && missing == 0, blocking, missing
+}
+
+// Migration 0031: a never-evaluated branch row after branch ship does not
+// lock depot edits; on a vehicle still on the line a pending branch row does.
+func TestDepotSequencingTrigger_IgnoresClosedBranchRows(t *testing.T) {
+	ctx, tx := stageTestTx(t)
+	repo := &ChecklistProgressRepo{}
+
+	var shipped, line string
+	var eolTmpl int
+	if err := tx.QueryRow(ctx, `
+		SELECT v.vin, v.eol_template_id FROM vehicles v JOIN vehicle_eol_workflow w ON w.vin = v.vin
+		WHERE w.branch_shipped_at IS NOT NULL AND v.current_global_status NOT IN ('DELIVERED','SHIPPED')
+		  AND EXISTS (SELECT 1 FROM checklist_item_progress p JOIN checklist_template_items c ON c.id = p.check_item_id
+		              WHERE p.vin = v.vin AND c.eol_phase = 'DEPOT')
+		  AND NOT EXISTS (SELECT 1 FROM checklist_item_progress p JOIN checklist_template_items c ON c.id = p.check_item_id
+		              WHERE p.vin = v.vin AND c.eol_phase = 'BRANCH'
+		                AND p.check_status NOT IN ('OK','CONDITIONAL_OK','PENDING'))
+		ORDER BY v.vin LIMIT 1`).Scan(&shipped, &eolTmpl); err != nil {
+		t.Fatalf("fixture needs a branch-shipped vehicle with depot rows: %v", err)
+	}
+	if err := tx.QueryRow(ctx, `
+		SELECT v.vin FROM vehicles v LEFT JOIN vehicle_eol_workflow w ON w.vin = v.vin
+		WHERE w.branch_shipped_at IS NULL AND v.eol_template_id = $1
+		  AND EXISTS (SELECT 1 FROM checklist_item_progress p JOIN checklist_template_items c ON c.id = p.check_item_id
+		              WHERE p.vin = v.vin AND c.eol_phase = 'DEPOT')
+		ORDER BY v.vin LIMIT 1`, eolTmpl).Scan(&line); err != nil {
+		t.Fatalf("fixture needs a line vehicle with depot rows: %v", err)
+	}
+
+	branch := domain.EOLItemPhaseBranch
+	late, err := repo.CreateTemplateItem(ctx, &domain.ChecklistTemplateItem{TemplateID: eolTmpl, ItemText: "TMP_STAGE_RULE late branch", EolPhase: &branch})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, vin := range []string{shipped, line} {
+		if _, err := tx.Exec(ctx,
+			`INSERT INTO checklist_item_progress (vin, checklist_type, check_item_id, check_status) VALUES ($1, 'EOL', $2, 'PENDING')`,
+			vin, late.ID); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	touchDepot := func(vin string) error {
+		sp, err := tx.Begin(ctx)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer func() { _ = sp.Rollback(ctx) }()
+		_, err = sp.Exec(ctx, `
+			UPDATE checklist_item_progress p SET check_status = 'OK', rejected_desc = NULL, rework_desc = NULL, conditional_desc = NULL
+			WHERE p.id = (SELECT p2.id FROM checklist_item_progress p2 JOIN checklist_template_items c ON c.id = p2.check_item_id
+			              WHERE p2.vin = $1 AND c.eol_phase = 'DEPOT' ORDER BY p2.id LIMIT 1)`, vin)
+		return err
+	}
+	if err := touchDepot(shipped); err != nil {
+		t.Errorf("branch-shipped %s: closed branch row blocked a depot edit: %v", shipped, err)
+	}
+	if err := touchDepot(line); err == nil {
+		t.Errorf("line vehicle %s: pending branch row must still block depot edits", line)
+	}
+}
