@@ -282,6 +282,21 @@ Mobil ile aynı yol: `shared/networkError.ts` + `translateApiError` /
 Kanıt: `scripts/verify-api-error-copy.mjs`, `scripts/verify-web-errors.mjs`,
 `docs/screenshots/web-errors/`.
 
+### A23. Araç detayı: hata kartı ve istasyon listesi düzeni `[x]` — 2026-09-28
+- Issue kartı (web + mobil, Issues ile ortak bileşen): açıklama ↖ (2 satır),
+  durum rozeti ↗, sınıflandırma + saat ikonlu açık kalma süresi ↙,
+  şiddet ↘; sağda ok (›). Mobil araç listesinde kartlar arası 12 px.
+- Araç listesinde şiddet yalnız ikon (`showSeverityLabel={false}`; metin
+  erişilebilirlik etiketinde). Issues'ta VIN ve şiddet metni kalır.
+- Şiddet ikonu: geometri tek kaynak `shared/severityBars.ts`; boş çubuklar
+  içi boş çerçeve → düşük 1 / orta 2 / kritik 3 dolu çubuk renksiz (gri
+  tonlamada) da ayırt edilir. Renkler hâlâ `shared/brand.ts`.
+- İstasyon satırı: durum `shared/stationProgress.ts` (Tamamlandı / Devam
+  ediyor / Başlanmadı) ikon + metin; mobilde aç/kapa oku. Web istasyon
+  adımları paneli aynı ikon + metin.
+Kanıt: `docs/screenshots/vehicle-issue-layout/` (önce/sonra 375-390-430,
+şiddet karşılaştırması, `harness/` betikleri).
+
 ---
 
 ## B — Canlıya çıkmadan önce ZORUNLU
