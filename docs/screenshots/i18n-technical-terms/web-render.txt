@@ -1,0 +1,10 @@
+# Real web StatusBadge rendered with react-dom/server inside the web
+# I18nProvider (locale from localStorage), plus checklistStatusLabel (web
+# EoL buttons) and translateApiError for a backend gate error. Output of
+# the one-off check run on 2026-09-28, copied verbatim.
+tr web StatusBadge(eol): |Bekliyor|Uygun|Uygun değil|Yeniden işlem|Şartlı uygun|
+tr web EoL buttons:      Uygun | Uygun değil | Yeniden işlem | Şartlı uygun
+tr gate error:           Sevk geçişi engellendi: 2 madde Uygun / Şartlı uygun değil (madde no: 44, 45).
+en web StatusBadge(eol): |Pending|OK|Not OK|Rework|Conditional OK|
+en web EoL buttons:      OK | Not OK | Rework | Conditional OK
+en gate error:           Shipment gate blocked: 2 item(s) not OK / Conditional OK (item ids: 44, 45).

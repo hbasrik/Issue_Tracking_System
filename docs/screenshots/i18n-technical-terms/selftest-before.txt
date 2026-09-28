@@ -1,0 +1,25 @@
+# node --experimental-strip-types shared/i18nMessages.selftest.ts against HEAD~0 (before this change)
+raw technical terms in Turkish messages:
+status.eol.ok: "OK" -> OK
+status.eol.notOk: "NOT OK" -> OK
+status.eol.rework: "REWORK" -> REWORK
+status.eol.conditionalOk: "CONDITIONAL OK" -> CONDITIONAL, OK
+status.eol.pending: "PENDING" -> PENDING
+issueDetail.solutionDescRequired: "Açıklama (solution_description) zorunlu" -> solution_description
+vehicles.inProductionNow: "Hattaki araçlar (IN_PRODUCTION, anlık)" -> IN_PRODUCTION
+checklist.pickStatus: "OK, NOT_OK, REWORK veya CONDITIONAL_OK seçin" -> OK, NOT_OK, REWORK, CONDITIONAL_OK
+checklist.yesOk: "Evet (OK)" -> OK
+checklist.noNotOk: "Hayır (NOT_OK)" -> NOT_OK
+checklist.operatorHint: "Operatör yalnızca maddeleri işaretler; WITH_CUSTOMER/SHIPPED durumunu yönetici web panelinden verir" -> WITH_CUSTOMER
+checklist.conditionalShort: "COND." -> COND
+eol.resetConfirm: "Bu aracın EoL iş akışını Fabrika / IN_PRODUCTION durumuna sıfırla? Yalnızca geliştirme — production’da yok." -> IN_PRODUCTION
+eol.resetHint: "Yalnızca geliştirme — EoL’u Fabrika’ya ve araç durumunu IN_PRODUCTION’a sıfırlar. APP_ENV=development dışında gizli ve 404." -> IN_PRODUCTION, APP_ENV
+media.file: "FILE" -> FILE
+templates.branch: "BRANCH" -> BRANCH
+templates.depot: "DEPOT" -> DEPOT
+templates.confirmCreate: "Yeni madde {affected} başlamamış araca PENDING olarak eklenecek, {protected} araç çalışmaya başladığı için etkilenmeyecek. Onaylıyor musunuz?" -> PENDING
+templates.confirmDelete: "Bu madde kalıcı silinecek ({affected} PENDING kayıt temizlenecek). Bu işlem geri alınamaz. Onaylıyor musunuz?" -> PENDING
+error.depotLocked: "Fabrika maddeleri OK veya CONDITIONAL_OK olmadan depo maddeleri güncellenemez." -> OK, CONDITIONAL_OK
+error.eolPhaseRequired: "EOL maddeleri için eol_phase gerekli." -> eol_phase
+error.eolPhaseNotAllowed: "eol_phase yalnızca EOL maddelerinde geçerlidir." -> eol_phase
+error.gateBlocked: "{type} geçişi engellendi: {n} madde OK/CONDITIONAL_OK değil (madde no: {ids})." -> OK, CONDITIONAL_OK

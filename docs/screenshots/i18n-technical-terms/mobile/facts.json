@@ -1,0 +1,242 @@
+{
+ "eol-line-tr-375": {
+  "sections": {
+   "checklist-stage-closed-toggle": null,
+   "checklist-inactive-toggle": null
+  },
+  "overflow": 0,
+  "raw_status_in_sections": [],
+  "errors": [],
+  "calls": []
+ },
+ "eol-line-tr-390": {
+  "sections": {
+   "checklist-stage-closed-toggle": null,
+   "checklist-inactive-toggle": null
+  },
+  "overflow": 0,
+  "raw_status_in_sections": [],
+  "errors": [],
+  "calls": []
+ },
+ "eol-line-tr-430": {
+  "sections": {
+   "checklist-stage-closed-toggle": null,
+   "checklist-inactive-toggle": null
+  },
+  "overflow": 0,
+  "raw_status_in_sections": [],
+  "errors": [],
+  "calls": []
+ },
+ "eol-line-en-375": {
+  "sections": {
+   "checklist-stage-closed-toggle": null,
+   "checklist-inactive-toggle": null
+  },
+  "overflow": 0,
+  "raw_status_in_sections": [],
+  "errors": [],
+  "calls": []
+ },
+ "eol-line-en-390": {
+  "sections": {
+   "checklist-stage-closed-toggle": null,
+   "checklist-inactive-toggle": null
+  },
+  "overflow": 0,
+  "raw_status_in_sections": [],
+  "errors": [],
+  "calls": []
+ },
+ "eol-line-en-430": {
+  "sections": {
+   "checklist-stage-closed-toggle": null,
+   "checklist-inactive-toggle": null
+  },
+  "overflow": 0,
+  "raw_status_in_sections": [],
+  "errors": [],
+  "calls": []
+ },
+ "eol-branch-shipped-tr-375": {
+  "sections": {
+   "checklist-stage-closed-toggle": null,
+   "checklist-inactive-toggle": null
+  },
+  "overflow": 0,
+  "raw_status_in_sections": [],
+  "errors": [],
+  "calls": []
+ },
+ "eol-branch-shipped-tr-390": {
+  "sections": {
+   "checklist-stage-closed-toggle": null,
+   "checklist-inactive-toggle": null
+  },
+  "overflow": 0,
+  "raw_status_in_sections": [],
+  "errors": [],
+  "calls": []
+ },
+ "eol-branch-shipped-tr-430": {
+  "sections": {
+   "checklist-stage-closed-toggle": null,
+   "checklist-inactive-toggle": null
+  },
+  "overflow": 0,
+  "raw_status_in_sections": [],
+  "errors": [],
+  "calls": []
+ },
+ "eol-branch-shipped-en-375": {
+  "sections": {
+   "checklist-stage-closed-toggle": null,
+   "checklist-inactive-toggle": null
+  },
+  "overflow": 0,
+  "raw_status_in_sections": [],
+  "errors": [],
+  "calls": []
+ },
+ "eol-branch-shipped-en-390": {
+  "sections": {
+   "checklist-stage-closed-toggle": null,
+   "checklist-inactive-toggle": null
+  },
+  "overflow": 0,
+  "raw_status_in_sections": [],
+  "errors": [],
+  "calls": []
+ },
+ "eol-branch-shipped-en-430": {
+  "sections": {
+   "checklist-stage-closed-toggle": null,
+   "checklist-inactive-toggle": null
+  },
+  "overflow": 0,
+  "raw_status_in_sections": [],
+  "errors": [],
+  "calls": []
+ },
+ "station-line-tr-375": {
+  "sections": {
+   "checklist-stage-closed-toggle": null,
+   "checklist-inactive-toggle": null
+  },
+  "overflow": 0,
+  "raw_status_in_sections": [],
+  "errors": [],
+  "calls": []
+ },
+ "station-line-tr-390": {
+  "sections": {
+   "checklist-stage-closed-toggle": null,
+   "checklist-inactive-toggle": null
+  },
+  "overflow": 0,
+  "raw_status_in_sections": [],
+  "errors": [],
+  "calls": []
+ },
+ "station-line-tr-430": {
+  "sections": {
+   "checklist-stage-closed-toggle": null,
+   "checklist-inactive-toggle": null
+  },
+  "overflow": 0,
+  "raw_status_in_sections": [],
+  "errors": [],
+  "calls": []
+ },
+ "station-line-en-375": {
+  "sections": {
+   "checklist-stage-closed-toggle": null,
+   "checklist-inactive-toggle": null
+  },
+  "overflow": 0,
+  "raw_status_in_sections": [],
+  "errors": [],
+  "calls": []
+ },
+ "station-line-en-390": {
+  "sections": {
+   "checklist-stage-closed-toggle": null,
+   "checklist-inactive-toggle": null
+  },
+  "overflow": 0,
+  "raw_status_in_sections": [],
+  "errors": [],
+  "calls": []
+ },
+ "station-line-en-430": {
+  "sections": {
+   "checklist-stage-closed-toggle": null,
+   "checklist-inactive-toggle": null
+  },
+  "overflow": 0,
+  "raw_status_in_sections": [],
+  "errors": [],
+  "calls": []
+ },
+ "shipment-delivered-tr-375": {
+  "sections": {
+   "checklist-stage-closed-toggle": "Bu aşama tamamlandı (2) ▾\nAraç bu aşamayı geçti; bu maddeler artık tamamlanamaz. Hiçbir sayıya, ilerlemeye veya kapıya dahil değildir; kayıt korunur.\n47. Bagaj kilidi kontrolü\nUygulanmaz\nDeğerlendirilmedi\n30. Yan ayna kapak klipsi\nUygulanmaz\nSon kayıt: Uygun değil",
+   "checklist-inactive-toggle": null
+  },
+  "overflow": 0,
+  "raw_status_in_sections": [],
+  "errors": [],
+  "calls": []
+ },
+ "shipment-delivered-tr-390": {
+  "sections": {
+   "checklist-stage-closed-toggle": "Bu aşama tamamlandı (2) ▾\nAraç bu aşamayı geçti; bu maddeler artık tamamlanamaz. Hiçbir sayıya, ilerlemeye veya kapıya dahil değildir; kayıt korunur.\n47. Bagaj kilidi kontrolü\nUygulanmaz\nDeğerlendirilmedi\n30. Yan ayna kapak klipsi\nUygulanmaz\nSon kayıt: Uygun değil",
+   "checklist-inactive-toggle": null
+  },
+  "overflow": 0,
+  "raw_status_in_sections": [],
+  "errors": [],
+  "calls": []
+ },
+ "shipment-delivered-tr-430": {
+  "sections": {
+   "checklist-stage-closed-toggle": "Bu aşama tamamlandı (2) ▾\nAraç bu aşamayı geçti; bu maddeler artık tamamlanamaz. Hiçbir sayıya, ilerlemeye veya kapıya dahil değildir; kayıt korunur.\n47. Bagaj kilidi kontrolü\nUygulanmaz\nDeğerlendirilmedi\n30. Yan ayna kapak klipsi\nUygulanmaz\nSon kayıt: Uygun değil",
+   "checklist-inactive-toggle": null
+  },
+  "overflow": 0,
+  "raw_status_in_sections": [],
+  "errors": [],
+  "calls": []
+ },
+ "shipment-delivered-en-375": {
+  "sections": {
+   "checklist-stage-closed-toggle": "This stage is complete (2) ▾\nThe vehicle has passed this stage; these items can no longer be completed. They count in no total, progress or gate; the record is kept.\n47. Bagaj kilidi kontrolü\nNot applicable\nNot evaluated\n30. Yan ayna kapak klipsi\nNot applicable\nLast record: Not OK",
+   "checklist-inactive-toggle": null
+  },
+  "overflow": 0,
+  "raw_status_in_sections": [],
+  "errors": [],
+  "calls": []
+ },
+ "shipment-delivered-en-390": {
+  "sections": {
+   "checklist-stage-closed-toggle": "This stage is complete (2) ▾\nThe vehicle has passed this stage; these items can no longer be completed. They count in no total, progress or gate; the record is kept.\n47. Bagaj kilidi kontrolü\nNot applicable\nNot evaluated\n30. Yan ayna kapak klipsi\nNot applicable\nLast record: Not OK",
+   "checklist-inactive-toggle": null
+  },
+  "overflow": 0,
+  "raw_status_in_sections": [],
+  "errors": [],
+  "calls": []
+ },
+ "shipment-delivered-en-430": {
+  "sections": {
+   "checklist-stage-closed-toggle": "This stage is complete (2) ▾\nThe vehicle has passed this stage; these items can no longer be completed. They count in no total, progress or gate; the record is kept.\n47. Bagaj kilidi kontrolü\nNot applicable\nNot evaluated\n30. Yan ayna kapak klipsi\nNot applicable\nLast record: Not OK",
+   "checklist-inactive-toggle": null
+  },
+  "overflow": 0,
+  "raw_status_in_sections": [],
+  "errors": [],
+  "calls": []
+ }
+}
