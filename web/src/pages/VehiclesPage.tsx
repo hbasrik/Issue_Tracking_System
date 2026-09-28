@@ -18,6 +18,7 @@ import {
   vehicleLifecycleLabel,
 } from '../lib/vehicleStatus';
 import { VehicleListPrint } from '../components/print/VehicleListPrint';
+import { LoadErrorState } from '../components/LoadErrorState';
 
 const LIFECYCLES = ['', ...VEHICLE_LIFECYCLE_FILTER_VALUES] as const;
 
@@ -46,8 +47,9 @@ export default function VehiclesPage() {
 
   const [items, setItems] = useState<Vehicle[]>([]);
   const [total, setTotal] = useState(0);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<unknown>(null);
   const [loading, setLoading] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
   function patchParams(mutate: (next: URLSearchParams) => void) {
     setSearchParams(
@@ -88,7 +90,7 @@ export default function VehiclesPage() {
         setTotal(res.Total ?? 0);
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : t('vehicles.loadFailed'));
+          setError(err);
           setItems([]);
         }
       } finally {
@@ -98,7 +100,7 @@ export default function VehiclesPage() {
     return () => {
       cancelled = true;
     };
-  }, [vin, lifecycle, page, analysisStat, from, to, t]);
+  }, [vin, lifecycle, page, analysisStat, from, to, reloadKey]);
 
   const analysisKey = ANALYSIS_STAT_KEYS[analysisStat];
   const analysisLabel = analysisKey ? t(analysisKey) : undefined;
@@ -173,7 +175,7 @@ export default function VehiclesPage() {
         <VehicleListPrint disabled={loading} onCollect={collectPrint} />
       </div>
 
-      {analysisLabel && (
+      {analysisLabel && error == null && (
         <div
           className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-[var(--bg-surface-1)] px-4 py-3"
           style={{ borderColor: 'var(--border)' }}
@@ -249,12 +251,16 @@ export default function VehiclesPage() {
         </div>
       </div>
 
-      {error && (
-        <p className="mt-4 text-[13px]" style={{ color: 'var(--status-not-ok)' }}>
-          {error}
-        </p>
-      )}
-
+      {error != null ? (
+        <LoadErrorState
+          className="mt-4"
+          title={t('vehicles.loadFailed')}
+          error={error}
+          onRetry={() => setReloadKey((k) => k + 1)}
+          retrying={loading}
+        />
+      ) : (
+      <>
       <div className="mt-4">
         <MobileCardStack
           empty={
@@ -393,6 +399,8 @@ export default function VehiclesPage() {
           {t('common.next')}
         </button>
       </div>
+      </>
+      )}
     </section>
   );
 }
