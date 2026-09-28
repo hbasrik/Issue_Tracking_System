@@ -1040,10 +1040,10 @@ export default function IssuesPage() {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <IssueListPrint
-            matchTotal={exportCount}
+            matchTotal={countLabel}
             filters={printFilters}
             fetchIssues={fetchMatchingIssues}
-            disabled={exportBusy || exportCount === 0}
+            disabled={exportBusy || exportCount === 0 || listError != null}
           />
           <button
             type="button"

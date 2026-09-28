@@ -32,7 +32,8 @@ export function IssueListPrint({
   fetchIssues,
   disabled = false,
 }: {
-  matchTotal: number;
+  /** Count shown on the button; a string (e.g. "—") when the count is unknown. */
+  matchTotal: number | string;
   filters: string[];
   fetchIssues: () => Promise<Issue[]>;
   disabled?: boolean;
