@@ -1,9 +1,8 @@
 /**
  * Bundles the real mobile VehicleStationScreen for react-native-web.
- * Needs a throwaway install (not a project dependency):
- *   RNW_DIR=/tmp/karea-rnw with react, react-dom, react-native-web,
- *   react-native-svg, lucide-react-native, esbuild.
- * Usage: RNW_DIR=/tmp/karea-rnw node build.mjs <outdir>
+ * Dependencies come from mobile/ devDependencies (see ../../mobile-harness
+ * for the general harness); RNW_DIR overrides the package directory.
+ * Usage: node build.mjs <outdir>
  */
 import path from 'node:path';
 import fs from 'node:fs';
@@ -11,10 +10,10 @@ import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const rnw = process.env.RNW_DIR ?? '/tmp/karea-rnw';
+const rnw = process.env.RNW_DIR ?? path.resolve(here, '../../../../mobile');
 const req = createRequire(path.join(rnw, 'package.json'));
 const esbuild = req('esbuild');
-const outdir = path.resolve(process.argv[2] ?? path.join(rnw, 'out'));
+const outdir = path.resolve(process.argv[2] ?? 'vehicle-issue-layout-out');
 fs.mkdirSync(outdir, { recursive: true });
 
 const stub = path.join(here, 'stubs.tsx');
