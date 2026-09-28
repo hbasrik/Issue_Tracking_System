@@ -18,25 +18,6 @@ export const ISSUE_CARD_COMPACT_MAX_PX = 600;
 /** Photo frame aspect ratio (width / height). */
 export const ISSUE_CARD_PHOTO_ASPECT = 4 / 3;
 
-/** i18n message keys for severity labels — both apps must use these. */
-export const SEVERITY_MESSAGE_KEYS = {
-  CRITICAL: 'severity.critical',
-  MEDIUM: 'severity.medium',
-  LOW: 'severity.low',
-} as const;
-
-export type SeverityCode = keyof typeof SEVERITY_MESSAGE_KEYS;
-
-export function severityMessageKey(
-  severity: string,
-): (typeof SEVERITY_MESSAGE_KEYS)[SeverityCode] | null {
-  const v = severity.toUpperCase();
-  if (v === 'CRITICAL' || v === 'MEDIUM' || v === 'LOW') {
-    return SEVERITY_MESSAGE_KEYS[v];
-  }
-  return null;
-}
-
 /**
  * Business report timestamp for sorting and open-duration.
  * Prefer IssueDate (issue_list.issue_date — indexed day analytics, set at
