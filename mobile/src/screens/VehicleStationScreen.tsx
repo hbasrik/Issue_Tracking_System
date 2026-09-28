@@ -401,14 +401,17 @@ export default function VehicleStationScreen() {
           {issues.length === 0 ? (
             <Subtitle>{t('vehicles.noIssues')}</Subtitle>
           ) : (
-            issues.map((issue) => (
-              <IssueCard
-                key={issue.ID}
-                issue={issue}
-                hideVin
-                onPress={() => navigation.navigate('IssueDetail', { id: issue.ID })}
-              />
-            ))
+            <View style={{ gap: 12, marginTop: 12 }}>
+              {issues.map((issue) => (
+                <IssueCard
+                  key={issue.ID}
+                  issue={issue}
+                  hideVin
+                  showSeverityLabel={false}
+                  onPress={() => navigation.navigate('IssueDetail', { id: issue.ID })}
+                />
+              ))}
+            </View>
           )}
         </View>
         ) : null}
