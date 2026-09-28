@@ -4,6 +4,7 @@
  */
 
 import type { EOLGates } from '../../../shared/eolGates';
+import type { ShipmentWarningLike } from '../../../shared/shipmentReadiness';
 
 export type {
   EOLGates,
@@ -774,16 +775,7 @@ export interface ShipmentReadiness {
   warnings: ShipmentWarning[];
 }
 
-export interface ShipmentWarning {
-  code: string;
-  message: string;
-  checklist_type?: string;
-  item_id?: number;
-  item_status?: string;
-  issue_id?: number;
-  issue_status?: string;
-  remaining_count?: number;
-}
+export type ShipmentWarning = ShipmentWarningLike;
 
 export interface Vehicle {
   VIN: string;

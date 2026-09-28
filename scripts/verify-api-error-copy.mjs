@@ -14,17 +14,22 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const require = createRequire(join(root, 'web/package.json'));
 const esbuild = require('esbuild');
 
-const out = await esbuild.build({
-  entryPoints: [join(root, 'shared/i18n/index.ts')],
-  bundle: true,
-  format: 'esm',
-  platform: 'node',
-  write: false,
-});
-const mod = await import(
-  'data:text/javascript;base64,' + Buffer.from(out.outputFiles[0].text).toString('base64')
+async function load(entry) {
+  const out = await esbuild.build({
+    entryPoints: [join(root, entry)],
+    bundle: true,
+    format: 'esm',
+    platform: 'node',
+    write: false,
+  });
+  return import(
+    'data:text/javascript;base64,' + Buffer.from(out.outputFiles[0].text).toString('base64')
+  );
+}
+const { translate, translateApiError, describeApiError, tr, en } = await load(
+  'shared/i18n/index.ts',
 );
-const { translate, translateApiError, describeApiError, tr, en } = mod;
+const { shipmentWarningText } = await load('shared/shipmentReadiness.ts');
 
 class ApiError extends Error {
   constructor(status, body) {
@@ -92,6 +97,31 @@ check(!translateApiError(trT, e400).includes('req-4xx-1'), '4xx hides request id
 check(
   describeApiError(trT, new Error('Yerel çeviri')).message === 'Yerel çeviri',
   'client-built Error passes through',
+);
+
+// Pre-shipment warnings are built from structured fields, never the raw message.
+const issueLabel = (s) => (s === 'OPEN' ? 'Open' : s);
+const item = {
+  code: 'SHIPMENT_INCOMPLETE', message: 'RAW-TR', checklist_type: 'SHIPMENT',
+  item_id: 10, item_no: 1, item_text: 'Battery disconnect', item_status: 'PENDING',
+};
+check(
+  shipmentWarningText(item, enT, issueLabel) === 'Shipment checklist item 1 “Battery disconnect” — Pending',
+  `readiness item (en): "${shipmentWarningText(item, enT, issueLabel)}"`,
+);
+check(
+  shipmentWarningText({ ...item, remaining_count: 3 }, trT, issueLabel).endsWith('ve 3 madde daha'),
+  'readiness remaining count (tr)',
+);
+const failed = { code: 'TEST_INCOMPLETE', message: 'Test checklist okunamadı', checklist_type: 'TEST', read_failed: true };
+check(
+  shipmentWarningText(failed, enT, issueLabel) === 'Could not read the Test checklist; its state is unknown.',
+  `readiness read failure (en): "${shipmentWarningText(failed, enT, issueLabel)}"`,
+);
+const issue = { code: 'OPEN_ISSUE', message: 'RAW-TR', issue_id: 7, issue_status: 'OPEN', issue_description: 'scratch' };
+check(
+  shipmentWarningText(issue, enT, issueLabel) === 'Open issue #7 (Open): scratch',
+  `readiness open issue (en): "${shipmentWarningText(issue, enT, issueLabel)}"`,
 );
 
 if (failures) {

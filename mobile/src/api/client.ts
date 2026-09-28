@@ -5,6 +5,7 @@
 
 import { File as ExpoFile } from 'expo-file-system';
 import type { EOLGates } from '../../../shared/eolGates';
+import type { ShipmentWarningLike } from '../../../shared/shipmentReadiness';
 import { isTransportError } from '../../../shared/networkError';
 import { noteTransportFailure, noteTransportSuccess } from '../offline/connectivity';
 
@@ -202,7 +203,7 @@ export interface ShipmentReadiness {
   vin: string;
   status: string;
   ready: boolean;
-  warnings: { code: string; message: string }[];
+  warnings: ShipmentWarningLike[];
 }
 
 export interface StationStepItem {

@@ -50,6 +50,8 @@ import { apiErrorMessage } from '../lib/password';
 import { loadFailureMessage } from '../offline/userFacingError';
 import { useReferenceCache } from '../offline/ReferenceCacheProvider';
 import { isTransportError } from '../../../shared/networkError';
+import { shipmentWarningText } from '../../../shared/shipmentReadiness';
+import { issueStatusLabel } from '../lib/issueStatus';
 import type { RootStackParamList } from '../navigation/types';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -355,7 +357,7 @@ export default function VehicleStationScreen() {
                   key={`${w.code}-${i}`}
                   style={{ color: tokens.textPrimary, fontSize: 13, marginTop: 6 }}
                 >
-                  • {w.message}
+                  • {shipmentWarningText(w, t, (s) => issueStatusLabel(s, t))}
                 </Text>
               ))}
             </Card>
