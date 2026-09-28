@@ -92,6 +92,77 @@ kabul edip "hiç veri yok" durumundan kaçındık.
 **Runbook** — "Şu olursa şunu yap" adımlarını içeren işletme belgesi.
 **Bizde:** B6 kapsamında üretim veritabanı kurulumu için yazılacak.
 
+### Çalışma yöntemleri
+
+**Agile (çevik)** — Uzun planlar yerine kısa döngülerle ilerleyip
+geri bildirime göre yön değiştirmeyi esas alan yaklaşım.
+*Aylar sonra yanlış şeyi teslim etme riskini azaltır.* Scrum ve
+Kanban bunun iki farklı uygulaması.
+
+**Waterfall (şelale)** — Önce tüm gereksinimler yazılır, sonra
+tasarlanır, sonra kodlanır, en son test edilir. *Agile'ın karşıtı.*
+Gereksinimlerin gerçekten sabit olduğu işlerde hâlâ kullanılır.
+
+**Scrum** — Sabit uzunlukta koşularla ilerleyen çerçeve.
+*Ekibe ritim ve öngörülebilirlik verir.* Kapsam koşu boyunca
+dondurulur.
+
+**Sprint (koşu)** — Scrum'daki sabit süre, genelde 1-4 hafta.
+Başında kapsam taahhüt edilir, içinde değiştirilmez.
+
+**Timebox** — Bir işe önceden ayrılan, aşılmayacak süre.
+*"Bitene kadar" yerine "şu kadar süre" demek; sonu gelmeyen
+araştırmaları önler.*
+
+**Scrum törenleri** — Koşu planlama (ne yapılacak), günlük ayak
+üstü toplantı (kim nerede takıldı), koşu sonu gözden geçirme
+(ne çıktı), retrospektif (süreç nasıl iyileştirilir).
+
+**Retrospective (retrospektif)** — Ekibin işi değil **çalışma
+biçimini** konuştuğu toplantı. *Aynı hatanın tekrarını önler.*
+
+**Product Owner (ürün sahibi)** — Neyin ne zaman yapılacağına
+karar veren kişi. Biriktirme listesinin önceliği ondadır.
+
+**Scrum Master** — Süreci işleten ve engelleri kaldıran kişi.
+Yönetici değildir.
+
+**Kanban** — Sabit koşu ve tören olmadan, sürekli akışla ilerleyen
+yöntem. *Bir iş biter, sıradaki çekilir.* Öncelik her an
+değişebilir. **Bu projede fiilen kullandığımız yöntem bu.**
+
+**WIP limit (eşzamanlı iş sınırı)** — Aynı anda kaç işin açık
+olabileceğinin sınırı. *Her şeye başlayıp hiçbirini bitirmemeyi
+engeller.* Bizde fiilen 1: bir prompt biter, sonraki girilir.
+
+**Velocity (hız)** — Bir ekibin koşu başına bitirdiği iş miktarı.
+Scrum'a özgü; Kanban'da kullanılmaz.
+
+**Story point (iş puanı)** — İşin büyüklüğünü saat yerine göreli
+bir sayıyla ifade etme yöntemi. *Süre tahmininin yanılma payını
+kabul eder.*
+
+**Cycle time / lead time** — Bir işin başlamasından bitmesine
+(cycle) ya da talep edilmesinden teslimine (lead) kadar geçen
+süre. *Kanban'ın hız yerine baktığı ölçüler.*
+
+**Epic / story / task** — Büyükten küçüğe iş kırılımı. Epic birkaç
+sprint sürebilecek büyük bir başlık, story kullanıcıya değer üreten
+bir parça, task onun teknik adımı.
+
+**Backlog refinement (liste bakımı)** — Biriktirme listesindeki
+maddelerin yapılmadan önce netleştirilmesi. *Bizde bu, prompt
+yazmadan önce yaptığımız tartışma.*
+
+**Definition of Ready** — Bir işin başlanabilir sayılması için
+gereken koşullar. Definition of Done'ın başlangıçtaki karşılığı.
+
+**Burndown / burnup chart** — Kalan işin (burndown) veya
+tamamlanan işin (burnup) zamana göre grafiği.
+
+**Ceremony (tören)** — Düzenli tekrarlanan toplantılara verilen
+genel ad. Tek kişilik ekiplerde çoğu gereksiz yüktür.
+
 ---
 
 # 2. Mimari ve kod organizasyonu
