@@ -235,6 +235,8 @@ export interface ChecklistItem {
   SectionKey?: string | null;
   SectionSort?: number | null;
   IsActive?: boolean;
+  /** Stage passed, never completed — shown collapsed, counts nowhere. */
+  StageClosed?: boolean;
   ProgressID?: number | null;
   CheckerName?: string;
   CheckDate?: string | null;

@@ -629,6 +629,10 @@ export const tr = {
   'checklist.inactiveBadge': 'Pasif',
   'checklist.inactiveHint':
     'Şablondan kaldırıldı; geçmiş işaretler korunur, kapıyı etkilemez.',
+  'checklist.stageClosedSection': 'Bu aşama tamamlandı ({n})',
+  'checklist.stageClosedBadge': 'Uygulanmaz',
+  'checklist.stageClosedHint':
+    'Araç bu aşamayı geçti; bu maddeler artık tamamlanamaz. Hiçbir sayıya, ilerlemeye veya kapıya dahil değildir; kayıt korunur.',
 
   'eol.title': 'EoL iş akışı',
   'eol.loading': 'EoL yükleniyor…',
@@ -2236,6 +2240,10 @@ export const en: Record<MessageKey, string> = {
   'checklist.inactiveBadge': 'Inactive',
   'checklist.inactiveHint':
     'Removed from the template; past ticks are kept and do not affect gates.',
+  'checklist.stageClosedSection': 'This stage is complete ({n})',
+  'checklist.stageClosedBadge': 'Not applicable',
+  'checklist.stageClosedHint':
+    'The vehicle has passed this stage; these items can no longer be completed. They count in no total, progress or gate; the record is kept.',
   'checklist.missingItems': 'Missing items',
   'checklist.progress': '{done} / {total} complete',
   'checklist.progressCount': '{done} / {total} complete',

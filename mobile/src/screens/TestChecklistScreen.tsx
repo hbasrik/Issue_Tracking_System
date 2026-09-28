@@ -16,6 +16,7 @@ import {
   Title,
 } from '../components/ui';
 import { ActionStamp } from '../components/ActionStamp';
+import { ChecklistCollapsedSection } from '../components/ChecklistCollapsedSection';
 import { checklistActorLines } from '../lib/actionStamp';
 import { apiErrorMessage } from '../lib/password';
 import { loadFailureMessage } from '../offline/userFacingError';
@@ -46,7 +47,6 @@ export default function TestChecklistScreen() {
   const [error, setError] = useState<string | null>(null);
   const [offlineHint, setOfflineHint] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<number | null>(null);
-  const [inactiveOpen, setInactiveOpen] = useState(false);
 
   const load = useCallback(async () => {
     setError(null);
@@ -71,7 +71,7 @@ export default function TestChecklistScreen() {
     }, [load]),
   );
 
-  const { active: activeItems, inactiveHistorical } = useMemo(
+  const { active: activeItems, stageClosed, inactiveHistorical } = useMemo(
     () => splitChecklistByActive(items),
     [items],
   );
@@ -168,60 +168,20 @@ export default function TestChecklistScreen() {
           </View>
         ))}
 
-        {inactiveHistorical.length > 0 ? (
-          <Card>
-            <Pressable
-              onPress={() => setInactiveOpen((o) => !o)}
-              accessibilityRole="button"
-              testID="checklist-inactive-toggle"
-            >
-              <Text style={{ color: tokens.textSecondary, fontWeight: '600', fontSize: 14 }}>
-                {t('checklist.inactiveSection', { n: inactiveHistorical.length })}
-                {inactiveOpen ? ' ▾' : ' ▸'}
-              </Text>
-            </Pressable>
-            {inactiveOpen ? (
-              <View style={{ marginTop: 8 }}>
-                <Text style={{ color: tokens.textSecondary, fontSize: 12, marginBottom: 8 }}>
-                  {t('checklist.inactiveHint')}
-                </Text>
-                {inactiveHistorical.map((item) => (
-                  <View
-                    key={item.ItemID}
-                    style={{
-                      marginTop: 8,
-                      paddingVertical: 8,
-                      borderTopWidth: 1,
-                      borderTopColor: tokens.border,
-                      opacity: 0.7,
-                    }}
-                  >
-                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
-                      <Text style={{ color: tokens.textPrimary, fontSize: 14, flex: 1 }}>
-                        {item.ItemNo}. {item.ItemText}
-                      </Text>
-                      <View
-                        style={{
-                          paddingHorizontal: 8,
-                          paddingVertical: 2,
-                          borderRadius: 999,
-                          backgroundColor: tokens.border,
-                        }}
-                      >
-                        <Text style={{ color: tokens.textSecondary, fontSize: 11, fontWeight: '700' }}>
-                          {t('checklist.inactiveBadge')}
-                        </Text>
-                      </View>
-                    </View>
-                    <Text style={{ color: tokens.textSecondary, fontSize: 12, marginTop: 4 }}>
-                      {item.Status}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            ) : null}
-          </Card>
-        ) : null}
+        <ChecklistCollapsedSection
+          title={t('checklist.stageClosedSection', { n: stageClosed.length })}
+          hint={t('checklist.stageClosedHint')}
+          badge={t('checklist.stageClosedBadge')}
+          items={stageClosed}
+          testID="checklist-stage-closed-toggle"
+        />
+        <ChecklistCollapsedSection
+          title={t('checklist.inactiveSection', { n: inactiveHistorical.length })}
+          hint={t('checklist.inactiveHint')}
+          badge={t('checklist.inactiveBadge')}
+          items={inactiveHistorical}
+          testID="checklist-inactive-toggle"
+        />
       </ScrollView>
 
       <View

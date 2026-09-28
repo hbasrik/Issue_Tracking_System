@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   api,
   ApiError,
@@ -10,7 +10,7 @@ import { useI18n } from '../i18n';
 import { StatusBadge } from './StatusBadge';
 import { ActionStamp } from './ActionStamp';
 import { checklistActorLines } from '../lib/actionStamp';
-import { statusColors } from '../theme/tokens';
+import { inkOn, statusColors } from '../theme/tokens';
 import { useAuth } from '../auth/AuthProvider';
 import { Perm } from '../auth/permissions';
 import { ChecklistPrint } from './print/ChecklistPrint';
@@ -124,7 +124,7 @@ export function ChecklistPanel({
     () => filterByEolPhase(items, eolPhase),
     [items, eolPhase],
   );
-  const { active: activeItems, inactiveHistorical } = useMemo(
+  const { active: activeItems, stageClosed, inactiveHistorical } = useMemo(
     () => splitChecklistByActive(phaseItems),
     [phaseItems],
   );
@@ -146,7 +146,6 @@ export function ChecklistPanel({
 
   const editor = type === 'eol' ? 'eol' : 'yesno';
   const readOnly = locked || !canEdit;
-  const [inactiveOpen, setInactiveOpen] = useState(false);
 
   return (
     <div
@@ -158,6 +157,7 @@ export function ChecklistPanel({
       data-checklist-active-total={counts.total}
       data-checklist-active-remaining={counts.remaining}
       data-checklist-inactive-count={inactiveHistorical.length}
+      data-checklist-stage-closed-count={stageClosed.length}
     >
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-lg font-semibold">{title}</h2>
@@ -235,42 +235,89 @@ export function ChecklistPanel({
           {t('checklist.emptyStage')}
         </p>
       )}
-      {inactiveHistorical.length > 0 ? (
-        <details
-          className="mt-4 rounded-lg border"
-          style={{ borderColor: 'var(--border)' }}
-          open={inactiveOpen}
-          onToggle={(e) => setInactiveOpen((e.target as HTMLDetailsElement).open)}
-          data-checklist-inactive-section
-        >
-          <summary className="cursor-pointer select-none px-3 py-2 text-[13px] font-semibold text-[var(--text-secondary)]">
-            {t('checklist.inactiveSection', { n: inactiveHistorical.length })}
-          </summary>
-          <p className="border-t px-3 py-2 text-[12px] text-[var(--text-secondary)]" style={{ borderColor: 'var(--border)' }}>
-            {t('checklist.inactiveHint')}
-          </p>
-          <ul className="divide-y border-t" style={{ borderColor: 'var(--border)' }}>
-            {inactiveHistorical.map((item) => (
-              <li
-                key={item.ItemID}
-                className="flex flex-col gap-1 px-3 py-3 opacity-70"
-                data-checklist-inactive-item={item.ItemID}
-              >
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-[14px] text-[var(--text-primary)]">
-                    {item.ItemNo}. {item.ItemText}
-                  </span>
-                  <ActiveBadge active={false} />
-                </div>
-                <p className="text-[12px] text-[var(--text-secondary)]">
-                  {item.Status}
-                </p>
-              </li>
-            ))}
-          </ul>
-        </details>
-      ) : null}
+      <CollapsedItemsSection
+        kind="stage-closed"
+        title={t('checklist.stageClosedSection', { n: stageClosed.length })}
+        hint={t('checklist.stageClosedHint')}
+        badge={<MutedBadge label={t('checklist.stageClosedBadge')} />}
+        items={stageClosed}
+      />
+      <CollapsedItemsSection
+        kind="inactive"
+        title={t('checklist.inactiveSection', { n: inactiveHistorical.length })}
+        hint={t('checklist.inactiveHint')}
+        badge={<ActiveBadge active={false} />}
+        items={inactiveHistorical}
+      />
     </div>
+  );
+}
+
+/** Read-only, collapsed-by-default list of items outside the work queue. */
+function CollapsedItemsSection({
+  kind,
+  title,
+  hint,
+  badge,
+  items,
+}: {
+  kind: 'stage-closed' | 'inactive';
+  title: string;
+  hint: string;
+  badge: ReactNode;
+  items: ChecklistItem[];
+}) {
+  const [open, setOpen] = useState(false);
+  if (items.length === 0) return null;
+  return (
+    <details
+      className="mt-4 rounded-lg border"
+      style={{ borderColor: 'var(--border)' }}
+      open={open}
+      onToggle={(e) => setOpen((e.target as HTMLDetailsElement).open)}
+      {...{ [`data-checklist-${kind}-section`]: '' }}
+    >
+      <summary className="cursor-pointer select-none px-3 py-2 text-[13px] font-semibold text-[var(--text-secondary)]">
+        {title}
+      </summary>
+      <p className="border-t px-3 py-2 text-[12px] text-[var(--text-secondary)]" style={{ borderColor: 'var(--border)' }}>
+        {hint}
+      </p>
+      <ul className="divide-y border-t" style={{ borderColor: 'var(--border)' }}>
+        {items.map((item) => (
+          <li
+            key={item.ItemID}
+            className="flex flex-col gap-1 px-3 py-3 opacity-70"
+            {...{ [`data-checklist-${kind}-item`]: item.ItemID }}
+          >
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[14px] text-[var(--text-primary)]">
+                {item.ItemNo}. {item.ItemText}
+              </span>
+              {badge}
+            </div>
+            <p className="text-[12px] text-[var(--text-secondary)]">
+              {item.Status}
+            </p>
+          </li>
+        ))}
+      </ul>
+    </details>
+  );
+}
+
+function MutedBadge({ label }: { label: string }) {
+  return (
+    <span
+      className="inline-flex items-center rounded-full px-2.5 py-1 text-[12px] font-semibold uppercase tracking-wide ring-1 ring-inset"
+      style={{
+        color: inkOn(statusColors.pending),
+        backgroundColor: statusColors.pending,
+        boxShadow: '0 0 0 1px color-mix(in srgb, var(--text-secondary) 35%, transparent)',
+      }}
+    >
+      {label}
+    </span>
   );
 }
 
