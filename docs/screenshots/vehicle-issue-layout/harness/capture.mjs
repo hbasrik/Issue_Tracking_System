@@ -19,7 +19,9 @@ let failed = false;
 
 for (const width of [375, 390, 430]) {
   const page = await browser.newPage({
-    viewport: { width, height: 800 },
+    // Tall viewport so the ScrollView lays out everything without CSS overrides
+    // (overriding overflow would defeat numberOfLines clamping).
+    viewport: { width, height: 2600 },
     deviceScaleFactor: 2,
   });
   const errors = [];
@@ -30,10 +32,6 @@ for (const width of [375, 390, 430]) {
     console.error('page errors', errors);
     failed = true;
   }
-  // Let the ScrollView content define the page height so one shot covers the list.
-  await page.addStyleTag({
-    content: 'html,body,#root{height:auto!important;min-height:0!important} *{overflow-y:visible!important}',
-  });
   const overflow = await page.evaluate(() => {
     const vw = document.documentElement.clientWidth;
     const bad = [];
@@ -41,6 +39,17 @@ for (const width of [375, 390, 430]) {
       const r = el.getBoundingClientRect();
       if (r.width > 0 && (r.right > vw + 0.5 || r.left < -0.5)) {
         bad.push(`${el.textContent?.slice(0, 40)} [${Math.round(r.left)},${Math.round(r.right)}]`);
+      }
+    }
+    // Nothing may spill out of a tappable card/row, horizontally or vertically.
+    for (const card of document.querySelectorAll('[role="button"]')) {
+      const box = card.getBoundingClientRect();
+      for (const el of card.querySelectorAll('*')) {
+        const r = el.getBoundingClientRect();
+        if (r.width === 0 || r.height === 0) continue;
+        if (r.right > box.right + 1 || r.left < box.left - 1 || r.bottom > box.bottom + 1 || r.top < box.top - 1) {
+          bad.push(`in-card: ${(el.textContent ?? '').slice(0, 40)}`);
+        }
       }
     }
     return { vw, scrollW: document.documentElement.scrollWidth, bad: bad.slice(0, 5) };
