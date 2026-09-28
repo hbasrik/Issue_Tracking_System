@@ -15,6 +15,8 @@
 
 **Etki:** `phases`→`stations`, `checkpoints`→`station_steps`, `production_phase_progress`→`vehicle_station_step_progress`, `vehicles.current_phase`→`vehicles.current_station_id`. Mevcut trigger mantığı (tamamlanma % hesaplama, soft-warning) aynı kalır, sadece tablo/kolon adları değişir.
 
+**Güncelleme (2026-09-28):** API'nin döndürdüğü tamamlanma % artık istasyon adımları + checklist maddelerinin uygulanabilir kümesinden hesaplanır — Karar 15.
+
 ## Karar 2 — EOL: Tek Kapı (13 madde) → 3 Fazlı İş Akışı (16 madde)
 
 **Çelişki:** Eski EOL: tek hard-block kapı, 13 madde, hepsi OK/CONDITIONAL_OK olunca araç çıkar. Yeni spec: Şube → Depo → Evrak olmak üzere 3 aşamalı, 16 maddelik, her aşamanın kendi onay/sevk/serbest bırakma checkbox'ları olan bir iş akışı.
@@ -179,6 +181,54 @@ uyarılarına `item_no`, `item_text`, `issue_description`, `read_failed`
 alanları eklendi; istemciler satırı bu alanlardan çevirerek kurar.
 `message` eski istemciler için Türkçe yedek olarak kalır; checklist okuma
 hatasının iç metni artık yanıtta değil, yalnız logda.
+
+## Karar 15 — Aşama uygulanabilirliği: yeni madde, uyarı ve ilerleme tek kural (NEW — 2026-09-28)
+
+**Gerekçe:** Şablona sonradan eklenen maddeler aşamasını geçmiş araçlara da
+dağıtılıyordu (`incomplete` kapsamı PENDING satırı olan teslim edilmiş aracı da
+seçiyordu) ve sevk öncesi uyarı, katalogdaki her aktif maddeyi araç durumuna
+bakmadan "bekliyor" listeliyordu. Teslim edilmiş bir araç %100 görünürken
+"şu maddeleri işaretleyin" diyordu; ilerleme % yalnız istasyon adımlarını,
+uyarı ise checklist'leri sayıyordu.
+
+**Aşama:** Her madde, onu bekleyen kapının aşamasına aittir (migration 0022):
+istasyon adımları + TEST + SHIPMENT + EOL BRANCH → şubeden sevk
+(`branch_shipped_at`); EOL DEPOT → depodan serbest bırakma
+(`depot_released_at`). Damga doluysa veya araç `DELIVERED`/`SHIPPED` ise o
+aşama geçilmiştir.
+
+**Karar — uygulanabilir küme** (`backend/internal/repository/postgres/stage_applicability.go`, tek kaynak):
+- Aşama geçilmemiş: her aktif madde sayılır; satırı olmayan madde PENDING
+  sayılır (kapı ile aynı).
+- Aşama geçilmiş, teslim edilmemiş: hiç değerlendirilmemiş satırlar (satır yok
+  veya PENDING) sayılmaz — aşamadan sonra eklenmişlerdir. Değerlendirilmiş
+  NOT_OK/REWORK satırları gerçek bulgudur, sayılmaya devam eder.
+- Teslim edilmiş (`DELIVERED`/`SHIPPED`): yalnız geçen (OK/CONDITIONAL_OK)
+  satırlar kalır; geçmiş donmuştur.
+
+**Uygulama:**
+- **Dağıtım:** `InsertPendingForVehicles` yeni maddeyi yalnız o maddenin
+  aşamasını henüz geçmemiş araçlara yazar. Kapsam (`not_started` /
+  `incomplete`) bu kümeyi daraltmaya devam eder; aşama kuralı zorunlu filtredir.
+  Etki önizlemesi (`/items/impact?action=create&eol_phase=`) ve eksik araç
+  listesi aynı kuralı kullanır. Hatta duran araç yeni SHIPMENT maddesini alır;
+  şubeye sevk edilmiş veya teslim edilmiş araç almaz.
+- **Sevk öncesi uyarı:** `shipment-readiness` checklist maddelerini uygulanabilir
+  kümeden okur; `DELIVERED`/`SHIPPED` araç `ready: true`, uyarısız döner.
+  Açık istasyon adımları `STATION_STEPS_INCOMPLETE` (`remaining_count`) olarak
+  eklenir. Web ve mobil bu araçlarda paneli göstermez.
+- **İlerleme %:** Karar 1'deki "yalnız istasyon adımı" tanımının yerine geçer:
+  `geçen / uygulanabilir` (istasyon adımları + checklist maddeleri), okuma
+  anında hesaplanır (`vehicleProgressSQL`). `%100 ⇔ açık madde yok`.
+  `vehicles.total_progress_percentage` kolonu yalnız istasyon adımlarını sayan
+  eski önbellek olarak durur (trigger yazmaya devam eder); API'deki
+  `TotalProgressPercentage` alanı artık hesaplanan değeri taşır.
+  `vw_vehicle_completion_split` view'ı hâlâ kolonu okur (uygulama kodu bu view'ı
+  kullanmıyor).
+
+**Mevcut yanlış satırlar:** Bu kararla dokunulmadı. Uygulanabilir kümeye
+girmedikleri için uyarıda ve ilerlemede görünmezler. Silme / "uygulanmaz"
+işaretleme kararı açık (bkz. `docs/16`).
 
 ## Değişmeyen / Yeniden Kullanılacaklar
 
