@@ -452,10 +452,12 @@ export const api = {
     templateId: number,
     action: 'create' | 'deactivate' | 'activate' | 'delete',
     itemId?: number,
+    eolPhase?: 'BRANCH' | 'DEPOT' | null,
   ) {
     if (action === 'create') {
+      const phase = eolPhase ? `&eol_phase=${eolPhase}` : '';
       return request<TemplateItemPropagationImpact>(
-        `/checklist-templates/${templateId}/items/impact?action=create`,
+        `/checklist-templates/${templateId}/items/impact?action=create${phase}`,
       );
     }
     return request<TemplateItemPropagationImpact>(

@@ -176,7 +176,12 @@ export default function TemplatesPage() {
     setBusy(true);
     setError(null);
     try {
-      const impact = await api.previewChecklistTemplateItemImpact(selected.ID, 'create');
+      const impact = await api.previewChecklistTemplateItemImpact(
+        selected.ID,
+        'create',
+        undefined,
+        selected.Type === 'EOL' ? newPhase : null,
+      );
       setPropagate({ kind: 'create', impact });
     } catch (err) {
       setError(err instanceof ApiError ? apiErrorMessage(err, t) : t('templates.addFailed'));
