@@ -18,7 +18,8 @@ import {
   type Vehicle,
   type VehicleStatusHistoryEntry,
 } from '../lib/api';
-import { apiErrorMessage } from '../lib/apiErrors';
+import { ApiErrorText } from '../components/ApiErrorText';
+import { LoadErrorState } from '../components/LoadErrorState';
 import { useAuth } from '../auth/AuthProvider';
 import { Perm } from '../auth/permissions';
 import { useI18n } from '../i18n';
@@ -64,7 +65,9 @@ export default function VehicleDetailPage() {
   });
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
   const [stations, setStations] = useState<Station[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<unknown>(null);
+  const [reloadKey, setReloadKey] = useState(0);
+  const [error, setError] = useState<unknown>(null);
   const [holdReason, setHoldReason] = useState('');
   const [busy, setBusy] = useState(false);
   const [readiness, setReadiness] = useState<ShipmentReadiness | null>(null);
@@ -97,31 +100,34 @@ export default function VehicleDetailPage() {
     let cancelled = false;
     (async () => {
       setError(null);
+      setLoadError(null);
       try {
+        let historyFailed = false;
         const [v, stationRes, ready, historyRes] = await Promise.all([
           api.getVehicle(vin),
           api.listStations().catch(() => ({ items: [] as Station[] })),
           has(Perm.ChecklistShipmentView)
             ? api.shipmentReadiness(vin).catch(() => null)
             : Promise.resolve(null),
-          api.getVehicleStatusHistory(vin).catch(() => ({ items: [] as VehicleStatusHistoryEntry[] })),
+          api.getVehicleStatusHistory(vin).catch(() => {
+            historyFailed = true;
+            return { items: [] as VehicleStatusHistoryEntry[] };
+          }),
         ]);
         if (cancelled) return;
         setVehicle(v);
         setStations(stationRes.items ?? []);
         setReadiness(ready);
         setStatusHistory(historyRes.items ?? []);
-        setHistoryError(null);
+        setHistoryError(historyFailed ? t('vehicles.historyFailed') : null);
       } catch (err) {
-        if (!cancelled) {
-          setError(err instanceof Error ? err.message : t('vehicles.loadOneFailed'));
-        }
+        if (!cancelled) setLoadError(err);
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [vin, has, t]);
+  }, [vin, has, t, reloadKey]);
 
   async function placeOnHold() {
     if (!vehicle) return;
@@ -140,7 +146,7 @@ export default function VehicleDetailPage() {
       setStatusHistory(historyRes.items ?? []);
       setHistoryError(null);
     } catch (err) {
-      setError(err instanceof Error ? apiErrorMessage(err, t) : t('vehicles.holdFailed'));
+      setError(err instanceof Error ? err : t('vehicles.holdFailed'));
     } finally {
       setBusy(false);
     }
@@ -163,7 +169,7 @@ export default function VehicleDetailPage() {
       setStatusHistory(historyRes.items ?? []);
       setHistoryError(null);
     } catch (err) {
-      setError(err instanceof Error ? apiErrorMessage(err, t) : t('vehicles.holdFailed'));
+      setError(err instanceof Error ? err : t('vehicles.holdFailed'));
     } finally {
       setBusy(false);
     }
@@ -173,15 +179,18 @@ export default function VehicleDetailPage() {
   const activeTab = visibleTabs.some((tabItem) => tabItem.id === tab) ? tab : 'overview';
   const manageHold = has(Perm.AdminManageMasters);
 
-  if (error && !vehicle) {
+  if (loadError != null) {
     return (
       <section>
         <Link to="/vehicles" className="text-[13px] text-[var(--accent)]">
           {t('vehicles.backToList')}
         </Link>
-        <p className="mt-4" style={{ color: 'var(--status-not-ok)' }}>
-          {error}
-        </p>
+        <LoadErrorState
+          className="mt-4"
+          title={t('vehicles.loadOneFailed')}
+          error={loadError}
+          onRetry={() => setReloadKey((k) => k + 1)}
+        />
       </section>
     );
   }
@@ -314,10 +323,11 @@ export default function VehicleDetailPage() {
                   </button>
                 </div>
               ) : null}
-              {error && (
-                <p className="mt-3 text-[13px]" style={{ color: 'var(--status-not-ok)' }}>
-                  {error}
-                </p>
+              {error != null && (
+                <ApiErrorText
+                  error={error}
+                  className="mt-3 text-[13px] text-[var(--status-not-ok)]"
+                />
               )}
               {lastStamp ? <ActionStamp lines={[lastStamp]} /> : null}
               <div className="mt-6">
