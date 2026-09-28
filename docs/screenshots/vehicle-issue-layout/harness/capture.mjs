@@ -58,6 +58,15 @@ for (const width of [375, 390, 430]) {
   console.log(`${prefix} ${width}px overflow`, ok ? 'none' : JSON.stringify(overflow));
   if (!ok && prefix === 'after') failed = true;
 
+  const sev = await page.evaluate(() => ({
+    visibleText: /\b(Kritik|Orta|Düşük)\b/.test(document.body.innerText),
+    a11y: [...document.querySelectorAll('[role="img"][aria-label]')]
+      .map((e) => e.getAttribute('aria-label'))
+      .filter((l) => /^(Kritik|Orta|Düşük)$/.test(l)),
+  }));
+  console.log(`${prefix} ${width}px severity text visible: ${sev.visibleText}; icon labels: ${sev.a11y.join(',')}`);
+  if (prefix === 'after' && (sev.visibleText || sev.a11y.length !== 4)) failed = true;
+
   const issuesTop = await page.locator('text=Sol ön kapı').first().boundingBox();
   const full = path.join(outDir, `${prefix}-${width}.png`);
   await page.screenshot({

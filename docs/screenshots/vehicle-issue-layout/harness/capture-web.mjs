@@ -57,14 +57,17 @@ async function capture(route, name, width, waitText) {
   });
   await page.goto(`${WEB}${route}`);
   await page.getByText(waitText).first().waitFor({ timeout: 20_000 });
-  await page.waitForTimeout(300);
+  // Measure only after fonts and the virtualized grid have settled.
+  await page.evaluate(() => document.fonts.ready);
+  await page.waitForTimeout(800);
   const overflow = await page.evaluate(() => {
     const bad = [];
     for (const card of document.querySelectorAll('article, [data-station-row]')) {
       const box = card.getBoundingClientRect();
       for (const el of card.querySelectorAll('*')) {
         const r = el.getBoundingClientRect();
-        if (r.width > 0 && (r.right > box.right + 0.5 || r.left < box.left - 0.5)) {
+        if (r.width === 0 || r.height === 0 || el.closest('.sr-only')) continue;
+        if (r.right > box.right + 1 || r.left < box.left - 1 || r.bottom > box.bottom + 1 || r.top < box.top - 1) {
           bad.push((el.textContent ?? '').slice(0, 30));
         }
       }
@@ -74,6 +77,37 @@ async function capture(route, name, width, waitText) {
   const ok = !overflow.docOverflow && overflow.bad.length === 0;
   console.log(`${prefix} web ${name} ${width}px overflow`, ok ? 'none' : JSON.stringify(overflow));
   if (!ok && prefix === 'after') failed = true;
+  if (name !== 'stations') {
+    const layout = await page.evaluate(() =>
+      [...document.querySelectorAll('article')].map((card) => {
+        const bars = card.querySelector('[data-severity-bars]');
+        const badge = card.querySelector('span.rounded-full');
+        const desc = card.querySelector('p');
+        const g = bars.parentElement.getBoundingClientRect();
+        const s = badge.getBoundingClientRect();
+        const d = desc.getBoundingClientRect();
+        return {
+          text: card.innerText,
+          filled: Number(bars.getAttribute('data-severity-bars')),
+          // Status on the description's row, right edge shared with severity.
+          statusTopRight: Math.abs(s.top - d.top) <= 6 && s.left >= d.right,
+          barsBottomRight: g.top > s.bottom && Math.abs(g.right - s.right) <= 2,
+        };
+      }),
+    );
+    const sevWords = /\b(Kritik|Orta|Düşük)\b/;
+    const expectLabel = name === 'issues-board';
+    const labelsOk = layout.every((c) => sevWords.test(c.text) === expectLabel);
+    const cornersOk = layout.every((c) => c.statusTopRight && c.barsBottomRight);
+    if (!cornersOk) {
+      console.log(JSON.stringify(layout.filter((c) => !(c.statusTopRight && c.barsBottomRight))));
+    }
+    const filled = layout.map((c) => c.filled).sort().join(',');
+    console.log(
+      `${prefix} web ${name} ${width}px severity text ${expectLabel ? 'shown' : 'hidden'}: ${labelsOk}; corners: ${cornersOk}; filled bars: ${filled}`,
+    );
+    if (prefix === 'after' && (!labelsOk || !cornersOk || filled !== '1,2,2,3')) failed = true;
+  }
   const target = page.getByText(waitText).first();
   await target.scrollIntoViewIfNeeded();
   const out = path.join(outDir, `${prefix}-web-${name}-${width}.png`);
