@@ -1,0 +1,182 @@
+{
+ "station-line-tr-375": {
+  "sections": {
+   "checklist-stage-closed-toggle": null,
+   "checklist-inactive-toggle": null
+  },
+  "overflow": 0,
+  "raw_status_in_sections": [],
+  "errors": [],
+  "calls": []
+ },
+ "station-line-tr-390": {
+  "sections": {
+   "checklist-stage-closed-toggle": null,
+   "checklist-inactive-toggle": null
+  },
+  "overflow": 0,
+  "raw_status_in_sections": [],
+  "errors": [],
+  "calls": []
+ },
+ "station-line-tr-430": {
+  "sections": {
+   "checklist-stage-closed-toggle": null,
+   "checklist-inactive-toggle": null
+  },
+  "overflow": 0,
+  "raw_status_in_sections": [],
+  "errors": [],
+  "calls": []
+ },
+ "shipment-passed-tr-375": {
+  "sections": {
+   "checklist-stage-closed-toggle": "Bu aşama tamamlandı (1) ▾\nAraç bu aşamayı geçti; bu maddeler artık tamamlanamaz. Hiçbir sayıya, ilerlemeye veya kapıya dahil değildir; kayıt korunur.\n47. Bagaj kilidi kontrolü\nUygulanmaz\nDeğerlendirilmedi",
+   "checklist-inactive-toggle": "Artık gerekli olmayan maddeler (1) ▾\nŞablondan kaldırıldı; geçmiş işaretler korunur, kapıyı etkilemez.\n12. Eski tampon braketi kontrolü\nPasif\nSon kayıt: OK"
+  },
+  "overflow": 0,
+  "raw_status_in_sections": [],
+  "errors": [],
+  "calls": []
+ },
+ "shipment-passed-tr-390": {
+  "sections": {
+   "checklist-stage-closed-toggle": "Bu aşama tamamlandı (1) ▾\nAraç bu aşamayı geçti; bu maddeler artık tamamlanamaz. Hiçbir sayıya, ilerlemeye veya kapıya dahil değildir; kayıt korunur.\n47. Bagaj kilidi kontrolü\nUygulanmaz\nDeğerlendirilmedi",
+   "checklist-inactive-toggle": "Artık gerekli olmayan maddeler (1) ▾\nŞablondan kaldırıldı; geçmiş işaretler korunur, kapıyı etkilemez.\n12. Eski tampon braketi kontrolü\nPasif\nSon kayıt: OK"
+  },
+  "overflow": 0,
+  "raw_status_in_sections": [],
+  "errors": [],
+  "calls": []
+ },
+ "shipment-passed-tr-430": {
+  "sections": {
+   "checklist-stage-closed-toggle": "Bu aşama tamamlandı (1) ▾\nAraç bu aşamayı geçti; bu maddeler artık tamamlanamaz. Hiçbir sayıya, ilerlemeye veya kapıya dahil değildir; kayıt korunur.\n47. Bagaj kilidi kontrolü\nUygulanmaz\nDeğerlendirilmedi",
+   "checklist-inactive-toggle": "Artık gerekli olmayan maddeler (1) ▾\nŞablondan kaldırıldı; geçmiş işaretler korunur, kapıyı etkilemez.\n12. Eski tampon braketi kontrolü\nPasif\nSon kayıt: OK"
+  },
+  "overflow": 0,
+  "raw_status_in_sections": [],
+  "errors": [],
+  "calls": []
+ },
+ "shipment-delivered-tr-375": {
+  "sections": {
+   "checklist-stage-closed-toggle": "Bu aşama tamamlandı (2) ▾\nAraç bu aşamayı geçti; bu maddeler artık tamamlanamaz. Hiçbir sayıya, ilerlemeye veya kapıya dahil değildir; kayıt korunur.\n47. Bagaj kilidi kontrolü\nUygulanmaz\nDeğerlendirilmedi\n30. Yan ayna kapak klipsi\nUygulanmaz\nSon kayıt: NOT OK",
+   "checklist-inactive-toggle": null
+  },
+  "overflow": 0,
+  "raw_status_in_sections": [],
+  "errors": [],
+  "calls": []
+ },
+ "shipment-delivered-tr-390": {
+  "sections": {
+   "checklist-stage-closed-toggle": "Bu aşama tamamlandı (2) ▾\nAraç bu aşamayı geçti; bu maddeler artık tamamlanamaz. Hiçbir sayıya, ilerlemeye veya kapıya dahil değildir; kayıt korunur.\n47. Bagaj kilidi kontrolü\nUygulanmaz\nDeğerlendirilmedi\n30. Yan ayna kapak klipsi\nUygulanmaz\nSon kayıt: NOT OK",
+   "checklist-inactive-toggle": null
+  },
+  "overflow": 0,
+  "raw_status_in_sections": [],
+  "errors": [],
+  "calls": []
+ },
+ "shipment-delivered-tr-430": {
+  "sections": {
+   "checklist-stage-closed-toggle": "Bu aşama tamamlandı (2) ▾\nAraç bu aşamayı geçti; bu maddeler artık tamamlanamaz. Hiçbir sayıya, ilerlemeye veya kapıya dahil değildir; kayıt korunur.\n47. Bagaj kilidi kontrolü\nUygulanmaz\nDeğerlendirilmedi\n30. Yan ayna kapak klipsi\nUygulanmaz\nSon kayıt: NOT OK",
+   "checklist-inactive-toggle": null
+  },
+  "overflow": 0,
+  "raw_status_in_sections": [],
+  "errors": [],
+  "calls": []
+ },
+ "shipment-line-tr-375": {
+  "sections": {
+   "checklist-stage-closed-toggle": null,
+   "checklist-inactive-toggle": null
+  },
+  "overflow": 0,
+  "raw_status_in_sections": [],
+  "errors": [],
+  "calls": []
+ },
+ "shipment-line-tr-390": {
+  "sections": {
+   "checklist-stage-closed-toggle": null,
+   "checklist-inactive-toggle": null
+  },
+  "overflow": 0,
+  "raw_status_in_sections": [],
+  "errors": [],
+  "calls": []
+ },
+ "shipment-line-tr-430": {
+  "sections": {
+   "checklist-stage-closed-toggle": null,
+   "checklist-inactive-toggle": null
+  },
+  "overflow": 0,
+  "raw_status_in_sections": [],
+  "errors": [],
+  "calls": []
+ },
+ "eol-branch-shipped-tr-375": {
+  "sections": {
+   "checklist-stage-closed-toggle": null,
+   "checklist-inactive-toggle": null
+  },
+  "overflow": 0,
+  "raw_status_in_sections": [],
+  "errors": [],
+  "calls": []
+ },
+ "eol-branch-shipped-tr-390": {
+  "sections": {
+   "checklist-stage-closed-toggle": null,
+   "checklist-inactive-toggle": null
+  },
+  "overflow": 0,
+  "raw_status_in_sections": [],
+  "errors": [],
+  "calls": []
+ },
+ "eol-branch-shipped-tr-430": {
+  "sections": {
+   "checklist-stage-closed-toggle": null,
+   "checklist-inactive-toggle": null
+  },
+  "overflow": 0,
+  "raw_status_in_sections": [],
+  "errors": [],
+  "calls": []
+ },
+ "eol-line-tr-375": {
+  "sections": {
+   "checklist-stage-closed-toggle": null,
+   "checklist-inactive-toggle": null
+  },
+  "overflow": 0,
+  "raw_status_in_sections": [],
+  "errors": [],
+  "calls": []
+ },
+ "eol-line-tr-390": {
+  "sections": {
+   "checklist-stage-closed-toggle": null,
+   "checklist-inactive-toggle": null
+  },
+  "overflow": 0,
+  "raw_status_in_sections": [],
+  "errors": [],
+  "calls": []
+ },
+ "eol-line-tr-430": {
+  "sections": {
+   "checklist-stage-closed-toggle": null,
+   "checklist-inactive-toggle": null
+  },
+  "overflow": 0,
+  "raw_status_in_sections": [],
+  "errors": [],
+  "calls": []
+ }
+}

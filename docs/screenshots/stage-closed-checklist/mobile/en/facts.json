@@ -1,0 +1,92 @@
+{
+ "station-line-en-375": {
+  "sections": {
+   "checklist-stage-closed-toggle": null,
+   "checklist-inactive-toggle": null
+  },
+  "overflow": 0,
+  "raw_status_in_sections": [],
+  "errors": [],
+  "calls": []
+ },
+ "station-line-en-390": {
+  "sections": {
+   "checklist-stage-closed-toggle": null,
+   "checklist-inactive-toggle": null
+  },
+  "overflow": 0,
+  "raw_status_in_sections": [],
+  "errors": [],
+  "calls": []
+ },
+ "station-line-en-430": {
+  "sections": {
+   "checklist-stage-closed-toggle": null,
+   "checklist-inactive-toggle": null
+  },
+  "overflow": 0,
+  "raw_status_in_sections": [],
+  "errors": [],
+  "calls": []
+ },
+ "shipment-delivered-en-375": {
+  "sections": {
+   "checklist-stage-closed-toggle": "This stage is complete (2) ▾\nThe vehicle has passed this stage; these items can no longer be completed. They count in no total, progress or gate; the record is kept.\n47. Bagaj kilidi kontrolü\nNot applicable\nNot evaluated\n30. Yan ayna kapak klipsi\nNot applicable\nLast record: NOT OK",
+   "checklist-inactive-toggle": null
+  },
+  "overflow": 0,
+  "raw_status_in_sections": [],
+  "errors": [],
+  "calls": []
+ },
+ "shipment-delivered-en-390": {
+  "sections": {
+   "checklist-stage-closed-toggle": "This stage is complete (2) ▾\nThe vehicle has passed this stage; these items can no longer be completed. They count in no total, progress or gate; the record is kept.\n47. Bagaj kilidi kontrolü\nNot applicable\nNot evaluated\n30. Yan ayna kapak klipsi\nNot applicable\nLast record: NOT OK",
+   "checklist-inactive-toggle": null
+  },
+  "overflow": 0,
+  "raw_status_in_sections": [],
+  "errors": [],
+  "calls": []
+ },
+ "shipment-delivered-en-430": {
+  "sections": {
+   "checklist-stage-closed-toggle": "This stage is complete (2) ▾\nThe vehicle has passed this stage; these items can no longer be completed. They count in no total, progress or gate; the record is kept.\n47. Bagaj kilidi kontrolü\nNot applicable\nNot evaluated\n30. Yan ayna kapak klipsi\nNot applicable\nLast record: NOT OK",
+   "checklist-inactive-toggle": null
+  },
+  "overflow": 0,
+  "raw_status_in_sections": [],
+  "errors": [],
+  "calls": []
+ },
+ "shipment-passed-en-375": {
+  "sections": {
+   "checklist-stage-closed-toggle": "This stage is complete (1) ▾\nThe vehicle has passed this stage; these items can no longer be completed. They count in no total, progress or gate; the record is kept.\n47. Bagaj kilidi kontrolü\nNot applicable\nNot evaluated",
+   "checklist-inactive-toggle": "No longer required (1) ▾\nRemoved from the template; past ticks are kept and do not affect gates.\n12. Eski tampon braketi kontrolü\nInactive\nLast record: OK"
+  },
+  "overflow": 0,
+  "raw_status_in_sections": [],
+  "errors": [],
+  "calls": []
+ },
+ "shipment-passed-en-390": {
+  "sections": {
+   "checklist-stage-closed-toggle": "This stage is complete (1) ▾\nThe vehicle has passed this stage; these items can no longer be completed. They count in no total, progress or gate; the record is kept.\n47. Bagaj kilidi kontrolü\nNot applicable\nNot evaluated",
+   "checklist-inactive-toggle": "No longer required (1) ▾\nRemoved from the template; past ticks are kept and do not affect gates.\n12. Eski tampon braketi kontrolü\nInactive\nLast record: OK"
+  },
+  "overflow": 0,
+  "raw_status_in_sections": [],
+  "errors": [],
+  "calls": []
+ },
+ "shipment-passed-en-430": {
+  "sections": {
+   "checklist-stage-closed-toggle": "This stage is complete (1) ▾\nThe vehicle has passed this stage; these items can no longer be completed. They count in no total, progress or gate; the record is kept.\n47. Bagaj kilidi kontrolü\nNot applicable\nNot evaluated",
+   "checklist-inactive-toggle": "No longer required (1) ▾\nRemoved from the template; past ticks are kept and do not affect gates.\n12. Eski tampon braketi kontrolü\nInactive\nLast record: OK"
+  },
+  "overflow": 0,
+  "raw_status_in_sections": [],
+  "errors": [],
+  "calls": []
+ }
+}
