@@ -17,6 +17,14 @@ import {
 } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
+  ChevronDown,
+  ChevronRight,
+  Circle,
+  CircleCheck,
+  CircleDot,
+  type LucideIcon,
+} from 'lucide-react-native';
+import {
   api,
   type Issue,
   type ShipmentReadiness,
@@ -51,6 +59,11 @@ import { loadFailureMessage } from '../offline/userFacingError';
 import { useReferenceCache } from '../offline/ReferenceCacheProvider';
 import { isTransportError } from '../../../shared/networkError';
 import { shipmentWarningText } from '../../../shared/shipmentReadiness';
+import {
+  STATION_PROGRESS_MESSAGE_KEYS,
+  stationProgress,
+  type StationProgress,
+} from '../../../shared/stationProgress';
 import { issueStatusLabel } from '../lib/issueStatus';
 import type { RootStackParamList } from '../navigation/types';
 
@@ -66,6 +79,18 @@ interface StationGroup {
   id: number;
   name: string;
   steps: StationStepItem[];
+}
+
+const STATION_PROGRESS_ICON: Record<StationProgress, LucideIcon> = {
+  DONE: CircleCheck,
+  IN_PROGRESS: CircleDot,
+  NOT_STARTED: Circle,
+};
+
+function stationProgressColor(progress: StationProgress): string {
+  if (progress === 'DONE') return statusColors.ok;
+  if (progress === 'IN_PROGRESS') return statusColors.issueInProgress;
+  return statusColors.pending;
 }
 
 function stepColor(status: StationStepItem['Status']): string {
@@ -419,34 +444,40 @@ export default function VehicleStationScreen() {
         {stations.map((station) => {
           const openCount = openByStation[String(station.id)] ?? 0;
           const active = station.id === vehicle?.CurrentStationID;
-          const done =
-            station.steps.length > 0 && station.steps.every((s) => s.Status === 'OK');
+          const progress = stationProgress(station.steps, active);
+          const progressColor = stationProgressColor(progress);
+          const ProgressIcon = STATION_PROGRESS_ICON[progress];
+          const progressLabel = t(STATION_PROGRESS_MESSAGE_KEYS[progress]);
           const expanded = expandedStation === station.id;
+          const Chevron = expanded ? ChevronDown : ChevronRight;
 
           return (
             <Card key={station.id}>
               <Pressable
                 onPress={() => toggleStation(station.id)}
-                style={{ minHeight: 44 }}
+                accessibilityRole="button"
+                accessibilityState={{ expanded }}
+                accessibilityLabel={`${station.name}, ${progressLabel}`}
+                style={{ minHeight: 44, justifyContent: 'center' }}
               >
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                  <View
-                    style={{
-                      width: 28,
-                      height: 28,
-                      borderRadius: 14,
-                      borderWidth: active ? 3 : 1,
-                      borderColor: done ? statusColors.ok : active ? tokens.accent : tokens.border,
-                      backgroundColor: done ? statusColors.ok : 'transparent',
-                    }}
-                  />
-                  <Text style={{ color: tokens.textPrimary, fontWeight: '600', flex: 1 }}>
-                    {station.name}
-                  </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                  <ProgressIcon size={26} color={progressColor} strokeWidth={2.25} />
+                  <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
+                    <Text
+                      style={{ color: tokens.textPrimary, fontWeight: '600', fontSize: 15 }}
+                      numberOfLines={2}
+                    >
+                      {station.name}
+                    </Text>
+                    <Text style={{ color: progressColor, fontWeight: '600', fontSize: 12 }}>
+                      {progressLabel}
+                    </Text>
+                  </View>
                   {/* Soft-warning: open issue badge — informational only, never blocks */}
                   {openCount > 0 ? (
                     <Badge label={t('home.openCount', { n: openCount })} color={statusColors.notOk} />
                   ) : null}
+                  <Chevron size={18} color={tokens.textSecondary} strokeWidth={2} />
                 </View>
               </Pressable>
 
