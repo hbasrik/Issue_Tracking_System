@@ -247,6 +247,22 @@ Meta satır: sol VIN+süre, sağ şiddet+durum. Filtre bloğu altında ayırıc�
 - Denylist (password/karea/sifre/parola/123456…) + e-posta yerel kısmı / ad;
   create, reset, self-change. Min uzunluk hâlâ 8. i18n TR/EN.
 
+### A21. Açılır listeler kırpılmıyor (portal) `[x]` — 2026-09-28
+Issues gelişmiş filtre “Parça” listesi `overflow-hidden` filtre kartında
+yalnız ilk seçeneği gösteriyordu. Ortak `web/src/components/AnchoredPopover`
+listeyi `document.body`'ye çizer, tetikleyiciye göre `fixed` konumlar;
+aşağıda yer yoksa yukarı açılır, kaydırma/yeniden boyutta hizalı kalır,
+dışarı tıklama + Esc kapatır, uzun liste kendi içinde kayar.
+- `PartMultiSelect`: ok tuşları + Enter + Esc (odak tetikleyiciye döner).
+- `AnalysisVinMultiSelect`: aynı sorun (`overflow-x-auto` filtre çubuğu y'yi
+  de kırpar) — aynı popover + klavye.
+- Tarama: `VinSearchBox` (üst bar, hata bildir) ve `ProfileMenu` kırpılan
+  kapsayıcıda değil; diğer seçimler (hata bildir, şablonlar, kullanıcılar,
+  katalog) yerel `<select>` — kırpılmaz. Mobil: tüm parça/bölge/tür
+  seçimleri `Modal` alt sayfa — kırpılma yok.
+Kanıt: `scripts/verify-anchored-popover.mjs`,
+`docs/screenshots/anchored-dropdown/`.
+
 ---
 
 ## B — Canlıya çıkmadan önce ZORUNLU
