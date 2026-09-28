@@ -7,7 +7,8 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "screenshots": "node ../docs/screenshots/mobile-harness/run.mjs"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "2.2.0",
@@ -37,6 +38,9 @@
   "devDependencies": {
     "@babel/core": "^7.25.0",
     "@types/react": "~19.2.4",
+    "esbuild": "^0.28.2",
+    "react-dom": "19.2.3",
+    "react-native-web": "^0.21.2",
     "typescript": "~6.0.3"
   }
 }
