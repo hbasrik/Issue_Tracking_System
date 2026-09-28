@@ -361,7 +361,9 @@ Kanıt: `docs/screenshots/stage-closed-checklist/` (ekran görüntüleri,
 `dom-facts.json`, eski/yeni API karşılaştırması `api-compare.txt`, depo
 girişi `depot-write.txt`, `analysis-diff.txt`);
 `stage_applicability_test.go` (`*_test` veritabanı); `checklist_gate_test.go`.
-Canlı DB'ye 0031 uygulanması ayrı adım (rapor).
+0031 canlı DB'ye 2026-09-28'de uygulandı (sürüm 30 → 31, dirty=false). Satır
+değişmedi. Salt okuma kontrolünde N7V1K1SA0TK000003'teki depo engeli kalktı.
+Kalan 497 engel hattaki araçlar; kural gereği sürüyorlar.
 
 ### A28. Kapsam (`not_started`) ile aşama kuralı arasındaki boşluk `[ ]`
 - `not_started` varsayılanı, checklist'e başlamış hat aracına yeni maddeyi
