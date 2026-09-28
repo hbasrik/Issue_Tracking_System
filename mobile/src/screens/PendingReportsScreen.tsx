@@ -51,7 +51,13 @@ function errorText(item: QueuedIssueReport, t: Translate): string | null {
     return t('queue.sessionExpired');
   }
   if (isWaitingConnection(item)) return null;
-  if (item.lastError) return translateApiError(t, new Error(item.lastError));
+  if (item.lastError) {
+    // 'http' = the server rejected the payload (4xx); unmapped text must not show raw.
+    const stored = Object.assign(new Error(item.lastError), {
+      status: item.lastErrorCode === 'http' ? 400 : undefined,
+    });
+    return translateApiError(t, stored);
+  }
   return null;
 }
 
