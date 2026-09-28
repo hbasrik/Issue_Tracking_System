@@ -196,11 +196,11 @@ function translateApiErrorMessage(t: Translate, err: unknown): string {
     /^(\S+) gate blocked: (\d+) item\(s\) not OK\/CONDITIONAL_OK \(item ids: ([^)]+)\)/,
   );
   if (gate) {
-    return t('error.gateBlocked', { type: gate[1], n: gate[2], ids: gate[3] });
+    return t('error.gateBlocked', { type: checklistTypeName(t, gate[1]), n: gate[2], ids: gate[3] });
   }
   const gateAny = msg.match(/^(\S+) gate blocked/);
   if (gateAny) {
-    return t('error.gateBlockedGeneric', { type: gateAny[1] });
+    return t('error.gateBlockedGeneric', { type: checklistTypeName(t, gateAny[1]) });
   }
   const branchShip = msg.match(
     /^branch ship blocked for (\S+): (\d+) gate\(s\) incomplete/,
@@ -226,6 +226,19 @@ function translateApiErrorMessage(t: Translate, err: unknown): string {
   // Errors built on the client already carry translated copy.
   if (status == null) return msg;
   return genericForStatus(t, status);
+}
+
+function checklistTypeName(t: Translate, type: string): string {
+  switch (type.toUpperCase()) {
+    case 'EOL':
+      return t('templates.typeEol');
+    case 'SHIPMENT':
+      return t('templates.typeShipment');
+    case 'TEST':
+      return t('templates.typeTest');
+    default:
+      return type;
+  }
 }
 
 export function describeApiError(t: Translate, err: unknown): ApiErrorParts {
