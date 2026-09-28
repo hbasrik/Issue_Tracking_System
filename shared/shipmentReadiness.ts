@@ -38,6 +38,9 @@ export function shipmentWarningText(
   if (w.read_failed) {
     return t('vehicles.readinessReadFailed', { list: checklistListLabel(w.checklist_type, t) });
   }
+  if (w.code === 'STATION_STEPS_INCOMPLETE' && w.remaining_count != null) {
+    return t('vehicles.readinessStationSteps', { n: w.remaining_count });
+  }
   if (w.code === 'OPEN_ISSUE' && w.issue_id != null) {
     return t('vehicles.readinessIssue', {
       id: w.issue_id,
