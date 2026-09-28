@@ -1,6 +1,6 @@
 import { useEffect, useState, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ImageOff } from 'lucide-react';
+import { ChevronRight, Clock, ImageOff } from 'lucide-react';
 import {
   formatIssueOpenDuration,
   issueCardIsCompact,
@@ -34,6 +34,8 @@ type Props = {
   className?: string;
   /** Brief visual emphasis for a newly appeared CRITICAL (board alert). */
   highlighted?: boolean;
+  /** False → severity shows as the bar icon only (vehicle issue list). */
+  showSeverityLabel?: boolean;
 };
 
 /**
@@ -46,6 +48,7 @@ export function IssueCard({
   layoutWidth,
   className = '',
   highlighted = false,
+  showSeverityLabel = true,
 }: Props) {
   const { t, locale } = useI18n();
   const { mode } = useTheme();
@@ -130,15 +133,19 @@ export function IssueCard({
     </button>
   );
 
+  // Corners: description ↖ status ↗, classification + open time ↙ severity ↘.
   const body = (
-    <div className={`min-w-0 flex-1 ${compact ? 'space-y-1' : 'space-y-2 p-3'}`}>
-      <p
-        className={`truncate font-medium text-[var(--text-primary)] ${
-          compact ? 'text-[14px] leading-snug' : 'text-[15px] leading-snug'
-        }`}
-      >
-        {issue.Description?.trim() || t('common.emDash')}
-      </p>
+    <div className={`min-w-0 flex-1 ${compact ? 'space-y-1.5' : 'space-y-2 p-3'}`}>
+      <div className="flex min-w-0 items-start gap-2">
+        <p
+          className={`line-clamp-2 min-w-0 flex-1 break-words font-medium text-[var(--text-primary)] ${
+            compact ? 'text-[14px] leading-snug' : 'text-[15px] leading-snug'
+          }`}
+        >
+          {issue.Description?.trim() || t('common.emDash')}
+        </p>
+        <StatusBadge kind="issue" value={issue.Status} className="shrink-0 whitespace-nowrap" />
+      </div>
       <p className="truncate text-[12px] text-[var(--text-secondary)]">
         {defect.listLine}
       </p>
@@ -158,24 +165,39 @@ export function IssueCard({
             </Link>
           ) : null}
           <span
-            className="min-w-0 truncate tabular-nums text-[var(--text-secondary)]"
+            className="inline-flex min-w-0 items-center gap-1 text-[var(--text-secondary)]"
             title={t('issue.openDuration')}
           >
-            {duration}
+            <Clock size={compact ? 13 : 14} className="shrink-0" aria-hidden />
+            <span className="sr-only">{t('issue.openDuration')}: </span>
+            <span className="truncate tabular-nums">{duration}</span>
           </span>
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
-          <SeverityIndicator severity={issue.Severity} decorative />
-          <span
-            className="max-w-[4.5rem] truncate font-medium"
-            style={sevColor ? { color: sevColor } : undefined}
-          >
-            {sevLabel}
-          </span>
-          <StatusBadge kind="issue" value={issue.Status} />
+          <SeverityIndicator
+            severity={issue.Severity}
+            size="md"
+            decorative={showSeverityLabel}
+          />
+          {showSeverityLabel ? (
+            <span
+              className="max-w-[4.5rem] truncate font-medium"
+              style={sevColor ? { color: sevColor } : undefined}
+            >
+              {sevLabel}
+            </span>
+          ) : null}
         </div>
       </div>
     </div>
+  );
+
+  const chevron = (
+    <ChevronRight
+      size={18}
+      className={`shrink-0 self-center text-[var(--text-secondary)] ${compact ? '' : 'mr-2'}`}
+      aria-hidden
+    />
   );
 
   return (
@@ -203,7 +225,17 @@ export function IssueCard({
         data-highlighted={highlighted ? '1' : undefined}
       >
         {photo}
-        {body}
+        {compact ? (
+          <>
+            {body}
+            {chevron}
+          </>
+        ) : (
+          <div className="flex min-w-0 flex-1">
+            {body}
+            {chevron}
+          </div>
+        )}
       </article>
 
       {lightbox && hasPhoto && issue.ReportPhotoPath ? (
