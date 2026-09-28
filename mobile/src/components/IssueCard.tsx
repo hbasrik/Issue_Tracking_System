@@ -1,8 +1,6 @@
 import { useMemo, useState } from 'react';
 import {
-  Dimensions,
   Image,
-  Modal,
   Pressable,
   Text,
   useWindowDimensions,
@@ -16,7 +14,7 @@ import {
   ISSUE_CARD_PHOTO_ASPECT,
   severityMessageKey,
 } from '../../../shared/issueCardLayout';
-import { mediaFileUrl, mediaThumbUrl, mediaCardThumbUrl, type Issue } from '../api/client';
+import { mediaThumbUrl, mediaCardThumbUrl, type Issue } from '../api/client';
 import { useAuth } from '../auth/AuthProvider';
 import { Badge, Card } from './ui';
 import {
@@ -55,7 +53,6 @@ export function IssueCard({
   const { width: windowWidth } = useWindowDimensions();
   const width = layoutWidth ?? windowWidth;
   const compact = issueCardIsCompact(width);
-  const [lightbox, setLightbox] = useState(false);
   const [now] = useState(() => Date.now());
 
   const defect = defectLabels(issue, t, locale);
@@ -90,22 +87,11 @@ export function IssueCard({
     };
   }, [compact]);
 
-  function openPhoto() {
-    if (hasPhoto) setLightbox(true);
-  }
-
+  // Part of the card press target: fullscreen viewing lives on the detail
+  // screen only.
   const photo = (
-    <Pressable
-      onPress={(e) => {
-        // Keep the touch on the photo — do not open the issue detail.
-        e?.stopPropagation?.();
-        openPhoto();
-      }}
-      disabled={!hasPhoto}
-      accessibilityRole="button"
-      accessibilityLabel={
-        hasPhoto ? t('issue.photoFullscreen') : t('issue.noPhoto')
-      }
+    <View
+      testID="issue-card-photo"
       style={{
         ...photoBox,
         backgroundColor: tokens.bgSurface2,
@@ -138,7 +124,7 @@ export function IssueCard({
           </Text>
         </View>
       )}
-    </Pressable>
+    </View>
   );
 
   const metaSize = compact ? 12 : 13;
@@ -276,105 +262,55 @@ export function IssueCard({
   );
 
   return (
-    <>
-      <Pressable
-        onPress={onPress}
-        accessibilityRole="button"
-        style={({ pressed }) => ({
-          opacity: pressed ? 0.82 : 1,
-        })}
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      style={({ pressed }) => ({
+        opacity: pressed ? 0.82 : 1,
+      })}
+    >
+      <Card
+        style={{
+          flex: compact ? undefined : 1,
+          padding: compact ? 12 : 0,
+          marginTop: 0,
+          overflow: 'hidden',
+          // Always keep a 1px edge — never pass borderWidth: undefined
+          // (can wipe StyleSheet.card border on some RN flatten paths).
+          borderWidth: highlighted ? 2 : 1,
+          borderColor: highlighted ? sevColor : tokens.border,
+          ...(highlighted
+            ? {
+                shadowColor: sevColor,
+                shadowOpacity: 0.45,
+                shadowRadius: 8,
+                elevation: 4,
+              }
+            : null),
+        }}
       >
-        <Card
+        <View
           style={{
+            flexDirection: compact ? 'row' : 'column',
+            gap: compact ? 12 : 0,
+            alignItems: compact ? 'flex-start' : undefined,
             flex: compact ? undefined : 1,
-            padding: compact ? 12 : 0,
-            marginTop: 0,
-            overflow: 'hidden',
-            // Always keep a 1px edge — never pass borderWidth: undefined
-            // (can wipe StyleSheet.card border on some RN flatten paths).
-            borderWidth: highlighted ? 2 : 1,
-            borderColor: highlighted ? sevColor : tokens.border,
-            ...(highlighted
-              ? {
-                  shadowColor: sevColor,
-                  shadowOpacity: 0.45,
-                  shadowRadius: 8,
-                  elevation: 4,
-                }
-              : null),
           }}
         >
-          <View
-            style={{
-              flexDirection: compact ? 'row' : 'column',
-              gap: compact ? 12 : 0,
-              alignItems: compact ? 'flex-start' : undefined,
-              flex: compact ? undefined : 1,
-            }}
-          >
-            {photo}
-            {compact ? (
-              <>
-                {body}
-                {chevron}
-              </>
-            ) : (
-              <View style={{ flexDirection: 'row', flex: 1 }}>
-                {body}
-                {chevron}
-              </View>
-            )}
-          </View>
-        </Card>
-      </Pressable>
-
-      <Modal
-        visible={lightbox}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setLightbox(false)}
-      >
-        <Pressable
-          style={{
-            flex: 1,
-            backgroundColor: 'rgba(0,0,0,0.88)',
-            justifyContent: 'center',
-            alignItems: 'center',
-            padding: 16,
-          }}
-          onPress={() => setLightbox(false)}
-        >
-          <Pressable
-            style={{
-              position: 'absolute',
-              top: 48,
-              right: 20,
-              paddingHorizontal: 14,
-              paddingVertical: 8,
-              borderRadius: 8,
-              backgroundColor: 'rgba(255,255,255,0.15)',
-            }}
-            onPress={() => setLightbox(false)}
-          >
-            <Text style={{ color: '#fff', fontWeight: '600' }}>
-              {t('common.close')}
-            </Text>
-          </Pressable>
-          {hasPhoto ? (
-            <Image
-              source={{
-                uri: mediaFileUrl(issue.ReportPhotoPath!),
-                headers: authHeaders,
-              }}
-              style={{
-                width: Dimensions.get('window').width - 32,
-                height: Dimensions.get('window').height * 0.75,
-              }}
-              resizeMode="contain"
-            />
-          ) : null}
-        </Pressable>
-      </Modal>
-    </>
+          {photo}
+          {compact ? (
+            <>
+              {body}
+              {chevron}
+            </>
+          ) : (
+            <View style={{ flexDirection: 'row', flex: 1 }}>
+              {body}
+              {chevron}
+            </View>
+          )}
+        </View>
+      </Card>
+    </Pressable>
   );
 }
