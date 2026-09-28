@@ -25,6 +25,10 @@ export const fixtureIssues = [
     Status: 'OPEN',
     Description: 'Sol ön kapı menteşesinde boşluk',
     IssueDate: ago(50),
+    // Stub media URLs return the path as-is, so this renders as the card photo.
+    // Raw markup: react-native-web encodes utf8 SVG data URIs itself.
+    ReportPhotoPath:
+      'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="192" height="144"><rect width="192" height="144" fill="#8E9E7C"/><circle cx="96" cy="72" r="40" fill="#C0A89B"/></svg>',
     DefectPartID: 1,
     DefectTypeID: 1,
     DefectPartNameTR: 'Ön kapı',

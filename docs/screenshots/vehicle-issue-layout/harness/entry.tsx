@@ -6,6 +6,7 @@ import VehicleStationScreen from '../../../../mobile/src/screens/VehicleStationS
 import { SeverityIndicator } from '../../../../mobile/src/components/SeverityIndicator';
 
 const params = new URLSearchParams(location.search);
+(window as unknown as { __nav: unknown[] }).__nav = [];
 window.__KAREA_STORE = {
   'karea-theme-mode': params.get('theme') ?? 'light',
   'karea-locale': params.get('locale') ?? 'tr',

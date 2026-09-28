@@ -31,7 +31,12 @@ export function SafeAreaView({ children, style }: { children: ReactNode; style?:
 
 // --- @react-navigation/native
 const route = { params: { vin: fixtureVehicle.VIN } };
-const navigation = { navigate: () => undefined, goBack: () => undefined };
+const navigation = {
+  navigate: (name: string, params?: unknown) => {
+    (window as unknown as { __nav: unknown[] }).__nav.push({ name, params });
+  },
+  goBack: () => undefined,
+};
 export function useRoute() {
   return route;
 }
