@@ -370,6 +370,33 @@ Kalan 497 engel hattaki araçlar; kural gereği sürüyorlar.
   yazmıyor. Buna rağmen kapı bu eksik maddeyi bekliyor.
 - Hangisinin kazanacağına karar verilmeli: kapsam mı, uygulanabilir küme mi?
 
+### A29. Kapalı bölümlerde çevrilmiş durum; kalıcı mobil ekran görüntüsü düzeneği `[x]` — 2026-09-28
+- Web ve mobilde "Bu aşama tamamlandı" ve "Artık gerekli olmayan maddeler"
+  satırlarındaki ham durum metni kaldırıldı. Yerine ortak
+  `checklistRecordLabel` (i18n, TR/EN) kullanılıyor:
+  - değerlendirilmemiş satır: "Değerlendirilmedi" (kimseden iş beklenmiyor,
+    bu yüzden "Bekliyor" yazmıyor);
+  - diğerleri: "Son kayıt: OK / NOT OK / REWORK / CONDITIONAL OK".
+- `react-native-web`, `react-dom` ve `esbuild` mobil `devDependencies`'e
+  eklendi.
+- Düzenek `docs/screenshots/mobile-harness/`:
+  - Gerçek mobil ekranları tarayıcıda çiziyor; yalnızca API, oturum,
+    navigasyon ve depolama stub'lanıyor. Sahneler `scenes.ts` içinde.
+  - Çalıştırma: `cd mobile && npm run screenshots -- <çıktı> [sahne,…] [--locales tr,en]`.
+  - 375, 390 ve 430 px'de görüntü alıyor. Kapalı bölümleri açıp tekrar
+    çekiyor.
+  - Sayfa hatası, yatay taşma veya kapalı bölümde ham durum metni görürse
+    hata veriyor.
+- Üretim paketine girmiyor. `expo export` ile üretilen iOS ve Android
+  bundle'larında `react-native-web` / `createDOMProps` /
+  `unstable_createElement` izi sıfır.
+- Eski `vehicle-issue-layout/harness` da artık `/tmp` yerine mobil
+  bağımlılıkları kullanıyor.
+Kanıt: `docs/screenshots/stage-closed-checklist/mobile/` (TR tüm sahneler,
+`en/` İngilizce, `facts.json`).
+- Kalan: aktif EoL satırlarındaki durum rozeti TR'de de `PENDING` yazıyor
+  (`status.eol.pending`). Bu turun kapsamı dışında kaldı.
+
 ---
 
 ## B — Canlıya çıkmadan önce ZORUNLU
