@@ -46,7 +46,6 @@ export function VehicleIssuesPanel({ vin }: { vin: string }) {
           items={items}
           emptyLabel={t('vehicles.noIssues')}
           hideVin
-          showSeverityLabel={false}
           onStatusChanged={() => void load()}
         />
       </div>

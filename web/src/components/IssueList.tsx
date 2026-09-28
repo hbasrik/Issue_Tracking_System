@@ -366,13 +366,11 @@ export function IssueList({
   items,
   emptyLabel,
   hideVin = false,
-  showSeverityLabel = true,
   highlightedIds,
 }: {
   items: Issue[];
   emptyLabel?: string;
   hideVin?: boolean;
-  showSeverityLabel?: boolean;
   highlightedIds?: ReadonlySet<number>;
   /** @deprecated Detail is a route; kept for call-site compatibility. */
   onStatusChanged?: () => void;
@@ -489,7 +487,6 @@ export function IssueList({
                     key={issue.ID}
                     issue={issue}
                     hideVin={hideVin}
-                    showSeverityLabel={showSeverityLabel}
                     layoutWidth={width}
                     highlighted={highlightedIds?.has(issue.ID) === true}
                   />

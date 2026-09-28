@@ -6,7 +6,6 @@ import {
   issueCardIsCompact,
   issueOpenDurationMs,
   ISSUE_CARD_PHOTO_ASPECT,
-  severityMessageKey,
 } from '../../../shared/issueCardLayout';
 import { useI18n } from '../i18n';
 import { type Issue } from '../lib/api';
@@ -34,8 +33,6 @@ type Props = {
   className?: string;
   /** Brief visual emphasis for a newly appeared CRITICAL (board alert). */
   highlighted?: boolean;
-  /** False → severity shows as the bar icon only (vehicle issue list). */
-  showSeverityLabel?: boolean;
 };
 
 /**
@@ -48,7 +45,6 @@ export function IssueCard({
   layoutWidth,
   className = '',
   highlighted = false,
-  showSeverityLabel = true,
 }: Props) {
   const { t, locale } = useI18n();
   const { mode } = useTheme();
@@ -62,8 +58,6 @@ export function IssueCard({
     issueOpenDurationMs(issue, now),
     locale,
   );
-  const sevKey = severityMessageKey(issue.Severity);
-  const sevLabel = sevKey ? t(sevKey) : issue.Severity;
   const sevLevel = normalizeSeverity(issue.Severity);
   const sevColor = sevLevel ? severityFillColor(sevLevel) : undefined;
   const hasPhoto = Boolean(issue.ReportPhotoPath);
@@ -113,7 +107,8 @@ export function IssueCard({
     </div>
   );
 
-  // Corners: description ↖ status ↗, classification + open time ↙ severity ↘.
+  // Description ↖, status ↗ with the severity bars right under it;
+  // classification, then VIN + open time along the bottom.
   const body = (
     <div className={`min-w-0 flex-1 ${compact ? 'space-y-1.5' : 'space-y-2 p-3'}`}>
       <div className="flex min-w-0 items-start gap-2">
@@ -124,50 +119,39 @@ export function IssueCard({
         >
           {issue.Description?.trim() || t('common.emDash')}
         </p>
-        <StatusBadge kind="issue" value={issue.Status} className="shrink-0 whitespace-nowrap" />
+        <div className="flex shrink-0 flex-col items-end gap-1.5">
+          <span data-testid="issue-card-status" className="inline-flex">
+            <StatusBadge kind="issue" value={issue.Status} className="whitespace-nowrap" />
+          </span>
+          <SeverityIndicator severity={issue.Severity} size="md" />
+        </div>
       </div>
       <p className="truncate text-[12px] text-[var(--text-secondary)]">
         {defect.listLine}
       </p>
       <div
-        className={`flex min-w-0 items-center justify-between gap-2 ${
+        data-testid="issue-card-meta"
+        className={`flex min-w-0 items-center gap-2 overflow-hidden ${
           compact ? 'text-[12px]' : 'text-[13px]'
         }`}
       >
-        <div className="flex min-w-0 flex-shrink items-center gap-2 overflow-hidden">
-          {!hideVin ? (
-            <Link
-              to={`/vehicles/${issue.VIN}?tab=issues`}
-              className="min-w-0 truncate font-mono font-semibold text-[var(--accent)] hover:underline"
-              onClick={(e) => e.stopPropagation()}
-            >
-              …{issue.VIN.slice(-5)}
-            </Link>
-          ) : null}
-          <span
-            className="inline-flex min-w-0 items-center gap-1 text-[var(--text-secondary)]"
-            title={t('issue.openDuration')}
+        {!hideVin ? (
+          <Link
+            to={`/vehicles/${issue.VIN}?tab=issues`}
+            className="min-w-0 truncate font-mono font-semibold text-[var(--accent)] hover:underline"
+            onClick={(e) => e.stopPropagation()}
           >
-            <Clock size={compact ? 13 : 14} className="shrink-0" aria-hidden />
-            <span className="sr-only">{t('issue.openDuration')}: </span>
-            <span className="truncate tabular-nums">{duration}</span>
-          </span>
-        </div>
-        <div className="flex shrink-0 items-center gap-1.5">
-          <SeverityIndicator
-            severity={issue.Severity}
-            size="md"
-            decorative={showSeverityLabel}
-          />
-          {showSeverityLabel ? (
-            <span
-              className="max-w-[4.5rem] truncate font-medium"
-              style={sevColor ? { color: sevColor } : undefined}
-            >
-              {sevLabel}
-            </span>
-          ) : null}
-        </div>
+            …{issue.VIN.slice(-5)}
+          </Link>
+        ) : null}
+        <span
+          className="inline-flex min-w-0 items-center gap-1 text-[var(--text-secondary)]"
+          title={t('issue.openDuration')}
+        >
+          <Clock size={compact ? 13 : 14} className="shrink-0" aria-hidden />
+          <span className="sr-only">{t('issue.openDuration')}: </span>
+          <span className="truncate tabular-nums">{duration}</span>
+        </span>
       </div>
     </div>
   );
