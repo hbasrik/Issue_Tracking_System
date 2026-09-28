@@ -70,6 +70,7 @@ import {
 } from '../lib/vehicleStatus';
 import { VehicleStatusDisplay } from '../components/VehicleStatusDisplay';
 import { AnalysisPrint } from '../components/print/AnalysisPrint';
+import { LoadErrorState } from '../components/LoadErrorState';
 import { formatDateRangeFull, formatDateRangeShort, formatDateTime, localeTag } from '../../../shared/i18n';
 
 const VEHICLE_LIFECYCLES = ['', ...VEHICLE_LIFECYCLE_FILTER_VALUES] as const;
@@ -326,7 +327,8 @@ export default function AnalysisPage() {
 
   const [dash, setDash] = useState<AnalysisDashboard | null>(null);
   const [stations, setStations] = useState<Station[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<unknown>(null);
+  const [exportError, setExportError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -349,12 +351,14 @@ export default function AnalysisPage() {
       setUpdatedAt(new Date());
     } catch (err) {
       if (isAuthError(err)) return;
-      setError(err instanceof Error ? err.message : t('analysis.loadFailed'));
+      // A failed filter change must not leave the previous filter's numbers up.
+      if (!silent) setDash(null);
+      setError(err);
     } finally {
       if (silent) setRefreshing(false);
       else setLoading(false);
     }
-  }, [applied, t]);
+  }, [applied]);
 
   useEffect(() => {
     void load();
@@ -784,14 +788,15 @@ export default function AnalysisPage() {
   function exportCsv() {
     if (!dash) return;
     setExporting(true);
+    setExportError(null);
     try {
       const csv = buildAnalysisCsv(dash, applied, t);
       downloadBlob(
         new Blob([csv], { type: 'text/csv;charset=utf-8' }),
         `karea-analysis-${new Date().toISOString().slice(0, 10)}.csv`,
       );
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('analysis.exportCsvFailed'));
+    } catch {
+      setExportError(t('analysis.exportCsvFailed'));
     } finally {
       setExporting(false);
     }
@@ -840,20 +845,29 @@ export default function AnalysisPage() {
         </div>
       </div>
 
-      {error && (
-        <p className="mt-3 text-[13px]" style={{ color: 'var(--status-not-ok)' }}>
-          {error}
+      {error != null && (
+        <LoadErrorState
+          title={dash ? t('common.refreshStale') : t('analysis.loadFailed')}
+          error={error}
+          onRetry={() => void load()}
+          retrying={loading || refreshing}
+          variant={dash ? 'inline' : 'block'}
+        />
+      )}
+      {exportError && (
+        <p className="mt-3 text-[13px]" role="alert" style={{ color: 'var(--status-not-ok)' }}>
+          {exportError}
         </p>
       )}
 
-      {loading && !dash && !error && (
+      {loading && !dash && error == null && (
         <p className="mt-3 text-[13px]" style={mutedCaption}>
           {t('home.metricsLoading')}
         </p>
       )}
 
       {/* Auth/network failure with no payload: do not paint "—" / "Veri yok" as if empty. */}
-      {error && !dash ? null : (
+      {error != null && !dash ? null : (
       <>
       {/* 1) KPI strip */}
       <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-5">
