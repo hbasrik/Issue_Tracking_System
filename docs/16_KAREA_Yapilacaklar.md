@@ -394,8 +394,48 @@ Kalan 497 engel hattaki araçlar; kural gereği sürüyorlar.
   bağımlılıkları kullanıyor.
 Kanıt: `docs/screenshots/stage-closed-checklist/mobile/` (TR tüm sahneler,
 `en/` İngilizce, `facts.json`).
-- Kalan: aktif EoL satırlarındaki durum rozeti TR'de de `PENDING` yazıyor
-  (`status.eol.pending`). Bu turun kapsamı dışında kaldı.
+- Aktif EoL rozetindeki `PENDING` sorunu A30'da düzeltildi.
+
+### A30. Türkçe arayüzde İngilizce teknik terim yok `[x]` — 2026-09-28
+- EoL durum adları Türkçeleşti: Bekliyor / Uygun / Uygun değil / Yeniden
+  işlem / Şartlı uygun. İngilizcede de enum yazımı kalmadı: Pending / OK /
+  Not OK / Rework / Conditional OK.
+- Web ve mobil aynı anahtarları kullanıyor. Mobilde dördüncü düğme artık
+  kısa "COND." değil, "Şartlı uygun"; `checklist.conditionalShort`
+  kaldırıldı.
+- Düzeltilen diğer TR metinler:
+  - Evet / Hayır (önceden `(OK)` / `(NOT_OK)` ekli);
+  - durum seçme ipucu;
+  - operatör ipucu (`WITH_CUSTOMER` / `SHIPPED` yazıyordu);
+  - hattaki araçlar başlığı (`IN_PRODUCTION`);
+  - EoL sıfırlama metinleri (`IN_PRODUCTION`, `APP_ENV`, 404);
+  - dosya kutusu (`FILE`);
+  - şablon fazları (`BRANCH` / `DEPOT` yerine Fabrika / Depo);
+  - şablon onayları (`PENDING`);
+  - depo kilidi ve kapı hataları (`CONDITIONAL_OK`);
+  - faz hataları (`eol_phase`);
+  - çözüm açıklaması (`solution_description`);
+  - "Severity" yerine "Şiddet".
+- Koddaki ham gösterimler düzeltildi:
+  - web `StatusBadge` bekleyen EoL satırında ham `PENDING` değerini
+    basıyordu;
+  - web EoL düğmeleri ham değer basıyordu (`NOT_OK`, `CONDITIONAL`);
+  - analiz filtre özeti ham şiddet değerini basıyordu (`CRITICAL`);
+  - kapı hatalarında checklist türü ham geliyordu (`SHIPMENT`), artık
+    Sevk / Test / EOL olarak çevriliyor.
+- Bilerek bırakılanlar:
+  - kısaltmalar: VIN, EOL/EoL, KPI, MTTR, CSV, ZIP, PDF, JPEG, PNG, HEIC,
+    ADAS;
+  - ürün sözlüğü: Issue(s), Checklist, Test, Model, Final (şablon bölüm
+    adı), Karea;
+  - rol kodu örneği `QUALITY_LEAD` (kullanıcının gireceği kod biçimi).
+- Kalıcı koruma: `shared/i18nMessages.selftest.ts`, TR tabloda ham enum,
+  snake_case alan adı veya env ataması görürse hata veriyor.
+Kanıt: `docs/screenshots/i18n-technical-terms/`:
+- `selftest-before.txt`: eski dosyada 23 anahtar hata veriyor;
+- `selftest-after.txt`: 1155 anahtar temiz;
+- `web-render.txt`: gerçek web bileşeninin çıktısı;
+- `mobile/`: 375, 390 ve 430 px, TR ve EN.
 
 ---
 
