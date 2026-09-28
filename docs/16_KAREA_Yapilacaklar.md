@@ -263,6 +263,25 @@ dışarı tıklama + Esc kapatır, uzun liste kendi içinde kayar.
 Kanıt: `scripts/verify-anchored-popover.mjs`,
 `docs/screenshots/anchored-dropdown/`.
 
+### A22. Web ham teknik hata metinleri temizlendi `[x]` — 2026-09-28
+Mobil ile aynı yol: `shared/networkError.ts` + `translateApiError` /
+`ApiErrorText` (bkz. `docs/11` Karar 14).
+- Ayrım: zaman aşımı (`error.timeout`), bağlantı (`error.offline`),
+  5xx (`error.server` + "Hata kodu: <request_id>"), 4xx (çevrilmiş metin,
+  kod yok), 401 oturum mesajı. Eşlenmemiş 4xx gövdesi artık ekrana ham
+  düşmez → duruma göre genel metin. Tüm domain sentinel'leri TR/EN.
+- Web `request()`: 15 sn (yükleme 120 sn) zaman aşımı; fetch hatası
+  `ApiError(0)`.
+- `LoadErrorState` (blok / eski-veri uyarısı, "Tekrar dene"): Home,
+  Vehicles, VehicleDetail, Activity, Analysis, Issues. Hata anında sıfır
+  kart / boş liste / "(0)" sayaç gösterilmez — "veri yok" ≠ "erişilemedi".
+- Sevkiyat hazırlık uyarıları yapılandırılmış alanlarla (`item_no`,
+  `item_text`, `issue_description`, `read_failed`) web+mobilde i18n;
+  okuma hatası artık DB hata metnini sızdırmaz (log'a gider).
+- Mobil: 5xx de hata kodunu gösterir.
+Kanıt: `scripts/verify-api-error-copy.mjs`, `scripts/verify-web-errors.mjs`,
+`docs/screenshots/web-errors/`.
+
 ---
 
 ## B — Canlıya çıkmadan önce ZORUNLU
