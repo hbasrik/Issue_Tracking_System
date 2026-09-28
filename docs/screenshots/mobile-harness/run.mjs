@@ -4,7 +4,10 @@
  *
  * Usage (from mobile/):  npm run screenshots -- <outDir> [scene,scene] [--locales tr,en]
  *   or: node docs/screenshots/mobile-harness/run.mjs <outDir> ...
- * Writes <scene>-<locale>-<width>[-open].png and facts.json into <outDir>.
+ * Writes <scene>-<locale>-<width>[-open].png and facts.json into <outDir>;
+ * with CARD_TEXT=<text> also a crop of the issue card containing that text.
+ * EXPECT_ISSUE_LAYOUT=1 fails on visible severity text or a card whose
+ * status/severity/meta corners do not match.
  * Exits non-zero on page errors, horizontal overflow or raw status text in
  * the collapsed checklist sections.
  */
@@ -69,9 +72,12 @@ function issueCardFacts() {
       return r.width > 0 && r.height > 0 &&
         (r.right > box.right + 1 || r.left < box.left - 1 || r.bottom > box.bottom + 1 || r.top < box.top - 1);
     }).length;
+    // Grid cards start the text body under the photo.
+    const photo = card.querySelector('[data-testid="issue-card-photo"]').getBoundingClientRect();
+    const bodyTop = photo.right < box.right - 1 ? box.top : photo.bottom;
     const layout = status && bars && meta
       ? {
-          status_top_right: status.top - box.top <= 16 && box.right - status.right <= 40,
+          status_top_right: status.top - bodyTop <= 16 && status.right >= meta.right - 1,
           severity_below_status: bars.top >= status.bottom - 0.5 && bars.top - status.bottom <= 12,
           severity_right_aligned: Math.abs(bars.right - status.right) <= 1.5,
           meta_bottom_left: meta.left < status.left && meta.top > status.bottom,
@@ -83,6 +89,8 @@ function issueCardFacts() {
       severity_aria: sev ? sev.getAttribute('aria-label') : null,
       card_aria: card.getAttribute('aria-label'),
       outside,
+      box: rect(card),
+      body_top: bodyTop,
       status,
       bars,
       meta,
@@ -133,6 +141,12 @@ for (const scene of scenes) {
       });
       const raw = Object.entries(texts).filter(([, v]) => v && RAW_STATUS.test(v)).map(([k]) => k);
       const issueCards = await page.evaluate(issueCardFacts);
+      if (process.env.CARD_TEXT && issueCards.length) {
+        await page
+          .locator('[role="button"]', { has: page.locator('[data-testid="issue-card-photo"]'), hasText: process.env.CARD_TEXT })
+          .first()
+          .screenshot({ path: path.join(outDir, `${key}-card.png`) });
+      }
       facts[key] = { sections: texts, overflow, raw_status_in_sections: raw, issue_cards: issueCards, errors, calls: await page.evaluate(() => window.__calls) };
       if (errors.length || overflow || raw.length) failed = true;
       if (process.env.EXPECT_ISSUE_LAYOUT === '1' && issueCards.some((c) =>
