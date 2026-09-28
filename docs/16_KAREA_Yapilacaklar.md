@@ -288,6 +288,7 @@ Kanıt: `scripts/verify-api-error-copy.mjs`, `scripts/verify-web-errors.mjs`,
   şiddet ↘; sağda ok (›). Mobil araç listesinde kartlar arası 12 px.
 - Araç listesinde şiddet yalnız ikon (`showSeverityLabel={false}`; metin
   erişilebilirlik etiketinde). Issues'ta VIN ve şiddet metni kalır.
+  (A31 ile değişti: şiddet metni her iki listede kalktı, ikon rozetin altında.)
 - Şiddet ikonu: geometri tek kaynak `shared/severityBars.ts`; boş çubuklar
   içi boş çerçeve → düşük 1 / orta 2 / kritik 3 dolu çubuk renksiz (gri
   tonlamada) da ayırt edilir. Renkler hâlâ `shared/brand.ts`.
@@ -436,6 +437,29 @@ Kanıt: `docs/screenshots/i18n-technical-terms/`:
 - `selftest-after.txt`: 1155 anahtar temiz;
 - `web-render.txt`: gerçek web bileşeninin çıktısı;
 - `mobile/`: 375, 390 ve 430 px, TR ve EN.
+
+### A31. Issues kartı araç detayı kartıyla aynı; şiddet metni yok `[x]` — 2026-09-28
+- Ortak `IssueCard` (web + mobil), Issues listesi ve araç detayı listesi
+  için tek düzen, hem ızgarada (fotoğraf üstte) hem sıkışıkta (fotoğraf solda):
+  - açıklama ↖ (2 satır);
+  - durum rozeti ↗, şiddet ikonu hemen altında, sağ kenarları hizalı;
+  - sınıflandırma satırı tam genişlikte;
+  - VIN (yalnız Issues'ta) ve açık kalma süresi en altta, solda.
+- Şiddet metni (Kritik / Orta / Düşük) kaldırıldı; seviye dolu çubuk
+  sayısıyla okunuyor. `showSeverityLabel` seçeneği ve kullanılmayan
+  `severityMessageKey` silindi.
+- Seviye adı ekran okuyucuda kaldı: web ikonu `role="img"` +
+  `aria-label`; mobil kartın etiketi "…, Şiddet: Orta, …" içeriyor.
+- Araç detayında değişen tek şey: ikon sağ alttan rozetin altına taşındı.
+- Mobil düzenek: `issues-list` (gerçek `MyIssuesScreen`) ve `vehicle-issues`
+  sahneleri, `--widths`, `CARD_TEXT` kırpması ve `EXPECT_ISSUE_LAYOUT=1`
+  düzen kontrolü eklendi.
+Kanıt: `docs/screenshots/issue-card-severity-right/`:
+- `web/` ve `mobile/` altında `before/` ve `after/`: 375, 390, 430 ve
+  1280 px, TR ve EN, `facts.json`;
+- `compare/`: aynı kaydın iki ekrandaki kartı yan yana; `compare.txt`'te
+  5 kayıt × 2 dil × 4 genişlik × 2 platform için 80 karşılaştırma, fark 0;
+- `source-scan.txt`, `build-and-tests.txt`.
 
 ---
 
