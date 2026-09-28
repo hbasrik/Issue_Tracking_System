@@ -1,0 +1,7 @@
+# depot item 15 on N7V1K1SA1TK000012 (branch shipped, closed BRANCH item 113 PENDING)
+old api (ea5a5a4):
+{"error":"cannot update depot-phase EoL items until every branch-phase item is OK or CONDITIONAL_OK","request_id":"Basri's Macbook/eaHGBJeUHo-000218"}
+ HTTP 409
+new api:
+{"gate_open":false,"proposed_status":""}
+ HTTP 200

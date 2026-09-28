@@ -1,0 +1,20 @@
+VIN                STATUS        PASSED   SHIP new/old kapali  EOL new/old kapali BR-EOL kalan o/n SHIP kalan o/n      %
+N7V1K1SA0TK000003  IN_PRODUCTION False     0/47 / 0/47      0  0/16 / 0/16      0          11 / 11        47 / 47   4.71
+N7V1K1SA1TK000009  IN_PRODUCTION False     0/47 / 0/47      0 10/16 / 10/16      0            1 / 1        47 / 47  43.53
+N7V1K1SA1TK000012  IN_WAREHOUSE  True    46/46 / 46/47      1 11/15 / 11/16      1            1 / 0          1 / 0  97.02
+N7V1K1SA2TK000004  IN_PRODUCTION False     0/47 / 0/47      0  0/16 / 0/16      0          11 / 11        47 / 47  15.29
+N7V1K1SA2TK000018  DELIVERED     True    46/46 / 46/47      1 15/15 / 15/16      1            1 / 0          1 / 0    100
+N7V1K1SA3TK000013  IN_WAREHOUSE  True    46/46 / 46/47      1 15/15 / 15/16      1            1 / 0          1 / 0    100
+N7V1K1SA4TK000005  IN_PRODUCTION False     0/47 / 0/47      0  0/16 / 0/16      0          11 / 11        47 / 47  19.41
+N7V1K1SA5TK000014  IN_WAREHOUSE  True    46/46 / 46/47      1 15/15 / 15/16      1            1 / 0          1 / 0    100
+N7V1K1SA6TK000006  IN_PRODUCTION False     0/47 / 0/47      0  0/16 / 0/16      0          11 / 11        47 / 47  23.53
+N7V1K1SA7TK000015  IN_WAREHOUSE  True    46/46 / 46/47      1 15/15 / 15/16      1            1 / 0          1 / 0    100
+N7V1K1SA8TK000007  IN_PRODUCTION False     0/47 / 0/47      0  5/16 / 5/16      0            6 / 6        47 / 47  40.59
+N7V1K1SA8TK000010  IN_WAREHOUSE  True    46/46 / 46/47      1 15/15 / 15/16      1            1 / 0          1 / 0    100
+N7V1K1SA9SK000001  IN_PRODUCTION False     0/47 / 0/47      0  0/16 / 0/16      0          11 / 11        47 / 47      0
+N7V1K1SA9TK000002  IN_PRODUCTION False     0/47 / 0/47      0  0/16 / 0/16      0          11 / 11        47 / 47   1.18
+N7V1K1SA9TK000016  DELIVERED     True    46/46 / 46/47      1 15/15 / 15/16      1            1 / 0          1 / 0    100
+N7V1K1SAXTK000008  IN_PRODUCTION False     0/47 / 0/47      0  8/16 / 8/16      0            3 / 3        47 / 47  42.35
+N7V1K1SAXTK000011  IN_WAREHOUSE  True    46/46 / 46/47      1 15/15 / 15/16      1            1 / 0          1 / 0    100
+N7V1K1SAXTK000017  DELIVERED     True    46/46 / 46/47      1 15/15 / 15/16      1            1 / 0          1 / 0    100
+LINE VEHICLES UNCHANGED

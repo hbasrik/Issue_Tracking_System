@@ -1,0 +1,430 @@
+{
+ "progress_tr_1280": {
+  "caption": "Araç ilerlemesi\nİstasyon adımları ve checklist maddeleri, depodan serbest bırakılmaya kadar",
+  "aria": "Araç ilerlemesi %44",
+  "ring_text": "44%"
+ },
+ "list_headers_tr": [
+  "VIN",
+  "Yaşam döngüsü",
+  "İstasyon",
+  "Araç ilerlemesi %",
+  "VIN",
+  "Durum",
+  "İstasyon",
+  "Araç ilerlemesi %",
+  "Açık issue"
+ ],
+ "progress_en_1280": {
+  "caption": "Vehicle progress\nStation steps and checklist items, up to depot release",
+  "aria": "Vehicle progress 44%",
+  "ring_text": "44%"
+ },
+ "list_headers_en": [
+  "VIN",
+  "Lifecycle",
+  "Station",
+  "Vehicle progress %",
+  "VIN",
+  "Status",
+  "Station",
+  "Vehicle progress %",
+  "Open issues"
+ ],
+ "progress_tr_390": {
+  "caption": "Araç ilerlemesi\nİstasyon adımları ve checklist maddeleri, depodan serbest bırakılmaya kadar",
+  "aria": "Araç ilerlemesi %44",
+  "ring_text": "44%"
+ },
+ "passed_shipment_collapsed": [
+  {
+   "title": "Sevk kontrol listesi",
+   "header": "46/46 geçti",
+   "active_total": "46",
+   "active_remaining": "0",
+   "stage_closed_count": "1",
+   "active_item_ids": [
+    "16",
+    "17",
+    "18",
+    "19",
+    "20",
+    "21",
+    "22",
+    "23",
+    "24",
+    "25",
+    "26",
+    "27",
+    "28",
+    "29",
+    "30",
+    "31",
+    "32",
+    "33",
+    "34",
+    "35",
+    "36",
+    "37",
+    "38",
+    "39",
+    "40",
+    "41",
+    "42",
+    "43",
+    "44",
+    "45",
+    "46",
+    "47",
+    "48",
+    "49",
+    "50",
+    "51",
+    "52",
+    "53",
+    "54",
+    "55",
+    "56",
+    "57",
+    "58",
+    "59",
+    "60",
+    "61"
+   ],
+   "stage_closed_section": {
+    "summary": "Bu aşama tamamlandı (1)",
+    "open": false,
+    "item_ids": [
+     "112"
+    ],
+    "buttons_inside": 0
+   },
+   "warnings": []
+  }
+ ],
+ "passed_shipment_expanded": [
+  {
+   "title": "Sevk kontrol listesi",
+   "header": "46/46 geçti",
+   "active_total": "46",
+   "active_remaining": "0",
+   "stage_closed_count": "1",
+   "active_item_ids": [
+    "16",
+    "17",
+    "18",
+    "19",
+    "20",
+    "21",
+    "22",
+    "23",
+    "24",
+    "25",
+    "26",
+    "27",
+    "28",
+    "29",
+    "30",
+    "31",
+    "32",
+    "33",
+    "34",
+    "35",
+    "36",
+    "37",
+    "38",
+    "39",
+    "40",
+    "41",
+    "42",
+    "43",
+    "44",
+    "45",
+    "46",
+    "47",
+    "48",
+    "49",
+    "50",
+    "51",
+    "52",
+    "53",
+    "54",
+    "55",
+    "56",
+    "57",
+    "58",
+    "59",
+    "60",
+    "61"
+   ],
+   "stage_closed_section": {
+    "summary": "Bu aşama tamamlandı (1)",
+    "open": true,
+    "item_ids": [
+     "112"
+    ],
+    "buttons_inside": 0
+   },
+   "warnings": []
+  }
+ ],
+ "passed_eol": [
+  {
+   "title": "Fabrika kontrol listesi",
+   "header": "10/10 geçti",
+   "active_total": "10",
+   "active_remaining": "0",
+   "stage_closed_count": "1",
+   "active_item_ids": [
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9",
+    "10"
+   ],
+   "stage_closed_section": {
+    "summary": "Bu aşama tamamlandı (1)",
+    "open": false,
+    "item_ids": [
+     "113"
+    ],
+    "buttons_inside": 0
+   },
+   "warnings": []
+  },
+  {
+   "title": "Depo kontrol listesi",
+   "header": "5/5 geçti",
+   "active_total": "5",
+   "active_remaining": "0",
+   "stage_closed_count": "0",
+   "active_item_ids": [
+    "11",
+    "12",
+    "13",
+    "14",
+    "15"
+   ],
+   "stage_closed_section": null,
+   "warnings": []
+  }
+ ],
+ "branch_shipped_eol": [
+  {
+   "title": "Fabrika kontrol listesi",
+   "header": "10/10 geçti",
+   "active_total": "10",
+   "active_remaining": "0",
+   "stage_closed_count": "1",
+   "active_item_ids": [
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9",
+    "10"
+   ],
+   "stage_closed_section": {
+    "summary": "Bu aşama tamamlandı (1)",
+    "open": false,
+    "item_ids": [
+     "113"
+    ],
+    "buttons_inside": 0
+   },
+   "warnings": []
+  },
+  {
+   "title": "Depo kontrol listesi",
+   "header": "1/5 geçti",
+   "active_total": "5",
+   "active_remaining": "4",
+   "stage_closed_count": "0",
+   "active_item_ids": [
+    "11",
+    "12",
+    "13",
+    "14",
+    "15"
+   ],
+   "stage_closed_section": null,
+   "warnings": []
+  }
+ ],
+ "branch_shipped_eol_depot_locked_hint": [],
+ "delivered_shipment": [
+  {
+   "title": "Sevk kontrol listesi",
+   "header": "46/46 geçti",
+   "active_total": "46",
+   "active_remaining": "0",
+   "stage_closed_count": "1",
+   "active_item_ids": [
+    "16",
+    "17",
+    "18",
+    "19",
+    "20",
+    "21",
+    "22",
+    "23",
+    "24",
+    "25",
+    "26",
+    "27",
+    "28",
+    "29",
+    "30",
+    "31",
+    "32",
+    "33",
+    "34",
+    "35",
+    "36",
+    "37",
+    "38",
+    "39",
+    "40",
+    "41",
+    "42",
+    "43",
+    "44",
+    "45",
+    "46",
+    "47",
+    "48",
+    "49",
+    "50",
+    "51",
+    "52",
+    "53",
+    "54",
+    "55",
+    "56",
+    "57",
+    "58",
+    "59",
+    "60",
+    "61"
+   ],
+   "stage_closed_section": {
+    "summary": "Bu aşama tamamlandı (1)",
+    "open": false,
+    "item_ids": [
+     "112"
+    ],
+    "buttons_inside": 0
+   },
+   "warnings": []
+  }
+ ],
+ "line_shipment": [
+  {
+   "title": "Sevk kontrol listesi",
+   "header": "0/47 geçti",
+   "active_total": "47",
+   "active_remaining": "47",
+   "stage_closed_count": "0",
+   "active_item_ids": [
+    "16",
+    "17",
+    "18",
+    "19",
+    "20",
+    "21",
+    "22",
+    "23",
+    "24",
+    "25",
+    "26",
+    "27",
+    "28",
+    "29",
+    "30",
+    "31",
+    "32",
+    "33",
+    "34",
+    "35",
+    "36",
+    "37",
+    "38",
+    "39",
+    "40",
+    "41",
+    "42",
+    "43",
+    "44",
+    "45",
+    "46",
+    "47",
+    "48",
+    "49",
+    "50",
+    "51",
+    "52",
+    "53",
+    "54",
+    "55",
+    "56",
+    "57",
+    "58",
+    "59",
+    "60",
+    "61",
+    "112"
+   ],
+   "stage_closed_section": null,
+   "warnings": []
+  }
+ ],
+ "line_eol": [
+  {
+   "title": "Fabrika kontrol listesi",
+   "header": "10/11 geçti",
+   "active_total": "11",
+   "active_remaining": "1",
+   "stage_closed_count": "0",
+   "active_item_ids": [
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9",
+    "10",
+    "113"
+   ],
+   "stage_closed_section": null,
+   "warnings": []
+  },
+  {
+   "title": "Depo kontrol listesi",
+   "header": "0/5 geçti",
+   "active_total": "5",
+   "active_remaining": "5",
+   "stage_closed_count": "0",
+   "active_item_ids": [
+    "11",
+    "12",
+    "13",
+    "14",
+    "15"
+   ],
+   "stage_closed_section": null,
+   "warnings": []
+  }
+ ]
+}

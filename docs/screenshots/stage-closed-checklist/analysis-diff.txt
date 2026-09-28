@@ -1,0 +1,4 @@
+# /analysis/dashboard old(ea5a5a4) vs new, fields that differ:
+.Cards.CompletionPercent: old=55.4 new=55.6
+.CompareCards.CompletionPercent: old=55.4 new=55.6
+.StagePerformance[0].Total: old=190 new=189

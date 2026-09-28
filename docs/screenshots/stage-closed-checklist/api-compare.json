@@ -1,0 +1,614 @@
+[
+ {
+  "vin": "N7V1K1SA0TK000003",
+  "status": "IN_PRODUCTION",
+  "stage_passed": false,
+  "progress_new": 4.71,
+  "progress_old": 4.71,
+  "branch_eol_remaining_old": 11,
+  "branch_eol_remaining_new": 11,
+  "shipment_remaining_old": 47,
+  "shipment_remaining_new": 47,
+  "readiness_new_warnings": 25,
+  "checklists": {
+   "shipment": {
+    "new": "0/47",
+    "old": "0/47",
+    "closed": 0,
+    "closed_nos": []
+   },
+   "test": {
+    "new": "0/43",
+    "old": "0/43",
+    "closed": 0,
+    "closed_nos": []
+   },
+   "eol": {
+    "new": "0/16",
+    "old": "0/16",
+    "closed": 0,
+    "closed_nos": []
+   }
+  }
+ },
+ {
+  "vin": "N7V1K1SA1TK000009",
+  "status": "IN_PRODUCTION",
+  "stage_passed": false,
+  "progress_new": 43.53,
+  "progress_old": 43.53,
+  "branch_eol_remaining_old": 1,
+  "branch_eol_remaining_new": 1,
+  "shipment_remaining_old": 47,
+  "shipment_remaining_new": 47,
+  "readiness_new_warnings": 23,
+  "checklists": {
+   "shipment": {
+    "new": "0/47",
+    "old": "0/47",
+    "closed": 0,
+    "closed_nos": []
+   },
+   "test": {
+    "new": "0/43",
+    "old": "0/43",
+    "closed": 0,
+    "closed_nos": []
+   },
+   "eol": {
+    "new": "10/16",
+    "old": "10/16",
+    "closed": 0,
+    "closed_nos": []
+   }
+  }
+ },
+ {
+  "vin": "N7V1K1SA1TK000012",
+  "status": "IN_WAREHOUSE",
+  "stage_passed": true,
+  "progress_new": 97.02,
+  "progress_old": 97.02,
+  "branch_eol_remaining_old": 1,
+  "branch_eol_remaining_new": 0,
+  "shipment_remaining_old": 1,
+  "shipment_remaining_new": 0,
+  "readiness_new_warnings": 7,
+  "checklists": {
+   "shipment": {
+    "new": "46/46",
+    "old": "46/47",
+    "closed": 1,
+    "closed_nos": [
+     47
+    ]
+   },
+   "test": {
+    "new": "42/43",
+    "old": "42/43",
+    "closed": 0,
+    "closed_nos": []
+   },
+   "eol": {
+    "new": "11/15",
+    "old": "11/16",
+    "closed": 1,
+    "closed_nos": [
+     16
+    ]
+   }
+  }
+ },
+ {
+  "vin": "N7V1K1SA2TK000004",
+  "status": "IN_PRODUCTION",
+  "stage_passed": false,
+  "progress_new": 15.29,
+  "progress_old": 15.29,
+  "branch_eol_remaining_old": 11,
+  "branch_eol_remaining_new": 11,
+  "shipment_remaining_old": 47,
+  "shipment_remaining_new": 47,
+  "readiness_new_warnings": 26,
+  "checklists": {
+   "shipment": {
+    "new": "0/47",
+    "old": "0/47",
+    "closed": 0,
+    "closed_nos": []
+   },
+   "test": {
+    "new": "0/43",
+    "old": "0/43",
+    "closed": 0,
+    "closed_nos": []
+   },
+   "eol": {
+    "new": "0/16",
+    "old": "0/16",
+    "closed": 0,
+    "closed_nos": []
+   }
+  }
+ },
+ {
+  "vin": "N7V1K1SA2TK000018",
+  "status": "DELIVERED",
+  "stage_passed": true,
+  "progress_new": 100,
+  "progress_old": 100,
+  "branch_eol_remaining_old": 1,
+  "branch_eol_remaining_new": 0,
+  "shipment_remaining_old": 1,
+  "shipment_remaining_new": 0,
+  "readiness_new_warnings": 0,
+  "checklists": {
+   "shipment": {
+    "new": "46/46",
+    "old": "46/47",
+    "closed": 1,
+    "closed_nos": [
+     47
+    ]
+   },
+   "test": {
+    "new": "43/43",
+    "old": "43/43",
+    "closed": 0,
+    "closed_nos": []
+   },
+   "eol": {
+    "new": "15/15",
+    "old": "15/16",
+    "closed": 1,
+    "closed_nos": [
+     16
+    ]
+   }
+  }
+ },
+ {
+  "vin": "N7V1K1SA3TK000013",
+  "status": "IN_WAREHOUSE",
+  "stage_passed": true,
+  "progress_new": 100,
+  "progress_old": 100,
+  "branch_eol_remaining_old": 1,
+  "branch_eol_remaining_new": 0,
+  "shipment_remaining_old": 1,
+  "shipment_remaining_new": 0,
+  "readiness_new_warnings": 0,
+  "checklists": {
+   "shipment": {
+    "new": "46/46",
+    "old": "46/47",
+    "closed": 1,
+    "closed_nos": [
+     47
+    ]
+   },
+   "test": {
+    "new": "43/43",
+    "old": "43/43",
+    "closed": 0,
+    "closed_nos": []
+   },
+   "eol": {
+    "new": "15/15",
+    "old": "15/16",
+    "closed": 1,
+    "closed_nos": [
+     16
+    ]
+   }
+  }
+ },
+ {
+  "vin": "N7V1K1SA4TK000005",
+  "status": "IN_PRODUCTION",
+  "stage_passed": false,
+  "progress_new": 19.41,
+  "progress_old": 19.41,
+  "branch_eol_remaining_old": 11,
+  "branch_eol_remaining_new": 11,
+  "shipment_remaining_old": 47,
+  "shipment_remaining_new": 47,
+  "readiness_new_warnings": 26,
+  "checklists": {
+   "shipment": {
+    "new": "0/47",
+    "old": "0/47",
+    "closed": 0,
+    "closed_nos": []
+   },
+   "test": {
+    "new": "0/43",
+    "old": "0/43",
+    "closed": 0,
+    "closed_nos": []
+   },
+   "eol": {
+    "new": "0/16",
+    "old": "0/16",
+    "closed": 0,
+    "closed_nos": []
+   }
+  }
+ },
+ {
+  "vin": "N7V1K1SA5TK000014",
+  "status": "IN_WAREHOUSE",
+  "stage_passed": true,
+  "progress_new": 100,
+  "progress_old": 100,
+  "branch_eol_remaining_old": 1,
+  "branch_eol_remaining_new": 0,
+  "shipment_remaining_old": 1,
+  "shipment_remaining_new": 0,
+  "readiness_new_warnings": 0,
+  "checklists": {
+   "shipment": {
+    "new": "46/46",
+    "old": "46/47",
+    "closed": 1,
+    "closed_nos": [
+     47
+    ]
+   },
+   "test": {
+    "new": "43/43",
+    "old": "43/43",
+    "closed": 0,
+    "closed_nos": []
+   },
+   "eol": {
+    "new": "15/15",
+    "old": "15/16",
+    "closed": 1,
+    "closed_nos": [
+     16
+    ]
+   }
+  }
+ },
+ {
+  "vin": "N7V1K1SA6TK000006",
+  "status": "IN_PRODUCTION",
+  "stage_passed": false,
+  "progress_new": 23.53,
+  "progress_old": 23.53,
+  "branch_eol_remaining_old": 11,
+  "branch_eol_remaining_new": 11,
+  "shipment_remaining_old": 47,
+  "shipment_remaining_new": 47,
+  "readiness_new_warnings": 27,
+  "checklists": {
+   "shipment": {
+    "new": "0/47",
+    "old": "0/47",
+    "closed": 0,
+    "closed_nos": []
+   },
+   "test": {
+    "new": "0/43",
+    "old": "0/43",
+    "closed": 0,
+    "closed_nos": []
+   },
+   "eol": {
+    "new": "0/16",
+    "old": "0/16",
+    "closed": 0,
+    "closed_nos": []
+   }
+  }
+ },
+ {
+  "vin": "N7V1K1SA7TK000015",
+  "status": "IN_WAREHOUSE",
+  "stage_passed": true,
+  "progress_new": 100,
+  "progress_old": 100,
+  "branch_eol_remaining_old": 1,
+  "branch_eol_remaining_new": 0,
+  "shipment_remaining_old": 1,
+  "shipment_remaining_new": 0,
+  "readiness_new_warnings": 0,
+  "checklists": {
+   "shipment": {
+    "new": "46/46",
+    "old": "46/47",
+    "closed": 1,
+    "closed_nos": [
+     47
+    ]
+   },
+   "test": {
+    "new": "43/43",
+    "old": "43/43",
+    "closed": 0,
+    "closed_nos": []
+   },
+   "eol": {
+    "new": "15/15",
+    "old": "15/16",
+    "closed": 1,
+    "closed_nos": [
+     16
+    ]
+   }
+  }
+ },
+ {
+  "vin": "N7V1K1SA8TK000007",
+  "status": "IN_PRODUCTION",
+  "stage_passed": false,
+  "progress_new": 40.59,
+  "progress_old": 40.59,
+  "branch_eol_remaining_old": 6,
+  "branch_eol_remaining_new": 6,
+  "shipment_remaining_old": 47,
+  "shipment_remaining_new": 47,
+  "readiness_new_warnings": 26,
+  "checklists": {
+   "shipment": {
+    "new": "0/47",
+    "old": "0/47",
+    "closed": 0,
+    "closed_nos": []
+   },
+   "test": {
+    "new": "0/43",
+    "old": "0/43",
+    "closed": 0,
+    "closed_nos": []
+   },
+   "eol": {
+    "new": "5/16",
+    "old": "5/16",
+    "closed": 0,
+    "closed_nos": []
+   }
+  }
+ },
+ {
+  "vin": "N7V1K1SA8TK000010",
+  "status": "IN_WAREHOUSE",
+  "stage_passed": true,
+  "progress_new": 100,
+  "progress_old": 100,
+  "branch_eol_remaining_old": 1,
+  "branch_eol_remaining_new": 0,
+  "shipment_remaining_old": 1,
+  "shipment_remaining_new": 0,
+  "readiness_new_warnings": 0,
+  "checklists": {
+   "shipment": {
+    "new": "46/46",
+    "old": "46/47",
+    "closed": 1,
+    "closed_nos": [
+     47
+    ]
+   },
+   "test": {
+    "new": "43/43",
+    "old": "43/43",
+    "closed": 0,
+    "closed_nos": []
+   },
+   "eol": {
+    "new": "15/15",
+    "old": "15/16",
+    "closed": 1,
+    "closed_nos": [
+     16
+    ]
+   }
+  }
+ },
+ {
+  "vin": "N7V1K1SA9SK000001",
+  "status": "IN_PRODUCTION",
+  "stage_passed": false,
+  "progress_new": 0,
+  "progress_old": 0,
+  "branch_eol_remaining_old": 11,
+  "branch_eol_remaining_new": 11,
+  "shipment_remaining_old": 47,
+  "shipment_remaining_new": 47,
+  "readiness_new_warnings": 25,
+  "checklists": {
+   "shipment": {
+    "new": "0/47",
+    "old": "0/47",
+    "closed": 0,
+    "closed_nos": []
+   },
+   "test": {
+    "new": "0/43",
+    "old": "0/43",
+    "closed": 0,
+    "closed_nos": []
+   },
+   "eol": {
+    "new": "0/16",
+    "old": "0/16",
+    "closed": 0,
+    "closed_nos": []
+   }
+  }
+ },
+ {
+  "vin": "N7V1K1SA9TK000002",
+  "status": "IN_PRODUCTION",
+  "stage_passed": false,
+  "progress_new": 1.18,
+  "progress_old": 1.18,
+  "branch_eol_remaining_old": 11,
+  "branch_eol_remaining_new": 11,
+  "shipment_remaining_old": 47,
+  "shipment_remaining_new": 47,
+  "readiness_new_warnings": 25,
+  "checklists": {
+   "shipment": {
+    "new": "0/47",
+    "old": "0/47",
+    "closed": 0,
+    "closed_nos": []
+   },
+   "test": {
+    "new": "0/43",
+    "old": "0/43",
+    "closed": 0,
+    "closed_nos": []
+   },
+   "eol": {
+    "new": "0/16",
+    "old": "0/16",
+    "closed": 0,
+    "closed_nos": []
+   }
+  }
+ },
+ {
+  "vin": "N7V1K1SA9TK000016",
+  "status": "DELIVERED",
+  "stage_passed": true,
+  "progress_new": 100,
+  "progress_old": 100,
+  "branch_eol_remaining_old": 1,
+  "branch_eol_remaining_new": 0,
+  "shipment_remaining_old": 1,
+  "shipment_remaining_new": 0,
+  "readiness_new_warnings": 0,
+  "checklists": {
+   "shipment": {
+    "new": "46/46",
+    "old": "46/47",
+    "closed": 1,
+    "closed_nos": [
+     47
+    ]
+   },
+   "test": {
+    "new": "43/43",
+    "old": "43/43",
+    "closed": 0,
+    "closed_nos": []
+   },
+   "eol": {
+    "new": "15/15",
+    "old": "15/16",
+    "closed": 1,
+    "closed_nos": [
+     16
+    ]
+   }
+  }
+ },
+ {
+  "vin": "N7V1K1SAXTK000008",
+  "status": "IN_PRODUCTION",
+  "stage_passed": false,
+  "progress_new": 42.35,
+  "progress_old": 42.35,
+  "branch_eol_remaining_old": 3,
+  "branch_eol_remaining_new": 3,
+  "shipment_remaining_old": 47,
+  "shipment_remaining_new": 47,
+  "readiness_new_warnings": 26,
+  "checklists": {
+   "shipment": {
+    "new": "0/47",
+    "old": "0/47",
+    "closed": 0,
+    "closed_nos": []
+   },
+   "test": {
+    "new": "0/43",
+    "old": "0/43",
+    "closed": 0,
+    "closed_nos": []
+   },
+   "eol": {
+    "new": "8/16",
+    "old": "8/16",
+    "closed": 0,
+    "closed_nos": []
+   }
+  }
+ },
+ {
+  "vin": "N7V1K1SAXTK000011",
+  "status": "IN_WAREHOUSE",
+  "stage_passed": true,
+  "progress_new": 100,
+  "progress_old": 100,
+  "branch_eol_remaining_old": 1,
+  "branch_eol_remaining_new": 0,
+  "shipment_remaining_old": 1,
+  "shipment_remaining_new": 0,
+  "readiness_new_warnings": 0,
+  "checklists": {
+   "shipment": {
+    "new": "46/46",
+    "old": "46/47",
+    "closed": 1,
+    "closed_nos": [
+     47
+    ]
+   },
+   "test": {
+    "new": "43/43",
+    "old": "43/43",
+    "closed": 0,
+    "closed_nos": []
+   },
+   "eol": {
+    "new": "15/15",
+    "old": "15/16",
+    "closed": 1,
+    "closed_nos": [
+     16
+    ]
+   }
+  }
+ },
+ {
+  "vin": "N7V1K1SAXTK000017",
+  "status": "DELIVERED",
+  "stage_passed": true,
+  "progress_new": 100,
+  "progress_old": 100,
+  "branch_eol_remaining_old": 1,
+  "branch_eol_remaining_new": 0,
+  "shipment_remaining_old": 1,
+  "shipment_remaining_new": 0,
+  "readiness_new_warnings": 0,
+  "checklists": {
+   "shipment": {
+    "new": "46/46",
+    "old": "46/47",
+    "closed": 1,
+    "closed_nos": [
+     47
+    ]
+   },
+   "test": {
+    "new": "43/43",
+    "old": "43/43",
+    "closed": 0,
+    "closed_nos": []
+   },
+   "eol": {
+    "new": "15/15",
+    "old": "15/16",
+    "closed": 1,
+    "closed_nos": [
+     16
+    ]
+   }
+  }
+ }
+]
