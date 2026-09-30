@@ -1,0 +1,15 @@
+# database/scripts/reset_and_load_vins.sql on a throwaway copy of the test DB
+# (container karea_progress_verify :55433; the live DB on :5432 is not touched)
+$ CREATE DATABASE karea_vins_check TEMPLATE karea_progress_test
+CREATE DATABASE
+$ schema version:
+32|f
+$ psql -v ON_ERROR_STOP=1 -f database/scripts/reset_and_load_vins.sql
+exit=0
+ERROR lines: 0
+$ counts:
+500|N7V1K1SA0TK000003|N7V1K1SAXTK000493|500
+32000
+$ DROP DATABASE karea_vins_check
+DROP DATABASE
+remaining karea_vins_check databases: 0

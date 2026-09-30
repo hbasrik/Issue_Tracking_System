@@ -1,0 +1,97 @@
+# rg 'total_progress_percentage|completion_split|UpdateProgress|ComputeProgress' (excluding docs/screenshots), after the change
+
+./docs/16_KAREA_Yapilacaklar.md:465:- `vehicles.total_progress_percentage` (yalnız istasyon adımları, trigger +
+./docs/16_KAREA_Yapilacaklar.md:466:  Go iki kez yazıyordu) ve tek okuyucusu `vw_vehicle_completion_split`
+./docs/16_KAREA_Yapilacaklar.md:471:  Go'da `ComputeProgress`/`UpdateProgress` yerine
+./docs/08_KAREA_database_schema.sql:162:    total_progress_percentage   NUMERIC(5,2) NOT NULL DEFAULT 0.00
+./docs/08_KAREA_database_schema.sql:163:                                 CHECK (total_progress_percentage BETWEEN 0 AND 100),
+./docs/08_KAREA_database_schema.sql:491:    SET total_progress_percentage = v_new_percentage,
+./docs/08_KAREA_database_schema.sql:719:CREATE OR REPLACE VIEW vw_vehicle_completion_split AS
+./docs/08_KAREA_database_schema.sql:720:SELECT count(*) FILTER (WHERE total_progress_percentage >= 100) AS completed_vehicles,
+./docs/08_KAREA_database_schema.sql:721:       count(*) FILTER (WHERE total_progress_percentage < 100) AS in_progress_vehicles
+./docs/11_KAREA_v2_Mimari_Mutabakati.md:247:**Gerekçe:** İki ayrı ilerleme sayısı vardı. `vehicles.total_progress_percentage`
+./docs/11_KAREA_v2_Mimari_Mutabakati.md:248:trigger (`fn_recalculate_vehicle_progress`) ve Go (`ComputeProgress` +
+./docs/11_KAREA_v2_Mimari_Mutabakati.md:249:`UpdateProgress`) tarafından iki kez yazılıyor, yalnız istasyon adımlarını
+./docs/11_KAREA_v2_Mimari_Mutabakati.md:251:gösteriyordu. Kolonun tek okuyucusu `vw_vehicle_completion_split` idi ve depo
+./docs/11_KAREA_v2_Mimari_Mutabakati.md:269:- **Go:** `ComputeProgress` / `UpdateProgress` yerine `ComputeCurrentStation` /
+./database/migrations/0007_planned_vehicles.up.sql:123:    SET total_progress_percentage = v_new_percentage,
+./database/migrations/0001_init.up.sql:230:    total_progress_percentage   NUMERIC(5,2) NOT NULL DEFAULT 0.00
+./database/migrations/0001_init.up.sql:231:                                 CHECK (total_progress_percentage BETWEEN 0 AND 100),
+./database/migrations/0001_init.up.sql:565:    SET total_progress_percentage = v_new_percentage,
+./database/migrations/0001_init.up.sql:814:               WHERE table_name = 'vehicles' AND column_name = 'total_progress_percentage') THEN
+./database/migrations/0001_init.up.sql:815:        CREATE OR REPLACE VIEW vw_vehicle_completion_split AS
+./database/migrations/0001_init.up.sql:816:        SELECT count(*) FILTER (WHERE total_progress_percentage >= 100) AS completed_vehicles,
+./database/migrations/0001_init.up.sql:817:               count(*) FILTER (WHERE total_progress_percentage < 100) AS in_progress_vehicles
+./database/migrations/0009_planned_vehicle_progress.up.sql:46:    SET total_progress_percentage = v_new_percentage,
+./database/migrations/0009_planned_vehicle_progress.down.sql:64:    SET total_progress_percentage = v_new_percentage,
+./docs/12_KAREA_v2_database_schema.sql:1045:-- vw_vehicle_completion_split was dropped in migration 0032 (Karar 16): it
+./database/migrations/0002_v2_architecture.down.sql:10:DROP VIEW IF EXISTS vw_vehicle_completion_split;
+./database/migrations/0002_v2_architecture.down.sql:399:    SET total_progress_percentage = v_new_percentage,
+./database/migrations/0002_v2_architecture.down.sql:639:CREATE OR REPLACE VIEW vw_vehicle_completion_split AS
+./database/migrations/0002_v2_architecture.down.sql:640:SELECT count(*) FILTER (WHERE total_progress_percentage >= 100) AS completed_vehicles,
+./database/migrations/0002_v2_architecture.down.sql:641:       count(*) FILTER (WHERE total_progress_percentage < 100) AS in_progress_vehicles
+./database/migrations/0032_drop_stored_progress_percentage.up.sql:3:-- vehicles.total_progress_percentage counted station steps only, while every
+./database/migrations/0032_drop_stored_progress_percentage.up.sql:11:-- vw_vehicle_completion_split was the only reader and nothing queries it; it
+./database/migrations/0032_drop_stored_progress_percentage.up.sql:17:DROP VIEW IF EXISTS vw_vehicle_completion_split;
+./database/migrations/0032_drop_stored_progress_percentage.up.sql:57:ALTER TABLE vehicles DROP COLUMN IF EXISTS total_progress_percentage;
+./database/migrations/0032_drop_stored_progress_percentage.down.sql:6:    ADD COLUMN IF NOT EXISTS total_progress_percentage NUMERIC(5,2) NOT NULL DEFAULT 0.00
+./database/migrations/0032_drop_stored_progress_percentage.down.sql:7:        CHECK (total_progress_percentage BETWEEN 0 AND 100);
+./database/migrations/0032_drop_stored_progress_percentage.down.sql:36:    SET total_progress_percentage = v_new_percentage,
+./database/migrations/0032_drop_stored_progress_percentage.down.sql:54:SET total_progress_percentage = COALESCE((
+./database/migrations/0032_drop_stored_progress_percentage.down.sql:60:CREATE OR REPLACE VIEW vw_vehicle_completion_split AS
+./database/migrations/0032_drop_stored_progress_percentage.down.sql:61:SELECT count(*) FILTER (WHERE total_progress_percentage >= 100) AS completed_vehicles,
+./database/migrations/0032_drop_stored_progress_percentage.down.sql:62:       count(*) FILTER (WHERE total_progress_percentage < 100) AS in_progress_vehicles
+./database/migrations/0002_v2_architecture.up.sql:15:DROP VIEW IF EXISTS vw_vehicle_completion_split;
+./database/migrations/0002_v2_architecture.up.sql:706:    SET total_progress_percentage = v_new_percentage,
+./database/migrations/0002_v2_architecture.up.sql:992:               WHERE table_name = 'vehicles' AND column_name = 'total_progress_percentage') THEN
+./database/migrations/0002_v2_architecture.up.sql:993:        CREATE OR REPLACE VIEW vw_vehicle_completion_split AS
+./database/migrations/0002_v2_architecture.up.sql:994:        SELECT count(*) FILTER (WHERE total_progress_percentage >= 100) AS completed_vehicles,
+./database/migrations/0002_v2_architecture.up.sql:995:               count(*) FILTER (WHERE total_progress_percentage < 100) AS in_progress_vehicles
+./database/migrations/0007_planned_vehicles.down.sql:103:    SET total_progress_percentage = v_new_percentage,
+./database/migrations/0001_init.down.sql:4:DROP VIEW IF EXISTS vw_vehicle_completion_split;
+./backend/internal/repository/postgres/progress_scope_test.go:252:	if err := tx.QueryRow(ctx, `SELECT to_regclass('public.vw_vehicle_completion_split') IS NOT NULL`).Scan(&view); err != nil {
+./backend/internal/repository/postgres/progress_scope_test.go:256:		t.Error("vw_vehicle_completion_split must not exist")
+
+# API field TotalProgressPercentage (computed value, vehicleProgressSQL) — readers:
+./mobile/src/api/client.ts:194:  TotalProgressPercentage: number;
+./mobile/src/screens/VehiclesScreen.tsx:245:                  label={`${Math.round(item.TotalProgressPercentage)}%`}
+./mobile/src/screens/VehicleStationScreen.tsx:316:            percent={vehicle?.TotalProgressPercentage ?? 0}
+./mobile/src/screens/VehicleStationScreen.tsx:318:              n: Math.round(vehicle?.TotalProgressPercentage ?? 0),
+./mobile/src/components/VinSearchBox.tsx:167:                  label={`${Math.round(item.TotalProgressPercentage)}%`}
+./web/src/pages/VehicleDetailPage.tsx:202:  const pct = Number(vehicle.TotalProgressPercentage);
+./web/src/pages/VehiclesPage.tsx:295:                  {Number(v.TotalProgressPercentage).toFixed(1)}%
+./web/src/pages/VehiclesPage.tsx:362:                    {Number(v.TotalProgressPercentage).toFixed(1)}%
+./web/src/lib/api.ts:790:  TotalProgressPercentage: number;
+./backend/internal/repository/postgres/stage_applicability_test.go:258:		if math.Abs(veh.TotalProgressPercentage-want) > 0.005 {
+./backend/internal/repository/postgres/stage_applicability_test.go:260:				v.vin, v.status, veh.TotalProgressPercentage, open, applicable, want)
+./backend/internal/repository/postgres/stage_applicability_test.go:262:		if (veh.TotalProgressPercentage == 100) != (open == 0 && applicable > 0) {
+./backend/internal/repository/postgres/stage_applicability_test.go:263:			t.Errorf("%s (%s): progress %.2f contradicts %d open item(s)", v.vin, v.status, veh.TotalProgressPercentage, open)
+./backend/internal/repository/postgres/stage_applicability_test.go:267:			if open != 0 || veh.TotalProgressPercentage != 100 {
+./backend/internal/repository/postgres/stage_applicability_test.go:268:				t.Errorf("delivered %s: want 100%% and nothing open, got %.2f / %d", v.vin, veh.TotalProgressPercentage, open)
+./backend/internal/repository/postgres/stage_applicability_test.go:271:		t.Logf("%s %-13s progress=%6.2f open=%d applicable=%d", v.vin, v.status, veh.TotalProgressPercentage, open, applicable)
+./backend/internal/domain/vehicle.go:117:	TotalProgressPercentage float64
+./backend/internal/repository/postgres/progress_scope_test.go:78:		if math.Abs(v.TotalProgressPercentage-want) > 0.005 {
+./backend/internal/repository/postgres/progress_scope_test.go:79:			t.Errorf("%s %s: progress %.2f, open %d of %d → want %.2f", label, vin, v.TotalProgressPercentage, open, applicable, want)
+./backend/internal/repository/postgres/progress_scope_test.go:81:		if (v.TotalProgressPercentage == 100) != (open == 0) {
+./backend/internal/repository/postgres/progress_scope_test.go:82:			t.Errorf("%s %s: progress %.2f contradicts %d open item(s)", label, vin, v.TotalProgressPercentage, open)
+./backend/internal/repository/postgres/progress_scope_test.go:84:		t.Logf("%-28s %s %-13s progress=%6.2f open=%d applicable=%d", label, vin, v.CurrentGlobalStatus, v.TotalProgressPercentage, open, applicable)
+./backend/internal/repository/postgres/progress_scope_test.go:85:		return snap{v.TotalProgressPercentage, open, applicable}
+./backend/internal/repository/postgres/progress_scope_test.go:208:		got := []float64{detail.TotalProgressPercentage}
+./backend/internal/repository/postgres/progress_scope_test.go:212:					got = append(got, r.TotalProgressPercentage)
+./backend/internal/usecase/record_station_step_result.go:35:	TotalProgressPercentage float64
+./backend/internal/usecase/record_station_step_result.go:71:		TotalProgressPercentage: vehicle.TotalProgressPercentage,
+./backend/internal/repository/postgres/vehicle_repo.go:28:// TotalProgressPercentage is computed from the applicable set (stage rule) on
+./backend/internal/repository/postgres/vehicle_repo.go:48:		&v.TotalProgressPercentage, &v.EOLTemplateID, &v.ShipmentTemplateID,
+./backend/internal/repository/postgres/vehicle_repo.go:68:		&v.TotalProgressPercentage, &v.EOLTemplateID, &v.ShipmentTemplateID,
+./backend/internal/usecase/record_station_step_result_test.go:20:	vehicles.vehicles[vin] = &domain.Vehicle{VIN: vin, TotalProgressPercentage: 37.5}
+./backend/internal/usecase/record_station_step_result_test.go:48:	if out.TotalProgressPercentage != 37.5 {
+./backend/internal/usecase/record_station_step_result_test.go:49:		t.Errorf("expected the vehicle read's 37.5%%, got %.2f", out.TotalProgressPercentage)
+./web/src/components/print/VehicleListPrint.tsx:94:                  <td>{Number(v.TotalProgressPercentage).toFixed(1)}%</td>
+
+# Reading of the scan:
+# - database/migrations/0001..0009 + 0002 down: historical chain that builds
+#   the column before 0032 drops it; 0001/0002 view creation is guarded.
+# - docs/08: legacy v1 schema, superseded by docs/12 (left as history).
+# - No app code (backend/web/mobile), export, print or report reads the
+#   stored column. Every UI/print value is TotalProgressPercentage from the
+#   API = vehicleProgressSQL (vehicle_repo.go vehicleColumns).

@@ -1,0 +1,68 @@
+=== RUN   TestUniqueItemNoRejectsDuplicateInsert
+    checklist_item_no_race_test.go:50: DATABASE_URL not set
+--- SKIP: TestUniqueItemNoRejectsDuplicateInsert (0.00s)
+=== RUN   TestCreateTemplateItemConcurrentDistinctItemNos
+    checklist_item_no_race_test.go:70: DATABASE_URL not set
+--- SKIP: TestCreateTemplateItemConcurrentDistinctItemNos (0.00s)
+=== RUN   TestProgress_HundredOnlyAfterDepotItems
+    progress_scope_test.go:110: all but depot                TMPPROGRESS000001 IN_PRODUCTION progress= 97.02 open=5 applicable=168
+    progress_scope_test.go:110: all but depot                TMPPROGRESS000002 IN_PRODUCTION progress= 97.02 open=5 applicable=168
+    progress_scope_test.go:110: all but depot                TMPPROGRESS000003 IN_PRODUCTION progress= 97.02 open=5 applicable=168
+    progress_scope_test.go:117: branch shipped               TMPPROGRESS000002 IN_WAREHOUSE  progress= 97.02 open=5 applicable=168
+    progress_scope_test.go:122: depot items done             TMPPROGRESS000001 IN_WAREHOUSE  progress=100.00 open=0 applicable=168
+    progress_scope_test.go:128: before new items             TMPPROGRESS000001 IN_WAREHOUSE  progress=100.00 open=0 applicable=168
+    progress_scope_test.go:128: before new items             TMPPROGRESS000002 IN_WAREHOUSE  progress= 97.02 open=5 applicable=168
+    progress_scope_test.go:128: before new items             TMPPROGRESS000003 IN_PRODUCTION progress= 97.02 open=5 applicable=168
+    progress_scope_test.go:149: new depot item               TMPPROGRESS000001 IN_WAREHOUSE  progress=100.00 open=0 applicable=168
+    progress_scope_test.go:149: new depot item               TMPPROGRESS000002 IN_WAREHOUSE  progress= 96.45 open=6 applicable=169
+    progress_scope_test.go:149: new depot item               TMPPROGRESS000003 IN_PRODUCTION progress= 96.45 open=6 applicable=169
+    progress_scope_test.go:149: new depot item distributed   TMPPROGRESS000001 IN_WAREHOUSE  progress=100.00 open=0 applicable=168
+    progress_scope_test.go:149: new depot item distributed   TMPPROGRESS000002 IN_WAREHOUSE  progress= 96.45 open=6 applicable=169
+    progress_scope_test.go:149: new depot item distributed   TMPPROGRESS000003 IN_PRODUCTION progress= 96.45 open=6 applicable=169
+    progress_scope_test.go:164: after depot item             TMPPROGRESS000001 IN_WAREHOUSE  progress=100.00 open=0 applicable=168
+    progress_scope_test.go:164: after depot item             TMPPROGRESS000002 IN_WAREHOUSE  progress= 96.45 open=6 applicable=169
+    progress_scope_test.go:164: after depot item             TMPPROGRESS000003 IN_PRODUCTION progress= 96.45 open=6 applicable=169
+    progress_scope_test.go:177: new shipment item            TMPPROGRESS000001 IN_WAREHOUSE  progress=100.00 open=0 applicable=168
+    progress_scope_test.go:177: new shipment item            TMPPROGRESS000002 IN_WAREHOUSE  progress= 96.45 open=6 applicable=169
+    progress_scope_test.go:177: new shipment item            TMPPROGRESS000003 IN_PRODUCTION progress= 95.88 open=7 applicable=170
+--- PASS: TestProgress_HundredOnlyAfterDepotItems (0.31s)
+=== RUN   TestProgress_SameNumberOnEveryReadPath
+    progress_scope_test.go:229: 19 vehicles: detail = list = search
+--- PASS: TestProgress_SameNumberOnEveryReadPath (0.09s)
+=== RUN   TestSchema_NoStoredProgressPercentage
+--- PASS: TestSchema_NoStoredProgressPercentage (0.07s)
+=== RUN   TestInsertPendingForVehicles_OnlyBeforeItemStage
+=== RUN   TestInsertPendingForVehicles_OnlyBeforeItemStage/shipment
+    stage_applicability_test.go:187: assigned=19 passed=10 eligible-received=9 still-missing=0
+=== RUN   TestInsertPendingForVehicles_OnlyBeforeItemStage/eol_depot
+    stage_applicability_test.go:187: assigned=19 passed=7 eligible-received=1 still-missing=2
+--- PASS: TestInsertPendingForVehicles_OnlyBeforeItemStage (0.06s)
+    --- PASS: TestInsertPendingForVehicles_OnlyBeforeItemStage/shipment (0.03s)
+    --- PASS: TestInsertPendingForVehicles_OnlyBeforeItemStage/eol_depot (0.02s)
+=== RUN   TestApplicableSet_ProgressMatchesOpenItems
+    stage_applicability_test.go:271: N7V1K1SA0TK000003 IN_PRODUCTION progress=  4.73 open=161 applicable=169
+    stage_applicability_test.go:271: N7V1K1SA1TK000009 IN_PRODUCTION progress= 43.79 open=95 applicable=169
+    stage_applicability_test.go:271: N7V1K1SA1TK000012 IN_WAREHOUSE  progress= 96.43 open=6 applicable=168
+    stage_applicability_test.go:271: N7V1K1SA2TK000004 IN_PRODUCTION progress= 15.38 open=143 applicable=169
+    stage_applicability_test.go:271: N7V1K1SA2TK000018 IN_WAREHOUSE  progress=100.00 open=0 applicable=168
+    stage_applicability_test.go:271: N7V1K1SA3TK000013 IN_WAREHOUSE  progress=100.00 open=0 applicable=168
+    stage_applicability_test.go:271: N7V1K1SA4TK000005 IN_PRODUCTION progress= 19.53 open=136 applicable=169
+    stage_applicability_test.go:271: N7V1K1SA5TK000014 IN_WAREHOUSE  progress=100.00 open=0 applicable=168
+    stage_applicability_test.go:271: N7V1K1SA6TK000006 IN_PRODUCTION progress= 23.67 open=129 applicable=169
+    stage_applicability_test.go:271: N7V1K1SA7TK000015 IN_WAREHOUSE  progress=100.00 open=0 applicable=168
+    stage_applicability_test.go:271: N7V1K1SA8TK000007 IN_PRODUCTION progress= 40.83 open=100 applicable=169
+    stage_applicability_test.go:271: N7V1K1SA8TK000010 IN_WAREHOUSE  progress=100.00 open=0 applicable=168
+    stage_applicability_test.go:271: N7V1K1SA9SK000001 IN_PRODUCTION progress=  0.00 open=169 applicable=169
+    stage_applicability_test.go:271: N7V1K1SA9TK000002 IN_PRODUCTION progress=  1.18 open=167 applicable=169
+    stage_applicability_test.go:271: N7V1K1SA9TK000016 IN_WAREHOUSE  progress=100.00 open=0 applicable=168
+    stage_applicability_test.go:271: N7V1K1SAXTK000008 IN_PRODUCTION progress= 42.60 open=97 applicable=169
+    stage_applicability_test.go:271: N7V1K1SAXTK000011 IN_WAREHOUSE  progress=100.00 open=0 applicable=168
+    stage_applicability_test.go:271: N7V1K1SAXTK000017 IN_WAREHOUSE  progress=100.00 open=0 applicable=168
+    stage_applicability_test.go:271: TMPDELIVERED00001 DELIVERED     progress=100.00 open=0 applicable=168
+--- PASS: TestApplicableSet_ProgressMatchesOpenItems (0.10s)
+=== RUN   TestListItemsWithProgress_StageClosedIsApplicableComplement
+--- PASS: TestListItemsWithProgress_StageClosedIsApplicableComplement (0.11s)
+=== RUN   TestDepotSequencingTrigger_IgnoresClosedBranchRows
+--- PASS: TestDepotSequencingTrigger_IgnoresClosedBranchRows (0.02s)
+PASS
+ok  	github.com/karea/backend/internal/repository/postgres	1.261s

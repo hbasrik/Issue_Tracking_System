@@ -15,7 +15,7 @@
 
 **Etki:** `phases`→`stations`, `checkpoints`→`station_steps`, `production_phase_progress`→`vehicle_station_step_progress`, `vehicles.current_phase`→`vehicles.current_station_id`. Mevcut trigger mantığı (tamamlanma % hesaplama, soft-warning) aynı kalır, sadece tablo/kolon adları değişir.
 
-**Güncelleme (2026-09-28):** API'nin döndürdüğü tamamlanma % artık istasyon adımları + checklist maddelerinin uygulanabilir kümesinden hesaplanır — Karar 15.
+**Güncelleme (2026-09-28):** API'nin döndürdüğü tamamlanma % artık istasyon adımları + checklist maddelerinin uygulanabilir kümesinden hesaplanır — Karar 15. Saklanan kolon kaldırıldı — Karar 16.
 
 ## Karar 2 — EOL: Tek Kapı (13 madde) → 3 Fazlı İş Akışı (16 madde)
 
@@ -220,11 +220,8 @@ aşama geçilmiştir.
 - **İlerleme %:** Karar 1'deki "yalnız istasyon adımı" tanımının yerine geçer:
   `geçen / uygulanabilir` (istasyon adımları + checklist maddeleri), okuma
   anında hesaplanır (`vehicleProgressSQL`). `%100 ⇔ açık madde yok`.
-  `vehicles.total_progress_percentage` kolonu yalnız istasyon adımlarını sayan
-  eski önbellek olarak durur (trigger yazmaya devam eder); API'deki
-  `TotalProgressPercentage` alanı artık hesaplanan değeri taşır.
-  `vw_vehicle_completion_split` view'ı hâlâ kolonu okur (uygulama kodu bu view'ı
-  kullanmıyor).
+  API'deki `TotalProgressPercentage` alanı hesaplanan değeri taşır. Eski
+  saklanan kolon ve onu okuyan view kaldırıldı — Karar 16.
 
 - **Checklist sekmesi:** `GET /vehicles/{vin}/checklist/{type}` her aktif
   maddeye `StageClosed` bayrağı ekler (uygulanabilir kümenin tam tümleyeni).
@@ -244,6 +241,45 @@ aşama geçilmiştir.
 eklenmez. Kural onları uyarıdan, ilerlemeden, sayaçlardan ve kapılardan
 dışlar, checklist sekmesinde kapalı bölümde gösterir. Yeni dağıtım da
 aşamayı geçmiş araca yazmadığı için tekrar oluşmazlar (`docs/16` A26).
+
+## Karar 16 — İlerleme % tek kaynak: saklanan kolon kaldırıldı (NEW — 2026-09-30)
+
+**Gerekçe:** İki ayrı ilerleme sayısı vardı. `vehicles.total_progress_percentage`
+trigger (`fn_recalculate_vehicle_progress`) ve Go (`ComputeProgress` +
+`UpdateProgress`) tarafından iki kez yazılıyor, yalnız istasyon adımlarını
+sayıyordu. Uygulama ise Karar 15'teki uygulanabilir kümeden hesaplanan değeri
+gösteriyordu. Kolonun tek okuyucusu `vw_vehicle_completion_split` idi ve depo
+maddeleri açık araçları "tamamlandı" sayıyordu (test veritabanında 12
+"tamamlandı", gerçekte 8).
+
+**Karar:** Kolon ve view kaldırıldı (migration 0032). Doğru bir saklanan değer
+için aşama kuralını PL/pgSQL'de ikinci kez yazmak gerekirdi; bu projede
+defalarca ayrışan desen tam olarak buydu. Kolonu `station_progress_percentage`
+adıyla tutmak da, kimsenin okumadığı ve iki yerden yazılan ikinci bir sayıyı
+yaşatmak olurdu.
+
+- **Tek tanım:** `vehicleProgressSQL` (`stage_applicability.go`). Kapsam:
+  istasyon adımları + EOL fabrika (BRANCH) + TEST + SHIPMENT + EOL DEPOT
+  maddeleri. Depo maddeleri depodan serbest bırakma aşamasına aittir; araç
+  şubeden sevk edilmiş olsa bile depo maddeleri tamamlanmadan %100 çıkmaz.
+  Yeni şablon maddesi, `InsertPendingForVehicles` çalışmadan bile (satırı olmayan
+  madde PENDING sayılır) aşaması açık araçların yüzdesini düşürür.
+- **Trigger kalır, yüzde yazmaz:** `fn_recalculate_vehicle_progress` yalnız
+  `current_station_id`'yi ve PLANNED → IN_PRODUCTION geçişini yönetir.
+- **Go:** `ComputeProgress` / `UpdateProgress` yerine `ComputeCurrentStation` /
+  `UpdateCurrentStation`; istasyon işaretleme yanıtındaki yüzde, aracın
+  yeniden okunmasından (`GetByVIN`) gelir.
+- **Eski migration'lar:** 0001/0002'deki view oluşturma, kolon yoksa atlanır;
+  böylece bütün `*.up.sql` dosyalarının yeniden uygulanması v32'de de hatasız
+  geçer. Rollback (0032 down) kolonu istasyon-bazlı değerle ve view'ı geri
+  kurar.
+- **Bekleyen riskler (bu kararda değişmedi):**
+  (1) Yüzdedeki istasyon kısmı aracın `vehicle_station_step_progress`
+  satırlarını sayar, `station_steps.is_active`'e bakmaz. Uygulamada adım
+  ekleme/pasifleştirme akışı yok (yalnız seed), bugün etkisi yok.
+  (2) Güncel istasyon hâlâ iki yerde hesaplanır (trigger + Go
+  `ComputeCurrentStation`); "hepsi bitti" durumunda trigger son aktif
+  istasyonu, Go aracın son satırının istasyonunu yazar.
 
 ## Değişmeyen / Yeniden Kullanılacaklar
 

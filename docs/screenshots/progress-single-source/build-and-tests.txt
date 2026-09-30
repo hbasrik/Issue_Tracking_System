@@ -1,0 +1,48 @@
+# 2026-09-30 14:21 — HEAD 1277dc5 + working tree
+
+$ (backend) go build ./... && go vet ./... && go test -count=1 ./...
+?   	github.com/karea/backend/cmd/api	[no test files]
+ok  	github.com/karea/backend/internal/delivery/http	16.596s
+ok  	github.com/karea/backend/internal/domain	0.471s
+ok  	github.com/karea/backend/internal/platform/applog	1.431s
+?   	github.com/karea/backend/internal/platform/auth	[no test files]
+ok  	github.com/karea/backend/internal/platform/config	1.712s
+ok  	github.com/karea/backend/internal/platform/storage	1.117s
+?   	github.com/karea/backend/internal/repository	[no test files]
+ok  	github.com/karea/backend/internal/repository/postgres	2.040s
+ok  	github.com/karea/backend/internal/usecase	9.176s
+exit=0
+
+$ (backend) TEST_DATABASE_URL=…/karea_progress_test (schema 32) go test -count=1 -v -run "TestProgress_|TestSchema_|TestApplicableSet_|TestStage" ./internal/repository/postgres/
+=== RUN   TestProgress_HundredOnlyAfterDepotItems
+--- PASS: TestProgress_HundredOnlyAfterDepotItems (0.30s)
+=== RUN   TestProgress_SameNumberOnEveryReadPath
+--- PASS: TestProgress_SameNumberOnEveryReadPath (0.07s)
+=== RUN   TestSchema_NoStoredProgressPercentage
+--- PASS: TestSchema_NoStoredProgressPercentage (0.07s)
+=== RUN   TestApplicableSet_ProgressMatchesOpenItems
+--- PASS: TestApplicableSet_ProgressMatchesOpenItems (0.13s)
+PASS
+ok  	github.com/karea/backend/internal/repository/postgres	0.888s
+
+$ (web) npx tsc --noEmit
+npm notice
+npm notice New major version of npm available! 10.9.2 -> 12.1.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.1.0
+npm notice To update run: npm install -g npm@12.1.0
+npm notice
+exit=0
+
+$ (web) npx vite build
+dist/assets/index-HBIs9BoY.css     46.86 kB │ gzip:   9.70 kB
+dist/assets/index-FDLiTtlf.js   1,121.51 kB │ gzip: 302.45 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 3.33s
+exit=0 (re-measured without a pipe; zsh has no PIPESTATUS)
+
+$ (mobile) npx tsc --noEmit
+exit=0

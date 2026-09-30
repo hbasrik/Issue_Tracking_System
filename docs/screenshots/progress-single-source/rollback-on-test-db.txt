@@ -1,0 +1,22 @@
+$ migrate down 1   (karea_progress_test, ephemeral container)
+32/d drop_stored_progress_percentage (13.282875ms)
+version|dirty: 31|f
+
+-- column and view are back, holding the old station-only meaning:
+        vin        | current_global_status | station_only_column 
+-------------------+-----------------------+---------------------
+ N7V1K1SA1TK000009 | IN_PRODUCTION         |              100.00
+ N7V1K1SA1TK000012 | IN_WAREHOUSE          |              100.00
+ TMPDELIVERED00001 | DELIVERED             |              100.00
+(3 rows)
+
+ completed_vehicles | in_progress_vehicles 
+--------------------+----------------------
+                 13 |                    6
+(1 row)
+
+$ migrate up
+32/u drop_stored_progress_percentage (8.514625ms)
+version|dirty: 32|f
+column exists: 0
+view exists:   f

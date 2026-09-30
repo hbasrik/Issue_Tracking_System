@@ -1,0 +1,42 @@
+# Before migration 0032 — karea_progress_test (ephemeral container, schema 31,
+# migrations + database/seed). stored_column = vehicles.total_progress_percentage
+# (trigger + Go UpdateProgress, station steps only). app_value = the SQL the
+# backend uses on every read (vehicleProgressSQL, stage_applicability.go),
+# generated from Go so the query is the application's own text.
+
+        vin        | current_global_status | stored_column | app_value 
+-------------------+-----------------------+---------------+-----------
+ N7V1K1SA0TK000003 | IN_PRODUCTION         |         12.50 |      4.76
+ N7V1K1SA1TK000009 | IN_PRODUCTION         |        100.00 |     44.05
+ N7V1K1SA1TK000012 | IN_WAREHOUSE          |        100.00 |     96.43
+ N7V1K1SA2TK000004 | IN_PRODUCTION         |         40.63 |     15.48
+ N7V1K1SA2TK000018 | IN_WAREHOUSE          |        100.00 |    100.00
+ N7V1K1SA3TK000013 | IN_WAREHOUSE          |        100.00 |    100.00
+ N7V1K1SA4TK000005 | IN_PRODUCTION         |         51.56 |     19.64
+ N7V1K1SA5TK000014 | IN_WAREHOUSE          |        100.00 |    100.00
+ N7V1K1SA6TK000006 | IN_PRODUCTION         |         62.50 |     23.81
+ N7V1K1SA7TK000015 | IN_WAREHOUSE          |        100.00 |    100.00
+ N7V1K1SA8TK000007 | IN_PRODUCTION         |        100.00 |     41.07
+ N7V1K1SA8TK000010 | IN_WAREHOUSE          |        100.00 |    100.00
+ N7V1K1SA9SK000001 | IN_PRODUCTION         |          0.00 |      0.00
+ N7V1K1SA9TK000002 | IN_PRODUCTION         |          3.13 |      1.19
+ N7V1K1SA9TK000016 | IN_WAREHOUSE          |        100.00 |    100.00
+ N7V1K1SAXTK000008 | IN_PRODUCTION         |        100.00 |     42.86
+ N7V1K1SAXTK000011 | IN_WAREHOUSE          |        100.00 |    100.00
+ N7V1K1SAXTK000017 | IN_WAREHOUSE          |        100.00 |    100.00
+(18 rows)
+
+# The only reader of the column:
+SELECT * FROM vw_vehicle_completion_split;
+ completed_vehicles | 12
+ in_progress_vehicles | 6
+# 12 "completed", but only 8 vehicles are really at 100%: three line vehicles
+# (…07, …08, …09) and one branch-shipped vehicle awaiting depot items (…012:
+# 4 depot items PENDING + 1 NOT_OK, 1 TEST NOT_OK) show 100% in the column.
+
+# N7V1K1SA1TK000012 open items at that time:
+ EOL  | DEPOT | NOT_OK  | 1
+ EOL  | DEPOT | PENDING | 4
+ TEST |       | NOT_OK  | 1
+ station steps: 64 OK
+ workflow: branch_shipped_at set, depot_released_at NULL

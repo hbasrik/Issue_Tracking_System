@@ -461,6 +461,33 @@ Kanıt: `docs/screenshots/issue-card-severity-right/`:
   5 kayıt × 2 dil × 4 genişlik × 2 platform için 80 karşılaştırma, fark 0;
 - `source-scan.txt`, `build-and-tests.txt`.
 
+### A32. İlerleme % tek kaynak; saklanan kolon kaldırıldı `[x]` — 2026-09-30
+- `vehicles.total_progress_percentage` (yalnız istasyon adımları, trigger +
+  Go iki kez yazıyordu) ve tek okuyucusu `vw_vehicle_completion_split`
+  kaldırıldı — migration 0032 (up + down), `docs/11` Karar 16.
+- Yüzde yalnız `vehicleProgressSQL`'den gelir: istasyon adımları + EOL fabrika
+  + TEST + SHIPMENT + EOL depo. Depo maddeleri bitmeden %100 çıkmaz.
+- Trigger yalnız güncel istasyonu ve PLANNED → IN_PRODUCTION geçişini yazar.
+  Go'da `ComputeProgress`/`UpdateProgress` yerine
+  `ComputeCurrentStation`/`UpdateCurrentStation`.
+- `database/scripts/reset_and_load_vins.sql` kolonu artık yazmıyor.
+- 0001/0002'deki view oluşturma kolon yoksa atlanıyor; tam yeniden uygulama
+  v32'de geçiyor.
+- **Canlı veritabanı v31'de, 0032 uygulanmadı.** Yeni kod v31'de de çalışır
+  (kolonu okumuyor, yazmıyor). Uygulamak için: `make migrate-up`.
+- Entegrasyon testleri (`progress_scope_test.go`): depo maddeleri eksik araç
+  %97,02, depo bitince %100; hattaki araçta yüzde = açık madde sayısıyla
+  tutarlı; yeni DEPOT/SHIPMENT maddesi, dağıtımdan önce ve sonra yüzdeyi
+  doğru düşürür; detay, liste ve arama aynı sayıyı verir; şemada hiçbir
+  kolon, view veya fonksiyon `progress_percentage` içermez.
+- Takip (değişmedi, Karar 16 riskleri): yüzdenin istasyon kısmı
+  `station_steps.is_active`'e bakmıyor; güncel istasyon trigger ve Go'da iki
+  kez hesaplanıyor.
+Kanıt: `docs/screenshots/progress-single-source/`:
+`before-stored-vs-app.txt`, `integration-tests-after.txt`,
+`rollback-on-test-db.txt`, `verify-migrations.txt`, `source-scan.txt`,
+`reset-script-on-copy.txt`, `build-and-tests.txt`.
+
 ---
 
 ## B — Canlıya çıkmadan önce ZORUNLU
