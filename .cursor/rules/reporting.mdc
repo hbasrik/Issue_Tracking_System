@@ -75,3 +75,22 @@ if a section does not apply, say so explicitly.
 - Report any such action under "Destructive actions". Attempting to
   restore afterwards does not make it non-destructive; a partial or
   substitute restore still counts as data loss.
+
+## Çalışan API süreci
+
+8080 portundaki API kullanıcının kendi terminalinde çalışır.
+Bu sürece dokunma: başlatma, durdurma, yeniden başlatma ya da
+arka planda kendi kopyanı çalıştırma.
+
+Doğrulama için çalışan bir API gerekiyorsa:
+- Farklı bir portta (18081 gibi) kendi örneğini başlat
+- İşin bitince mutlaka durdur ve raporda durdurduğunu belirt
+- 8080 portunu hiçbir koşulda kullanma
+
+Backend kodu değiştiğinde, kullanıcının API'yi yeniden başlatması
+gerektiğini raporun başında açıkça hatırlat. Kendin yeniden
+başlatma.
+
+Arka planda süreç bırakma: setsid, nohup veya benzeri yollarla
+terminale bağlı olmayan süreç başlatma. Böyle bir süreç
+başlatman gerekiyorsa önce sor.
