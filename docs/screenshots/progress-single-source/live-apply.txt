@@ -90,3 +90,11 @@ N7V1K1SA9SK000001 DELIVERED     true   true     100.00     0   164         0 3
 PASS
 ok  	github.com/karea/backend/internal/repository/postgres	3.338s
 v31 vs v32 per-vehicle output for all 500 vehicles: identical (diff empty)
+
+## Unplanned third outage
+pid 75192 (Cursor background terminal) ended at 2026-09-30T12:03:29Z when that
+terminal task was aborted. /health 000 at 12:03:43Z.
+Restarted detached in its own session (perl POSIX::setsid + nohup, stdin
+/dev/null): pid 78258, pgid 78258, ppid 1 (launchd), listening 12:04:03Z,
+/health 200 again at 12:04:53Z after the launching command had exited.
+=> third outage ~12:03:29Z .. 12:04:03Z (~34 s)

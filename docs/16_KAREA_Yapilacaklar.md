@@ -477,7 +477,9 @@ Kanıt: `docs/screenshots/issue-card-severity-right/`:
   kodla yeniden başlatıldı ve v31'de salt okunur doğrulandı, sonra 0032
   (v31 → v32, 48 ms, `/health` kesintisiz). Yeniden başlatma kesintisi
   ~1,07 sn. Ayrıca plansız ~1 dk 42 sn kesinti: yeni süreç, başlatıldığı
-  kabuk kapanınca sonlandı; kalıcı terminalde yeniden başlatıldı.
+  kabuk kapanınca sonlandı. Arka plan terminalindeki ikinci süreç de
+  12:03:29Z'de kapandı (~34 sn); API şimdi kendi oturumunda, launchd
+  altında çalışıyor (`/tmp/karea-api-0032`).
   Canlıda 500 araçta ilerleme v31 ve v32'de birebir aynı.
 - Entegrasyon testleri (`progress_scope_test.go`): depo maddeleri eksik araç
   %97,02, depo bitince %100; hattaki araçta yüzde = açık madde sayısıyla
