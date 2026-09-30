@@ -63,6 +63,8 @@ export function activityDetailLine(
     case 'EOL_WORKFLOW_STAGE_CHANGE':
       return change(ov, nv, (v) => eolStageLabel(v, t), emDash);
     case 'ISSUE_CLASSIFICATION_CHANGE':
+      // Absent (not null) means an API build that does not resolve changes.
+      if (row.Classification === undefined) return t('common.emDash');
       return classificationChangeLines(row.Classification, t, locale).join(' · ');
     case 'MEDIA_UPLOADED':
       return t('home.activity.media');
