@@ -1,0 +1,32 @@
+---
+description: Migration design and release order (code first when compatible, short planned downtime otherwise)
+alwaysApply: true
+---
+
+# Migration rules
+
+## Migration tasarımı
+
+Sistem tek sunucuda çalışıyor ve kısa planlı kesinti kabul
+edilebilir. Bu yüzden geriye dönük uyum bir ZORUNLULUK değil,
+mümkün olduğunda tercih edilen yoldur.
+
+Sıralama tercihi:
+- Migration yeni kodu eski şemada çalışabilir bırakıyorsa: önce
+  kod devreye alınır, sonra migration uygulanır. Kesinti olmaz.
+- Bırakmıyorsa: uygulama durdurulur, migration uygulanır, yeni
+  sürüm başlatılır. Kısa kesinti kabul edilir ve raporda belirtilir.
+
+İkisi arasında seçim yaparken karmaşıklığı artırmak pahasına
+kesintiden kaçınma. Otuz saniyelik planlı duraklama, iki aşamalı
+migration zincirinden daha basittir.
+
+Her durumda geçerli olanlar:
+- Her migration'ın çalışan bir geri alma dosyası olur
+- Migration'lar idempotent olur
+- Kolon, tablo veya görünüm kaldırılmadan önce onu okuyan kodun
+  yayından kalkacağı sıralama planlanır
+- Uygulanmış bir migration dosyası sonradan değiştirilmez;
+  zorunlu istisna varsa gerekçesi dosyaya yorum olarak yazılır
+- Migration bir kesinti gerektiriyorsa, uygulamadan önce bunu
+  raporla ve onay bekle
