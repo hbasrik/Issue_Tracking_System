@@ -6,6 +6,7 @@
 import { File as ExpoFile } from 'expo-file-system';
 import type { EOLGates } from '../../../shared/eolGates';
 import type { ShipmentWarningLike } from '../../../shared/shipmentReadiness';
+import type { ClassificationChange } from '../../../shared/classificationChanges';
 import { isTransportError } from '../../../shared/networkError';
 import { noteTransportFailure, noteTransportSuccess } from '../offline/connectivity';
 
@@ -356,8 +357,11 @@ export interface Issue {
 
 export interface IssueStatusHistoryEntry {
   ID: number;
+  /** STATUS rows use From/ToStatus; CLASSIFICATION rows use Changes. */
+  Kind?: 'STATUS' | 'CLASSIFICATION';
   FromStatus: string;
   ToStatus: string;
+  Changes?: ClassificationChange[] | null;
   ActorName: string;
   EventAt: string;
 }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { localeTag } from '../../../shared/i18n';
+import { classificationChangeLines } from '../../../shared/classificationChanges';
 import { useI18n } from '../i18n';
 import { api, type IssueStatusHistoryEntry } from '../lib/api';
 import { apiErrorMessage } from '../lib/apiErrors';
@@ -12,7 +13,7 @@ function formatEventAt(iso: string, tag: string, emDash: string): string {
   return d.toLocaleString(tag);
 }
 
-/** Chronological ISSUE_STATUS_CHANGE trail from GET /issues/:id/history. */
+/** Chronological status + classification trail from GET /issues/:id/history. */
 export function IssueStatusHistory({
   issueId,
   hideTitle,
@@ -67,17 +68,30 @@ export function IssueStatusHistory({
       )}
       {items.length > 0 && (
         <ol className="mt-2 space-y-2">
-          {items.map((row) => (
-            <li
-              key={row.ID}
-              className="text-[13px] text-[var(--text-primary)]"
-            >
-              <p className="font-medium text-[var(--text-primary)]">
-                {issueStatusLabel(row.FromStatus, t)} → {issueStatusLabel(row.ToStatus, t)}:{' '}
-                {row.ActorName || t('common.emDash')}, {formatEventAt(row.EventAt, localeTag(locale), t('common.emDash'))}
-              </p>
-            </li>
-          ))}
+          {items.map((row) => {
+            const who = `${row.ActorName || t('common.emDash')}, ${formatEventAt(row.EventAt, localeTag(locale), t('common.emDash'))}`;
+            if (row.Kind === 'CLASSIFICATION') {
+              return (
+                <li key={row.ID} className="text-[13px] text-[var(--text-primary)]">
+                  <p className="font-medium text-[var(--text-primary)]">
+                    {t('issueDetail.historyClassification')}: {who}
+                  </p>
+                  <ul className="mt-0.5 space-y-0.5 pl-3" style={{ color: 'var(--text-secondary)' }}>
+                    {classificationChangeLines(row.Changes, t, locale).map((line) => (
+                      <li key={line}>{line}</li>
+                    ))}
+                  </ul>
+                </li>
+              );
+            }
+            return (
+              <li key={row.ID} className="text-[13px] text-[var(--text-primary)]">
+                <p className="font-medium text-[var(--text-primary)]">
+                  {issueStatusLabel(row.FromStatus, t)} → {issueStatusLabel(row.ToStatus, t)}: {who}
+                </p>
+              </li>
+            );
+          })}
         </ol>
       )}
     </div>

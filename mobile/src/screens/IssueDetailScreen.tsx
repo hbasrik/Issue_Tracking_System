@@ -54,6 +54,7 @@ import { issueStationLabel, reporterFallback, defectLabels } from '../lib/issueD
 import { apiErrorMessage } from '../lib/password';
 import { loadFailureMessage } from '../offline/userFacingError';
 import { isTransportError } from '../../../shared/networkError';
+import { classificationChangeLines } from '../../../shared/classificationChanges';
 import { useI18n } from '../i18n';
 import type { Locale } from '../../../shared/i18n';
 import {
@@ -764,16 +765,32 @@ export default function IssueDetailScreen() {
             <Card style={{ marginTop: 0 }}>
               <SectionHeading>{t('issueDetail.history')}</SectionHeading>
               {history.length === 0 ? (
-                <Subtitle>{t('vehicles.historyEmpty')}</Subtitle>
+                <Subtitle>{t('issueDetail.historyEmpty')}</Subtitle>
               ) : (
-                history.map((row) => (
-                  <View key={row.ID} style={{ marginTop: space[2] }}>
-                    <Text style={{ color: tokens.textPrimary, fontWeight: '600', fontSize: 14 }}>
-                      {issueStatusLabel(row.FromStatus || '', t)} → {issueStatusLabel(row.ToStatus || '', t)}:{' '}
-                      {row.ActorName || t('common.emDash')}, {formatDate(row.EventAt, locale)}
-                    </Text>
-                  </View>
-                ))
+                history.map((row) => {
+                  const who = `${row.ActorName || t('common.emDash')}, ${formatDate(row.EventAt, locale)}`;
+                  if (row.Kind === 'CLASSIFICATION') {
+                    return (
+                      <View key={row.ID} style={{ marginTop: space[2] }}>
+                        <Text style={{ color: tokens.textPrimary, fontWeight: '600', fontSize: 14 }}>
+                          {t('issueDetail.historyClassification')}: {who}
+                        </Text>
+                        {classificationChangeLines(row.Changes, t, locale).map((line) => (
+                          <Text key={line} style={{ color: tokens.textSecondary, fontSize: 13, marginTop: 2 }}>
+                            {line}
+                          </Text>
+                        ))}
+                      </View>
+                    );
+                  }
+                  return (
+                    <View key={row.ID} style={{ marginTop: space[2] }}>
+                      <Text style={{ color: tokens.textPrimary, fontWeight: '600', fontSize: 14 }}>
+                        {issueStatusLabel(row.FromStatus || '', t)} → {issueStatusLabel(row.ToStatus || '', t)}: {who}
+                      </Text>
+                    </View>
+                  );
+                })
               )}
             </Card>
 

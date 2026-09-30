@@ -2,6 +2,7 @@ import { Printer } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { formatDateTime } from '../../../../shared/i18n';
+import { classificationChangeLines } from '../../../../shared/classificationChanges';
 import { useAuth } from '../../auth/AuthProvider';
 import { useI18n } from '../../i18n';
 import {
@@ -282,13 +283,23 @@ export function IssueDetailPrint({ issue }: { issue: Issue }) {
             <p>{t('issueDetail.historyEmpty')}</p>
           ) : (
             <ol>
-              {history.map((row) => (
-                <li key={row.ID}>
-                  {issueStatusLabel(row.FromStatus, t)} → {issueStatusLabel(row.ToStatus, t)}:{' '}
-                  {row.ActorName || t('common.emDash')},{' '}
-                  {formatDateTime(row.EventAt, locale)}
-                </li>
-              ))}
+              {history.map((row) => {
+                const who = `${row.ActorName || t('common.emDash')}, ${formatDateTime(row.EventAt, locale)}`;
+                if (row.Kind === 'CLASSIFICATION') {
+                  return (
+                    <li key={row.ID}>
+                      {t('issueDetail.historyClassification')}: {who}
+                      <br />
+                      {classificationChangeLines(row.Changes, t, locale).join(' · ')}
+                    </li>
+                  );
+                }
+                return (
+                  <li key={row.ID}>
+                    {issueStatusLabel(row.FromStatus, t)} → {issueStatusLabel(row.ToStatus, t)}: {who}
+                  </li>
+                );
+              })}
             </ol>
           )}
         </section>
