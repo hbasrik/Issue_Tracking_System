@@ -193,6 +193,8 @@ type HomeActivityEntry struct {
 	ChecklistType   string
 	ItemNo          *int
 	ItemText        string
+	// Classification is set on ISSUE_CLASSIFICATION_CHANGE rows.
+	Classification []ClassificationChange
 }
 
 // AuditActivityFilter scopes the paginated plant-wide activity list.

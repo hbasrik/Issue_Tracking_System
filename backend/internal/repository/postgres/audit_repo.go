@@ -36,18 +36,22 @@ func (r *AuditRepo) Append(ctx context.Context, entry domain.AuditLog) error {
 	return err
 }
 
-// ListIssueStatusHistory returns ISSUE_STATUS_CHANGE rows for one issue,
-// oldest first. Statuses live on old_value/new_value; issue_id is in metadata.
+// ListIssueStatusHistory returns one issue's timeline, oldest first: status
+// changes (old_value/new_value) and classification corrections (resolved
+// field changes). issue_id is in metadata for both event types.
 func (r *AuditRepo) ListIssueStatusHistory(ctx context.Context, issueID int64) ([]domain.IssueStatusHistoryEntry, error) {
-	rows, err := r.pool.Query(ctx,
+	q := executor(ctx, r.pool)
+	rows, err := q.Query(ctx,
 		`SELECT a.id,
+		        a.event_type::text,
 		        COALESCE(NULLIF(a.old_value, ''), a.metadata->>'from_status', ''),
 		        COALESCE(NULLIF(a.new_value, ''), a.metadata->>'to_status', ''),
+		        CASE WHEN a.event_type = 'ISSUE_CLASSIFICATION_CHANGE' THEN a.metadata END,
 		        COALESCE(u.full_name, ''),
 		        a.event_at
 		 FROM audit_logs a
 		 LEFT JOIN users u ON u.id = a.performed_by
-		 WHERE a.event_type = 'ISSUE_STATUS_CHANGE'
+		 WHERE a.event_type IN ('ISSUE_STATUS_CHANGE', 'ISSUE_CLASSIFICATION_CHANGE')
 		   AND (a.metadata->>'issue_id')::bigint = $1
 		 ORDER BY a.event_at ASC, a.id ASC`, issueID)
 	if err != nil {
@@ -56,14 +60,36 @@ func (r *AuditRepo) ListIssueStatusHistory(ctx context.Context, issueID int64) (
 	defer rows.Close()
 
 	var out []domain.IssueStatusHistoryEntry
+	var parsed [][]parsedClassificationChange
+	var classIdx []int
 	for rows.Next() {
 		var e domain.IssueStatusHistoryEntry
-		if err := rows.Scan(&e.ID, &e.FromStatus, &e.ToStatus, &e.ActorName, &e.EventAt); err != nil {
+		var eventType string
+		var meta []byte
+		if err := rows.Scan(&e.ID, &eventType, &e.FromStatus, &e.ToStatus, &meta, &e.ActorName, &e.EventAt); err != nil {
 			return nil, err
+		}
+		e.Kind = domain.IssueHistoryKindStatus
+		if eventType == string(domain.AuditEventIssueClassification) {
+			e.Kind = domain.IssueHistoryKindClassification
+			e.FromStatus, e.ToStatus = "", ""
+			parsed = append(parsed, parseClassificationMetadata(meta))
+			classIdx = append(classIdx, len(out))
 		}
 		out = append(out, e)
 	}
-	return out, rows.Err()
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	rows.Close()
+	resolved, err := resolveClassificationChanges(ctx, q, parsed)
+	if err != nil {
+		return nil, err
+	}
+	for i, idx := range classIdx {
+		out[idx].Changes = resolved[i]
+	}
+	return out, nil
 }
 
 // ListVehicleStatusHistory returns STATUS_CHANGE rows for one VIN, oldest
@@ -170,7 +196,8 @@ func (r *AuditRepo) ListActivity(ctx context.Context, f domain.AuditActivityFilt
 		          ELSE NULL
 		        END,
 		        COALESCE(cti.item_no, 0),
-		        COALESCE(cti.item_text, '')
+		        COALESCE(cti.item_text, ''),
+		        CASE WHEN a.event_type = 'ISSUE_CLASSIFICATION_CHANGE' THEN a.metadata END
 		   FROM audit_logs a
 		   LEFT JOIN users u ON u.id = a.performed_by
 		   LEFT JOIN checklist_template_items cti
@@ -187,14 +214,17 @@ func (r *AuditRepo) ListActivity(ctx context.Context, f domain.AuditActivityFilt
 	defer rows.Close()
 
 	out := make([]domain.HomeActivityEntry, 0, limit)
+	var parsed [][]parsedClassificationChange
+	var classIdx []int
 	for rows.Next() {
 		var e domain.HomeActivityEntry
 		var metaItemID *int
 		var itemNo int
+		var classMeta []byte
 		if err := rows.Scan(
 			&e.EventAt, &e.EventType, &e.VIN, &e.OldValue, &e.NewValue,
 			&e.ActorName, &e.ActorEmail, &e.ChecklistType, &metaItemID,
-			&itemNo, &e.ItemText,
+			&itemNo, &e.ItemText, &classMeta,
 		); err != nil {
 			return nil, err
 		}
@@ -204,10 +234,25 @@ func (r *AuditRepo) ListActivity(ctx context.Context, f domain.AuditActivityFilt
 		} else if metaItemID != nil {
 			e.ItemNo = metaItemID
 		}
+		if e.EventType == string(domain.AuditEventIssueClassification) {
+			// The stored summaries are internal (ids, process); readers get
+			// the resolved Classification changes instead.
+			e.OldValue, e.NewValue = "", ""
+			parsed = append(parsed, parseClassificationMetadata(classMeta))
+			classIdx = append(classIdx, len(out))
+		}
 		out = append(out, e)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
+	}
+	rows.Close()
+	resolved, err := resolveClassificationChanges(ctx, r.pool, parsed)
+	if err != nil {
+		return nil, err
+	}
+	for i, idx := range classIdx {
+		out[idx].Classification = resolved[i]
 	}
 	return &domain.AuditActivityPage{Items: out, Total: total}, nil
 }

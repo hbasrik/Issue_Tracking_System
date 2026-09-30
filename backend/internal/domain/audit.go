@@ -62,12 +62,43 @@ type AuditLog struct {
 	Metadata    map[string]any
 }
 
-// IssueStatusHistoryEntry is one ISSUE_STATUS_CHANGE row for an issue,
-// resolved with the acting user's name (Karar 7 — no separate history table).
+// Issue history entry kinds.
+const (
+	IssueHistoryKindStatus         = "STATUS"
+	IssueHistoryKindClassification = "CLASSIFICATION"
+)
+
+// Classification change fields, in display order. The responsible process is
+// deliberately absent: it is stored and audited but not shown (docs/16 A33).
+const (
+	ClassificationFieldPart         = "part"
+	ClassificationFieldType         = "type"
+	ClassificationFieldCustomPart   = "custom_part"
+	ClassificationFieldCustomDefect = "custom_defect"
+	ClassificationFieldCode         = "code"
+)
+
+// ClassificationChange is one field of an ISSUE_CLASSIFICATION_CHANGE row with
+// catalogue ids resolved to names. Free-text fields carry the same text in
+// both languages; an empty side means "not set".
+type ClassificationChange struct {
+	Field  string
+	FromTR string
+	FromEN string
+	ToTR   string
+	ToEN   string
+}
+
+// IssueStatusHistoryEntry is one row of an issue's timeline, resolved with
+// the acting user's name (Karar 7 — no separate history table). Kind STATUS
+// uses FromStatus/ToStatus; kind CLASSIFICATION uses Changes (empty when the
+// save changed nothing).
 type IssueStatusHistoryEntry struct {
 	ID         int64
+	Kind       string
 	FromStatus string
 	ToStatus   string
+	Changes    []ClassificationChange
 	ActorName  string
 	EventAt    time.Time
 }
