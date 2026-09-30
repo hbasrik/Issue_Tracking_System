@@ -27,6 +27,10 @@ export async function build(outdir) {
     /\/offline\/ReferenceCacheProvider$/,
     /\/api\/client$/,
     /\/lib\/criticalAlertSound$/,
+    /\/components\/ConfirmDialog$/,
+    /\/components\/ApprovalUndoToast$/,
+    /^expo-image-picker$/,
+    /\/lib\/prepareUploadImage$/,
   ];
   const fromMobile = /^(react|react-dom|react-native-web|react-native-svg|lucide-react-native)(\/.*)?$/;
 

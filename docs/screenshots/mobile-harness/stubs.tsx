@@ -85,6 +85,12 @@ export const api = {
     items: scene.api.checklists?.[type] ?? [],
   }),
   getEOLWorkflow: async () => scene.api.eolWorkflow,
+  getIssue: async () => scene.api.issue,
+  getIssueHistory: async () => ({ items: scene.api.issueHistory ?? [] }),
+  listMedia: async () => ({ items: [] }),
+  updateIssueStatus: record('updateIssueStatus'),
+  updateIssueClassification: record('updateIssueClassification'),
+  uploadMedia: record('uploadMedia'),
   recordChecklist: record('recordChecklist'),
   recordStationStep: record('recordStationStep'),
   placeOnHold: record('placeOnHold'),
@@ -100,6 +106,24 @@ export class ApiError extends Error {}
 
 // --- ../lib/criticalAlertSound (expo-audio has no web build here)
 export const playCriticalAlertIfEnabled = async () => false;
+
+// --- ../components/ConfirmDialog, ../components/ApprovalUndoToast
+const confirm = async () => false;
+export function useConfirm() {
+  return confirm;
+}
+const undo = { showAfterApproval: () => undefined };
+export function useApprovalUndo() {
+  return undo;
+}
+
+// --- expo-image-picker, ../lib/prepareUploadImage (no picking in the harness)
+export const requestMediaLibraryPermissionsAsync = async () => ({ granted: false });
+export const requestCameraPermissionsAsync = async () => ({ granted: false });
+export const launchImageLibraryAsync = async () => ({ canceled: true, assets: [] });
+export const launchCameraAsync = async () => ({ canceled: true, assets: [] });
+export const MediaTypeOptions = { Images: 'Images' };
+export const prepareUploadImage = async (f: unknown) => f;
 
 // --- @react-native/assets-registry/registry (react-native-svg image assets)
 export const getAssetByID = () => null;

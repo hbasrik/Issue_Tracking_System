@@ -7,7 +7,7 @@ import type { ComponentType } from 'react';
 
 type Status = 'PENDING' | 'OK' | 'NOT_OK' | 'REWORK' | 'CONDITIONAL_OK';
 
-export type SceneScreen = 'vehicle-station' | 'shipment' | 'test' | 'eol' | 'my-issues';
+export type SceneScreen = 'vehicle-station' | 'shipment' | 'test' | 'eol' | 'my-issues' | 'issue-detail';
 
 export interface Scene {
   id: string;
@@ -20,6 +20,8 @@ export interface Scene {
     readiness?: unknown;
     checklists?: Partial<Record<'eol' | 'shipment' | 'test', unknown[]>>;
     eolWorkflow?: unknown;
+    issue?: unknown;
+    issueHistory?: unknown[];
   };
 }
 
@@ -231,6 +233,22 @@ export const SCENES: Scene[] = [
       vehicle: vehicle(LINE_VIN, 'IN_PRODUCTION', 'BRANCH', 43.53),
       checklists: { eol: eolBranch(false, ['PENDING', 'PENDING', 'PENDING']) },
       eolWorkflow: eolWorkflow(LINE_VIN, 'BRANCH', null, null, 3),
+    },
+  },
+  {
+    id: 'issue-detail',
+    screen: 'issue-detail',
+    params: { id: 101 },
+    api: {
+      issue: {
+        ...issues[0],
+        ReporterName: 'Assembly Operator',
+        IssueTypeName: 'Montaj',
+        StationName: 'Trim Station',
+        DefectZoneNameTR: 'Kapılar', DefectZoneNameEN: 'Doors',
+        DefectCode: '10-01-01',
+      },
+      issueHistory: [],
     },
   },
 ];
