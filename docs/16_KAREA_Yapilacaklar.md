@@ -494,6 +494,43 @@ Kanıt: `docs/screenshots/progress-single-source/`:
 `rollback-on-test-db.txt`, `verify-migrations.txt`, `source-scan.txt`,
 `reset-script-on-copy.txt`, `build-and-tests.txt`, `live-apply.txt`.
 
+### A33. Aktivite okunur; sınıflandırma geçmişte; süreç ekrandan gizli `[x]` — 2026-09-30
+- **Aktivite detay sütunu:** hata ve araç durumları, EOL aşamaları ve
+  checklist sonuçları çevrilmiş adla ve "Açık → İşlemde" biçiminde görünüyor.
+  Sınıflandırma satırında parça ve tip id yerine katalog adı var ("Parça:
+  Doghouse → Kapı · Kusur tipi: Deformasyon → Boşluk / hizasızlık"). İşlem
+  sütununda "Tüm tipler" yazan olay artık "Sınıflandırma düzeltildi"; olay
+  tipi filtresine "Hata sınıflandırması" eklendi. Metinler TR + EN.
+- **Ham değer taraması:** Analiz CSV'si durum, şiddet, EOL aşaması ve yaş
+  aralığını kod olarak yazıyordu; istasyon FPY satırında istasyon adı yerine
+  id vardı. Hata CSV'sinde şiddet kod olarak çıkıyordu. Hepsi çevrildi.
+  Başka ham değer gösteren ekran veya sütun bulunmadı.
+- **Hata geçmişi:** "Durum Geçmişi" → "Geçmiş". Sınıflandırma düzeltmeleri
+  durum değişiklikleriyle aynı çizelgede: kim, ne zaman, hangi alan neden
+  neye (web, mobil, yazdırma). Süreç burada da görünmez.
+- **Sorumlu süreç ekrandan kaldırıldı** (`docs/11` Karar 17): hata detayı
+  (web + mobil), düzenleyici, yazdırma, hata CSV'si (`sorumlu_surec` kolonu
+  çıktı), Analiz grafiği, "süreci atanmamış" oranı, Analiz CSV'si ve
+  yazdırması. Veritabanı kolonu, otomatik atama ve audit kaydı aynen kalıyor,
+  veri birikmeye devam ediyor.
+  **Yeniden açılacak:** kalite ekibi şu altı kusur tipine varsayılan süreç
+  tanımladığında: boşluk/hizasızlık, çizik/darbe/hasar, deformasyon,
+  sızdırma, ses/titreşim, Diğer.
+- **Yetim audit satırları (silinmedi, karar bekliyor):** 395 audit
+  satırının 6'sı artık olmayan hataya bağlı. Bunlar 1 ve 2 (hata 7), 12
+  (hata 10), 427 (hata 40), 428 (hata 41) ve 429 (hata 42). 429 ayrıca
+  silinmiş katalog parçası 50'yi (TEMP_C_PROMOTE_PART) gösteriyor. Checklist
+  maddesi ve medya yetimi yok. `vin`, `station_id` ve `performed_by` FK'li
+  olduğu için yetim olamaz. Audit geçmişi olduğu için silme kararı
+  birlikte verilecek.
+- **Canlı API** (pid 78258, 6dd1f06'dan derlendi) backend değişikliklerini
+  içermiyor. Yeniden başlatılana kadar Aktivite'de sınıflandırma satırının
+  detayı "—", hata geçmişinde yalnız durum satırları görünür. Migration
+  yok; kod önce yeniden başlatma yeterli.
+Kanıt: `docs/screenshots/activity-history-process/`:
+`live-readonly-activity-history.txt`, `orphan-audit-scan.txt`,
+`build-and-tests.txt`.
+
 ---
 
 ## B — Canlıya çıkmadan önce ZORUNLU

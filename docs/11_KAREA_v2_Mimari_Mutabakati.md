@@ -281,6 +281,35 @@ yaşatmak olurdu.
   `ComputeCurrentStation`); "hepsi bitti" durumunda trigger son aktif
   istasyonu, Go aracın son satırının istasyonunu yazar.
 
+## Karar 17 — Sorumlu süreç ekrandan gizli; sınıflandırma düzeltmeleri geçmişte (NEW — 2026-09-30)
+
+**Gerekçe:** 10 kusur tipinin 6'sında varsayılan süreç yok (01, 03, 04, 07,
+09, 99). Canlıda 27 hatanın 22'sinde süreç boş (%81,5). Bu veriyle
+"sürece göre hata" grafiği ve hata detayındaki süreç satırı yanıltıcıydı.
+
+**Karar:**
+- **Süreç yalnız arayüzden kalktı.** Hata detayı (web + mobil), hata
+  yazdırma, hata CSV'si, Analiz grafiği, Analiz kapsamındaki "süreci
+  atanmamış" oranı, Analiz CSV'si ve yazdırması süreci göstermez.
+- **Veri akışı aynen sürer.** `issue_list.responsible_process_id`, kusur
+  tipinin varsayılanından otomatik atama ve audit satırı değişmedi. Backend
+  analiz alanları (`DefectByProcess`, `ProcessUnassigned`) ve katalogdaki
+  varsayılan süreç yönetimi de duruyor; kalite ekibi varsayılanları oradan
+  girecek.
+- **Düzenleyiciler süreci sessizce göndermeye devam eder.**
+  `UpdateClassification` süreci gönderilen değerle birebir yazar; göndermemek
+  kayıtlı süreci silerdi. Tip değişince süreç yeni tipin varsayılanına
+  (yoksa boşa) çekilir, eskisi gibi.
+- **Sınıflandırma düzeltmeleri hata geçmişinde.**
+  `ListIssueStatusHistory` `ISSUE_STATUS_CHANGE` ile
+  `ISSUE_CLASSIFICATION_CHANGE` satırlarını aynı zaman çizelgesinde döner
+  (`Kind` = `STATUS` | `CLASSIFICATION`). Parça ve tip id'leri katalogdan
+  TR/EN adlara backend'de çözülür (`audit_classification.go`); aynı
+  çözümleme Aktivite ekranında da kullanılır. Süreç alanı çözümlemede
+  atlanır, hiçbir yerde gösterilmez.
+- **Yeniden açma:** kalite ekibi altı tipe varsayılan süreç tanımladığında
+  arayüz geri açılır; altı tip `docs/16` A33'te.
+
 ## Değişmeyen / Yeniden Kullanılacaklar
 
 Şunlara **dokunulmuyor**, olduğu gibi kalıyor: JWT auth + bcrypt (üstteki JWT_SECRET ve iptal sıkılaştırmaları hariç), CORS allowlist mimarisi, Unit-of-Work (pgx.Tx) transaction pattern, `.cursor/rules` (commit ve environment-check kuralları), Analysis sekmesi temel yapısı (VIN×severity kırılımı, Pie/Bar chart'lar — yeni station/EOL alanlarıyla genişleyecek ama sıfırdan kurulmayacak), Docker/migration/seed altyapısı.

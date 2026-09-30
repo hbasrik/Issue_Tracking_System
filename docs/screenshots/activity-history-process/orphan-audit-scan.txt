@@ -1,0 +1,29 @@
+# read-only orphan scan, 2026-09-30T14:02:36Z, default_transaction_read_only=on
+ default_transaction_read_only 
+-------------------------------
+ on
+(1 row)
+
+ total_audit_rows 
+------------------
+              395
+(1 row)
+
+         kind         |         event_type          | count |                  detail                  
+----------------------+-----------------------------+-------+------------------------------------------
+ issue_id_missing     | ISSUE_CLASSIFICATION_CHANGE |     3 | 427:issue 40, 428:issue 41, 429:issue 42
+ issue_id_missing     | ISSUE_STATUS_CHANGE         |     3 | 1:issue 7, 2:issue 7, 12:issue 10
+ promote_part_missing | ISSUE_CLASSIFICATION_CHANGE |     1 | 429:part 50
+(3 rows)
+
+ id  |         event_type          |        vin        |           event_at            |                                                                                                       metadata                                                                                                        
+-----+-----------------------------+-------------------+-------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+   1 | ISSUE_STATUS_CHANGE         | N7V1K1SA9SK000001 | 2026-08-24 15:32:04.579773+00 | {"issue_id": 7}
+   2 | ISSUE_STATUS_CHANGE         | N7V1K1SA9SK000001 | 2026-08-24 15:32:04.603301+00 | {"issue_id": 7}
+  12 | ISSUE_STATUS_CHANGE         | N7V1K1SA0TK000003 | 2026-08-25 12:55:39.385113+00 | {"issue_id": 10}
+ 427 | ISSUE_CLASSIFICATION_CHANGE | N7V1K1SA4TK000005 | 2026-09-11 11:28:26.749771+00 | {"fields": {"defect_code": {"to": "10-01-01", "from": "10-09-04"}, "defect_part_id": {"to": 10, "from": 2}, "defect_type_id": {"to": 8, "from": 1}}, "issue_id": 40}
+ 428 | ISSUE_CLASSIFICATION_CHANGE | N7V1K1SA4TK000005 | 2026-09-11 11:28:26.943296+00 | {"fields": {"defect_code": {"to": "10-01-04", "from": ""}, "defect_part_id": {"to": 10, "from": null}, "defect_type_id": {"to": 1, "from": null}, "responsible_process_id": {"to": 1, "from": null}}, "issue_id": 41}
+ 429 | ISSUE_CLASSIFICATION_CHANGE | N7V1K1SA4TK000005 | 2026-09-11 11:28:27.094924+00 | {"action": "promote_other_part", "issue_id": 42, "custom_name": "TEMP_C_PROMOTE_PART", "new_part_id": 50, "new_part_code": "10-TEMP-C"}
+(6 rows)
+
+# vin, station_id, performed_by: FK constraints on audit_logs (vin ON DELETE CASCADE) — orphans impossible

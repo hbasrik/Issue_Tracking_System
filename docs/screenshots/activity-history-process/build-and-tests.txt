@@ -1,0 +1,25 @@
+# 2026-09-30T14:03:19Z HEAD=dd07540
+## go test ./...
+?   	github.com/karea/backend/cmd/api	[no test files]
+ok  	github.com/karea/backend/internal/delivery/http	(cached)
+ok  	github.com/karea/backend/internal/domain	(cached)
+ok  	github.com/karea/backend/internal/platform/applog	(cached)
+?   	github.com/karea/backend/internal/platform/auth	[no test files]
+ok  	github.com/karea/backend/internal/platform/config	(cached)
+ok  	github.com/karea/backend/internal/platform/storage	(cached)
+?   	github.com/karea/backend/internal/repository	[no test files]
+ok  	github.com/karea/backend/internal/repository/postgres	(cached)
+ok  	github.com/karea/backend/internal/usecase	(cached)
+exit=0
+## web tsc --noEmit
+exit=0
+## web vite build
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 3.10s
+## mobile tsc --noEmit
+exit=0
+## i18n selftest
+(Use `node --trace-warnings ...` to show where the warning was created)
+shared/i18n/messages.ts ok (1162 tr keys scanned)

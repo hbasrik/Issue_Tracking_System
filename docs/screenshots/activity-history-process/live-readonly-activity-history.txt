@@ -1,0 +1,13 @@
+=== RUN   TestZZLiveReadonlyAudit
+default_transaction_read_only = on
+activity ISSUE_CLASSIFICATION_CHANGE total = 4
+  2026-09-11T11:56:47Z vin=N7V1K1SA0TK000017 old="" new="" classification=[]
+  2026-09-11T11:28:27Z vin=N7V1K1SA4TK000005 old="" new="" classification=[{Field:part FromTR:TEMP_C_PROMOTE_PART FromEN:TEMP_C_PROMOTE_PART ToTR: ToEN:}]
+  2026-09-11T11:28:26Z vin=N7V1K1SA4TK000005 old="" new="" classification=[{Field:part FromTR: FromEN: ToTR:Kapı ToEN:Door} {Field:type FromTR: FromEN: ToTR:Deformasyon ToEN:Deformation} {Field:code FromTR: FromEN: ToTR:10-01-04 ToEN:10-01-04}]
+  2026-09-11T11:28:26Z vin=N7V1K1SA4TK000005 old="" new="" classification=[{Field:part FromTR:Doghouse FromEN:Doghouse ToTR:Kapı ToEN:Door} {Field:type FromTR:Deformasyon FromEN:Deformation ToTR:Boşluk / hizasızlık ToEN:Gap / misalignment} {Field:code FromTR:10-09-04 FromEN:10-09-04 ToTR:10-01-01 ToEN:10-01-01}]
+issue 38 history:
+  id=430 kind=CLASSIFICATION ""->"" changes=[] by=Basri at=2026-09-11T11:56:47Z
+  id=564 kind=STATUS "OPEN"->"IN_PROGRESS" changes=[] by=Basri at=2026-09-28T10:37:47Z
+--- PASS: TestZZLiveReadonlyAudit (0.05s)
+PASS
+ok  	github.com/karea/backend/internal/repository/postgres	0.601s
