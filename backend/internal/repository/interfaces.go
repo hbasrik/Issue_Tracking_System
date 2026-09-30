@@ -20,9 +20,9 @@ type VehicleRepository interface {
 	// SearchByVINSuffix returns vehicles whose VIN contains the given suffix
 	// (partial trigram search), capped at limit rows.
 	SearchByVINSuffix(ctx context.Context, suffix string, limit int) ([]domain.Vehicle, error)
-	// UpdateProgress persists the recomputed completion percentage and current
-	// station for a vehicle.
-	UpdateProgress(ctx context.Context, vin string, percentage float64, currentStationID *int) error
+	// UpdateCurrentStation persists the vehicle's current station. There is no
+	// stored percentage: reads compute it from the applicable set.
+	UpdateCurrentStation(ctx context.Context, vin string, currentStationID *int) error
 	// UpdateStatus persists a new global status for a vehicle.
 	UpdateStatus(ctx context.Context, vin string, status domain.VehicleStatus) error
 	// PlaceOnHold moves the vehicle to ON_HOLD, storing prior status + reason.

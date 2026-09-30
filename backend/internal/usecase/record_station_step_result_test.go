@@ -16,7 +16,8 @@ func TestRecordStationStepResult_NotOKDoesNotBlockNextStation(t *testing.T) {
 	const vin = "1HGCM82633A004352"
 
 	vehicles := newFakeVehicleRepo()
-	vehicles.vehicles[vin] = &domain.Vehicle{VIN: vin}
+	// Stands for the applicable-set percentage the Postgres read computes.
+	vehicles.vehicles[vin] = &domain.Vehicle{VIN: vin, TotalProgressPercentage: 37.5}
 
 	steps := newFakeStationStepRepo()
 	steps.rows[vin] = []domain.VehicleStationStepProgress{
@@ -42,10 +43,10 @@ func TestRecordStationStepResult_NotOKDoesNotBlockNextStation(t *testing.T) {
 		t.Fatalf("station-2 step was blocked by earlier NOT_OK: %v", err)
 	}
 
-	// The NOT_OK item is excluded from completion (1 of 2 OK => 50%), and the
+	// The percentage is the vehicle read's (no station-only recompute), and the
 	// current station remains the earliest incomplete one (station 1).
-	if out.TotalProgressPercentage != 50 {
-		t.Errorf("expected 50%% completion, got %.2f", out.TotalProgressPercentage)
+	if out.TotalProgressPercentage != 37.5 {
+		t.Errorf("expected the vehicle read's 37.5%%, got %.2f", out.TotalProgressPercentage)
 	}
 	if out.CurrentStationID == nil {
 		t.Fatal("expected a current station, got nil")

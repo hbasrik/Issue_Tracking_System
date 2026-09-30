@@ -1,47 +1,30 @@
 package usecase
 
 import (
-	"math"
-
 	"github.com/karea/backend/internal/domain"
 )
 
-// ComputeProgress recomputes a vehicle's completion percentage and current
-// station from its station step progress rows.
+// ComputeCurrentStation returns the vehicle's current station from its
+// station step progress rows: the earliest station that is not yet fully OK;
+// when every step is OK, the last station the vehicle has rows for (the
+// DDL's COALESCE(MIN(...), MAX(...))). A NOT_OK step never blocks later
+// stations (FR-2.5). Callers pass the rows in station order, which the
+// repository guarantees.
 //
-// This is the application-layer mirror of the fn_recalculate_vehicle_progress
-// database trigger (defense in depth). Soft-warning rule (FR-2.5, unchanged by
-// Karar 1): only OK steps count toward completion; a NOT_OK (or PENDING) step
-// is simply excluded from the percentage and never blocks progress elsewhere.
-//
-// The current station is the earliest station that is not yet fully OK; when
-// every step is OK it is the last station the vehicle has rows for, matching
-// the DDL's COALESCE(MIN(...), MAX(...)) behaviour. Callers pass the rows in
-// station order, which the repository guarantees.
-func ComputeProgress(items []domain.VehicleStationStepProgress) (percentage float64, currentStationID *int) {
-	total := len(items)
-	done := 0
-
-	for i, it := range items {
-		if it.Status == domain.StationStepStatusOK {
-			done++
-			continue
-		}
-		if currentStationID == nil {
-			stationID := items[i].StationID
-			currentStationID = &stationID
+// The completion percentage is not computed here: it is read from the
+// applicable set (repository stage_applicability.go, docs/11 Karar 16).
+func ComputeCurrentStation(items []domain.VehicleStationStepProgress) *int {
+	for _, it := range items {
+		if it.Status != domain.StationStepStatusOK {
+			stationID := it.StationID
+			return &stationID
 		}
 	}
-
-	if total == 0 {
-		return 0, nil
+	if len(items) == 0 {
+		return nil
 	}
-	if currentStationID == nil {
-		lastStationID := items[total-1].StationID
-		currentStationID = &lastStationID
-	}
-	percentage = round2(float64(done) / float64(total) * 100)
-	return percentage, currentStationID
+	lastStationID := items[len(items)-1].StationID
+	return &lastStationID
 }
 
 // EvaluateChecklistGate reports whether a hard-block quality gate is open.
@@ -156,9 +139,4 @@ func AuthorizeStatusTransition(target domain.VehicleStatus, shipmentGateOpen boo
 		return domain.ErrInvalidStatusTransition
 	}
 	return nil
-}
-
-// round2 rounds to two decimal places, mirroring PostgreSQL round(x, 2).
-func round2(v float64) float64 {
-	return math.Round(v*100) / 100
 }

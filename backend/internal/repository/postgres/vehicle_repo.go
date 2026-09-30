@@ -25,8 +25,8 @@ func NewVehicleRepo(pool *pgxpool.Pool) *VehicleRepo {
 
 var _ repository.VehicleRepository = (*VehicleRepo)(nil)
 
-// TotalProgressPercentage is read from the applicable set (stage rule), not
-// the stored station-only vehicles.total_progress_percentage, so it always
+// TotalProgressPercentage is computed from the applicable set (stage rule) on
+// every read — there is no stored column (migration 0032) — so it always
 // agrees with the pre-shipment warning list.
 var vehicleColumns = `vin, vehicle_model_id,
 	current_global_status, current_station_id, ` + vehicleProgressSQL("vehicles.vin") + `,
@@ -209,7 +209,7 @@ func (r *VehicleRepo) List(ctx context.Context, f domain.VehicleListFilter) ([]d
 		where +
 		fmt.Sprintf(" ORDER BY vehicles.vin DESC LIMIT $%d OFFSET $%d", len(args)-1, len(args))
 
-	rows, err := r.pool.Query(ctx, query, args...)
+	rows, err := executor(ctx, r.pool).Query(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -237,7 +237,7 @@ func (r *VehicleRepo) Count(ctx context.Context, f domain.VehicleListFilter) (in
 // SearchByVINSuffix returns vehicles whose VIN contains the given fragment,
 // including PLANNED (Karar 10 — issue-entry typeahead must see the full plan).
 func (r *VehicleRepo) SearchByVINSuffix(ctx context.Context, suffix string, limit int) ([]domain.Vehicle, error) {
-	rows, err := r.pool.Query(ctx,
+	rows, err := executor(ctx, r.pool).Query(ctx,
 		`SELECT `+vehicleColumns+` FROM vehicles WHERE vin ILIKE '%' || $1 || '%' ORDER BY vin LIMIT $2`,
 		suffix, limit)
 	if err != nil {
@@ -256,11 +256,11 @@ func (r *VehicleRepo) SearchByVINSuffix(ctx context.Context, suffix string, limi
 	return out, rows.Err()
 }
 
-// UpdateProgress persists the recomputed completion percentage and station.
-func (r *VehicleRepo) UpdateProgress(ctx context.Context, vin string, percentage float64, currentStationID *int) error {
+// UpdateCurrentStation persists the vehicle's current station.
+func (r *VehicleRepo) UpdateCurrentStation(ctx context.Context, vin string, currentStationID *int) error {
 	tag, err := executor(ctx, r.pool).Exec(ctx,
-		`UPDATE vehicles SET total_progress_percentage = $2, current_station_id = $3 WHERE vin = $1`,
-		vin, percentage, currentStationID)
+		`UPDATE vehicles SET current_station_id = $2 WHERE vin = $1`,
+		vin, currentStationID)
 	if err != nil {
 		return err
 	}

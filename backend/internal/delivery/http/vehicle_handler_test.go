@@ -42,7 +42,7 @@ func (f *recordingVehicleRepo) Count(_ context.Context, filter domain.VehicleLis
 func (f *recordingVehicleRepo) SearchByVINSuffix(context.Context, string, int) ([]domain.Vehicle, error) {
 	return nil, nil
 }
-func (f *recordingVehicleRepo) UpdateProgress(context.Context, string, float64, *int) error {
+func (f *recordingVehicleRepo) UpdateCurrentStation(context.Context, string, *int) error {
 	return nil
 }
 func (f *recordingVehicleRepo) UpdateStatus(context.Context, string, domain.VehicleStatus) error {

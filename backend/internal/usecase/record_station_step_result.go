@@ -7,8 +7,8 @@ import (
 	"github.com/karea/backend/internal/repository"
 )
 
-// StationStepResultRecorder records the result of a single station step and
-// recomputes the vehicle's completion percentage.
+// StationStepResultRecorder records the result of a single station step,
+// moves the vehicle's current station and reports its completion percentage.
 type StationStepResultRecorder struct {
 	vehicles repository.VehicleRepository
 	progress repository.StationStepProgressRepository
@@ -56,13 +56,12 @@ func (r *StationStepResultRecorder) Record(ctx context.Context, in RecordStation
 		return nil, err
 	}
 
-	percentage, currentStationID := ComputeProgress(items)
-	if err := r.vehicles.UpdateProgress(ctx, in.VIN, percentage, currentStationID); err != nil {
+	currentStationID := ComputeCurrentStation(items)
+	if err := r.vehicles.UpdateCurrentStation(ctx, in.VIN, currentStationID); err != nil {
 		return nil, err
 	}
 
-	// Report the same percentage vehicle reads return (station steps plus
-	// applicable checklist items), not the station-only stored value.
+	// The percentage is the one vehicle reads return (applicable set).
 	vehicle, err := r.vehicles.GetByVIN(ctx, in.VIN)
 	if err != nil {
 		return nil, err

@@ -57,12 +57,12 @@ func (s *snapshotFakeUoW) WithinTx(ctx context.Context, fn func(context.Context)
 }
 
 // fakeVehicleRepo is an in-memory VehicleRepository for unit tests. It records
-// status/progress updates so tests can assert whether a transition was
+// status/station updates so tests can assert whether a transition was
 // attempted.
 type fakeVehicleRepo struct {
 	vehicles       map[string]*domain.Vehicle
 	statusUpdates  []statusUpdate
-	progressUpdate *progressUpdate
+	stationUpdate  *stationUpdate
 }
 
 type vehicleSnapshot map[string]domain.Vehicle
@@ -72,10 +72,9 @@ type statusUpdate struct {
 	status domain.VehicleStatus
 }
 
-type progressUpdate struct {
-	vin        string
-	percentage float64
-	stationID  *int
+type stationUpdate struct {
+	vin       string
+	stationID *int
 }
 
 func newFakeVehicleRepo() *fakeVehicleRepo {
@@ -130,12 +129,10 @@ func (f *fakeVehicleRepo) SearchByVINSuffix(_ context.Context, suffix string, li
 	return out, nil
 }
 
-func (f *fakeVehicleRepo) UpdateProgress(_ context.Context, vin string, percentage float64, stationID *int) error {
-	f.progressUpdate = &progressUpdate{vin: vin, percentage: percentage, stationID: stationID}
+func (f *fakeVehicleRepo) UpdateCurrentStation(_ context.Context, vin string, stationID *int) error {
+	f.stationUpdate = &stationUpdate{vin: vin, stationID: stationID}
 	if v, ok := f.vehicles[vin]; ok {
-		// No checklist rows in these fixtures: station-only equals the
-		// applicable-set percentage GetByVIN returns in Postgres.
-		v.TotalProgressPercentage = percentage
+		v.CurrentStationID = stationID
 	}
 	return nil
 }
