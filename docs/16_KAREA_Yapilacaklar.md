@@ -533,6 +533,35 @@ Kanıt: `docs/screenshots/activity-history-process/`:
 `live-readonly-activity-history.txt`, `orphan-audit-scan.txt`,
 `build-and-tests.txt`.
 
+### A34. Katalog yeterliliği kartı; grafik etiketleri; VIN bağlantısı `[x]` — 2026-09-30
+- **Katalog yeterliliği kartı:** üstte tek cümlelik açıklama ("“Diğer”
+  seçimleri katalogda eksik kalan yerleri gösterir; oran yükselirse katalog
+  gözden geçirilmeli"). Belirsiz üst çubuk kaldırıldı; yerine iki net
+  sayı var: "Diğer" seçilen parça ve "Diğer" seçilen kusur tipi, her biri
+  adet + oran. **Payda artık sınıflandırılmış hata sayısı** (eskiden tüm
+  hatalar). Serbest metin listeleri "Kataloğa eklenecek adaylar" başlığıyla
+  kaldı. Katalog öncesi (sınıflandırılmamış) kayıtlar kesik çizgili ayrı
+  bir kutuda, "Yukarıdaki oranlara dahil değildir" notuyla. Aynı düzen
+  yazdırmada ve Analiz CSV'sinde de var: CSV'de oranlar sınıflandırılmış
+  hatalar üzerinden, katalog öncesi ayrı bölümde. Yalnız frontend
+  değişikliği; API sorgusu aynı.
+- **Grafik etiketleri:** "En çok hata çıkan parçalar", "Parça × kusur
+  tipi", sıcak nokta, istasyon, raporlayan ve kusur tipi grafiklerinde
+  eksen etiketleri tek satır. Etiket genişliği en uzun etikete göre
+  hesaplanıyor (grafik genişliğinin %45'i, kombinasyonda %55'i ile
+  sınırlı); sığmayan metin "…" ile kısaltılıyor, tam metin üzerine
+  gelince görünüyor. Satır yüksekliği 30 px. Yazdırmada da aynı kısaltma
+  var ama orada hover olmadığı için tam ad görünmez. Ana sayfa grafikleri
+  yalnız sayısal eksen kullandığı için değişmedi.
+- **VIN bağlantısı:** hata detayındaki araç kimliği mobilde ve webde araç
+  detayına gidiyor. VIN'in son hanelerinin altı çizili ve yanında ok var.
+  Mobilde `VehicleStation` ekranına, webde `/vehicles/<VIN>` sayfasına
+  gidiyor; iki tarafta da önceden bağlantı değildi.
+Kanıt: `docs/screenshots/analysis-labels-vin/`: önce/sonra kart ve
+grafik görüntüleri (1280 + 1920 px, yazdırma), `before-facts.json` /
+`after-facts.json` (etiket çakışma ölçümü), mobil VIN dokunma testi
+(`verify-mobile-vin-link.mjs`, TR + EN), `build-and-tests.txt`.
+
 ---
 
 ## B — Canlıya çıkmadan önce ZORUNLU
