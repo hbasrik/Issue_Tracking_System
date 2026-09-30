@@ -1,0 +1,528 @@
+{
+ "phase": "after",
+ "screen": {
+  "1280": {
+   "coverageText": "Katalog yeterliliği\n\n“Diğer” seçimleri katalogda eksik kalan yerleri gösterir; oran yükselirse katalog gözden geçirilmeli.\n\n“Diğer” seçilen parça\n\n1\n10%\n\n10 sınıflandırılmış hata içinde\n\n“Diğer” seçilen kusur tipi\n\n0\n0%\n\n10 sınıflandırılmış hata içinde\n\nKataloğa eklenecek adaylar\n\nEn sık “Diğer” parça metinleri\n\nArka tampon sağ alt köşe bağlantı braketi ve plastik koruma kapağı\n1\n\nKatalog öncesi kayıtlar\n\n17 / 27 hata (63%) sınıflandırma kataloğundan önce açıldı. Yukarıdaki oranlara dahil değildir.",
+   "charts": {
+    "parts": {
+     "count": 8,
+     "multiLine": 0,
+     "overlaps": 0,
+     "intoPlot": 0,
+     "ticks": [
+      {
+       "text": "Bağlantı elemanı (perçin, somun, vida, klips, saplama)Bağlantı elemanı (perçin, somun, vid…",
+       "title": "Bağlantı elemanı (perçin, somun, vida, klips, saplama)",
+       "lines": 1
+      },
+      {
+       "text": "İç mekân (koltuk, konsol, direksiyon, panel, döşeme)İç mekân (koltuk, konsol, direksiyon,…",
+       "title": "İç mekân (koltuk, konsol, direksiyon, panel, döşeme)",
+       "lines": 1
+      },
+      {
+       "text": "Conta / Sızdırmazlık elemanıConta / Sızdırmazlık elemanı",
+       "title": "Conta / Sızdırmazlık elemanı",
+       "lines": 1
+      },
+      {
+       "text": "Şarj sistemi / Yüksek voltajŞarj sistemi / Yüksek voltaj",
+       "title": "Şarj sistemi / Yüksek voltaj",
+       "lines": 1
+      },
+      {
+       "text": "Kablo / Soket / TesisatKablo / Soket / Tesisat",
+       "title": "Kablo / Soket / Tesisat",
+       "lines": 1
+      },
+      {
+       "text": "Bagaj kapağı / TailgateBagaj kapağı / Tailgate",
+       "title": "Bagaj kapağı / Tailgate",
+       "lines": 1
+      },
+      {
+       "text": "Far / Stop / AydınlatmaFar / Stop / Aydınlatma",
+       "title": "Far / Stop / Aydınlatma",
+       "lines": 1
+      },
+      {
+       "text": "KapıKapı",
+       "title": "Kapı",
+       "lines": 1
+      }
+     ]
+    },
+    "types": {
+     "count": 6,
+     "multiLine": 0,
+     "overlaps": 0,
+     "intoPlot": 0,
+     "ticks": [
+      {
+       "text": "Boşluk / hizasızlıkBoşluk / hizasızlık",
+       "title": "Boşluk / hizasızlık",
+       "lines": 1
+      },
+      {
+       "text": "Yüzey / boya hatasıYüzey / boya hatası",
+       "title": "Yüzey / boya hatası",
+       "lines": 1
+      },
+      {
+       "text": "Çizik / darbe / hasarÇizik / darbe / hasar",
+       "title": "Çizik / darbe / hasar",
+       "lines": 1
+      },
+      {
+       "text": "Bağlantı / tork sorunuBağlantı / tork sorunu",
+       "title": "Bağlantı / tork sorunu",
+       "lines": 1
+      },
+      {
+       "text": "Fonksiyon çalışmıyorFonksiyon çalışmıyor",
+       "title": "Fonksiyon çalışmıyor",
+       "lines": 1
+      },
+      {
+       "text": "DiğerDiğer",
+       "title": "Diğer",
+       "lines": 1
+      }
+     ]
+    },
+    "combo": {
+     "count": 6,
+     "multiLine": 0,
+     "overlaps": 0,
+     "intoPlot": 0,
+     "ticks": [
+      {
+       "text": "Bağlantı elemanı (perçin, somun, vida, klips, saplama) · Bağlantı / tork sorunuBağlantı elemanı (perçin, somun, vida, klips,…",
+       "title": "Bağlantı elemanı (perçin, somun, vida, klips, saplama) · Bağlantı / tork sorunu",
+       "lines": 1
+      },
+      {
+       "text": "İç mekân (koltuk, konsol, direksiyon, panel, döşeme) · Çizik / darbe / hasarİç mekân (koltuk, konsol, direksiyon, panel, d…",
+       "title": "İç mekân (koltuk, konsol, direksiyon, panel, döşeme) · Çizik / darbe / hasar",
+       "lines": 1
+      },
+      {
+       "text": "Conta / Sızdırmazlık elemanı · Boşluk / hizasızlıkConta / Sızdırmazlık elemanı · Boşluk / hizası…",
+       "title": "Conta / Sızdırmazlık elemanı · Boşluk / hizasızlık",
+       "lines": 1
+      },
+      {
+       "text": "Şarj sistemi / Yüksek voltaj · Fonksiyon çalışmıyorŞarj sistemi / Yüksek voltaj · Fonksiyon çalış…",
+       "title": "Şarj sistemi / Yüksek voltaj · Fonksiyon çalışmıyor",
+       "lines": 1
+      },
+      {
+       "text": "Bagaj kapağı / Tailgate · Yüzey / boya hatasıBagaj kapağı / Tailgate · Yüzey / boya hatası",
+       "title": "Bagaj kapağı / Tailgate · Yüzey / boya hatası",
+       "lines": 1
+      },
+      {
+       "text": "Kapı · Boşluk / hizasızlıkKapı · Boşluk / hizasızlık",
+       "title": "Kapı · Boşluk / hizasızlık",
+       "lines": 1
+      }
+     ]
+    },
+    "hotspots": {
+     "count": 1,
+     "multiLine": 0,
+     "overlaps": 0,
+     "intoPlot": 0,
+     "ticks": [
+      {
+       "text": "Bağlantı elemanı (perçin, somun, vida, klips, saplama) · Bağlantı / tork sorunuBağlantı elemanı (perçin, somun, vida, klips,…",
+       "title": "Bağlantı elemanı (perçin, somun, vida, klips, saplama) · Bağlantı / tork sorunu",
+       "lines": 1
+      }
+     ]
+    },
+    "issue-types": {
+     "count": 2,
+     "multiLine": 0,
+     "overlaps": 0,
+     "intoPlot": 0,
+     "ticks": [
+      {
+       "text": "HataHata",
+       "title": "Hata",
+       "lines": 1
+      },
+      {
+       "text": "Tamir GerekiyorTamir Gerekiyor",
+       "title": "Tamir Gerekiyor",
+       "lines": 1
+      }
+     ]
+    },
+    "reporters": {
+     "count": 3,
+     "multiLine": 0,
+     "overlaps": 0,
+     "intoPlot": 0,
+     "ticks": [
+      {
+       "text": "Assembly OperatorAssembly Operator",
+       "title": "Assembly Operator",
+       "lines": 1
+      },
+      {
+       "text": "Quality Operator Mehmet YılmazoğluQuality Operator Meh…",
+       "title": "Quality Operator Mehmet Yılmazoğlu",
+       "lines": 1
+      },
+      {
+       "text": "Local ManagerLocal Manager",
+       "title": "Local Manager",
+       "lines": 1
+      }
+     ]
+    },
+    "stations": {
+     "count": 3,
+     "multiLine": 0,
+     "overlaps": 0,
+     "intoPlot": 0,
+     "ticks": [
+      {
+       "text": "1. İstasyon1. İstasyon",
+       "title": "1. İstasyon",
+       "lines": 1
+      },
+      {
+       "text": "4. İstasyon4. İstasyon",
+       "title": "4. İstasyon",
+       "lines": 1
+      },
+      {
+       "text": "8. İstasyon8. İstasyon",
+       "title": "8. İstasyon",
+       "lines": 1
+      }
+     ]
+    }
+   },
+   "errors": [],
+   "hoverFirstPartTick": {
+    "shown": "Bağlantı elemanı (perçin, somun, vida, klips, saplama)Bağlantı elemanı (perçin, somun, vid…",
+    "title": "Bağlantı elemanı (perçin, somun, vida, klips, saplama)"
+   },
+   "barTooltip": "Bağlantı elemanı (perçin, somun, vida, klips, saplama)\n\nToplam : 5"
+  },
+  "1920": {
+   "coverageText": "Katalog yeterliliği\n\n“Diğer” seçimleri katalogda eksik kalan yerleri gösterir; oran yükselirse katalog gözden geçirilmeli.\n\n“Diğer” seçilen parça\n\n1\n10%\n\n10 sınıflandırılmış hata içinde\n\n“Diğer” seçilen kusur tipi\n\n0\n0%\n\n10 sınıflandırılmış hata içinde\n\nKataloğa eklenecek adaylar\n\nEn sık “Diğer” parça metinleri\n\nArka tampon sağ alt köşe bağlantı braketi ve plastik koruma kapağı\n1\n\nKatalog öncesi kayıtlar\n\n17 / 27 hata (63%) sınıflandırma kataloğundan önce açıldı. Yukarıdaki oranlara dahil değildir.",
+   "charts": {
+    "parts": {
+     "count": 8,
+     "multiLine": 0,
+     "overlaps": 0,
+     "intoPlot": 0,
+     "ticks": [
+      {
+       "text": "Bağlantı elemanı (perçin, somun, vida, klips, saplama)Bağlantı elemanı (perçin, somun, vida, klips, saplama)",
+       "title": "Bağlantı elemanı (perçin, somun, vida, klips, saplama)",
+       "lines": 1
+      },
+      {
+       "text": "İç mekân (koltuk, konsol, direksiyon, panel, döşeme)İç mekân (koltuk, konsol, direksiyon, panel, döşeme)",
+       "title": "İç mekân (koltuk, konsol, direksiyon, panel, döşeme)",
+       "lines": 1
+      },
+      {
+       "text": "Conta / Sızdırmazlık elemanıConta / Sızdırmazlık elemanı",
+       "title": "Conta / Sızdırmazlık elemanı",
+       "lines": 1
+      },
+      {
+       "text": "Şarj sistemi / Yüksek voltajŞarj sistemi / Yüksek voltaj",
+       "title": "Şarj sistemi / Yüksek voltaj",
+       "lines": 1
+      },
+      {
+       "text": "Kablo / Soket / TesisatKablo / Soket / Tesisat",
+       "title": "Kablo / Soket / Tesisat",
+       "lines": 1
+      },
+      {
+       "text": "Bagaj kapağı / TailgateBagaj kapağı / Tailgate",
+       "title": "Bagaj kapağı / Tailgate",
+       "lines": 1
+      },
+      {
+       "text": "Far / Stop / AydınlatmaFar / Stop / Aydınlatma",
+       "title": "Far / Stop / Aydınlatma",
+       "lines": 1
+      },
+      {
+       "text": "KapıKapı",
+       "title": "Kapı",
+       "lines": 1
+      }
+     ]
+    },
+    "types": {
+     "count": 6,
+     "multiLine": 0,
+     "overlaps": 0,
+     "intoPlot": 0,
+     "ticks": [
+      {
+       "text": "Boşluk / hizasızlıkBoşluk / hizasızlık",
+       "title": "Boşluk / hizasızlık",
+       "lines": 1
+      },
+      {
+       "text": "Yüzey / boya hatasıYüzey / boya hatası",
+       "title": "Yüzey / boya hatası",
+       "lines": 1
+      },
+      {
+       "text": "Çizik / darbe / hasarÇizik / darbe / hasar",
+       "title": "Çizik / darbe / hasar",
+       "lines": 1
+      },
+      {
+       "text": "Bağlantı / tork sorunuBağlantı / tork sorunu",
+       "title": "Bağlantı / tork sorunu",
+       "lines": 1
+      },
+      {
+       "text": "Fonksiyon çalışmıyorFonksiyon çalışmıyor",
+       "title": "Fonksiyon çalışmıyor",
+       "lines": 1
+      },
+      {
+       "text": "DiğerDiğer",
+       "title": "Diğer",
+       "lines": 1
+      }
+     ]
+    },
+    "combo": {
+     "count": 6,
+     "multiLine": 0,
+     "overlaps": 0,
+     "intoPlot": 0,
+     "ticks": [
+      {
+       "text": "Bağlantı elemanı (perçin, somun, vida, klips, saplama) · Bağlantı / tork sorunuBağlantı elemanı (perçin, somun, vida, klips, saplama) · Bağlantı /…",
+       "title": "Bağlantı elemanı (perçin, somun, vida, klips, saplama) · Bağlantı / tork sorunu",
+       "lines": 1
+      },
+      {
+       "text": "İç mekân (koltuk, konsol, direksiyon, panel, döşeme) · Çizik / darbe / hasarİç mekân (koltuk, konsol, direksiyon, panel, döşeme) · Çizik / darb…",
+       "title": "İç mekân (koltuk, konsol, direksiyon, panel, döşeme) · Çizik / darbe / hasar",
+       "lines": 1
+      },
+      {
+       "text": "Conta / Sızdırmazlık elemanı · Boşluk / hizasızlıkConta / Sızdırmazlık elemanı · Boşluk / hizasızlık",
+       "title": "Conta / Sızdırmazlık elemanı · Boşluk / hizasızlık",
+       "lines": 1
+      },
+      {
+       "text": "Şarj sistemi / Yüksek voltaj · Fonksiyon çalışmıyorŞarj sistemi / Yüksek voltaj · Fonksiyon çalışmıyor",
+       "title": "Şarj sistemi / Yüksek voltaj · Fonksiyon çalışmıyor",
+       "lines": 1
+      },
+      {
+       "text": "Bagaj kapağı / Tailgate · Yüzey / boya hatasıBagaj kapağı / Tailgate · Yüzey / boya hatası",
+       "title": "Bagaj kapağı / Tailgate · Yüzey / boya hatası",
+       "lines": 1
+      },
+      {
+       "text": "Kapı · Boşluk / hizasızlıkKapı · Boşluk / hizasızlık",
+       "title": "Kapı · Boşluk / hizasızlık",
+       "lines": 1
+      }
+     ]
+    },
+    "hotspots": {
+     "count": 1,
+     "multiLine": 0,
+     "overlaps": 0,
+     "intoPlot": 0,
+     "ticks": [
+      {
+       "text": "Bağlantı elemanı (perçin, somun, vida, klips, saplama) · Bağlantı / tork sorunuBağlantı elemanı (perçin, somun, vida, klips, saplama) · Bağlantı /…",
+       "title": "Bağlantı elemanı (perçin, somun, vida, klips, saplama) · Bağlantı / tork sorunu",
+       "lines": 1
+      }
+     ]
+    },
+    "issue-types": {
+     "count": 2,
+     "multiLine": 0,
+     "overlaps": 0,
+     "intoPlot": 0,
+     "ticks": [
+      {
+       "text": "HataHata",
+       "title": "Hata",
+       "lines": 1
+      },
+      {
+       "text": "Tamir GerekiyorTamir Gerekiyor",
+       "title": "Tamir Gerekiyor",
+       "lines": 1
+      }
+     ]
+    },
+    "reporters": {
+     "count": 3,
+     "multiLine": 0,
+     "overlaps": 0,
+     "intoPlot": 0,
+     "ticks": [
+      {
+       "text": "Assembly OperatorAssembly Operator",
+       "title": "Assembly Operator",
+       "lines": 1
+      },
+      {
+       "text": "Quality Operator Mehmet YılmazoğluQuality Operator Mehmet Yılmaz…",
+       "title": "Quality Operator Mehmet Yılmazoğlu",
+       "lines": 1
+      },
+      {
+       "text": "Local ManagerLocal Manager",
+       "title": "Local Manager",
+       "lines": 1
+      }
+     ]
+    },
+    "stations": {
+     "count": 3,
+     "multiLine": 0,
+     "overlaps": 0,
+     "intoPlot": 0,
+     "ticks": [
+      {
+       "text": "1. İstasyon1. İstasyon",
+       "title": "1. İstasyon",
+       "lines": 1
+      },
+      {
+       "text": "4. İstasyon4. İstasyon",
+       "title": "4. İstasyon",
+       "lines": 1
+      },
+      {
+       "text": "8. İstasyon8. İstasyon",
+       "title": "8. İstasyon",
+       "lines": 1
+      }
+     ]
+    }
+   },
+   "errors": [],
+   "hoverFirstPartTick": {
+    "shown": "Bağlantı elemanı (perçin, somun, vida, klips, saplama)Bağlantı elemanı (perçin, somun, vida, klips, saplama)",
+    "title": "Bağlantı elemanı (perçin, somun, vida, klips, saplama)"
+   },
+   "barTooltip": "Bağlantı elemanı (perçin, somun, vida, klips, saplama)\n\nToplam : 5"
+  }
+ },
+ "print": {
+  "parts": {
+   "count": 8,
+   "multiLine": 0,
+   "overlaps": 0,
+   "intoPlot": 0,
+   "ticks": [
+    {
+     "text": "Bağlantı elemanı (perçin, somun, vida, klips, saplama)Bağlantı elemanı (perçin, somun…",
+     "title": "Bağlantı elemanı (perçin, somun, vida, klips, saplama)",
+     "lines": 1
+    },
+    {
+     "text": "İç mekân (koltuk, konsol, direksiyon, panel, döşeme)İç mekân (koltuk, konsol, direksi…",
+     "title": "İç mekân (koltuk, konsol, direksiyon, panel, döşeme)",
+     "lines": 1
+    },
+    {
+     "text": "Conta / Sızdırmazlık elemanıConta / Sızdırmazlık elemanı",
+     "title": "Conta / Sızdırmazlık elemanı",
+     "lines": 1
+    },
+    {
+     "text": "Şarj sistemi / Yüksek voltajŞarj sistemi / Yüksek voltaj",
+     "title": "Şarj sistemi / Yüksek voltaj",
+     "lines": 1
+    },
+    {
+     "text": "Kablo / Soket / TesisatKablo / Soket / Tesisat",
+     "title": "Kablo / Soket / Tesisat",
+     "lines": 1
+    },
+    {
+     "text": "Bagaj kapağı / TailgateBagaj kapağı / Tailgate",
+     "title": "Bagaj kapağı / Tailgate",
+     "lines": 1
+    },
+    {
+     "text": "Far / Stop / AydınlatmaFar / Stop / Aydınlatma",
+     "title": "Far / Stop / Aydınlatma",
+     "lines": 1
+    },
+    {
+     "text": "KapıKapı",
+     "title": "Kapı",
+     "lines": 1
+    }
+   ]
+  },
+  "combo": {
+   "count": 6,
+   "multiLine": 0,
+   "overlaps": 0,
+   "intoPlot": 0,
+   "ticks": [
+    {
+     "text": "Bağlantı elemanı (perçin, somun, vida, klips, saplama) · Bağlantı / tork sorunuBağlantı elemanı (perçin, somun, vida, kl…",
+     "title": "Bağlantı elemanı (perçin, somun, vida, klips, saplama) · Bağlantı / tork sorunu",
+     "lines": 1
+    },
+    {
+     "text": "İç mekân (koltuk, konsol, direksiyon, panel, döşeme) · Çizik / darbe / hasarİç mekân (koltuk, konsol, direksiyon, pan…",
+     "title": "İç mekân (koltuk, konsol, direksiyon, panel, döşeme) · Çizik / darbe / hasar",
+     "lines": 1
+    },
+    {
+     "text": "Conta / Sızdırmazlık elemanı · Boşluk / hizasızlıkConta / Sızdırmazlık elemanı · Boşluk / hi…",
+     "title": "Conta / Sızdırmazlık elemanı · Boşluk / hizasızlık",
+     "lines": 1
+    },
+    {
+     "text": "Şarj sistemi / Yüksek voltaj · Fonksiyon çalışmıyorŞarj sistemi / Yüksek voltaj · Fonksiyon ç…",
+     "title": "Şarj sistemi / Yüksek voltaj · Fonksiyon çalışmıyor",
+     "lines": 1
+    },
+    {
+     "text": "Bagaj kapağı / Tailgate · Yüzey / boya hatasıBagaj kapağı / Tailgate · Yüzey / boya ha…",
+     "title": "Bagaj kapağı / Tailgate · Yüzey / boya hatası",
+     "lines": 1
+    },
+    {
+     "text": "Kapı · Boşluk / hizasızlıkKapı · Boşluk / hizasızlık",
+     "title": "Kapı · Boşluk / hizasızlık",
+     "lines": 1
+    }
+   ]
+  },
+  "coverage": "Hata sınıflandırması\n\nKatalog yeterliliği: “Diğer” seçimleri katalogda eksik kalan yerleri gösterir; oran yükselirse katalog gözden geçirilmeli.\n\n“Diğer” seçilen parça: 1 (10%) · “Diğer” seçilen kusur tipi: 0 (0%) — 10 sınıflandırılmış hata içinde\n\nKataloğa eklenecek adaylar: Arka tampon sağ alt köşe bağlantı braketi ve plastik koruma kapağı (1)\n\nKatalog öncesi kayıtlar: 17 / 27 hata (63%) sınıflandırma kataloğundan önce açıldı. Yukarıdaki oranlara dahil değildir.\n\nTekrar oranı: 20% (2/10) — Sezgisel gösterge: aynı araçta aynı hata kodunun birden fazla açılması. Kesin kök neden değildir."
+ },
+ "vin": {
+  "tag": "A",
+  "href": "/vehicles/N7V1K1SA4TK000005",
+  "label": "Araç detayını aç: N7V1K1SA4TK000005",
+  "cursor": "pointer",
+  "urlAfterClick": "/vehicles/N7V1K1SA4TK000005",
+  "errors": []
+ },
+ "blockedRequestsTo8080": [],
+ "unmockedApiPaths": []
+}

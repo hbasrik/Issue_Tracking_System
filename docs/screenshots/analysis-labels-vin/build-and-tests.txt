@@ -1,0 +1,41 @@
+## go test ./... (8b91846)
+?   	github.com/karea/backend/cmd/api	[no test files]
+ok  	github.com/karea/backend/internal/delivery/http	(cached)
+ok  	github.com/karea/backend/internal/domain	(cached)
+ok  	github.com/karea/backend/internal/platform/applog	(cached)
+?   	github.com/karea/backend/internal/platform/auth	[no test files]
+ok  	github.com/karea/backend/internal/platform/config	(cached)
+ok  	github.com/karea/backend/internal/platform/storage	(cached)
+?   	github.com/karea/backend/internal/repository	[no test files]
+ok  	github.com/karea/backend/internal/repository/postgres	(cached)
+ok  	github.com/karea/backend/internal/usecase	(cached)
+exit=0
+
+## web tsc --noEmit
+exit=0
+
+## web vite build
+vite v5.4.21 building for production...
+transforming...
+✓ 2493 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                     1.00 kB │ gzip:   0.48 kB
+dist/assets/index-C8qfmmFg.css     47.51 kB │ gzip:   9.82 kB
+dist/assets/index-DklHLPUJ.js   1,126.00 kB │ gzip: 304.68 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 3.21s
+exit=0
+
+## mobile tsc --noEmit
+exit=0
+
+## i18n selftest
+(node:50945) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+shared/i18n/messages.ts ok (1167 tr keys scanned)
+exit=0

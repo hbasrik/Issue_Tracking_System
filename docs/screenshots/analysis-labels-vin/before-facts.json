@@ -1,0 +1,511 @@
+{
+ "phase": "before",
+ "screen": {
+  "1280": {
+   "coverageText": "Katalog yeterliliği\n\n“Diğer” seçimleri kataloğun eksik kaldığı yerleri gösterir\n\n“Diğer” parça oranı\n1 (100%)\n“Diğer” parça oranı: 3.7% (1)\n“Diğer” kusur oranı: 0% (0)\n\nEn sık “Diğer” parça metinleri\n\nArka tampon sağ alt köşe bağlantı braketi ve plastik koruma kapağı\n1\n\nEski sınıflandırılmamış: 63% (17/27)",
+   "charts": {
+    "parts": {
+     "count": 8,
+     "multiLine": 7,
+     "overlaps": 3,
+     "intoPlot": 0,
+     "ticks": [
+      {
+       "text": "Bağlantıelemanı(perçin,somun, vida,klips,saplama)",
+       "title": null,
+       "lines": 6
+      },
+      {
+       "text": "İç mekân(koltuk,konsol,direksiyon,panel,döşeme)",
+       "title": null,
+       "lines": 6
+      },
+      {
+       "text": "Conta /Sızdırmazlıkelemanı",
+       "title": null,
+       "lines": 3
+      },
+      {
+       "text": "Şarj sistemi /Yüksek voltaj",
+       "title": null,
+       "lines": 2
+      },
+      {
+       "text": "Kablo / Soket /Tesisat",
+       "title": null,
+       "lines": 2
+      },
+      {
+       "text": "Bagaj kapağı/ Tailgate",
+       "title": null,
+       "lines": 2
+      },
+      {
+       "text": "Far / Stop /Aydınlatma",
+       "title": null,
+       "lines": 2
+      },
+      {
+       "text": "Kapı",
+       "title": null,
+       "lines": 1
+      }
+     ]
+    },
+    "types": {
+     "count": 6,
+     "multiLine": 5,
+     "overlaps": 0,
+     "intoPlot": 0,
+     "ticks": [
+      {
+       "text": "Boşluk /hizasızlık",
+       "title": null,
+       "lines": 2
+      },
+      {
+       "text": "Yüzey / boyahatası",
+       "title": null,
+       "lines": 2
+      },
+      {
+       "text": "Çizik / darbe /hasar",
+       "title": null,
+       "lines": 2
+      },
+      {
+       "text": "Bağlantı /tork sorunu",
+       "title": null,
+       "lines": 2
+      },
+      {
+       "text": "Fonksiyonçalışmıyor",
+       "title": null,
+       "lines": 2
+      },
+      {
+       "text": "Diğer",
+       "title": null,
+       "lines": 1
+      }
+     ]
+    },
+    "combo": {
+     "count": 6,
+     "multiLine": 6,
+     "overlaps": 5,
+     "intoPlot": 0,
+     "ticks": [
+      {
+       "text": "Bağlantı elemanı(perçin, somun,vida, klips,saplama) · Bağlantı/ tork sorunu",
+       "title": null,
+       "lines": 5
+      },
+      {
+       "text": "İç mekân (koltuk,konsol, direksiyon,panel, döşeme) ·Çizik / darbe /hasar",
+       "title": null,
+       "lines": 5
+      },
+      {
+       "text": "Conta / Sızdırmazlıkelemanı · Boşluk /hizasızlık",
+       "title": null,
+       "lines": 3
+      },
+      {
+       "text": "Şarj sistemi /Yüksek voltaj ·Fonksiyonçalışmıyor",
+       "title": null,
+       "lines": 4
+      },
+      {
+       "text": "Bagaj kapağı /Tailgate · Yüzey /boya hatası",
+       "title": null,
+       "lines": 3
+      },
+      {
+       "text": "Kapı · Boşluk /hizasızlık",
+       "title": null,
+       "lines": 2
+      }
+     ]
+    },
+    "hotspots": {
+     "count": 1,
+     "multiLine": 1,
+     "overlaps": 0,
+     "intoPlot": 0,
+     "ticks": [
+      {
+       "text": "Bağlantı elemanı(perçin, somun,vida, klips,saplama) · Bağlantı/ tork sorunu",
+       "title": null,
+       "lines": 5
+      }
+     ]
+    },
+    "issue-types": {
+     "count": 2,
+     "multiLine": 1,
+     "overlaps": 0,
+     "intoPlot": 0,
+     "ticks": [
+      {
+       "text": "Hata",
+       "title": null,
+       "lines": 1
+      },
+      {
+       "text": "TamirGerekiyor",
+       "title": null,
+       "lines": 2
+      }
+     ]
+    },
+    "reporters": {
+     "count": 3,
+     "multiLine": 3,
+     "overlaps": 0,
+     "intoPlot": 0,
+     "ticks": [
+      {
+       "text": "AssemblyOperator",
+       "title": null,
+       "lines": 2
+      },
+      {
+       "text": "QualityOperatorMehmetYılmazoğlu",
+       "title": null,
+       "lines": 4
+      },
+      {
+       "text": "LocalManager",
+       "title": null,
+       "lines": 2
+      }
+     ]
+    },
+    "stations": {
+     "count": 3,
+     "multiLine": 0,
+     "overlaps": 0,
+     "intoPlot": 0,
+     "ticks": [
+      {
+       "text": "1. İstasyon",
+       "title": null,
+       "lines": 1
+      },
+      {
+       "text": "4. İstasyon",
+       "title": null,
+       "lines": 1
+      },
+      {
+       "text": "8. İstasyon",
+       "title": null,
+       "lines": 1
+      }
+     ]
+    }
+   },
+   "errors": []
+  },
+  "1920": {
+   "coverageText": "Katalog yeterliliği\n\n“Diğer” seçimleri kataloğun eksik kaldığı yerleri gösterir\n\n“Diğer” parça oranı\n1 (100%)\n“Diğer” parça oranı: 3.7% (1)\n“Diğer” kusur oranı: 0% (0)\n\nEn sık “Diğer” parça metinleri\n\nArka tampon sağ alt köşe bağlantı braketi ve plastik koruma kapağı\n1\n\nEski sınıflandırılmamış: 63% (17/27)",
+   "charts": {
+    "parts": {
+     "count": 8,
+     "multiLine": 7,
+     "overlaps": 3,
+     "intoPlot": 0,
+     "ticks": [
+      {
+       "text": "Bağlantıelemanı(perçin,somun, vida,klips,saplama)",
+       "title": null,
+       "lines": 6
+      },
+      {
+       "text": "İç mekân(koltuk,konsol,direksiyon,panel,döşeme)",
+       "title": null,
+       "lines": 6
+      },
+      {
+       "text": "Conta /Sızdırmazlıkelemanı",
+       "title": null,
+       "lines": 3
+      },
+      {
+       "text": "Şarj sistemi /Yüksek voltaj",
+       "title": null,
+       "lines": 2
+      },
+      {
+       "text": "Kablo / Soket /Tesisat",
+       "title": null,
+       "lines": 2
+      },
+      {
+       "text": "Bagaj kapağı/ Tailgate",
+       "title": null,
+       "lines": 2
+      },
+      {
+       "text": "Far / Stop /Aydınlatma",
+       "title": null,
+       "lines": 2
+      },
+      {
+       "text": "Kapı",
+       "title": null,
+       "lines": 1
+      }
+     ]
+    },
+    "types": {
+     "count": 6,
+     "multiLine": 5,
+     "overlaps": 0,
+     "intoPlot": 0,
+     "ticks": [
+      {
+       "text": "Boşluk /hizasızlık",
+       "title": null,
+       "lines": 2
+      },
+      {
+       "text": "Yüzey / boyahatası",
+       "title": null,
+       "lines": 2
+      },
+      {
+       "text": "Çizik / darbe /hasar",
+       "title": null,
+       "lines": 2
+      },
+      {
+       "text": "Bağlantı /tork sorunu",
+       "title": null,
+       "lines": 2
+      },
+      {
+       "text": "Fonksiyonçalışmıyor",
+       "title": null,
+       "lines": 2
+      },
+      {
+       "text": "Diğer",
+       "title": null,
+       "lines": 1
+      }
+     ]
+    },
+    "combo": {
+     "count": 6,
+     "multiLine": 6,
+     "overlaps": 5,
+     "intoPlot": 0,
+     "ticks": [
+      {
+       "text": "Bağlantı elemanı(perçin, somun,vida, klips,saplama) · Bağlantı/ tork sorunu",
+       "title": null,
+       "lines": 5
+      },
+      {
+       "text": "İç mekân (koltuk,konsol, direksiyon,panel, döşeme) ·Çizik / darbe /hasar",
+       "title": null,
+       "lines": 5
+      },
+      {
+       "text": "Conta / Sızdırmazlıkelemanı · Boşluk /hizasızlık",
+       "title": null,
+       "lines": 3
+      },
+      {
+       "text": "Şarj sistemi /Yüksek voltaj ·Fonksiyonçalışmıyor",
+       "title": null,
+       "lines": 4
+      },
+      {
+       "text": "Bagaj kapağı /Tailgate · Yüzey /boya hatası",
+       "title": null,
+       "lines": 3
+      },
+      {
+       "text": "Kapı · Boşluk /hizasızlık",
+       "title": null,
+       "lines": 2
+      }
+     ]
+    },
+    "hotspots": {
+     "count": 1,
+     "multiLine": 1,
+     "overlaps": 0,
+     "intoPlot": 0,
+     "ticks": [
+      {
+       "text": "Bağlantı elemanı(perçin, somun,vida, klips,saplama) · Bağlantı/ tork sorunu",
+       "title": null,
+       "lines": 5
+      }
+     ]
+    },
+    "issue-types": {
+     "count": 2,
+     "multiLine": 1,
+     "overlaps": 0,
+     "intoPlot": 0,
+     "ticks": [
+      {
+       "text": "Hata",
+       "title": null,
+       "lines": 1
+      },
+      {
+       "text": "TamirGerekiyor",
+       "title": null,
+       "lines": 2
+      }
+     ]
+    },
+    "reporters": {
+     "count": 3,
+     "multiLine": 3,
+     "overlaps": 0,
+     "intoPlot": 0,
+     "ticks": [
+      {
+       "text": "AssemblyOperator",
+       "title": null,
+       "lines": 2
+      },
+      {
+       "text": "QualityOperatorMehmetYılmazoğlu",
+       "title": null,
+       "lines": 4
+      },
+      {
+       "text": "LocalManager",
+       "title": null,
+       "lines": 2
+      }
+     ]
+    },
+    "stations": {
+     "count": 3,
+     "multiLine": 0,
+     "overlaps": 0,
+     "intoPlot": 0,
+     "ticks": [
+      {
+       "text": "1. İstasyon",
+       "title": null,
+       "lines": 1
+      },
+      {
+       "text": "4. İstasyon",
+       "title": null,
+       "lines": 1
+      },
+      {
+       "text": "8. İstasyon",
+       "title": null,
+       "lines": 1
+      }
+     ]
+    }
+   },
+   "errors": []
+  }
+ },
+ "print": {
+  "parts": {
+   "count": 8,
+   "multiLine": 7,
+   "overlaps": 0,
+   "intoPlot": 0,
+   "ticks": [
+    {
+     "text": "Bağlantıelemanı…",
+     "title": null,
+     "lines": 2
+    },
+    {
+     "text": "İç mekân(koltuk…",
+     "title": null,
+     "lines": 2
+    },
+    {
+     "text": "Conta /Sızdırma…",
+     "title": null,
+     "lines": 2
+    },
+    {
+     "text": "Şarj sistemi/ Y…",
+     "title": null,
+     "lines": 2
+    },
+    {
+     "text": "Kablo / Soket /…",
+     "title": null,
+     "lines": 2
+    },
+    {
+     "text": "Bagajkapağı / T…",
+     "title": null,
+     "lines": 2
+    },
+    {
+     "text": "Far / Stop /Ayd…",
+     "title": null,
+     "lines": 2
+    },
+    {
+     "text": "Kapı",
+     "title": null,
+     "lines": 1
+    }
+   ]
+  },
+  "combo": {
+   "count": 6,
+   "multiLine": 5,
+   "overlaps": 0,
+   "intoPlot": 0,
+   "ticks": [
+    {
+     "text": "Bağlantıelemanı (pe…",
+     "title": null,
+     "lines": 2
+    },
+    {
+     "text": "İç mekân(koltuk, ko…",
+     "title": null,
+     "lines": 2
+    },
+    {
+     "text": "Conta / Sızdırmazlık…",
+     "title": null,
+     "lines": 1
+    },
+    {
+     "text": "Şarj sistemi /Yükse…",
+     "title": null,
+     "lines": 2
+    },
+    {
+     "text": "Bagaj kapağı/ Tailg…",
+     "title": null,
+     "lines": 2
+    },
+    {
+     "text": "Kapı · Boşluk/ hiza…",
+     "title": null,
+     "lines": 2
+    }
+   ]
+  },
+  "coverage": "Hata sınıflandırması\n\nKatalog yeterliliği: “Diğer” parça oranı 1 · “Diğer” kusur oranı 0 · Eski sınıflandırılmamış 17\n\nArka tampon sağ alt köşe bağlantı braketi ve plastik koruma kapağı (1)\n\nTekrar oranı: 20% (2/10) — Sezgisel gösterge: aynı araçta aynı hata kodunun birden fazla açılması. Kesin kök neden değildir."
+ },
+ "vin": null,
+ "blockedRequestsTo8080": [],
+ "unmockedApiPaths": []
+}
