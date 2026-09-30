@@ -509,13 +509,15 @@ Kanıt: `docs/screenshots/progress-single-source/`:
   durum değişiklikleriyle aynı çizelgede: kim, ne zaman, hangi alan neden
   neye (web, mobil, yazdırma). Süreç burada da görünmez.
 - **Sorumlu süreç ekrandan kaldırıldı** (`docs/11` Karar 17): hata detayı
-  (web + mobil), düzenleyici, yazdırma, hata CSV'si (`sorumlu_surec` kolonu
-  çıktı), Analiz grafiği, "süreci atanmamış" oranı, Analiz CSV'si ve
-  yazdırması. Veritabanı kolonu, otomatik atama ve audit kaydı aynen kalıyor,
-  veri birikmeye devam ediyor.
+  (web + mobil), düzenleyici, yazdırma, Analiz grafiği, "süreci atanmamış"
+  oranı, Analiz CSV'si ve yazdırması. Arayüzün yanı sıra hata CSV dışa
+  aktarmasındaki `sorumlu_surec` kolonu da kaldırıldı; bu dosyayı okuyan
+  bir araç varsa kolon düzeni değişti. Veritabanı kolonu, otomatik atama ve
+  audit kaydı aynen kalıyor, veri birikmeye devam ediyor.
   **Yeniden açılacak:** kalite ekibi şu altı kusur tipine varsayılan süreç
   tanımladığında: boşluk/hizasızlık, çizik/darbe/hasar, deformasyon,
-  sızdırma, ses/titreşim, Diğer.
+  sızdırma, ses/titreşim, Diğer. O zaman ekranlar, Analiz grafiği ve hata
+  CSV'sindeki `sorumlu_surec` kolonu birlikte geri açılacak.
 - **Yetim audit satırları (silinmedi, karar bekliyor):** 395 audit
   satırının 6'sı artık olmayan hataya bağlı. Bunlar 1 ve 2 (hata 7), 12
   (hata 10), 427 (hata 40), 428 (hata 41) ve 429 (hata 42). 429 ayrıca
