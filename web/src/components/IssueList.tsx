@@ -64,7 +64,6 @@ function IssueInfoFields({ issue }: { issue: Issue }) {
     [t('issue.defectZone'), defect.zone],
     [t('issue.defectPart'), defect.part],
     [t('issue.defectType'), defect.type],
-    [t('issue.defectProcess'), defect.process],
     [t('issue.defectCode'), defect.code, true],
   ];
   if (issue.SolutionDescription?.trim()) {

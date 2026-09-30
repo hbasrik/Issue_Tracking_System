@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   api,
   type DefectPart,
-  type DefectProcess,
   type DefectType,
   type DefectZone,
   type Issue,
@@ -38,10 +37,11 @@ export function IssueClassificationEditor({
   const [zones, setZones] = useState<DefectZone[]>([]);
   const [parts, setParts] = useState<DefectPart[]>([]);
   const [types, setTypes] = useState<DefectType[]>([]);
-  const [processes, setProcesses] = useState<DefectProcess[]>([]);
   const [zoneId, setZoneId] = useState<number | ''>(issue.DefectZoneID ?? '');
   const [partId, setPartId] = useState<number | ''>(issue.DefectPartID ?? '');
   const [typeId, setTypeId] = useState<number | ''>(issue.DefectTypeID ?? '');
+  // Not shown in the UI, but UpdateClassification overwrites the stored
+  // process with whatever is sent, so it must still be submitted.
   const [processId, setProcessId] = useState<number | ''>(
     issue.ResponsibleProcessID ?? '',
   );
@@ -58,17 +58,15 @@ export function IssueClassificationEditor({
     let cancelled = false;
     (async () => {
       try {
-        const [z, p, ty, pr] = await Promise.all([
+        const [z, p, ty] = await Promise.all([
           api.listDefectCatalogZones(),
           api.listDefectCatalogParts(),
           api.listDefectCatalogTypes(),
-          api.listDefectCatalogProcesses(),
         ]);
         if (cancelled) return;
         setZones(z.items ?? []);
         setParts(p.items ?? []);
         setTypes(ty.items ?? []);
-        setProcesses(pr.items ?? []);
       } catch (err) {
         if (!cancelled) setLoadError(apiErrorMessage(err, t));
       }
@@ -263,25 +261,6 @@ export function IssueClassificationEditor({
           />
         </label>
       ) : null}
-
-      <label className="block text-[12px] text-[var(--text-secondary)]">
-        {t('issue.defectProcess')}
-        <select
-          className={`${inputClass} mt-1`}
-          style={{ borderColor: 'var(--border)' }}
-          value={processId === '' ? '' : String(processId)}
-          onChange={(e) =>
-            setProcessId(e.target.value ? Number(e.target.value) : '')
-          }
-        >
-          <option value="">{t('issue.processUnassigned')}</option>
-          {processes.map((p) => (
-            <option key={p.ID} value={p.ID}>
-              {nameOf(p.NameTR, p.NameEN, locale)}
-            </option>
-          ))}
-        </select>
-      </label>
 
       {error ? (
         <p className="text-[13px]" style={{ color: 'var(--status-not-ok)' }}>

@@ -252,9 +252,6 @@ export function IssueDetailPrint({ issue }: { issue: Issue }) {
                   <strong>{t('issue.defectType')}:</strong> {d.type}
                 </p>
                 <p>
-                  <strong>{t('issue.defectProcess')}:</strong> {d.process}
-                </p>
-                <p>
                   <strong>{t('issue.defectCode')}:</strong> {d.code}
                 </p>
               </>

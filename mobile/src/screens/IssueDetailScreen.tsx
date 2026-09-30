@@ -14,7 +14,6 @@ import {
   api,
   mediaFileUrl,
   type DefectPart,
-  type DefectProcess,
   type DefectType,
   type Issue,
   type IssueStatusHistoryEntry,
@@ -122,7 +121,8 @@ export default function IssueDetailScreen() {
     customPartName: '',
     customDefectName: '',
   });
-  const [processes, setProcesses] = useState<DefectProcess[]>([]);
+  // Not shown in the UI, but UpdateClassification overwrites the stored
+  // process with whatever is sent, so it must still be submitted.
   const [processId, setProcessId] = useState<number | null>(null);
   const [catalogParts, setCatalogParts] = useState<DefectPart[]>([]);
   const [catalogTypes, setCatalogTypes] = useState<DefectType[]>([]);
@@ -363,7 +363,6 @@ export default function IssueDetailScreen() {
     });
     setProcessId(issue.ResponsibleProcessID ?? null);
     setEditingClassification(true);
-    void api.listDefectCatalogProcesses().then((r) => setProcesses(r.items ?? []));
   }
 
   async function saveClassification() {
@@ -481,61 +480,6 @@ export default function IssueDetailScreen() {
                       setCatalogTypes(types);
                     }}
                   />
-                  <Text style={{ color: tokens.textSecondary, fontWeight: '600', fontSize: 13 }}>
-                    {t('issue.defectProcess')}
-                  </Text>
-                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                    <Pressable
-                      onPress={() => setProcessId(null)}
-                      style={{
-                        paddingHorizontal: 12,
-                        minHeight: 40,
-                        borderRadius: 999,
-                        backgroundColor:
-                          processId == null ? tokens.textPrimary : tokens.bgSurface2,
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <Text
-                        style={{
-                          color: processId == null ? tokens.bgPage : tokens.textSecondary,
-                          fontSize: 12,
-                          fontWeight: '600',
-                        }}
-                      >
-                        {t('issue.processUnassigned')}
-                      </Text>
-                    </Pressable>
-                    {processes.map((p) => {
-                      const selected = processId === p.ID;
-                      const label = locale === 'en' ? p.NameEN || p.NameTR : p.NameTR || p.NameEN;
-                      return (
-                        <Pressable
-                          key={p.ID}
-                          onPress={() => setProcessId(p.ID)}
-                          style={{
-                            paddingHorizontal: 12,
-                            minHeight: 40,
-                            borderRadius: 999,
-                            backgroundColor: selected
-                              ? tokens.textPrimary
-                              : tokens.bgSurface2,
-                            justifyContent: 'center',
-                          }}
-                        >
-                          <Text
-                            style={{
-                              color: selected ? tokens.bgPage : tokens.textSecondary,
-                              fontSize: 12,
-                              fontWeight: '600',
-                            }}
-                          >
-                            {label}
-                          </Text>
-                        </Pressable>
-                      );
-                    })}
-                  </View>
                   <PrimaryButton
                     label={busy ? t('common.saving') : t('common.save')}
                     onPress={() => void saveClassification()}
@@ -555,7 +499,6 @@ export default function IssueDetailScreen() {
                         <InfoRow label={t('issue.defectZone')} value={d.zone} />
                         <InfoRow label={t('issue.defectPart')} value={d.part} />
                         <InfoRow label={t('issue.defectType')} value={d.type} />
-                        <InfoRow label={t('issue.defectProcess')} value={d.process} />
                         <InfoRow label={t('issue.defectCode')} value={d.code} muted />
                       </>
                     );
