@@ -247,17 +247,6 @@ export function AnalysisPrint({
     ][i % 4],
   }));
 
-  const defectProcessPie = (dash?.DefectByProcess ?? []).map((r, i) => ({
-    name: defectLabel(r.NameTR, r.NameEN),
-    value: r.Count,
-    color: [
-      statusColors.ok,
-      statusColors.info,
-      statusColors.issueInProgress,
-      statusColors.severityMedium,
-    ][i % 4],
-  }));
-
   const defectPartBars = (dash?.DefectTopParts ?? []).map((r) => ({
     name:
       defectLabel(r.NameTR, r.NameEN).length > 18
@@ -588,8 +577,7 @@ export function AnalysisPrint({
               {cov && cov.Total > 0 ? (
                 <p>
                   {t('analysis.defectCoverage')}: {t('analysis.defectOtherPartRate')}{' '}
-                  {cov.OtherPart} · {t('analysis.defectOtherTypeRate')} {cov.OtherType} ·{' '}
-                  {t('analysis.defectProcessUnassigned')} {cov.ProcessUnassigned}
+                  {cov.OtherPart} · {t('analysis.defectOtherTypeRate')} {cov.OtherType}
                   {cov.Unclassified > 0
                     ? ` · ${t('analysis.defectLegacyUnclassifiedNote')} ${cov.Unclassified}`
                     : ''}
@@ -642,32 +630,6 @@ export function AnalysisPrint({
                       isAnimationActive={false}
                     >
                       {defectZonePie.map((e) => (
-                        <Cell key={e.name} fill={e.color} />
-                      ))}
-                    </Pie>
-                  </PieChart>
-                )}
-              </ChartCard>
-
-              <ChartCard
-                title={t('analysis.defectByProcess')}
-                legend={<ColorLegend items={defectProcessPie} />}
-              >
-                {defectProcessPie.length === 0 ? (
-                  <p>{t('analysis.noData')}</p>
-                ) : (
-                  <PieChart width={PIE_SIZE} height={PIE_SIZE}>
-                    <Pie
-                      data={defectProcessPie}
-                      dataKey="value"
-                      nameKey="name"
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={36}
-                      outerRadius={58}
-                      isAnimationActive={false}
-                    >
-                      {defectProcessPie.map((e) => (
                         <Cell key={e.name} fill={e.color} />
                       ))}
                     </Pie>

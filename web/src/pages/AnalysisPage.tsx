@@ -703,16 +703,6 @@ export default function AnalysisPage() {
     [dash, defectLabel],
   );
 
-  const defectProcessPie = useMemo(
-    () =>
-      (dash?.DefectByProcess ?? []).map((r, i) => ({
-        name: defectLabel(r.NameTR, r.NameEN),
-        value: r.Count,
-        color: PIE_COLORS[(i + 2) % PIE_COLORS.length],
-      })),
-    [dash, defectLabel],
-  );
-
   const defectComboBars = useMemo(
     () =>
       (dash?.DefectPartTypeTop ?? []).map((r) => ({
@@ -736,11 +726,6 @@ export default function AnalysisPage() {
         value: cov.OtherType,
         color: statusColors.severityMedium,
       },
-      {
-        name: t('analysis.defectProcessUnassigned'),
-        value: cov.ProcessUnassigned,
-        color: statusColors.severityCritical,
-      },
     ].filter((r) => r.value > 0);
   }, [dash, t]);
 
@@ -761,10 +746,6 @@ export default function AnalysisPage() {
   const defectOtherTypePct =
     defectCoverage && defectCoverage.Total > 0
       ? Math.round((defectCoverage.OtherType / defectCoverage.Total) * 1000) / 10
-      : null;
-  const defectProcessUnassignedPct =
-    defectCoverage && defectCoverage.Total > 0
-      ? Math.round((defectCoverage.ProcessUnassigned / defectCoverage.Total) * 1000) / 10
       : null;
   const defectUnclassifiedPct =
     defectCoverage && defectCoverage.Total > 0
@@ -1447,15 +1428,6 @@ export default function AnalysisPage() {
                     {` (${defectCoverage.OtherType})`}
                   </span>
                 </li>
-                <li>
-                  {t('analysis.defectProcessUnassigned')}:{' '}
-                  <span className="font-semibold tabular-nums text-[var(--text-primary)]">
-                    {defectProcessUnassignedPct != null
-                      ? `${defectProcessUnassignedPct}%`
-                      : t('common.emDash')}
-                    {` (${defectCoverage.ProcessUnassigned})`}
-                  </span>
-                </li>
               </ul>
               {(topOtherParts.length > 0 || topOtherTypes.length > 0) && (
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -1538,18 +1510,6 @@ export default function AnalysisPage() {
           icon={<Layers size={16} />}
         >
           {defectZonePie.length === 0 ? <EmptyChart /> : <DonutChart data={defectZonePie} />}
-        </ChartCard>
-
-        <ChartCard
-          title={t('analysis.defectByProcess')}
-          subtitle={t('analysis.defectChart.process')}
-          icon={<Factory size={16} />}
-        >
-          {defectProcessPie.length === 0 ? (
-            <EmptyChart />
-          ) : (
-            <DonutChart data={defectProcessPie} />
-          )}
         </ChartCard>
 
         <ChartCard

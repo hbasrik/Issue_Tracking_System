@@ -256,7 +256,6 @@ export function buildAnalysisCsv(
       ...section(t('analysis.defectCoverage'), [
         row([t('analysis.defectOtherPartRate'), cov.OtherPart]),
         row([t('analysis.defectOtherTypeRate'), cov.OtherType]),
-        row([t('analysis.defectProcessUnassigned'), cov.ProcessUnassigned]),
         row([t('analysis.defectLegacyUnclassifiedNote'), cov.Unclassified]),
         row([t('analysis.defectClassified'), cov.Classified]),
         row([t('analysis.total'), cov.Total]),
@@ -297,17 +296,6 @@ export function buildAnalysisCsv(
       ...section(t('analysis.defectByType'), [
         row([t('defects.colName'), t('defects.colCode'), t('analysis.total')]),
         ...dash.DefectByType.map((r) =>
-          row([nameLocale(r.NameTR, r.NameEN), r.Code, r.Count]),
-        ),
-      ]),
-    );
-  }
-
-  if (dash.DefectByProcess?.length) {
-    lines.push(
-      ...section(t('analysis.defectByProcess'), [
-        row([t('defects.colName'), t('defects.colCode'), t('analysis.total')]),
-        ...dash.DefectByProcess.map((r) =>
           row([nameLocale(r.NameTR, r.NameEN), r.Code, r.Count]),
         ),
       ]),
