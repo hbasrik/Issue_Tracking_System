@@ -11,7 +11,7 @@
 -- This file is a hand-maintained reading aid: it shows the intended
 -- shape of the schema in one place, with the reasoning behind each
 -- decision. It is NOT executable against a real database and must not
--- be used to create one. Migrations 0001-0031 are authoritative.
+-- be used to create one. Migrations 0001-0032 are authoritative.
 --
 -- Known limitation of this file: it is validated with a SQL parser,
 -- which checks syntax only. A parser cannot tell that a view selects a
@@ -231,8 +231,9 @@ CREATE TABLE vehicles (
     vehicle_model_id            INT REFERENCES vehicle_models(id),  -- nullable: PLANNED vehicles may not have a model yet (Karar 10)
     current_global_status       vehicle_status_enum NOT NULL DEFAULT 'IN_PRODUCTION',
     current_station_id          INT REFERENCES stations(id),  -- Karar 1: replaces current_phase; set by trigger on first station
-    total_progress_percentage   NUMERIC(5,2) NOT NULL DEFAULT 0.00
-                                 CHECK (total_progress_percentage BETWEEN 0 AND 100),
+    -- No stored progress column (migration 0032, Karar 16): the completion %
+    -- is computed on every read from the applicable set (station steps +
+    -- EOL factory/depot + TEST + SHIPMENT items), see stage_applicability.go.
     eol_template_id             INT REFERENCES checklist_templates(id),
     shipment_template_id        INT REFERENCES checklist_templates(id),
     test_template_id            INT REFERENCES checklist_templates(id),  -- Karar 4
@@ -679,28 +680,20 @@ CREATE TRIGGER trg_initialize_vehicle_progress
     AFTER INSERT ON vehicles
     FOR EACH ROW EXECUTE FUNCTION fn_initialize_vehicle_progress();
 
--- --- Recalculate completion %, current_station -------------------------
+-- --- Move current_station (+ PLANNED -> IN_PRODUCTION) ------------------
 -- Soft-warning rule (v1 Decision Log #2, unchanged): a NOT_OK step never
--- blocks progress into the next station, it is simply excluded from the
--- percentage until its linked issue is resolved and the item re-ticked.
+-- blocks progress into the next station.
 -- Unlike v1, completing all station steps no longer auto-flips
 -- current_global_status — that now happens via the EOL branch-shipment
 -- transition below (Karar 2), which is a separate, explicit action.
+-- Migration 0032 (Karar 16): the function no longer computes or stores a
+-- percentage. Simplified here; the real body (0009 + 0032) also parks
+-- PLANNED vehicles and flips PLANNED -> IN_PRODUCTION on the first tick.
 CREATE OR REPLACE FUNCTION fn_recalculate_vehicle_progress()
 RETURNS TRIGGER AS $$
 DECLARE
-    v_total INT;
-    v_done INT;
-    v_new_percentage NUMERIC(5,2);
     v_new_station_id INT;
 BEGIN
-    SELECT count(*), count(*) FILTER (WHERE status = 'OK')
-    INTO v_total, v_done
-    FROM vehicle_station_step_progress
-    WHERE vin = NEW.vin;
-
-    v_new_percentage := CASE WHEN v_total = 0 THEN 0 ELSE round((v_done::NUMERIC / v_total) * 100, 2) END;
-
     -- lowest-sequence station that still has a non-OK step; last active
     -- station if everything is complete.
     SELECT COALESCE(
@@ -712,8 +705,7 @@ BEGIN
     ) INTO v_new_station_id;
 
     UPDATE vehicles
-    SET total_progress_percentage = v_new_percentage,
-        current_station_id = (SELECT id FROM stations WHERE sequence_no = v_new_station_id)
+    SET current_station_id = (SELECT id FROM stations WHERE sequence_no = v_new_station_id)
     WHERE vin = NEW.vin;
 
     RETURN NEW;
@@ -1050,11 +1042,9 @@ FROM issue_list
 WHERE status = 'DONE'
 ORDER BY finish_date ASC;
 
--- Biten / Devam Eden İşler (Pie chart source) — vehicle completion split
-CREATE OR REPLACE VIEW vw_vehicle_completion_split AS
-SELECT count(*) FILTER (WHERE total_progress_percentage >= 100) AS completed_vehicles,
-       count(*) FILTER (WHERE total_progress_percentage < 100) AS in_progress_vehicles
-FROM vehicles;
+-- vw_vehicle_completion_split was dropped in migration 0032 (Karar 16): it
+-- read the station-only stored column and counted vehicles as "completed"
+-- while depot/test items were still open. Nothing in the app queried it.
 
 -- EOL workflow funnel — new for Karar 2, shows how many vehicles sit in
 -- each EOL stage at any given time.
@@ -1068,13 +1058,14 @@ GROUP BY current_stage;
 -- completion counters, and open-issue severity breakdown. Feeds the
 -- Vehicle Detail "Overview" tab and the Analysis-tab VIN detail panel so
 -- a single query answers "what is the full current state of vehicle X".
+-- NOTE: this view exists only in this file — no migration creates it. The
+-- completion % is not a column (0032); readers use the API value.
 CREATE OR REPLACE VIEW vw_vehicle_full_overview AS
 SELECT
     v.vin,
     v.vehicle_model_id,
     v.current_global_status,
     s.name AS current_station_name,
-    v.total_progress_percentage,
     ew.current_stage AS eol_stage,
     ew.branch_shipped_at,
     ew.depot_released_at,

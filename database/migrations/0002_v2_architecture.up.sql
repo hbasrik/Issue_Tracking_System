@@ -984,11 +984,18 @@ FROM issue_list
 WHERE status = 'DONE'
 ORDER BY finish_date ASC;
 
--- Biten / Devam Eden İşler (Pie chart source) — vehicle completion split
-CREATE OR REPLACE VIEW vw_vehicle_completion_split AS
-SELECT count(*) FILTER (WHERE total_progress_percentage >= 100) AS completed_vehicles,
-       count(*) FILTER (WHERE total_progress_percentage < 100) AS in_progress_vehicles
-FROM vehicles;
+-- Biten / Devam Eden İşler (Pie chart source) — vehicle completion split.
+-- 0032 drops the column and this view; re-applying on a newer schema skips it.
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.columns
+               WHERE table_name = 'vehicles' AND column_name = 'total_progress_percentage') THEN
+        CREATE OR REPLACE VIEW vw_vehicle_completion_split AS
+        SELECT count(*) FILTER (WHERE total_progress_percentage >= 100) AS completed_vehicles,
+               count(*) FILTER (WHERE total_progress_percentage < 100) AS in_progress_vehicles
+        FROM vehicles;
+    END IF;
+END $$;
 
 -- EOL workflow funnel — new for Karar 2, shows how many vehicles sit in
 -- each EOL stage at any given time.
