@@ -8,7 +8,13 @@ import {
   View,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { useFocusEffect, useRoute, type RouteProp } from '@react-navigation/native';
+import {
+  useFocusEffect,
+  useNavigation,
+  useRoute,
+  type RouteProp,
+} from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   api,
@@ -104,6 +110,7 @@ function InfoRow({
 
 export default function IssueDetailScreen() {
   const route = useRoute<RouteProp<RootStackParamList, 'IssueDetail'>>();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const insets = useSafeAreaInsets();
   const { tokens } = useTheme();
   const { has, user, token } = useAuth();
@@ -410,7 +417,12 @@ export default function IssueDetailScreen() {
         {issue ? (
           <View style={{ gap: space[4] }}>
             <Card style={{ marginTop: 0 }}>
-              <VehicleIdentity vin={issue.VIN} variant="hero" />
+              <VehicleIdentity
+                vin={issue.VIN}
+                variant="hero"
+                linkLabel={t('issueDetail.openVehicle')}
+                onPress={() => navigation.navigate('VehicleStation', { vin: issue.VIN })}
+              />
               <View
                 style={{
                   flexDirection: 'row',

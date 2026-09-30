@@ -221,7 +221,7 @@ export function IssueDetailPanel({
         />
       ) : null}
       <DetailBlock>
-        <VehicleIdentity vin={issue.VIN} variant="hero" />
+        <VehicleIdentity vin={issue.VIN} variant="hero" linkLabel={t('issueDetail.openVehicle')} />
         <div className="mt-[var(--space-4)] flex flex-wrap items-center gap-[var(--space-2)]">
           <SeverityIndicator severity={issue.Severity} />
           <StatusBadge kind="issue" value={issue.Status} />
