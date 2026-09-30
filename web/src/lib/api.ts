@@ -5,6 +5,7 @@
 
 import type { EOLGates } from '../../../shared/eolGates';
 import type { ShipmentWarningLike } from '../../../shared/shipmentReadiness';
+import type { ClassificationChange } from '../../../shared/classificationChanges';
 
 export type {
   EOLGates,
@@ -1062,8 +1063,11 @@ export interface Issue {
 
 export interface IssueStatusHistoryEntry {
   ID: number;
+  /** STATUS rows use From/ToStatus; CLASSIFICATION rows use Changes. */
+  Kind?: 'STATUS' | 'CLASSIFICATION';
   FromStatus: string;
   ToStatus: string;
+  Changes?: ClassificationChange[] | null;
   ActorName: string;
   EventAt: string;
 }
@@ -1230,6 +1234,7 @@ export interface HomeActivityEntry {
   ChecklistType?: string;
   ItemNo?: number | null;
   ItemText?: string;
+  Classification?: ClassificationChange[] | null;
 }
 
 export interface AuditActivityPage {

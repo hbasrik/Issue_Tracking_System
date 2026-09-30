@@ -14,6 +14,7 @@ import {
   History,
   Layers,
   RefreshCw,
+  Tags,
   Timer,
   TrendingDown,
   TrendingUp,
@@ -715,7 +716,7 @@ export default function HomePage() {
                 <tbody>
                   {overview?.Activity.map((row, i) => {
                     const meta = activityMeta(row.EventType, row.NewValue, t, row.OldValue);
-                    const detail = activityDetailLine(row, t);
+                    const detail = activityDetailLine(row, t, locale);
                     return (
                       <tr
                         key={`${row.EventAt}-${i}`}
@@ -1145,6 +1146,9 @@ function activityMeta(
   }
   if (eventType === 'MEDIA_UPLOADED') {
     return { label: t('home.activity.media'), color: statusColors.info, icon: <ClipboardCheck size={16} /> };
+  }
+  if (eventType === 'ISSUE_CLASSIFICATION_CHANGE') {
+    return { label: t('home.activity.classification'), color: statusColors.info, icon: <Tags size={16} /> };
   }
   return { label: t('home.activity.other'), color: statusColors.pending, icon: <AlertCircle size={16} /> };
 }

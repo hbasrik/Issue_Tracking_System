@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   ClipboardCheck,
   History,
+  Tags,
   Timer,
   Warehouse,
 } from 'lucide-react';
@@ -24,6 +25,7 @@ const muted = { color: 'var(--text-secondary)' } as const;
 const EVENT_TYPES = [
   '',
   'ISSUE_STATUS_CHANGE',
+  'ISSUE_CLASSIFICATION_CHANGE',
   'STATUS_CHANGE',
   'EOL_WORKFLOW_STAGE_CHANGE',
   'CHECKLIST_ITEM_UPDATE',
@@ -37,6 +39,8 @@ function eventLabel(
   switch (type) {
     case 'ISSUE_STATUS_CHANGE':
       return t('activity.filter.issueStatus');
+    case 'ISSUE_CLASSIFICATION_CHANGE':
+      return t('activity.filter.issueClassification');
     case 'STATUS_CHANGE':
       return t('activity.filter.vehicleStatus');
     case 'EOL_WORKFLOW_STAGE_CHANGE':
@@ -45,8 +49,10 @@ function eventLabel(
       return t('home.activity.checklist');
     case 'MEDIA_UPLOADED':
       return t('home.activity.media');
-    default:
+    case '':
       return t('activity.filter.allTypes');
+    default:
+      return t('home.activity.other');
   }
 }
 
@@ -76,6 +82,9 @@ function activityIcon(eventType: string, newValue: string, oldValue?: string): {
   }
   if (eventType === 'CHECKLIST_ITEM_UPDATE') {
     return { color: statusColors.ok, icon: <ClipboardCheck size={16} /> };
+  }
+  if (eventType === 'ISSUE_CLASSIFICATION_CHANGE') {
+    return { color: statusColors.info, icon: <Tags size={16} /> };
   }
   return { color: statusColors.pending, icon: <AlertCircle size={16} /> };
 }
@@ -258,7 +267,7 @@ export default function ActivityPage() {
             {!loading &&
               items.map((row, i) => {
                 const icon = activityIcon(row.EventType, row.NewValue, row.OldValue);
-                const detail = activityDetailLine(row, t);
+                const detail = activityDetailLine(row, t, locale);
                 return (
                   <tr
                     key={`${row.EventAt}-${row.VIN}-${i}`}
