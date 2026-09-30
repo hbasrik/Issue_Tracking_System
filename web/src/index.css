@@ -576,6 +576,12 @@ tr.cursor-pointer:focus:not(:focus-visible) {
     padding-bottom: 2pt;
   }
 
+  .print-note {
+    margin-top: 6pt;
+    padding: 4pt 6pt;
+    border: 0.75pt dashed #666666;
+  }
+
   .print-item {
     break-inside: avoid;
     page-break-inside: avoid;

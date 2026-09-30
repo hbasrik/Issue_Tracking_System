@@ -17,6 +17,7 @@ import {
   Download,
   Factory,
   Gauge,
+  Archive,
   Info,
   Layers,
   RefreshCw,
@@ -78,6 +79,7 @@ import {
 import { VehicleStatusDisplay } from '../components/VehicleStatusDisplay';
 import { AnalysisPrint } from '../components/print/AnalysisPrint';
 import { LoadErrorState } from '../components/LoadErrorState';
+import { defectCoverageRates, formatPct } from '../lib/defectCoverage';
 import {
   CategoryTick,
   CategoryXTick,
@@ -725,23 +727,6 @@ export default function AnalysisPage() {
     [dash, defectLabel],
   );
 
-  const defectCoverageBars = useMemo(() => {
-    const cov = dash?.DefectCoverage;
-    if (!cov || cov.Total === 0) return [];
-    return [
-      {
-        name: t('analysis.defectOtherPartRate'),
-        value: cov.OtherPart,
-        color: statusColors.pending,
-      },
-      {
-        name: t('analysis.defectOtherTypeRate'),
-        value: cov.OtherType,
-        color: statusColors.severityMedium,
-      },
-    ].filter((r) => r.value > 0);
-  }, [dash, t]);
-
   const defectRecurrenceHotspotBars = useMemo(
     () =>
       (dash?.DefectRecurrence?.Hotspots ?? []).map((r) => ({
@@ -752,18 +737,7 @@ export default function AnalysisPage() {
   );
 
   const defectCoverage = dash?.DefectCoverage;
-  const defectOtherPartPct =
-    defectCoverage && defectCoverage.Total > 0
-      ? Math.round((defectCoverage.OtherPart / defectCoverage.Total) * 1000) / 10
-      : null;
-  const defectOtherTypePct =
-    defectCoverage && defectCoverage.Total > 0
-      ? Math.round((defectCoverage.OtherType / defectCoverage.Total) * 1000) / 10
-      : null;
-  const defectUnclassifiedPct =
-    defectCoverage && defectCoverage.Total > 0
-      ? Math.round((defectCoverage.Unclassified / defectCoverage.Total) * 1000) / 10
-      : null;
+  const coverageRates = defectCoverage ? defectCoverageRates(defectCoverage) : null;
   const defectRecurrence = dash?.DefectRecurrence;
   const defectRecurrenceCases = defectRecurrence?.Cases ?? [];
   const topOtherParts = defectCoverage?.TopOtherParts ?? [];
@@ -1430,70 +1404,56 @@ export default function AnalysisPage() {
           {!defectCoverage || defectCoverage.Total === 0 ? (
             <EmptyChart />
           ) : (
-            <div className="space-y-3">
-              <SplitBars data={defectCoverageBars} />
-              <ul className="space-y-1 text-[13px]" style={mutedCaption}>
-                <li>
-                  {t('analysis.defectOtherPartRate')}:{' '}
-                  <span className="font-semibold tabular-nums text-[var(--text-primary)]">
-                    {defectOtherPartPct != null ? `${defectOtherPartPct}%` : t('common.emDash')}
-                    {` (${defectCoverage.OtherPart})`}
-                  </span>
-                </li>
-                <li>
-                  {t('analysis.defectOtherTypeRate')}:{' '}
-                  <span className="font-semibold tabular-nums text-[var(--text-primary)]">
-                    {defectOtherTypePct != null ? `${defectOtherTypePct}%` : t('common.emDash')}
-                    {` (${defectCoverage.OtherType})`}
-                  </span>
-                </li>
-              </ul>
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <OtherShareTile
+                  label={t('analysis.defectOtherPartRate')}
+                  count={defectCoverage.OtherPart}
+                  pct={coverageRates?.otherPartPct ?? null}
+                  classified={defectCoverage.Classified}
+                  color={statusColors.info}
+                />
+                <OtherShareTile
+                  label={t('analysis.defectOtherTypeRate')}
+                  count={defectCoverage.OtherType}
+                  pct={coverageRates?.otherTypePct ?? null}
+                  classified={defectCoverage.Classified}
+                  color={statusColors.severityMedium}
+                />
+              </div>
               {(topOtherParts.length > 0 || topOtherTypes.length > 0) && (
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  {topOtherParts.length > 0 ? (
-                    <div>
-                      <p className="mb-1 text-[12px] font-medium text-[var(--text-primary)]">
-                        {t('analysis.defectTopOtherParts')}
-                      </p>
-                      <ul className="space-y-0.5 text-[12px]" style={mutedCaption}>
-                        {topOtherParts.map((row) => (
-                          <li key={`op-${row.Name}`} className="flex justify-between gap-2">
-                            <span className="truncate">{row.Name}</span>
-                            <span className="tabular-nums text-[var(--text-primary)]">
-                              {row.Count}
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ) : null}
-                  {topOtherTypes.length > 0 ? (
-                    <div>
-                      <p className="mb-1 text-[12px] font-medium text-[var(--text-primary)]">
-                        {t('analysis.defectTopOtherTypes')}
-                      </p>
-                      <ul className="space-y-0.5 text-[12px]" style={mutedCaption}>
-                        {topOtherTypes.map((row) => (
-                          <li key={`ot-${row.Name}`} className="flex justify-between gap-2">
-                            <span className="truncate">{row.Name}</span>
-                            <span className="tabular-nums text-[var(--text-primary)]">
-                              {row.Count}
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ) : null}
+                <div>
+                  <p className="mb-2 text-[12px]" style={mutedCaption}>
+                    {t('analysis.defectOtherCandidates')}
+                  </p>
+                  <div
+                    className={`grid grid-cols-1 gap-3 ${
+                      topOtherParts.length > 0 && topOtherTypes.length > 0 ? 'sm:grid-cols-2' : ''
+                    }`}
+                  >
+                    <OtherTextList title={t('analysis.defectTopOtherParts')} rows={topOtherParts} />
+                    <OtherTextList title={t('analysis.defectTopOtherTypes')} rows={topOtherTypes} />
+                  </div>
                 </div>
               )}
               {defectCoverage.Unclassified > 0 ? (
-                <p className="text-[11px]" style={mutedCaption}>
-                  {t('analysis.defectLegacyUnclassifiedNote')}:{' '}
-                  <span className="tabular-nums">
-                    {defectUnclassifiedPct != null ? `${defectUnclassifiedPct}%` : t('common.emDash')}
-                    {` (${defectCoverage.Unclassified}/${defectCoverage.Total})`}
-                  </span>
-                </p>
+                <div
+                  className="rounded-lg border border-dashed p-3"
+                  style={{ borderColor: 'var(--border)', backgroundColor: 'var(--bg-surface-2)' }}
+                  data-testid="defect-legacy-block"
+                >
+                  <p className="flex items-center gap-1.5 text-[12px] font-medium text-[var(--text-primary)]">
+                    <Archive size={14} aria-hidden />
+                    {t('analysis.defectLegacyTitle')}
+                  </p>
+                  <p className="mt-1 text-[12px] leading-snug" style={mutedCaption}>
+                    {t('analysis.defectLegacyBody', {
+                      count: defectCoverage.Unclassified,
+                      total: defectCoverage.Total,
+                      pct: formatPct(coverageRates?.legacyPct ?? null, t('common.emDash')),
+                    })}
+                  </p>
+                </div>
               ) : null}
             </div>
           )}
@@ -2049,6 +2009,69 @@ function ChartCard({
         </div>
       </div>
       <div className="mt-2.5">{children}</div>
+    </div>
+  );
+}
+
+function OtherShareTile({
+  label,
+  count,
+  pct,
+  classified,
+  color,
+}: {
+  label: string;
+  count: number;
+  pct: number | null;
+  classified: number;
+  color: string;
+}) {
+  const { t } = useI18n();
+  return (
+    <div className="rounded-lg border p-3" style={{ borderColor: 'var(--border)' }}>
+      <p className="text-[12px] font-medium" style={mutedCaption}>
+        {label}
+      </p>
+      <p className="mt-1 flex items-baseline gap-2">
+        <span className="text-[26px] font-semibold leading-none tabular-nums text-[var(--text-primary)]">
+          {count}
+        </span>
+        <span className="text-[15px] font-semibold tabular-nums" style={{ color }}>
+          {formatPct(pct, t('common.emDash'))}
+        </span>
+      </p>
+      <div
+        className="mt-2 h-1.5 overflow-hidden rounded-full"
+        style={{ backgroundColor: 'var(--bg-surface-2)' }}
+        aria-hidden
+      >
+        <div
+          className="h-full rounded-full"
+          style={{ width: `${Math.min(100, pct ?? 0)}%`, backgroundColor: color }}
+        />
+      </div>
+      <p className="mt-1.5 text-[12px]" style={mutedCaption}>
+        {t('analysis.defectOtherShareOf', { classified })}
+      </p>
+    </div>
+  );
+}
+
+function OtherTextList({ title, rows }: { title: string; rows: { Name: string; Count: number }[] }) {
+  if (rows.length === 0) return null;
+  return (
+    <div className="min-w-0">
+      <p className="mb-1 text-[12px] font-medium text-[var(--text-primary)]">{title}</p>
+      <ul className="space-y-0.5 text-[12px]" style={mutedCaption}>
+        {rows.map((row) => (
+          <li key={row.Name} className="flex justify-between gap-2">
+            <span className="truncate" title={row.Name}>
+              {row.Name}
+            </span>
+            <span className="tabular-nums text-[var(--text-primary)]">{row.Count}</span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

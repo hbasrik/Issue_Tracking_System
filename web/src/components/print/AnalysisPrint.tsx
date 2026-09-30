@@ -32,6 +32,7 @@ import {
 import { statusColors } from '../../theme/tokens';
 import { PrintButton, PrintHeader, PrintRoot } from './PrintRoot';
 import { CategoryTick, categoryAxisWidth } from '../charts/categoryTick';
+import { defectCoverageRates, formatPct } from '../../lib/defectCoverage';
 
 /**
  * Print-only chart geometry (px). Sized for a 2-column A4 content grid
@@ -272,6 +273,7 @@ export function AnalysisPrint({
   const defectPartH = verticalChartHeight(defectPartBars.length);
   const defectComboH = verticalChartHeight(defectComboBars.length);
   const cov = dash?.DefectCoverage;
+  const covRates = cov ? defectCoverageRates(cov) : null;
   const rec = dash?.DefectRecurrence;
 
   return (
@@ -581,18 +583,25 @@ export function AnalysisPrint({
             <section className="print-section print-table-block">
               <h2>{t('analysis.defectSection')}</h2>
               {cov && cov.Total > 0 ? (
-                <p>
-                  {t('analysis.defectCoverage')}: {t('analysis.defectOtherPartRate')}{' '}
-                  {cov.OtherPart} · {t('analysis.defectOtherTypeRate')} {cov.OtherType}
-                  {cov.Unclassified > 0
-                    ? ` · ${t('analysis.defectLegacyUnclassifiedNote')} ${cov.Unclassified}`
-                    : ''}
-                </p>
+                <>
+                  <p>
+                    <strong>{t('analysis.defectCoverage')}:</strong>{' '}
+                    {t('analysis.defectCatalogAdequacyHint')}
+                  </p>
+                  <p>
+                    {t('analysis.defectOtherPartRate')}: {cov.OtherPart} (
+                    {formatPct(covRates?.otherPartPct ?? null, t('common.emDash'))}) ·{' '}
+                    {t('analysis.defectOtherTypeRate')}: {cov.OtherType} (
+                    {formatPct(covRates?.otherTypePct ?? null, t('common.emDash'))}) —{' '}
+                    {t('analysis.defectOtherShareOf', { classified: cov.Classified })}
+                  </p>
+                </>
               ) : (
                 <p>{t('analysis.noData')}</p>
               )}
               {cov && (cov.TopOtherParts?.length || cov.TopOtherTypes?.length) ? (
                 <p>
+                  <strong>{t('analysis.defectOtherCandidates')}:</strong>{' '}
                   {(cov.TopOtherParts ?? [])
                     .slice(0, 5)
                     .map((r) => `${r.Name} (${r.Count})`)
@@ -602,6 +611,16 @@ export function AnalysisPrint({
                     .slice(0, 5)
                     .map((r) => `${r.Name} (${r.Count})`)
                     .join(', ')}
+                </p>
+              ) : null}
+              {cov && cov.Unclassified > 0 ? (
+                <p className="print-note">
+                  <strong>{t('analysis.defectLegacyTitle')}:</strong>{' '}
+                  {t('analysis.defectLegacyBody', {
+                    count: cov.Unclassified,
+                    total: cov.Total,
+                    pct: formatPct(covRates?.legacyPct ?? null, t('common.emDash')),
+                  })}
                 </p>
               ) : null}
               {rec && rec.CodedIssueCount > 0 ? (

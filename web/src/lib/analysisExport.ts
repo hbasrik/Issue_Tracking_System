@@ -2,6 +2,7 @@ import type { AnalysisDashboard, AnalysisQuery } from './api';
 import type { MessageKey, Translate } from '../../../shared/i18n';
 import { issueStatusLabel } from './issueStatus';
 import { eolStageLabel } from './vehicleStatus';
+import { defectCoverageRates, formatPct } from './defectCoverage';
 
 const AGE_BUCKET_KEYS: Record<string, MessageKey> = {
   '0-1': 'analysis.age.0_1',
@@ -281,19 +282,24 @@ export function buildAnalysisCsv(
   const nameLocale = (tr: string, en: string) => tr || en;
   const cov = dash.DefectCoverage;
   if (cov && cov.Total > 0) {
+    const rates = defectCoverageRates(cov);
+    const shareOf = t('analysis.defectOtherShareOf', { classified: cov.Classified });
     lines.push(
       ...section(t('analysis.defectCoverage'), [
-        row([t('analysis.defectOtherPartRate'), cov.OtherPart]),
-        row([t('analysis.defectOtherTypeRate'), cov.OtherType]),
-        row([t('analysis.defectLegacyUnclassifiedNote'), cov.Unclassified]),
+        row([t('analysis.defectCatalogAdequacyHint')]),
+        row([t('analysis.defectOtherPartRate'), cov.OtherPart, formatPct(rates.otherPartPct, ''), shareOf]),
+        row([t('analysis.defectOtherTypeRate'), cov.OtherType, formatPct(rates.otherTypePct, ''), shareOf]),
         row([t('analysis.defectClassified'), cov.Classified]),
-        row([t('analysis.total'), cov.Total]),
         ...(cov.TopOtherParts ?? []).map((r) =>
           row([`${t('analysis.defectTopOtherParts')}: ${r.Name}`, r.Count]),
         ),
         ...(cov.TopOtherTypes ?? []).map((r) =>
           row([`${t('analysis.defectTopOtherTypes')}: ${r.Name}`, r.Count]),
         ),
+      ]),
+      ...section(t('analysis.defectLegacyTitle'), [
+        row([t('analysis.defectLegacyUnclassifiedNote'), cov.Unclassified, formatPct(rates.legacyPct, '')]),
+        row([t('analysis.total'), cov.Total]),
       ]),
     );
   }
