@@ -54,6 +54,19 @@ export function formatExportInstant(iso?: string | null): string {
   return d.toISOString();
 }
 
+function severityText(severity: string | undefined, t: Translate): string {
+  switch (severity) {
+    case 'CRITICAL':
+      return t('severity.critical');
+    case 'MEDIUM':
+      return t('severity.medium');
+    case 'LOW':
+      return t('severity.low');
+    default:
+      return severity ?? '';
+  }
+}
+
 function approverOf(issue: Issue): { name: string; at: string } {
   if (issue.Status === 'CONDITIONAL_APPROVED') {
     return {
@@ -84,7 +97,7 @@ export function issueCsvRow(
     defect.code,
     issue.CustomPartName?.trim() ?? '',
     issue.CustomDefectName?.trim() ?? '',
-    issue.Severity ?? '',
+    severityText(issue.Severity, t),
     issueStatusLabel(issue.Status, t),
     issue.Description ?? '',
     issue.ReporterName ?? '',

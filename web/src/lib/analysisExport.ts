@@ -1,5 +1,29 @@
 import type { AnalysisDashboard, AnalysisQuery } from './api';
-import type { Translate } from '../../../shared/i18n';
+import type { MessageKey, Translate } from '../../../shared/i18n';
+import { issueStatusLabel } from './issueStatus';
+import { eolStageLabel } from './vehicleStatus';
+
+const AGE_BUCKET_KEYS: Record<string, MessageKey> = {
+  '0-1': 'analysis.age.0_1',
+  '1-3': 'analysis.age.1_3',
+  '3-7': 'analysis.age.3_7',
+  '7+': 'analysis.age.7plus',
+};
+
+const SEVERITY_KEYS: Record<string, MessageKey> = {
+  CRITICAL: 'severity.critical',
+  MEDIUM: 'severity.medium',
+  LOW: 'severity.low',
+};
+
+function severityText(severity: string, t: Translate): string {
+  const key = SEVERITY_KEYS[severity.toUpperCase()];
+  return key ? t(key) : severity;
+}
+
+function waitStageText(stage: string, t: Translate): string {
+  return stage === 'DELIVERY' ? t('analysis.wait.delivery') : eolStageLabel(stage, t);
+}
 
 function csvEscape(value: string | number | null | undefined): string {
   if (value == null) return '';
@@ -101,7 +125,7 @@ export function buildAnalysisCsv(
     lines.push(
       ...section(t('analysis.statusDist'), [
         row([t('analysis.statusDist'), t('analysis.total')]),
-        ...dash.IssueStatus.map((s) => row([s.Status, s.Count])),
+        ...dash.IssueStatus.map((s) => row([issueStatusLabel(s.Status, t), s.Count])),
       ]),
     );
   }
@@ -110,7 +134,7 @@ export function buildAnalysisCsv(
     lines.push(
       ...section(t('analysis.severityMix'), [
         row([t('severity.label'), t('analysis.total')]),
-        ...dash.SeverityMix.map((s) => row([s.Severity, s.Count])),
+        ...dash.SeverityMix.map((s) => row([severityText(s.Severity, t), s.Count])),
       ]),
     );
   }
@@ -119,7 +143,7 @@ export function buildAnalysisCsv(
     lines.push(
       ...section(t('analysis.eolFunnel'), [
         row([t('home.colStage'), t('analysis.total')]),
-        ...dash.EOLFunnel.map((s) => row([s.Stage, s.Count])),
+        ...dash.EOLFunnel.map((s) => row([eolStageLabel(s.Stage, t), s.Count])),
       ]),
     );
   }
@@ -128,7 +152,7 @@ export function buildAnalysisCsv(
     lines.push(
       ...section(t('analysis.openAge'), [
         row([t('analysis.ageBucket'), t('analysis.total')]),
-        ...dash.OpenAgeBuckets.map((b) => row([b.Bucket, b.Count])),
+        ...dash.OpenAgeBuckets.map((b) => row([AGE_BUCKET_KEYS[b.Bucket] ? t(AGE_BUCKET_KEYS[b.Bucket]) : b.Bucket, b.Count])),
       ]),
     );
   }
@@ -181,9 +205,14 @@ export function buildAnalysisCsv(
   if (dash.FPYByStation?.length) {
     lines.push(
       ...section(t('analysis.fpyByStation'), [
-        row([t('vehicles.station'), t('analysis.kpi.fpy'), 'ok', 'total']),
+        row([
+          t('vehicles.station'),
+          t('analysis.kpi.fpy'),
+          t('analysis.export.okCount'),
+          t('analysis.export.checkCount'),
+        ]),
         ...dash.FPYByStation.map((s) =>
-          row([s.StationID, s.Percent ?? '', s.OkCount, s.TotalCount]),
+          row([s.StationName || s.StationID, s.Percent ?? '', s.OkCount, s.TotalCount]),
         ),
       ]),
     );
@@ -202,7 +231,7 @@ export function buildAnalysisCsv(
     lines.push(
       ...section(t('analysis.typeSeverity'), [
         row([t('analysis.issueType'), t('severity.label'), t('analysis.total')]),
-        ...dash.TypeSeverity.map((r) => row([r.TypeName, r.Severity, r.Count])),
+        ...dash.TypeSeverity.map((r) => row([r.TypeName, severityText(r.Severity, t), r.Count])),
       ]),
     );
   }
@@ -210,7 +239,7 @@ export function buildAnalysisCsv(
   if (dash.Sparklines?.Opened?.length || dash.Sparklines?.Closed?.length) {
     lines.push(
       ...section(t('analysis.cumulativeFlow'), [
-        row(['day', t('analysis.kpi.opened'), t('analysis.kpi.closed')]),
+        row([t('analysis.export.day'), t('analysis.kpi.opened'), t('analysis.kpi.closed')]),
         ...mergeSparkDays(dash.Sparklines),
       ]),
     );
@@ -226,7 +255,7 @@ export function buildAnalysisCsv(
             : '',
         ]),
         ...((dash.EOLStageWait ?? []).map((s) =>
-          row([s.Stage, Math.round(s.AvgHours * 10) / 10]),
+          row([waitStageText(s.Stage, t), Math.round(s.AvgHours * 10) / 10]),
         )),
       ]),
     );
