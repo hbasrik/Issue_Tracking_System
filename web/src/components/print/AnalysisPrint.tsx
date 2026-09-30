@@ -1,5 +1,5 @@
 import { Printer } from 'lucide-react';
-import { useState, type ReactNode } from 'react';
+import { useState, type ComponentProps, type ReactNode } from 'react';
 import { flushSync } from 'react-dom';
 import {
   Bar,
@@ -31,6 +31,7 @@ import {
 } from '../../lib/vehicleStatus';
 import { statusColors } from '../../theme/tokens';
 import { PrintButton, PrintHeader, PrintRoot } from './PrintRoot';
+import { CategoryTick, categoryAxisWidth } from '../charts/categoryTick';
 
 /**
  * Print-only chart geometry (px). Sized for a 2-column A4 content grid
@@ -53,6 +54,17 @@ const KPI_KEYS: { key: KpiKey; titleKey: string }[] = [
 
 function verticalChartHeight(rowCount: number): number {
   return Math.min(280, Math.max(CHART_H, 28 + rowCount * 22));
+}
+
+/** Y-axis width + single-line truncated tick for a print category axis. */
+function printCategoryAxis(labels: string[], fontSize: number, maxShare = 0.45) {
+  const width = categoryAxisWidth(labels, fontSize, { max: Math.floor(CHART_W * maxShare) });
+  return {
+    width,
+    tick: (p: ComponentProps<typeof CategoryTick>) => (
+      <CategoryTick {...p} width={width} fontSize={fontSize} fill="#111" />
+    ),
+  };
 }
 
 function ChartCard({
@@ -191,7 +203,7 @@ export function AnalysisPrint({
   }));
 
   const reporterBars = (dash?.OpenedByReporter ?? []).map((r) => ({
-    name: r.ReporterName.length > 18 ? `${r.ReporterName.slice(0, 16)}…` : r.ReporterName,
+    name: r.ReporterName,
     count: r.Count,
   }));
 
@@ -248,20 +260,14 @@ export function AnalysisPrint({
   }));
 
   const defectPartBars = (dash?.DefectTopParts ?? []).map((r) => ({
-    name:
-      defectLabel(r.NameTR, r.NameEN).length > 18
-        ? `${defectLabel(r.NameTR, r.NameEN).slice(0, 16)}…`
-        : defectLabel(r.NameTR, r.NameEN),
+    name: defectLabel(r.NameTR, r.NameEN),
     count: r.Count,
   }));
 
-  const defectComboBars = (dash?.DefectPartTypeTop ?? []).map((r) => {
-    const label = `${defectLabel(r.PartNameTR, r.PartNameEN)} · ${defectLabel(r.TypeNameTR, r.TypeNameEN)}`;
-    return {
-      name: label.length > 22 ? `${label.slice(0, 20)}…` : label,
-      count: r.Count,
-    };
-  });
+  const defectComboBars = (dash?.DefectPartTypeTop ?? []).map((r) => ({
+    name: `${defectLabel(r.PartNameTR, r.PartNameEN)} · ${defectLabel(r.TypeNameTR, r.TypeNameEN)}`,
+    count: r.Count,
+  }));
 
   const defectPartH = verticalChartHeight(defectPartBars.length);
   const defectComboH = verticalChartHeight(defectComboBars.length);
@@ -483,8 +489,8 @@ export function AnalysisPrint({
                   <YAxis
                     type="category"
                     dataKey="station"
-                    width={72}
-                    tick={{ fontSize: 9, fill: '#111' }}
+                    interval={0}
+                    {...printCategoryAxis(openStationBars.map((r) => r.station), 9)}
                   />
                   <Bar
                     dataKey="count"
@@ -515,8 +521,8 @@ export function AnalysisPrint({
                   <YAxis
                     type="category"
                     dataKey="name"
-                    width={88}
-                    tick={{ fontSize: 8, fill: '#111' }}
+                    interval={0}
+                    {...printCategoryAxis(reporterBars.map((r) => r.name), 8)}
                   />
                   <Bar
                     dataKey="count"
@@ -661,8 +667,8 @@ export function AnalysisPrint({
                     <YAxis
                       type="category"
                       dataKey="name"
-                      width={88}
-                      tick={{ fontSize: 8, fill: '#111' }}
+                      interval={0}
+                      {...printCategoryAxis(defectPartBars.map((r) => r.name), 8)}
                     />
                     <Bar
                       dataKey="count"
@@ -697,8 +703,8 @@ export function AnalysisPrint({
                     <YAxis
                       type="category"
                       dataKey="name"
-                      width={100}
-                      tick={{ fontSize: 7, fill: '#111' }}
+                      interval={0}
+                      {...printCategoryAxis(defectComboBars.map((r) => r.name), 8, 0.55)}
                     />
                     <Bar
                       dataKey="count"

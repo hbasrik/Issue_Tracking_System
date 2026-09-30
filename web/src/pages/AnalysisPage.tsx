@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type ComponentProps,
+  type ReactNode,
+} from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
   AlertCircle,
@@ -71,6 +78,12 @@ import {
 import { VehicleStatusDisplay } from '../components/VehicleStatusDisplay';
 import { AnalysisPrint } from '../components/print/AnalysisPrint';
 import { LoadErrorState } from '../components/LoadErrorState';
+import {
+  CategoryTick,
+  CategoryXTick,
+  categoryAxisWidth,
+  useElementWidth,
+} from '../components/charts/categoryTick';
 import { formatDateRangeFull, formatDateRangeShort, formatDateTime, localeTag } from '../../../shared/i18n';
 
 const VEHICLE_LIFECYCLES = ['', ...VEHICLE_LIFECYCLE_FILTER_VALUES] as const;
@@ -1340,7 +1353,13 @@ export default function AnalysisPage() {
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={typeSeverityStacked} tabIndex={-1} margin={{ top: 4, right: 8, left: 0, bottom: 28 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                  <XAxis dataKey="type" tick={TICK} interval={0} />
+                  <XAxis
+                    dataKey="type"
+                    interval={0}
+                    tick={(p: ComponentProps<typeof CategoryXTick>) => (
+                      <CategoryXTick {...p} fontSize={TICK.fontSize} fill={TICK.fill} />
+                    )}
+                  />
                   <YAxis allowDecimals={false} width={36} tick={TICK} />
                   <Tooltip contentStyle={CHART_TOOLTIP} />
                   <Legend wrapperStyle={{ fontSize: 13 }} />
@@ -1547,7 +1566,7 @@ export default function AnalysisPage() {
             <HorizontalRankChart
               data={defectComboBars}
               color={statusColors.info}
-              labelWidth={140}
+              maxLabelShare={0.55}
             />
           )}
         </ChartCard>
@@ -1563,7 +1582,7 @@ export default function AnalysisPage() {
             <HorizontalRankChart
               data={defectRecurrenceHotspotBars}
               color={statusColors.severityCritical}
-              labelWidth={140}
+              maxLabelShare={0.55}
             />
           )}
         </ChartCard>
@@ -2119,29 +2138,11 @@ function HorizontalBarChart({
   color: string;
 }) {
   return (
-    <div className={`chart-inert ${CHART_H} w-full min-w-0`}>
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart
-          layout="vertical"
-          data={data}
-          tabIndex={-1}
-          margin={{ top: 4, right: 16, left: 4, bottom: 4 }}
-        >
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
-          <XAxis type="number" allowDecimals={false} tick={TICK} />
-          <YAxis
-            type="category"
-            dataKey="station"
-            width={80}
-            tick={TICK}
-          />
-          <Tooltip contentStyle={CHART_TOOLTIP} />
-          <Bar dataKey="issues" fill={color} isAnimationActive={false} radius={[0, 4, 4, 0]}>
-            <LabelList dataKey="issues" position="right" style={{ fill: 'var(--text-primary)', fontSize: 12, fontWeight: 600 }} />
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
-    </div>
+    <HorizontalRankChart
+      data={data.map((d) => ({ name: d.station, count: d.issues }))}
+      color={color}
+      fontSize={TICK.fontSize}
+    />
   );
 }
 
@@ -2153,47 +2154,47 @@ function HorizontalTypeChart({
   color: string;
 }) {
   return (
-    <div className={`chart-inert ${CHART_H} w-full min-w-0`}>
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart
-          layout="vertical"
-          data={data}
-          tabIndex={-1}
-          margin={{ top: 4, right: 16, left: 4, bottom: 4 }}
-        >
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
-          <XAxis type="number" allowDecimals={false} tick={{ fill: 'var(--text-secondary)', fontSize: 10 }} />
-          <YAxis
-            type="category"
-            dataKey="type"
-            width={80}
-            tick={{ fill: 'var(--text-secondary)', fontSize: 10 }}
-          />
-          <Tooltip contentStyle={CHART_TOOLTIP} />
-          <Bar dataKey="count" fill={color} isAnimationActive={false} radius={[0, 4, 4, 0]} />
-        </BarChart>
-      </ResponsiveContainer>
-    </div>
+    <HorizontalRankChart
+      data={data.map((d) => ({ name: d.type, count: d.count }))}
+      color={color}
+    />
   );
 }
 
+const RANK_ROW_PX = 30;
+
+/**
+ * Horizontal bar chart with one single-line, truncated label per row
+ * (full text on hover). The label column takes what the longest label
+ * needs, up to `maxLabelShare` of the chart width.
+ */
 function HorizontalRankChart({
   data,
   color,
-  labelWidth = 100,
+  fontSize = 11,
+  maxLabelShare = 0.45,
 }: {
   data: { name: string; count: number }[];
   color: string;
-  labelWidth?: number;
+  fontSize?: number;
+  maxLabelShare?: number;
 }) {
-  const h = Math.min(280, Math.max(140, 28 + data.length * 26));
+  const { t } = useI18n();
+  const [ref, width] = useElementWidth<HTMLDivElement>();
+  const h = Math.min(360, Math.max(140, 28 + data.length * RANK_ROW_PX));
+  const labelWidth = categoryAxisWidth(
+    data.map((d) => d.name),
+    fontSize,
+    { max: Math.max(80, Math.floor((width || 480) * maxLabelShare)) },
+  );
   return (
-    <div className="chart-inert w-full min-w-0" style={{ height: h }}>
+    <div ref={ref} className="chart-inert w-full min-w-0" style={{ height: h }}>
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
           layout="vertical"
           data={data}
           tabIndex={-1}
+          barCategoryGap="28%"
           margin={{ top: 4, right: 28, left: 4, bottom: 4 }}
         >
           <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
@@ -2202,10 +2203,22 @@ function HorizontalRankChart({
             type="category"
             dataKey="name"
             width={labelWidth}
-            tick={{ fill: 'var(--text-secondary)', fontSize: 11 }}
+            interval={0}
+            tick={(p: ComponentProps<typeof CategoryTick>) => (
+              <CategoryTick {...p} width={labelWidth} fontSize={fontSize} fill="var(--text-secondary)" />
+            )}
           />
-          <Tooltip contentStyle={CHART_TOOLTIP} />
-          <Bar dataKey="count" fill={color} isAnimationActive={false} radius={[0, 4, 4, 0]}>
+          <Tooltip
+            contentStyle={{ ...CHART_TOOLTIP, whiteSpace: 'normal', maxWidth: 260 }}
+            allowEscapeViewBox={{ x: false, y: true }}
+          />
+          <Bar
+            dataKey="count"
+            name={t('analysis.total')}
+            fill={color}
+            isAnimationActive={false}
+            radius={[0, 4, 4, 0]}
+          >
             <LabelList
               dataKey="count"
               position="right"
