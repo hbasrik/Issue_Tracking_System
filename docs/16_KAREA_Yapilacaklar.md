@@ -473,8 +473,12 @@ Kanıt: `docs/screenshots/issue-card-severity-right/`:
 - `database/scripts/reset_and_load_vins.sql` kolonu artık yazmıyor.
 - 0001/0002'deki view oluşturma kolon yoksa atlanıyor; tam yeniden uygulama
   v32'de geçiyor.
-- **Canlı veritabanı v31'de, 0032 uygulanmadı.** Yeni kod v31'de de çalışır
-  (kolonu okumuyor, yazmıyor). Uygulamak için: `make migrate-up`.
+- **Canlıya uygulandı (2026-09-30), `docs/19` §6 A yolu:** önce API güncel
+  kodla yeniden başlatıldı ve v31'de salt okunur doğrulandı, sonra 0032
+  (v31 → v32, 48 ms, `/health` kesintisiz). Yeniden başlatma kesintisi
+  ~1,07 sn. Ayrıca plansız ~1 dk 42 sn kesinti: yeni süreç, başlatıldığı
+  kabuk kapanınca sonlandı; kalıcı terminalde yeniden başlatıldı.
+  Canlıda 500 araçta ilerleme v31 ve v32'de birebir aynı.
 - Entegrasyon testleri (`progress_scope_test.go`): depo maddeleri eksik araç
   %97,02, depo bitince %100; hattaki araçta yüzde = açık madde sayısıyla
   tutarlı; yeni DEPOT/SHIPMENT maddesi, dağıtımdan önce ve sonra yüzdeyi
@@ -486,7 +490,7 @@ Kanıt: `docs/screenshots/issue-card-severity-right/`:
 Kanıt: `docs/screenshots/progress-single-source/`:
 `before-stored-vs-app.txt`, `integration-tests-after.txt`,
 `rollback-on-test-db.txt`, `verify-migrations.txt`, `source-scan.txt`,
-`reset-script-on-copy.txt`, `build-and-tests.txt`.
+`reset-script-on-copy.txt`, `build-and-tests.txt`, `live-apply.txt`.
 
 ---
 

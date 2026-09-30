@@ -1,0 +1,92 @@
+# Migration 0032 applied to the live DB (localhost:5432/karea) — 2026-09-30
+# Order (docs/19 §6 path A): new code first on v31, then the migration.
+# All checks are read-only: psql sessions with default_transaction_read_only=on,
+# and the API's own repository code (GetByVIN, List, SearchByVINSuffix,
+# ListApplicableItems, CountApplicableOpen) inside BEGIN READ ONLY, rolled back.
+# No login, no token.
+
+## Restart (old pid 4206 = `go run ./cmd/api` from 2026-09-28 12:12, commit 8309855)
+new binary: go build -o /tmp/karea-api-0032 ./cmd/api at HEAD 6dd1f06, cwd backend/
+(same root .env via godotenv; no env overrides in the shell)
+1790769451.256 KILL 4206
+1790769451.281 old process gone
+1790769451.282 START new pid 73955
+1790769452.326 new /health 200
+/health probe every ~50 ms: 15 x 000, 45 x 200; outage window 0.947 s
+=> restart outage ~1.07 s (kill -> first 200)
+
+## Unplanned second outage
+pid 73955 was started with nohup from a shell that the tool closed when the
+command returned (~11:57:39Z); the process ended with it (no error in its
+output or log). Noticed at the next check (curl exit 7, nothing on :8080).
+Restarted in a persistent background terminal: pid 75192, listening
+2026-09-30T11:59:21Z, /health 200.
+=> second outage ~11:57:39Z .. 11:59:21Z (~1 min 42 s; last confirmed 200 at 11:57:34Z)
+
+## Step 3 — new code on schema 31 (before the migration)
+
+=== RUN   TestLiveReadOnlyProgress
+transaction_read_only=on schema_migrations=31 dirty=false
+vin               status        branch depot  progress  open  appl depotOpen paths
+N7V1K1SA0TK000003 IN_WAREHOUSE  true   true     100.00     0   164         0 3
+N7V1K1SA0TK000017 PLANNED       false  false      0.00   168   168         5 2
+N7V1K1SA0TK000020 PLANNED       false  false      0.00   168   168         5 2
+N7V1K1SA0TK000034 PLANNED       false  false      0.00   168   168         5 2
+N7V1K1SA0TK000048 PLANNED       false  false      0.00   168   168         5 2
+N7V1K1SA0TK000051 PLANNED       false  false      0.00   168   168         5 2
+N7V1K1SA0TK000003 IN_WAREHOUSE  true   true     100.00     0   164         0 3
+N7V1K1SA1TK000009 IN_PRODUCTION false  false      0.60   167   168         5 3
+N7V1K1SA4TK000005 IN_PRODUCTION false  false      5.36   159   168         5 3
+N7V1K1SA6TK000068 IN_WAREHOUSE  true   false    100.00     0   168         0 3
+N7V1K1SA9SK000001 DELIVERED     true   true     100.00     0   164         0 3
+500 vehicles checked
+--- PASS: TestLiveReadOnlyProgress (2.66s)
+PASS
+ok  	github.com/karea/backend/internal/repository/postgres	3.166s
+(495 PLANNED rows: 0.00, open 168 of 168 — omitted)
+new process log since 11:59:21Z: 0 WARN/ERROR lines; /health 200
+
+## Old stored column at v31 (read-only), for comparison
+        vin        | current_global_status | stored_column 
+-------------------+-----------------------+---------------
+ N7V1K1SA0TK000003 | IN_WAREHOUSE          |        100.00
+ N7V1K1SA1TK000009 | IN_PRODUCTION         |          1.56
+ N7V1K1SA4TK000005 | IN_PRODUCTION         |         14.06
+ N7V1K1SA6TK000068 | IN_WAREHOUSE          |        100.00
+ N7V1K1SA9SK000001 | DELIVERED             |        100.00
+(5 rows)
+
+ completed_vehicles | in_progress_vehicles 
+--------------------+----------------------
+                  3 |                  497
+(1 row)
+
+
+## Step 4 — migrate up 1
+BEFORE: schema_migrations=31 dirty=false
+32/u drop_stored_progress_percentage (48.086875ms)
+migrate exit=0
+AFTER:  schema_migrations=32 dirty=false
+/health during the migration: 19 x 200, 0 failures
+
+## After: column and view gone (read-only psql)
+column_total_progress_percentage          0
+view_vw_vehicle_completion_split          0
+to_regclass('public.vw_vehicle_completion_split')  NULL
+functions_mentioning_progress_percentage  0
+views_mentioning_progress_percentage      0
+
+## After: API read path on schema 32
+=== RUN   TestLiveReadOnlyProgress
+transaction_read_only=on schema_migrations=32 dirty=false
+vin               status        branch depot  progress  open  appl depotOpen paths
+N7V1K1SA0TK000003 IN_WAREHOUSE  true   true     100.00     0   164         0 3
+N7V1K1SA1TK000009 IN_PRODUCTION false  false      0.60   167   168         5 3
+N7V1K1SA4TK000005 IN_PRODUCTION false  false      5.36   159   168         5 3
+N7V1K1SA6TK000068 IN_WAREHOUSE  true   false    100.00     0   168         0 3
+N7V1K1SA9SK000001 DELIVERED     true   true     100.00     0   164         0 3
+500 vehicles checked
+--- PASS: TestLiveReadOnlyProgress (2.91s)
+PASS
+ok  	github.com/karea/backend/internal/repository/postgres	3.338s
+v31 vs v32 per-vehicle output for all 500 vehicles: identical (diff empty)
