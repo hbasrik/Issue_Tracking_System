@@ -1,6 +1,12 @@
 -- Populate default EOL / SHIPMENT / TEST templates (migration 0002).
 -- Source: live DB active checklist_template_items (exact text, incl. trailing newlines).
--- Idempotent: ON CONFLICT (template_id, item_no) DO UPDATE.
+-- Insert-only: existing items are never updated, so admin edits to text,
+-- phase, section, order and is_active survive a re-run.
+-- A seed item counts as present when any row in its template carries
+-- seed_key = md5(seed text) (migration 0034). item_no is only a position
+-- (reorder renumbers it) and is never used to match. A missing item is
+-- re-added at its original item_no when that slot is free, otherwise after
+-- the last item.
 -- Excludes inactive and test-only items (see seed README / task report).
 WITH template_items (
     template_name,
@@ -121,6 +127,49 @@ WITH template_items (
         ('Default Test Checklist (45 items)', 41, 'Tam dönüş kontrolü — Düşük hızda tam sağ/sol manevra. Sürtme, vuruntu veya aks sesi var mı?', NULL, 'final', 110),
         ('Default Test Checklist (45 items)', 42, 'DTC / Diyagnostik tarama — Aktif veya geçmiş hata varsa kayıt altına al. Tarama bitiş saatini not et.', NULL, 'final', 110),
         ('Default Test Checklist (45 items)', 43, 'Mühendis Nihai Onayı', NULL, 'final', 110)
+),
+missing AS (
+    SELECT
+        template.id AS template_id,
+        seed.*,
+        md5(seed.item_text) AS seed_key,
+        EXISTS (
+            SELECT 1
+            FROM checklist_template_items slot
+            WHERE slot.template_id = template.id
+              AND slot.item_no = seed.item_no
+        ) AS slot_taken
+    FROM template_items seed
+    JOIN checklist_templates template
+      ON template.name = seed.template_name
+     AND template.vehicle_model_id IS NULL
+    WHERE NOT EXISTS (
+        SELECT 1
+        FROM checklist_template_items existing
+        WHERE existing.template_id = template.id
+          AND existing.seed_key = md5(seed.item_text)
+    )
+),
+placed AS (
+    SELECT
+        m.*,
+        CASE
+            WHEN NOT m.slot_taken THEN m.item_no
+            ELSE (
+                GREATEST(
+                    (SELECT COALESCE(MAX(i.item_no), 0)
+                     FROM checklist_template_items i
+                     WHERE i.template_id = m.template_id),
+                    (SELECT MAX(s.item_no)
+                     FROM template_items s
+                     WHERE s.template_name = m.template_name)
+                ) + ROW_NUMBER() OVER (
+                    PARTITION BY m.template_id, m.slot_taken
+                    ORDER BY m.item_no
+                )
+            )::SMALLINT
+        END AS target_item_no
+    FROM missing m
 )
 INSERT INTO checklist_template_items (
     template_id,
@@ -129,23 +178,17 @@ INSERT INTO checklist_template_items (
     eol_phase,
     section_key,
     section_sort,
-    is_active
+    is_active,
+    seed_key
 )
 SELECT
-    template.id,
-    seed.item_no,
-    seed.item_text,
-    seed.eol_phase,
-    seed.section_key,
-    seed.section_sort,
-    TRUE
-FROM template_items seed
-JOIN checklist_templates template
-  ON template.name = seed.template_name
- AND template.vehicle_model_id IS NULL
-ON CONFLICT (template_id, item_no) DO UPDATE
-SET item_text = EXCLUDED.item_text,
-    eol_phase = EXCLUDED.eol_phase,
-    section_key = EXCLUDED.section_key,
-    section_sort = EXCLUDED.section_sort,
-    is_active = EXCLUDED.is_active;
+    template_id,
+    target_item_no,
+    item_text,
+    eol_phase,
+    section_key,
+    section_sort,
+    TRUE,
+    seed_key
+FROM placed
+ON CONFLICT (template_id, item_no) DO NOTHING;

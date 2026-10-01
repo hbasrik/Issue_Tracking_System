@@ -3,11 +3,15 @@
 Reference data scripts for local development. Run them after migrations in
 the following order:
 
-- `01_stations.sql`
-- `02_stations_and_steps.sql`
+- `01_stations.sql` — insert-only; renames only the untouched
+  `Station N` placeholders from migration 0002, never writes `is_active`
+- `02_stations_and_steps.sql` — insert-only `DO NOTHING`; finds stations by
+  `sequence_no`, so renamed stations still get their missing steps
 - `03_checklist_templates.sql` — real shop-floor checklist items (EOL /
-  SHIPMENT / TEST) exported from production content; idempotent
-  `ON CONFLICT (template_id, item_no) DO UPDATE`
+  SHIPMENT / TEST) exported from production content; insert-only. A seed
+  item is present when its template has a row with
+  `seed_key = md5(item text)` (migration 0034), never matched on `item_no`
+  (reorder renumbers it). Requires migration 0034.
 - `04_users.sql`
 - `05_defect_catalog.sql` — defect zones / parts / types / processes;
   insert-only `ON CONFLICT (code) DO NOTHING`, so re-running it on a live
