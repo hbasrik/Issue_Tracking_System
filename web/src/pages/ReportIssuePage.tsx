@@ -168,8 +168,15 @@ export default function ReportIssuePage() {
         setStations(
           (stationsRes.items ?? []).slice().sort((a, b) => a.SequenceNo - b.SequenceNo),
         );
-        setZones(zonesRes.items ?? []);
-        setParts(partsRes.items ?? []);
+        const activeZones = zonesRes.items ?? [];
+        const activeZoneIds = new Set(activeZones.map((z) => z.ID));
+        setZones(activeZones);
+        // Search spans all zones, so a part is offered only while its zone is active.
+        setParts(
+          (partsRes.items ?? []).filter(
+            (p) => activeZoneIds.has(p.ZoneID) && p.ZoneIsActive !== false,
+          ),
+        );
         setTypes(defectTypesRes.items ?? []);
       } catch (err) {
         if (!cancelled) setError(apiErrorMessage(err, t));
