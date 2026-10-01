@@ -638,6 +638,16 @@ Boş DB + migration yolu net; checklist gerçek içerik `database/seed/03`'te.
 §5 üretim adımlarında). Kalan: kontrollü prod koşumu, B3 kullanıcı ayrımı,
 migration dirty-state prosedürü.
 
+**Açık risk — katalog seed'i yönetim değişikliklerini ezer (üretim
+kurulumundan önce çözülecek):** `database/seed/05_defect_catalog.sql`
+dört katalog tablosunda da `ON CONFLICT (code) DO UPDATE` kullanıyor.
+Üretimde seed yeniden çalıştırılırsa kalite ekibinin yönetim sayfasından
+yaptığı değişiklikler sessizce geri alınır: süreç, bölge, parça ve tip
+adları (TR/EN), sıralama, parçanın bölgesi (`zone_id`) ve tipin
+varsayılan süreci (`default_process_id`). `is_active` güncellenmiyor,
+yani pasife alınan satırlar pasif kalır. Seed'de olmayan yeni katalog
+satırlarına dokunulmaz.
+
 ### B7. Hata izleme ve log toplama `[~]` — sunucu gerektirmeyen kısım yapıldı
 **Yapıldı:**
 - Panik kurtarma (`recoverPanic`): beklenmeyen çökme süreci öldürmüyor,
