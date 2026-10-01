@@ -605,6 +605,12 @@ Kanıt: `docs/screenshots/catalog-fixes/`: `verification-output.txt`
 `live-0033-snapshot.sql` (canlı uygulama). Mobil cihaz görüntüsü
 alınmadı; mobil yalnız tip denetimiyle doğrulandı.
 
+### A36. Katalog seed'i, kod biçimi, ad tekrarı, mobil önbellek `[x]` — 2026-10-01
+Katalog incelemesinden kalan dört bulgu.
+- **Seed yalnız ekler:** `05_defect_catalog.sql` `ON CONFLICT DO NOTHING`;
+  yeniden çalıştırmak katalog düzenlemelerini geri almaz. Diğer seed
+  dosyalarının durumu B6'da.
+
 ---
 
 ## B — Canlıya çıkmadan önce ZORUNLU
@@ -638,15 +644,29 @@ Boş DB + migration yolu net; checklist gerçek içerik `database/seed/03`'te.
 §5 üretim adımlarında). Kalan: kontrollü prod koşumu, B3 kullanıcı ayrımı,
 migration dirty-state prosedürü.
 
-**Açık risk — katalog seed'i yönetim değişikliklerini ezer (üretim
-kurulumundan önce çözülecek):** `database/seed/05_defect_catalog.sql`
-dört katalog tablosunda da `ON CONFLICT (code) DO UPDATE` kullanıyor.
-Üretimde seed yeniden çalıştırılırsa kalite ekibinin yönetim sayfasından
-yaptığı değişiklikler sessizce geri alınır: süreç, bölge, parça ve tip
-adları (TR/EN), sıralama, parçanın bölgesi (`zone_id`) ve tipin
-varsayılan süreci (`default_process_id`). `is_active` güncellenmiyor,
-yani pasife alınan satırlar pasif kalır. Seed'de olmayan yeni katalog
-satırlarına dokunulmaz.
+**Çözüldü (2026-10-01) — katalog seed'i artık yalnız ekler:**
+`database/seed/05_defect_catalog.sql` dört katalog tablosunda da
+`ON CONFLICT (code) DO NOTHING` kullanıyor. Yeniden çalıştırılırsa yalnız
+eksik satırları ekler; kalite ekibinin değiştirdiği ad, sıralama, bölge ve
+varsayılan süreç korunur (A36).
+
+**Açık risk — diğer seed dosyaları hâlâ üzerine yazıyor (üretim
+kurulumundan önce karar verilecek):**
+- `03_checklist_templates.sql`: `ON CONFLICT (template_id, item_no) DO
+  UPDATE` madde metni, EoL fazı, bölüm ve `is_active`'i yazar. Şablon
+  maddeleri yönetim ekranından düzenlenebilir ve yeniden sıralanabilir
+  (`item_no` değişir); seed yeniden çalışırsa düzenlemeler geri alınır,
+  pasife alınan maddeler yeniden aktif olur, sıra değişmişse metinler
+  başka maddelerin üzerine yazılır. En riskli dosya bu.
+- `01_stations.sql` (`sequence_no`) ve `02_stations_and_steps.sql`
+  (`station_id, sequence_no`): istasyon/adım adını ve `is_active`'i yazar.
+  Bugün bunları düzenleyen bir yönetim ekranı yok; elle yapılmış DB
+  değişiklikleri geri alınır.
+- `06_test_vehicles.sql`: araç modeli adını ve `is_active`'i yazar; dosya
+  yalnız geliştirme/test içindir, üretimde çalıştırılmaz.
+- `04_users.sql`: `DO NOTHING`, sorun yok. Roller ve izinler seed değil,
+  migration'larda (0002, 0010, 0013); migration'lar bir kez çalıştığı
+  için yeniden koşum riski yok.
 
 ### B7. Hata izleme ve log toplama `[~]` — sunucu gerektirmeyen kısım yapıldı
 **Yapıldı:**

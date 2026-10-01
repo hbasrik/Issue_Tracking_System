@@ -9,7 +9,9 @@ the following order:
   SHIPMENT / TEST) exported from production content; idempotent
   `ON CONFLICT (template_id, item_no) DO UPDATE`
 - `04_users.sql`
-- `05_defect_catalog.sql` — defect zones / parts / types / processes
+- `05_defect_catalog.sql` — defect zones / parts / types / processes;
+  insert-only `ON CONFLICT (code) DO NOTHING`, so re-running it on a live
+  install only adds missing rows and never reverts catalogue edits
 - `06_test_vehicles.sql` — **DEV/TEST DATA ONLY.** 18 fixture vehicles
   covering every station / EoL / issue state. Never apply in production.
 

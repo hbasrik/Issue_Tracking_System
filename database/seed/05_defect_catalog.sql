@@ -1,4 +1,6 @@
 -- Idempotent defect classification catalogue (docs/15_KAREA_Hata_Kodu_Katalogu_Taslak.md).
+-- Insert-only: re-running adds missing rows and never overwrites rows the
+-- quality team has edited (names, order, zone, default process, is_active).
 
 -- Processes (sorumlu süreç)
 WITH seed (code, name_tr, name_en, sort_order) AS (
@@ -11,11 +13,7 @@ WITH seed (code, name_tr, name_en, sort_order) AS (
 INSERT INTO defect_processes (code, name_tr, name_en, sort_order, is_active)
 SELECT s.code, s.name_tr, s.name_en, s.sort_order, TRUE
 FROM seed s
-ON CONFLICT (code) DO UPDATE SET
-    name_tr = EXCLUDED.name_tr,
-    name_en = EXCLUDED.name_en,
-    sort_order = EXCLUDED.sort_order,
-    updated_at = now();
+ON CONFLICT (code) DO NOTHING;
 
 -- Zones (parça grubu)
 WITH seed (code, name_tr, name_en, sort_order) AS (
@@ -30,11 +28,7 @@ WITH seed (code, name_tr, name_en, sort_order) AS (
 INSERT INTO defect_zones (code, name_tr, name_en, sort_order, is_active)
 SELECT s.code, s.name_tr, s.name_en, s.sort_order, TRUE
 FROM seed s
-ON CONFLICT (code) DO UPDATE SET
-    name_tr = EXCLUDED.name_tr,
-    name_en = EXCLUDED.name_en,
-    sort_order = EXCLUDED.sort_order,
-    updated_at = now();
+ON CONFLICT (code) DO NOTHING;
 
 -- Parts (23 + Diğer). Part code embeds zone prefix (10-01 …).
 WITH seed (zone_code, code, name_tr, name_en, sort_order) AS (
@@ -69,12 +63,7 @@ INSERT INTO defect_parts (zone_id, code, name_tr, name_en, sort_order, is_active
 SELECT z.id, s.code, s.name_tr, s.name_en, s.sort_order, TRUE
 FROM seed s
 JOIN defect_zones z ON z.code = s.zone_code
-ON CONFLICT (code) DO UPDATE SET
-    zone_id = EXCLUDED.zone_id,
-    name_tr = EXCLUDED.name_tr,
-    name_en = EXCLUDED.name_en,
-    sort_order = EXCLUDED.sort_order,
-    updated_at = now();
+ON CONFLICT (code) DO NOTHING;
 
 -- Defect types with default process mapping
 -- Only assign a default when the responsible process is reliably known.
@@ -97,9 +86,4 @@ INSERT INTO defect_types (code, name_tr, name_en, default_process_id, sort_order
 SELECT s.code, s.name_tr, s.name_en, p.id, s.sort_order, TRUE
 FROM seed s
 LEFT JOIN defect_processes p ON p.code = s.process_code
-ON CONFLICT (code) DO UPDATE SET
-    name_tr = EXCLUDED.name_tr,
-    name_en = EXCLUDED.name_en,
-    default_process_id = EXCLUDED.default_process_id,
-    sort_order = EXCLUDED.sort_order,
-    updated_at = now();
+ON CONFLICT (code) DO NOTHING;
