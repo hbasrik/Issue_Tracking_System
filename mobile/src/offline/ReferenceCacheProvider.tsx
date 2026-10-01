@@ -28,11 +28,21 @@ interface ReferenceCacheValue {
   fromCache: boolean;
   ready: boolean;
   cacheAgeLabel: string | null;
+  /** Always-on "catalogue updated … ago" line for the manual refresh control. */
+  catalogAgeLabel: string | null;
+  refreshing: boolean;
   searchVehicles: (query: string) => Vehicle[];
   refresh: (force?: boolean) => Promise<void>;
 }
 
 const ReferenceCacheContext = createContext<ReferenceCacheValue | null>(null);
+
+/**
+ * While the app is open the snapshot is checked this often and refetched once
+ * it is REFERENCE_REFRESH_MS (15 min) old; the same tick keeps the age label
+ * current. Background apps do not tick; returning to the foreground refreshes.
+ */
+export const FOREGROUND_CHECK_MS = 60_000;
 
 export function ReferenceCacheProvider({ children }: { children: ReactNode }) {
   const { isAuthenticated, token } = useAuth();
@@ -42,12 +52,14 @@ export function ReferenceCacheProvider({ children }: { children: ReactNode }) {
   const [fromCache, setFromCache] = useState(false);
   const [ready, setReady] = useState(false);
   const [now, setNow] = useState(() => Date.now());
+  const [refreshing, setRefreshing] = useState(false);
+  const inFlight = useRef<Promise<void> | null>(null);
   const snapshotRef = useRef(snapshot);
   snapshotRef.current = snapshot;
   const tokenRef = useRef(token);
   tokenRef.current = token;
 
-  const refresh = useCallback(async (force = false) => {
+  const runRefresh = useCallback(async (force: boolean) => {
     if (!tokenRef.current) return;
     const current =
       snapshotRef.current.fetchedAt
@@ -65,6 +77,7 @@ export function ReferenceCacheProvider({ children }: { children: ReactNode }) {
       setReady(true);
       return;
     }
+    setRefreshing(true);
     try {
       const result = await refreshReferenceSnapshot(
         current.fetchedAt ? current : null,
@@ -79,9 +92,22 @@ export function ReferenceCacheProvider({ children }: { children: ReactNode }) {
         setFromCache(true);
       }
     } finally {
+      setRefreshing(false);
       setReady(true);
     }
   }, []);
+
+  const refresh = useCallback(
+    (force = false) => {
+      if (inFlight.current) return inFlight.current;
+      const run = runRefresh(force).finally(() => {
+        inFlight.current = null;
+      });
+      inFlight.current = run;
+      return run;
+    },
+    [runRefresh],
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -119,6 +145,17 @@ export function ReferenceCacheProvider({ children }: { children: ReactNode }) {
     };
   }, [isAuthenticated, refresh]);
 
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const id = setInterval(() => {
+      if (AppState.currentState !== 'active') return;
+      const nowMs = Date.now();
+      setNow(nowMs);
+      if (snapshotIsStale(snapshotRef.current.fetchedAt, nowMs)) void refresh(true);
+    }, FOREGROUND_CHECK_MS);
+    return () => clearInterval(id);
+  }, [isAuthenticated, refresh]);
+
   const cacheAgeLabel = useMemo(() => {
     if (!snapshot.fetchedAt) return null;
     if (online && !fromCache) return null;
@@ -126,6 +163,14 @@ export function ReferenceCacheProvider({ children }: { children: ReactNode }) {
       age: formatCacheAge(snapshot.fetchedAt, now, t),
     });
   }, [snapshot.fetchedAt, fromCache, online, now, t]);
+
+  const catalogAgeLabel = useMemo(() => {
+    if (!snapshot.fetchedAt) return null;
+    const age = formatCacheAge(snapshot.fetchedAt, now, t);
+    return age === t('offline.justNow')
+      ? t('catalog.updatedJustNow')
+      : t('catalog.updatedAgo', { age });
+  }, [snapshot.fetchedAt, now, t]);
 
   const searchVehicles = useCallback(
     (query: string) => searchCachedVehicles(snapshot.vehicles, query),
@@ -138,10 +183,12 @@ export function ReferenceCacheProvider({ children }: { children: ReactNode }) {
       fromCache,
       ready,
       cacheAgeLabel,
+      catalogAgeLabel,
+      refreshing,
       searchVehicles,
       refresh,
     }),
-    [snapshot, fromCache, ready, cacheAgeLabel, searchVehicles, refresh],
+    [snapshot, fromCache, ready, cacheAgeLabel, catalogAgeLabel, refreshing, searchVehicles, refresh],
   );
 
   return (
