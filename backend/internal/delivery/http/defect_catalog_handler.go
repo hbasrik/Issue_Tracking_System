@@ -345,12 +345,24 @@ func (s *server) handleDefectTypeReorder(w http.ResponseWriter, r *http.Request)
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true})
 }
 
-// Active catalogue pickers for issue reporters (issue.create) — inactive rows hidden.
+// Catalogue pickers for issue reporters — inactive rows hidden, and a part
+// under an inactive zone counts as inactive. ?include_inactive=1 returns every
+// row (with IsActive / ZoneIsActive) for list filters, where old issues may
+// still point at retired values.
+
+func includeInactive(r *http.Request) bool {
+	v := r.URL.Query().Get("include_inactive")
+	return v == "1" || v == "true"
+}
 
 func (s *server) handleDefectCatalogActiveZones(w http.ResponseWriter, r *http.Request) {
 	items, err := s.deps.DefectCatalog.ListZones(r.Context())
 	if err != nil {
 		writeError(w, err)
+		return
+	}
+	if includeInactive(r) {
+		writeJSON(w, http.StatusOK, map[string]any{"items": items})
 		return
 	}
 	out := make([]domain.DefectZone, 0, len(items))
@@ -377,9 +389,13 @@ func (s *server) handleDefectCatalogActiveParts(w http.ResponseWriter, r *http.R
 		writeError(w, err)
 		return
 	}
+	if includeInactive(r) {
+		writeJSON(w, http.StatusOK, map[string]any{"items": items})
+		return
+	}
 	out := make([]domain.DefectPart, 0, len(items))
 	for _, p := range items {
-		if p.IsActive {
+		if p.Selectable() {
 			out = append(out, p)
 		}
 	}
@@ -390,6 +406,10 @@ func (s *server) handleDefectCatalogActiveTypes(w http.ResponseWriter, r *http.R
 	items, err := s.deps.DefectCatalog.ListTypes(r.Context())
 	if err != nil {
 		writeError(w, err)
+		return
+	}
+	if includeInactive(r) {
+		writeJSON(w, http.StatusOK, map[string]any{"items": items})
 		return
 	}
 	out := make([]domain.DefectType, 0, len(items))

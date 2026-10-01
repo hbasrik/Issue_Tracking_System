@@ -50,7 +50,15 @@ type DefectPart struct {
 	ZoneCode   string    `json:"ZoneCode"`
 	ZoneNameTR string    `json:"ZoneNameTR"`
 	ZoneNameEN string    `json:"ZoneNameEN"`
-	UsageCount int       `json:"UsageCount"`
+	// ZoneIsActive mirrors defect_zones.is_active: a part under an inactive
+	// zone is not selectable even when its own flag is still TRUE.
+	ZoneIsActive bool `json:"ZoneIsActive"`
+	UsageCount   int  `json:"UsageCount"`
+}
+
+// Selectable reports whether new issues may use this part.
+func (p DefectPart) Selectable() bool {
+	return p.IsActive && p.ZoneIsActive
 }
 
 // DefectType is a defect category independent of part.
@@ -71,10 +79,18 @@ type DefectType struct {
 }
 
 // Stable "Diğer / Other" catalogue codes from the seed (name may change; code does not).
+// The Other part lives alone in its own zone so deactivating a real zone
+// never hides the catalogue's catch-all (migration 0033).
 const (
+	DefectZoneCodeOther = "99"
 	DefectPartCodeOther = "99-99"
 	DefectTypeCodeOther = "99"
 )
+
+// IsOtherZone reports whether the zone is the dedicated "Other" zone.
+func IsOtherZone(code string) bool {
+	return strings.TrimSpace(code) == DefectZoneCodeOther
+}
 
 // IsOtherPart reports whether the part is the free-text "Other" catch-all.
 func IsOtherPart(code string) bool {

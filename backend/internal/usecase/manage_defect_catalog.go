@@ -135,6 +135,13 @@ func (a *DefectCatalogAdmin) UpdateZone(ctx context.Context, id int, in UpsertZo
 	if err := domain.ValidateDefectCatalogueFields(in.Code, in.NameTR, in.NameEN); err != nil {
 		return err
 	}
+	current, err := a.catalog.GetZone(ctx, id)
+	if err != nil {
+		return err
+	}
+	if domain.IsOtherZone(current.Code) && (!in.IsActive || strings.TrimSpace(in.Code) != current.Code) {
+		return domain.ErrDefectCatalogueProtected
+	}
 	return a.catalog.UpdateZone(ctx, &domain.DefectZone{
 		ID: id, Code: strings.TrimSpace(in.Code), NameTR: strings.TrimSpace(in.NameTR), NameEN: strings.TrimSpace(in.NameEN),
 		SortOrder: in.SortOrder, IsActive: in.IsActive,
@@ -142,6 +149,13 @@ func (a *DefectCatalogAdmin) UpdateZone(ctx context.Context, id int, in UpsertZo
 }
 
 func (a *DefectCatalogAdmin) DeleteZone(ctx context.Context, id int) error {
+	zone, err := a.catalog.GetZone(ctx, id)
+	if err != nil {
+		return err
+	}
+	if domain.IsOtherZone(zone.Code) {
+		return domain.ErrDefectCatalogueProtected
+	}
 	usage, err := a.catalog.CountZoneUsage(ctx, id)
 	if err != nil {
 		return err
@@ -192,7 +206,11 @@ func (a *DefectCatalogAdmin) CreatePart(ctx context.Context, in UpsertPartInput)
 	if err := domain.ValidateDefectCatalogueFields(in.Code, in.NameTR, in.NameEN); err != nil {
 		return nil, err
 	}
-	if _, err := a.catalog.GetZone(ctx, in.ZoneID); err != nil {
+	zone, err := a.catalog.GetZone(ctx, in.ZoneID)
+	if err != nil {
+		return nil, err
+	}
+	if err := partZoneAllowed(zone, in.Code); err != nil {
 		return nil, err
 	}
 	p := &domain.DefectPart{
@@ -217,8 +235,26 @@ func (a *DefectCatalogAdmin) UpdatePart(ctx context.Context, id int, in UpsertPa
 	if err := domain.ValidateDefectCatalogueFields(in.Code, in.NameTR, in.NameEN); err != nil {
 		return err
 	}
-	if _, err := a.catalog.GetZone(ctx, in.ZoneID); err != nil {
+	current, err := a.catalog.GetPart(ctx, id)
+	if err != nil {
 		return err
+	}
+	if domain.IsOtherPart(current.Code) &&
+		(!in.IsActive || strings.TrimSpace(in.Code) != current.Code || in.ZoneID != current.ZoneID) {
+		return domain.ErrDefectCatalogueProtected
+	}
+	zone, err := a.catalog.GetZone(ctx, in.ZoneID)
+	if err != nil {
+		return err
+	}
+	// Editing a part that already sits in an inactive zone (rename, deactivate)
+	// stays allowed; only moving a part into a closed zone counts as adding.
+	if in.ZoneID != current.ZoneID {
+		if err := partZoneAllowed(zone, in.Code); err != nil {
+			return err
+		}
+	} else if domain.IsOtherZone(zone.Code) && !domain.IsOtherPart(in.Code) {
+		return domain.ErrDefectCatalogueProtected
 	}
 	return a.catalog.UpdatePart(ctx, &domain.DefectPart{
 		ID: id, ZoneID: in.ZoneID, Code: strings.TrimSpace(in.Code), NameTR: strings.TrimSpace(in.NameTR), NameEN: strings.TrimSpace(in.NameEN),
@@ -227,6 +263,13 @@ func (a *DefectCatalogAdmin) UpdatePart(ctx context.Context, id int, in UpsertPa
 }
 
 func (a *DefectCatalogAdmin) DeletePart(ctx context.Context, id int) error {
+	part, err := a.catalog.GetPart(ctx, id)
+	if err != nil {
+		return err
+	}
+	if domain.IsOtherPart(part.Code) {
+		return domain.ErrDefectCatalogueProtected
+	}
 	n, err := a.catalog.CountPartUsage(ctx, id)
 	if err != nil {
 		return err
@@ -235,6 +278,18 @@ func (a *DefectCatalogAdmin) DeletePart(ctx context.Context, id int) error {
 		return &domain.CatalogInUseError{Kind: "part", Count: n}
 	}
 	return a.catalog.DeletePart(ctx, id)
+}
+
+// partZoneAllowed decides whether a part with partCode may be placed in zone:
+// closed zones accept no new parts and the Other zone holds only the Other part.
+func partZoneAllowed(zone *domain.DefectZone, partCode string) error {
+	if domain.IsOtherZone(zone.Code) != domain.IsOtherPart(partCode) {
+		return domain.ErrDefectCatalogueProtected
+	}
+	if !zone.IsActive {
+		return domain.ErrDefectZoneClosedForParts
+	}
+	return nil
 }
 
 func (a *DefectCatalogAdmin) ReorderParts(ctx context.Context, zoneID int, ids []int) error {
@@ -289,6 +344,13 @@ func (a *DefectCatalogAdmin) UpdateType(ctx context.Context, id int, in UpsertTy
 	if err := domain.ValidateDefectCatalogueFields(in.Code, in.NameTR, in.NameEN); err != nil {
 		return err
 	}
+	current, err := a.catalog.GetType(ctx, id)
+	if err != nil {
+		return err
+	}
+	if domain.IsOtherType(current.Code) && (!in.IsActive || strings.TrimSpace(in.Code) != current.Code) {
+		return domain.ErrDefectCatalogueProtected
+	}
 	return a.catalog.UpdateType(ctx, &domain.DefectType{
 		ID: id, Code: strings.TrimSpace(in.Code), NameTR: strings.TrimSpace(in.NameTR), NameEN: strings.TrimSpace(in.NameEN),
 		DefaultProcessID: in.DefaultProcessID, SortOrder: in.SortOrder, IsActive: in.IsActive,
@@ -296,6 +358,13 @@ func (a *DefectCatalogAdmin) UpdateType(ctx context.Context, id int, in UpsertTy
 }
 
 func (a *DefectCatalogAdmin) DeleteType(ctx context.Context, id int) error {
+	typ, err := a.catalog.GetType(ctx, id)
+	if err != nil {
+		return err
+	}
+	if domain.IsOtherType(typ.Code) {
+		return domain.ErrDefectCatalogueProtected
+	}
 	n, err := a.catalog.CountTypeUsage(ctx, id)
 	if err != nil {
 		return err
@@ -390,7 +459,11 @@ func (a *DefectCatalogAdmin) promoteOtherPart(ctx context.Context, in PromoteOth
 	if in.ZoneID <= 0 {
 		return nil, domain.ErrDefectZoneRequired
 	}
-	if _, err := a.catalog.GetZone(ctx, in.ZoneID); err != nil {
+	zone, err := a.catalog.GetZone(ctx, in.ZoneID)
+	if err != nil {
+		return nil, err
+	}
+	if err := partZoneAllowed(zone, in.Code); err != nil {
 		return nil, err
 	}
 	other, err := a.catalog.GetPartByCode(ctx, domain.DefectPartCodeOther)

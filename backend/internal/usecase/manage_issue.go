@@ -141,8 +141,8 @@ func (m *IssueManager) Create(ctx context.Context, in CreateIssueInput) (*domain
 	if err != nil {
 		return nil, err
 	}
-	if !part.IsActive {
-		return nil, domain.ErrDefectCatalogueInactive
+	if err := partSelectable(part); err != nil {
+		return nil, err
 	}
 	typ, err := m.catalog.GetType(ctx, *in.DefectTypeID)
 	if err != nil {
@@ -387,6 +387,25 @@ func (m *IssueManager) UpdateClassification(ctx context.Context, in UpdateClassi
 		return nil, err
 	}
 	return m.issues.GetByID(ctx, in.IssueID)
+}
+
+// partSelectable rejects parts that are inactive themselves or sit in an
+// inactive zone, with distinct errors so the screen can say which one.
+func partSelectable(part *domain.DefectPart) error {
+	if !part.IsActive {
+		return domain.ErrDefectCatalogueInactive
+	}
+	if !part.ZoneIsActive {
+		return domain.ErrDefectZoneInactive
+	}
+	return nil
+}
+
+func sameIntPtr(a, b *int) bool {
+	if a == nil || b == nil {
+		return a == nil && b == nil
+	}
+	return *a == *b
 }
 
 func classificationAuditSummary(issue *domain.Issue) string {

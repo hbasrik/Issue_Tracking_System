@@ -275,7 +275,7 @@ func (s createIssueStubVehicles) GetByVIN(_ context.Context, vin string) (*domai
 type createIssueStubCatalog struct{}
 
 func (createIssueStubCatalog) GetPart(_ context.Context, id int) (*domain.DefectPart, error) {
-	return &domain.DefectPart{ID: id, ZoneID: 1, Code: "10-01", NameTR: "Kapı", NameEN: "Door", IsActive: true}, nil
+	return &domain.DefectPart{ID: id, ZoneID: 1, Code: "10-01", NameTR: "Kapı", NameEN: "Door", IsActive: true, ZoneIsActive: true}, nil
 }
 func (createIssueStubCatalog) GetType(_ context.Context, id int) (*domain.DefectType, error) {
 	pid := 1

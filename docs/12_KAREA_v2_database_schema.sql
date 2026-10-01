@@ -11,7 +11,8 @@
 -- This file is a hand-maintained reading aid: it shows the intended
 -- shape of the schema in one place, with the reasoning behind each
 -- decision. It is NOT executable against a real database and must not
--- be used to create one. Migrations 0001-0032 are authoritative.
+-- be used to create one. Migrations 0001-0033 are authoritative.
+-- (0033 is data-only: "Diğer" part 99-99 moves to its own zone 99.)
 --
 -- Known limitation of this file: it is validated with a SQL parser,
 -- which checks syntax only. A parser cannot tell that a view selects a

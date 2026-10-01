@@ -310,6 +310,44 @@ yaşatmak olurdu.
 - **Yeniden açma:** kalite ekibi altı tipe varsayılan süreç tanımladığında
   arayüz geri açılır; altı tip `docs/16` A33'te.
 
+## Karar 18 — Pasif bölge kapanır; "Diğer" kendi bölgesinde ve korumalı (NEW — 2026-10-01)
+
+**Gerekçe:** Katalog incelemesinde (2026-10-01) Body pasife alındığında
+14 parçanın hepsi aktif parça listesinde dönmeye devam etti; hata
+açılabildi, pasif bölgeye yeni parça bile eklenebildi. "Diğer" (99-99)
+de Body altında durduğu için Body kapanırsa katalogdaki eksikleri yakalayan
+seçenek de kaybolacaktı.
+
+**Karar:**
+- **Pasif bölgenin parçaları pasif sayılır.** `DefectPart.ZoneIsActive`
+  bölgenin durumunu taşır; `Selectable()` = parça aktif VE bölge aktif.
+  Aktif parça listesi (`/defect-catalog/parts`, web ve mobil formlar ile
+  mobil önbellek bunu kullanır) yalnız seçilebilir parçaları döner. Hata
+  oluşturma pasif bölgedeki parçayı `selected part's zone is inactive` ile
+  reddeder. Parçanın kendi `is_active` bayrağına dokunulmaz: bölge yeniden
+  açılınca parçalar eski durumlarına döner.
+- **Pasif bölgeye parça eklenmez.** Yeni parça, başka bölgeden taşıma ve
+  "Diğer"den kataloğa alma (promote) pasif bölgeyi reddeder. Pasif
+  bölgedeki mevcut bir parçayı düzenlemek (ad, pasife alma) serbest.
+- **Mevcut hatalar etkilenmez.** Bağlantı, `defect_code` ve ad anlık
+  görüntüleri aynı kalır.
+- **"Diğer" kendi bölgesinde (99), bölgeden bağımsız değil.** İki yol
+  vardı: `zone_id`'yi boş bırakılabilir yapmak ya da ayrı bölge. Boş
+  bölge; `zone_id NOT NULL` FK'sini, parça listelerindeki JOIN'leri, web
+  ve mobilde "önce bölge seç" akışını ve paylaşılan doğrulamayı
+  (`report.zoneRequired`) değiştirmeyi gerektirirdi. Ayrı bölge yalnız veri
+  migration'ı (0033): parça id'si ve kodu aynı kalır, mevcut hataların
+  sınıflandırması ve `99-99-xx` kodları bozulmaz. Tek görünür fark: eski
+  "Diğer" hatalarında bölge Body yerine "Diğer" görünür.
+- **"Diğer" satırları korumalı.** Bölge 99, parça 99-99 ve tip 99 pasife
+  alınamaz, silinemez, kodu değiştirilemez; parça 99-99 başka bölgeye
+  taşınamaz ve bölge 99'a başka parça konamaz
+  (`the Other catalogue rows are protected`). Ad değiştirmek serbest.
+- **Filtreler pasifi de gösterir.** `?include_inactive=1` tüm satırları
+  `IsActive` / `ZoneIsActive` ile döner; Hatalar filtreleri (web ve mobil)
+  pasif değerleri "(pasif)" etiketiyle listeler, eski hatalar onlarla da
+  süzülebilir.
+
 ## Değişmeyen / Yeniden Kullanılacaklar
 
 Şunlara **dokunulmuyor**, olduğu gibi kalıyor: JWT auth + bcrypt (üstteki JWT_SECRET ve iptal sıkılaştırmaları hariç), CORS allowlist mimarisi, Unit-of-Work (pgx.Tx) transaction pattern, `.cursor/rules` (commit ve environment-check kuralları), Analysis sekmesi temel yapısı (VIN×severity kırılımı, Pie/Bar chart'lar — yeni station/EOL alanlarıyla genişleyecek ama sıfırdan kurulmayacak), Docker/migration/seed altyapısı.

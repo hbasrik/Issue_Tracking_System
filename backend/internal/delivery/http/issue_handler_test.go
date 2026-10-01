@@ -257,7 +257,7 @@ func (httpStubVehicles) GetByVIN(_ context.Context, vin string) (*domain.Vehicle
 type httpStubCatalog struct{}
 
 func (httpStubCatalog) GetPart(_ context.Context, id int) (*domain.DefectPart, error) {
-	return &domain.DefectPart{ID: id, Code: "10-01", IsActive: true}, nil
+	return &domain.DefectPart{ID: id, Code: "10-01", IsActive: true, ZoneIsActive: true}, nil
 }
 func (httpStubCatalog) GetType(_ context.Context, id int) (*domain.DefectType, error) {
 	return &domain.DefectType{ID: id, Code: "01", IsActive: true}, nil

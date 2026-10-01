@@ -115,6 +115,13 @@ var (
 	ErrCustomDefectNameRequired = errors.New("custom defect name is required for Other")
 	// ErrDefectCatalogueInactive indicates a selected catalogue row is inactive.
 	ErrDefectCatalogueInactive = errors.New("selected catalogue item is inactive")
+	// ErrDefectZoneInactive indicates the selected part belongs to an inactive zone.
+	ErrDefectZoneInactive = errors.New("selected part's zone is inactive")
+	// ErrDefectZoneClosedForParts indicates a part was added to or moved into an inactive zone.
+	ErrDefectZoneClosedForParts = errors.New("parts cannot be added to an inactive zone")
+	// ErrDefectCatalogueProtected indicates a change that would disable or
+	// relocate the "Other" catch-all rows, or put another part in its zone.
+	ErrDefectCatalogueProtected = errors.New("the Other catalogue rows are protected")
 	// ErrDefectProcessRequired indicates responsible process missing on edit.
 	ErrDefectProcessRequired = errors.New("responsible process is required")
 	// ErrDefectProcessInactive indicates selected process is inactive.

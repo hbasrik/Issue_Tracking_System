@@ -23,7 +23,9 @@ WITH seed (code, name_tr, name_en, sort_order) AS (
         ('10', 'Body', 'Body', 1::SMALLINT),
         ('20', 'Şasi', 'Chassis', 2),
         ('30', 'Trim', 'Trim', 3),
-        ('40', 'Elektrik', 'Electrical', 4)
+        ('40', 'Elektrik', 'Electrical', 4),
+        -- Diğer: dedicated zone so closing a real zone never hides the catch-all
+        ('99', 'Diğer', 'Other', 99)
 )
 INSERT INTO defect_zones (code, name_tr, name_en, sort_order, is_active)
 SELECT s.code, s.name_tr, s.name_en, s.sort_order, TRUE
@@ -60,8 +62,8 @@ WITH seed (zone_code, code, name_tr, name_en, sort_order) AS (
         ('40', '40-02', 'Kablo / Soket / Tesisat', 'Cable / connector / harness', 2),
         ('40', '40-03', 'Şarj sistemi / Yüksek voltaj', 'Charging / high voltage', 3),
         ('40', '40-04', 'Klima / Fan', 'HVAC / fan', 4),
-        -- Diğer: attach to Body zone for FK; code 99-99 is zone-independent
-        ('10', '99-99', 'Diğer', 'Other', 99)
+        -- Diğer: alone in zone 99 (migration 0033)
+        ('99', '99-99', 'Diğer', 'Other', 99)
 )
 INSERT INTO defect_parts (zone_id, code, name_tr, name_en, sort_order, is_active)
 SELECT z.id, s.code, s.name_tr, s.name_en, s.sort_order, TRUE

@@ -226,7 +226,7 @@ func (r *DefectCatalogRepo) GetZone(ctx context.Context, id int) (*domain.Defect
 func (r *DefectCatalogRepo) ListParts(ctx context.Context, zoneID *int) ([]domain.DefectPart, error) {
 	rows, err := executor(ctx, r.pool).Query(ctx, `
 		SELECT p.id, p.zone_id, p.code, p.name_tr, p.name_en, p.sort_order, p.is_active, p.created_at, p.updated_at,
-		       z.code, z.name_tr, z.name_en,
+		       z.code, z.name_tr, z.name_en, z.is_active,
 		       (SELECT COUNT(*)::int FROM issue_list i WHERE i.defect_part_id = p.id) AS usage_count
 		FROM defect_parts p
 		JOIN defect_zones z ON z.id = p.zone_id
@@ -241,7 +241,7 @@ func (r *DefectCatalogRepo) ListParts(ctx context.Context, zoneID *int) ([]domai
 		var p domain.DefectPart
 		if err := rows.Scan(
 			&p.ID, &p.ZoneID, &p.Code, &p.NameTR, &p.NameEN, &p.SortOrder, &p.IsActive, &p.CreatedAt, &p.UpdatedAt,
-			&p.ZoneCode, &p.ZoneNameTR, &p.ZoneNameEN, &p.UsageCount,
+			&p.ZoneCode, &p.ZoneNameTR, &p.ZoneNameEN, &p.ZoneIsActive, &p.UsageCount,
 		); err != nil {
 			return nil, err
 		}
@@ -254,12 +254,12 @@ func (r *DefectCatalogRepo) GetPart(ctx context.Context, id int) (*domain.Defect
 	var p domain.DefectPart
 	err := executor(ctx, r.pool).QueryRow(ctx, `
 		SELECT p.id, p.zone_id, p.code, p.name_tr, p.name_en, p.sort_order, p.is_active, p.created_at, p.updated_at,
-		       z.code, z.name_tr, z.name_en, 0
+		       z.code, z.name_tr, z.name_en, z.is_active, 0
 		FROM defect_parts p
 		JOIN defect_zones z ON z.id = p.zone_id
 		WHERE p.id = $1`, id).Scan(
 		&p.ID, &p.ZoneID, &p.Code, &p.NameTR, &p.NameEN, &p.SortOrder, &p.IsActive, &p.CreatedAt, &p.UpdatedAt,
-		&p.ZoneCode, &p.ZoneNameTR, &p.ZoneNameEN, &p.UsageCount,
+		&p.ZoneCode, &p.ZoneNameTR, &p.ZoneNameEN, &p.ZoneIsActive, &p.UsageCount,
 	)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, domain.ErrNotFound
@@ -511,12 +511,12 @@ func (r *DefectCatalogRepo) GetPartByCode(ctx context.Context, code string) (*do
 	var p domain.DefectPart
 	err := executor(ctx, r.pool).QueryRow(ctx, `
 		SELECT p.id, p.zone_id, p.code, p.name_tr, p.name_en, p.sort_order, p.is_active, p.created_at, p.updated_at,
-		       z.code, z.name_tr, z.name_en, 0
+		       z.code, z.name_tr, z.name_en, z.is_active, 0
 		FROM defect_parts p
 		JOIN defect_zones z ON z.id = p.zone_id
 		WHERE p.code = $1`, strings.TrimSpace(code)).Scan(
 		&p.ID, &p.ZoneID, &p.Code, &p.NameTR, &p.NameEN, &p.SortOrder, &p.IsActive, &p.CreatedAt, &p.UpdatedAt,
-		&p.ZoneCode, &p.ZoneNameTR, &p.ZoneNameEN, &p.UsageCount,
+		&p.ZoneCode, &p.ZoneNameTR, &p.ZoneNameEN, &p.ZoneIsActive, &p.UsageCount,
 	)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, domain.ErrNotFound
