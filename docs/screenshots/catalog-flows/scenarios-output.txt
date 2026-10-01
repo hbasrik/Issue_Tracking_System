@@ -1,0 +1,99 @@
+database: karea_catalog_test
+login (test DB seed user manager@karea.local): HTTP 200
+zones: {'10': 'Body', '20': 'Şasi', '30': 'Trim', '40': 'Elektrik'}
+'Diğer' part 99-99 zone: 10 Body
+
+========================================================================
+1. Yeni parça ekleme (Body bölgesine)
+========================================================================
+  create 10-10 'Test Kapı Kolu': HTTP 201 {"ID": 25, "Code": "10-10", "ZoneID": 1, "SortOrder": 1, "IsActive": true}
+  in active picker list: True
+  create code 'ZZZ' (no zone prefix) in Body: HTTP 201 {"ID": 26, "Code": "ZZZ"}
+  create code '40-77' (Elektrik prefix) in Body: HTTP 201 {"ID": 27, "Code": "40-77"}
+  create with empty code: HTTP 400 {"error": "code, name_tr and name_en are required", "request_id": "Basri's Macbook/W2OXb36fqG-000010"}
+
+========================================================================
+5. Aynı kod / aynı ad ile ikinci parça
+========================================================================
+  same code 10-10: HTTP 409 {"error": "catalogue code already exists", "request_id": "Basri's Macbook/W2OXb36fqG-000011"}
+  same code 10-10 in another zone: HTTP 409 {"error": "catalogue code already exists", "request_id": "Basri's Macbook/W2OXb36fqG-000012"}
+  same name 'Test Kapı Kolu', new code 10-11, same zone: HTTP 201 {"ID": 30, "Code": "10-11", "NameTR": "Test Kapı Kolu"}
+  same name different case + trailing space, code 10-12: HTTP 201 {"ID": 31, "Code": "10-12", "NameTR": "test kapı kolu"}
+  code ' 10-10 ' (spaces): HTTP 409 {"error": "catalogue code already exists", "request_id": "Basri's Macbook/W2OXb36fqG-000015"}
+
+========================================================================
+2. Parçayı pasife almak
+========================================================================
+  issue created with 10-10 before deactivation: HTTP 201 {"ID": 17, "DefectCode": "10-10-01"}
+  deactivate 10-10: HTTP 200 {"id": 25}
+  in active picker list after deactivate: False
+  issue detail after deactivate: (200, {'ID': 17, 'DefectCode': '10-10-01', 'DefectPartID': 25, 'DefectPartNameTR': 'Test Kapı Kolu', 'DefectZoneID': 1, 'DefectTypeID': 10, 'DefectTypeNameTR': 'Boşluk / hizasızlık', 'ResponsibleProcessID': None})
+  new issue with inactive part: HTTP 400 {"error": "selected catalogue item is inactive", "request_id": "Basri's Macbook/W2OXb36fqG-000020"}
+  edit classification of old issue, keep inactive part, change type: HTTP 400 {"error": "selected catalogue item is inactive", "request_id": "Basri's Macbook/W2OXb36fqG-000021"}
+  rename 10-10 -> 'YENİ AD' (still inactive): HTTP 200 {"id": 25}
+  issue detail after rename (snapshot): (200, {'ID': 17, 'DefectCode': '10-10-01', 'DefectPartID': 25, 'DefectPartNameTR': 'Test Kapı Kolu', 'DefectZoneID': 1, 'DefectTypeID': 10, 'DefectTypeNameTR': 'Boşluk / hizasızlık', 'ResponsibleProcessID': None})
+  DB row: 25 | Test Kapı Kolu | 10-10-01
+  legacy (NULL snapshot) row detail: (200, {'ID': 18, 'DefectCode': '10-10-01', 'DefectPartID': 25, 'DefectPartNameTR': 'YENİ AD', 'DefectZoneID': 1, 'DefectTypeID': 10, 'DefectTypeNameTR': 'Boşluk / hizasızlık', 'ResponsibleProcessID': None})
+
+========================================================================
+3. Parçayı silmek
+========================================================================
+  delete 10-10 (used by 2 issues): HTTP 409 {"error": "bu parça 2 kayıtta kullanılmış, silinemez — pasife çekebilirsiniz", "request_id": "Basri's Macbook/W2OXb36fqG-000025"}
+  delete ZZZ (never used): HTTP 204
+  ZZZ still in DB: 0
+  delete non-existent id: HTTP 404 {"error": "entity not found", "request_id": "Basri's Macbook/W2OXb36fqG-000027"}
+
+========================================================================
+4. Pasif parçayı tekrar aktif etmek
+========================================================================
+  reactivate 10-10: HTTP 200 {"id": 25}
+  in active picker list: True
+  new issue with reactivated part: HTTP 201 {"ID": 19, "DefectCode": "10-10-01", "DefectPartNameTR": "YENİ AD"}
+  old issue still shows its snapshot: (200, {'ID': 17, 'DefectCode': '10-10-01', 'DefectPartID': 25, 'DefectPartNameTR': 'Test Kapı Kolu', 'DefectZoneID': 1, 'DefectTypeID': 10, 'DefectTypeNameTR': 'Boşluk / hizasızlık', 'ResponsibleProcessID': None})
+
+========================================================================
+6. Bölgeyi pasife almak (Body)
+========================================================================
+  deactivate zone Body: HTTP 200 {"id": 1}
+  Body in active zone list: False
+  Body parts still returned by active-parts picker endpoint: 14 of 14 -> ['10-01', '10-10', '40-77', '10-11', '10-12', '10-02', '10-03', '10-04', '10-05', '10-06', '10-07', '10-08', '10-09', '99-99']
+  new issue with 10-01 Kapı (zone Body inactive): HTTP 201 {"ID": 20, "DefectCode": "10-01-01"}
+  new issue with 99-99 Diğer (also lives in Body): HTTP 201 {"ID": 21, "DefectCode": "99-99-01"}
+  create new part under inactive zone: HTTP 201 {"ID": 33, "Code": "10-13", "IsActive": true}
+  delete zone Body: HTTP 409 {"error": "bu bölge 5 kayıtta kullanılmış, silinemez — pasife çekebilirsiniz", "request_id": "Basri's Macbook/W2OXb36fqG-000039"}
+  reactivate zone Body: HTTP 200 {"id": 1}
+
+========================================================================
+7. Kusur tipleri
+========================================================================
+  create type 50: HTTP 201 {"ID": 11, "Code": "50", "DefaultProcessID": null}
+  same type code 50: HTTP 409 {"error": "catalogue code already exists", "request_id": "Basri's Macbook/W2OXb36fqG-000042"}
+  same type name, code 51: HTTP 201 {"ID": 13, "Code": "51", "NameTR": "Test kusur"}
+  issue with type 50: HTTP 201 {"ID": 22, "DefectCode": "10-01-50"}
+  deactivate type 50: HTTP 200 {"id": 11}
+  type 50 in active list: False
+  issue detail: (200, {'ID': 22, 'DefectCode': '10-01-50', 'DefectPartID': 10, 'DefectPartNameTR': 'Kapı', 'DefectZoneID': 1, 'DefectTypeID': 11, 'DefectTypeNameTR': 'Test kusur', 'ResponsibleProcessID': None})
+  new issue with inactive type: HTTP 400 {"error": "selected catalogue item is inactive", "request_id": "Basri's Macbook/W2OXb36fqG-000048"}
+  delete used type 50: HTTP 409 {"error": "bu kusur tipi 1 kayıtta kullanılmış, silinemez — pasife çekebilirsiniz", "request_id": "Basri's Macbook/W2OXb36fqG-000049"}
+  delete unused type 51: HTTP 204
+  reactivate type 50: HTTP 200 {"id": 11}
+  type 50 in active list: True
+
+========================================================================
+8. Sorumlu süreç pasife alınırsa
+========================================================================
+  type 05 'Eksik / yanlış parça' default process = ASSEMBLY (id 3)
+  deactivate process ASSEMBLY: HTTP 200 {"id": 3}
+  ASSEMBLY in active process list: False
+  new issue with type 05: HTTP 201 {"ID": 23, "ResponsibleProcessID": 3}
+  DB responsible_process_id: 3 | ASSEMBLY | f
+  edit classification (part change, hidden process sent back as-is): HTTP 400 {"error": "selected process is inactive", "request_id": "Basri's Macbook/W2OXb36fqG-000056"}
+  same edit with process=null: HTTP 200 {"ID": 23, "ResponsibleProcessID": null}
+  delete process ASSEMBLY (default of types): HTTP 409 {"error": "bu süreç 2 kayıtta kullanılmış, silinemez — pasife çekebilirsiniz", "request_id": "Basri's Macbook/W2OXb36fqG-000058"}
+  reactivate process ASSEMBLY: HTTP 200 {"id": 3}
+
+========================================================================
+Temizlik (yalnız bu betiğin oluşturdukları; veritabanı sonra tamamen silinecek)
+========================================================================
+  issues created: 17,18,19,20,21,22,23
+  audit rows for them: 1
