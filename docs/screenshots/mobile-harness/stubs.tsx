@@ -6,6 +6,7 @@
 import { useEffect, type ReactNode } from 'react';
 import { View } from 'react-native';
 import { activeScene } from './scenes';
+import * as RealReferenceCache from '../../../mobile/src/offline/ReferenceCacheProvider';
 
 declare global {
   interface Window {
@@ -16,6 +17,7 @@ declare global {
 }
 
 const scene = activeScene();
+const live = scene.live;
 
 // --- @react-native-async-storage/async-storage
 export const AsyncStorage = {
@@ -55,30 +57,84 @@ export function useFocusEffect(cb: () => void) {
 }
 
 // --- ../auth/AuthProvider (stable references: screens use them in deps)
-const auth = { has: () => true, token: null, user: null };
+const auth = live
+  ? { has: () => true, token: 'harness', user: { ID: live.userId }, isAuthenticated: true }
+  : { has: () => true, token: null, user: null, isAuthenticated: false };
 export function useAuth() {
   return auth;
 }
 
-// --- ../offline/ReferenceCacheProvider
-const cache = { snapshot: { vehicles: [] } };
-export function useReferenceCache() {
-  return cache;
+// --- ../offline/ReferenceCacheProvider (live scenes run the real provider)
+const emptySnapshot = { fetchedAt: '', vehicles: [], zones: [], parts: [], types: [], stations: [], issueTypes: [] };
+const cache = {
+  snapshot: emptySnapshot,
+  ready: true,
+  fromCache: false,
+  cacheAgeLabel: null,
+  catalogAgeLabel: null,
+  refreshing: false,
+  searchVehicles: () => [],
+  refresh: async () => undefined,
+};
+function PassThrough({ children }: { children: ReactNode }) {
+  return <>{children}</>;
 }
+export const ReferenceCacheProvider = live ? RealReferenceCache.ReferenceCacheProvider : PassThrough;
+export const FOREGROUND_CHECK_MS = RealReferenceCache.FOREGROUND_CHECK_MS;
+export const useReferenceCache = live
+  ? RealReferenceCache.useReferenceCache
+  : function useReferenceCache() {
+      return cache;
+    };
+
+// --- expo-file-system/legacy (queued photos stay where the scene put them)
+export const documentDirectory = 'file:///harness/';
+export const makeDirectoryAsync = async () => undefined;
+export const copyAsync = async () => undefined;
+export const getInfoAsync = async () => ({ exists: true, size: 1 });
+export const deleteAsync = async (uri: string) => {
+  window.__calls.push({ name: 'deleteAsync', args: [uri.slice(0, 40)] });
+};
 
 // --- ../api/client
 const record = (name: string) => async (...args: unknown[]) => {
   window.__calls.push({ name, args });
   return {};
 };
+let catalogFetches = 0;
+const catalogue = (key: 'zones' | 'parts' | 'types') => async () => {
+  if (!live) return { items: [] };
+  if (key === 'parts') catalogFetches += 1;
+  window.__calls.push({ name: `listDefectCatalog_${key}`, args: [], at: Date.now() });
+  const source = catalogFetches > 1 && live.catalogAfter ? live.catalogAfter : live.catalog;
+  return { items: source[key] };
+};
+export class ApiError extends Error {
+  status: number;
+  body: { error?: string };
+  constructor(status: number, body: { error?: string }) {
+    super(body.error || `HTTP ${status}`);
+    this.status = status;
+    this.body = body;
+  }
+}
 export const api = {
+  listVehicles: async () => ({ Items: [], Total: 0, Size: 100 }),
+  listStations: async () => ({ items: [] }),
+  createIssue: async (payload: { defect_part_id: number }, opts?: unknown) => {
+    window.__calls.push({ name: 'createIssue', args: [payload, opts] });
+    if (live?.rejectPartIds?.includes(payload.defect_part_id)) {
+      throw new ApiError(400, { error: 'selected catalogue item is inactive' });
+    }
+    return { ID: 501 };
+  },
   getVehicle: async () => scene.api.vehicle,
   getStationSteps: async () => scene.api.stationSteps ?? { Items: [], OpenIssuesByStation: {} },
   listIssues: async () => ({ items: scene.api.issues ?? [], has_more: false }),
   listIssueTypes: async () => ({ items: [] }),
-  listDefectCatalogZones: async () => ({ items: [] }),
-  listDefectCatalogParts: async () => ({ items: [] }),
-  listDefectCatalogTypes: async () => ({ items: [] }),
+  listDefectCatalogZones: catalogue('zones'),
+  listDefectCatalogParts: catalogue('parts'),
+  listDefectCatalogTypes: catalogue('types'),
   shipmentReadiness: async () => scene.api.readiness ?? null,
   getVehicleStatusHistory: async () => ({ items: [] }),
   getChecklist: async (_vin: string, type: 'eol' | 'shipment' | 'test') => ({
@@ -102,7 +158,6 @@ export const api = {
 export const mediaFileUrl = (p: string) => p;
 export const mediaThumbUrl = (p: string) => p;
 export const mediaCardThumbUrl = (p: string) => p;
-export class ApiError extends Error {}
 
 // --- ../lib/criticalAlertSound (expo-audio has no web build here)
 export const playCriticalAlertIfEnabled = async () => false;

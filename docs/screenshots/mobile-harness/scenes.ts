@@ -7,7 +7,23 @@ import type { ComponentType } from 'react';
 
 type Status = 'PENDING' | 'OK' | 'NOT_OK' | 'REWORK' | 'CONDITIONAL_OK';
 
-export type SceneScreen = 'vehicle-station' | 'shipment' | 'test' | 'eol' | 'my-issues' | 'issue-detail';
+export type SceneScreen =
+  | 'vehicle-station' | 'shipment' | 'test' | 'eol' | 'my-issues' | 'issue-detail' | 'pending-reports';
+
+/**
+ * Live scenes run the real reference-cache and issue-queue providers on the
+ * stubbed storage and API: the queue starts from `queue`, catalogue fetches
+ * return `catalog` (and `catalogAfter` from the second fetch on), and
+ * createIssue rejects payloads that use `rejectPartIds`, as the backend does
+ * for a deactivated part.
+ */
+export interface LiveData {
+  userId: number;
+  queue: unknown[];
+  catalog: { zones: unknown[]; parts: unknown[]; types: unknown[] };
+  catalogAfter?: { zones: unknown[]; parts: unknown[]; types: unknown[] };
+  rejectPartIds?: number[];
+}
 
 export interface Scene {
   id: string;
@@ -23,6 +39,7 @@ export interface Scene {
     issue?: unknown;
     issueHistory?: unknown[];
   };
+  live?: LiveData;
 }
 
 const HOUR = 3_600_000;
@@ -178,6 +195,69 @@ const issues = [
     75, { ReportPhotoPath: PHOTO }),
 ];
 
+// --- Defect catalogue for the live queue scenes (codes and names from seed 05)
+const zone = (ID: number, Code: string, NameTR: string, NameEN: string) =>
+  ({ ID, Code, NameTR, NameEN, SortOrder: ID, IsActive: true });
+const ZONES = [
+  zone(1, '10', 'Body', 'Body'),
+  zone(3, '30', 'Trim', 'Trim'),
+  zone(10, '99', 'Diğer', 'Other'),
+];
+const part = (ID: number, ZoneID: number, Code: string, NameTR: string, NameEN: string) => {
+  const z = ZONES.find((x) => x.ID === ZoneID)!;
+  return {
+    ID, ZoneID, Code, NameTR, NameEN, SortOrder: ID, IsActive: true,
+    ZoneCode: z.Code, ZoneNameTR: z.NameTR, ZoneNameEN: z.NameEN, ZoneIsActive: true,
+  };
+};
+const MIRROR = part(13, 3, '30-03', 'Ayna', 'Mirror');
+const PARTS_AFTER = [
+  part(2, 1, '10-01', 'Kapı', 'Door'),
+  part(3, 1, '10-02', 'Bagaj kapağı / Tailgate', 'Tailgate / liftgate'),
+  part(5, 1, '10-04', 'Tampon', 'Bumper'),
+  part(11, 3, '30-01', 'Trim / Çıta / Garnish', 'Trim / moulding / garnish'),
+  part(12, 3, '30-02', 'Cam', 'Glass'),
+  part(15, 3, '30-05', 'Conta / Sızdırmazlık elemanı', 'Seal / weatherstrip'),
+  part(1, 10, '99-99', 'Diğer', 'Other'),
+];
+const TYPES = [
+  { ID: 1, Code: '01', NameTR: 'Boşluk / hizasızlık', NameEN: 'Gap / misalignment', SortOrder: 1, IsActive: true },
+  { ID: 3, Code: '03', NameTR: 'Çizik / darbe / hasar', NameEN: 'Scratch / impact / damage', SortOrder: 3, IsActive: true },
+  { ID: 5, Code: '05', NameTR: 'Eksik / yanlış parça', NameEN: 'Missing / wrong part', SortOrder: 5, IsActive: true },
+  { ID: 10, Code: '99', NameTR: 'Diğer', NameEN: 'Other', SortOrder: 99, IsActive: true },
+];
+const CATALOG_BEFORE = { zones: ZONES, parts: [...PARTS_AFTER.slice(0, 5), MIRROR, ...PARTS_AFTER.slice(5)], types: TYPES };
+const CATALOG_AFTER = { zones: ZONES, parts: PARTS_AFTER, types: TYPES };
+
+const QUEUE_PHOTO =
+  'data:image/svg+xml;base64,' +
+  btoa(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="112" height="112"><rect width="112" height="112" fill="#5b6b7a"/>' +
+      '<rect x="14" y="30" width="84" height="52" rx="8" fill="#c9d3dc"/><circle cx="56" cy="56" r="16" fill="#5b6b7a"/></svg>',
+  );
+export const QUEUED_ID = '6f1c2a9e-4b7d-4c1e-9a3f-2d8b5e7c1a40';
+const queued = (extra: Record<string, unknown>) => ({
+  id: QUEUED_ID,
+  createdAt: ago(3),
+  status: 'failed',
+  attempts: 1,
+  photoUploaded: false,
+  photoUri: QUEUE_PHOTO,
+  photoName: 'sag-ayna.jpg',
+  photoType: 'image/jpeg',
+  payload: {
+    vin: 'NM0KTSKRC2XSB0142',
+    source_type: 'MANUAL',
+    station_id: 6,
+    issue_type_id: 1,
+    severity: 'MEDIUM',
+    description: 'Sağ dış ayna kapağında çizik, montajda fark edildi.',
+    defect_part_id: MIRROR.ID,
+    defect_type_id: 3,
+  },
+  ...extra,
+});
+
 export const SCENES: Scene[] = [
   {
     id: 'issues-list',
@@ -249,6 +329,32 @@ export const SCENES: Scene[] = [
         DefectCode: '10-01-01',
       },
       issueHistory: [],
+    },
+  },
+  {
+    id: 'queue-rejected',
+    screen: 'pending-reports',
+    params: {},
+    api: {},
+    live: {
+      userId: 7,
+      queue: [queued({ lastErrorCode: 'http', lastError: 'selected catalogue item is inactive' })],
+      catalog: CATALOG_AFTER,
+      rejectPartIds: [MIRROR.ID],
+    },
+  },
+  {
+    id: 'queue-refresh',
+    screen: 'pending-reports',
+    params: {},
+    api: {},
+    live: {
+      userId: 7,
+      // Waiting for the network: the queue poll leaves it alone until nextAttemptAt.
+      queue: [queued({ status: 'pending', lastErrorCode: 'network', nextAttemptAt: new Date(Date.now() + 6 * HOUR).toISOString() })],
+      catalog: CATALOG_BEFORE,
+      catalogAfter: CATALOG_AFTER,
+      rejectPartIds: [MIRROR.ID],
     },
   },
 ];
