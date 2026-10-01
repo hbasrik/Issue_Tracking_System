@@ -216,8 +216,13 @@ CREATE TABLE checklist_template_items (
     station_id    INT REFERENCES stations(id),
     eol_phase     eol_item_phase_enum,  -- Karar 2: only populated for items on an EOL-type template
     is_active     BOOLEAN NOT NULL DEFAULT TRUE,
+    seed_key      TEXT,  -- migration 0034: md5 of the seed text at creation, never updated; NULL for admin-created items
     UNIQUE (template_id, item_no)
 );
+
+COMMENT ON COLUMN checklist_template_items.seed_key IS
+    'md5 of the seed item text when the row was created; never updated. '
+    'Seed 03 uses it to detect missing default items. NULL for admin-created items.';
 
 COMMENT ON COLUMN checklist_template_items.eol_phase IS
     'BRANCH or DEPOT for EOL-type templates; must be NULL for SHIPMENT/TEST templates. '

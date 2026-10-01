@@ -443,6 +443,27 @@ kalıyordu.
   (`issueId` dolu) sınıflandırma kuyruktan değiştirilmez; o kayıt hata
   detayındaki sınıflandırma düzenleyicisiyle düzeltilir.
 
+## Karar 22 — Referans seed'leri yalnız ekler, kararlı anahtarla eşleşir (NEW — 2026-10-01)
+
+- **Kural:** `database/seed/01`, `02`, `03` ve `05` mevcut satıra dokunmaz;
+  yeniden çalıştırıldığında yalnız eksik satırı ekler. Ad, metin, sıra ve
+  `is_active` hiçbir koşulda seed tarafından yazılmaz. `06` yalnız
+  geliştirme verisidir, bu kuralın dışındadır.
+- **Eşleştirme anahtarı kararlı olmalı:** görüntüleme sırası anahtar
+  olamaz. Checklist maddelerinde `item_no` yeniden sıralamayla değiştiği
+  için anahtar `checklist_template_items.seed_key` (migration 0034):
+  satır oluşturulurken metnin md5'i, sonra hiç güncellenmez. Yönetim
+  ekranından eklenen maddede NULL. Eksik seed maddesi asıl `item_no`
+  boşsa oraya, doluysa son maddenin arkasına eklenir.
+- **İstasyon/adım:** `stations.sequence_no` ve `(station_id,
+  sequence_no)` hiçbir kod yolunda değişmediği için anahtar olarak
+  kalır; adımlar istasyonu ada göre değil `sequence_no` ile bulur.
+  Tek istisna: 01, migration 0002'nin koyduğu dokunulmamış `Station N`
+  yer tutucusunu üretim adıyla değiştirir (temiz kurulum).
+- **Sınır:** seed'in eklediği madde/adım için mevcut araçlara PENDING
+  ilerleme satırı açılmaz; canlıda eksik madde yönetim ekranından
+  eklenir.
+
 ## Değişmeyen / Yeniden Kullanılacaklar
 
 Şunlara **dokunulmuyor**, olduğu gibi kalıyor: JWT auth + bcrypt (üstteki JWT_SECRET ve iptal sıkılaştırmaları hariç), CORS allowlist mimarisi, Unit-of-Work (pgx.Tx) transaction pattern, `.cursor/rules` (commit ve environment-check kuralları), Analysis sekmesi temel yapısı (VIN×severity kırılımı, Pie/Bar chart'lar — yeni station/EOL alanlarıyla genişleyecek ama sıfırdan kurulmayacak), Docker/migration/seed altyapısı.
