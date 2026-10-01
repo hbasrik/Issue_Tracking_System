@@ -1,6 +1,7 @@
 package http
 
 import (
+	"encoding/json"
 	"net/http"
 	"strconv"
 	"strings"
@@ -299,11 +300,23 @@ func (s *server) handleIssueUndoApproval(w http.ResponseWriter, r *http.Request)
 }
 
 type updateClassificationRequest struct {
-	DefectPartID         *int   `json:"defect_part_id"`
-	DefectTypeID         *int   `json:"defect_type_id"`
-	ResponsibleProcessID *int   `json:"responsible_process_id"`
-	CustomPartName       string `json:"custom_part_name"`
-	CustomDefectName     string `json:"custom_defect_name"`
+	DefectPartID         *int        `json:"defect_part_id"`
+	DefectTypeID         *int        `json:"defect_type_id"`
+	ResponsibleProcessID optionalInt `json:"responsible_process_id"`
+	CustomPartName       string      `json:"custom_part_name"`
+	CustomDefectName     string      `json:"custom_defect_name"`
+}
+
+// optionalInt tells an omitted JSON key (Set=false) apart from an explicit
+// null (Set=true, Value=nil).
+type optionalInt struct {
+	Set   bool
+	Value *int
+}
+
+func (o *optionalInt) UnmarshalJSON(data []byte) error {
+	o.Set = true
+	return json.Unmarshal(data, &o.Value)
 }
 
 // handleIssueClassificationUpdate corrects or backfills defect classification.
@@ -331,9 +344,10 @@ func (s *server) handleIssueClassificationUpdate(w http.ResponseWriter, r *http.
 		ActorPermissions:     permissions,
 		DefectPartID:         req.DefectPartID,
 		DefectTypeID:         req.DefectTypeID,
-		ResponsibleProcessID: req.ResponsibleProcessID,
-		CustomPartName:       req.CustomPartName,
-		CustomDefectName:     req.CustomDefectName,
+		ResponsibleProcessSet: req.ResponsibleProcessID.Set,
+		ResponsibleProcessID:  req.ResponsibleProcessID.Value,
+		CustomPartName:        req.CustomPartName,
+		CustomDefectName:      req.CustomDefectName,
 	})
 	if err != nil {
 		writeError(w, err)

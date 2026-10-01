@@ -296,10 +296,9 @@ yaşatmak olurdu.
   analiz alanları (`DefectByProcess`, `ProcessUnassigned`) ve katalogdaki
   varsayılan süreç yönetimi de duruyor; kalite ekibi varsayılanları oradan
   girecek.
-- **Düzenleyiciler süreci sessizce göndermeye devam eder.**
-  `UpdateClassification` süreci gönderilen değerle birebir yazar; göndermemek
-  kayıtlı süreci silerdi. Tip değişince süreç yeni tipin varsayılanına
-  (yoksa boşa) çekilir, eskisi gibi.
+- **Düzenleyiciler süreci göndermez** (2026-10-01, Karar 19 ile
+  değişti; önceden gizli olarak gönderiliyordu). Kayıtlı süreç korunur;
+  tip değişince süreç yeni tipin varsayılanına (yoksa boşa) çekilir.
 - **Sınıflandırma düzeltmeleri hata geçmişinde.**
   `ListIssueStatusHistory` `ISSUE_STATUS_CHANGE` ile
   `ISSUE_CLASSIFICATION_CHANGE` satırlarını aynı zaman çizelgesinde döner
@@ -347,6 +346,33 @@ seçenek de kaybolacaktı.
   `IsActive` / `ZoneIsActive` ile döner; Hatalar filtreleri (web ve mobil)
   pasif değerleri "(pasif)" etiketiyle listeler, eski hatalar onlarla da
   süzülebilir.
+
+## Karar 19 — Değişmeyen alan doğrulanmaz (NEW — 2026-10-01)
+
+**Gerekçe:** Katalog incelemesinde pasife alınan süreç, parça ya da tip,
+o değeri taşıyan hatanın sınıflandırmasını tamamen kilitledi: kullanıcı
+başka bir alanı düzeltmek istese bile kayıtlı (pasif) değer yeniden
+doğrulanıp reddediliyordu.
+
+**Karar:**
+- **Pasif kontrolü yalnız değişen alanda.** `UpdateClassification` parçayı
+  yalnız parça id'si değiştiyse (`Selectable()`: parça ve bölge aktif),
+  tipi yalnız tip id'si değiştiyse aktiflik açısından doğrular. Kullanıcı
+  kayıtlı pasif değeri koruyabilir.
+- **Süreç isteğe bağlı alan.** `responsible_process_id` istekte yoksa
+  kayıtlı süreç korunur (tip değiştiyse yeni tipin varsayılanı yazılır,
+  oluşturmadaki gibi). Açıkça gönderilirse o değer yazılır; değişmemişse
+  doğrulanmaz, `null` süreci boşaltır. Eski istemciler (süreci geri
+  gönderen) bu yüzden kırılmaz.
+- **Anlık görüntü ve kod korunur.** Parça ya da tip değişmediyse
+  `defect_part_name_*` / `defect_type_name_*` anlık görüntüleri SQL'de
+  (`CASE WHEN … IS DISTINCT FROM …`) olduğu gibi kalır; ikisi de
+  değişmediyse `defect_code` da aynı kalır.
+- **Ekranda:** web ve mobil düzenleyici kayıtlı pasif bölge/parça/tipi
+  "(pasif)" etiketiyle seçenek olarak tutar; değiştirilirse yalnız aktif
+  seçenekler sunulur. Reddedilen değişiklikte sebep açık metinle görünür
+  (parça pasif / bölge pasif / pasif bölgeye parça eklenemez / "Diğer"
+  korumalı).
 
 ## Değişmeyen / Yeniden Kullanılacaklar
 

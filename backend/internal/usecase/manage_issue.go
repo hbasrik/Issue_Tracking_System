@@ -289,14 +289,22 @@ type UpdateClassificationInput struct {
 	ActorPermissions     domain.PermissionSet
 	DefectPartID         *int
 	DefectTypeID         *int
-	ResponsibleProcessID *int
-	CustomPartName       string
-	CustomDefectName     string
+	// ResponsibleProcessSet is false when the client omitted the process
+	// (the editors do, Karar 17): the stored process is then kept, or replaced
+	// by the new type's default when the type changes — the same rule as create.
+	ResponsibleProcessSet bool
+	ResponsibleProcessID  *int
+	CustomPartName        string
+	CustomDefectName      string
 }
 
 // UpdateClassification validates catalogue picks, recomputes defect_code, and
 // writes an ISSUE_CLASSIFICATION_CHANGE audit row with field-level before/after.
 // Closed issues remain editable (labelling, not a quality decision).
+//
+// A field that keeps its stored value is not re-validated: a part, type or
+// process deactivated after the issue was classified must not lock the rest
+// of the classification. Only a newly chosen value has to be selectable.
 func (m *IssueManager) UpdateClassification(ctx context.Context, in UpdateClassificationInput) (*domain.Issue, error) {
 	issue, err := m.issues.GetByID(ctx, in.IssueID)
 	if err != nil {
@@ -312,29 +320,41 @@ func (m *IssueManager) UpdateClassification(ctx context.Context, in UpdateClassi
 		return nil, domain.ErrDefectTypeRequired
 	}
 
+	partChanged := !sameIntPtr(issue.DefectPartID, in.DefectPartID)
+	typeChanged := !sameIntPtr(issue.DefectTypeID, in.DefectTypeID)
+
 	part, err := m.catalog.GetPart(ctx, *in.DefectPartID)
 	if err != nil {
 		return nil, err
 	}
-	if !part.IsActive {
-		return nil, domain.ErrDefectCatalogueInactive
+	if partChanged {
+		if err := partSelectable(part); err != nil {
+			return nil, err
+		}
 	}
 	typ, err := m.catalog.GetType(ctx, *in.DefectTypeID)
 	if err != nil {
 		return nil, err
 	}
-	if !typ.IsActive {
+	if typeChanged && !typ.IsActive {
 		return nil, domain.ErrDefectCatalogueInactive
 	}
 
-	if in.ResponsibleProcessID != nil {
-		proc, err := m.catalog.GetProcess(ctx, *in.ResponsibleProcessID)
-		if err != nil {
-			return nil, err
+	processID := issue.ResponsibleProcessID
+	switch {
+	case in.ResponsibleProcessSet:
+		processID = in.ResponsibleProcessID
+		if !sameIntPtr(issue.ResponsibleProcessID, processID) && processID != nil {
+			proc, err := m.catalog.GetProcess(ctx, *processID)
+			if err != nil {
+				return nil, err
+			}
+			if !proc.IsActive {
+				return nil, domain.ErrDefectProcessInactive
+			}
 		}
-		if !proc.IsActive {
-			return nil, domain.ErrDefectProcessInactive
-		}
+	case typeChanged:
+		processID = typ.DefaultProcessID
 	}
 
 	customPart := strings.TrimSpace(in.CustomPartName)
@@ -355,9 +375,11 @@ func (m *IssueManager) UpdateClassification(ctx context.Context, in UpdateClassi
 	}
 
 	code := domain.FormatDefectCode(part.Code, typ.Code)
+	if !partChanged && !typeChanged && strings.TrimSpace(issue.DefectCode) != "" {
+		code = issue.DefectCode
+	}
 	partID := part.ID
 	typeID := typ.ID
-	processID := in.ResponsibleProcessID
 
 	oldSummary := classificationAuditSummary(issue)
 	fields := classificationFieldDiffs(issue, &partID, &typeID, processID, customPart, customDefect, code)

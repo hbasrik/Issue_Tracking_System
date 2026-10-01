@@ -352,8 +352,9 @@ func (r *IssueRepo) RevertApproval(ctx context.Context, id int64) error {
 }
 
 // UpdateClassification persists defect catalogue fields on an existing issue.
-// Name snapshots are rewritten because this is a conscious re-label, not a
-// catalogue rename.
+// A newly chosen part or type gets a fresh name snapshot (a conscious
+// re-label); an unchanged one keeps its frozen snapshot, including NULL on
+// legacy rows, so a later catalogue rename does not leak into history.
 func (r *IssueRepo) UpdateClassification(
 	ctx context.Context,
 	id int64,
@@ -369,10 +370,14 @@ func (r *IssueRepo) UpdateClassification(
 		    custom_part_name = NULLIF($5, ''),
 		    custom_defect_name = NULLIF($6, ''),
 		    defect_code = NULLIF($7, ''),
-		    defect_part_name_tr = NULLIF($8, ''),
-		    defect_part_name_en = NULLIF($9, ''),
-		    defect_type_name_tr = NULLIF($10, ''),
-		    defect_type_name_en = NULLIF($11, ''),
+		    defect_part_name_tr = CASE WHEN defect_part_id IS DISTINCT FROM $2
+		                               THEN NULLIF($8, '') ELSE defect_part_name_tr END,
+		    defect_part_name_en = CASE WHEN defect_part_id IS DISTINCT FROM $2
+		                               THEN NULLIF($9, '') ELSE defect_part_name_en END,
+		    defect_type_name_tr = CASE WHEN defect_type_id IS DISTINCT FROM $3
+		                               THEN NULLIF($10, '') ELSE defect_type_name_tr END,
+		    defect_type_name_en = CASE WHEN defect_type_id IS DISTINCT FROM $3
+		                               THEN NULLIF($11, '') ELSE defect_type_name_en END,
 		    updated_at = now()
 		WHERE id = $1`,
 		id, partID, typeID, processID, customPart, customDefect, defectCode,

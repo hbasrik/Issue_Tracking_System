@@ -595,17 +595,29 @@ func (f *fakeIssueRepo) UpdateClassification(
 	if !ok {
 		return domain.ErrNotFound
 	}
+	// Mirrors the SQL: an unchanged part/type keeps its frozen name snapshot.
+	if !sameFakeIntPtr(issue.DefectPartID, partID) {
+		issue.DefectPartNameTR = partNameTR
+		issue.DefectPartNameEN = partNameEN
+	}
+	if !sameFakeIntPtr(issue.DefectTypeID, typeID) {
+		issue.DefectTypeNameTR = typeNameTR
+		issue.DefectTypeNameEN = typeNameEN
+	}
 	issue.DefectPartID = partID
 	issue.DefectTypeID = typeID
 	issue.ResponsibleProcessID = processID
 	issue.CustomPartName = customPart
 	issue.CustomDefectName = customDefect
 	issue.DefectCode = defectCode
-	issue.DefectPartNameTR = partNameTR
-	issue.DefectPartNameEN = partNameEN
-	issue.DefectTypeNameTR = typeNameTR
-	issue.DefectTypeNameEN = typeNameEN
 	return nil
+}
+
+func sameFakeIntPtr(a, b *int) bool {
+	if a == nil || b == nil {
+		return a == nil && b == nil
+	}
+	return *a == *b
 }
 
 func (f *fakeIssueRepo) ListIssueTypes(_ context.Context) ([]domain.IssueType, error) {
