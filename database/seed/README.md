@@ -37,6 +37,12 @@ only. Inactive / test-only rows that may exist in a long-lived dev DB
 (e.g. `Test Depo Madde`, inactive English TEST 44–45 leftovers) are
 intentionally omitted.
 
+**Rule: never change the text of an EXISTING checklist item in the seed
+file.** The seed key is derived from the text (`md5(item text)`), so an
+edited text looks like a new item to the seed and it inserts a second copy
+next to the original. Text corrections are made in the admin screen. Only
+add NEW items to the seed file.
+
 ## 500 VIN load (not part of `make seed`)
 
 Bulk PLANNED VIN import lives at
