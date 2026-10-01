@@ -618,15 +618,21 @@ export const api = {
     });
   },
 
-  listDefectCatalogZones() {
-    return request<{ items: DefectZone[] }>('/defect-catalog/zones');
+  /** `includeInactive` is for list filters only; pickers stay active-only. */
+  listDefectCatalogZones(includeInactive = false) {
+    const q = includeInactive ? '?include_inactive=1' : '';
+    return request<{ items: DefectZone[] }>(`/defect-catalog/zones${q}`);
   },
-  listDefectCatalogParts(zoneId?: number) {
-    const q = zoneId != null ? `?zone_id=${zoneId}` : '';
-    return request<{ items: DefectPart[] }>(`/defect-catalog/parts${q}`);
+  listDefectCatalogParts(zoneId?: number, includeInactive = false) {
+    const params = new URLSearchParams();
+    if (zoneId != null) params.set('zone_id', String(zoneId));
+    if (includeInactive) params.set('include_inactive', '1');
+    const q = params.toString();
+    return request<{ items: DefectPart[] }>(`/defect-catalog/parts${q ? `?${q}` : ''}`);
   },
-  listDefectCatalogTypes() {
-    return request<{ items: DefectType[] }>('/defect-catalog/types');
+  listDefectCatalogTypes(includeInactive = false) {
+    const q = includeInactive ? '?include_inactive=1' : '';
+    return request<{ items: DefectType[] }>(`/defect-catalog/types${q}`);
   },
   listDefectCatalogProcesses() {
     return request<{ items: DefectProcess[] }>('/defect-catalog/processes');
@@ -656,7 +662,8 @@ export const api = {
     body: {
       defect_part_id: number;
       defect_type_id: number;
-      responsible_process_id: number | null;
+      /** Omit to keep the saved process (a type change applies its default). */
+      responsible_process_id?: number | null;
       custom_part_name?: string;
       custom_defect_name?: string;
     },
@@ -847,6 +854,8 @@ export interface DefectPart {
   ZoneCode: string;
   ZoneNameTR: string;
   ZoneNameEN: string;
+  /** Part is selectable only when both IsActive and ZoneIsActive are true. */
+  ZoneIsActive: boolean;
   UsageCount: number;
 }
 
