@@ -213,6 +213,12 @@ func (a *DefectCatalogAdmin) CreatePart(ctx context.Context, in UpsertPartInput)
 	if err := partZoneAllowed(zone, in.Code); err != nil {
 		return nil, err
 	}
+	if err := partCodeFits(zone, in.Code); err != nil {
+		return nil, err
+	}
+	if err := a.partNameFree(ctx, in.ZoneID, 0, in.NameTR, in.NameEN); err != nil {
+		return nil, err
+	}
 	p := &domain.DefectPart{
 		ZoneID: in.ZoneID, Code: strings.TrimSpace(in.Code), NameTR: strings.TrimSpace(in.NameTR), NameEN: strings.TrimSpace(in.NameEN),
 		SortOrder: in.SortOrder, IsActive: in.IsActive,
@@ -256,6 +262,19 @@ func (a *DefectCatalogAdmin) UpdatePart(ctx context.Context, id int, in UpsertPa
 	} else if domain.IsOtherZone(zone.Code) && !domain.IsOtherPart(in.Code) {
 		return domain.ErrDefectCatalogueProtected
 	}
+	// Legacy rows with an old-style code or a duplicate name stay editable:
+	// only a changed code/zone or a changed name is checked.
+	zoneChanged := in.ZoneID != current.ZoneID
+	if zoneChanged || strings.TrimSpace(in.Code) != current.Code {
+		if err := partCodeFits(zone, in.Code); err != nil {
+			return err
+		}
+	}
+	if zoneChanged || !domain.SameCatalogueName(in.NameTR, current.NameTR) || !domain.SameCatalogueName(in.NameEN, current.NameEN) {
+		if err := a.partNameFree(ctx, in.ZoneID, id, in.NameTR, in.NameEN); err != nil {
+			return err
+		}
+	}
 	return a.catalog.UpdatePart(ctx, &domain.DefectPart{
 		ID: id, ZoneID: in.ZoneID, Code: strings.TrimSpace(in.Code), NameTR: strings.TrimSpace(in.NameTR), NameEN: strings.TrimSpace(in.NameEN),
 		SortOrder: in.SortOrder, IsActive: in.IsActive,
@@ -288,6 +307,50 @@ func partZoneAllowed(zone *domain.DefectZone, partCode string) error {
 	}
 	if !zone.IsActive {
 		return domain.ErrDefectZoneClosedForParts
+	}
+	return nil
+}
+
+// partCodeFits enforces the "<zone code>-NN" format; the Other part is
+// already pinned to its own zone by partZoneAllowed.
+func partCodeFits(zone *domain.DefectZone, partCode string) error {
+	if domain.IsOtherPart(partCode) {
+		return nil
+	}
+	return domain.ValidatePartCode(zone.Code, partCode)
+}
+
+// partNameFree rejects a TR or EN name already used by another part in the
+// same zone, active or not. The same name in another zone is allowed.
+func (a *DefectCatalogAdmin) partNameFree(ctx context.Context, zoneID, selfID int, nameTR, nameEN string) error {
+	parts, err := a.catalog.ListParts(ctx, &zoneID)
+	if err != nil {
+		return err
+	}
+	for _, p := range parts {
+		if p.ID == selfID {
+			continue
+		}
+		if domain.SameCatalogueName(p.NameTR, nameTR) || domain.SameCatalogueName(p.NameEN, nameEN) {
+			return domain.ErrDefectPartNameTaken
+		}
+	}
+	return nil
+}
+
+// typeNameFree rejects a TR or EN name already used by another defect type.
+func (a *DefectCatalogAdmin) typeNameFree(ctx context.Context, selfID int, nameTR, nameEN string) error {
+	types, err := a.catalog.ListTypes(ctx)
+	if err != nil {
+		return err
+	}
+	for _, t := range types {
+		if t.ID == selfID {
+			continue
+		}
+		if domain.SameCatalogueName(t.NameTR, nameTR) || domain.SameCatalogueName(t.NameEN, nameEN) {
+			return domain.ErrDefectTypeNameTaken
+		}
 	}
 	return nil
 }
@@ -325,6 +388,12 @@ func (a *DefectCatalogAdmin) CreateType(ctx context.Context, in UpsertTypeInput)
 	if err := domain.ValidateDefectCatalogueFields(in.Code, in.NameTR, in.NameEN); err != nil {
 		return nil, err
 	}
+	if err := domain.ValidateTypeCode(in.Code); err != nil {
+		return nil, err
+	}
+	if err := a.typeNameFree(ctx, 0, in.NameTR, in.NameEN); err != nil {
+		return nil, err
+	}
 	t := &domain.DefectType{
 		Code: strings.TrimSpace(in.Code), NameTR: strings.TrimSpace(in.NameTR), NameEN: strings.TrimSpace(in.NameEN),
 		DefaultProcessID: in.DefaultProcessID, SortOrder: in.SortOrder, IsActive: in.IsActive,
@@ -350,6 +419,16 @@ func (a *DefectCatalogAdmin) UpdateType(ctx context.Context, id int, in UpsertTy
 	}
 	if domain.IsOtherType(current.Code) && (!in.IsActive || strings.TrimSpace(in.Code) != current.Code) {
 		return domain.ErrDefectCatalogueProtected
+	}
+	if strings.TrimSpace(in.Code) != current.Code {
+		if err := domain.ValidateTypeCode(in.Code); err != nil {
+			return err
+		}
+	}
+	if !domain.SameCatalogueName(in.NameTR, current.NameTR) || !domain.SameCatalogueName(in.NameEN, current.NameEN) {
+		if err := a.typeNameFree(ctx, id, in.NameTR, in.NameEN); err != nil {
+			return err
+		}
 	}
 	return a.catalog.UpdateType(ctx, &domain.DefectType{
 		ID: id, Code: strings.TrimSpace(in.Code), NameTR: strings.TrimSpace(in.NameTR), NameEN: strings.TrimSpace(in.NameEN),
@@ -466,6 +545,12 @@ func (a *DefectCatalogAdmin) promoteOtherPart(ctx context.Context, in PromoteOth
 	if err := partZoneAllowed(zone, in.Code); err != nil {
 		return nil, err
 	}
+	if err := partCodeFits(zone, in.Code); err != nil {
+		return nil, err
+	}
+	if err := a.partNameFree(ctx, in.ZoneID, 0, in.NameTR, in.NameEN); err != nil {
+		return nil, err
+	}
 	other, err := a.catalog.GetPartByCode(ctx, domain.DefectPartCodeOther)
 	if err != nil {
 		return nil, err
@@ -541,6 +626,12 @@ func (a *DefectCatalogAdmin) promoteOtherPart(ctx context.Context, in PromoteOth
 }
 
 func (a *DefectCatalogAdmin) promoteOtherType(ctx context.Context, in PromoteOtherInput, custom string) (*PromoteOtherResult, error) {
+	if err := domain.ValidateTypeCode(in.Code); err != nil {
+		return nil, err
+	}
+	if err := a.typeNameFree(ctx, 0, in.NameTR, in.NameEN); err != nil {
+		return nil, err
+	}
 	other, err := a.catalog.GetTypeByCode(ctx, domain.DefectTypeCodeOther)
 	if err != nil {
 		return nil, err

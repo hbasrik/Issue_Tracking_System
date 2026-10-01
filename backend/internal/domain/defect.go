@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 	"time"
+	"unicode"
 	"unicode/utf8"
 )
 
@@ -147,6 +148,46 @@ func ValidateDefectCatalogueFields(code, nameTR, nameEN string) error {
 		return ErrDefectCatalogueNameTooLong
 	}
 	return nil
+}
+
+// ValidatePartCode checks that a part code is "<zone code>-NN" (NN = 01–99).
+// Part codes are copied into issue snapshots and defect codes, so a malformed
+// code would outlive any later rename. The Other part (99-99) is placed by
+// partZoneAllowed and passes here.
+func ValidatePartCode(zoneCode, code string) error {
+	zoneCode = strings.TrimSpace(zoneCode)
+	code = strings.TrimSpace(code)
+	suffix, ok := strings.CutPrefix(code, zoneCode+"-")
+	if !ok || zoneCode == "" || !isTwoDigitCode(suffix) {
+		return fmt.Errorf("%w: expected %s-NN", ErrDefectPartCodeFormat, zoneCode)
+	}
+	return nil
+}
+
+// ValidateTypeCode checks that a defect type code is two digits (01–99).
+func ValidateTypeCode(code string) error {
+	if !isTwoDigitCode(strings.TrimSpace(code)) {
+		return ErrDefectTypeCodeFormat
+	}
+	return nil
+}
+
+func isTwoDigitCode(s string) bool {
+	return len(s) == 2 && s[0] >= '0' && s[0] <= '9' && s[1] >= '0' && s[1] <= '9' && s != "00"
+}
+
+// SameCatalogueName reports whether two catalogue names are the same entry
+// for a person: case, surrounding and repeated spaces are ignored. Dotted and
+// dotless i fold together so both Turkish (KAPI = kapı) and English
+// (HINGE = hinge) names compare equal regardless of keyboard locale.
+func SameCatalogueName(a, b string) bool {
+	return normalizeCatalogueName(a) == normalizeCatalogueName(b)
+}
+
+func normalizeCatalogueName(s string) string {
+	s = strings.Join(strings.Fields(s), " ")
+	s = strings.ToLowerSpecial(unicode.TurkishCase, s)
+	return strings.ReplaceAll(s, "ı", "i")
 }
 
 // CatalogInUseError is returned when DELETE is attempted on a catalogue row

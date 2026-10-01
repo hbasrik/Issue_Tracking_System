@@ -374,6 +374,40 @@ doğrulanıp reddediliyordu.
   (parça pasif / bölge pasif / pasif bölgeye parça eklenemez / "Diğer"
   korumalı).
 
+## Karar 20 — Katalog kod biçimi ve ad tekliği (NEW — 2026-10-01)
+
+**Gerekçe:** Parça ve kusur tipi kodu elle yazılıyordu; Body bölgesine
+"40-77" ve "ZZZ" kodlu parça eklenebildi. Kod hata kayıtlarına anlık
+görüntü (`defect_code`) olarak yazıldığı için yanlış kod sonradan
+düzeltilse bile eski kayıtlarda kalır. Aynı bölgede "Test Kapı Kolu" ve
+"test kapı kolu " da ayrı parça olarak kabul ediliyordu.
+
+**Karar:**
+- **Parça kodu `<bölge kodu>-NN`** (NN = 01–99, iki hane). Ön ek seçilen
+  bölgenin kodu olmalı; uymazsa `part code must be the zone code, a dash
+  and two digits: expected 10-NN` ile 400 döner, ekranda beklenen ön ek
+  yazılır. 99-99 ("Diğer") yalnız bölge 99'da durur (Karar 18).
+- **Kusur tipi kodu iki hane** (01–99); uymazsa 400.
+- **Ad tekliği:** aynı bölgedeki iki parça, ya da herhangi iki kusur tipi
+  aynı TR veya EN adı taşıyamaz (409). Karşılaştırma büyük/küçük harfe,
+  baştaki/sondaki ve tekrarlanan boşluğa duyarsızdır; noktalı/noktasız i
+  aynı sayılır (KAPI = kapı, HINGE = hinge). Pasif satırların adı da
+  dolu sayılır. Farklı bölgelerde aynı parça adı serbesttir ("Conta").
+- **Uygulama katmanında, DB kısıtı yok.** Kurallar oluşturma, düzenleme
+  ve "Diğer"den kataloğa almada `DefectCatalogAdmin`'de uygulanır. DB'de
+  benzersiz indeks yok; canlıda olabilecek eski tekrarlar bir migration'ı
+  kırmasın diye.
+- **Eski kayıtlar düzenlenebilir kalır (Karar 19 ilkesi):** düzenlemede
+  kod yalnız kod ya da bölge değiştiyse, ad yalnız ad ya da bölge
+  değiştiyse denetlenir. Eski biçimli kodu ya da tekrarlanan adı olan bir
+  satır yeniden adlandırılabilir, pasife alınabilir.
+- **Öneri:** yönetim sayfası yeni parçada seçilen bölgeye göre bir sonraki
+  boş kodu (bölgedeki en büyük NN + 1), yeni tipte bir sonraki boş iki
+  haneli kodu önerir. Alan elle değiştirilebilir; biçim ve ad tekrarı
+  istemcide de anında gösterilir, son söz sunucudadır.
+- **Seed yalnız ekler:** `05_defect_catalog.sql` `ON CONFLICT DO NOTHING`;
+  yeniden çalıştırma kalite ekibinin katalog düzenlemelerini geri almaz.
+
 ## Değişmeyen / Yeniden Kullanılacaklar
 
 Şunlara **dokunulmuyor**, olduğu gibi kalıyor: JWT auth + bcrypt (üstteki JWT_SECRET ve iptal sıkılaştırmaları hariç), CORS allowlist mimarisi, Unit-of-Work (pgx.Tx) transaction pattern, `.cursor/rules` (commit ve environment-check kuralları), Analysis sekmesi temel yapısı (VIN×severity kırılımı, Pie/Bar chart'lar — yeni station/EOL alanlarıyla genişleyecek ama sıfırdan kurulmayacak), Docker/migration/seed altyapısı.

@@ -102,6 +102,8 @@ func writeError(w http.ResponseWriter, err error) {
 		errors.Is(err, domain.ErrLastActiveManager),
 		errors.Is(err, domain.ErrEmailTaken),
 		errors.Is(err, domain.ErrDefectCatalogueCodeTaken),
+		errors.Is(err, domain.ErrDefectPartNameTaken),
+		errors.Is(err, domain.ErrDefectTypeNameTaken),
 		errors.Is(err, domain.ErrTemplateItemNoConflict):
 		writeJSON(w, http.StatusConflict, errorResponse{Error: err.Error()})
 	case errors.Is(err, domain.ErrNotFound):
@@ -161,6 +163,8 @@ func writeError(w http.ResponseWriter, err error) {
 		errors.Is(err, domain.ErrDefectZoneInactive),
 		errors.Is(err, domain.ErrDefectZoneClosedForParts),
 		errors.Is(err, domain.ErrDefectCatalogueProtected),
+		errors.Is(err, domain.ErrDefectPartCodeFormat),
+		errors.Is(err, domain.ErrDefectTypeCodeFormat),
 		errors.Is(err, domain.ErrPromoteOtherKindInvalid),
 		errors.Is(err, domain.ErrPromoteOtherNameRequired),
 		errors.Is(err, domain.ErrEmailInvalid),

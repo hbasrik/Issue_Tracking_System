@@ -122,6 +122,15 @@ var (
 	// ErrDefectCatalogueProtected indicates a change that would disable or
 	// relocate the "Other" catch-all rows, or put another part in its zone.
 	ErrDefectCatalogueProtected = errors.New("the Other catalogue rows are protected")
+	// ErrDefectPartCodeFormat indicates a part code that is not "<zone code>-NN".
+	ErrDefectPartCodeFormat = errors.New("part code must be the zone code, a dash and two digits")
+	// ErrDefectTypeCodeFormat indicates a defect type code that is not two digits.
+	ErrDefectTypeCodeFormat = errors.New("defect type code must be two digits")
+	// ErrDefectPartNameTaken indicates another part in the same zone already
+	// uses this name (case and surrounding spaces ignored).
+	ErrDefectPartNameTaken = errors.New("a part with this name already exists in the zone")
+	// ErrDefectTypeNameTaken indicates another defect type already uses this name.
+	ErrDefectTypeNameTaken = errors.New("a defect type with this name already exists")
 	// ErrDefectProcessRequired indicates responsible process missing on edit.
 	ErrDefectProcessRequired = errors.New("responsible process is required")
 	// ErrDefectProcessInactive indicates selected process is inactive.

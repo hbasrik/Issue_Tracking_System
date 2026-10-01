@@ -97,6 +97,28 @@ func (c *lifecycleCatalog) UpdatePart(_ context.Context, p *domain.DefectPart) e
 	return nil
 }
 
+func (c *lifecycleCatalog) ListParts(_ context.Context, zoneID *int) ([]domain.DefectPart, error) {
+	var out []domain.DefectPart
+	for _, p := range c.parts {
+		if zoneID == nil || p.ZoneID == *zoneID {
+			out = append(out, *p)
+		}
+	}
+	return out, nil
+}
+
+func (c *lifecycleCatalog) ListTypes(_ context.Context) ([]domain.DefectType, error) {
+	var out []domain.DefectType
+	for _, t := range c.types {
+		out = append(out, *t)
+	}
+	return out, nil
+}
+
+func (c *lifecycleCatalog) CreateType(_ context.Context, _ *domain.DefectType) (int, error) {
+	return 2000, nil
+}
+
 func (c *lifecycleCatalog) UpdateZone(_ context.Context, _ *domain.DefectZone) error { return nil }
 func (c *lifecycleCatalog) UpdateType(_ context.Context, _ *domain.DefectType) error { return nil }
 
