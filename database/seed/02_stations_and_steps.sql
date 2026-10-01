@@ -1,5 +1,9 @@
 -- Eight station steps per station (64 total). Same content as the former
 -- checkpoints seed, remapped onto station_steps.
+-- Insert-only: existing steps are never updated, so renamed or deactivated
+-- steps survive a re-run. Stations are located by sequence_no, not by name,
+-- so a renamed station still receives its missing steps. (station_id,
+-- sequence_no) is stable: no code path renumbers stations or steps.
 WITH step_seed (sequence_no, station_name, step_name) AS (
     VALUES
         (1::SMALLINT, 'Body and Frame Station', 'Underbody dimensional inspection'),
@@ -73,6 +77,17 @@ WITH step_seed (sequence_no, station_name, step_name) AS (
         (6, 'Final Assembly Station', 'Water ingress test'),
         (7, 'Final Assembly Station', 'Final torque audit'),
         (8, 'Final Assembly Station', 'Production completion inspection')
+),
+station_seed (station_name, station_sequence_no) AS (
+    VALUES
+        ('Body and Frame Station', 1::SMALLINT),
+        ('Paint Preparation Station', 2::SMALLINT),
+        ('Chassis Assembly Station', 3::SMALLINT),
+        ('High Voltage System Station', 4::SMALLINT),
+        ('Interior Assembly Station', 5::SMALLINT),
+        ('Exterior Assembly Station', 6::SMALLINT),
+        ('Electrical Integration Station', 7::SMALLINT),
+        ('Final Assembly Station', 8::SMALLINT)
 )
 INSERT INTO station_steps (
     station_id,
@@ -86,8 +101,8 @@ SELECT
     seed.step_name,
     TRUE
 FROM step_seed seed
+JOIN station_seed
+  ON station_seed.station_name = seed.station_name
 JOIN stations station
-  ON station.name = seed.station_name
-ON CONFLICT (station_id, sequence_no) DO UPDATE
-SET name = EXCLUDED.name,
-    is_active = EXCLUDED.is_active;
+  ON station.sequence_no = station_seed.station_sequence_no
+ON CONFLICT (station_id, sequence_no) DO NOTHING;
