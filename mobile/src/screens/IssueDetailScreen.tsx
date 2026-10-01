@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   DeviceEventEmitter,
   Image,
@@ -41,6 +41,7 @@ import {
 } from '../components/ui';
 import {
   DefectClassificationFields,
+  savedClassificationFromIssue,
   type DefectClassificationState,
 } from '../components/DefectClassificationFields';
 import { SeverityIndicator } from '../components/SeverityIndicator';
@@ -128,9 +129,6 @@ export default function IssueDetailScreen() {
     customPartName: '',
     customDefectName: '',
   });
-  // Not shown in the UI, but UpdateClassification overwrites the stored
-  // process with whatever is sent, so it must still be submitted.
-  const [processId, setProcessId] = useState<number | null>(null);
   const [catalogParts, setCatalogParts] = useState<DefectPart[]>([]);
   const [catalogTypes, setCatalogTypes] = useState<DefectType[]>([]);
   const [resolutionPhotos, setResolutionPhotos] = useState<MediaAttachment[]>([]);
@@ -299,6 +297,11 @@ export default function IssueDetailScreen() {
     }
   }
 
+  const savedClassification = useMemo(
+    () => (issue ? savedClassificationFromIssue(issue) : undefined),
+    [issue],
+  );
+
   if (!issue && !error && !offlineHint) return <Loading />;
 
   async function applyStatus(status: Issue['Status']) {
@@ -368,7 +371,6 @@ export default function IssueDetailScreen() {
       customPartName: issue.CustomPartName ?? '',
       customDefectName: issue.CustomDefectName ?? '',
     });
-    setProcessId(issue.ResponsibleProcessID ?? null);
     setEditingClassification(true);
   }
 
@@ -394,7 +396,6 @@ export default function IssueDetailScreen() {
       const updated = await api.updateIssueClassification(issue.ID, {
         defect_part_id: classState.partId,
         defect_type_id: classState.typeId,
-        responsible_process_id: processId,
         custom_part_name: isOtherPartCode(part?.Code)
           ? classState.customPartName.trim()
           : undefined,
@@ -476,17 +477,10 @@ export default function IssueDetailScreen() {
                     customPartName={classState.customPartName}
                     customDefectName={classState.customDefectName}
                     onChange={(patch) => {
-                      setClassState((prev) => {
-                        const next = { ...prev, ...patch };
-                        if (patch.typeId != null) {
-                          const typ = catalogTypes.find((ty) => ty.ID === patch.typeId);
-                          if (typ?.DefaultProcessID) setProcessId(typ.DefaultProcessID);
-                          else setProcessId(null);
-                        }
-                        return next;
-                      });
+                      setClassState((prev) => ({ ...prev, ...patch }));
                     }}
                     locale={locale}
+                    saved={savedClassification}
                     onCatalogLoaded={(parts, types) => {
                       setCatalogParts(parts);
                       setCatalogTypes(types);

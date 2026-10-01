@@ -9,6 +9,8 @@ import {
 import {
   type DefectPart,
   type DefectType,
+  type DefectZone,
+  type Issue,
 } from '../api/client';
 import { AppTextInput, InfoText, Subtitle } from './ui';
 import { useTheme } from '../theme/ThemeProvider';
@@ -48,6 +50,61 @@ interface DefectClassificationFieldsProps {
   locale: Locale;
   /** Called once after zones/parts/types are loaded (for parent validation). */
   onCatalogLoaded?: (parts: DefectPart[], types: DefectType[]) => void;
+  /** Saved values of an existing issue, offered even if since deactivated. */
+  saved?: SavedClassification;
+}
+
+export interface SavedClassification {
+  zone?: DefectZone;
+  part?: DefectPart;
+  type?: DefectType;
+}
+
+/**
+ * Rebuilds the issue's saved zone/part/type from its snapshot fields so the
+ * editor can keep them after deactivation (the backend validates only
+ * changed fields). Entries still in the active catalogue are ignored.
+ */
+export function savedClassificationFromIssue(issue: Issue): SavedClassification {
+  // DefectCode is "<part code>-<type code>", e.g. 10-03-05.
+  const code = issue.DefectCode ?? '';
+  const cut = code.lastIndexOf('-');
+  const out: SavedClassification = {};
+  if (issue.DefectZoneID != null) {
+    out.zone = {
+      ID: issue.DefectZoneID,
+      Code: '',
+      NameTR: issue.DefectZoneNameTR ?? '',
+      NameEN: issue.DefectZoneNameEN ?? '',
+      IsActive: false,
+    };
+    if (issue.DefectPartID != null) {
+      out.part = {
+        ID: issue.DefectPartID,
+        ZoneID: issue.DefectZoneID,
+        Code: cut > 0 ? code.slice(0, cut) : '',
+        NameTR: issue.DefectPartNameTR ?? '',
+        NameEN: issue.DefectPartNameEN ?? '',
+        IsActive: false,
+        ZoneNameTR: issue.DefectZoneNameTR,
+        ZoneNameEN: issue.DefectZoneNameEN,
+      };
+    }
+  }
+  if (issue.DefectTypeID != null) {
+    out.type = {
+      ID: issue.DefectTypeID,
+      Code: cut > 0 ? code.slice(cut + 1) : '',
+      NameTR: issue.DefectTypeNameTR ?? '',
+      NameEN: issue.DefectTypeNameEN ?? '',
+      IsActive: false,
+    };
+  }
+  return out;
+}
+
+function codePrefix(code: string): string {
+  return code ? `${code} · ` : '';
 }
 
 function localizedName(
@@ -63,7 +120,7 @@ function partLabel(part: DefectPart, locale: Locale): string {
     locale,
   );
   const name = localizedName(part, locale);
-  return zone ? `${part.Code} · ${name} (${zone})` : `${part.Code} · ${name}`;
+  return zone ? `${codePrefix(part.Code)}${name} (${zone})` : `${codePrefix(part.Code)}${name}`;
 }
 
 export function isDefectClassificationComplete(
@@ -94,14 +151,46 @@ export function DefectClassificationFields({
   onChange,
   locale,
   onCatalogLoaded,
+  saved,
 }: DefectClassificationFieldsProps) {
   const { tokens } = useTheme();
   const { t } = useI18n();
   const { snapshot, ready } = useReferenceCache();
 
-  const zones = snapshot.zones;
-  const allParts = snapshot.parts;
-  const types = snapshot.types;
+  // An older cache may still hold parts of a zone deactivated since; a part
+  // is offered only while its zone is in the active zone list.
+  const activeZoneIds = useMemo(
+    () => new Set(snapshot.zones.map((z) => z.ID)),
+    [snapshot.zones],
+  );
+  const activeParts = useMemo(
+    () =>
+      snapshot.parts.filter(
+        (p) => activeZoneIds.has(p.ZoneID) && p.ZoneIsActive !== false,
+      ),
+    [snapshot.parts, activeZoneIds],
+  );
+
+  const keptZone =
+    saved?.zone && !snapshot.zones.some((z) => z.ID === saved.zone?.ID) ? saved.zone : null;
+  const keptPart =
+    saved?.part && !activeParts.some((p) => p.ID === saved.part?.ID) ? saved.part : null;
+  const keptType =
+    saved?.type && !snapshot.types.some((ty) => ty.ID === saved.type?.ID) ? saved.type : null;
+
+  const zones = useMemo(
+    () => (keptZone ? [...snapshot.zones, keptZone] : snapshot.zones),
+    [snapshot.zones, keptZone],
+  );
+  const allParts = useMemo(
+    () => (keptPart ? [...activeParts, keptPart] : activeParts),
+    [activeParts, keptPart],
+  );
+  const types = useMemo(
+    () => (keptType ? [...snapshot.types, keptType] : snapshot.types),
+    [snapshot.types, keptType],
+  );
+  const inactiveSuffix = t('catalog.inactiveSuffix');
   const loading = !ready && zones.length === 0;
   const emptyCache = ready && zones.length === 0 && allParts.length === 0;
 
@@ -114,8 +203,13 @@ export function DefectClassificationFields({
   onCatalogLoadedRef.current = onCatalogLoaded;
 
   useEffect(() => {
-    onCatalogLoadedRef.current?.(snapshot.parts, snapshot.types);
-  }, [snapshot.parts, snapshot.types]);
+    onCatalogLoadedRef.current?.(allParts, types);
+  }, [allParts, types]);
+
+  const keepingInactive =
+    (keptZone != null && zoneId === keptZone.ID) ||
+    (keptPart != null && partId === keptPart.ID) ||
+    (keptType != null && typeId === keptType.ID);
 
   const selectedZone = zones.find((z) => z.ID === zoneId) ?? null;
   const selectedPart = allParts.find((p) => p.ID === partId) ?? null;
@@ -129,7 +223,7 @@ export function DefectClassificationFields({
   const searchResults = useMemo(() => {
     const q = partSearch.trim().toLowerCase();
     if (q.length < 1) return [];
-    return allParts.filter((p) => {
+    return activeParts.filter((p) => {
       const haystack = [
         p.Code,
         p.NameTR,
@@ -142,7 +236,7 @@ export function DefectClassificationFields({
         .toLowerCase();
       return haystack.includes(q);
     });
-  }, [allParts, partSearch]);
+  }, [activeParts, partSearch]);
 
   const showCustomPart = isOtherPartCode(selectedPart?.Code);
   const showCustomDefect = isOtherTypeCode(selectedType?.Code);
@@ -184,7 +278,9 @@ export function DefectClassificationFields({
           }}
         >
           {selectedZone
-            ? `${selectedZone.Code} · ${localizedName(selectedZone, locale)}`
+            ? `${codePrefix(selectedZone.Code)}${localizedName(selectedZone, locale)}${
+                selectedZone.ID === keptZone?.ID ? inactiveSuffix : ''
+              }`
             : t('report.zone')}
         </Text>
       </Pressable>
@@ -255,7 +351,9 @@ export function DefectClassificationFields({
           }}
         >
           {selectedPart
-            ? `${selectedPart.Code} · ${localizedName(selectedPart, locale)}`
+            ? `${codePrefix(selectedPart.Code)}${localizedName(selectedPart, locale)}${
+                selectedPart.ID === keptPart?.ID ? inactiveSuffix : ''
+              }`
             : t('report.part')}
         </Text>
       </Pressable>
@@ -272,10 +370,14 @@ export function DefectClassificationFields({
           }}
         >
           {selectedType
-            ? `${selectedType.Code} · ${localizedName(selectedType, locale)}`
+            ? `${codePrefix(selectedType.Code)}${localizedName(selectedType, locale)}${
+                selectedType.ID === keptType?.ID ? inactiveSuffix : ''
+              }`
             : t('report.defectType')}
         </Text>
       </Pressable>
+
+      {keepingInactive ? <InfoText>{t('catalog.keptInactiveHint')}</InfoText> : null}
 
       {showCustomPart ? (
         <>
@@ -344,7 +446,9 @@ export function DefectClassificationFields({
                   style={sheetRowStyle(tokens)}
                 >
                   <Text style={{ color: tokens.textPrimary, fontSize: 15 }}>
-                    {z.Code} · {localizedName(z, locale)}
+                    {codePrefix(z.Code)}
+                    {localizedName(z, locale)}
+                    {z.ID === keptZone?.ID ? inactiveSuffix : ''}
                   </Text>
                 </Pressable>
               ))}
@@ -368,7 +472,9 @@ export function DefectClassificationFields({
                   style={sheetRowStyle(tokens)}
                 >
                   <Text style={{ color: tokens.textPrimary, fontSize: 15 }}>
-                    {p.Code} · {localizedName(p, locale)}
+                    {codePrefix(p.Code)}
+                    {localizedName(p, locale)}
+                    {p.ID === keptPart?.ID ? inactiveSuffix : ''}
                   </Text>
                 </Pressable>
               ))}
@@ -399,7 +505,9 @@ export function DefectClassificationFields({
                   style={sheetRowStyle(tokens)}
                 >
                   <Text style={{ color: tokens.textPrimary, fontSize: 15 }}>
-                    {dt.Code} · {localizedName(dt, locale)}
+                    {codePrefix(dt.Code)}
+                    {localizedName(dt, locale)}
+                    {dt.ID === keptType?.ID ? inactiveSuffix : ''}
                   </Text>
                 </Pressable>
               ))}
