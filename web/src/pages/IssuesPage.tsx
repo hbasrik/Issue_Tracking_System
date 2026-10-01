@@ -330,9 +330,10 @@ export default function IssuesPage() {
   const loadCatalogs = useCallback(async () => {
     const [typesRes, zonesRes, partsRes, defectTypesRes] = await Promise.all([
       api.listIssueTypes().catch(() => ({ items: [] as IssueType[] })),
-      api.listDefectCatalogZones().catch(() => ({ items: [] as DefectZone[] })),
-      api.listDefectCatalogParts().catch(() => ({ items: [] as DefectPart[] })),
-      api.listDefectCatalogTypes().catch(() => ({ items: [] as DefectType[] })),
+      // Filters include retired values so old issues stay findable.
+      api.listDefectCatalogZones(true).catch(() => ({ items: [] as DefectZone[] })),
+      api.listDefectCatalogParts(undefined, true).catch(() => ({ items: [] as DefectPart[] })),
+      api.listDefectCatalogTypes(true).catch(() => ({ items: [] as DefectType[] })),
     ]);
     setIssueTypes(typesRes.items ?? []);
     setDefectZones(zonesRes.items ?? []);
@@ -1339,9 +1340,10 @@ export default function IssuesPage() {
                       const selected =
                         !homeStat && !analysisStat && defectZoneIds.has(z.ID);
                       const label =
-                        locale === 'en'
+                        (locale === 'en'
                           ? z.NameEN || z.NameTR
-                          : z.NameTR || z.NameEN;
+                          : z.NameTR || z.NameEN) +
+                        (z.IsActive ? '' : t('catalog.inactiveSuffix'));
                       return (
                         <button
                           key={z.ID}
@@ -1386,9 +1388,10 @@ export default function IssuesPage() {
                     const selected =
                       !homeStat && !analysisStat && defectTypeIds.has(ty.ID);
                     const label =
-                      locale === 'en'
+                      (locale === 'en'
                         ? ty.NameEN || ty.NameTR
-                        : ty.NameTR || ty.NameEN;
+                        : ty.NameTR || ty.NameEN) +
+                      (ty.IsActive ? '' : t('catalog.inactiveSuffix'));
                     return (
                       <button
                         key={ty.ID}

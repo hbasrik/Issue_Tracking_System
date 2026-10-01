@@ -4,7 +4,8 @@ import { useI18n } from '../i18n';
 import type { DefectPart } from '../lib/api';
 import { AnchoredPopover } from './AnchoredPopover';
 
-type PartOption = Pick<DefectPart, 'ID' | 'ZoneID' | 'NameTR' | 'NameEN'>;
+type PartOption = Pick<DefectPart, 'ID' | 'ZoneID' | 'NameTR' | 'NameEN'> &
+  Partial<Pick<DefectPart, 'IsActive' | 'ZoneIsActive'>>;
 
 interface PartMultiSelectProps {
   parts: PartOption[];
@@ -15,8 +16,10 @@ interface PartMultiSelectProps {
   disabled?: boolean;
 }
 
-function partLabel(p: PartOption, locale: string): string {
-  return locale === 'en' ? p.NameEN || p.NameTR : p.NameTR || p.NameEN;
+function partLabel(p: PartOption, locale: string, inactiveSuffix: string): string {
+  const name = locale === 'en' ? p.NameEN || p.NameTR : p.NameTR || p.NameEN;
+  const inactive = p.IsActive === false || p.ZoneIsActive === false;
+  return inactive ? `${name}${inactiveSuffix}` : name;
 }
 
 /**
@@ -33,6 +36,7 @@ export function PartMultiSelect({
   disabled = false,
 }: PartMultiSelectProps) {
   const { t, locale } = useI18n();
+  const inactiveSuffix = t('catalog.inactiveSuffix');
   const triggerRef = useRef<HTMLButtonElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const listboxId = useId();
@@ -47,8 +51,10 @@ export function PartMultiSelect({
         : parts.filter((p) => zoneIds.has(p.ZoneID));
     const q = query.trim().toLocaleLowerCase(locale === 'en' ? 'en' : 'tr');
     if (!q) return scoped;
-    return scoped.filter((p) => partLabel(p, locale).toLocaleLowerCase().includes(q));
-  }, [parts, zoneIds, query, locale]);
+    return scoped.filter((p) =>
+      partLabel(p, locale, inactiveSuffix).toLocaleLowerCase().includes(q),
+    );
+  }, [parts, zoneIds, query, locale, inactiveSuffix]);
 
   const selectedParts = useMemo(
     () => parts.filter((p) => selectedIds.has(p.ID)),
@@ -137,7 +143,7 @@ export function PartMultiSelect({
                 color: 'var(--text-primary)',
               }}
             >
-              <span className="truncate">{partLabel(p, locale)}</span>
+              <span className="truncate">{partLabel(p, locale, inactiveSuffix)}</span>
               <button
                 type="button"
                 disabled={disabled}
@@ -249,7 +255,7 @@ export function PartMultiSelect({
                   >
                     ✓
                   </span>
-                  <span className="truncate">{partLabel(p, locale)}</span>
+                  <span className="truncate">{partLabel(p, locale, inactiveSuffix)}</span>
                 </div>
               );
             })
