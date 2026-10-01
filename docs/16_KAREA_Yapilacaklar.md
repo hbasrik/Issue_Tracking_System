@@ -590,13 +590,19 @@ kapatıldı. Kararlar `docs/11` Karar 18 ve 19.
   filtreleri pasif değerleri "(pasif)" etiketiyle listeler
   (`?include_inactive=1`), eski hatalar onlarla da süzülebilir.
 - **Yayın sırası:** kod eski şemada çalışır. Önce API yeniden başlatılır,
-  sonra 0033 uygulanır; kesinti yok. 0033 canlıda 99-99 satırının
-  `zone_id`'sini değiştirir ve bir bölge satırı ekler; bu yazma
-  uygulandığında olur, bu görevde canlıya dokunulmadı.
+  sonra 0033 uygulanır; kesinti yok.
+- **Canlıya uygulandı (2026-10-01):** API güncel kodla yeniden
+  başlatıldıktan sonra `migrate up 1` (v32 → v33, 35 ms, API yanıt vermeye
+  devam etti). Bölge 99 "Diğer" eklendi (id 10); 99-99 (id 1) Body'den bu
+  bölgeye taşındı. Tek "Diğer" hatası (38) ve 27 hatanın tamamının
+  sınıflandırma alanları önce/sonra birebir aynı (md5). "Diğer" koruması
+  canlıda salt okunur işlemde gerçek yönetim koduyla doğrulandı: 7 deneme
+  (bölge/parça/tip pasife alma, silme, 99-99 taşıma) reddedildi.
 Kanıt: `docs/screenshots/catalog-fixes/`: `verification-output.txt`
 (ayrı test DB'de 0033 öncesi/sonrası, down/up turu, tüm senaryolar),
 `capture-output.txt` + web ekran görüntüleri (düzenleyici, filtre, yönetim),
-`error-messages-output.txt`, `build-output.txt`. Mobil cihaz görüntüsü
+`error-messages-output.txt`, `build-output.txt`, `live-0033-apply.txt` +
+`live-0033-snapshot.sql` (canlı uygulama). Mobil cihaz görüntüsü
 alınmadı; mobil yalnız tip denetimiyle doğrulandı.
 
 ---

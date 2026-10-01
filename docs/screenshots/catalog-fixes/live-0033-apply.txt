@@ -1,0 +1,118 @@
+# Migration 0033 applied to the live DB (localhost:5432/karea) — 2026-10-01
+# Order (docs/19 §6 path A): API already restarted on current code (pid 56238, started 11:13:12,
+# after HEAD 5174376 11:07:22), then the migration. All checks read-only: psql with
+# default_transaction_read_only=on; protection check through the real DefectCatalogAdmin inside
+# BEGIN READ ONLY on a read-only connection, rolled back. No login, no token, no API write.
+
+## BEFORE (live-0033-snapshot.sql)
+  db   | read_only 
+-------+-----------
+ karea | on
+
+ version | dirty 
+---------+-------
+      32 | f
+
+ id | code | name_tr  |  name_en   | sort_order | is_active 
+----+------+----------+------------+------------+-----------
+  1 | 10   | Body     | Body       |          1 | t
+  2 | 20   | Şasi     | Chassis    |          2 | t
+  3 | 30   | Trim     | Trim       |          3 | t
+  4 | 40   | Elektrik | Electrical |          4 | t
+
+ id | code  | name_tr | is_active | zone_id | zone_code | zone_name 
+----+-------+---------+-----------+---------+-----------+-----------
+  1 | 99-99 | Diğer   | t         |       1 | 10        | Body
+
+ zone_code | parts 
+-----------+-------
+ 10        |    10
+ 20        |     3
+ 30        |     7
+ 40        |     4
+
+ id | defect_part_id | defect_type_id | responsible_process_id | defect_code | defect_part_name_tr | defect_type_name_tr | custom_part_name | custom_defect_name |          updated_at           
+----+----------------+----------------+------------------------+-------------+---------------------+---------------------+------------------+--------------------+-------------------------------
+ 38 |              1 |              7 |                      3 | 99-99-03    |                     |                     | test parcasi     |                    | 2026-09-28 10:37:47.254615+00
+
+  all_issues_classification_md5   | issues 
+----------------------------------+--------
+ 5d955fc7ee7ef4e2cb9ea461d5338632 |     27
+
+## MIGRATE: ~/go/bin/migrate -path database/migrations -database $DATABASE_URL up 1
+33/u other_part_own_zone (34.812084ms)
+migrate exit=0
+API answered all 40 probes during the migration (probe path /api/v1/health -> 404 route-not-found; /health afterwards -> 200)
+
+## AFTER
+  db   | read_only 
+-------+-----------
+ karea | on
+
+ version | dirty 
+---------+-------
+      33 | f
+
+ id | code | name_tr  |  name_en   | sort_order | is_active 
+----+------+----------+------------+------------+-----------
+  1 | 10   | Body     | Body       |          1 | t
+  2 | 20   | Şasi     | Chassis    |          2 | t
+  3 | 30   | Trim     | Trim       |          3 | t
+  4 | 40   | Elektrik | Electrical |          4 | t
+ 10 | 99   | Diğer    | Other      |         99 | t
+
+ id | code  | name_tr | is_active | zone_id | zone_code | zone_name 
+----+-------+---------+-----------+---------+-----------+-----------
+  1 | 99-99 | Diğer   | t         |      10 | 99        | Diğer
+
+ zone_code | parts 
+-----------+-------
+ 10        |     9
+ 20        |     3
+ 30        |     7
+ 40        |     4
+ 99        |     1
+
+ id | defect_part_id | defect_type_id | responsible_process_id | defect_code | defect_part_name_tr | defect_type_name_tr | custom_part_name | custom_defect_name |          updated_at           
+----+----------------+----------------+------------------------+-------------+---------------------+---------------------+------------------+--------------------+-------------------------------
+ 38 |              1 |              7 |                      3 | 99-99-03    |                     |                     | test parcasi     |                    | 2026-09-28 10:37:47.254615+00
+
+  all_issues_classification_md5   | issues 
+----------------------------------+--------
+ 5d955fc7ee7ef4e2cb9ea461d5338632 |     27
+
+## diff BEFORE -> AFTER
+7c7
+<       32 | f
+---
+>       33 | f
+14a15
+>  10 | 99   | Diğer    | Other      |         99 | t
+18c19
+<   1 | 99-99 | Diğer   | t         |       1 | 10        | Body
+---
+>   1 | 99-99 | Diğer   | t         |      10 | 99        | Diğer
+22c23
+<  10        |    10
+---
+>  10        |     9
+25a27
+>  99        |     1
+
+## 'Diğer' protection (temporary test, not committed: TestLiveReadOnlyOtherProtection)
+=== RUN   TestLiveReadOnlyOtherProtection
+    zz_live_other_protect_test.go:47: transaction_read_only=on schema_migrations=33
+    zz_live_other_protect_test.go:76: zone 99 id=10 | part 99-99 id=1 zone_id=10 | type 99 id=10
+    zz_live_other_protect_test.go:101: deactivate zone 99           -> the Other catalogue rows are protected (protected=true)
+    zz_live_other_protect_test.go:101: delete zone 99               -> the Other catalogue rows are protected (protected=true)
+    zz_live_other_protect_test.go:101: deactivate part 99-99        -> the Other catalogue rows are protected (protected=true)
+    zz_live_other_protect_test.go:101: move part 99-99 to zone 20   -> the Other catalogue rows are protected (protected=true)
+    zz_live_other_protect_test.go:101: delete part 99-99            -> the Other catalogue rows are protected (protected=true)
+    zz_live_other_protect_test.go:101: deactivate type 99           -> the Other catalogue rows are protected (protected=true)
+    zz_live_other_protect_test.go:101: delete type 99               -> the Other catalogue rows are protected (protected=true)
+--- PASS: TestLiveReadOnlyOtherProtection (0.03s)
+PASS
+ok  	github.com/karea/backend/internal/repository/postgres	0.851s
+
+## Snapshot again after the protection check
+identical to AFTER (no catalogue or issue change)
