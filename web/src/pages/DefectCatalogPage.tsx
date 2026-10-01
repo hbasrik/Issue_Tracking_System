@@ -14,6 +14,13 @@ import { ActiveBadge } from '../components/ActiveBadge';
 import { useConfirm } from '../components/ConfirmDialog';
 import { useI18n } from '../i18n';
 import { isOtherPartCode, isOtherTypeCode } from '../lib/issueDefectValidation';
+import {
+  isValidPartCode,
+  isValidTypeCode,
+  nextPartCode,
+  nextTypeCode,
+  sameCatalogueName,
+} from '../../../shared/defectCatalogCodes';
 
 type Tab = 'zones' | 'parts' | 'types' | 'processes' | 'other';
 
@@ -61,6 +68,8 @@ export default function DefectCatalogPage() {
   const [hideInactive, setHideInactive] = useState(true);
   const [draft, setDraft] = useState<Draft>(emptyDraft());
   const [editId, setEditId] = useState<number | null>(null);
+  // A new row gets a suggested code until the user types one.
+  const [codeTouched, setCodeTouched] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -71,6 +80,7 @@ export default function DefectCatalogPage() {
     group: DefectOtherUsageGroup;
   } | null>(null);
   const [promoteCode, setPromoteCode] = useState('');
+  const [promoteCodeTouched, setPromoteCodeTouched] = useState(false);
   const [promoteNameTR, setPromoteNameTR] = useState('');
   const [promoteNameEN, setPromoteNameEN] = useState('');
   const [promoteZoneId, setPromoteZoneId] = useState<number | ''>('');
@@ -112,6 +122,7 @@ export default function DefectCatalogPage() {
 
   function startCreate() {
     setEditId(null);
+    setCodeTouched(false);
     const base = emptyDraft();
     if (tab === 'parts' && filterZone !== '') base.zone_id = filterZone;
     setDraft(base);
@@ -128,6 +139,7 @@ export default function DefectCatalogPage() {
     DefaultProcessID?: number | null;
   }) {
     setEditId(row.ID);
+    setCodeTouched(true);
     setDraft({
       code: row.Code,
       name_tr: row.NameTR,
@@ -367,6 +379,102 @@ export default function DefectCatalogPage() {
     );
   }, [zones, parts, editId, draft.code]);
 
+  const suggestedCode = useMemo(() => {
+    if (editId != null) return null;
+    if (tab === 'parts') {
+      const zone = zones.find((z) => z.ID === draft.zone_id);
+      if (!zone || zone.Code === OTHER_ZONE_CODE) return null;
+      return nextPartCode(zone.Code, parts.map((p) => p.Code));
+    }
+    if (tab === 'types') return nextTypeCode(types.map((ty) => ty.Code));
+    return null;
+  }, [tab, editId, zones, parts, types, draft.zone_id]);
+
+  useEffect(() => {
+    if (editId == null) setCodeTouched(false);
+  }, [editId, tab]);
+
+  useEffect(() => {
+    if (codeTouched || suggestedCode == null) return;
+    setDraft((d) => (d.code === suggestedCode ? d : { ...d, code: suggestedCode }));
+  }, [suggestedCode, codeTouched]);
+
+  // Mirrors the backend rules (docs/11 Karar 20): only a new or changed code
+  // and a new or changed name are checked, so legacy rows stay editable.
+  const draftProblems = useMemo(() => {
+    const out: { code?: string; name?: string } = {};
+    if (tab !== 'parts' && tab !== 'types') return out;
+    const code = draft.code.trim();
+    const nameTR = draft.name_tr;
+    const nameEN = draft.name_en;
+    if (tab === 'parts') {
+      const current = editId != null ? parts.find((p) => p.ID === editId) : undefined;
+      const zone = zones.find((z) => z.ID === draft.zone_id);
+      const zoneChanged = !current || current.ZoneID !== draft.zone_id;
+      if (zone && code && !isOtherPartCode(code) && (zoneChanged || current?.Code !== code) &&
+        !isValidPartCode(zone.Code, code)) {
+        out.code = t('error.partCodeFormat', { expected: `${zone.Code}-NN` });
+      }
+      const nameChanged = !current || zoneChanged ||
+        !sameCatalogueName(current.NameTR, nameTR) || !sameCatalogueName(current.NameEN, nameEN);
+      if (zone && nameChanged && parts.some((p) =>
+        p.ZoneID === zone.ID && p.ID !== editId &&
+        ((nameTR.trim() && sameCatalogueName(p.NameTR, nameTR)) ||
+          (nameEN.trim() && sameCatalogueName(p.NameEN, nameEN))))) {
+        out.name = t('error.partNameTaken');
+      }
+    } else {
+      const current = editId != null ? types.find((ty) => ty.ID === editId) : undefined;
+      if (code && current?.Code !== code && !isValidTypeCode(code)) {
+        out.code = t('error.typeCodeFormat');
+      }
+      const nameChanged = !current ||
+        !sameCatalogueName(current.NameTR, nameTR) || !sameCatalogueName(current.NameEN, nameEN);
+      if (nameChanged && types.some((ty) =>
+        ty.ID !== editId &&
+        ((nameTR.trim() && sameCatalogueName(ty.NameTR, nameTR)) ||
+          (nameEN.trim() && sameCatalogueName(ty.NameEN, nameEN))))) {
+        out.name = t('error.typeNameTaken');
+      }
+    }
+    return out;
+  }, [tab, draft, editId, parts, types, zones, t]);
+  const draftBlocked = draftProblems.code != null || draftProblems.name != null;
+
+  const promoteSuggestedCode = useMemo(() => {
+    if (!promoteTarget) return null;
+    if (promoteTarget.kind === 'type') return nextTypeCode(types.map((ty) => ty.Code));
+    const zone = zones.find((z) => z.ID === promoteZoneId);
+    return zone ? nextPartCode(zone.Code, parts.map((p) => p.Code)) : null;
+  }, [promoteTarget, promoteZoneId, zones, parts, types]);
+
+  useEffect(() => {
+    if (promoteCodeTouched || promoteSuggestedCode == null) return;
+    setPromoteCode(promoteSuggestedCode);
+  }, [promoteSuggestedCode, promoteCodeTouched]);
+
+  const promoteProblem = useMemo(() => {
+    if (!promoteTarget) return null;
+    const code = promoteCode.trim();
+    if (promoteTarget.kind === 'type') {
+      if (code && !isValidTypeCode(code)) return t('error.typeCodeFormat');
+      if (types.some((ty) => sameCatalogueName(ty.NameTR, promoteNameTR) || sameCatalogueName(ty.NameEN, promoteNameEN))) {
+        return t('error.typeNameTaken');
+      }
+      return null;
+    }
+    const zone = zones.find((z) => z.ID === promoteZoneId);
+    if (!zone) return null;
+    if (code && !isValidPartCode(zone.Code, code)) {
+      return t('error.partCodeFormat', { expected: `${zone.Code}-NN` });
+    }
+    if (parts.some((p) => p.ZoneID === zone.ID &&
+      (sameCatalogueName(p.NameTR, promoteNameTR) || sameCatalogueName(p.NameEN, promoteNameEN)))) {
+      return t('error.partNameTaken');
+    }
+    return null;
+  }, [promoteTarget, promoteCode, promoteNameTR, promoteNameEN, promoteZoneId, zones, parts, types, t]);
+
   const tabs: { id: Tab; label: string }[] = [
     { id: 'zones', label: t('defects.tabZones') },
     { id: 'parts', label: t('defects.tabParts') },
@@ -378,9 +486,10 @@ export default function DefectCatalogPage() {
   function openPromote(kind: 'part' | 'type', group: DefectOtherUsageGroup) {
     setPromoteTarget({ kind, group });
     setPromoteCode('');
+    setPromoteCodeTouched(false);
     setPromoteNameTR(group.CustomName);
     setPromoteNameEN(group.CustomName);
-    setPromoteZoneId(zones[0]?.ID ?? '');
+    setPromoteZoneId(zones.find((z) => z.IsActive && z.Code !== OTHER_ZONE_CODE)?.ID ?? '');
     setPromoteProcessId(processes.find((p) => p.IsActive)?.ID ?? '');
     setPromoteRebind(true);
   }
@@ -561,8 +670,14 @@ export default function DefectCatalogPage() {
                   className={`${inputClass} mt-1`}
                   style={{ borderColor: 'var(--border)' }}
                   value={promoteCode}
-                  onChange={(e) => setPromoteCode(e.target.value)}
+                  onChange={(e) => {
+                    setPromoteCodeTouched(true);
+                    setPromoteCode(e.target.value);
+                  }}
                 />
+                {promoteSuggestedCode && !promoteCodeTouched ? (
+                  <span className="mt-1 block">{t('defects.codeSuggested', { code: promoteSuggestedCode })}</span>
+                ) : null}
               </label>
               <label className="block text-[12px] text-[var(--text-secondary)]">
                 name_tr
@@ -628,8 +743,11 @@ export default function DefectCatalogPage() {
                 />
                 {t('catalog.rebindIssues', { n: promoteTarget.group.Count })}
               </label>
+              {promoteProblem ? (
+                <p className="text-[12px] text-[var(--status-not-ok)]" role="alert">{promoteProblem}</p>
+              ) : null}
               <div className="flex gap-2">
-                <button type="button" className={btnPrimary} disabled={busy} onClick={() => void runPromote()}>
+                <button type="button" className={btnPrimary} disabled={busy || promoteProblem != null} onClick={() => void runPromote()}>
                   {busy ? t('common.saving') : t('common.save')}
                 </button>
                 <button
@@ -762,8 +880,22 @@ export default function DefectCatalogPage() {
                 className={`${inputClass} mt-1`}
                 style={{ borderColor: 'var(--border)' }}
                 value={draft.code}
-                onChange={(e) => setDraft((d) => ({ ...d, code: e.target.value }))}
+                aria-invalid={draftProblems.code != null}
+                onChange={(e) => {
+                  setCodeTouched(true);
+                  setDraft((d) => ({ ...d, code: e.target.value }));
+                }}
               />
+              {suggestedCode && !codeTouched ? (
+                <span className="mt-1 block" data-testid="catalog-code-suggestion">
+                  {t('defects.codeSuggested', { code: suggestedCode })}
+                </span>
+              ) : null}
+              {draftProblems.code ? (
+                <span className="mt-1 block text-[var(--status-not-ok)]" role="alert" data-testid="catalog-code-problem">
+                  {draftProblems.code}
+                </span>
+              ) : null}
             </label>
             <label className="block text-[12px] text-[var(--text-secondary)]">
               {t('defects.nameTr')}
@@ -783,6 +915,11 @@ export default function DefectCatalogPage() {
                 onChange={(e) => setDraft((d) => ({ ...d, name_en: e.target.value }))}
               />
             </label>
+            {draftProblems.name ? (
+              <p className="text-[12px] text-[var(--status-not-ok)]" role="alert" data-testid="catalog-name-problem">
+                {draftProblems.name}
+              </p>
+            ) : null}
             {tab === 'parts' ? (
               <label className="block text-[12px] text-[var(--text-secondary)]">
                 {t('defects.tabZones')}
@@ -836,7 +973,7 @@ export default function DefectCatalogPage() {
               {t('common.active')}
             </label>
             <div className="flex gap-2 pt-1">
-              <button type="button" className={btnPrimary} disabled={busy} onClick={() => void save()}>
+              <button type="button" className={btnPrimary} disabled={busy || draftBlocked} onClick={() => void save()}>
                 {t('common.save')}
               </button>
               <button
