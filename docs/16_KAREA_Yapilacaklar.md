@@ -713,9 +713,14 @@ yalnız ekler:**
   ekleniyor; ikinci koşum `INSERT 0 0`; 1836 araç ilerleme kaydı aynı
   maddeyi göstermeye devam ediyor.
 - Canlıya alma: önce migration 0034 (kolon ekler, kesinti yok; API kodu
-  kolonu okumuyor), sonra gerekirse seed. Canlıda seed'deki 104 maddenin
-  hepsi aynı şablonda aynı metinle duruyor (salt okunur kontrol), bu
-  yüzden md5 ataması hepsini eşleştiriyor ve seed bir şey eklemiyor.
+  kolonu okumuyor), sonra gerekirse seed.
+- **Canlıya uygulandı (2026-10-01):** `schema_migrations` 33 → 34,
+  `dirty=false`. Varsayılan şablonlardaki 108 maddenin hepsine anahtar
+  yazıldı (104 seed maddesi + 4 seed dışı pasif madde: TEST #44/#45,
+  EoL #16/#17); NULL kalan yok. Seed 03, `BEGIN … ROLLBACK` içinde
+  `INSERT 0 0`. Metin, sıra, aktiflik ve 53000 ilerleme kaydının md5
+  özetleri önce/sonra aynı. Kanıt:
+  `docs/screenshots/seed-insert-only/live-apply-output.txt`.
 - Sınır: seed'in geri eklediği madde/adım için mevcut araçlara PENDING
   ilerleme satırı açılmaz (yönetim ekranındaki ekleme açar). Canlıda
   eksik madde gerekiyorsa yönetim ekranından eklenmeli.

@@ -1,0 +1,77 @@
+Live apply of migration 0034 — 2026-10-01
+
+== BEFORE (read-only, live-snapshot.sql) ==
+                migration                 
+------------------------------------------
+ schema_migrations version=33 dirty=false
+(1 row)
+
+ all_items | active | inactive |         full_fingerprint         |         text_fingerprint         |        order_fingerprint         |        active_fingerprint        
+-----------+--------+----------+----------------------------------+----------------------------------+----------------------------------+----------------------------------
+       108 |    104 |        4 | 77fd6ebef35ac84ed1ec3b5df38f0afa | 79821405764490cc440277cac4484f36 | 32600eb878237a9612d91214c62e34e6 | 5aed41701f444f6c942f20c21f1def07
+(1 row)
+
+                    template                     | items | inactive |           fingerprint            
+-------------------------------------------------+-------+----------+----------------------------------
+ Default Customer Vehicle Checklist (43 items)   |    46 |        0 | 0797d6dbea8f12883381ab056775bb92
+ Default EoL Template (16 items, Branch + Depot) |    17 |        2 | da0c3d71d9db3830f5bccc704cd761f2
+ Default Test Checklist (45 items)               |    45 |        2 | 0d4b067d109f39be44b29d21ac35857b
+(3 rows)
+
+                                    progress                                     
+---------------------------------------------------------------------------------
+ checklist_item_progress rows=53000 fingerprint=3d498e69723b80dcf2b342d69cf09fcc
+(1 row)
+
+== seed_key column before: 0 (information_schema)
+
+== MIGRATE (docker migrate/migrate up) ==
+34/u checklist_item_seed_key (21.990833ms)
+
+== AFTER (read-only, live-snapshot.sql) ==
+                migration                 
+------------------------------------------
+ schema_migrations version=34 dirty=false
+(1 row)
+
+ all_items | active | inactive |         full_fingerprint         |         text_fingerprint         |        order_fingerprint         |        active_fingerprint        
+-----------+--------+----------+----------------------------------+----------------------------------+----------------------------------+----------------------------------
+       108 |    104 |        4 | 77fd6ebef35ac84ed1ec3b5df38f0afa | 79821405764490cc440277cac4484f36 | 32600eb878237a9612d91214c62e34e6 | 5aed41701f444f6c942f20c21f1def07
+(1 row)
+
+                    template                     | items | inactive |           fingerprint            
+-------------------------------------------------+-------+----------+----------------------------------
+ Default Customer Vehicle Checklist (43 items)   |    46 |        0 | 0797d6dbea8f12883381ab056775bb92
+ Default EoL Template (16 items, Branch + Depot) |    17 |        2 | da0c3d71d9db3830f5bccc704cd761f2
+ Default Test Checklist (45 items)               |    45 |        2 | 0d4b067d109f39be44b29d21ac35857b
+(3 rows)
+
+                                    progress                                     
+---------------------------------------------------------------------------------
+ checklist_item_progress rows=53000 fingerprint=3d498e69723b80dcf2b342d69cf09fcc
+(1 row)
+
+== seed_key statistics (read-only) ==
+                                            k                                            |                     v                     
+-----------------------------------------------------------------------------------------+-------------------------------------------
+ seed items (seed file)                                                                  | 104
+ seed items matched by seed_key = md5(seed text)                                         | 104
+ all items with seed_key                                                                 | 108
+ all items with seed_key NULL                                                            | 0
+ seed_key = md5(item_text)                                                               | 108
+ keyed but not in seed: Default Test Checklist (45 items) #44 active=false               | Final road-test driveability sign-off
+ keyed but not in seed: Default Test Checklist (45 items) #45 active=false               | End-of-line test report archive and stamp
+ keyed but not in seed: Default EoL Template (16 items, Branch + Depot) #16 active=false | Test Depo Madde
+ keyed but not in seed: Default EoL Template (16 items, Branch + Depot) #17 active=false | Test Depo Madde 2
+(9 rows)
+
+== seed 03 inside BEGIN ... ROLLBACK ==
+BEGIN
+INSERT 0 0
+ROLLBACK
+
+== snapshot after the rolled-back seed run vs after migration ==
+identical (diff empty)
+
+== before vs after migration (all fingerprints, counts, progress) ==
+identical (diff empty); only schema_migrations changed 33 -> 34
