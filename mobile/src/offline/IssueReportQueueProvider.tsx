@@ -16,7 +16,9 @@ import {
   loadQueue,
   QueueLimitError,
   submitOrQueueIssueReport,
+  updateQueuedClassification,
   type IssueReportPayload,
+  type QueuedClassificationPatch,
   type QueuedIssueReport,
 } from '../lib/issueReportQueue';
 import { overlaySendingStatus } from '../lib/issueReportQueuePolicy';
@@ -38,6 +40,8 @@ interface QueueContextValue {
   ) => Promise<EnqueueResult>;
   flush: (opts?: { id?: string; force?: boolean; afterLogin?: boolean }) => Promise<void>;
   remove: (id: string) => Promise<void>;
+  /** Saves a new classification on a queued report and sends it right away. */
+  reclassify: (id: string, patch: QueuedClassificationPatch) => Promise<void>;
 }
 
 const QueueContext = createContext<QueueContextValue | null>(null);
@@ -145,6 +149,15 @@ export function IssueReportQueueProvider({ children }: { children: ReactNode }) 
     [userId],
   );
 
+  const reclassify = useCallback(
+    async (id: string, patch: QueuedClassificationPatch) => {
+      if (userId == null) return;
+      setItems(await updateQueuedClassification(userId, id, patch));
+      await flush({ id, force: true });
+    },
+    [userId, flush],
+  );
+
   useEffect(() => {
     void refresh();
   }, [refresh]);
@@ -180,8 +193,9 @@ export function IssueReportQueueProvider({ children }: { children: ReactNode }) 
       enqueue,
       flush,
       remove,
+      reclassify,
     }),
-    [visibleItems, flushing, enqueue, flush, remove],
+    [visibleItems, flushing, enqueue, flush, remove, reclassify],
   );
 
   return (

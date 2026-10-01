@@ -255,6 +255,40 @@ export async function deleteQueuedReport(
   );
 }
 
+export type QueuedClassificationPatch = Pick<
+  IssueReportPayload,
+  'defect_part_id' | 'defect_type_id' | 'custom_part_name' | 'custom_defect_name'
+>;
+
+/**
+ * Replaces only the classification of a queued report whose issue was not
+ * created yet and makes it sendable again. Photo, description, VIN and the
+ * idempotency id stay as queued; a rejected create left no server row, so
+ * the same id is safe to reuse.
+ */
+export async function updateQueuedClassification(
+  userId: number,
+  id: string,
+  patch: QueuedClassificationPatch,
+): Promise<QueuedIssueReport[]> {
+  const item = (await loadQueue(userId)).find((row) => row.id === id);
+  if (!item || item.issueId != null) return loadQueue(userId);
+  const payload: IssueReportPayload = {
+    ...item.payload,
+    defect_part_id: patch.defect_part_id,
+    defect_type_id: patch.defect_type_id,
+    custom_part_name: patch.custom_part_name || undefined,
+    custom_defect_name: patch.custom_defect_name || undefined,
+  };
+  return patchItem(userId, id, {
+    payload,
+    status: 'pending',
+    lastError: undefined,
+    lastErrorCode: undefined,
+    nextAttemptAt: undefined,
+  });
+}
+
 function errorMessage(err: unknown): string {
   if (err instanceof ApiError) {
     return err.message;
