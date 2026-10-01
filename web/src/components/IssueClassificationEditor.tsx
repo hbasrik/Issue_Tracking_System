@@ -21,6 +21,78 @@ function nameOf(tr: string, en: string, locale: string) {
   return locale === 'en' ? en || tr : tr || en;
 }
 
+type KeptIds = { zone?: number; part?: number; type?: number };
+
+/**
+ * The issue's saved zone/part/type may have been deactivated since; the
+ * active pickers no longer list them. Rebuild them from the issue so the
+ * user can keep the saved value (the backend only validates changed fields).
+ */
+function keptInactiveOptions(
+  issue: Issue,
+  zones: DefectZone[],
+  parts: DefectPart[],
+  types: DefectType[],
+): { ids: KeptIds; zones: DefectZone[]; parts: DefectPart[]; types: DefectType[] } {
+  const ids: KeptIds = {};
+  const out = { zones: [] as DefectZone[], parts: [] as DefectPart[], types: [] as DefectType[] };
+  // DefectCode is "<part code>-<type code>", e.g. 10-03-05.
+  const code = issue.DefectCode ?? '';
+  const cut = code.lastIndexOf('-');
+  const partCode = cut > 0 ? code.slice(0, cut) : '';
+  const typeCode = cut > 0 ? code.slice(cut + 1) : '';
+  const zoneId = issue.DefectZoneID;
+  if (zoneId != null && !zones.some((z) => z.ID === zoneId)) {
+    ids.zone = zoneId;
+    out.zones.push({
+      ID: zoneId,
+      Code: '',
+      NameTR: issue.DefectZoneNameTR ?? '',
+      NameEN: issue.DefectZoneNameEN ?? '',
+      SortOrder: 0,
+      IsActive: false,
+      PartCount: 0,
+      UsageCount: 0,
+    });
+  }
+  const partId = issue.DefectPartID;
+  if (partId != null && zoneId != null && !parts.some((p) => p.ID === partId)) {
+    ids.part = partId;
+    out.parts.push({
+      ID: partId,
+      ZoneID: zoneId,
+      Code: partCode,
+      NameTR: issue.DefectPartNameTR ?? '',
+      NameEN: issue.DefectPartNameEN ?? '',
+      SortOrder: 0,
+      IsActive: false,
+      ZoneCode: '',
+      ZoneNameTR: issue.DefectZoneNameTR ?? '',
+      ZoneNameEN: issue.DefectZoneNameEN ?? '',
+      ZoneIsActive: ids.zone == null,
+      UsageCount: 0,
+    });
+  }
+  const typeId = issue.DefectTypeID;
+  if (typeId != null && !types.some((ty) => ty.ID === typeId)) {
+    ids.type = typeId;
+    out.types.push({
+      ID: typeId,
+      Code: typeCode,
+      NameTR: issue.DefectTypeNameTR ?? '',
+      NameEN: issue.DefectTypeNameEN ?? '',
+      DefaultProcessID: null,
+      SortOrder: 0,
+      IsActive: false,
+      ProcessCode: '',
+      ProcessNameTR: '',
+      ProcessNameEN: '',
+      UsageCount: 0,
+    });
+  }
+  return { ids, ...out };
+}
+
 interface IssueClassificationEditorProps {
   issue: Issue;
   onSaved: (issue: Issue) => void;
@@ -40,11 +112,6 @@ export function IssueClassificationEditor({
   const [zoneId, setZoneId] = useState<number | ''>(issue.DefectZoneID ?? '');
   const [partId, setPartId] = useState<number | ''>(issue.DefectPartID ?? '');
   const [typeId, setTypeId] = useState<number | ''>(issue.DefectTypeID ?? '');
-  // Not shown in the UI, but UpdateClassification overwrites the stored
-  // process with whatever is sent, so it must still be submitted.
-  const [processId, setProcessId] = useState<number | ''>(
-    issue.ResponsibleProcessID ?? '',
-  );
   const [customPartName, setCustomPartName] = useState(issue.CustomPartName ?? '');
   const [customDefectName, setCustomDefectName] = useState(
     issue.CustomDefectName ?? '',
@@ -53,6 +120,7 @@ export function IssueClassificationEditor({
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [keptIds, setKeptIds] = useState<KeptIds>({});
 
   useEffect(() => {
     let cancelled = false;
@@ -64,9 +132,11 @@ export function IssueClassificationEditor({
           api.listDefectCatalogTypes(),
         ]);
         if (cancelled) return;
-        setZones(z.items ?? []);
-        setParts(p.items ?? []);
-        setTypes(ty.items ?? []);
+        const kept = keptInactiveOptions(issue, z.items ?? [], p.items ?? [], ty.items ?? []);
+        setKeptIds(kept.ids);
+        setZones([...(z.items ?? []), ...kept.zones]);
+        setParts([...(p.items ?? []), ...kept.parts]);
+        setTypes([...(ty.items ?? []), ...kept.types]);
       } catch (err) {
         if (!cancelled) setLoadError(apiErrorMessage(err, t));
       }
@@ -74,7 +144,14 @@ export function IssueClassificationEditor({
     return () => {
       cancelled = true;
     };
-  }, [t]);
+    // Kept options come from the issue as opened; re-fetch only per issue.
+  }, [t, issue.ID]);
+
+  const inactiveLabel = t('catalog.inactiveSuffix');
+  const keepingInactive =
+    (zoneId !== '' && zoneId === keptIds.zone) ||
+    (partId !== '' && partId === keptIds.part) ||
+    (typeId !== '' && typeId === keptIds.type);
 
   const selectedPart = useMemo(
     () => parts.find((p) => p.ID === partId) ?? null,
@@ -102,12 +179,6 @@ export function IssueClassificationEditor({
     }
   }, [selectedPart, zoneId]);
 
-  useEffect(() => {
-    if (!selectedType?.DefaultProcessID) return;
-    const def = selectedType.DefaultProcessID;
-    setProcessId((prev) => (prev === '' ? def : prev));
-  }, [selectedType?.ID, selectedType?.DefaultProcessID]);
-
   async function save() {
     setError(null);
     const classErr = validateDefectClassification(
@@ -133,7 +204,6 @@ export function IssueClassificationEditor({
       const updated = await api.updateIssueClassification(issue.ID, {
         defect_part_id: partId,
         defect_type_id: typeId,
-        responsible_process_id: processId === '' ? null : processId,
         custom_part_name: isOtherPartCode(selectedPart?.Code)
           ? customPartName.trim()
           : undefined,
@@ -178,6 +248,7 @@ export function IssueClassificationEditor({
           {zones.map((z) => (
             <option key={z.ID} value={z.ID}>
               {nameOf(z.NameTR, z.NameEN, locale)}
+              {z.ID === keptIds.zone ? inactiveLabel : ''}
             </option>
           ))}
         </select>
@@ -208,7 +279,9 @@ export function IssueClassificationEditor({
           <option value="">{t('report.pickPart')}</option>
           {scopedParts.map((p) => (
             <option key={p.ID} value={p.ID}>
-              {p.Code} · {nameOf(p.NameTR, p.NameEN, locale)}
+              {p.Code ? `${p.Code} · ` : ''}
+              {nameOf(p.NameTR, p.NameEN, locale)}
+              {p.ID === keptIds.part ? inactiveLabel : ''}
             </option>
           ))}
         </select>
@@ -236,15 +309,15 @@ export function IssueClassificationEditor({
             const id = e.target.value ? Number(e.target.value) : '';
             setTypeId(id);
             const ty = types.find((x) => x.ID === id);
-            if (ty?.DefaultProcessID) setProcessId(ty.DefaultProcessID);
-            else setProcessId('');
             if (!ty || !isOtherTypeCode(ty.Code)) setCustomDefectName('');
           }}
         >
           <option value="">{t('report.pickDefectType')}</option>
           {types.map((ty) => (
             <option key={ty.ID} value={ty.ID}>
-              {ty.Code} · {nameOf(ty.NameTR, ty.NameEN, locale)}
+              {ty.Code ? `${ty.Code} · ` : ''}
+              {nameOf(ty.NameTR, ty.NameEN, locale)}
+              {ty.ID === keptIds.type ? inactiveLabel : ''}
             </option>
           ))}
         </select>
@@ -260,6 +333,12 @@ export function IssueClassificationEditor({
             onChange={(e) => setCustomDefectName(e.target.value)}
           />
         </label>
+      ) : null}
+
+      {keepingInactive ? (
+        <p className="text-[12px] text-[var(--text-secondary)]">
+          {t('catalog.keptInactiveHint')}
+        </p>
       ) : null}
 
       {error ? (
