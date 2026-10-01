@@ -13,6 +13,7 @@ import { apiErrorMessage } from '../lib/apiErrors';
 import { ActiveBadge } from '../components/ActiveBadge';
 import { useConfirm } from '../components/ConfirmDialog';
 import { useI18n } from '../i18n';
+import { isOtherPartCode, isOtherTypeCode } from '../lib/issueDefectValidation';
 
 type Tab = 'zones' | 'parts' | 'types' | 'processes' | 'other';
 
@@ -32,6 +33,16 @@ type Draft = {
   zone_id?: number;
   default_process_id?: number | null;
 };
+
+const OTHER_ZONE_CODE = '99';
+
+/** "Other" catalogue rows the backend refuses to deactivate or delete. */
+function isSystemRow(tab: Tab, code: string): boolean {
+  if (tab === 'zones') return code === OTHER_ZONE_CODE;
+  if (tab === 'parts') return isOtherPartCode(code);
+  if (tab === 'types') return isOtherTypeCode(code);
+  return false;
+}
 
 function emptyDraft(): Draft {
   return { code: '', name_tr: '', name_en: '', sort_order: 1, is_active: true };
@@ -304,7 +315,9 @@ export default function DefectCatalogPage() {
           id: p.ID,
           code: p.Code,
           name: nameOf(p.NameTR, p.NameEN),
-          meta: nameOf(p.ZoneNameTR, p.ZoneNameEN),
+          meta:
+            nameOf(p.ZoneNameTR, p.ZoneNameEN) +
+            (p.ZoneIsActive === false ? ` · ${t('defects.zoneInactiveBadge')}` : ''),
           active: p.IsActive,
           usage: p.UsageCount,
           raw: p,
@@ -340,6 +353,19 @@ export default function DefectCatalogPage() {
         raw: p,
       }));
   }, [tab, zones, parts, types, processes, hideInactive, filterZone, nameOf, t]);
+
+  // Inactive zones take no new parts and zone 99 holds only "Other"; an
+  // edited part keeps its current zone as an option.
+  const partFormZones = useMemo(() => {
+    const currentZoneId =
+      editId != null ? parts.find((p) => p.ID === editId)?.ZoneID : undefined;
+    const otherPart = isOtherPartCode(draft.code.trim());
+    return zones.filter(
+      (z) =>
+        z.ID === currentZoneId ||
+        (z.IsActive && (z.Code === OTHER_ZONE_CODE) === otherPart),
+    );
+  }, [zones, parts, editId, draft.code]);
 
   const tabs: { id: Tab; label: string }[] = [
     { id: 'zones', label: t('defects.tabZones') },
@@ -567,7 +593,7 @@ export default function DefectCatalogPage() {
                       setPromoteZoneId(e.target.value ? Number(e.target.value) : '')
                     }
                   >
-                    {zones.filter((z) => z.IsActive).map((z) => (
+                    {zones.filter((z) => z.IsActive && z.Code !== OTHER_ZONE_CODE).map((z) => (
                       <option key={z.ID} value={z.ID}>
                         {z.Code} — {nameOf(z.NameTR, z.NameEN)}
                       </option>
@@ -644,7 +670,9 @@ export default function DefectCatalogPage() {
                 </tr>
               </thead>
               <tbody>
-                {rows.map((row, idx) => (
+                {rows.map((row, idx) => {
+                  const system = isSystemRow(tab, row.code);
+                  return (
                   <tr
                     key={row.id}
                     className="border-t"
@@ -694,7 +722,8 @@ export default function DefectCatalogPage() {
                           type="button"
                           className={btnGhost}
                           style={{ borderColor: 'var(--border)' }}
-                          disabled={busy}
+                          disabled={busy || (system && row.active)}
+                          title={system ? t('defects.systemRowHint') : undefined}
                           onClick={() => void toggleActive(row.raw as never)}
                         >
                           {row.active ? t('common.deactivate') : t('common.activate')}
@@ -703,7 +732,8 @@ export default function DefectCatalogPage() {
                           type="button"
                           className={btnGhost}
                           style={{ borderColor: 'var(--border)' }}
-                          disabled={busy}
+                          disabled={busy || system}
+                          title={system ? t('defects.systemRowHint') : undefined}
                           onClick={() => void remove(row.id, row.usage)}
                         >
                           {t('common.delete')}
@@ -711,7 +741,8 @@ export default function DefectCatalogPage() {
                       </div>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           )}
@@ -764,9 +795,10 @@ export default function DefectCatalogPage() {
                   }
                 >
                   <option value="">{t('defects.pickZone')}</option>
-                  {zones.map((z) => (
+                  {partFormZones.map((z) => (
                     <option key={z.ID} value={z.ID}>
                       {z.Code} — {nameOf(z.NameTR, z.NameEN)}
+                      {z.IsActive ? '' : t('catalog.inactiveSuffix')}
                     </option>
                   ))}
                 </select>
