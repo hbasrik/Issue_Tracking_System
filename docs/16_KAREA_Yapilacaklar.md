@@ -562,6 +562,43 @@ grafik görüntüleri (1280 + 1920 px, yazdırma), `before-facts.json` /
 `after-facts.json` (etiket çakışma ölçümü), mobil VIN dokunma testi
 (`verify-mobile-vin-link.mjs`, TR + EN), `build-and-tests.txt`.
 
+### A35. Pasif bölge kapanır; pasif değer düzenlemeyi kilitlemez `[x]` — 2026-10-01
+Katalog incelemesinin (`docs/screenshots/catalog-flows/`) üç bulgusu
+kapatıldı. Kararlar `docs/11` Karar 18 ve 19.
+- **Pasif bölge (bulgu A):** pasif bölgedeki parça pasif sayılır. Aktif
+  parça listesinde ve aramada çıkmaz (web, mobil; mobilde eski önbelleğe
+  karşı istemcide de bölge süzgeci var). Hata açılışında
+  `selected part's zone is inactive` ile reddedilir. Pasif bölgeye yeni
+  parça eklenemez, başka bölgeden taşınamaz, "Diğer"den kataloğa alınamaz.
+  Bölge yeniden açılınca parçalar geri gelir. Mevcut hatalar ve anlık
+  görüntüler değişmez.
+- **"Diğer" kendi bölgesinde:** 99-99 Body'den yeni bölge 99 "Diğer"e
+  taşındı (migration 0033, yalnız veri; up + down). Parça id'si ve kodu
+  aynı, mevcut hataların sınıflandırması ve `99-99-xx` kodları bozulmaz;
+  eski "Diğer" hatalarında bölge Body yerine "Diğer" görünür. Bölge 99,
+  parça 99-99 ve tip 99 pasife alınamaz ve silinemez; yönetim sayfasında
+  düğmeleri kapalı.
+- **Değişmeyen alan doğrulanmaz (bulgu B, C):** sınıflandırma düzeltmesi
+  pasif kontrolünü yalnız değişen parça, tip ya da süreçte yapar.
+  Düzenleyiciler (web + mobil) süreci artık göndermez; kayıtlı süreç
+  korunur, tip değişirse yeni tipin varsayılanı yazılır. Kayıtlı pasif
+  bölge, parça ve tip "(pasif)" etiketiyle seçili kalır ve bir açıklama
+  satırı görünür; değiştirilirse yalnız aktif seçenekler sunulur.
+  Değişmeyen parça/tipin ad anlık görüntüsü ve `defect_code` korunur.
+  Reddedilen işlemlerde sebep açık metinle görünür (TR + EN).
+- **Filtreler:** Issues sayfasının (web + mobil) bölge, parça ve kusur tipi
+  filtreleri pasif değerleri "(pasif)" etiketiyle listeler
+  (`?include_inactive=1`), eski hatalar onlarla da süzülebilir.
+- **Yayın sırası:** kod eski şemada çalışır. Önce API yeniden başlatılır,
+  sonra 0033 uygulanır; kesinti yok. 0033 canlıda 99-99 satırının
+  `zone_id`'sini değiştirir ve bir bölge satırı ekler; bu yazma
+  uygulandığında olur, bu görevde canlıya dokunulmadı.
+Kanıt: `docs/screenshots/catalog-fixes/`: `verification-output.txt`
+(ayrı test DB'de 0033 öncesi/sonrası, down/up turu, tüm senaryolar),
+`capture-output.txt` + web ekran görüntüleri (düzenleyici, filtre, yönetim),
+`error-messages-output.txt`, `build-output.txt`. Mobil cihaz görüntüsü
+alınmadı; mobil yalnız tip denetimiyle doğrulandı.
+
 ---
 
 ## B — Canlıya çıkmadan önce ZORUNLU

@@ -1,0 +1,120 @@
+database: karea_catalog_test
+login (test DB seed user manager@karea.local): HTTP 200
+
+========================================================================
+0. Migration 0033 öncesi: mevcut issue'lar (canlıyla aynı durum)
+========================================================================
+  99-99 zone before 0033: 10 | Body
+  [OK] create Diğer (99-99) issue before 0033 -> HTTP 201 99-99-01
+  [OK] create 10-01 issue (process from type 05 default) -> HTTP 201
+  [OK] create 20-01 issue -> HTTP 201
+  Diğer issue row before: 1 | 10 |  | 99-99-01 | Diğer | Boşluk / hizasızlık | Serbest parça
+
+========================================================================
+0b. Migration 0033 uygulanır (iki kez: idempotent)
+========================================================================
+  zone 99: 99 | Diğer | Other | t
+  [OK] 99-99 now under zone 99
+  [OK] 99-99 part id unchanged
+  [OK] Diğer issue row unchanged (part, type, code, snapshot, custom name) -> 1 | 10 |  | 99-99-01 | Diğer | Boşluk / hizasızlık | Serbest parça
+  [OK] Diğer issue detail shows zone 'Diğer' -> {'DefectCode': '99-99-01', 'DefectZoneNameTR': 'Diğer', 'DefectPartNameTR': 'Diğer', 'CustomPartName': 'Serbest parça'}
+  zone count after 0033 (twice): 1
+
+========================================================================
+0c. 0033 down + up turu
+========================================================================
+  after down: 99-99 zone = 10 | zone 99 rows = 0
+  after up again: 99-99 zone = 99
+  [OK] Diğer issue row still unchanged after down/up
+
+========================================================================
+1. Bölge pasife alınınca parçaları kapanır (Body)
+========================================================================
+  [OK] deactivate zone Body -> HTTP 200
+  [OK] active part list has no Body parts (9 Body parts) -> []
+  [OK] search 'kapı/door' over active list finds nothing from Body -> []
+  [OK] active parts filtered by zone=Body is empty -> 0
+  [OK] issue creation with Body part rejected -> HTTP 400 selected part's zone is inactive
+  [OK] new part under inactive zone rejected -> HTTP 400 parts cannot be added to an inactive zone
+  [OK] moving a part into inactive zone rejected -> HTTP 400 parts cannot be added to an inactive zone
+  [OK] 20-02 still in Chassis
+  [OK] include_inactive=1 returns Body parts with ZoneIsActive=false -> 9 parts
+  [OK] include_inactive=1 zones include Body (IsActive=false)
+
+========================================================================
+1b. 'Diğer' bölge pasifliğinden etkilenmez ve korumalı
+========================================================================
+  [OK] 99-99 still in active part list
+  [OK] Diğer issue creation while Body inactive -> HTTP 201 99-99-01
+  [OK] deactivate zone 99 rejected -> HTTP 400 the Other catalogue rows are protected
+  [OK] delete zone 99 rejected -> HTTP 400 the Other catalogue rows are protected
+  [OK] deactivate part 99-99 rejected -> HTTP 400 the Other catalogue rows are protected
+  [OK] move part 99-99 to Chassis rejected -> HTTP 400 the Other catalogue rows are protected
+  [OK] delete part 99-99 rejected -> HTTP 400 the Other catalogue rows are protected
+  [OK] deactivate type 99 rejected -> HTTP 400 the Other catalogue rows are protected
+  [OK] new regular part in zone 99 rejected -> HTTP 400 the Other catalogue rows are protected
+  [OK] rename zone 99 allowed -> HTTP 200
+
+========================================================================
+1c. Pasif bölgedeki parçayı taşıyan eski issue düzenlenebilir
+========================================================================
+  [OK] type-only edit on issue whose part's zone is inactive -> HTTP 200 
+  before: 10 | 3 | 3 | 10-01-05 | Kapı | Eksik / yanlış parça |
+  after:  10 | 1 | 2 | 10-01-02 | Kapı | Yüzey / boya hatası |
+  [OK] part kept, part snapshot kept
+  [OK] switching to another part of the inactive zone rejected -> HTTP 400 selected part's zone is inactive
+  [OK] reactivate zone Body -> all Body parts back in active list
+
+========================================================================
+2. Pasif süreç düzenlemeyi kilitlemez
+========================================================================
+  issue 18 process before: PAINT
+  [OK] set type 05 (default ASSEMBLY) while active -> 3
+  [OK] deactivate process ASSEMBLY -> HTTP 200
+  [OK] part change, process omitted (new editors) -> succeeds -> HTTP 200 
+  [OK] process preserved (ASSEMBLY)
+  [OK] unchanged inactive process sent back (old clients) -> succeeds -> HTTP 200 
+  [OK] process still ASSEMBLY
+  [OK] newly chosen inactive process rejected -> HTTP 400 selected process is inactive
+
+========================================================================
+3. Pasif parça / tip düzenlemeyi kilitlemez
+========================================================================
+  [OK] deactivate part 20-01
+  [OK] rename inactive 20-01 -> 'YENİ AD (pasif)'
+  [OK] issue with inactive part: type-only edit succeeds -> HTTP 200 
+  before: 13 | 1 | 2 | 20-01-02 | Şasi / Süspansiyon | Yüzey / boya hatası |
+  after:  13 | 9 |  | 20-01-03 | Şasi / Süspansiyon | Çizik / darbe / hasar |
+  [OK] part id and part-name snapshot kept (not renamed to 'YENİ AD')
+  [OK] defect_code updated for the new type only -> 20-01-03
+  [OK] choosing an inactive part on another issue rejected -> HTTP 400 selected catalogue item is inactive
+  [OK] deactivate type 03
+  [OK] issue with inactive part AND inactive type: re-save unchanged succeeds -> HTTP 200 
+  [OK] row identical after unchanged re-save -> 13 | 9 |  | 20-01-03 | Şasi / Süspansiyon | Çizik / darbe / hasar |
+  [OK] choosing an inactive type on another issue rejected -> HTTP 400 selected catalogue item is inactive
+  [OK] legacy row (inactive part, NULL snapshot): type-only edit succeeds -> HTTP 200
+  legacy row after: 13 | 1 | 2 | 20-01-02 | <NULL> | Yüzey / boya hatası |
+  [OK] legacy part snapshot still NULL (live name fallback unchanged)
+
+========================================================================
+4. Filtrelerde pasif değerler (eski issue'lar süzülebilir)
+========================================================================
+  [OK] inactive part 20-01 in filter list (include_inactive) -> {'Code': '20-01', 'NameTR': 'YENİ AD (pasif)', 'IsActive': False, 'ZoneIsActive': True}
+  [OK] inactive part 20-01 NOT in picker list
+  [OK] inactive type 03 in filter list
+  [OK] Issues filter by inactive part 20-01 (client-side on DefectPartID) finds old issues -> [19, 21]
+
+========================================================================
+5. Anlık görüntüler (snapshot) bozulmadı
+========================================================================
+  [OK] issue detail shows snapshot part name, not the renamed live name -> Şasi / Süspansiyon
+  [OK] Diğer issue still intact -> 1 | 10 |  | 99-99-01 | Diğer | Boşluk / hizasızlık | Serbest parça
+
+========================================================================
+Temizlik (yalnız bu betiğin oluşturdukları; veritabanı sonra tamamen silinecek)
+========================================================================
+  issues created: 17,18,19,20,21
+  audit rows for them: 8
+  catalogue rows created by this script: 0
+
+RESULT: ALL CHECKS PASSED

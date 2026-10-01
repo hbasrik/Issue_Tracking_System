@@ -1,0 +1,8 @@
+setup: zone Body inactive 200 | part 20-01 inactive 200
+issue 18 editor selected: ["Body (pasif)","10-01 · Kapı (pasif)","05 · Eksik / yanlış parça"] | hint shown: true -> web-editor-zone-inactive.png
+issue 18 save with kept inactive values -> editor closed: true
+issue 19 editor selected: ["Şasi","20-01 · Şasi / Süspansiyon (pasif)","03 · Çizik / darbe / hasar"] | hint shown: true -> web-editor-part-inactive.png
+issues part filter options matching "pasif": ["✓Kapı (pasif)","✓Bagaj kapağı / Tailgate (pasif)","✓C-Pillar / Direk (pasif)","✓Tampon (pasif)","✓Kaput (pasif)","✓Çamurluk / Fender (pasif)","✓Tavan (pasif)","✓Spoiler (pasif)","✓Doghouse (pasif)","✓Şasi / Süspansiyon (pasif)"]
+issues zone/type chips with (pasif): ["Body (pasif)"]
+admin parts: 99-99 deactivate disabled true | delete disabled true | rows marked "Bölge pasif" 9
+ok /Users/Basri/Desktop/kts_kms_project/docs/screenshots/catalog-fixes

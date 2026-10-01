@@ -1,0 +1,27 @@
+## go test -count=1 ./... (2026-10-01 11:06:18)
+?   	github.com/karea/backend/cmd/api	[no test files]
+ok  	github.com/karea/backend/internal/delivery/http	17.273s
+ok  	github.com/karea/backend/internal/domain	1.714s
+ok  	github.com/karea/backend/internal/platform/applog	0.504s
+?   	github.com/karea/backend/internal/platform/auth	[no test files]
+ok  	github.com/karea/backend/internal/platform/config	1.427s
+ok  	github.com/karea/backend/internal/platform/storage	1.131s
+?   	github.com/karea/backend/internal/repository	[no test files]
+ok  	github.com/karea/backend/internal/repository/postgres	1.987s
+ok  	github.com/karea/backend/internal/usecase	8.381s
+exit=0
+
+## web: npx tsc --noEmit
+exit=0
+
+## web: npx vite build
+✓ 2493 modules transformed.
+✓ built in 3.17s
+exit=0
+
+## mobile: npx tsc --noEmit
+exit=0
+
+## shared i18n selftest
+shared/i18n/messages.ts ok (1174 tr keys scanned)
+exit=0
