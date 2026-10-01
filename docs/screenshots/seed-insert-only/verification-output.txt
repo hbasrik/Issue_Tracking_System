@@ -1,0 +1,86 @@
+== 1. Upgrade-path database: migrations 0001-0033 + previous seeds ==
+  applied 33 migrations (0001-0033)
+  old 01_stations.sql @ 11fc7ca: INSERT 0 8
+  old 02_stations_and_steps.sql @ 11fc7ca: INSERT 0 64
+  old 03_checklist_templates.sql @ 11fc7ca: INSERT 0 104
+  04_users.sql: INSERT 0 5
+  05_defect_catalog.sql: INSERT 0 4 / INSERT 0 4 / INSERT 0 24 / INSERT 0 10
+  06_test_vehicles.sql: INSERT 0 2 / INSERT 0 0 / INSERT 0 18
+  default checklist items: 104 | stations: 8 | steps: 64 | item progress rows: 1872
+
+== 2. Bug reproduction with the previous seeds (inside a rolled-back transaction) ==
+  old seed -> items whose text changed: 14
+  old seed -> example: id 9 was "Sürüş" now "Far Ayarı"
+  old seed -> edited text "Araç Motoru (düzenlendi)" still present: false
+  old seed -> deactivated "Batarya" now is_active = true
+  old seed -> station 3 name now: Chassis Assembly Station, station 5 is_active now: true
+  old seed -> renamed step now: Front frame rail alignment
+  old seed -> deactivated step is_active now: true
+PASS previous seed writes text onto other items after a reorder
+PASS previous seed re-enables a deactivated item
+PASS previous seed reverts station and step names
+PASS rollback left the database unchanged
+
+== 3. Migration 0034: add seed_key, backfill, idempotency, rollback ==
+  default items: 104, with seed_key: 104, seed_key = md5(item_text): 104
+PASS 0034 backfills every default-template item
+PASS re-running 0034 changes nothing and leaves later admin items NULL — admin item seed_key=NULL
+PASS 0034 down drops the column
+PASS 0034 down is idempotent — second down ran without error
+PASS 0034 up after down restores the same keys
+
+== 4. New seeds on the untouched upgraded database ==
+  01: INSERT 0 0
+  02: INSERT 0 0
+  03: INSERT 0 0
+PASS new seeds add nothing to a complete install
+
+== 5. Checklist items: edit, deactivate, reorder, delete, then seed ==
+  fixture: deleting 'Rot Balans' and 'Jant Logo Değişimi' with their 36 progress rows (seed 06 evaluated every item)
+  EOL order after reverse + delete + compact: Görsel Kontrol 2 | EE Check | Yağmur Testi | Bumpy Road | Depo Sürüş | Görsel Kontrol | Sürüş | Far Ayarı | Fren/El Testi | Fonksiyonel Komponet Kontrolü | Süspansiyon Testi | Batarya | Araç Motoru (düzenlendi) | Software Update
+  shipment item_no 20 free: t
+  EOL slot 8 (seed slot of Rot Balans) now holds: Far Ayarı
+  03 run 1: INSERT 0 2
+PASS seed inserts exactly the 2 deleted items
+PASS every pre-existing item is byte-identical (text, item_no, is_active, phase, section, seed_key)
+PASS edited text kept, original text not re-added — ["Araç Motoru (düzenlendi)"]
+PASS deactivated item still inactive — is_active=False
+  re-added: Default EoL Template (16 items, Branch + Depot) #16 'Rot Balans' is_active=True seed_key=md5(text): 168e818ca7a9ea63b8b841e7a5076507
+  re-added: Default Customer Vehicle Checklist (43 items) #20 'Jant Logo Değişimi' is_active=True seed_key=md5(text): 6ea240280395957663c24f5af89e10eb
+PASS deleted shipment item re-added at its free original slot 20
+PASS deleted EOL item re-added after the last item because slot 8 is taken (15 seed slots -> 16)
+PASS no template has the same text twice — duplicate groups: 0
+PASS every vehicle progress row still points at the same item text — 1836 progress rows compared
+  03 run 2: INSERT 0 0
+PASS second run inserts nothing (INSERT 0 0) and changes no row
+
+== 6. Stations and steps: rename, deactivate, delete, then seed ==
+  fixture: deleting step 3/7 'Underbody shield installation' with its 18 progress rows
+  01 run 1: INSERT 0 0
+  02 run 1: INSERT 0 1
+PASS 01 changes no station (renamed name and is_active kept)
+  station 3: Şasi Montaj İstasyonu | station 5 is_active: f
+PASS 02 leaves every existing step identical
+  re-added steps: [{"id": 242, "station_id": 3, "sequence_no": 7, "name": "Underbody shield installation", "is_active": true}]
+PASS 02 re-adds the deleted step under the renamed station (matched by sequence_no)
+  01 run 2: INSERT 0 0
+  02 run 2: INSERT 0 0
+PASS second run of 01 and 02 inserts nothing and changes no row
+
+== 7. Fresh install: every migration + new seeds ==
+  applied 34 migrations
+  placeholders from 0002: Station 1, Station 2, Station 3, Station 4, Station 5, Station 6, Station 7, Station 8
+  admin renamed placeholder 'Station 4' to 'HV Hattı' before seeding
+  01: INSERT 0 7
+  02: INSERT 0 64
+  03: INSERT 0 104
+  stations: Body and Frame Station, Paint Preparation Station, Chassis Assembly Station, HV Hattı, Interior Assembly Station, Exterior Assembly Station, Electrical Integration Station, Final Assembly Station
+PASS 01 renames untouched placeholders only
+PASS 02 inserts all 64 steps
+PASS 03 inserts all 104 items with seed_key = md5(text) at seed item_no
+  01 run 2: INSERT 0 0
+  02 run 2: INSERT 0 0
+  03 run 2: INSERT 0 0
+PASS fresh install second run: INSERT 0 0 for 01, 02, 03
+
+ALL CHECKS PASSED

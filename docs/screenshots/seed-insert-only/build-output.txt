@@ -1,0 +1,27 @@
+$ cd backend && go test ./...
+?   	github.com/karea/backend/cmd/api	[no test files]
+ok  	github.com/karea/backend/internal/delivery/http	(cached)
+ok  	github.com/karea/backend/internal/domain	(cached)
+ok  	github.com/karea/backend/internal/platform/applog	(cached)
+?   	github.com/karea/backend/internal/platform/auth	[no test files]
+ok  	github.com/karea/backend/internal/platform/config	(cached)
+ok  	github.com/karea/backend/internal/platform/storage	(cached)
+?   	github.com/karea/backend/internal/repository	[no test files]
+ok  	github.com/karea/backend/internal/repository/postgres	(cached)
+ok  	github.com/karea/backend/internal/usecase	(cached)
+rc=0
+
+$ cd web && npx tsc --noEmit
+rc=0
+
+$ cd web && npx vite build --outDir /tmp/web-seed-dist --emptyOutDir
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 3.01s
+rc=0
+
+$ cd mobile && npx tsc --noEmit
+rc=0

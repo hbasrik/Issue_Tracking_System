@@ -685,20 +685,43 @@ migration dirty-state prosedürü.
 eksik satırları ekler; kalite ekibinin değiştirdiği ad, sıralama, bölge ve
 varsayılan süreç korunur (A36).
 
-**Açık risk — diğer seed dosyaları hâlâ üzerine yazıyor (üretim
-kurulumundan önce karar verilecek):**
-- `03_checklist_templates.sql`: `ON CONFLICT (template_id, item_no) DO
-  UPDATE` madde metni, EoL fazı, bölüm ve `is_active`'i yazar. Şablon
-  maddeleri yönetim ekranından düzenlenebilir ve yeniden sıralanabilir
-  (`item_no` değişir); seed yeniden çalışırsa düzenlemeler geri alınır,
-  pasife alınan maddeler yeniden aktif olur, sıra değişmişse metinler
-  başka maddelerin üzerine yazılır. En riskli dosya bu.
-- `01_stations.sql` (`sequence_no`) ve `02_stations_and_steps.sql`
-  (`station_id, sequence_no`): istasyon/adım adını ve `is_active`'i yazar.
-  Bugün bunları düzenleyen bir yönetim ekranı yok; elle yapılmış DB
-  değişiklikleri geri alınır.
-- `06_test_vehicles.sql`: araç modeli adını ve `is_active`'i yazar; dosya
-  yalnız geliştirme/test içindir, üretimde çalıştırılmaz.
+**Çözüldü (2026-10-01) — checklist, istasyon ve adım seed'leri de artık
+yalnız ekler:**
+- `03_checklist_templates.sql`: eskiden `ON CONFLICT (template_id,
+  item_no) DO UPDATE` ile madde metnini, EoL fazını, bölümü ve
+  `is_active`'i yazıyordu. Eşleştirme `item_no` üzerindendi; yeniden
+  sıralama `item_no`'yu değiştirdiği için metinler başka maddelerin
+  üzerine yazılıyordu (test DB'de yeniden üretildi: ters sıralamadan
+  sonra 14 maddenin metni değişti, pasif madde açıldı). Artık mevcut
+  maddeye hiç dokunmuyor. Kararlı anahtar migration 0034'teki
+  `checklist_template_items.seed_key`: satır oluşturulurken metnin md5'i,
+  sonra hiç güncellenmez (metin düzenleme, pasife alma, sıralama onu
+  değiştirmez). Seed, şablonunda bu anahtar yoksa maddeyi ekler: asıl
+  `item_no` boşsa oraya, doluysa son maddenin arkasına. Yönetim
+  ekranından eklenen maddelerde `seed_key` NULL.
+- `01_stations.sql`: `is_active` artık yazılmıyor; ad yalnızca migration
+  0002'nin koyduğu dokunulmamış `Station N` yer tutucusundaysa değişiyor
+  (temiz kurulum için gerekli). Diğer istasyonlara dokunmuyor.
+- `02_stations_and_steps.sql`: `DO NOTHING`; istasyonu ada göre değil
+  `sequence_no` ile buluyor, böylece adı değişmiş istasyonun eksik
+  adımları da ekleniyor. İstasyon ve adım sırasını değiştiren kod yolu
+  yok; `(station_id, sequence_no)` kararlı.
+- Kanıt: `docs/screenshots/seed-insert-only/verification-output.txt`
+  (yükseltme yolu: 0001–0033 + eski seed'ler → 0034 + yeni seed'ler;
+  ayrıca temiz kurulum). Düzenlenen metin, pasif madde, yeniden sıralama,
+  istasyon/adım adı ve `is_active` korunuyor; silinen madde/adım geri
+  ekleniyor; ikinci koşum `INSERT 0 0`; 1836 araç ilerleme kaydı aynı
+  maddeyi göstermeye devam ediyor.
+- Canlıya alma: önce migration 0034 (kolon ekler, kesinti yok; API kodu
+  kolonu okumuyor), sonra gerekirse seed. Canlıda seed'deki 104 maddenin
+  hepsi aynı şablonda aynı metinle duruyor (salt okunur kontrol), bu
+  yüzden md5 ataması hepsini eşleştiriyor ve seed bir şey eklemiyor.
+- Sınır: seed'in geri eklediği madde/adım için mevcut araçlara PENDING
+  ilerleme satırı açılmaz (yönetim ekranındaki ekleme açar). Canlıda
+  eksik madde gerekiyorsa yönetim ekranından eklenmeli.
+- `06_test_vehicles.sql` değiştirilmedi: araç modeli adını ve
+  `is_active`'i yazar; dosya yalnız geliştirme/test içindir, üretimde
+  çalıştırılmaz.
 - `04_users.sql`: `DO NOTHING`, sorun yok. Roller ve izinler seed değil,
   migration'larda (0002, 0010, 0013); migration'lar bir kez çalıştığı
   için yeniden koşum riski yok.
