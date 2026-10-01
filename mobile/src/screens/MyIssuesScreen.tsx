@@ -307,9 +307,11 @@ export default function MyIssuesScreen() {
   const loadCatalogs = useCallback(async () => {
     const [typesRes, zonesRes, partsRes, defectTypesRes] = await Promise.all([
       api.listIssueTypes().catch(() => ({ items: snapshot.issueTypes })),
-      api.listDefectCatalogZones().catch(() => ({ items: snapshot.zones })),
-      api.listDefectCatalogParts().catch(() => ({ items: snapshot.parts })),
-      api.listDefectCatalogTypes().catch(() => ({ items: snapshot.types })),
+      // Filters include retired values so old issues stay findable; the
+      // offline fallback (active-only cache) is the best available then.
+      api.listDefectCatalogZones(true).catch(() => ({ items: snapshot.zones })),
+      api.listDefectCatalogParts(undefined, true).catch(() => ({ items: snapshot.parts })),
+      api.listDefectCatalogTypes(true).catch(() => ({ items: snapshot.types })),
     ]);
     setIssueTypes(typesRes.items ?? snapshot.issueTypes);
     setDefectZones(zonesRes.items ?? snapshot.zones);
@@ -1005,9 +1007,10 @@ export default function MyIssuesScreen() {
               {defectZones.map((z) => {
                 const selected = !homeStat && defectZoneIds.has(z.ID);
                 const label =
-                  locale === 'en'
+                  (locale === 'en'
                     ? z.NameEN || z.NameTR
-                    : z.NameTR || z.NameEN;
+                    : z.NameTR || z.NameEN) +
+                  (z.IsActive === false ? t('catalog.inactiveSuffix') : '');
                 return (
                   <Pressable
                     key={z.ID}
@@ -1078,9 +1081,10 @@ export default function MyIssuesScreen() {
               {defectTypes.map((ty) => {
                 const selected = !homeStat && defectTypeIds.has(ty.ID);
                 const label =
-                  locale === 'en'
+                  (locale === 'en'
                     ? ty.NameEN || ty.NameTR
-                    : ty.NameTR || ty.NameEN;
+                    : ty.NameTR || ty.NameEN) +
+                  (ty.IsActive === false ? t('catalog.inactiveSuffix') : '');
                 return (
                   <Pressable
                     key={ty.ID}

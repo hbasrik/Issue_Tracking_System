@@ -12,7 +12,8 @@ import { useTheme } from '../theme/ThemeProvider';
 import { mixColors } from '../theme/tokens';
 import { AppTextInput } from './ui';
 
-type PartOption = Pick<DefectPart, 'ID' | 'ZoneID' | 'NameTR' | 'NameEN'>;
+type PartOption = Pick<DefectPart, 'ID' | 'ZoneID' | 'NameTR' | 'NameEN'> &
+  Partial<Pick<DefectPart, 'IsActive' | 'ZoneIsActive'>>;
 
 interface PartMultiSelectFilterProps {
   parts: PartOption[];
@@ -22,8 +23,10 @@ interface PartMultiSelectFilterProps {
   disabled?: boolean;
 }
 
-function partLabel(p: PartOption, locale: string): string {
-  return locale === 'en' ? p.NameEN || p.NameTR : p.NameTR || p.NameEN;
+function partLabel(p: PartOption, locale: string, inactiveSuffix: string): string {
+  const name = locale === 'en' ? p.NameEN || p.NameTR : p.NameTR || p.NameEN;
+  const inactive = p.IsActive === false || p.ZoneIsActive === false;
+  return inactive ? `${name}${inactiveSuffix}` : name;
 }
 
 /** Multi-select parts filter — sheet picker + removable tags. */
@@ -35,6 +38,7 @@ export function PartMultiSelectFilter({
   disabled = false,
 }: PartMultiSelectFilterProps) {
   const { t, locale } = useI18n();
+  const inactiveSuffix = t('catalog.inactiveSuffix');
   const { tokens } = useTheme();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -47,9 +51,9 @@ export function PartMultiSelectFilter({
     const q = query.trim().toLocaleLowerCase(locale === 'en' ? 'en' : 'tr');
     if (!q) return scoped;
     return scoped.filter((p) =>
-      partLabel(p, locale).toLocaleLowerCase().includes(q),
+      partLabel(p, locale, inactiveSuffix).toLocaleLowerCase().includes(q),
     );
-  }, [parts, zoneIds, query, locale]);
+  }, [parts, zoneIds, query, locale, inactiveSuffix]);
 
   const selectedParts = useMemo(
     () => parts.filter((p) => selectedIds.has(p.ID)),
@@ -110,7 +114,7 @@ export function PartMultiSelectFilter({
                 }}
                 numberOfLines={1}
               >
-                {partLabel(p, locale)}
+                {partLabel(p, locale, inactiveSuffix)}
               </Text>
               <Text style={{ color: tokens.textSecondary, fontSize: 14 }}>×</Text>
             </Pressable>
@@ -268,7 +272,7 @@ export function PartMultiSelectFilter({
                           flex: 1,
                         }}
                       >
-                        {partLabel(p, locale)}
+                        {partLabel(p, locale, inactiveSuffix)}
                       </Text>
                     </Pressable>
                   );
