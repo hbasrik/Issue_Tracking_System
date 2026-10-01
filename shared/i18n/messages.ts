@@ -1291,7 +1291,19 @@ export const tr = {
   'error.defectTypeRequired': 'Kusur tipi seçilmeli.',
   'error.customPartNameRequired': '“Diğer” seçildiğinde parça adı yazılmalı.',
   'error.customDefectNameRequired': '“Diğer” seçildiğinde kusur adı yazılmalı.',
-  'error.catalogItemInactive': 'Seçilen katalog maddesi pasif.',
+  'error.catalogItemInactive':
+    'Seçilen parça veya kusur tipi pasif. Mevcut değeri koruyun ya da aktif bir seçenek seçin.',
+  'error.zoneInactive':
+    'Seçilen parçanın bölgesi pasif. Aktif bir bölgeden parça seçin.',
+  'error.zoneClosedForParts':
+    'Bu bölge pasif; pasif bölgeye parça eklenemez. Önce bölgeyi aktif edin.',
+  'error.catalogProtected':
+    '“Diğer” bölgesi, parçası ve kusur tipi sistem satırıdır: pasife alınamaz, silinemez, kodu ya da bölgesi değiştirilemez.',
+  'catalog.inactiveSuffix': ' (pasif)',
+  'catalog.keptInactiveHint':
+    'Kayıtlı değer pasif; korunabilir. Değiştirirseniz yalnız aktif seçenekler sunulur.',
+  'defects.zoneInactiveBadge': 'Bölge pasif',
+  'defects.systemRowHint': 'Sistem satırı (“Diğer”): pasife alınamaz, silinemez.',
   'error.processRequired': 'Sorumlu süreç seçilmeli.',
   'error.processInactive': 'Seçilen süreç pasif.',
   'error.promoteKindInvalid':
@@ -2126,7 +2138,19 @@ export const en: Record<MessageKey, string> = {
   'error.defectTypeRequired': 'Select a defect type.',
   'error.customPartNameRequired': 'Enter a part name when “Other” is selected.',
   'error.customDefectNameRequired': 'Enter a defect name when “Other” is selected.',
-  'error.catalogItemInactive': 'The selected catalogue item is inactive.',
+  'error.catalogItemInactive':
+    'The selected part or defect type is inactive. Keep the current value or choose an active option.',
+  'error.zoneInactive':
+    "The selected part's zone is inactive. Choose a part from an active zone.",
+  'error.zoneClosedForParts':
+    'This zone is inactive; parts cannot be added to it. Activate the zone first.',
+  'error.catalogProtected':
+    'The “Other” zone, part and defect type are system rows: they cannot be deactivated, deleted, re-coded or moved.',
+  'catalog.inactiveSuffix': ' (inactive)',
+  'catalog.keptInactiveHint':
+    'The saved value is inactive; you can keep it. If you change it, only active options are offered.',
+  'defects.zoneInactiveBadge': 'Zone inactive',
+  'defects.systemRowHint': 'System row (“Other”): cannot be deactivated or deleted.',
   'error.processRequired': 'Select the responsible process.',
   'error.processInactive': 'The selected process is inactive.',
   'error.promoteKindInvalid':
