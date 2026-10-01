@@ -88,6 +88,10 @@ const EXACT: Record<string, MessageKey> = {
   "selected part's zone is inactive": 'error.zoneInactive',
   'parts cannot be added to an inactive zone': 'error.zoneClosedForParts',
   'the Other catalogue rows are protected': 'error.catalogProtected',
+  'part code must be the zone code, a dash and two digits': 'error.partCodeFormatGeneric',
+  'defect type code must be two digits': 'error.typeCodeFormat',
+  'a part with this name already exists in the zone': 'error.partNameTaken',
+  'a defect type with this name already exists': 'error.typeNameTaken',
   'responsible process is required': 'error.processRequired',
   'selected process is inactive': 'error.processInactive',
   'promote kind must be part or type': 'error.promoteKindInvalid',
@@ -150,6 +154,11 @@ function translateApiErrorMessage(t: Translate, err: unknown): string {
 
   const exact = EXACT[msg];
   if (exact) return t(exact);
+
+  const partCode = msg.match(
+    /^part code must be the zone code, a dash and two digits: expected (\S+)$/,
+  );
+  if (partCode) return t('error.partCodeFormat', { expected: partCode[1] });
 
   // Wrapped sentinels: "invalid status transition: vehicle status changes …"
   const colon = msg.indexOf(':');

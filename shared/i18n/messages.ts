@@ -1304,6 +1304,31 @@ export const tr = {
     'Kayıtlı değer pasif; korunabilir. Değiştirirseniz yalnız aktif seçenekler sunulur.',
   'defects.zoneInactiveBadge': 'Bölge pasif',
   'defects.systemRowHint': 'Sistem satırı (“Diğer”): pasife alınamaz, silinemez.',
+  'error.partCodeFormat':
+    'Parça kodu bu bölge için {expected} biçiminde olmalı: bölge kodu, tire ve iki hane (ör. 01).',
+  'error.partCodeFormatGeneric':
+    'Parça kodu bölge kodu, tire ve iki haneden oluşmalı (ör. 10-04).',
+  'error.typeCodeFormat': 'Kusur tipi kodu iki haneli olmalı (ör. 07).',
+  'error.partNameTaken':
+    'Bu bölgede aynı adlı bir parça zaten var (pasifler dahil). Büyük-küçük harf ve boşluk farkı ayrı ad sayılmaz.',
+  'error.typeNameTaken':
+    'Aynı adlı bir kusur tipi zaten var (pasifler dahil). Büyük-küçük harf ve boşluk farkı ayrı ad sayılmaz.',
+  'defects.codeSuggested': 'Önerilen kod: {code}. Gerekirse değiştirebilirsiniz.',
+  'catalog.refresh': 'Kataloğu yenile',
+  'catalog.refreshing': 'Yenileniyor…',
+  'catalog.updatedJustNow': 'Katalog az önce güncellendi',
+  'catalog.updatedAgo': 'Katalog {age} önce güncellendi',
+  'queue.catalogPartRemoved': 'Bu parça katalogdan kaldırıldı, lütfen yeni bir parça seçin.',
+  'queue.catalogTypeRemoved':
+    'Bu kusur tipi katalogdan kaldırıldı, lütfen yeni bir kusur tipi seçin.',
+  'queue.catalogBothRemoved':
+    'Bu parça ve kusur tipi katalogdan kaldırıldı, lütfen yenilerini seçin.',
+  'queue.catalogChanged':
+    'Seçilen parça veya kusur tipi katalogdan kaldırıldı, lütfen sınıflandırmayı yeniden seçin.',
+  'queue.fixClassification': 'Sınıflandırmayı düzelt',
+  'queue.saveAndResend': 'Kaydet ve gönder',
+  'queue.fixKeepsData': 'Fotoğraf ve açıklama korunur; yalnız sınıflandırma değişir.',
+  'queue.photoAttached': 'Fotoğraf ekli',
   'error.processRequired': 'Sorumlu süreç seçilmeli.',
   'error.processInactive': 'Seçilen süreç pasif.',
   'error.promoteKindInvalid':
@@ -2151,6 +2176,31 @@ export const en: Record<MessageKey, string> = {
     'The saved value is inactive; you can keep it. If you change it, only active options are offered.',
   'defects.zoneInactiveBadge': 'Zone inactive',
   'defects.systemRowHint': 'System row (“Other”): cannot be deactivated or deleted.',
+  'error.partCodeFormat':
+    'For this zone the part code must look like {expected}: zone code, a dash and two digits (e.g. 01).',
+  'error.partCodeFormatGeneric':
+    'The part code must be the zone code, a dash and two digits (e.g. 10-04).',
+  'error.typeCodeFormat': 'The defect type code must be two digits (e.g. 07).',
+  'error.partNameTaken':
+    'A part with this name already exists in this zone (including inactive ones). Case and spacing differences do not count as a new name.',
+  'error.typeNameTaken':
+    'A defect type with this name already exists (including inactive ones). Case and spacing differences do not count as a new name.',
+  'defects.codeSuggested': 'Suggested code: {code}. You can change it if needed.',
+  'catalog.refresh': 'Refresh catalogue',
+  'catalog.refreshing': 'Refreshing…',
+  'catalog.updatedJustNow': 'Catalogue updated just now',
+  'catalog.updatedAgo': 'Catalogue updated {age} ago',
+  'queue.catalogPartRemoved': 'This part was removed from the catalogue, please choose a new part.',
+  'queue.catalogTypeRemoved':
+    'This defect type was removed from the catalogue, please choose a new defect type.',
+  'queue.catalogBothRemoved':
+    'This part and defect type were removed from the catalogue, please choose new ones.',
+  'queue.catalogChanged':
+    'The selected part or defect type was removed from the catalogue, please choose the classification again.',
+  'queue.fixClassification': 'Fix classification',
+  'queue.saveAndResend': 'Save and send',
+  'queue.fixKeepsData': 'The photo and description are kept; only the classification changes.',
+  'queue.photoAttached': 'Photo attached',
   'error.processRequired': 'Select the responsible process.',
   'error.processInactive': 'The selected process is inactive.',
   'error.promoteKindInvalid':
