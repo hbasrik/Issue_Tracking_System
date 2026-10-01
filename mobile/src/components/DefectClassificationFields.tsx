@@ -6,6 +6,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { RefreshCw } from 'lucide-react-native';
 import {
   type DefectPart,
   type DefectType,
@@ -155,7 +156,7 @@ export function DefectClassificationFields({
 }: DefectClassificationFieldsProps) {
   const { tokens } = useTheme();
   const { t } = useI18n();
-  const { snapshot, ready } = useReferenceCache();
+  const { snapshot, ready, catalogAgeLabel, refreshing, refresh } = useReferenceCache();
 
   // An older cache may still hold parts of a zone deactivated since; a part
   // is offered only while its zone is in the active zone list.
@@ -266,6 +267,37 @@ export function DefectClassificationFields({
 
   return (
     <View>
+      <View
+        style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8 }}
+      >
+        <Text style={{ flex: 1, color: tokens.textSecondary, fontSize: 12 }}>
+          {catalogAgeLabel ?? ''}
+        </Text>
+        <Pressable
+          testID="catalog-refresh"
+          accessibilityRole="button"
+          accessibilityLabel={t('catalog.refresh')}
+          onPress={() => void refresh(true)}
+          disabled={refreshing}
+          style={{
+            minHeight: 44,
+            paddingHorizontal: 12,
+            borderRadius: 10,
+            borderWidth: 1,
+            borderColor: tokens.border,
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 6,
+            opacity: refreshing ? 0.6 : 1,
+          }}
+        >
+          <RefreshCw size={16} color={tokens.accent} />
+          <Text style={{ color: tokens.accent, fontSize: 13, fontWeight: '600' }}>
+            {refreshing ? t('catalog.refreshing') : t('catalog.refresh')}
+          </Text>
+        </Pressable>
+      </View>
+
       <Text style={labelStyle(tokens)}>{t('report.zone')} *</Text>
       <Pressable
         onPress={() => setZonePickerOpen(true)}
