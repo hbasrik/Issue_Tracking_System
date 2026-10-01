@@ -1,0 +1,24 @@
+PASS A-tr rejection reason shown — "Bu parça katalogdan kaldırıldı, lütfen yeni bir parça seçin."
+PASS A editor keeps the still-active defect type
+PASS A editor clears the removed part
+PASS A resend sends exactly one create — 1
+PASS A resend uses the new part (30-02 Cam, id 12) — 12
+PASS A resend keeps the defect type
+PASS A resend keeps description and VIN
+PASS A resend reuses the idempotency key — {"idempotencyKey":"6f1c2a9e-4b7d-4c1e-9a3f-2d8b5e7c1a40"}
+PASS A photo uploaded from the queued copy — [["ISSUE","501","sag-ayna.jpg"]]
+PASS A queue empty after send
+PASS A no page errors — []
+PASS A-en rejection reason shown — "This part was removed from the catalogue, please choose a new part."
+PASS A-en no page errors — []
+PASS B first fetch on open — 1
+PASS B item still sendable before refresh
+PASS B no refetch at 14 min — 1
+PASS B refetched at 15 min while open — 2
+PASS B removed part flagged without user action
+PASS B age label after auto refresh
+PASS B age label ticks while open
+PASS B manual refresh fetches — 3
+PASS B age label reset by manual refresh
+PASS B no page errors — []
+mobile flows: ALL CHECKS PASSED -> /Users/Basri/Desktop/kts_kms_project/docs/screenshots/catalog-codes/mobile

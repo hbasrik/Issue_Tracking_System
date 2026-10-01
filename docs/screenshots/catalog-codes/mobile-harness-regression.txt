@@ -1,0 +1,34 @@
+issues-list-tr-375 overflow=0 errors=0 raw=0 cards=5 sevText=0 aria=Orta|Düşük|Orta|Kritik|Kritik layoutOk=5 cardOverflow=0
+issues-list-tr-390 overflow=0 errors=0 raw=0 cards=5 sevText=0 aria=Orta|Düşük|Orta|Kritik|Kritik layoutOk=5 cardOverflow=0
+issues-list-tr-430 overflow=0 errors=0 raw=0 cards=5 sevText=0 aria=Orta|Düşük|Orta|Kritik|Kritik layoutOk=5 cardOverflow=0
+vehicle-issues-tr-375 overflow=0 errors=0 raw=0 cards=5 sevText=0 aria=Kritik|Orta|Düşük|Orta|Kritik layoutOk=5 cardOverflow=0
+vehicle-issues-tr-390 overflow=0 errors=0 raw=0 cards=5 sevText=0 aria=Kritik|Orta|Düşük|Orta|Kritik layoutOk=5 cardOverflow=0
+vehicle-issues-tr-430 overflow=0 errors=0 raw=0 cards=5 sevText=0 aria=Kritik|Orta|Düşük|Orta|Kritik layoutOk=5 cardOverflow=0
+station-line-tr-375 overflow=0 errors=0 raw=0
+station-line-tr-390 overflow=0 errors=0 raw=0
+station-line-tr-430 overflow=0 errors=0 raw=0
+shipment-passed-tr-375 overflow=0 errors=0 raw=0
+shipment-passed-tr-390 overflow=0 errors=0 raw=0
+shipment-passed-tr-430 overflow=0 errors=0 raw=0
+shipment-delivered-tr-375 overflow=0 errors=0 raw=0
+shipment-delivered-tr-390 overflow=0 errors=0 raw=0
+shipment-delivered-tr-430 overflow=0 errors=0 raw=0
+shipment-line-tr-375 overflow=0 errors=0 raw=0
+shipment-line-tr-390 overflow=0 errors=0 raw=0
+shipment-line-tr-430 overflow=0 errors=0 raw=0
+eol-branch-shipped-tr-375 overflow=0 errors=0 raw=0
+eol-branch-shipped-tr-390 overflow=0 errors=0 raw=0
+eol-branch-shipped-tr-430 overflow=0 errors=0 raw=0
+eol-line-tr-375 overflow=0 errors=0 raw=0
+eol-line-tr-390 overflow=0 errors=0 raw=0
+eol-line-tr-430 overflow=0 errors=0 raw=0
+issue-detail-tr-375 overflow=0 errors=0 raw=0
+issue-detail-tr-390 overflow=0 errors=0 raw=0
+issue-detail-tr-430 overflow=0 errors=0 raw=0
+queue-rejected-tr-375 overflow=0 errors=0 raw=0
+queue-rejected-tr-390 overflow=0 errors=0 raw=0
+queue-rejected-tr-430 overflow=0 errors=0 raw=0
+queue-refresh-tr-375 overflow=0 errors=0 raw=0
+queue-refresh-tr-390 overflow=0 errors=0 raw=0
+queue-refresh-tr-430 overflow=0 errors=0 raw=0
+mobile harness: ok -> /tmp/mh-all3

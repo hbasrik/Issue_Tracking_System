@@ -1,0 +1,14 @@
+PASS Body suggests 10-11 — 10-11
+PASS suggestion hint shown
+PASS switching to Trim suggests 30-09 — 30-09
+PASS wrong prefix flagged — Parça kodu bu bölge için 10-NN biçiminde olmalı: bölge kodu, tire ve iki hane (ör. 01).
+PASS save disabled for wrong prefix
+PASS save disabled for ZZZ
+PASS duplicate name in Body flagged — Bu bölgede aynı adlı bir parça zaten var (pasifler dahil). Büyük-küçük harf ve boşluk farkı ayrı ad sayılmaz.
+PASS save disabled for duplicate name
+PASS same name allowed in Elektrik
+PASS save enabled in Elektrik
+PASS saved through the API in Elektrik — {"Code":"40-05","NameTR":"test kapı kolu"}
+PASS types suggest 11 (after 01–10, 99 reserved) — 11
+PASS duplicate type name flagged
+ALL CHECKS PASSED

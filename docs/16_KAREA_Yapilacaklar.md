@@ -610,6 +610,41 @@ Katalog incelemesinden kalan dört bulgu.
 - **Seed yalnız ekler:** `05_defect_catalog.sql` `ON CONFLICT DO NOTHING`;
   yeniden çalıştırmak katalog düzenlemelerini geri almaz. Diğer seed
   dosyalarının durumu B6'da.
+- **Kod biçimi (Karar 20):** parça kodu `<bölge kodu>-NN`, kusur tipi
+  kodu iki hane. Yanlış önek ("40-77" Body'de, "ZZZ") 400 ile ve beklenen
+  ön ek yazılarak reddedilir; oluşturma, düzenleme (kod/bölge
+  değiştiyse) ve "Diğer"den kataloğa almada. Yönetim sayfası seçilen
+  bölgeye göre bir sonraki kodu (Body'de 10-11 gibi), tiplerde bir sonraki
+  iki haneli kodu önerir; elle değiştirilebilir, biçim hatası anında
+  gösterilir ve kaydet kapanır.
+- **Ad tekliği (Karar 20):** aynı bölgede aynı parça adı, herhangi iki
+  kusur tipinde aynı ad 409 ile reddedilir (TR veya EN; büyük-küçük harf,
+  boşluk, noktalı/noktasız i farkı sayılmaz; pasifler dahil). Farklı
+  bölgede aynı ad serbest. Eski kayıtlar düzenlenebilir kalır.
+- **Canlı tarama (salt okunur, düzeltme yapılmadı):** 24 parça ve 10 tipte
+  yanlış biçimli kod yok, bölge içinde ya da tipler arasında tekrarlanan
+  ad yok; koda sahip 10 hatanın `defect_code` anlık görüntüsü
+  `NN-NN-NN` biçiminde (`live-scan-output.txt`).
+- **Mobil tazeleme (Karar 21):** uygulama açıkken katalog 15 dakikada bir
+  tazelenir; sınıflandırma alanlarında yaş satırı ve "Kataloğu yenile".
+- **Kuyrukta düzeltme (Karar 21):** parçası/tipi katalogdan kaldırılan
+  kayıt "Bu parça katalogdan kaldırıldı, lütfen yeni bir parça seçin."
+  der; "Sınıflandırmayı düzelt" ile yeni parça/tip seçilip aynı kayıt
+  fotoğraf ve açıklamasıyla yeniden gönderilir.
+- **Mobil düzenek:** canlı sahneler gerçek kuyruk ve önbellek
+  sağlayıcılarını sahte depolama/API üzerinde çalıştırır
+  (`queue-rejected`, `queue-refresh`).
+- **Yayın:** migration yok; backend değişti, API yeniden başlatılmalı.
+Kanıt: `docs/screenshots/catalog-codes/`: `verification-output.txt`
+(ayrı test DB: eski seed adı geri alıyor, yeni seed koruyor; kod ve ad
+reddi/kabulü API üzerinden), `error-messages-output.txt` (sunucu
+metinlerinin TR/EN karşılığı), `capture-web-output.txt` + `web-*.png`
+(öneri, yanlış önek, aynı ad, başka bölgede aynı ad, tip önerisi),
+`mobile-flows-output.txt` + `mobile/*.png` (red sebebi, düzeltme formu,
+yeniden gönderim; sahte saatle 14. dakikada çekim yok, 15. dakikada var,
+elle yenileme), `mobile-harness-regression.txt` (tüm sahneler),
+`live-scan-output.txt`, `build-output.txt`. Gerçek cihazda görüntü
+alınmadı; mobil kanıt react-native-web düzeneğinden.
 
 ---
 

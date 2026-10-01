@@ -1,0 +1,17 @@
+tr | 400 part code must be the zone code, a dash and two digits: expected 10-NN
+     -> Parça kodu bu bölge için 10-NN biçiminde olmalı: bölge kodu, tire ve iki hane (ör. 01).
+tr | 400 defect type code must be two digits
+     -> Kusur tipi kodu iki haneli olmalı (ör. 07).
+tr | 409 a part with this name already exists in the zone
+     -> Bu bölgede aynı adlı bir parça zaten var (pasifler dahil). Büyük-küçük harf ve boşluk farkı ayrı ad sayılmaz.
+tr | 409 a defect type with this name already exists
+     -> Aynı adlı bir kusur tipi zaten var (pasifler dahil). Büyük-küçük harf ve boşluk farkı ayrı ad sayılmaz.
+en | 400 part code must be the zone code, a dash and two digits: expected 10-NN
+     -> For this zone the part code must look like 10-NN: zone code, a dash and two digits (e.g. 01).
+en | 400 defect type code must be two digits
+     -> The defect type code must be two digits (e.g. 07).
+en | 409 a part with this name already exists in the zone
+     -> A part with this name already exists in this zone (including inactive ones). Case and spacing differences do not count as a new name.
+en | 409 a defect type with this name already exists
+     -> A defect type with this name already exists (including inactive ones). Case and spacing differences do not count as a new name.
+ok: every rejection has a specific message

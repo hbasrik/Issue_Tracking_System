@@ -1,0 +1,62 @@
+{
+ "part 40-77 in Body rejected": {
+  "status": 400,
+  "error": "part code must be the zone code, a dash and two digits: expected 10-NN"
+ },
+ "part ZZZ in Body rejected": {
+  "status": 400,
+  "error": "part code must be the zone code, a dash and two digits: expected 10-NN"
+ },
+ "part 10-7 rejected": {
+  "status": 400,
+  "error": "part code must be the zone code, a dash and two digits: expected 10-NN"
+ },
+ "part 10-00 rejected": {
+  "status": 400,
+  "error": "part code must be the zone code, a dash and two digits: expected 10-NN"
+ },
+ "part 30-08 in Body rejected": {
+  "status": 400,
+  "error": "part code must be the zone code, a dash and two digits: expected 10-NN"
+ },
+ "type code 7 rejected": {
+  "status": 400,
+  "error": "defect type code must be two digits"
+ },
+ "type code AB rejected": {
+  "status": 400,
+  "error": "defect type code must be two digits"
+ },
+ "type code 10-01 rejected": {
+  "status": 400,
+  "error": "defect type code must be two digits"
+ },
+ "promote-other part with wrong prefix rejected": {
+  "status": 400,
+  "error": "part code must be the zone code, a dash and two digits: expected 10-NN"
+ },
+ "' test kapı kolu ' in Body rejected": {
+  "status": 409,
+  "error": "a part with this name already exists in the zone"
+ },
+ "'TEST KAPI KOLU' in Body rejected": {
+  "status": 409,
+  "error": "a part with this name already exists in the zone"
+ },
+ "same EN name in Body rejected": {
+  "status": 409,
+  "error": "a part with this name already exists in the zone"
+ },
+ "type ' çizik / darbe / HASAR ' rejected": {
+  "status": 409,
+  "error": "a defect type with this name already exists"
+ },
+ "renaming onto sibling 'Tampon' rejected": {
+  "status": 409,
+  "error": "a part with this name already exists in the zone"
+ },
+ "changing the legacy code to another bad code rejected": {
+  "status": 400,
+  "error": "part code must be the zone code, a dash and two digits: expected 10-NN"
+ }
+}

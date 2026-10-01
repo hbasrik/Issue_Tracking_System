@@ -1,0 +1,32 @@
+== parts whose code is not <zone code>-NN (Other 99-99 excluded) ==
+ id | code | zone | name_tr | is_active | issues 
+----+------+------+---------+-----------+--------
+(0 rows)
+
+== defect types whose code is not two digits ==
+ id | code | name_tr | is_active | issues 
+----+------+---------+-----------+--------
+(0 rows)
+
+== duplicate part names within a zone (TR or EN; case, spaces, dotted/dotless i ignored) ==
+ zone_id | code | name_tr | dup_code | dup_name_tr 
+---------+------+---------+----------+-------------
+(0 rows)
+
+== duplicate defect type names ==
+ code | name_tr | dup_code | dup_name_tr 
+------+---------+----------+-------------
+(0 rows)
+
+== issue defect codes (snapshot) that are not NN-NN-NN ==
+ issues_with_code | malformed 
+------------------+-----------
+               10 |         0
+(1 row)
+
+== totals ==
+ zones | parts | types |          scanned_at           
+-------+-------+-------+-------------------------------
+     5 |    24 |    10 | 2026-10-01 09:06:02.248262+00
+(1 row)
+

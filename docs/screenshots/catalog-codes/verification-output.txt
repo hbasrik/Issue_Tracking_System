@@ -1,0 +1,50 @@
+== 1. Seed is insert-only ==
+Fixture edits a quality engineer could make in the admin page (test DB only):
+  part 10-01: 10-01 | Kapı (kalite ekibi adı) | Door | 42 | 10 | t
+  type 02   : 02 | Yüzey / boya hatası | Paint / surface (QA wording) |
+Before the fix — seed from 5c0052b^ (ON CONFLICT DO UPDATE) re-run:
+  old seed: INSERT 0 4 / INSERT 0 5 / INSERT 0 24 / INSERT 0 10
+  part 10-01: 10-01 | Kapı | Door | 1 | 10 | t
+  type 02   : 02 | Yüzey / boya hatası | Surface / paint defect | 2
+PASS old seed reverted the rename (bug reproduced)
+Edits re-applied; part 40-04 deleted to show missing rows still get added.
+After the fix — current seed (ON CONFLICT DO NOTHING) re-run:
+  new seed: INSERT 0 0 / INSERT 0 0 / INSERT 0 1 / INSERT 0 0
+PASS rename kept — Kapı (kalite ekibi adı)
+PASS sort order kept — 42
+PASS type EN name kept — Paint / surface (QA wording)
+PASS type default process kept (NULL, seed says PAINT) — NULL
+PASS missing part 40-04 re-added — 40-04 | Klima / Fan | HVAC / fan | 4 | 40 | t
+  second re-run: INSERT 0 0 / INSERT 0 0 / INSERT 0 0 / INSERT 0 0
+PASS second re-run inserts nothing
+
+== 2. Code format ==
+PASS login (seed user, test DB) — HTTP 200
+  Body part codes: 10-01, 10-02, 10-03, 10-04, 10-05, 10-06, 10-07, 10-08, 10-09
+PASS part 40-77 in Body rejected — HTTP 400 "part code must be the zone code, a dash and two digits: expected 10-NN"
+PASS part ZZZ in Body rejected — HTTP 400 "part code must be the zone code, a dash and two digits: expected 10-NN"
+PASS part 10-7 rejected — HTTP 400 "part code must be the zone code, a dash and two digits: expected 10-NN"
+PASS part 10-00 rejected — HTTP 400 "part code must be the zone code, a dash and two digits: expected 10-NN"
+PASS part 30-08 in Body rejected — HTTP 400 "part code must be the zone code, a dash and two digits: expected 10-NN"
+PASS part 10-10 (suggested next code) accepted — HTTP 201
+PASS type code 7 rejected — HTTP 400 "defect type code must be two digits"
+PASS type code AB rejected — HTTP 400 "defect type code must be two digits"
+PASS type code 10-01 rejected — HTTP 400 "defect type code must be two digits"
+PASS type code 10 (suggested next code) accepted — HTTP 201
+PASS promote-other part with wrong prefix rejected — HTTP 400 "part code must be the zone code, a dash and two digits: expected 10-NN"
+
+== 3. Duplicate names ==
+PASS ' test kapı kolu ' in Body rejected — HTTP 409 "a part with this name already exists in the zone"
+PASS 'TEST KAPI KOLU' in Body rejected — HTTP 409 "a part with this name already exists in the zone"
+PASS same EN name in Body rejected — HTTP 409 "a part with this name already exists in the zone"
+PASS same name in Trim accepted — HTTP 201
+PASS type ' çizik / darbe / HASAR ' rejected — HTTP 409 "a defect type with this name already exists"
+PASS renaming onto sibling 'Tampon' rejected — HTTP 409 "a part with this name already exists in the zone"
+PASS re-casing the part's own name accepted — HTTP 200
+
+== 4. Legacy rows stay editable (unchanged code/name are not re-checked) ==
+  legacy fixture inserted directly (test DB): ZZZ | Eski kayıt | Legacy row | 99 | 10 | t
+PASS legacy ZZZ part renamed and deactivated — HTTP 200
+PASS changing the legacy code to another bad code rejected — HTTP 400 "part code must be the zone code, a dash and two digits: expected 10-NN"
+
+ALL CHECKS PASSED

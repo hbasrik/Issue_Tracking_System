@@ -1,0 +1,146 @@
+{
+ "A-tr rejection reason shown": {
+  "ok": true,
+  "detail": "Bu parça katalogdan kaldırıldı, lütfen yeni bir parça seçin."
+ },
+ "A editor keeps the still-active defect type": {
+  "ok": true
+ },
+ "A editor clears the removed part": {
+  "ok": true
+ },
+ "A resend sends exactly one create": {
+  "ok": true,
+  "detail": 1
+ },
+ "A resend uses the new part (30-02 Cam, id 12)": {
+  "ok": true,
+  "detail": 12
+ },
+ "A resend keeps the defect type": {
+  "ok": true
+ },
+ "A resend keeps description and VIN": {
+  "ok": true
+ },
+ "A resend reuses the idempotency key": {
+  "ok": true,
+  "detail": {
+   "idempotencyKey": "6f1c2a9e-4b7d-4c1e-9a3f-2d8b5e7c1a40"
+  }
+ },
+ "A photo uploaded from the queued copy": {
+  "ok": true,
+  "detail": [
+   [
+    "ISSUE",
+    "501",
+    "sag-ayna.jpg"
+   ]
+  ]
+ },
+ "A queue empty after send": {
+  "ok": true
+ },
+ "A no page errors": {
+  "ok": true,
+  "detail": []
+ },
+ "A_calls": [
+  {
+   "name": "listDefectCatalog_zones",
+   "args": []
+  },
+  {
+   "name": "listDefectCatalog_parts",
+   "args": []
+  },
+  {
+   "name": "listDefectCatalog_types",
+   "args": []
+  },
+  {
+   "name": "createIssue",
+   "args": [
+    {
+     "vin": "NM0KTSKRC2XSB0142",
+     "source_type": "MANUAL",
+     "station_id": 6,
+     "issue_type_id": 1,
+     "severity": "MEDIUM",
+     "description": "Sağ dış ayna kapağında çizik, montajda fark edildi.",
+     "defect_part_id": 12,
+     "defect_type_id": 3
+    },
+    {
+     "idempotencyKey": "6f1c2a9e-4b7d-4c1e-9a3f-2d8b5e7c1a40"
+    }
+   ]
+  },
+  {
+   "name": "uploadMedia",
+   "args": [
+    "ISSUE",
+    "501",
+    {
+     "uri": "data:image/svg+xml;base64,PHN2Zy…",
+     "name": "sag-ayna.jpg",
+     "type": "image/jpeg"
+    }
+   ]
+  },
+  {
+   "name": "deleteAsync",
+   "args": [
+    "data:image/svg+xml;base64,PHN2ZyB4bWxucz"
+   ]
+  }
+ ],
+ "A-en rejection reason shown": {
+  "ok": true,
+  "detail": "This part was removed from the catalogue, please choose a new part."
+ },
+ "A-en no page errors": {
+  "ok": true,
+  "detail": []
+ },
+ "B first fetch on open": {
+  "ok": true,
+  "detail": 1
+ },
+ "B item still sendable before refresh": {
+  "ok": true
+ },
+ "B no refetch at 14 min": {
+  "ok": true,
+  "detail": 1
+ },
+ "B refetched at 15 min while open": {
+  "ok": true,
+  "detail": 2
+ },
+ "B removed part flagged without user action": {
+  "ok": true
+ },
+ "B_fetch_times": [
+  "+0 s",
+  "+900 s"
+ ],
+ "B age label after auto refresh": {
+  "ok": true
+ },
+ "B age label ticks while open": {
+  "ok": true
+ },
+ "B manual refresh fetches": {
+  "ok": true,
+  "detail": 3
+ },
+ "B age label reset by manual refresh": {
+  "ok": true
+ },
+ "B no page errors": {
+  "ok": true,
+  "detail": []
+ }
+}

@@ -1,0 +1,31 @@
+== go test ./... (backend)
+?   	github.com/karea/backend/cmd/api	[no test files]
+ok  	github.com/karea/backend/internal/delivery/http	(cached)
+ok  	github.com/karea/backend/internal/domain	(cached)
+ok  	github.com/karea/backend/internal/platform/applog	(cached)
+?   	github.com/karea/backend/internal/platform/auth	[no test files]
+ok  	github.com/karea/backend/internal/platform/config	(cached)
+ok  	github.com/karea/backend/internal/platform/storage	(cached)
+?   	github.com/karea/backend/internal/repository	[no test files]
+ok  	github.com/karea/backend/internal/repository/postgres	0.805s
+ok  	github.com/karea/backend/internal/usecase	(cached)
+rc=0
+
+== web: tsc --noEmit
+rc=0
+
+== web: vite build
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 3.13s
+rc=0
+
+== mobile: tsc --noEmit
+rc=0
+
+== shared selftests
+shared/checklistActive.ts ok
+defectCatalogCodes selftest: ok
+shared/i18n/messages.ts ok (1192 tr keys scanned)
+shared/surfaces.ts ok
