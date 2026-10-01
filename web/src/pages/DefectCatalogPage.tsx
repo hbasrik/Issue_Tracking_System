@@ -397,7 +397,7 @@ export default function DefectCatalogPage() {
   useEffect(() => {
     if (codeTouched || suggestedCode == null) return;
     setDraft((d) => (d.code === suggestedCode ? d : { ...d, code: suggestedCode }));
-  }, [suggestedCode, codeTouched]);
+  }, [suggestedCode, codeTouched, draft.code]);
 
   // Mirrors the backend rules (docs/11 Karar 20): only a new or changed code
   // and a new or changed name are checked, so legacy rows stay editable.
