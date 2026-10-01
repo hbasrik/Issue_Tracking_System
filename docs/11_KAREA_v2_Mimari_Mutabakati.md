@@ -408,6 +408,41 @@ düzeltilse bile eski kayıtlarda kalır. Aynı bölgede "Test Kapı Kolu" ve
 - **Seed yalnız ekler:** `05_defect_catalog.sql` `ON CONFLICT DO NOTHING`;
   yeniden çalıştırma kalite ekibinin katalog düzenlemelerini geri almaz.
 
+## Karar 21 — Mobil katalog tazeleme ve kuyrukta sınıflandırma düzeltme (NEW — 2026-10-01)
+
+**Gerekçe:** Mobil referans önbelleği yalnız girişte, ağ geri gelince ve
+arka plandan dönüşte (15 dk eskiyse) tazeleniyordu; uygulama ön planda
+açık kaldıkça katalog değişikliği hiç gelmiyordu. Kuyruktaki bir kayıt,
+parçası pasife alındığı için reddedilince "gönderilemedi" olarak kalıyor,
+operatör kaydı fotoğrafıyla birlikte silip baştan girmek zorunda
+kalıyordu.
+
+**Karar:**
+- **Ön planda düzenli tazeleme:** `ReferenceCacheProvider` uygulama
+  açıkken dakikada bir saati günceller ve anlık görüntü 15 dakikayı
+  (`REFERENCE_REFRESH_MS`) geçtiyse yeniden çeker. Arka plandaki uygulama
+  çekmez; ön plana dönüşte mevcut kural geçerli. Aynı anda tek çekim
+  yapılır.
+- **Elle tazeleme:** sınıflandırma alanlarının (hata bildirme formu, hata
+  düzenleme, kuyruk düzeltme) üstünde "Katalog N dk önce güncellendi"
+  satırı ve "Kataloğu yenile" düğmesi.
+- **Red sebebi açık:** kuyruktaki kaydın parçası/tipi seçilebilir katalogda
+  yoksa ya da sunucu `selected catalogue item is inactive` /
+  `selected part's zone is inactive` ile reddettiyse kart "Bu parça
+  katalogdan kaldırıldı, lütfen yeni bir parça seçin." (tip, ikisi ya da
+  belirsiz durum için eşdeğer metinler) gösterir. Tazeleme sonrası
+  kaldırılan parça, kayıt gönderilmeden de işaretlenir.
+- **Kuyrukta düzeltme:** kartta "Sınıflandırmayı düzelt" aynı
+  sınıflandırma alanlarını açar; hâlâ aktif olan değer seçili kalır,
+  kaldırılan temizlenir. "Kaydet ve gönder" yalnız payload'ın parça/tip ve
+  "Diğer" serbest metin alanlarını değiştirir, kaydı bekleyen duruma alır
+  ve hemen gönderir. Fotoğraf kopyası, açıklama, VIN, istasyon ve
+  idempotency anahtarı (kuyruk id'si) aynı kalır; reddedilen oluşturma
+  sunucuda satır bırakmadığı için aynı anahtar güvenlidir.
+- **Sınır:** hata sunucuda oluşmuş, yalnız fotoğrafı bekleyen kayıtta
+  (`issueId` dolu) sınıflandırma kuyruktan değiştirilmez; o kayıt hata
+  detayındaki sınıflandırma düzenleyicisiyle düzeltilir.
+
 ## Değişmeyen / Yeniden Kullanılacaklar
 
 Şunlara **dokunulmuyor**, olduğu gibi kalıyor: JWT auth + bcrypt (üstteki JWT_SECRET ve iptal sıkılaştırmaları hariç), CORS allowlist mimarisi, Unit-of-Work (pgx.Tx) transaction pattern, `.cursor/rules` (commit ve environment-check kuralları), Analysis sekmesi temel yapısı (VIN×severity kırılımı, Pie/Bar chart'lar — yeni station/EOL alanlarıyla genişleyecek ama sıfırdan kurulmayacak), Docker/migration/seed altyapısı.
