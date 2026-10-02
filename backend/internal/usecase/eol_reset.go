@@ -41,12 +41,15 @@ type EOLResetOutput struct {
 }
 
 // Reset returns the vehicle's EoL workflow to BRANCH and its global status
-// to IN_PRODUCTION, and appends an EOL_WORKFLOW_STAGE_CHANGE audit row so
-// the rewind is not silent.
+// to IN_PRODUCTION, and appends an EOL_WORKFLOW_STAGE_CHANGE audit row (plus
+// a STATUS_CHANGE row when the status really moves back) so the rewind is
+// not silent. Both rows carry dev_reset=true for the vehicle timeline.
 func (s *EOLWorkflowResetter) Reset(ctx context.Context, vin string, actorID int) (*EOLResetOutput, error) {
-	if _, err := s.vehicles.GetByVIN(ctx, vin); err != nil {
+	vehicle, err := s.vehicles.GetByVIN(ctx, vin)
+	if err != nil {
 		return nil, err
 	}
+	previousStatus := vehicle.CurrentGlobalStatus
 
 	workflow, err := s.workflow.Get(ctx, vin)
 	if err != nil {
@@ -61,7 +64,7 @@ func (s *EOLWorkflowResetter) Reset(ctx context.Context, vin string, actorID int
 		if err := s.vehicles.UpdateStatusAllowingRewind(txCtx, vin, domain.VehicleStatusInProduction); err != nil {
 			return err
 		}
-		return s.audit.Append(txCtx, domain.AuditLog{
+		if err := s.audit.Append(txCtx, domain.AuditLog{
 			VIN:         vin,
 			EventType:   domain.AuditEventEOLWorkflowStage,
 			OldValue:    string(workflow.CurrentStage),
@@ -70,6 +73,22 @@ func (s *EOLWorkflowResetter) Reset(ctx context.Context, vin string, actorID int
 			Metadata: map[string]any{
 				"dev_reset": true,
 				"reason":    "development eol workflow reset",
+			},
+		}); err != nil {
+			return err
+		}
+		if previousStatus == domain.VehicleStatusInProduction {
+			return nil
+		}
+		return s.audit.Append(txCtx, domain.AuditLog{
+			VIN:         vin,
+			EventType:   domain.AuditEventStatusChange,
+			OldValue:    string(previousStatus),
+			NewValue:    string(domain.VehicleStatusInProduction),
+			PerformedBy: &performedBy,
+			Metadata: map[string]any{
+				"dev_reset": true,
+				"action":    "dev_reset",
 			},
 		})
 	})

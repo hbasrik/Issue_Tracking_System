@@ -302,6 +302,8 @@ func TestEOLReset_ReturnsShippedVehicleToBranch(t *testing.T) {
 	if _, err := f.branchShip.Ship(ctx, eolTestVIN, 7); err != nil {
 		t.Fatalf("branch ship: %v", err)
 	}
+	// fn_enforce_branch_shipment moves the vehicle to IN_WAREHOUSE in the DB.
+	f.vehicles.vehicles[eolTestVIN].CurrentGlobalStatus = domain.VehicleStatusInWarehouse
 
 	out, err := f.reset.Reset(ctx, eolTestVIN, 9)
 	if err != nil {
@@ -328,8 +330,8 @@ func TestEOLReset_ReturnsShippedVehicleToBranch(t *testing.T) {
 		t.Errorf("stage timestamps still set: %+v", workflow)
 	}
 
-	if len(f.audit.entries) != 1 {
-		t.Fatalf("audit entries = %d, want 1", len(f.audit.entries))
+	if len(f.audit.entries) != 2 {
+		t.Fatalf("audit entries = %d, want 2", len(f.audit.entries))
 	}
 	entry := f.audit.entries[0]
 	if entry.EventType != domain.AuditEventEOLWorkflowStage {
@@ -340,5 +342,28 @@ func TestEOLReset_ReturnsShippedVehicleToBranch(t *testing.T) {
 	}
 	if entry.Metadata["dev_reset"] != true {
 		t.Errorf("metadata = %+v, want dev_reset=true", entry.Metadata)
+	}
+
+	status := f.audit.entries[1]
+	if status.EventType != domain.AuditEventStatusChange {
+		t.Errorf("event = %q, want %q", status.EventType, domain.AuditEventStatusChange)
+	}
+	if status.OldValue != string(domain.VehicleStatusInWarehouse) || status.NewValue != string(domain.VehicleStatusInProduction) {
+		t.Errorf("status audit %q -> %q, want IN_WAREHOUSE -> IN_PRODUCTION", status.OldValue, status.NewValue)
+	}
+	if status.Metadata["dev_reset"] != true || status.PerformedBy == nil || *status.PerformedBy != 9 {
+		t.Errorf("status audit = %+v, want dev_reset=true by user 9", status)
+	}
+}
+
+// TestEOLReset_NoStatusRowWhenAlreadyInProduction: the STATUS_CHANGE row is
+// written only when the vehicle status really moves back.
+func TestEOLReset_NoStatusRowWhenAlreadyInProduction(t *testing.T) {
+	f := newEOLFixture(t)
+	if _, err := f.reset.Reset(context.Background(), eolTestVIN, 9); err != nil {
+		t.Fatalf("reset: %v", err)
+	}
+	if len(f.audit.entries) != 1 || f.audit.entries[0].EventType != domain.AuditEventEOLWorkflowStage {
+		t.Fatalf("audit entries = %+v, want only the stage row", f.audit.entries)
 	}
 }
