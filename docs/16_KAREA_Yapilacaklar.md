@@ -690,7 +690,7 @@ durumu gösterir. Kanıt: `docs/screenshots/form-focus-ring/`
 (`before-*` / `after-*` görüntüleri ve ölçümleri, `build-output.txt`;
 API Playwright ile taklit edildi).
 
-### A39. Sevk bölümleri süreç sırasıyla `[~]` — 2026-10-02
+### A39. Sevk bölümleri süreç sırasıyla `[x]` — 2026-10-02
 A37'deki kategori bölümleri Sevk adımlarını dağıtıyordu; liste 17.
 maddeden başlıyordu. Sevk artık ardışık adımlardan oluşan 6 bölüm (Karar
 23): İç Montaj & Kesim İşleri (1–12), Şasi & Dış Donanım (13–16), Logo,
@@ -702,8 +702,12 @@ değişmedi.
 - **Migration 0036:** her Sevk maddesi `seed_key` ile tek tek atanır,
   aralık yok; idempotent, geri alma dosyası 0035 değerlerini yazar.
   Seed 03 aynı değerleri taşır.
-- **Canlı:** henüz uygulanmadı, onay bekliyor. Uygulanınca 46 Sevk
-  satırı değişir; web birlikte yayına alınmalı.
+- **Canlı (2026-10-02):** 0036 uygulandı, sürüm 35 → 36; 46 Sevk
+  satırının bölümü değişti, Test ve EOL satırları aynı kaldı. Sevk ekran
+  sırası 1..46. Metin, sıra, aktiflik md5'leri ve 53000 araç ilerleme
+  kaydı aynı kaldı: `live-apply-output.txt` + `live-snapshot.sql`. Yeni
+  web birlikte yayına alınmalı; mobilde yeni sürüm yüklenene kadar eski
+  uygulama bölüm başlığını ham anahtar olarak gösterir.
 Kanıt: `docs/screenshots/shipment-sections-process/`:
 `verification-output.txt` (canlı şablon satırlarının kopyası üzerinde
 0036: madde tablosu, ekran sırası, iki kez çalıştırma, geri alma,

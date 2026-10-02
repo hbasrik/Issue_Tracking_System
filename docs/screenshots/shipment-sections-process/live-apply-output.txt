@@ -1,0 +1,146 @@
+Live apply of migration 0036 — 2026-10-02
+
+== BEFORE (read-only, live-snapshot.sql) ==
+                migration                 
+------------------------------------------
+ schema_migrations version=35 dirty=false
+(1 row)
+
+ all_items | active |     non_section_fingerprint      |         text_fingerprint         |        order_fingerprint         |        active_fingerprint        |       section_fingerprint        
+-----------+--------+----------------------------------+----------------------------------+----------------------------------+----------------------------------+----------------------------------
+       108 |    104 | 756f8f46ff05210be58a636c267d6e05 | 05569c6cdfd5f753a5b094843bbde883 | 32600eb878237a9612d91214c62e34e6 | 5aed41701f444f6c942f20c21f1def07 | 189f7709f71e610bde6b6489e5fa9dfd
+(1 row)
+
+ template_type | items |     all_columns_fingerprint      
+---------------+-------+----------------------------------
+ EOL           |    17 | 0aacb86c9c99b40c566991c4d2725400
+ SHIPMENT      |    46 | a56ea0b64633f003eefd6bd0aefc1171
+ TEST          |    45 | 4928eea335c859540276a562e3f8529c
+(3 rows)
+
+ template_type | section_key | section_sort | items | active |            item_nos             
+---------------+-------------+--------------+-------+--------+---------------------------------
+ SHIPMENT      | identity    |           10 |     6 |      6 | 17,18,19,20,23,24
+ SHIPMENT      | exterior    |           20 |     6 |      6 | 3,4,16,28,29,45
+ SHIPMENT      | interior    |           30 |    13 |     13 | 1,2,5,6,7,8,9,10,11,12,21,22,32
+ SHIPMENT      | closures    |           40 |     3 |      3 | 25,26,43
+ SHIPMENT      | electrical  |           50 |     3 |      3 | 14,27,31
+ SHIPMENT      | sealing     |           60 |     8 |      8 | 15,30,34,35,36,37,38,46
+ SHIPMENT      | chassis     |           70 |     7 |      7 | 13,33,39,40,41,42,44
+ TEST          | cold_drag   |           10 |     3 |      3 | 1,2,3
+ TEST          | bcm_ee      |           20 |    12 |     12 | 4,5,6,7,8,9,10,11,12,13,14,15
+ TEST          | road_test   |           30 |     9 |      9 | 16,17,18,19,20,21,22,23,24
+ TEST          | brake_test  |           40 |     5 |      5 | 25,26,27,28,29
+ TEST          | alignment   |           50 |     3 |      3 | 30,31,32
+ TEST          | hot_drag    |           60 |     5 |      5 | 33,34,35,36,37
+ TEST          | eng_quality |           70 |     6 |      6 | 38,39,40,41,42,43
+ TEST          | -           |              |     2 |      0 | 44,45
+(15 rows)
+
+                                                                 shipment_screen_order                                                                  
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+ SHIPMENT screen order=17,18,19,20,23,24,3,4,16,28,29,45,1,2,5,6,7,8,9,10,11,12,21,22,32,25,26,43,14,27,31,15,30,34,35,36,37,38,46,13,33,39,40,41,42,44
+(1 row)
+
+                                    progress                                     
+---------------------------------------------------------------------------------
+ checklist_item_progress rows=53000 fingerprint=4a59c65ba452928b62113f9806e759b6
+(1 row)
+
+== MIGRATE (migrate/migrate up) ==
+36/u shipment_sections_by_process (28.78475ms)
+
+== AFTER (read-only, live-snapshot.sql) ==
+                migration                 
+------------------------------------------
+ schema_migrations version=36 dirty=false
+(1 row)
+
+ all_items | active |     non_section_fingerprint      |         text_fingerprint         |        order_fingerprint         |        active_fingerprint        |       section_fingerprint        
+-----------+--------+----------------------------------+----------------------------------+----------------------------------+----------------------------------+----------------------------------
+       108 |    104 | 756f8f46ff05210be58a636c267d6e05 | 05569c6cdfd5f753a5b094843bbde883 | 32600eb878237a9612d91214c62e34e6 | 5aed41701f444f6c942f20c21f1def07 | 28db807b0d54ab29c51f6b1011ced22b
+(1 row)
+
+ template_type | items |     all_columns_fingerprint      
+---------------+-------+----------------------------------
+ EOL           |    17 | 0aacb86c9c99b40c566991c4d2725400
+ SHIPMENT      |    46 | 948540dd754f2075ead3370caedff5c1
+ TEST          |    45 | 4928eea335c859540276a562e3f8529c
+(3 rows)
+
+ template_type |   section_key    | section_sort | items | active |           item_nos            
+---------------+------------------+--------------+-------+--------+-------------------------------
+ SHIPMENT      | interior_fit     |           10 |    12 |     12 | 1,2,3,4,5,6,7,8,9,10,11,12
+ SHIPMENT      | chassis_exterior |           20 |     4 |      4 | 13,14,15,16
+ SHIPMENT      | badges_trim      |           30 |     8 |      8 | 17,18,19,20,21,22,23,24
+ SHIPMENT      | rubber_film      |           40 |     8 |      8 | 25,26,27,28,29,30,31,32
+ SHIPMENT      | brake_sealing    |           50 |     8 |      8 | 33,34,35,36,37,38,39,40
+ SHIPMENT      | final_adjust     |           60 |     6 |      6 | 41,42,43,44,45,46
+ TEST          | cold_drag        |           10 |     3 |      3 | 1,2,3
+ TEST          | bcm_ee           |           20 |    12 |     12 | 4,5,6,7,8,9,10,11,12,13,14,15
+ TEST          | road_test        |           30 |     9 |      9 | 16,17,18,19,20,21,22,23,24
+ TEST          | brake_test       |           40 |     5 |      5 | 25,26,27,28,29
+ TEST          | alignment        |           50 |     3 |      3 | 30,31,32
+ TEST          | hot_drag         |           60 |     5 |      5 | 33,34,35,36,37
+ TEST          | eng_quality      |           70 |     6 |      6 | 38,39,40,41,42,43
+ TEST          | -                |              |     2 |      0 | 44,45
+(14 rows)
+
+                                                                 shipment_screen_order                                                                  
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+ SHIPMENT screen order=1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46
+(1 row)
+
+                                    progress                                     
+---------------------------------------------------------------------------------
+ checklist_item_progress rows=53000 fingerprint=4a59c65ba452928b62113f9806e759b6
+(1 row)
+
+== ROWS UPDATED (per-row section_key/section_sort, read-only before/after) ==
+rows compared: 108 | section changed: 46 | by type: {'SHIPMENT': 46}
+  SHIPMENT # 1: interior/30 -> interior_fit/10
+  SHIPMENT # 2: interior/30 -> interior_fit/10
+  SHIPMENT # 3: exterior/20 -> interior_fit/10
+  SHIPMENT # 4: exterior/20 -> interior_fit/10
+  SHIPMENT # 5: interior/30 -> interior_fit/10
+  SHIPMENT # 6: interior/30 -> interior_fit/10
+  SHIPMENT # 7: interior/30 -> interior_fit/10
+  SHIPMENT # 8: interior/30 -> interior_fit/10
+  SHIPMENT # 9: interior/30 -> interior_fit/10
+  SHIPMENT #10: interior/30 -> interior_fit/10
+  SHIPMENT #11: interior/30 -> interior_fit/10
+  SHIPMENT #12: interior/30 -> interior_fit/10
+  SHIPMENT #13: chassis/70 -> chassis_exterior/20
+  SHIPMENT #14: electrical/50 -> chassis_exterior/20
+  SHIPMENT #15: sealing/60 -> chassis_exterior/20
+  SHIPMENT #16: exterior/20 -> chassis_exterior/20
+  SHIPMENT #17: identity/10 -> badges_trim/30
+  SHIPMENT #18: identity/10 -> badges_trim/30
+  SHIPMENT #19: identity/10 -> badges_trim/30
+  SHIPMENT #20: identity/10 -> badges_trim/30
+  SHIPMENT #21: interior/30 -> badges_trim/30
+  SHIPMENT #22: interior/30 -> badges_trim/30
+  SHIPMENT #23: identity/10 -> badges_trim/30
+  SHIPMENT #24: identity/10 -> badges_trim/30
+  SHIPMENT #25: closures/40 -> rubber_film/40
+  SHIPMENT #26: closures/40 -> rubber_film/40
+  SHIPMENT #27: electrical/50 -> rubber_film/40
+  SHIPMENT #28: exterior/20 -> rubber_film/40
+  SHIPMENT #29: exterior/20 -> rubber_film/40
+  SHIPMENT #30: sealing/60 -> rubber_film/40
+  SHIPMENT #31: electrical/50 -> rubber_film/40
+  SHIPMENT #32: interior/30 -> rubber_film/40
+  SHIPMENT #33: chassis/70 -> brake_sealing/50
+  SHIPMENT #34: sealing/60 -> brake_sealing/50
+  SHIPMENT #35: sealing/60 -> brake_sealing/50
+  SHIPMENT #36: sealing/60 -> brake_sealing/50
+  SHIPMENT #37: sealing/60 -> brake_sealing/50
+  SHIPMENT #38: sealing/60 -> brake_sealing/50
+  SHIPMENT #39: chassis/70 -> brake_sealing/50
+  SHIPMENT #40: chassis/70 -> brake_sealing/50
+  SHIPMENT #41: chassis/70 -> final_adjust/60
+  SHIPMENT #42: chassis/70 -> final_adjust/60
+  SHIPMENT #43: closures/40 -> final_adjust/60
+  SHIPMENT #44: chassis/70 -> final_adjust/60
+  SHIPMENT #45: exterior/20 -> final_adjust/60
+  SHIPMENT #46: sealing/60 -> final_adjust/60
