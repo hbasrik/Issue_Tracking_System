@@ -30,15 +30,17 @@ export const TEST_CHECKLIST_SECTIONS: ChecklistSectionCatalogEntry[] = [
   { key: 'eng_quality', sort: 70, titleKey: 'checklist.section.eng_quality' },
 ];
 
-/** Shipment checklist sections (same coupling with 0035 / seed 03). */
+/**
+ * Shipment checklist sections follow the work order: each one is a run of
+ * consecutive steps (migration 0036 / seed 03; change them together).
+ */
 export const SHIPMENT_CHECKLIST_SECTIONS: ChecklistSectionCatalogEntry[] = [
-  { key: 'identity', sort: 10, titleKey: 'checklist.section.identity' },
-  { key: 'exterior', sort: 20, titleKey: 'checklist.section.exterior' },
-  { key: 'interior', sort: 30, titleKey: 'checklist.section.interior' },
-  { key: 'closures', sort: 40, titleKey: 'checklist.section.closures' },
-  { key: 'electrical', sort: 50, titleKey: 'checklist.section.electrical' },
-  { key: 'sealing', sort: 60, titleKey: 'checklist.section.sealing' },
-  { key: 'chassis', sort: 70, titleKey: 'checklist.section.chassis' },
+  { key: 'interior_fit', sort: 10, titleKey: 'checklist.section.interior_fit' },
+  { key: 'chassis_exterior', sort: 20, titleKey: 'checklist.section.chassis_exterior' },
+  { key: 'badges_trim', sort: 30, titleKey: 'checklist.section.badges_trim' },
+  { key: 'rubber_film', sort: 40, titleKey: 'checklist.section.rubber_film' },
+  { key: 'brake_sealing', sort: 50, titleKey: 'checklist.section.brake_sealing' },
+  { key: 'final_adjust', sort: 60, titleKey: 'checklist.section.final_adjust' },
 ];
 
 const KNOWN_TITLE: Record<string, MessageKey> = Object.fromEntries(
