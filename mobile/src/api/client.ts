@@ -7,6 +7,7 @@ import { File as ExpoFile } from 'expo-file-system';
 import type { EOLGates } from '../../../shared/eolGates';
 import type { ShipmentWarningLike } from '../../../shared/shipmentReadiness';
 import type { ClassificationChange } from '../../../shared/classificationChanges';
+import type { VehicleTimelineResponse } from '../../../shared/vehicleTimeline';
 import { isTransportError } from '../../../shared/networkError';
 import { noteTransportFailure, noteTransportSuccess } from '../offline/connectivity';
 
@@ -503,6 +504,12 @@ export const api = {
   getVehicleStatusHistory(vin: string) {
     return request<{ items: VehicleStatusHistoryEntry[] }>(
       `/vehicles/${encodeURIComponent(vin)}/status-history`,
+    );
+  },
+
+  getVehicleTimeline(vin: string) {
+    return request<VehicleTimelineResponse>(
+      `/vehicles/${encodeURIComponent(vin)}/timeline`,
     );
   },
 

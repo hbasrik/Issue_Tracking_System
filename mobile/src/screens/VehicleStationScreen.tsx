@@ -53,6 +53,7 @@ import { useAuth } from '../auth/AuthProvider';
 import { Perm } from '../auth/permissions';
 import { statusColors } from '../theme/tokens';
 import { ActionStamp } from '../components/ActionStamp';
+import { VehicleTimelineSection } from '../components/VehicleTimelineSection';
 import { useI18n } from '../i18n';
 import { apiErrorMessage } from '../lib/password';
 import { loadFailureMessage } from '../offline/userFacingError';
@@ -65,6 +66,7 @@ import {
   type StationProgress,
 } from '../../../shared/stationProgress';
 import { issueStatusLabel } from '../lib/issueStatus';
+import type { VehicleTimelineResponse } from '../../../shared/vehicleTimeline';
 import type { RootStackParamList } from '../navigation/types';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -161,6 +163,8 @@ export default function VehicleStationScreen() {
   const [issues, setIssues] = useState<Issue[]>([]);
   const [readiness, setReadiness] = useState<ShipmentReadiness | null>(null);
   const [statusHistory, setStatusHistory] = useState<VehicleStatusHistoryEntry[]>([]);
+  const [timeline, setTimeline] = useState<VehicleTimelineResponse | null>(null);
+  const [timelineFailed, setTimelineFailed] = useState(false);
   const [openByStation, setOpenByStation] = useState<Record<string, number>>({});
   const [expandedStation, setExpandedStation] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -173,7 +177,7 @@ export default function VehicleStationScreen() {
     setError(null);
     setOfflineHint(null);
     try {
-      const [v, res, issueRes, ready, historyRes] = await Promise.all([
+      const [v, res, issueRes, ready, historyRes, timelineRes] = await Promise.all([
         api.getVehicle(vin),
         api.getStationSteps(vin),
         has(Perm.IssueView)
@@ -183,6 +187,7 @@ export default function VehicleStationScreen() {
           ? api.shipmentReadiness(vin).catch(() => null)
           : Promise.resolve(null),
         api.getVehicleStatusHistory(vin).catch(() => ({ items: [] as VehicleStatusHistoryEntry[] })),
+        api.getVehicleTimeline(vin).catch(() => null),
       ]);
       setVehicle(v);
       setSteps(res.Items ?? []);
@@ -190,6 +195,8 @@ export default function VehicleStationScreen() {
       setIssues(issueRes.items ?? []);
       setReadiness(ready);
       setStatusHistory(historyRes.items ?? []);
+      setTimeline(timelineRes);
+      setTimelineFailed(timelineRes === null);
       setExpandedStation((prev) => prev ?? v.CurrentStationID);
     } catch (err) {
       if (isTransportError(err)) {
@@ -569,6 +576,17 @@ export default function VehicleStationScreen() {
             </Card>
           );
         })}
+
+        <View style={{ marginTop: 8 }}>
+          <VehicleTimelineSection
+            items={timeline?.items ?? (timelineFailed ? [] : null)}
+            truncated={timeline?.truncated}
+            failed={timelineFailed}
+            onIssuePress={
+              has(Perm.IssueView) ? (id) => navigation.navigate('IssueDetail', { id }) : undefined
+            }
+          />
+        </View>
       </ScrollView>
     </Screen>
   );
