@@ -1,0 +1,10 @@
+after login-remember/click             focused=true focus-visible=false outline=none 0px
+after login-remember/tab               focused=true focus-visible=true outline=solid 2px
+after templates-hide-inactive/click    focused=true focus-visible=false outline=none 0px
+after templates-hide-inactive/tab      focused=true focus-visible=true outline=solid 2px
+after templates-section-select/click   focused=true focus-visible=true outline=solid 2px
+after templates-section-select/tab     focused=true focus-visible=true outline=solid 2px
+after propagate-radio/click            focused=true focus-visible=false outline=none 0px
+after propagate-radio/tab              focused=true focus-visible=true outline=solid 2px
+after templates-text-input/click       focused=true focus-visible=true outline=solid 2px
+after templates-text-input/tab         focused=true focus-visible=true outline=solid 2px

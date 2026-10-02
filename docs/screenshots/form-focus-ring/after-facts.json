@@ -1,0 +1,52 @@
+{
+ "login-remember/click": {
+  "focused": true,
+  "focusVisible": false,
+  "outline": "none 0px"
+ },
+ "login-remember/tab": {
+  "focused": true,
+  "focusVisible": true,
+  "outline": "solid 2px"
+ },
+ "templates-hide-inactive/click": {
+  "focused": true,
+  "focusVisible": false,
+  "outline": "none 0px"
+ },
+ "templates-hide-inactive/tab": {
+  "focused": true,
+  "focusVisible": true,
+  "outline": "solid 2px"
+ },
+ "templates-section-select/click": {
+  "focused": true,
+  "focusVisible": true,
+  "outline": "solid 2px"
+ },
+ "templates-section-select/tab": {
+  "focused": true,
+  "focusVisible": true,
+  "outline": "solid 2px"
+ },
+ "propagate-radio/click": {
+  "focused": true,
+  "focusVisible": false,
+  "outline": "none 0px"
+ },
+ "propagate-radio/tab": {
+  "focused": true,
+  "focusVisible": true,
+  "outline": "solid 2px"
+ },
+ "templates-text-input/click": {
+  "focused": true,
+  "focusVisible": true,
+  "outline": "solid 2px"
+ },
+ "templates-text-input/tab": {
+  "focused": true,
+  "focusVisible": true,
+  "outline": "solid 2px"
+ }
+}
