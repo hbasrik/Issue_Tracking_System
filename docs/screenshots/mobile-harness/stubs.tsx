@@ -137,6 +137,7 @@ export const api = {
   listDefectCatalogTypes: catalogue('types'),
   shipmentReadiness: async () => scene.api.readiness ?? null,
   getVehicleStatusHistory: async () => ({ items: [] }),
+  getVehicleTimeline: async () => scene.api.timeline ?? { items: [], truncated: false },
   getChecklist: async (_vin: string, type: 'eol' | 'shipment' | 'test') => ({
     items: scene.api.checklists?.[type] ?? [],
   }),

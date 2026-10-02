@@ -147,8 +147,19 @@ for (const scene of scenes) {
           .first()
           .screenshot({ path: path.join(outDir, `${key}-card.png`) });
       }
-      const lines = await page.evaluate(() => document.body.innerText.split('\n').map((l) => l.trim()).filter(Boolean));
-      facts[key] = { sections: texts, overflow, raw_status_in_sections: raw, issue_cards: issueCards, errors, calls: await page.evaluate(() => window.__calls), lines };
+      const bodyLines = () => document.body.innerText.split('\n').map((l) => l.trim()).filter(Boolean);
+      const lines = await page.evaluate(bodyLines);
+      // CLICK_TESTIDS=a,b clicks each testID in turn (first match) and shoots <key>-<testID>.png.
+      const clicked = {};
+      for (const id of (process.env.CLICK_TESTIDS ?? '').split(',').filter(Boolean)) {
+        const target = page.locator(`[data-testid="${id}"]`).first();
+        if (!(await target.count())) continue;
+        await target.click();
+        await page.waitForTimeout(250);
+        await fitAndShoot(page, width, `${key}-${id}.png`);
+        clicked[id] = await page.evaluate(bodyLines);
+      }
+      facts[key] = { sections: texts, overflow, raw_status_in_sections: raw, issue_cards: issueCards, errors, calls: await page.evaluate(() => window.__calls), lines, clicked };
       if (errors.length || overflow || raw.length) failed = true;
       if (process.env.EXPECT_ISSUE_LAYOUT === '1' && issueCards.some((c) =>
         c.severity_word_visible || !c.severity_aria || c.outside ||

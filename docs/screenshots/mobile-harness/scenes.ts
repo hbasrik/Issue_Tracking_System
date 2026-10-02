@@ -7,6 +7,8 @@ import type { ComponentType } from 'react';
 // Real API response from a *_test database after migration 0035.
 import sectionChecklists from '../checklist-sections/api-checklists.json';
 import processChecklists from '../shipment-sections-process/api-checklists.json';
+// Real GET /vehicles/{vin}/timeline response from karea_timeline_test (docs/16 A40).
+import vehicleTimeline from '../vehicle-timeline/api-timeline.json';
 
 type Status = 'PENDING' | 'OK' | 'NOT_OK' | 'REWORK' | 'CONDITIONAL_OK';
 
@@ -41,6 +43,7 @@ export interface Scene {
     eolWorkflow?: unknown;
     issue?: unknown;
     issueHistory?: unknown[];
+    timeline?: unknown;
   };
   live?: LiveData;
 }
@@ -123,6 +126,7 @@ function eolWorkflow(vin: string, current: string, branchH: number | null, depot
 const PASSED_VIN = 'N7V1K1SA3TK000013';
 const BRANCH_VIN = 'N7V1K1SA1TK000012';
 const LINE_VIN = 'N7V1K1SA1TK000009';
+const TIMELINE_VIN = 'N7V1K1SA6TK000006';
 const DELIVERED_VIN = 'N7V1K1SA9TK000016';
 
 const shipmentPassed = [
@@ -273,6 +277,16 @@ export const SCENES: Scene[] = [
     screen: 'vehicle-station',
     params: { vin: ISSUE_VIN },
     api: { vehicle: vehicle(ISSUE_VIN, 'IN_PRODUCTION', null, 38), stationSteps, issues },
+  },
+  {
+    id: 'vehicle-timeline',
+    screen: 'vehicle-station',
+    params: { vin: TIMELINE_VIN },
+    api: {
+      vehicle: vehicle(TIMELINE_VIN, 'IN_PRODUCTION', null, 100),
+      issues: [],
+      timeline: vehicleTimeline,
+    },
   },
   {
     id: 'station-line',
