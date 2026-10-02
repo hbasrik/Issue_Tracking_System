@@ -216,9 +216,18 @@ CREATE TABLE checklist_template_items (
     station_id    INT REFERENCES stations(id),
     eol_phase     eol_item_phase_enum,  -- Karar 2: only populated for items on an EOL-type template
     is_active     BOOLEAN NOT NULL DEFAULT TRUE,
+    section_key   VARCHAR(64),  -- migration 0024: display section id (NULL = "Other items"); titles in shared/checklistSections.ts + i18n
+    section_sort  SMALLINT,     -- migration 0024: section order, copied from the catalogue sort
     seed_key      TEXT,  -- migration 0034: md5 of the seed text at creation, never updated; NULL for admin-created items
     UNIQUE (template_id, item_no)
 );
+
+-- Section values (migration 0035, Karar 23), assigned per item by seed_key:
+--   SHIPMENT identity 10, exterior 20, interior 30, closures 40,
+--            electrical 50, sealing 60, chassis 70
+--   TEST     cold_drag 10, bcm_ee 20, road_test 30, brake_test 40,
+--            alignment 50, hot_drag 60, eng_quality 70
+--   EOL      none
 
 COMMENT ON COLUMN checklist_template_items.seed_key IS
     'md5 of the seed item text when the row was created; never updated. '

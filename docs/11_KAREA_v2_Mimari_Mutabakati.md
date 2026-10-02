@@ -464,6 +464,33 @@ kalıyordu.
   ilerleme satırı açılmaz; canlıda eksik madde yönetim ekranından
   eklenir.
 
+## Karar 23 — Checklist bölümleri içeriğe göre, madde kimliğiyle atanır (NEW — 2026-10-02)
+
+- **Sorun:** migration 0024 `section_key` değerini eski yer tutucu
+  maddeler için yazılmış `item_no` aralıklarından doldurdu; gerçek
+  maddeler aynı numaralara geldiği için bölüm adları içerikle
+  ilgisiz kaldı.
+- **Kural:** bölüm ataması hiçbir zaman `item_no` ya da numara
+  aralığıyla yapılmaz. Toplu atama, maddenin kendi kimliği olan
+  `seed_key` ile tek tek yapılır (migration 0035); yeniden sıralama ve
+  metin düzenlemesi atamayı başka maddeye kaydırmaz. Yönetim ekranında
+  atama zaten madde bazında.
+- **Katalog:** Sevk 7 bölüm (Kimlik, Logo & Etiket; Dış Görünüm; İç
+  Donanım & Trim; Kapı & Kaput Ayarı; Elektrik & Kablaj; Sızdırmazlık;
+  Şasi, Fren & Direksiyon), Test 7 bölüm (Soğuk Sıkma Testi; BCM / EE
+  Fonksiyon Kontrol; Sürüş Testi; Fren Testi; Rot Testi; Sıcak Sıkma
+  Testi; Mühendislik & Kalite Kontrol). EOL'de bölüm yok. Eski
+  anahtarlar katalogdan ve dil dosyasından çıkarıldı; hâlâ eski anahtar
+  taşıyan madde 0035 ile bölümsüz kalır.
+- **Birlikte değişir:** `shared/checklistSections.ts` (anahtar + sıra),
+  `shared/i18n/messages.ts` (TR/EN ad), `database/seed/03` (madde
+  başına anahtar/sıra) ve atamayı canlıya taşıyan migration.
+- **Yayın sırası:** web ve migration birlikte yayına alınır. Eski web
+  yeni anahtarı, yeni web eski anahtarı ham metin olarak gösterir;
+  veri ve kapılar etkilenmez. Mobilde katalog uygulamanın içinde
+  derlendiği için yeni sürüm yüklenene kadar eski uygulama bölüm
+  başlığını ham anahtar olarak (`cold_drag` gibi) gösterir.
+
 ## Değişmeyen / Yeniden Kullanılacaklar
 
 Şunlara **dokunulmuyor**, olduğu gibi kalıyor: JWT auth + bcrypt (üstteki JWT_SECRET ve iptal sıkılaştırmaları hariç), CORS allowlist mimarisi, Unit-of-Work (pgx.Tx) transaction pattern, `.cursor/rules` (commit ve environment-check kuralları), Analysis sekmesi temel yapısı (VIN×severity kırılımı, Pie/Bar chart'lar — yeni station/EOL alanlarıyla genişleyecek ama sıfırdan kurulmayacak), Docker/migration/seed altyapısı.
