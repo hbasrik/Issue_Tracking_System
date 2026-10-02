@@ -1,0 +1,29 @@
+$ cd backend && go test ./...
+?   	github.com/karea/backend/cmd/api	[no test files]
+ok  	github.com/karea/backend/internal/delivery/http	16.617s
+ok  	github.com/karea/backend/internal/domain	1.168s
+ok  	github.com/karea/backend/internal/platform/applog	0.562s
+?   	github.com/karea/backend/internal/platform/auth	[no test files]
+ok  	github.com/karea/backend/internal/platform/config	1.520s
+ok  	github.com/karea/backend/internal/platform/storage	0.864s
+?   	github.com/karea/backend/internal/repository	[no test files]
+ok  	github.com/karea/backend/internal/repository/postgres	2.412s
+ok  	github.com/karea/backend/internal/usecase	8.078s
+rc=0
+
+$ cd web && ./node_modules/.bin/tsc --noEmit
+rc=0
+
+$ cd web && ./node_modules/.bin/vite build --outDir /tmp/web-sections-dist --emptyOutDir
+computing gzip size...
+../../../../../tmp/web-sections-dist/index.html                     1.00 kB │ gzip:   0.48 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 2.84s
+rc=0
+
+$ cd mobile && ./node_modules/.bin/tsc --noEmit
+rc=0

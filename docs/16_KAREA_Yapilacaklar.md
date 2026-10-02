@@ -646,6 +646,33 @@ elle yenileme), `mobile-harness-regression.txt` (tüm sahneler),
 `live-scan-output.txt`, `build-output.txt`. Gerçek cihazda görüntü
 alınmadı; mobil kanıt react-native-web düzeneğinden.
 
+### A37. Checklist bölümleri madde içeriğine göre `[~]` — 2026-10-02
+0024'ün `item_no` aralığıyla yaptığı bölüm ataması içerikle ilgisizdi
+(Karar 23).
+- **Sevk (7 bölüm):** Kimlik, Logo & Etiket; Dış Görünüm; İç Donanım &
+  Trim; Kapı & Kaput Ayarı; Elektrik & Kablaj; Sızdırmazlık (yeni);
+  Şasi, Fren & Direksiyon (yeni). "Şarj & Final" kaldırıldı. Bölümsüz
+  44–46 da atandı. #29 ve #42 sahadan teyit bekliyor.
+- **Test (7 bölüm):** Soğuk Sıkma Testi (1–3), BCM / EE Fonksiyon
+  Kontrol (4–15), Sürüş Testi (16–24), Fren Testi (25–29), Rot Testi
+  (30–32), Sıcak Sıkma Testi (33–37), Mühendislik & Kalite Kontrol
+  (38–43). Eski 11 bölüm kaldırıldı; pasif #44/#45 bölümsüz.
+- **Migration 0035:** her madde `seed_key` ile tek tek atanır, aralık
+  yok; idempotent, geri alma dosyası 0035 öncesi canlı değerleri yazar.
+  Seed 03 aynı değerleri taşır; katalog ve TR/EN adlar
+  `shared/checklistSections.ts` + `messages.ts`.
+- **Açık:** 0035 canlıya **uygulanmadı** (onay bekliyor). Web ile
+  birlikte yayına alınmalı; mobilde yeni sürüm yüklenene kadar eski
+  uygulama bölüm başlığını ham anahtar olarak gösterir.
+Kanıt: `docs/screenshots/checklist-sections/`: `verification-output.txt`
+(canlı şablon satırlarının kopyası üzerinde 0035: madde tablosu, iki
+kez çalıştırma, geri alma, yeniden sıralamaya dayanıklılık, seed
+karşılaştırması, metin/sıra/aktiflik değişmedi), `capture-web-output.txt`
++ `web-*.png` (araç detayı Test/Sevk paneli TR/EN/390, şablon ekranı
+bölüm seçicisi), `mobile-run-output.txt` + `mobile/*.png` (Test ve Sevk
+ekranları, react-native-web düzeneği), `build-output.txt`. Gerçek
+cihazda görüntü alınmadı.
+
 ---
 
 ## B — Canlıya çıkmadan önce ZORUNLU

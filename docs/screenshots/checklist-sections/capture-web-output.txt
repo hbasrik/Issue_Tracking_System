@@ -1,0 +1,9 @@
+test-tr-1280 Soğuk Sıkma Testi (3) | BCM / EE Fonksiyon Kontrol (12) | Sürüş Testi (9) | Fren Testi (5) | Rot Testi (3) | Sıcak Sıkma Testi (5) | Mühendislik & Kalite Kontrol (6)
+shipment-tr-1280 Kimlik, Logo & Etiket (6) | Dış Görünüm (6) | İç Donanım & Trim (13) | Kapı & Kaput Ayarı (3) | Elektrik & Kablaj (3) | Sızdırmazlık (8) | Şasi, Fren & Direksiyon (7)
+test-en-1280 Cold drag test (3) | BCM / EE function check (12) | Road test (9) | Brake test (5) | Wheel alignment test (3) | Hot drag test (5) | Engineering & quality check (6)
+shipment-en-1280 Identity, logo & labels (6) | Exterior (6) | Interior & trim (13) | Door & hood fit (3) | Electrical & wiring (3) | Sealing (8) | Chassis, brakes & steering (7)
+test-tr-390 Soğuk Sıkma Testi (3) | BCM / EE Fonksiyon Kontrol (12) | Sürüş Testi (9) | Fren Testi (5) | Rot Testi (3) | Sıcak Sıkma Testi (5) | Mühendislik & Kalite Kontrol (6)
+shipment-tr-390 Kimlik, Logo & Etiket (6) | Dış Görünüm (6) | İç Donanım & Trim (13) | Kapı & Kaput Ayarı (3) | Elektrik & Kablaj (3) | Sızdırmazlık (8) | Şasi, Fren & Direksiyon (7)
+templates-shipment-section-options row="Varsayılan (tüm modeller) Sevk 46 AKTİF" pickers=47 identical=true: Diğer maddeler (bölümsüz) | Kimlik, Logo & Etiket | Dış Görünüm | İç Donanım & Trim | Kapı & Kaput Ayarı | Elektrik & Kablaj | Sızdırmazlık | Şasi, Fren & Direksiyon | Özel anahtar…
+templates-test-section-options row="Varsayılan (tüm modeller) Test 43 AKTİF" pickers=46 identical=true: Diğer maddeler (bölümsüz) | Soğuk Sıkma Testi | BCM / EE Fonksiyon Kontrol | Sürüş Testi | Fren Testi | Rot Testi | Sıcak Sıkma Testi | Mühendislik & Kalite Kontrol | Özel anahtar…
+api items: test=43 shipment=46

@@ -1,0 +1,11 @@
+shipment-sections-tr-390 overflow=0 errors=0 raw=0
+shipment-sections-en-390 overflow=0 errors=0 raw=0
+test-sections-tr-390 overflow=0 errors=0 raw=0
+test-sections-en-390 overflow=0 errors=0 raw=0
+mobile harness: ok -> /Users/Basri/Desktop/kts_kms_project/docs/screenshots/checklist-sections/mobile
+
+Section headings on screen (count = numbered rows under each), from facts.json lines:
+shipment-sections-tr-390 Kimlik, Logo & Etiket (6) | Dış Görünüm (6) | İç Donanım & Trim (13) | Kapı & Kaput Ayarı (3) | Elektrik & Kablaj (3) | Sızdırmazlık (8) | Şasi, Fren & Direksiyon (7)
+shipment-sections-en-390 Identity, logo & labels (6) | Exterior (6) | Interior & trim (13) | Door & hood fit (3) | Electrical & wiring (3) | Sealing (8) | Chassis, brakes & steering (7)
+test-sections-tr-390 Soğuk Sıkma Testi (3) | BCM / EE Fonksiyon Kontrol (12) | Sürüş Testi (9) | Fren Testi (5) | Rot Testi (3) | Sıcak Sıkma Testi (5) | Mühendislik & Kalite Kontrol (6)
+test-sections-en-390 Cold drag test (3) | BCM / EE function check (12) | Road test (9) | Brake test (5) | Wheel alignment test (3) | Hot drag test (5) | Engineering & quality check (6)

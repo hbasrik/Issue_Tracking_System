@@ -1,0 +1,1063 @@
+{
+ "test-tr-1280": [
+  {
+   "title": "Soğuk Sıkma Testi",
+   "items": [
+    "1.N'de aracı ittir — Anormal direnç var mı?Hayır",
+    "2.D'de gaz ver — Araç normal hızlanıyor mu? Sıkm",
+    "3.R'de gaz ver — Geri viteste normal hızlanıyor "
+   ]
+  },
+  {
+   "title": "BCM / EE Fonksiyon Kontrol",
+   "items": [
+    "4.Dış aydınlatma — Kısa, uzun, selektör, park, s",
+    "5.Korna — Ses seviyesi ve çalışması normal mi?Ha",
+    "6.Camlar — Tüm camlar açılıp kapanıyor mu? Takıl",
+    "7.Merkezi kilit & kapılar — İçeriden ve anahtarl",
+    "8.Aynalar & iç donanım — Aynalar, IP kapakları, ",
+    "9.Emniyet kemerleri — Tokalar çalışıyor mu? Keme",
+    "10.El freni (KRİTİK) — El frenini çek -> hafif g",
+    "11.Vites seçimi — P/R/N/D geçişlerinde gecikme, ",
+    "12.Ana ekran / menüler — Tüm menülerde düğmelere",
+    "13.Geri görüş kamerası — R'ye alınca görüntü gel",
+    "14.Klima & havalandırma — Fan 1-2-3, yüze/cama ü",
+    "15.Odometer — Sürüş öncesi değeri not et. Sürüş "
+   ]
+  },
+  {
+   "title": "Sürüş Testi",
+   "items": [
+    "16.Düşük hız — 500m, 0 -> 30 km/s. Titreme, silk",
+    "17.Fren — 30 -> 0 x5 (~300m). Her frenlemede sağ",
+    "18.Sürekli frenleme — Dur-kalk min. 20x (~600m).",
+    "19.Fren — 50 -> 0 x5 (~400m). Her frenlemede sağ",
+    "20.Fren — 90 -> 0 / 80 ->0 / 70 -> 0 (~500m). He",
+    "21.Son hıza ulaşma (~600m) — ECO modda 90 km/s'y",
+    "22.Yokuş çıkış + iniş (~400m) — Çıkışta geri kaç",
+    "23.Yokuş el freni (KRİTİK) — Yokuşta en az 6 kez",
+    "24.N'de yokuş fren testi (~100m) — Yokuş aşağı N"
+   ]
+  },
+  {
+   "title": "Fren Testi",
+   "items": [
+    "25.Düşük hız fren genel — 30 -> 0 testlerinde tu",
+    "26.Orta hız fren genel — 50 -> 0 testlerinde tut",
+    "27.Yüksek hız fren genel — 90/80/70 -> 0 testler",
+    "28.FRENLERDE SIKMA VAR MI? (KRİTİK) — Anormal di",
+    "29.Nihai Fren Onayı — Tüm fren testleri tamamlan"
+   ]
+  },
+  {
+   "title": "Rot Testi",
+   "items": [
+    "30.Rot ayarı — Düz/eğimsiz yolda direksiyonu bır",
+    "31.Direksiyon merkezi — Düz gidişte direksiyon t",
+    "32.Yüksek hızda kararlılık — 70–90 km/s'de araç "
+   ]
+  },
+  {
+   "title": "Sıcak Sıkma Testi",
+   "items": [
+    "33.Sol ön disk — Elini yaklaştır (dokunma). Diğe",
+    "34.Sağ ön disk — Aynı kontrol. Belirgin şekilde ",
+    "35.Sol arka disk — Aynı kontrol. Belirgin şekild",
+    "36.Sağ arka disk — Aynı kontrol. Belirgin şekild",
+    "37.N'de aracı ittir — Soğuk teste kıyasla artan "
+   ]
+  },
+  {
+   "title": "Mühendislik & Kalite Kontrol",
+   "items": [
+    "38.Kapı / Kaput ayarı — Görsel kontrol. Fotoğraf",
+    "39.Boya kalitesi — Görsel kontrol. Fotoğraf ilet",
+    "40.Trim & Bagaj — İç trim, dış trim düzgün mü? B",
+    "41.Tam dönüş kontrolü — Düşük hızda tam sağ/sol ",
+    "42.DTC / Diyagnostik tarama — Aktif veya geçmiş ",
+    "43.Mühendis Nihai OnayıHayır"
+   ]
+  }
+ ],
+ "shipment-tr-1280": [
+  {
+   "title": "Kimlik, Logo & Etiket",
+   "items": [
+    "17.Logo montajıHayır",
+    "18.Anahtarlık logosu değişimi Hayır",
+    "19.Direksiyon Logo DeğişimiHayır",
+    "20.Jant Logo DeğişimiHayır",
+    "23.Araç tanıtım etiketi perçinlenmesi Hayır",
+    "24.VIN markalamasıHayır"
+   ]
+  },
+  {
+   "title": "Dış Görünüm",
+   "items": [
+    "3.Sol Air Flap MontajHayır",
+    "4.Sağ Air Flap MontajHayır",
+    "16.Ayarlı dış aynaların takılmasıHayır",
+    "28.Anti Scratch film tampona kaplanmasıHayır",
+    "29.Anti Fog Film cama kaplanmasıHayır",
+    "45.Kaput civatalarinin piano black rötuş kalemi "
+   ]
+  },
+  {
+   "title": "İç Donanım & Trim",
+   "items": [
+    "1.Rear Bota Ses İzolasyonu Montaj Hayır",
+    "2.Front Dash Ses İzolasyonu MontajHayır",
+    "5.C_Pillar Inner Sol KesimHayır",
+    "6.C_Pillar Inner Sağ Kesim Hayır",
+    "7.Polen Filtresi MontajHayır",
+    "8.C_Pillar Inner Support M5 Delik SağHayır",
+    "9.C_Pillar Inner Support M5 Delik SolHayır",
+    "10.C_Pillar Yeni Clips DeğişmesiHayır",
+    "11.C_Pillar Stop tırnaklarının kesilmesiHayır",
+    "12.Headliner Yeni Clips DeğişmesiHayır",
+    "21.HVAC kapama parçası takılması Hayır",
+    "22.Trunk Diveder parça takılması Hayır",
+    "32.Kelebek camı düşmemesi için sünger konulmasıH"
+   ]
+  },
+  {
+   "title": "Kapı & Kaput Ayarı",
+   "items": [
+    "25.Kapı ayar kauçuklarının takılmasıHayır",
+    "26.Kaput ayar kauçuklarının takılmasıHayır",
+    "43.Kaput ayar pulu atıldı mıHayır"
+   ]
+  },
+  {
+   "title": "Elektrik & Kablaj",
+   "items": [
+    "14.CCB Korna Şasi Almaması Dolaylı HarnessHayır",
+    "27.Chogori IP68 kablonun araca konulmasıHayır",
+    "31.P silinmiş combination switch kullanılmasıHay"
+   ]
+  },
+  {
+   "title": "Sızdırmazlık",
+   "items": [
+    "15.Kapı direk plastik parça sıvı conta uygulamas",
+    "30.Kaput altı sızdırmazlık contasının kullanılma",
+    "34.IP yanı kapı harness ve kapı clips bölgesinde",
+    "35.Arka kapı sağ alt sızdırmazlık şeridi çekilme",
+    "36.Arka kapı sol alt sızdırmazlık şeridi çekilme",
+    "37.Arka kapı sağ üst sızdırmazlık şeridi çekilme",
+    "38.Arka kapı sol üst sızdırmazlık şeridi çekilme",
+    "46.Bagaj kapagi su sizdirma problemi parca enteg"
+   ]
+  },
+  {
+   "title": "Şasi, Fren & Direksiyon",
+   "items": [
+    "13.Knuckle 2,5 mm Slot Açılması ve 1 derece Ayar",
+    "33.El Fren Ayarı yapılması ve arka disklere denk",
+    "39.Arka davlumbaz sol fren borusu girişim bölges",
+    "40.Arka davlumbaz sağ fren borusu girişim bölges",
+    "41.Direksiyon yumusatma ayari Hayır",
+    "42.Stop delik genisletme yapildi mi Hayır",
+    "44.Direksiyon kolonu dip lastiği yerine tam olar"
+   ]
+  }
+ ],
+ "test-en-1280": [
+  {
+   "title": "Cold drag test",
+   "items": [
+    "1.N'de aracı ittir — Anormal direnç var mı?No",
+    "2.D'de gaz ver — Araç normal hızlanıyor mu? Sıkm",
+    "3.R'de gaz ver — Geri viteste normal hızlanıyor "
+   ]
+  },
+  {
+   "title": "BCM / EE function check",
+   "items": [
+    "4.Dış aydınlatma — Kısa, uzun, selektör, park, s",
+    "5.Korna — Ses seviyesi ve çalışması normal mi?No",
+    "6.Camlar — Tüm camlar açılıp kapanıyor mu? Takıl",
+    "7.Merkezi kilit & kapılar — İçeriden ve anahtarl",
+    "8.Aynalar & iç donanım — Aynalar, IP kapakları, ",
+    "9.Emniyet kemerleri — Tokalar çalışıyor mu? Keme",
+    "10.El freni (KRİTİK) — El frenini çek -> hafif g",
+    "11.Vites seçimi — P/R/N/D geçişlerinde gecikme, ",
+    "12.Ana ekran / menüler — Tüm menülerde düğmelere",
+    "13.Geri görüş kamerası — R'ye alınca görüntü gel",
+    "14.Klima & havalandırma — Fan 1-2-3, yüze/cama ü",
+    "15.Odometer — Sürüş öncesi değeri not et. Sürüş "
+   ]
+  },
+  {
+   "title": "Road test",
+   "items": [
+    "16.Düşük hız — 500m, 0 -> 30 km/s. Titreme, silk",
+    "17.Fren — 30 -> 0 x5 (~300m). Her frenlemede sağ",
+    "18.Sürekli frenleme — Dur-kalk min. 20x (~600m).",
+    "19.Fren — 50 -> 0 x5 (~400m). Her frenlemede sağ",
+    "20.Fren — 90 -> 0 / 80 ->0 / 70 -> 0 (~500m). He",
+    "21.Son hıza ulaşma (~600m) — ECO modda 90 km/s'y",
+    "22.Yokuş çıkış + iniş (~400m) — Çıkışta geri kaç",
+    "23.Yokuş el freni (KRİTİK) — Yokuşta en az 6 kez",
+    "24.N'de yokuş fren testi (~100m) — Yokuş aşağı N"
+   ]
+  },
+  {
+   "title": "Brake test",
+   "items": [
+    "25.Düşük hız fren genel — 30 -> 0 testlerinde tu",
+    "26.Orta hız fren genel — 50 -> 0 testlerinde tut",
+    "27.Yüksek hız fren genel — 90/80/70 -> 0 testler",
+    "28.FRENLERDE SIKMA VAR MI? (KRİTİK) — Anormal di",
+    "29.Nihai Fren Onayı — Tüm fren testleri tamamlan"
+   ]
+  },
+  {
+   "title": "Wheel alignment test",
+   "items": [
+    "30.Rot ayarı — Düz/eğimsiz yolda direksiyonu bır",
+    "31.Direksiyon merkezi — Düz gidişte direksiyon t",
+    "32.Yüksek hızda kararlılık — 70–90 km/s'de araç "
+   ]
+  },
+  {
+   "title": "Hot drag test",
+   "items": [
+    "33.Sol ön disk — Elini yaklaştır (dokunma). Diğe",
+    "34.Sağ ön disk — Aynı kontrol. Belirgin şekilde ",
+    "35.Sol arka disk — Aynı kontrol. Belirgin şekild",
+    "36.Sağ arka disk — Aynı kontrol. Belirgin şekild",
+    "37.N'de aracı ittir — Soğuk teste kıyasla artan "
+   ]
+  },
+  {
+   "title": "Engineering & quality check",
+   "items": [
+    "38.Kapı / Kaput ayarı — Görsel kontrol. Fotoğraf",
+    "39.Boya kalitesi — Görsel kontrol. Fotoğraf ilet",
+    "40.Trim & Bagaj — İç trim, dış trim düzgün mü? B",
+    "41.Tam dönüş kontrolü — Düşük hızda tam sağ/sol ",
+    "42.DTC / Diyagnostik tarama — Aktif veya geçmiş ",
+    "43.Mühendis Nihai OnayıNo"
+   ]
+  }
+ ],
+ "shipment-en-1280": [
+  {
+   "title": "Identity, logo & labels",
+   "items": [
+    "17.Logo montajıNo",
+    "18.Anahtarlık logosu değişimi No",
+    "19.Direksiyon Logo DeğişimiNo",
+    "20.Jant Logo DeğişimiNo",
+    "23.Araç tanıtım etiketi perçinlenmesi No",
+    "24.VIN markalamasıNo"
+   ]
+  },
+  {
+   "title": "Exterior",
+   "items": [
+    "3.Sol Air Flap MontajNo",
+    "4.Sağ Air Flap MontajNo",
+    "16.Ayarlı dış aynaların takılmasıNo",
+    "28.Anti Scratch film tampona kaplanmasıNo",
+    "29.Anti Fog Film cama kaplanmasıNo",
+    "45.Kaput civatalarinin piano black rötuş kalemi "
+   ]
+  },
+  {
+   "title": "Interior & trim",
+   "items": [
+    "1.Rear Bota Ses İzolasyonu Montaj No",
+    "2.Front Dash Ses İzolasyonu MontajNo",
+    "5.C_Pillar Inner Sol KesimNo",
+    "6.C_Pillar Inner Sağ Kesim No",
+    "7.Polen Filtresi MontajNo",
+    "8.C_Pillar Inner Support M5 Delik SağNo",
+    "9.C_Pillar Inner Support M5 Delik SolNo",
+    "10.C_Pillar Yeni Clips DeğişmesiNo",
+    "11.C_Pillar Stop tırnaklarının kesilmesiNo",
+    "12.Headliner Yeni Clips DeğişmesiNo",
+    "21.HVAC kapama parçası takılması No",
+    "22.Trunk Diveder parça takılması No",
+    "32.Kelebek camı düşmemesi için sünger konulmasıN"
+   ]
+  },
+  {
+   "title": "Door & hood fit",
+   "items": [
+    "25.Kapı ayar kauçuklarının takılmasıNo",
+    "26.Kaput ayar kauçuklarının takılmasıNo",
+    "43.Kaput ayar pulu atıldı mıNo"
+   ]
+  },
+  {
+   "title": "Electrical & wiring",
+   "items": [
+    "14.CCB Korna Şasi Almaması Dolaylı HarnessNo",
+    "27.Chogori IP68 kablonun araca konulmasıNo",
+    "31.P silinmiş combination switch kullanılmasıNo"
+   ]
+  },
+  {
+   "title": "Sealing",
+   "items": [
+    "15.Kapı direk plastik parça sıvı conta uygulamas",
+    "30.Kaput altı sızdırmazlık contasının kullanılma",
+    "34.IP yanı kapı harness ve kapı clips bölgesinde",
+    "35.Arka kapı sağ alt sızdırmazlık şeridi çekilme",
+    "36.Arka kapı sol alt sızdırmazlık şeridi çekilme",
+    "37.Arka kapı sağ üst sızdırmazlık şeridi çekilme",
+    "38.Arka kapı sol üst sızdırmazlık şeridi çekilme",
+    "46.Bagaj kapagi su sizdirma problemi parca enteg"
+   ]
+  },
+  {
+   "title": "Chassis, brakes & steering",
+   "items": [
+    "13.Knuckle 2,5 mm Slot Açılması ve 1 derece Ayar",
+    "33.El Fren Ayarı yapılması ve arka disklere denk",
+    "39.Arka davlumbaz sol fren borusu girişim bölges",
+    "40.Arka davlumbaz sağ fren borusu girişim bölges",
+    "41.Direksiyon yumusatma ayari No",
+    "42.Stop delik genisletme yapildi mi No",
+    "44.Direksiyon kolonu dip lastiği yerine tam olar"
+   ]
+  }
+ ],
+ "test-tr-390": [
+  {
+   "title": "Soğuk Sıkma Testi",
+   "items": [
+    "1.N'de aracı ittir — Anormal direnç var mı?Hayır",
+    "2.D'de gaz ver — Araç normal hızlanıyor mu? Sıkm",
+    "3.R'de gaz ver — Geri viteste normal hızlanıyor "
+   ]
+  },
+  {
+   "title": "BCM / EE Fonksiyon Kontrol",
+   "items": [
+    "4.Dış aydınlatma — Kısa, uzun, selektör, park, s",
+    "5.Korna — Ses seviyesi ve çalışması normal mi?Ha",
+    "6.Camlar — Tüm camlar açılıp kapanıyor mu? Takıl",
+    "7.Merkezi kilit & kapılar — İçeriden ve anahtarl",
+    "8.Aynalar & iç donanım — Aynalar, IP kapakları, ",
+    "9.Emniyet kemerleri — Tokalar çalışıyor mu? Keme",
+    "10.El freni (KRİTİK) — El frenini çek -> hafif g",
+    "11.Vites seçimi — P/R/N/D geçişlerinde gecikme, ",
+    "12.Ana ekran / menüler — Tüm menülerde düğmelere",
+    "13.Geri görüş kamerası — R'ye alınca görüntü gel",
+    "14.Klima & havalandırma — Fan 1-2-3, yüze/cama ü",
+    "15.Odometer — Sürüş öncesi değeri not et. Sürüş "
+   ]
+  },
+  {
+   "title": "Sürüş Testi",
+   "items": [
+    "16.Düşük hız — 500m, 0 -> 30 km/s. Titreme, silk",
+    "17.Fren — 30 -> 0 x5 (~300m). Her frenlemede sağ",
+    "18.Sürekli frenleme — Dur-kalk min. 20x (~600m).",
+    "19.Fren — 50 -> 0 x5 (~400m). Her frenlemede sağ",
+    "20.Fren — 90 -> 0 / 80 ->0 / 70 -> 0 (~500m). He",
+    "21.Son hıza ulaşma (~600m) — ECO modda 90 km/s'y",
+    "22.Yokuş çıkış + iniş (~400m) — Çıkışta geri kaç",
+    "23.Yokuş el freni (KRİTİK) — Yokuşta en az 6 kez",
+    "24.N'de yokuş fren testi (~100m) — Yokuş aşağı N"
+   ]
+  },
+  {
+   "title": "Fren Testi",
+   "items": [
+    "25.Düşük hız fren genel — 30 -> 0 testlerinde tu",
+    "26.Orta hız fren genel — 50 -> 0 testlerinde tut",
+    "27.Yüksek hız fren genel — 90/80/70 -> 0 testler",
+    "28.FRENLERDE SIKMA VAR MI? (KRİTİK) — Anormal di",
+    "29.Nihai Fren Onayı — Tüm fren testleri tamamlan"
+   ]
+  },
+  {
+   "title": "Rot Testi",
+   "items": [
+    "30.Rot ayarı — Düz/eğimsiz yolda direksiyonu bır",
+    "31.Direksiyon merkezi — Düz gidişte direksiyon t",
+    "32.Yüksek hızda kararlılık — 70–90 km/s'de araç "
+   ]
+  },
+  {
+   "title": "Sıcak Sıkma Testi",
+   "items": [
+    "33.Sol ön disk — Elini yaklaştır (dokunma). Diğe",
+    "34.Sağ ön disk — Aynı kontrol. Belirgin şekilde ",
+    "35.Sol arka disk — Aynı kontrol. Belirgin şekild",
+    "36.Sağ arka disk — Aynı kontrol. Belirgin şekild",
+    "37.N'de aracı ittir — Soğuk teste kıyasla artan "
+   ]
+  },
+  {
+   "title": "Mühendislik & Kalite Kontrol",
+   "items": [
+    "38.Kapı / Kaput ayarı — Görsel kontrol. Fotoğraf",
+    "39.Boya kalitesi — Görsel kontrol. Fotoğraf ilet",
+    "40.Trim & Bagaj — İç trim, dış trim düzgün mü? B",
+    "41.Tam dönüş kontrolü — Düşük hızda tam sağ/sol ",
+    "42.DTC / Diyagnostik tarama — Aktif veya geçmiş ",
+    "43.Mühendis Nihai OnayıHayır"
+   ]
+  }
+ ],
+ "shipment-tr-390": [
+  {
+   "title": "Kimlik, Logo & Etiket",
+   "items": [
+    "17.Logo montajıHayır",
+    "18.Anahtarlık logosu değişimi Hayır",
+    "19.Direksiyon Logo DeğişimiHayır",
+    "20.Jant Logo DeğişimiHayır",
+    "23.Araç tanıtım etiketi perçinlenmesi Hayır",
+    "24.VIN markalamasıHayır"
+   ]
+  },
+  {
+   "title": "Dış Görünüm",
+   "items": [
+    "3.Sol Air Flap MontajHayır",
+    "4.Sağ Air Flap MontajHayır",
+    "16.Ayarlı dış aynaların takılmasıHayır",
+    "28.Anti Scratch film tampona kaplanmasıHayır",
+    "29.Anti Fog Film cama kaplanmasıHayır",
+    "45.Kaput civatalarinin piano black rötuş kalemi "
+   ]
+  },
+  {
+   "title": "İç Donanım & Trim",
+   "items": [
+    "1.Rear Bota Ses İzolasyonu Montaj Hayır",
+    "2.Front Dash Ses İzolasyonu MontajHayır",
+    "5.C_Pillar Inner Sol KesimHayır",
+    "6.C_Pillar Inner Sağ Kesim Hayır",
+    "7.Polen Filtresi MontajHayır",
+    "8.C_Pillar Inner Support M5 Delik SağHayır",
+    "9.C_Pillar Inner Support M5 Delik SolHayır",
+    "10.C_Pillar Yeni Clips DeğişmesiHayır",
+    "11.C_Pillar Stop tırnaklarının kesilmesiHayır",
+    "12.Headliner Yeni Clips DeğişmesiHayır",
+    "21.HVAC kapama parçası takılması Hayır",
+    "22.Trunk Diveder parça takılması Hayır",
+    "32.Kelebek camı düşmemesi için sünger konulmasıH"
+   ]
+  },
+  {
+   "title": "Kapı & Kaput Ayarı",
+   "items": [
+    "25.Kapı ayar kauçuklarının takılmasıHayır",
+    "26.Kaput ayar kauçuklarının takılmasıHayır",
+    "43.Kaput ayar pulu atıldı mıHayır"
+   ]
+  },
+  {
+   "title": "Elektrik & Kablaj",
+   "items": [
+    "14.CCB Korna Şasi Almaması Dolaylı HarnessHayır",
+    "27.Chogori IP68 kablonun araca konulmasıHayır",
+    "31.P silinmiş combination switch kullanılmasıHay"
+   ]
+  },
+  {
+   "title": "Sızdırmazlık",
+   "items": [
+    "15.Kapı direk plastik parça sıvı conta uygulamas",
+    "30.Kaput altı sızdırmazlık contasının kullanılma",
+    "34.IP yanı kapı harness ve kapı clips bölgesinde",
+    "35.Arka kapı sağ alt sızdırmazlık şeridi çekilme",
+    "36.Arka kapı sol alt sızdırmazlık şeridi çekilme",
+    "37.Arka kapı sağ üst sızdırmazlık şeridi çekilme",
+    "38.Arka kapı sol üst sızdırmazlık şeridi çekilme",
+    "46.Bagaj kapagi su sizdirma problemi parca enteg"
+   ]
+  },
+  {
+   "title": "Şasi, Fren & Direksiyon",
+   "items": [
+    "13.Knuckle 2,5 mm Slot Açılması ve 1 derece Ayar",
+    "33.El Fren Ayarı yapılması ve arka disklere denk",
+    "39.Arka davlumbaz sol fren borusu girişim bölges",
+    "40.Arka davlumbaz sağ fren borusu girişim bölges",
+    "41.Direksiyon yumusatma ayari Hayır",
+    "42.Stop delik genisletme yapildi mi Hayır",
+    "44.Direksiyon kolonu dip lastiği yerine tam olar"
+   ]
+  }
+ ],
+ "templates-shipment-section-options": {
+  "row": "Varsayılan (tüm modeller) Sevk 46 AKTİF",
+  "pickers": 47,
+  "new_item_picker": [
+   "Diğer maddeler (bölümsüz)",
+   "Kimlik, Logo & Etiket",
+   "Dış Görünüm",
+   "İç Donanım & Trim",
+   "Kapı & Kaput Ayarı",
+   "Elektrik & Kablaj",
+   "Sızdırmazlık",
+   "Şasi, Fren & Direksiyon",
+   "Özel anahtar…"
+  ],
+  "all_pickers_identical": true
+ },
+ "templates-test-section-options": {
+  "row": "Varsayılan (tüm modeller) Test 43 AKTİF",
+  "pickers": 46,
+  "new_item_picker": [
+   "Diğer maddeler (bölümsüz)",
+   "Soğuk Sıkma Testi",
+   "BCM / EE Fonksiyon Kontrol",
+   "Sürüş Testi",
+   "Fren Testi",
+   "Rot Testi",
+   "Sıcak Sıkma Testi",
+   "Mühendislik & Kalite Kontrol",
+   "Özel anahtar…"
+  ],
+  "all_pickers_identical": true
+ },
+ "api": {
+  "test": [
+   [
+    1,
+    "cold_drag",
+    10,
+    true
+   ],
+   [
+    2,
+    "cold_drag",
+    10,
+    true
+   ],
+   [
+    3,
+    "cold_drag",
+    10,
+    true
+   ],
+   [
+    4,
+    "bcm_ee",
+    20,
+    true
+   ],
+   [
+    5,
+    "bcm_ee",
+    20,
+    true
+   ],
+   [
+    6,
+    "bcm_ee",
+    20,
+    true
+   ],
+   [
+    7,
+    "bcm_ee",
+    20,
+    true
+   ],
+   [
+    8,
+    "bcm_ee",
+    20,
+    true
+   ],
+   [
+    9,
+    "bcm_ee",
+    20,
+    true
+   ],
+   [
+    10,
+    "bcm_ee",
+    20,
+    true
+   ],
+   [
+    11,
+    "bcm_ee",
+    20,
+    true
+   ],
+   [
+    12,
+    "bcm_ee",
+    20,
+    true
+   ],
+   [
+    13,
+    "bcm_ee",
+    20,
+    true
+   ],
+   [
+    14,
+    "bcm_ee",
+    20,
+    true
+   ],
+   [
+    15,
+    "bcm_ee",
+    20,
+    true
+   ],
+   [
+    16,
+    "road_test",
+    30,
+    true
+   ],
+   [
+    17,
+    "road_test",
+    30,
+    true
+   ],
+   [
+    18,
+    "road_test",
+    30,
+    true
+   ],
+   [
+    19,
+    "road_test",
+    30,
+    true
+   ],
+   [
+    20,
+    "road_test",
+    30,
+    true
+   ],
+   [
+    21,
+    "road_test",
+    30,
+    true
+   ],
+   [
+    22,
+    "road_test",
+    30,
+    true
+   ],
+   [
+    23,
+    "road_test",
+    30,
+    true
+   ],
+   [
+    24,
+    "road_test",
+    30,
+    true
+   ],
+   [
+    25,
+    "brake_test",
+    40,
+    true
+   ],
+   [
+    26,
+    "brake_test",
+    40,
+    true
+   ],
+   [
+    27,
+    "brake_test",
+    40,
+    true
+   ],
+   [
+    28,
+    "brake_test",
+    40,
+    true
+   ],
+   [
+    29,
+    "brake_test",
+    40,
+    true
+   ],
+   [
+    30,
+    "alignment",
+    50,
+    true
+   ],
+   [
+    31,
+    "alignment",
+    50,
+    true
+   ],
+   [
+    32,
+    "alignment",
+    50,
+    true
+   ],
+   [
+    33,
+    "hot_drag",
+    60,
+    true
+   ],
+   [
+    34,
+    "hot_drag",
+    60,
+    true
+   ],
+   [
+    35,
+    "hot_drag",
+    60,
+    true
+   ],
+   [
+    36,
+    "hot_drag",
+    60,
+    true
+   ],
+   [
+    37,
+    "hot_drag",
+    60,
+    true
+   ],
+   [
+    38,
+    "eng_quality",
+    70,
+    true
+   ],
+   [
+    39,
+    "eng_quality",
+    70,
+    true
+   ],
+   [
+    40,
+    "eng_quality",
+    70,
+    true
+   ],
+   [
+    41,
+    "eng_quality",
+    70,
+    true
+   ],
+   [
+    42,
+    "eng_quality",
+    70,
+    true
+   ],
+   [
+    43,
+    "eng_quality",
+    70,
+    true
+   ]
+  ],
+  "shipment": [
+   [
+    1,
+    "interior",
+    30,
+    true
+   ],
+   [
+    2,
+    "interior",
+    30,
+    true
+   ],
+   [
+    3,
+    "exterior",
+    20,
+    true
+   ],
+   [
+    4,
+    "exterior",
+    20,
+    true
+   ],
+   [
+    5,
+    "interior",
+    30,
+    true
+   ],
+   [
+    6,
+    "interior",
+    30,
+    true
+   ],
+   [
+    7,
+    "interior",
+    30,
+    true
+   ],
+   [
+    8,
+    "interior",
+    30,
+    true
+   ],
+   [
+    9,
+    "interior",
+    30,
+    true
+   ],
+   [
+    10,
+    "interior",
+    30,
+    true
+   ],
+   [
+    11,
+    "interior",
+    30,
+    true
+   ],
+   [
+    12,
+    "interior",
+    30,
+    true
+   ],
+   [
+    13,
+    "chassis",
+    70,
+    true
+   ],
+   [
+    14,
+    "electrical",
+    50,
+    true
+   ],
+   [
+    15,
+    "sealing",
+    60,
+    true
+   ],
+   [
+    16,
+    "exterior",
+    20,
+    true
+   ],
+   [
+    17,
+    "identity",
+    10,
+    true
+   ],
+   [
+    18,
+    "identity",
+    10,
+    true
+   ],
+   [
+    19,
+    "identity",
+    10,
+    true
+   ],
+   [
+    20,
+    "identity",
+    10,
+    true
+   ],
+   [
+    21,
+    "interior",
+    30,
+    true
+   ],
+   [
+    22,
+    "interior",
+    30,
+    true
+   ],
+   [
+    23,
+    "identity",
+    10,
+    true
+   ],
+   [
+    24,
+    "identity",
+    10,
+    true
+   ],
+   [
+    25,
+    "closures",
+    40,
+    true
+   ],
+   [
+    26,
+    "closures",
+    40,
+    true
+   ],
+   [
+    27,
+    "electrical",
+    50,
+    true
+   ],
+   [
+    28,
+    "exterior",
+    20,
+    true
+   ],
+   [
+    29,
+    "exterior",
+    20,
+    true
+   ],
+   [
+    30,
+    "sealing",
+    60,
+    true
+   ],
+   [
+    31,
+    "electrical",
+    50,
+    true
+   ],
+   [
+    32,
+    "interior",
+    30,
+    true
+   ],
+   [
+    33,
+    "chassis",
+    70,
+    true
+   ],
+   [
+    34,
+    "sealing",
+    60,
+    true
+   ],
+   [
+    35,
+    "sealing",
+    60,
+    true
+   ],
+   [
+    36,
+    "sealing",
+    60,
+    true
+   ],
+   [
+    37,
+    "sealing",
+    60,
+    true
+   ],
+   [
+    38,
+    "sealing",
+    60,
+    true
+   ],
+   [
+    39,
+    "chassis",
+    70,
+    true
+   ],
+   [
+    40,
+    "chassis",
+    70,
+    true
+   ],
+   [
+    41,
+    "chassis",
+    70,
+    true
+   ],
+   [
+    42,
+    "chassis",
+    70,
+    true
+   ],
+   [
+    43,
+    "closures",
+    40,
+    true
+   ],
+   [
+    44,
+    "chassis",
+    70,
+    true
+   ],
+   [
+    45,
+    "exterior",
+    20,
+    true
+   ],
+   [
+    46,
+    "sealing",
+    60,
+    true
+   ]
+  ]
+ }
+}

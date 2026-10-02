@@ -1,0 +1,176 @@
+== 1. Live clone: migrations 0001-0034 + live template rows + seeds ==
+  applied 34 migrations (0001-0034)
+  loaded live dump: 3 templates, 108 items
+  01_stations.sql: INSERT 0 8
+  02_stations_and_steps.sql: INSERT 0 64
+  03_checklist_templates.sql: INSERT 0 0
+  04_users.sql: INSERT 0 5
+  05_defect_catalog.sql: INSERT 0 4 / INSERT 0 4 / INSERT 0 24 / INSERT 0 10
+  06_test_vehicles.sql: INSERT 0 2 / INSERT 0 0 / INSERT 0 18
+  items: 108 | vehicle checklist progress rows: 1872
+  section keys before: SHIPMENT:charge, SHIPMENT:exterior, SHIPMENT:identity, SHIPMENT:interior, SHIPMENT:lighting, SHIPMENT:locks, TEST:adas, TEST:body, TEST:brakes, TEST:dash, TEST:diag, TEST:drive, TEST:final, TEST:hv, TEST:infotainment, TEST:lights, TEST:steering
+
+== 2. Migration 0035 up ==
+  run 1: UPDATE 90 / UPDATE 0
+PASS first run updates 90 rows (45 SHIPMENT: all but #16, whose key and sort stay exterior/20; 45 TEST) and clears no other row — UPDATE 90 / UPDATE 0
+
+  Result (SHIPMENT and TEST, by item_no):
+  type      no  active section_key  sort  title                          text
+  SHIPMENT   1  true   interior       30  İç Donanım & Trim              Rear Bota Ses İzolasyonu Montaj
+  SHIPMENT   2  true   interior       30  İç Donanım & Trim              Front Dash Ses İzolasyonu Montaj
+  SHIPMENT   3  true   exterior       20  Dış Görünüm                    Sol Air Flap Montaj
+  SHIPMENT   4  true   exterior       20  Dış Görünüm                    Sağ Air Flap Montaj
+  SHIPMENT   5  true   interior       30  İç Donanım & Trim              C_Pillar Inner Sol Kesim
+  SHIPMENT   6  true   interior       30  İç Donanım & Trim              C_Pillar Inner Sağ Kesim
+  SHIPMENT   7  true   interior       30  İç Donanım & Trim              Polen Filtresi Montaj
+  SHIPMENT   8  true   interior       30  İç Donanım & Trim              C_Pillar Inner Support M5 Delik Sağ
+  SHIPMENT   9  true   interior       30  İç Donanım & Trim              C_Pillar Inner Support M5 Delik Sol
+  SHIPMENT  10  true   interior       30  İç Donanım & Trim              C_Pillar Yeni Clips Değişmesi
+  SHIPMENT  11  true   interior       30  İç Donanım & Trim              C_Pillar Stop tırnaklarının kesilmesi
+  SHIPMENT  12  true   interior       30  İç Donanım & Trim              Headliner Yeni Clips Değişmesi
+  SHIPMENT  13  true   chassis        70  Şasi, Fren & Direksiyon        Knuckle 2,5 mm Slot Açılması ve 1 derece Ayarı
+  SHIPMENT  14  true   electrical     50  Elektrik & Kablaj              CCB Korna Şasi Almaması Dolaylı Harness
+  SHIPMENT  15  true   sealing        60  Sızdırmazlık                   Kapı direk plastik parça sıvı conta uygulaması
+  SHIPMENT  16  true   exterior       20  Dış Görünüm                    Ayarlı dış aynaların takılması
+  SHIPMENT  17  true   identity       10  Kimlik, Logo & Etiket          Logo montajı
+  SHIPMENT  18  true   identity       10  Kimlik, Logo & Etiket          Anahtarlık logosu değişimi
+  SHIPMENT  19  true   identity       10  Kimlik, Logo & Etiket          Direksiyon Logo Değişimi
+  SHIPMENT  20  true   identity       10  Kimlik, Logo & Etiket          Jant Logo Değişimi
+  SHIPMENT  21  true   interior       30  İç Donanım & Trim              HVAC kapama parçası takılması
+  SHIPMENT  22  true   interior       30  İç Donanım & Trim              Trunk Diveder parça takılması
+  SHIPMENT  23  true   identity       10  Kimlik, Logo & Etiket          Araç tanıtım etiketi perçinlenmesi
+  SHIPMENT  24  true   identity       10  Kimlik, Logo & Etiket          VIN markalaması
+  SHIPMENT  25  true   closures       40  Kapı & Kaput Ayarı             Kapı ayar kauçuklarının takılması
+  SHIPMENT  26  true   closures       40  Kapı & Kaput Ayarı             Kaput ayar kauçuklarının takılması
+  SHIPMENT  27  true   electrical     50  Elektrik & Kablaj              Chogori IP68 kablonun araca konulması
+  SHIPMENT  28  true   exterior       20  Dış Görünüm                    Anti Scratch film tampona kaplanması
+  SHIPMENT  29  true   exterior       20  Dış Görünüm                    Anti Fog Film cama kaplanması
+  SHIPMENT  30  true   sealing        60  Sızdırmazlık                   Kaput altı sızdırmazlık contasının kullanılması
+  SHIPMENT  31  true   electrical     50  Elektrik & Kablaj              P silinmiş combination switch kullanılması
+  SHIPMENT  32  true   interior       30  İç Donanım & Trim              Kelebek camı düşmemesi için sünger konulması
+  SHIPMENT  33  true   chassis        70  Şasi, Fren & Direksiyon        El Fren Ayarı yapılması ve arka disklere denk gelen noktada...
+  SHIPMENT  34  true   sealing        60  Sızdırmazlık                   IP yanı kapı harness ve kapı clips bölgesinde sızdırmazlıkl...
+  SHIPMENT  35  true   sealing        60  Sızdırmazlık                   Arka kapı sağ alt sızdırmazlık şeridi çekilmesi
+  SHIPMENT  36  true   sealing        60  Sızdırmazlık                   Arka kapı sol alt sızdırmazlık şeridi çekilmesi
+  SHIPMENT  37  true   sealing        60  Sızdırmazlık                   Arka kapı sağ üst sızdırmazlık şeridi çekilmesi
+  SHIPMENT  38  true   sealing        60  Sızdırmazlık                   Arka kapı sol üst sızdırmazlık şeridi çekilmesi
+  SHIPMENT  39  true   chassis        70  Şasi, Fren & Direksiyon        Arka davlumbaz sol fren borusu girişim bölgesi kesimi
+  SHIPMENT  40  true   chassis        70  Şasi, Fren & Direksiyon        Arka davlumbaz sağ fren borusu girişim bölgesi kesimi
+  SHIPMENT  41  true   chassis        70  Şasi, Fren & Direksiyon        Direksiyon yumusatma ayari
+  SHIPMENT  42  true   chassis        70  Şasi, Fren & Direksiyon        Stop delik genisletme yapildi mi
+  SHIPMENT  43  true   closures       40  Kapı & Kaput Ayarı             Kaput ayar pulu atıldı mı
+  SHIPMENT  44  true   chassis        70  Şasi, Fren & Direksiyon        Direksiyon kolonu dip lastiği yerine tam olarak oturmuş mu
+  SHIPMENT  45  true   exterior       20  Dış Görünüm                    Kaput civatalarinin piano black rötuş kalemi ile boyanmasi
+  SHIPMENT  46  true   sealing        60  Sızdırmazlık                   Bagaj kapagi su sizdirma problemi parca entegrasyonu
+  TEST       1  true   cold_drag      10  Soğuk Sıkma Testi              N'de aracı ittir — Anormal direnç var mı?
+  TEST       2  true   cold_drag      10  Soğuk Sıkma Testi              D'de gaz ver — Araç normal hızlanıyor mu? Sıkma hissi veya ...
+  TEST       3  true   cold_drag      10  Soğuk Sıkma Testi              R'de gaz ver — Geri viteste normal hızlanıyor mu? Sıkma his...
+  TEST       4  true   bcm_ee         20  BCM / EE Fonksiyon Kontrol     Dış aydınlatma — Kısa, uzun, selektör, park, sis, sol/sağ s...
+  TEST       5  true   bcm_ee         20  BCM / EE Fonksiyon Kontrol     Korna — Ses seviyesi ve çalışması normal mi?
+  TEST       6  true   bcm_ee         20  BCM / EE Fonksiyon Kontrol     Camlar — Tüm camlar açılıp kapanıyor mu? Takılma, yavaşlık ...
+  TEST       7  true   bcm_ee         20  BCM / EE Fonksiyon Kontrol     Merkezi kilit & kapılar — İçeriden ve anahtarla dışarıdan k...
+  TEST       8  true   bcm_ee         20  BCM / EE Fonksiyon Kontrol     Aynalar & iç donanım — Aynalar, IP kapakları, emniyet kemer...
+  TEST       9  true   bcm_ee         20  BCM / EE Fonksiyon Kontrol     Emniyet kemerleri — Tokalar çalışıyor mu? Kemer düzgün sarı...
+  TEST      10  true   bcm_ee         20  BCM / EE Fonksiyon Kontrol     El freni (KRİTİK) — El frenini çek -> hafif gaz ver -> araç...
+  TEST      11  true   bcm_ee         20  BCM / EE Fonksiyon Kontrol     Vites seçimi — P/R/N/D geçişlerinde gecikme, yanlış gösteri...
+  TEST      12  true   bcm_ee         20  BCM / EE Fonksiyon Kontrol     Ana ekran / menüler — Tüm menülerde düğmelere tek tek bas. ...
+  TEST      13  true   bcm_ee         20  BCM / EE Fonksiyon Kontrol     Geri görüş kamerası — R'ye alınca görüntü geliyor mu? Görün...
+  TEST      14  true   bcm_ee         20  BCM / EE Fonksiyon Kontrol     Klima & havalandırma — Fan 1-2-3, yüze/cama üfleme, iç hava...
+  TEST      15  true   bcm_ee         20  BCM / EE Fonksiyon Kontrol     Odometer — Sürüş öncesi değeri not et. Sürüş sonrası doğru ...
+  TEST      16  true   road_test      30  Sürüş Testi                    Düşük hız — 500m, 0 -> 30 km/s. Titreme, silkelenme, anorma...
+  TEST      17  true   road_test      30  Sürüş Testi                    Fren — 30 -> 0 x5 (~300m). Her frenlemede sağa/sola ekstrem...
+  TEST      18  true   road_test      30  Sürüş Testi                    Sürekli frenleme — Dur-kalk min. 20x (~600m). Pedal sertleş...
+  TEST      19  true   road_test      30  Sürüş Testi                    Fren — 50 -> 0 x5 (~400m). Her frenlemede sağa/sola ekstrem...
+  TEST      20  true   road_test      30  Sürüş Testi                    Fren — 90 -> 0 / 80 ->0 / 70 -> 0 (~500m). Her frenlemede s...
+  TEST      21  true   road_test      30  Sürüş Testi                    Son hıza ulaşma (~600m) — ECO modda 90 km/s'ye ulaşıyor mu?...
+  TEST      22  true   road_test      30  Sürüş Testi                    Yokuş çıkış + iniş (~400m) — Çıkışta geri kaçırma, çekiş dü...
+  TEST      23  true   road_test      30  Sürüş Testi                    Yokuş el freni (KRİTİK) — Yokuşta en az 6 kez kaydır-tut. E...
+  TEST      24  true   road_test      30  Sürüş Testi                    N'de yokuş fren testi (~100m) — Yokuş aşağı N'de fren yap, ...
+  TEST      25  true   brake_test     40  Fren Testi                     Düşük hız fren genel — 30 -> 0 testlerinde tutarlı performa...
+  TEST      26  true   brake_test     40  Fren Testi                     Orta hız fren genel — 50 -> 0 testlerinde tutarlı performan...
+  TEST      27  true   brake_test     40  Fren Testi                     Yüksek hız fren genel — 90/80/70 -> 0 testlerinde tutarlı p...
+  TEST      28  true   brake_test     40  Fren Testi                     FRENLERDE SIKMA VAR MI? (KRİTİK) — Anormal direnç, tek tara...
+  TEST      29  true   brake_test     40  Fren Testi                     Nihai Fren Onayı — Tüm fren testleri tamamlandı, anormal bu...
+  TEST      30  true   alignment      50  Rot Testi                      Rot ayarı — Düz/eğimsiz yolda direksiyonu bırak. Araç sola ...
+  TEST      31  true   alignment      50  Rot Testi                      Direksiyon merkezi — Düz gidişte direksiyon tam ortada mı? ...
+  TEST      32  true   alignment      50  Rot Testi                      Yüksek hızda kararlılık — 70–90 km/s'de araç düz gidiyor mu...
+  TEST      33  true   hot_drag       60  Sıcak Sıkma Testi              Sol ön disk — Elini yaklaştır (dokunma). Diğer disklere kıy...
+  TEST      34  true   hot_drag       60  Sıcak Sıkma Testi              Sağ ön disk — Aynı kontrol. Belirgin şekilde sıcak mı?
+  TEST      35  true   hot_drag       60  Sıcak Sıkma Testi              Sol arka disk — Aynı kontrol. Belirgin şekilde sıcak mı?
+  TEST      36  true   hot_drag       60  Sıcak Sıkma Testi              Sağ arka disk — Aynı kontrol. Belirgin şekilde sıcak mı?
+  TEST      37  true   hot_drag       60  Sıcak Sıkma Testi              N'de aracı ittir — Soğuk teste kıyasla artan direnç var mı?...
+  TEST      38  true   eng_quality    70  Mühendislik & Kalite Kontrol   Kapı / Kaput ayarı — Görsel kontrol. Fotoğraf ilet.
+  TEST      39  true   eng_quality    70  Mühendislik & Kalite Kontrol   Boya kalitesi — Görsel kontrol. Fotoğraf ilet.
+  TEST      40  true   eng_quality    70  Mühendislik & Kalite Kontrol   Trim & Bagaj — İç trim, dış trim düzgün mü? Bagaj yüksekliğ...
+  TEST      41  true   eng_quality    70  Mühendislik & Kalite Kontrol   Tam dönüş kontrolü — Düşük hızda tam sağ/sol manevra. Sürtm...
+  TEST      42  true   eng_quality    70  Mühendislik & Kalite Kontrol   DTC / Diyagnostik tarama — Aktif veya geçmiş hata varsa kay...
+  TEST      43  true   eng_quality    70  Mühendislik & Kalite Kontrol   Mühendis Nihai Onayı
+  TEST      44  false  -               -  (bölümsüz)                     Final road-test driveability sign-off
+  TEST      45  false  -               -  (bölümsüz)                     End-of-line test report archive and stamp
+PASS every SHIPMENT/TEST item sits in the requested section — []
+PASS TEST #44 and #45 (inactive) are unsectioned
+
+  Sections per template:
+  SHIPMENT identity     sort=10   items=6   active=6   item_no=17,18,19,20,23,24
+  SHIPMENT exterior     sort=20   items=6   active=6   item_no=3,4,16,28,29,45
+  SHIPMENT interior     sort=30   items=13  active=13  item_no=1,2,5,6,7,8,9,10,11,12,21,22,32
+  SHIPMENT closures     sort=40   items=3   active=3   item_no=25,26,43
+  SHIPMENT electrical   sort=50   items=3   active=3   item_no=14,27,31
+  SHIPMENT sealing      sort=60   items=8   active=8   item_no=15,30,34,35,36,37,38,46
+  SHIPMENT chassis      sort=70   items=7   active=7   item_no=13,33,39,40,41,42,44
+  TEST     cold_drag    sort=10   items=3   active=3   item_no=1,2,3
+  TEST     bcm_ee       sort=20   items=12  active=12  item_no=4,5,6,7,8,9,10,11,12,13,14,15
+  TEST     road_test    sort=30   items=9   active=9   item_no=16,17,18,19,20,21,22,23,24
+  TEST     brake_test   sort=40   items=5   active=5   item_no=25,26,27,28,29
+  TEST     alignment    sort=50   items=3   active=3   item_no=30,31,32
+  TEST     hot_drag     sort=60   items=5   active=5   item_no=33,34,35,36,37
+  TEST     eng_quality  sort=70   items=6   active=6   item_no=38,39,40,41,42,43
+  TEST     -            sort=None items=2   active=0   item_no=44,45
+PASS EOL items untouched (no sections)
+PASS text, item_no, is_active, phase, station and seed_key unchanged for all 108 items — 108 rows compared
+PASS vehicle checklist progress rows unchanged — 1872 rows compared
+  text/order/active fingerprint after 0035: b9d2a599c8dc8cf0f956f071a873ec4e
+
+== 3. Idempotency: second run ==
+  run 2: UPDATE 0 / UPDATE 0
+PASS second run updates nothing and changes no row
+
+== 4. Rollback ==
+  down run 1: UPDATE 90
+PASS down restores every row exactly as before 0035 (all columns)
+  TEST #10 after down: brakes (live value before 0035)
+PASS second down updates nothing — UPDATE 0
+PASS up after down gives the same result again — UPDATE 90 / UPDATE 0
+
+== 5. Identity, not position: reorder + text edit, then down/up (rolled back) ==
+  item_no  3 -> eng_quality Mühendis Nihai Onayı (düzenlendi)
+  item_no 10 -> hot_drag    Sağ arka disk — Aynı kontrol. Belirgin şekilde ...
+  item_no 45 -> cold_drag   N'de aracı ittir — Anormal direnç var mı?
+PASS after reversing order each item keeps its own section (old #1 now #45 still cold_drag, old #43 now #3 still eng_quality) — {"Mühendis Nihai Onayı (düzenlendi)": [3, "eng_quality"], "Sağ arka disk": [10, "hot_drag"], "N'de aracı ittir": [45, "cold_drag"]}
+PASS probe rolled back
+
+== 6. Retired keys on other items are cleared (rolled back) ==
+   INSERT 0 1 / UPDATE 0 / UPDATE 1
+PASS an admin item still on 'brakes' becomes unsectioned
+PASS fixture rolled back
+
+== 7. Seed 03 on the migrated live clone ==
+PASS seed 03 adds nothing and changes nothing — INSERT 0 0
+
+== 8. Fresh install: every migration + seeds ==
+  0035 on an empty template: UPDATE 0 / UPDATE 0
+  applied 35 migrations
+  01_stations.sql: INSERT 0 8
+  02_stations_and_steps.sql: INSERT 0 64
+  03_checklist_templates.sql: INSERT 0 104
+  04_users.sql: INSERT 0 5
+  05_defect_catalog.sql: INSERT 0 4 / INSERT 0 4 / INSERT 0 24 / INSERT 0 10
+  06_test_vehicles.sql: INSERT 0 2 / INSERT 0 0 / INSERT 0 18
+  seeded SHIPMENT/TEST items: 89; compared with the migrated live clone by seed_key
+PASS seed 03 gives every item the same section as migration 0035 — []
+PASS fresh install matches the requested table by item_no too — []
+PASS 0035 re-run on the fresh install changes nothing — UPDATE 0 / UPDATE 0
+
+  dropped karea_sections_fresh_test; kept karea_sections_test for screenshots
+
+ALL CHECKS PASSED
