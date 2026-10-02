@@ -4,6 +4,8 @@
  * from the real templates. Select with ?scene=<id>.
  */
 import type { ComponentType } from 'react';
+// Real API response from a *_test database after migration 0035.
+import sectionChecklists from '../checklist-sections/api-checklists.json';
 
 type Status = 'PENDING' | 'OK' | 'NOT_OK' | 'REWORK' | 'CONDITIONAL_OK';
 
@@ -294,6 +296,18 @@ export const SCENES: Scene[] = [
     screen: 'shipment',
     params: { vin: LINE_VIN },
     api: { checklists: { shipment: shipmentLine } },
+  },
+  {
+    id: 'shipment-sections',
+    screen: 'shipment',
+    params: { vin: LINE_VIN },
+    api: { checklists: { shipment: sectionChecklists.shipment } },
+  },
+  {
+    id: 'test-sections',
+    screen: 'test',
+    params: { vin: LINE_VIN },
+    api: { checklists: { test: sectionChecklists.test } },
   },
   {
     id: 'eol-branch-shipped',

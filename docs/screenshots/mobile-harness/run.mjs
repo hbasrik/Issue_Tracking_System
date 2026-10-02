@@ -147,7 +147,8 @@ for (const scene of scenes) {
           .first()
           .screenshot({ path: path.join(outDir, `${key}-card.png`) });
       }
-      facts[key] = { sections: texts, overflow, raw_status_in_sections: raw, issue_cards: issueCards, errors, calls: await page.evaluate(() => window.__calls) };
+      const lines = await page.evaluate(() => document.body.innerText.split('\n').map((l) => l.trim()).filter(Boolean));
+      facts[key] = { sections: texts, overflow, raw_status_in_sections: raw, issue_cards: issueCards, errors, calls: await page.evaluate(() => window.__calls), lines };
       if (errors.length || overflow || raw.length) failed = true;
       if (process.env.EXPECT_ISSUE_LAYOUT === '1' && issueCards.some((c) =>
         c.severity_word_visible || !c.severity_aria || c.outside ||
