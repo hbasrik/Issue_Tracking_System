@@ -718,7 +718,7 @@ Test TR), `mobile-facts-check.txt` + `mobile/*.png` (Sevk ve Test
 ekranları, react-native-web düzeneği), `build-output.txt`. Gerçek
 cihazda görüntü alınmadı.
 
-### A40. Araç denetim kaydı: eksik olaylar + tek zaman çizelgesi `[ ]` — 2026-10-02
+### A40. Araç denetim kaydı: eksik olaylar + tek zaman çizelgesi `[x]` — 2026-10-02 (0037 canlıya uygulanmadı)
 - **Migration 0037:** `fn_enforce_branch_shipment` depoya sevkte aracı
   `IN_WAREHOUSE` yaparken artık `STATUS_CHANGE` de yazar (teslim
   tetikleyicisiyle aynı desen, `metadata.trigger = eol_branch_ship`,
@@ -730,6 +730,38 @@ cihazda görüntü alınmadı.
 - **Uç nokta:** `GET /vehicles/{vin}/timeline` (yetki: `vehicle.view`)
   durum, hat sonu aşama, checklist, hata durumu ve sınıflandırma
   satırlarını en yeni üstte, bağlamı çözülmüş olarak döndürür (Karar 24).
+- **Ekran (web denetim sekmesi + mobil araç ekranı):** aynı
+  `shared/vehicleTimeline.ts` ile her satır cümle olarak yazılır ("Araç
+  depoya alındı — Durum: Hatta → Depoda", "Beklemeye alındı — Neden: …",
+  "Sevk maddesi 17: Bekliyor → Uygun", "Hata #49: Açık → İşlemde").
+  Bilinmeyen bir değer "Bilinmeyen değer" olarak gösterilir, ham değil.
+  Aynı kişinin aynı listedeki en az 3 ardışık işaretlemesi tek satırda
+  toplanır ("Sevk listesinde 46 işaretleme", açılabilir). Filtre: Tümü /
+  Durum ve aşama / Checklist / Hatalar (sayılı). Sıfırlama satırları
+  "Geliştirme sıfırlaması" etiketi taşır, üstte açıklama notu çıkar.
+  Web'de eski `VehicleStatusHistory` bileşeni kaldırıldı; başlıktaki son
+  durum damgası `status-history` ile kalır. Mobilde zaman çizelgesi araç
+  ekranının en altında. `issueStatusLabel` `shared/issueStatus.ts`'e
+  taşındı.
+- **Yayın:** backend + web + mobil birlikte; 0037 kesinti gerektirmez
+  (yalnız `CREATE OR REPLACE FUNCTION`), kod onsuz da çalışır. 0037
+  uygulanmadan önceki depoya sevklerde yalnız aşama satırı vardır; eski
+  mobil sürüm zaman çizelgesini göstermez.
+
+Kanıt: `docs/screenshots/vehicle-timeline/`:
+`db-verification-output.txt` (0037: fonksiyon değişti, iki kez up, down
+0036 gövdesini birebir geri yazdı, mevcut 15 denetim satırının md5'i
+değişmedi), `api-verification-output.txt` (karea_timeline_test üzerinde
+bekleme, hata yaşam döngüsü, 46+44+10 checklist işaretlemesi, depoya
+sevk → `STATUS_CHANGE IN_PRODUCTION → IN_WAREHOUSE` (trigger
+eol_branch_ship), sıfırlama → `STATUS_CHANGE IN_WAREHOUSE →
+IN_PRODUCTION` (dev_reset); zaman çizelgesi 112 satırın tamamını
+döndürür), `api-timeline.json`, `capture-web-output.txt` + `web-*.png`
+(TR/EN 1280, TR 390, açık grup, üç filtre; tamamen açık metinde ham
+değer yok), `mobile-facts-check.txt` + `mobile/*.png` (react-native-web
+düzeneği, TR/EN 390), `build-output.txt`, `live-readonly-check.txt`
+(canlı sürüm 36, fonksiyon 0022 gövdesi). Gerçek cihazda görüntü
+alınmadı.
 
 ---
 

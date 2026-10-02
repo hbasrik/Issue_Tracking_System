@@ -1,0 +1,33 @@
+== go test ./... (backend)
+?   	github.com/karea/backend/cmd/api	[no test files]
+ok  	github.com/karea/backend/internal/delivery/http	(cached)
+ok  	github.com/karea/backend/internal/domain	(cached)
+ok  	github.com/karea/backend/internal/platform/applog	(cached)
+?   	github.com/karea/backend/internal/platform/auth	[no test files]
+ok  	github.com/karea/backend/internal/platform/config	(cached)
+ok  	github.com/karea/backend/internal/platform/storage	(cached)
+?   	github.com/karea/backend/internal/repository	[no test files]
+ok  	github.com/karea/backend/internal/repository/postgres	(cached)
+ok  	github.com/karea/backend/internal/usecase	(cached)
+exit=0
+
+== shared/vehicleTimeline.selftest.ts
+shared/vehicleTimeline.ts ok (20 entries × tr/en)
+exit=0
+
+== shared/i18nMessages.selftest.ts
+shared/i18n/messages.ts ok (1231 tr keys scanned)
+exit=0
+
+== web: tsc --noEmit
+exit=0
+
+== web: vite build
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+exit=0
+
+== mobile: tsc --noEmit
+exit=0

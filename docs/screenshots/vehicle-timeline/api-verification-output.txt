@@ -1,0 +1,41 @@
+== 3. Scenario on N7V1K1SA6TK000006 via the test API (18081 -> karea_timeline_test) ==
+  start: IN_PRODUCTION / BRANCH
+  issue #17: OPEN → IN_PROGRESS → classification → DONE → APPROVED → undo → APPROVED
+  station steps OK: 64; checklist items marked: {'test': 43, 'shipment': 46, 'eol': 10}
+
+== 4. Branch shipment (trigger fn_enforce_branch_shipment, migration 0037) ==
+    133|13:14:46.501|EOL_WORKFLOW_STAGE_CHANGE|BRANCH|DEPOT|Local Manager|{"blocked": false, "open_issue_count_warning": 2}
+    134|13:14:46.501|STATUS_CHANGE|IN_PRODUCTION|IN_WAREHOUSE|Local Manager|{"trigger": "eol_branch_ship"}
+  [PASS] branch ship wrote EOL_WORKFLOW_STAGE_CHANGE BRANCH → DEPOT
+  [PASS] branch ship wrote STATUS_CHANGE IN_PRODUCTION → IN_WAREHOUSE by the shipper
+  [PASS] vehicle is IN_WAREHOUSE / DEPOT
+
+== 5. Development reset (APP_ENV=development on the test API) ==
+    135|13:14:46.611|EOL_WORKFLOW_STAGE_CHANGE|DEPOT|BRANCH|Local Manager|{"reason": "development eol workflow reset", "dev_reset": true}
+    136|13:14:46.611|STATUS_CHANGE|IN_WAREHOUSE|IN_PRODUCTION|Local Manager|{"action": "dev_reset", "dev_reset": true}
+  [PASS] reset wrote EOL_WORKFLOW_STAGE_CHANGE DEPOT → BRANCH with dev_reset
+  [PASS] reset wrote STATUS_CHANGE IN_WAREHOUSE → IN_PRODUCTION with dev_reset
+  [PASS] vehicle is IN_PRODUCTION / BRANCH
+
+== 6. Every status / stage audit row written during the scenario ==
+    25|13:14:45.656|STATUS_CHANGE|IN_PRODUCTION|ON_HOLD|Local Manager|{"action": "place_on_hold", "hold_reason": "Ayna parçası bekleniyor"}
+    26|13:14:45.672|STATUS_CHANGE|ON_HOLD|IN_PRODUCTION|Local Manager|{"action": "release_from_hold"}
+    133|13:14:46.501|EOL_WORKFLOW_STAGE_CHANGE|BRANCH|DEPOT|Local Manager|{"blocked": false, "open_issue_count_warning": 2}
+    134|13:14:46.501|STATUS_CHANGE|IN_PRODUCTION|IN_WAREHOUSE|Local Manager|{"trigger": "eol_branch_ship"}
+    135|13:14:46.611|EOL_WORKFLOW_STAGE_CHANGE|DEPOT|BRANCH|Local Manager|{"reason": "development eol workflow reset", "dev_reset": true}
+    136|13:14:46.611|STATUS_CHANGE|IN_WAREHOUSE|IN_PRODUCTION|Local Manager|{"action": "dev_reset", "dev_reset": true}
+  scenario rows by type: STATUS_CHANGE 4, CHECKLIST_ITEM_UPDATE 100, ISSUE_STATUS_CHANGE 5, EOL_WORKFLOW_STAGE_CHANGE 2, ISSUE_CLASSIFICATION_CHANGE 1
+
+== 7. GET /vehicles/{vin}/timeline ==
+  items 112, truncated False, types ['CHECKLIST_ITEM_UPDATE', 'EOL_WORKFLOW_STAGE_CHANGE', 'ISSUE_CLASSIFICATION_CHANGE', 'ISSUE_STATUS_CHANGE', 'STATUS_CHANGE']
+  [PASS] timeline returns every timeline audit row of the vehicle — db 112
+  [PASS] timeline covers all five event kinds
+  [PASS] newest first
+  [PASS] checklist rows carry item no + text
+  [PASS] issue rows carry the issue id
+  [PASS] classification row resolved to names
+  [PASS] hold row carries the reason
+  [PASS] dev reset rows flagged
+  saved api-timeline.json
+
+ALL CHECKS PASSED

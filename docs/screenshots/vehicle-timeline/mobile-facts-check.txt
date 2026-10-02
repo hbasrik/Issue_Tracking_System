@@ -1,0 +1,32 @@
+== vehicle-timeline-tr-390 ==
+  collapsed timeline: 56 lines; first group expanded: 86 lines
+  [PASS] errors / overflow — errors 0, overflow 0
+  [PASS] shows “Fabrikadan depoya sevk edildi”
+  [PASS] shows “Araç depoya alındı”
+  [PASS] shows “Araç hatta geri alındı”
+  [PASS] shows “Beklemeye alındı”
+  [PASS] shows “Beklemeden çıkarıldı”
+  [PASS] shows “sınıflandırması düzeltildi”
+  [PASS] dev-reset tag on two rows — 2
+  [PASS] three folded checklist runs
+  [PASS] expanding shows item rows
+  [PASS] status filter hides checklist and issue rows
+  [PASS] issue filter shows only issue rows
+  [PASS] no raw stored value in any view — none
+== vehicle-timeline-en-390 ==
+  collapsed timeline: 56 lines; first group expanded: 86 lines
+  [PASS] errors / overflow — errors 0, overflow 0
+  [PASS] shows “Shipped from factory to depot”
+  [PASS] shows “Vehicle moved to warehouse”
+  [PASS] shows “Vehicle returned to the line”
+  [PASS] shows “Put on hold”
+  [PASS] shows “Released from hold”
+  [PASS] shows “classification corrected”
+  [PASS] dev-reset tag on two rows — 2
+  [PASS] three folded checklist runs
+  [PASS] expanding shows item rows
+  [PASS] status filter hides checklist and issue rows
+  [PASS] issue filter shows only issue rows
+  [PASS] no raw stored value in any view — none
+
+ALL CHECKS PASSED

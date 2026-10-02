@@ -1,0 +1,6 @@
+tr-1280: top-level rows {"STATUS_CHANGE":4,"EOL_WORKFLOW_STAGE_CHANGE":2,"CHECKLIST_GROUP":3,"ISSUE_STATUS_CHANGE":5,"ISSUE_CLASSIFICATION_CHANGE":1}; groups 3; rows with groups expanded 115; lines scanned 356; raw values none
+en-1280: top-level rows {"STATUS_CHANGE":4,"EOL_WORKFLOW_STAGE_CHANGE":2,"CHECKLIST_GROUP":3,"ISSUE_STATUS_CHANGE":5,"ISSUE_CLASSIFICATION_CHANGE":1}; groups 3; rows with groups expanded 115; lines scanned 356; raw values none
+tr-390: top-level rows {"STATUS_CHANGE":4,"EOL_WORKFLOW_STAGE_CHANGE":2,"CHECKLIST_GROUP":3,"ISSUE_STATUS_CHANGE":5,"ISSUE_CLASSIFICATION_CHANGE":1}; groups 3; rows with groups expanded 115; lines scanned 356; raw values none
+tr-1280 filter status: {"STATUS_CHANGE":4,"EOL_WORKFLOW_STAGE_CHANGE":2}
+tr-1280 filter checklist: {"CHECKLIST_GROUP":3}
+tr-1280 filter issue: {"ISSUE_STATUS_CHANGE":5,"ISSUE_CLASSIFICATION_CHANGE":1}

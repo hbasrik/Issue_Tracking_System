@@ -518,8 +518,9 @@ kalıyordu.
   sıfırlama işareti) döndürür; cümleye çevirme istemcidedir ve web ile
   mobil aynı `shared/vehicleTimeline.ts` kodunu kullanır. Ekranda ham
   enum değeri gösterilmez.
-- **Gösterim:** ardışık checklist işaretlemeleri (aynı liste, aynı kişi)
-  tek satırda toplanır ve açılabilir; olay türüne göre filtre vardır.
+- **Gösterim:** ardışık checklist işaretlemeleri (aynı liste, aynı kişi,
+  en az 3) tek satırda toplanır ve açılabilir; bilinen değer kümesi
+  dışındaki bir değer "Bilinmeyen değer" olarak adlandırılır; olay türüne göre filtre vardır.
   Geliştirme sıfırlaması satırları ayrı etiket taşır; sıfırlamadan önceki
   satırlar silinmez, etiket neden hâlâ durduklarını açıklar.
   `status-history` uç noktası başlıktaki "son durum değişikliği" damgası

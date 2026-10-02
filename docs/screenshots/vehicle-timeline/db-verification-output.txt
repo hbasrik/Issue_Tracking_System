@@ -1,0 +1,17 @@
+== 1. Migration 0037 on karea_timeline_mig_test (0001-0036 + seeds 01-06) ==
+  before 0037: function md5 5f9e6f4014be900904c3ddb714c4135c; audit_logs 15 rows, md5 7dd0f59cb9d4fa9b526055babdaf27f5
+  [PASS] 0037 up replaces the function — 608330a0e2a94943365832cfa3fe4106
+  [PASS] new body writes STATUS_CHANGE with trigger eol_branch_ship
+  [PASS] existing audit rows unchanged by 0037 up — 15 rows, md5 7dd0f59cb9d4fa9b526055babdaf27f5
+  [PASS] 0037 up twice: same function
+  [PASS] 0037 down restores the 0036 function exactly — 5f9e6f4014be900904c3ddb714c4135c
+  [PASS] 0037 down twice: same function
+  [PASS] 0037 up after down: new function again
+  [PASS] audit rows unchanged after up/down/up
+  dropped karea_timeline_mig_test
+
+== 2. karea_timeline_test: every migration + seeds 01-06 ==
+  applied 37 migrations; schema_migrations not used (psql apply)
+  vehicle N7V1K1SA6TK000006: IN_PRODUCTION / BRANCH
+
+ALL CHECKS PASSED
