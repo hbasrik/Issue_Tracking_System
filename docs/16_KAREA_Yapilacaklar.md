@@ -676,6 +676,20 @@ bölüm seçicisi), `mobile-run-output.txt` + `mobile/*.png` (Test ve Sevk
 ekranları, react-native-web düzeneği), `build-output.txt`. Gerçek
 cihazda görüntü alınmadı.
 
+### A38. Form öğelerinde odak halkası yalnız klavyede `[x]` — 2026-10-02
+Onay kutusu ve seçim düğmesi fareyle tıklandıktan sonra 2px turuncu
+çerçeve kalıyordu. Kaynak `web/src/index.css`'teki ortak
+`input/textarea/select:focus` kuralıydı: bu kalıcı bir çerçeve değil,
+odak halkası. Öğe tıklamadan sonra odakta kaldığı için halka da kalıyordu.
+Kural artık `:focus-visible` ile çalışıyor; `:focus:not(:focus-visible)`
+halkayı kaldırıyor. Tab ile gelindiğinde halka görünür. Metin alanları ve
+`select` tıklamada da halka gösterir: tarayıcı bu öğeleri her zaman
+`:focus-visible` sayar, çünkü klavye girdisi alırlar. Mobilde CSS odak
+halkası yok; onay kutuları `Pressable`'dır ve çerçeve yalnız işaretli
+durumu gösterir. Kanıt: `docs/screenshots/form-focus-ring/`
+(`before-*` / `after-*` görüntüleri ve ölçümleri, `build-output.txt`;
+API Playwright ile taklit edildi).
+
 ---
 
 ## B — Canlıya çıkmadan önce ZORUNLU
