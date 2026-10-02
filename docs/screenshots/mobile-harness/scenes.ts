@@ -6,6 +6,7 @@
 import type { ComponentType } from 'react';
 // Real API response from a *_test database after migration 0035.
 import sectionChecklists from '../checklist-sections/api-checklists.json';
+import processChecklists from '../shipment-sections-process/api-checklists.json';
 
 type Status = 'PENDING' | 'OK' | 'NOT_OK' | 'REWORK' | 'CONDITIONAL_OK';
 
@@ -308,6 +309,18 @@ export const SCENES: Scene[] = [
     screen: 'test',
     params: { vin: LINE_VIN },
     api: { checklists: { test: sectionChecklists.test } },
+  },
+  {
+    id: 'shipment-process-sections',
+    screen: 'shipment',
+    params: { vin: LINE_VIN },
+    api: { checklists: { shipment: processChecklists.shipment } },
+  },
+  {
+    id: 'test-process-sections',
+    screen: 'test',
+    params: { vin: LINE_VIN },
+    api: { checklists: { test: processChecklists.test } },
   },
   {
     id: 'eol-branch-shipped',

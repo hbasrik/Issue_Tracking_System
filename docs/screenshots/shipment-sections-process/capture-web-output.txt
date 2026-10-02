@@ -1,0 +1,10 @@
+shipment-tr-1280 İç Montaj & Kesim İşleri (1-12) | Şasi & Dış Donanım (13-16) | Logo, Etiket & İç Parça (17-24) | Kauçuk, Kaplama & Küçük Montaj (25-32) | Fren Ayarı & Sızdırmazlık (33-40) | Son Ayar & Kontroller (41-46)
+  first item #1; order 1..46 intact: true
+test-tr-1280 Soğuk Sıkma Testi (1-3) | BCM / EE Fonksiyon Kontrol (4-15) | Sürüş Testi (16-24) | Fren Testi (25-29) | Rot Testi (30-32) | Sıcak Sıkma Testi (33-37) | Mühendislik & Kalite Kontrol (38-43)
+  first item #1; order 1..43 intact: true
+shipment-en-1280 Interior fitting & cutting (1-12) | Chassis & exterior fittings (13-16) | Logos, labels & interior parts (17-24) | Rubbers, films & small fittings (25-32) | Brake adjustment & sealing (33-40) | Final adjustments & checks (41-46)
+  first item #1; order 1..46 intact: true
+shipment-tr-390 İç Montaj & Kesim İşleri (1-12) | Şasi & Dış Donanım (13-16) | Logo, Etiket & İç Parça (17-24) | Kauçuk, Kaplama & Küçük Montaj (25-32) | Fren Ayarı & Sızdırmazlık (33-40) | Son Ayar & Kontroller (41-46)
+  first item #1; order 1..46 intact: true
+test-tr-390 Soğuk Sıkma Testi (1-3) | BCM / EE Fonksiyon Kontrol (4-15) | Sürüş Testi (16-24) | Fren Testi (25-29) | Rot Testi (30-32) | Sıcak Sıkma Testi (33-37) | Mühendislik & Kalite Kontrol (38-43)
+  first item #1; order 1..43 intact: true

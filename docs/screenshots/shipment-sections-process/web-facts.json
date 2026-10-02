@@ -1,0 +1,396 @@
+{
+ "shipment-tr-1280": [
+  {
+   "title": "İç Montaj & Kesim İşleri",
+   "items": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12
+   ]
+  },
+  {
+   "title": "Şasi & Dış Donanım",
+   "items": [
+    13,
+    14,
+    15,
+    16
+   ]
+  },
+  {
+   "title": "Logo, Etiket & İç Parça",
+   "items": [
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24
+   ]
+  },
+  {
+   "title": "Kauçuk, Kaplama & Küçük Montaj",
+   "items": [
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32
+   ]
+  },
+  {
+   "title": "Fren Ayarı & Sızdırmazlık",
+   "items": [
+    33,
+    34,
+    35,
+    36,
+    37,
+    38,
+    39,
+    40
+   ]
+  },
+  {
+   "title": "Son Ayar & Kontroller",
+   "items": [
+    41,
+    42,
+    43,
+    44,
+    45,
+    46
+   ]
+  }
+ ],
+ "test-tr-1280": [
+  {
+   "title": "Soğuk Sıkma Testi",
+   "items": [
+    1,
+    2,
+    3
+   ]
+  },
+  {
+   "title": "BCM / EE Fonksiyon Kontrol",
+   "items": [
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15
+   ]
+  },
+  {
+   "title": "Sürüş Testi",
+   "items": [
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24
+   ]
+  },
+  {
+   "title": "Fren Testi",
+   "items": [
+    25,
+    26,
+    27,
+    28,
+    29
+   ]
+  },
+  {
+   "title": "Rot Testi",
+   "items": [
+    30,
+    31,
+    32
+   ]
+  },
+  {
+   "title": "Sıcak Sıkma Testi",
+   "items": [
+    33,
+    34,
+    35,
+    36,
+    37
+   ]
+  },
+  {
+   "title": "Mühendislik & Kalite Kontrol",
+   "items": [
+    38,
+    39,
+    40,
+    41,
+    42,
+    43
+   ]
+  }
+ ],
+ "shipment-en-1280": [
+  {
+   "title": "Interior fitting & cutting",
+   "items": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12
+   ]
+  },
+  {
+   "title": "Chassis & exterior fittings",
+   "items": [
+    13,
+    14,
+    15,
+    16
+   ]
+  },
+  {
+   "title": "Logos, labels & interior parts",
+   "items": [
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24
+   ]
+  },
+  {
+   "title": "Rubbers, films & small fittings",
+   "items": [
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32
+   ]
+  },
+  {
+   "title": "Brake adjustment & sealing",
+   "items": [
+    33,
+    34,
+    35,
+    36,
+    37,
+    38,
+    39,
+    40
+   ]
+  },
+  {
+   "title": "Final adjustments & checks",
+   "items": [
+    41,
+    42,
+    43,
+    44,
+    45,
+    46
+   ]
+  }
+ ],
+ "shipment-tr-390": [
+  {
+   "title": "İç Montaj & Kesim İşleri",
+   "items": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12
+   ]
+  },
+  {
+   "title": "Şasi & Dış Donanım",
+   "items": [
+    13,
+    14,
+    15,
+    16
+   ]
+  },
+  {
+   "title": "Logo, Etiket & İç Parça",
+   "items": [
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24
+   ]
+  },
+  {
+   "title": "Kauçuk, Kaplama & Küçük Montaj",
+   "items": [
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32
+   ]
+  },
+  {
+   "title": "Fren Ayarı & Sızdırmazlık",
+   "items": [
+    33,
+    34,
+    35,
+    36,
+    37,
+    38,
+    39,
+    40
+   ]
+  },
+  {
+   "title": "Son Ayar & Kontroller",
+   "items": [
+    41,
+    42,
+    43,
+    44,
+    45,
+    46
+   ]
+  }
+ ],
+ "test-tr-390": [
+  {
+   "title": "Soğuk Sıkma Testi",
+   "items": [
+    1,
+    2,
+    3
+   ]
+  },
+  {
+   "title": "BCM / EE Fonksiyon Kontrol",
+   "items": [
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15
+   ]
+  },
+  {
+   "title": "Sürüş Testi",
+   "items": [
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24
+   ]
+  },
+  {
+   "title": "Fren Testi",
+   "items": [
+    25,
+    26,
+    27,
+    28,
+    29
+   ]
+  },
+  {
+   "title": "Rot Testi",
+   "items": [
+    30,
+    31,
+    32
+   ]
+  },
+  {
+   "title": "Sıcak Sıkma Testi",
+   "items": [
+    33,
+    34,
+    35,
+    36,
+    37
+   ]
+  },
+  {
+   "title": "Mühendislik & Kalite Kontrol",
+   "items": [
+    38,
+    39,
+    40,
+    41,
+    42,
+    43
+   ]
+  }
+ ]
+}

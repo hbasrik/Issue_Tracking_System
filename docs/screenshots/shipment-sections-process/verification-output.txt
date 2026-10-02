@@ -1,0 +1,128 @@
+== 1. Live clone: migrations 0001-0035 + live template rows + seeds ==
+  applied 35 migrations (0001-0035)
+  loaded live dump: 3 templates, 108 items
+  01_stations.sql: INSERT 0 8
+  02_stations_and_steps.sql: INSERT 0 64
+  03_checklist_templates.sql: INSERT 0 0
+  04_users.sql: INSERT 0 5
+  05_defect_catalog.sql: INSERT 0 4 / INSERT 0 4 / INSERT 0 24 / INSERT 0 10
+  06_test_vehicles.sql: INSERT 0 2 / INSERT 0 0 / INSERT 0 18
+  items: 108 | vehicle checklist progress rows: 1872
+  SHIPMENT screen order before 0036: 17,18,19,20,23,24,3,4,16,28,29,45,1,2,5,6,7,8,9,10,11,12,21,22,32,25,26,43,14,27,31,15,30,34,35,36,37,38,46,13,33,39,40,41,42,44
+  text/order/active fingerprint before: b9d2a599c8dc8cf0f956f071a873ec4e
+  progress fingerprint before: 1872 rows, md5 7bf456b459bd0d9c0dc499d7238690de
+
+== 2. Migration 0036 up ==
+  run 1: UPDATE 46 / UPDATE 0
+PASS first run updates the 46 SHIPMENT rows and clears no other row — UPDATE 46 / UPDATE 0
+
+  Result (SHIPMENT, by item_no):
+   no  active section_key      sort  title                            text
+    1  true   interior_fit       10  İç Montaj & Kesim İşleri         Rear Bota Ses İzolasyonu Montaj
+    2  true   interior_fit       10  İç Montaj & Kesim İşleri         Front Dash Ses İzolasyonu Montaj
+    3  true   interior_fit       10  İç Montaj & Kesim İşleri         Sol Air Flap Montaj
+    4  true   interior_fit       10  İç Montaj & Kesim İşleri         Sağ Air Flap Montaj
+    5  true   interior_fit       10  İç Montaj & Kesim İşleri         C_Pillar Inner Sol Kesim
+    6  true   interior_fit       10  İç Montaj & Kesim İşleri         C_Pillar Inner Sağ Kesim
+    7  true   interior_fit       10  İç Montaj & Kesim İşleri         Polen Filtresi Montaj
+    8  true   interior_fit       10  İç Montaj & Kesim İşleri         C_Pillar Inner Support M5 Delik Sağ
+    9  true   interior_fit       10  İç Montaj & Kesim İşleri         C_Pillar Inner Support M5 Delik Sol
+   10  true   interior_fit       10  İç Montaj & Kesim İşleri         C_Pillar Yeni Clips Değişmesi
+   11  true   interior_fit       10  İç Montaj & Kesim İşleri         C_Pillar Stop tırnaklarının kesilmesi
+   12  true   interior_fit       10  İç Montaj & Kesim İşleri         Headliner Yeni Clips Değişmesi
+   13  true   chassis_exterior   20  Şasi & Dış Donanım               Knuckle 2,5 mm Slot Açılması ve 1 derece Ayarı
+   14  true   chassis_exterior   20  Şasi & Dış Donanım               CCB Korna Şasi Almaması Dolaylı Harness
+   15  true   chassis_exterior   20  Şasi & Dış Donanım               Kapı direk plastik parça sıvı conta uygulaması
+   16  true   chassis_exterior   20  Şasi & Dış Donanım               Ayarlı dış aynaların takılması
+   17  true   badges_trim        30  Logo, Etiket & İç Parça          Logo montajı
+   18  true   badges_trim        30  Logo, Etiket & İç Parça          Anahtarlık logosu değişimi
+   19  true   badges_trim        30  Logo, Etiket & İç Parça          Direksiyon Logo Değişimi
+   20  true   badges_trim        30  Logo, Etiket & İç Parça          Jant Logo Değişimi
+   21  true   badges_trim        30  Logo, Etiket & İç Parça          HVAC kapama parçası takılması
+   22  true   badges_trim        30  Logo, Etiket & İç Parça          Trunk Diveder parça takılması
+   23  true   badges_trim        30  Logo, Etiket & İç Parça          Araç tanıtım etiketi perçinlenmesi
+   24  true   badges_trim        30  Logo, Etiket & İç Parça          VIN markalaması
+   25  true   rubber_film        40  Kauçuk, Kaplama & Küçük Montaj   Kapı ayar kauçuklarının takılması
+   26  true   rubber_film        40  Kauçuk, Kaplama & Küçük Montaj   Kaput ayar kauçuklarının takılması
+   27  true   rubber_film        40  Kauçuk, Kaplama & Küçük Montaj   Chogori IP68 kablonun araca konulması
+   28  true   rubber_film        40  Kauçuk, Kaplama & Küçük Montaj   Anti Scratch film tampona kaplanması
+   29  true   rubber_film        40  Kauçuk, Kaplama & Küçük Montaj   Anti Fog Film cama kaplanması
+   30  true   rubber_film        40  Kauçuk, Kaplama & Küçük Montaj   Kaput altı sızdırmazlık contasının kullanılması
+   31  true   rubber_film        40  Kauçuk, Kaplama & Küçük Montaj   P silinmiş combination switch kullanılması
+   32  true   rubber_film        40  Kauçuk, Kaplama & Küçük Montaj   Kelebek camı düşmemesi için sünger konulması
+   33  true   brake_sealing      50  Fren Ayarı & Sızdırmazlık        El Fren Ayarı yapılması ve arka disklere denk gelen noktada...
+   34  true   brake_sealing      50  Fren Ayarı & Sızdırmazlık        IP yanı kapı harness ve kapı clips bölgesinde sızdırmazlıkl...
+   35  true   brake_sealing      50  Fren Ayarı & Sızdırmazlık        Arka kapı sağ alt sızdırmazlık şeridi çekilmesi
+   36  true   brake_sealing      50  Fren Ayarı & Sızdırmazlık        Arka kapı sol alt sızdırmazlık şeridi çekilmesi
+   37  true   brake_sealing      50  Fren Ayarı & Sızdırmazlık        Arka kapı sağ üst sızdırmazlık şeridi çekilmesi
+   38  true   brake_sealing      50  Fren Ayarı & Sızdırmazlık        Arka kapı sol üst sızdırmazlık şeridi çekilmesi
+   39  true   brake_sealing      50  Fren Ayarı & Sızdırmazlık        Arka davlumbaz sol fren borusu girişim bölgesi kesimi
+   40  true   brake_sealing      50  Fren Ayarı & Sızdırmazlık        Arka davlumbaz sağ fren borusu girişim bölgesi kesimi
+   41  true   final_adjust       60  Son Ayar & Kontroller            Direksiyon yumusatma ayari
+   42  true   final_adjust       60  Son Ayar & Kontroller            Stop delik genisletme yapildi mi
+   43  true   final_adjust       60  Son Ayar & Kontroller            Kaput ayar pulu atıldı mı
+   44  true   final_adjust       60  Son Ayar & Kontroller            Direksiyon kolonu dip lastiği yerine tam olarak oturmuş mu
+   45  true   final_adjust       60  Son Ayar & Kontroller            Kaput civatalarinin piano black rötuş kalemi ile boyanmasi
+   46  true   final_adjust       60  Son Ayar & Kontroller            Bagaj kapagi su sizdirma problemi parca entegrasyonu
+PASS every SHIPMENT item sits in the requested section — []
+
+  SHIPMENT sections:
+  sort=10  interior_fit     items=12  item_no=1,2,3,4,5,6,7,8,9,10,11,12
+  sort=20  chassis_exterior items=4   item_no=13,14,15,16
+  sort=30  badges_trim      items=8   item_no=17,18,19,20,21,22,23,24
+  sort=40  rubber_film      items=8   item_no=25,26,27,28,29,30,31,32
+  sort=50  brake_sealing    items=8   item_no=33,34,35,36,37,38,39,40
+  sort=60  final_adjust     items=6   item_no=41,42,43,44,45,46
+PASS each section is one consecutive run of item numbers
+  SHIPMENT screen order after 0036: 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46
+PASS screen order starts at #1 and keeps the item order 1..46
+PASS TEST rows unchanged (all columns, incl. section_key / section_sort) — 45 rows compared
+PASS EOL rows unchanged
+PASS text, item_no, is_active, phase, station and seed_key unchanged for all items — 108 rows compared
+PASS vehicle checklist progress rows unchanged — 1872 rows compared
+  text/order/active fingerprint after: b9d2a599c8dc8cf0f956f071a873ec4e
+  progress fingerprint after: 1872 rows, md5 7bf456b459bd0d9c0dc499d7238690de
+
+== 3. Idempotency: second run ==
+  run 2: UPDATE 0 / UPDATE 0
+PASS second run updates nothing and changes no row
+
+== 4. Rollback ==
+  down run 1: UPDATE 46 / UPDATE 0
+PASS down restores every row exactly as before 0036 (all columns) — UPDATE 46 / UPDATE 0
+PASS second down updates nothing — UPDATE 0 / UPDATE 0
+PASS up after down gives the same result again — UPDATE 46 / UPDATE 0
+
+== 5. Identity, not position: reverse order + text edit, then down/up (rolled back) ==
+  item_no  1 -> final_adjust     Bagaj kapagi su sizdirma problemi parca entegra...
+  item_no 30 -> badges_trim      Logo montajı (düzenlendi)
+  item_no 46 -> interior_fit     Rear Bota Ses İzolasyonu Montaj
+PASS after reversing order each item keeps its own section (old #1 now #46 still interior_fit, old #17 now #30 still badges_trim, old #46 now #1 still final_adjust) — {"Bagaj": [1, "final_adjust"], "Logo": [30, "badges_trim"], "Rear": [46, "interior_fit"]}
+PASS probe rolled back
+
+== 6. Retired keys on other SHIPMENT items are cleared (rolled back) ==
+   INSERT 0 1 / UPDATE 0 / UPDATE 1
+PASS an admin SHIPMENT item still on 'sealing' becomes unsectioned
+PASS fixture rolled back
+
+== 7. Seed 03 on the migrated live clone ==
+PASS seed 03 adds nothing and changes nothing — INSERT 0 0
+
+== 8. Fresh install: every migration + seeds ==
+  0036 on an empty template: UPDATE 0 / UPDATE 0
+  applied 36 migrations
+  01_stations.sql: INSERT 0 8
+  02_stations_and_steps.sql: INSERT 0 64
+  03_checklist_templates.sql: INSERT 0 104
+  04_users.sql: INSERT 0 5
+  05_defect_catalog.sql: INSERT 0 4 / INSERT 0 4 / INSERT 0 24 / INSERT 0 10
+  06_test_vehicles.sql: INSERT 0 2 / INSERT 0 0 / INSERT 0 18
+  seeded SHIPMENT/TEST items: 89; compared with the migrated live clone by seed_key
+PASS seed 03 gives every SHIPMENT and TEST item the same section as the migrated live clone — []
+PASS fresh install SHIPMENT matches the requested table by item_no too — []
+PASS fresh install screen order starts at #1 and is 1..46
+PASS 0036 re-run on the fresh install changes nothing — UPDATE 0 / UPDATE 0
+
+  dropped karea_shipsec_fresh_test; kept karea_shipsec_test for screenshots
+
+ALL CHECKS PASSED

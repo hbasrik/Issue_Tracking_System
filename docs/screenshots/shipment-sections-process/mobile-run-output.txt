@@ -1,0 +1,5 @@
+shipment-process-sections-tr-390 overflow=0 errors=0 raw=0
+shipment-process-sections-en-390 overflow=0 errors=0 raw=0
+test-process-sections-tr-390 overflow=0 errors=0 raw=0
+test-process-sections-en-390 overflow=0 errors=0 raw=0
+mobile harness: ok -> /Users/Basri/Desktop/kts_kms_project/docs/screenshots/shipment-sections-process/mobile
