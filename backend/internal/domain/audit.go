@@ -113,3 +113,48 @@ type VehicleStatusHistoryEntry struct {
 	ActorName  string
 	EventAt    time.Time
 }
+
+// VehicleTimelineEventTypes are the audit rows shown on a vehicle's timeline.
+var VehicleTimelineEventTypes = []AuditEvent{
+	AuditEventStatusChange,
+	AuditEventEOLWorkflowStage,
+	AuditEventChecklistItemUpdate,
+	AuditEventIssueStatusChange,
+	AuditEventIssueClassification,
+}
+
+// VehicleTimelineLimit caps one timeline read; Truncated reports the rest.
+const VehicleTimelineLimit = 1000
+
+// VehicleTimelineEntry is one audit row of a vehicle's timeline with the
+// metadata readers need already lifted out: checklist item number/text,
+// issue id, resolved classification changes, and the action that caused a
+// status change (hold, release, trigger, development reset). Raw stored
+// values stay in Old/NewValue; clients translate them.
+type VehicleTimelineEntry struct {
+	ID             int64
+	EventAt        time.Time
+	EventType      string
+	OldValue       string
+	NewValue       string
+	ActorName      string
+	ChecklistType  string
+	ItemNo         *int
+	ItemText       string
+	IssueID        *int64
+	Classification []ClassificationChange
+	// Action is metadata.action (place_on_hold, release_from_hold,
+	// dev_reset, approval_undone, ...); Trigger is metadata.trigger
+	// (eol_branch_ship, eol_deliver).
+	Action         string
+	Trigger        string
+	HoldReason     string
+	DevReset       bool
+	OpenIssueCount *int
+}
+
+// VehicleTimeline is a newest-first timeline page.
+type VehicleTimeline struct {
+	Items     []VehicleTimelineEntry
+	Truncated bool
+}

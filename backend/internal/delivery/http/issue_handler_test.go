@@ -234,6 +234,9 @@ func (httpNoopAudit) ListIssueStatusHistory(context.Context, int64) ([]domain.Is
 func (httpNoopAudit) ListVehicleStatusHistory(context.Context, string) ([]domain.VehicleStatusHistoryEntry, error) {
 	return []domain.VehicleStatusHistoryEntry{}, nil
 }
+func (httpNoopAudit) ListVehicleTimeline(context.Context, string) (*domain.VehicleTimeline, error) {
+	return &domain.VehicleTimeline{}, nil
+}
 
 func (httpNoopAudit) ListRecent(context.Context, int) ([]domain.HomeActivityEntry, error) {
 	return []domain.HomeActivityEntry{}, nil

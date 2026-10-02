@@ -687,6 +687,21 @@ func (f *fakeAuditRepo) ListIssueStatusHistory(_ context.Context, issueID int64)
 	return out, nil
 }
 
+func (f *fakeAuditRepo) ListVehicleTimeline(_ context.Context, vin string) (*domain.VehicleTimeline, error) {
+	out := &domain.VehicleTimeline{}
+	for i := len(f.entries) - 1; i >= 0; i-- {
+		e := f.entries[i]
+		if e.VIN != vin {
+			continue
+		}
+		out.Items = append(out.Items, domain.VehicleTimelineEntry{
+			ID: e.ID, EventAt: e.EventAt, EventType: string(e.EventType),
+			OldValue: e.OldValue, NewValue: e.NewValue,
+		})
+	}
+	return out, nil
+}
+
 func (f *fakeAuditRepo) ListVehicleStatusHistory(_ context.Context, vin string) ([]domain.VehicleStatusHistoryEntry, error) {
 	var out []domain.VehicleStatusHistoryEntry
 	for _, e := range f.entries {

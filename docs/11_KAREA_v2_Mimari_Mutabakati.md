@@ -497,7 +497,33 @@ kalıyordu.
   yeni anahtarı, yeni web eski anahtarı ham metin olarak gösterir;
   veri ve kapılar etkilenmez. Mobilde katalog uygulamanın içinde
   derlendiği için yeni sürüm yüklenene kadar eski uygulama bölüm
-  başlığını ham anahtar olarak (`cold_drag` gibi) gösterir.
+   başlığını ham anahtar olarak (`cold_drag` gibi) gösterir.
+
+## Karar 24 — Araç zaman çizelgesi: her durum değişikliği yazılır, tek listede okunur (NEW — 2026-10-02)
+
+- **Kural (yazma):** aracın `current_global_status` değerini değiştiren
+  her yol `STATUS_CHANGE` yazar: beklemeye alma / çıkarma (uygulama),
+  depoya sevk (`fn_enforce_branch_shipment`, migration 0037,
+  `metadata.trigger = eol_branch_ship`), teslim (`fn_enforce_eol_deliver`,
+  `eol_deliver`) ve geliştirme sıfırlaması (uygulama,
+  `metadata.dev_reset = true`). Satır yalnızca durum gerçekten
+  değiştiğinde yazılır. Geçmiş kayıtlar sonradan doldurulmaz: 0037
+  öncesi depoya sevklerde yalnız aşama satırı vardır.
+- **Kural (okuma):** araç detayındaki denetim bölümü
+  `GET /vehicles/{vin}/timeline` ile durum, hat sonu aşama, checklist,
+  hata durumu ve hata sınıflandırma satırlarını tek listede, en yeni
+  üstte gösterir (en fazla 1000 satır, fazlası `truncated`). Sunucu ham
+  değerleri ve metadata'dan çıkarılmış bağlamı (madde no/metni, hata no,
+  çözülmüş sınıflandırma, eylem, tetikleyici, bekleme nedeni,
+  sıfırlama işareti) döndürür; cümleye çevirme istemcidedir ve web ile
+  mobil aynı `shared/vehicleTimeline.ts` kodunu kullanır. Ekranda ham
+  enum değeri gösterilmez.
+- **Gösterim:** ardışık checklist işaretlemeleri (aynı liste, aynı kişi)
+  tek satırda toplanır ve açılabilir; olay türüne göre filtre vardır.
+  Geliştirme sıfırlaması satırları ayrı etiket taşır; sıfırlamadan önceki
+  satırlar silinmez, etiket neden hâlâ durduklarını açıklar.
+  `status-history` uç noktası başlıktaki "son durum değişikliği" damgası
+  için kalır.
 
 ## Değişmeyen / Yeniden Kullanılacaklar
 

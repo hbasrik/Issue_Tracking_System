@@ -306,6 +306,10 @@ type AuditRepository interface {
 	// ListVehicleStatusHistory returns STATUS_CHANGE events for one VIN,
 	// oldest first, with the acting user's display name.
 	ListVehicleStatusHistory(ctx context.Context, vin string) ([]domain.VehicleStatusHistoryEntry, error)
+	// ListVehicleTimeline returns the vehicle's timeline events (status,
+	// EoL stage, checklist, issue status and classification), newest first,
+	// at most domain.VehicleTimelineLimit rows.
+	ListVehicleTimeline(ctx context.Context, vin string) (*domain.VehicleTimeline, error)
 	// ListRecent returns the newest audit rows (any event type) with actor names.
 	ListRecent(ctx context.Context, limit int) ([]domain.HomeActivityEntry, error)
 	// ListActivity returns a filtered, newest-first page of audit rows.

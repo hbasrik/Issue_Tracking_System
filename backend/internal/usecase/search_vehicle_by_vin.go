@@ -190,6 +190,29 @@ func (s *VehicleService) ListStatusHistory(ctx context.Context, vin string) ([]d
 	return items, nil
 }
 
+// ListTimeline returns the vehicle's full audit timeline, newest first. A
+// missing vehicle 404s.
+func (s *VehicleService) ListTimeline(ctx context.Context, vin string) (*domain.VehicleTimeline, error) {
+	if _, err := s.vehicles.GetByVIN(ctx, vin); err != nil {
+		return nil, err
+	}
+	empty := &domain.VehicleTimeline{Items: []domain.VehicleTimelineEntry{}}
+	if s.audit == nil {
+		return empty, nil
+	}
+	timeline, err := s.audit.ListVehicleTimeline(ctx, vin)
+	if err != nil {
+		return nil, err
+	}
+	if timeline == nil {
+		return empty, nil
+	}
+	if timeline.Items == nil {
+		timeline.Items = []domain.VehicleTimelineEntry{}
+	}
+	return timeline, nil
+}
+
 const maxBulkImportVINs = 500
 
 // VehicleBulkImportResult is the outcome of a PLANNED VIN bulk insert.

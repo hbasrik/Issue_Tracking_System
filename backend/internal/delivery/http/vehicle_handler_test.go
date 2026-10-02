@@ -152,7 +152,12 @@ func TestVehicleList_AnalysisStatInvalid(t *testing.T) {
 }
 
 type namedStatusAudit struct {
-	items []domain.VehicleStatusHistoryEntry
+	items    []domain.VehicleStatusHistoryEntry
+	timeline []domain.VehicleTimelineEntry
+}
+
+func (a namedStatusAudit) ListVehicleTimeline(context.Context, string) (*domain.VehicleTimeline, error) {
+	return &domain.VehicleTimeline{Items: a.timeline}, nil
 }
 
 func (namedStatusAudit) Append(context.Context, domain.AuditLog) error { return nil }
@@ -215,5 +220,77 @@ func TestVehicleStatusHistory_JSONIncludesActorName(t *testing.T) {
 	}
 	if body.Items[0].ToStatus != "SHIPPED" {
 		t.Errorf("ToStatus = %q", body.Items[0].ToStatus)
+	}
+}
+
+func TestVehicleTimeline_JSONCarriesEventContext(t *testing.T) {
+	const vin = "1KTSKRC2XSB010057"
+	at := time.Date(2026, 10, 2, 9, 0, 0, 0, time.UTC)
+	repo := &recordingVehicleRepo{
+		byVIN: map[string]*domain.Vehicle{
+			vin: {VIN: vin, CurrentGlobalStatus: domain.VehicleStatusInWarehouse},
+		},
+	}
+	itemNo := 17
+	audit := namedStatusAudit{timeline: []domain.VehicleTimelineEntry{
+		{ID: 3, EventAt: at, EventType: "STATUS_CHANGE", OldValue: "IN_PRODUCTION",
+			NewValue: "IN_WAREHOUSE", ActorName: "Local Manager", Trigger: "eol_branch_ship"},
+		{ID: 2, EventAt: at, EventType: "CHECKLIST_ITEM_UPDATE", NewValue: "OK",
+			ChecklistType: "SHIPMENT", ItemNo: &itemNo, ItemText: "Ayna"},
+	}}
+	issuer := auth.NewIssuer("test-secret", time.Hour)
+	router := apphttp.NewRouter(apphttp.Deps{
+		Issuer:   issuer,
+		Roles:    newFakeRoleRepo(),
+		Vehicles: usecase.NewVehicleService(repo, nil, audit, nil),
+	})
+	token, err := issuer.Issue(managerUserID, domain.RoleCodeManagerAdmin)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/vehicles/"+vin+"/timeline", nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d body %s", rec.Code, rec.Body.String())
+	}
+
+	var body struct {
+		Items     []domain.VehicleTimelineEntry `json:"items"`
+		Truncated *bool                         `json:"truncated"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+		t.Fatal(err)
+	}
+	if len(body.Items) != 2 || body.Truncated == nil || *body.Truncated {
+		t.Fatalf("body = %s", rec.Body.String())
+	}
+	if body.Items[0].Trigger != "eol_branch_ship" || body.Items[0].ActorName != "Local Manager" {
+		t.Errorf("status row = %+v", body.Items[0])
+	}
+	if body.Items[1].ItemNo == nil || *body.Items[1].ItemNo != 17 || body.Items[1].ChecklistType != "SHIPMENT" {
+		t.Errorf("checklist row = %+v", body.Items[1])
+	}
+}
+
+func TestVehicleTimeline_UnknownVINIs404(t *testing.T) {
+	issuer := auth.NewIssuer("test-secret", time.Hour)
+	router := apphttp.NewRouter(apphttp.Deps{
+		Issuer:   issuer,
+		Roles:    newFakeRoleRepo(),
+		Vehicles: usecase.NewVehicleService(&recordingVehicleRepo{byVIN: map[string]*domain.Vehicle{}}, nil, namedStatusAudit{}, nil),
+	})
+	token, err := issuer.Issue(managerUserID, domain.RoleCodeManagerAdmin)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/vehicles/NOPE/timeline", nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("status = %d, want 404", rec.Code)
 	}
 }

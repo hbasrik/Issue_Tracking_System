@@ -121,6 +121,103 @@ func (r *AuditRepo) ListVehicleStatusHistory(ctx context.Context, vin string) ([
 	return out, rows.Err()
 }
 
+// ListVehicleTimeline returns one VIN's timeline rows, newest first, with
+// checklist item context, issue id, hold/reset/trigger metadata and resolved
+// classification changes. One row past the cap is read to set Truncated.
+func (r *AuditRepo) ListVehicleTimeline(ctx context.Context, vin string) (*domain.VehicleTimeline, error) {
+	q := executor(ctx, r.pool)
+	types := make([]string, len(domain.VehicleTimelineEventTypes))
+	for i, t := range domain.VehicleTimelineEventTypes {
+		types[i] = string(t)
+	}
+	rows, err := q.Query(ctx,
+		`SELECT a.id,
+		        a.event_at,
+		        a.event_type::text,
+		        COALESCE(a.old_value, ''),
+		        COALESCE(a.new_value, ''),
+		        COALESCE(u.full_name, ''),
+		        COALESCE(a.metadata->>'checklist_type', ''),
+		        CASE WHEN a.metadata ? 'item_id' THEN (a.metadata->>'item_id')::int END,
+		        COALESCE(cti.item_no, 0),
+		        COALESCE(btrim(cti.item_text, E' \n'), ''),
+		        CASE WHEN a.metadata ? 'issue_id' THEN (a.metadata->>'issue_id')::bigint END,
+		        CASE WHEN a.event_type = 'ISSUE_CLASSIFICATION_CHANGE' THEN a.metadata END,
+		        COALESCE(a.metadata->>'action', ''),
+		        COALESCE(a.metadata->>'trigger', ''),
+		        COALESCE(a.metadata->>'hold_reason', ''),
+		        COALESCE(a.metadata->>'dev_reset', '') = 'true',
+		        CASE WHEN a.metadata ? 'open_issue_count_warning'
+		             THEN (a.metadata->>'open_issue_count_warning')::int END
+		   FROM audit_logs a
+		   LEFT JOIN users u ON u.id = a.performed_by
+		   LEFT JOIN checklist_template_items cti
+		          ON a.event_type = 'CHECKLIST_ITEM_UPDATE'
+		         AND a.metadata ? 'item_id'
+		         AND cti.id = (a.metadata->>'item_id')::int
+		  WHERE a.vin = $1
+		    AND a.event_type::text = ANY($2)
+		  ORDER BY a.event_at DESC, a.id DESC
+		  LIMIT $3`,
+		vin, types, domain.VehicleTimelineLimit+1)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]domain.VehicleTimelineEntry, 0, 64)
+	var parsed [][]parsedClassificationChange
+	var classIdx []int
+	for rows.Next() {
+		var e domain.VehicleTimelineEntry
+		var metaItemID *int
+		var itemNo int
+		var classMeta []byte
+		if err := rows.Scan(
+			&e.ID, &e.EventAt, &e.EventType, &e.OldValue, &e.NewValue,
+			&e.ActorName, &e.ChecklistType, &metaItemID, &itemNo, &e.ItemText,
+			&e.IssueID, &classMeta, &e.Action, &e.Trigger, &e.HoldReason,
+			&e.DevReset, &e.OpenIssueCount,
+		); err != nil {
+			return nil, err
+		}
+		if itemNo > 0 {
+			n := itemNo
+			e.ItemNo = &n
+		}
+		if e.EventType == string(domain.AuditEventIssueClassification) {
+			e.OldValue, e.NewValue = "", ""
+			parsed = append(parsed, parseClassificationMetadata(classMeta))
+			classIdx = append(classIdx, len(out))
+		}
+		out = append(out, e)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	rows.Close()
+
+	truncated := len(out) > domain.VehicleTimelineLimit
+	if truncated {
+		out = out[:domain.VehicleTimelineLimit]
+		for len(classIdx) > 0 && classIdx[len(classIdx)-1] >= domain.VehicleTimelineLimit {
+			classIdx = classIdx[:len(classIdx)-1]
+			parsed = parsed[:len(parsed)-1]
+		}
+	}
+	resolved, err := resolveClassificationChanges(ctx, q, parsed)
+	if err != nil {
+		return nil, err
+	}
+	for i, idx := range classIdx {
+		out[idx].Classification = resolved[i]
+		if out[idx].Classification == nil {
+			out[idx].Classification = []domain.ClassificationChange{}
+		}
+	}
+	return &domain.VehicleTimeline{Items: out, Truncated: truncated}, nil
+}
+
 // ListRecent returns the newest audit rows with the acting user's name/email
 // and checklist item context when present in metadata.
 func (r *AuditRepo) ListRecent(ctx context.Context, limit int) ([]domain.HomeActivityEntry, error) {

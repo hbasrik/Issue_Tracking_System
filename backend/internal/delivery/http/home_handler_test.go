@@ -41,6 +41,9 @@ func (fakeHomeAudit) ListIssueStatusHistory(context.Context, int64) ([]domain.Is
 func (fakeHomeAudit) ListVehicleStatusHistory(context.Context, string) ([]domain.VehicleStatusHistoryEntry, error) {
 	return nil, nil
 }
+func (fakeHomeAudit) ListVehicleTimeline(context.Context, string) (*domain.VehicleTimeline, error) {
+	return nil, nil
+}
 func (f fakeHomeAudit) ListRecent(context.Context, int) ([]domain.HomeActivityEntry, error) {
 	return f.items, nil
 }

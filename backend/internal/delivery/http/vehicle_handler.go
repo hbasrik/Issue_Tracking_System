@@ -201,6 +201,25 @@ func (s *server) handleVehicleStatusHistory(w http.ResponseWriter, r *http.Reque
 	writeJSON(w, http.StatusOK, map[string]any{"items": items})
 }
 
+// handleVehicleTimeline lists every timeline audit row for one vehicle
+// (status, EoL stage, checklist, issue), newest first.
+func (s *server) handleVehicleTimeline(w http.ResponseWriter, r *http.Request) {
+	vin := chi.URLParam(r, "vin")
+	if s.deps.Vehicles == nil {
+		writeError(w, domain.ErrNotFound)
+		return
+	}
+	timeline, err := s.deps.Vehicles.ListTimeline(r.Context(), vin)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"items":     timeline.Items,
+		"truncated": timeline.Truncated,
+	})
+}
+
 // handleVehicleChecklistGet returns checklist items for eol, shipment, or
 // test. vehicle.view gets the caller onto the vehicle; the matching
 // checklist.*.view code is required on top so Quality can open Test without

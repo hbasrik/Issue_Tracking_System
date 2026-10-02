@@ -727,6 +727,9 @@ cihazda görüntü alınmadı.
 - **Geliştirme sıfırlaması:** araç `IN_PRODUCTION`'a geri alınırken
   `STATUS_CHANGE` yazılır (`metadata.dev_reset = true`), aşama satırının
   yanında.
+- **Uç nokta:** `GET /vehicles/{vin}/timeline` (yetki: `vehicle.view`)
+  durum, hat sonu aşama, checklist, hata durumu ve sınıflandırma
+  satırlarını en yeni üstte, bağlamı çözülmüş olarak döndürür (Karar 24).
 
 ---
 

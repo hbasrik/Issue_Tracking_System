@@ -248,6 +248,9 @@ func (nopAudit) ListIssueStatusHistory(context.Context, int64) ([]domain.IssueSt
 func (nopAudit) ListVehicleStatusHistory(context.Context, string) ([]domain.VehicleStatusHistoryEntry, error) {
 	return nil, nil
 }
+func (nopAudit) ListVehicleTimeline(context.Context, string) (*domain.VehicleTimeline, error) {
+	return nil, nil
+}
 func (nopAudit) ListRecent(context.Context, int) ([]domain.HomeActivityEntry, error) {
 	return nil, nil
 }
