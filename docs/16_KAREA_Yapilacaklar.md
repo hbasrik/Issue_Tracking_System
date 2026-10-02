@@ -690,6 +690,30 @@ durumu gösterir. Kanıt: `docs/screenshots/form-focus-ring/`
 (`before-*` / `after-*` görüntüleri ve ölçümleri, `build-output.txt`;
 API Playwright ile taklit edildi).
 
+### A39. Sevk bölümleri süreç sırasıyla `[~]` — 2026-10-02
+A37'deki kategori bölümleri Sevk adımlarını dağıtıyordu; liste 17.
+maddeden başlıyordu. Sevk artık ardışık adımlardan oluşan 6 bölüm (Karar
+23): İç Montaj & Kesim İşleri (1–12), Şasi & Dış Donanım (13–16), Logo,
+Etiket & İç Parça (17–24), Kauçuk, Kaplama & Küçük Montaj (25–32), Fren
+Ayarı & Sızdırmazlık (33–40), Son Ayar & Kontroller (41–46). Ekranda
+liste 1. maddeden başlar, madde sırası bozulmaz. 0035'in 7 Sevk kategori
+anahtarı katalogdan ve TR/EN dil dosyasından çıkarıldı. Test bölümleri
+değişmedi.
+- **Migration 0036:** her Sevk maddesi `seed_key` ile tek tek atanır,
+  aralık yok; idempotent, geri alma dosyası 0035 değerlerini yazar.
+  Seed 03 aynı değerleri taşır.
+- **Canlı:** henüz uygulanmadı, onay bekliyor. Uygulanınca 46 Sevk
+  satırı değişir; web birlikte yayına alınmalı.
+Kanıt: `docs/screenshots/shipment-sections-process/`:
+`verification-output.txt` (canlı şablon satırlarının kopyası üzerinde
+0036: madde tablosu, ekran sırası, iki kez çalıştırma, geri alma,
+yeniden sıralamaya dayanıklılık, seed karşılaştırması, metin/sıra/
+aktiflik, araç ilerlemesi ve Test satırları değişmedi),
+`capture-web-output.txt` + `web-*.png` (araç detayı Sevk TR/EN/390,
+Test TR), `mobile-facts-check.txt` + `mobile/*.png` (Sevk ve Test
+ekranları, react-native-web düzeneği), `build-output.txt`. Gerçek
+cihazda görüntü alınmadı.
+
 ---
 
 ## B — Canlıya çıkmadan önce ZORUNLU

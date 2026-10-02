@@ -475,13 +475,21 @@ kalıyordu.
   `seed_key` ile tek tek yapılır (migration 0035); yeniden sıralama ve
   metin düzenlemesi atamayı başka maddeye kaydırmaz. Yönetim ekranında
   atama zaten madde bazında.
-- **Katalog:** Sevk 7 bölüm (Kimlik, Logo & Etiket; Dış Görünüm; İç
-  Donanım & Trim; Kapı & Kaput Ayarı; Elektrik & Kablaj; Sızdırmazlık;
-  Şasi, Fren & Direksiyon), Test 7 bölüm (Soğuk Sıkma Testi; BCM / EE
+- **Katalog:** Test 7 bölüm, içeriğe göre (Soğuk Sıkma Testi; BCM / EE
   Fonksiyon Kontrol; Sürüş Testi; Fren Testi; Rot Testi; Sıcak Sıkma
   Testi; Mühendislik & Kalite Kontrol). EOL'de bölüm yok. Eski
   anahtarlar katalogdan ve dil dosyasından çıkarıldı; hâlâ eski anahtar
   taşıyan madde 0035 ile bölümsüz kalır.
+- **Sevk süreç sırasıyla gruplanır (2026-10-02, migration 0036):** Sevk
+  listesi adım adım yapılır, sıra anlamlıdır. 0035'in kategori bölümleri
+  adımları dağıttı (liste 17. maddeden başlıyordu). Sevk artık ardışık
+  adımlardan oluşan 6 bölüm: İç Montaj & Kesim İşleri; Şasi & Dış
+  Donanım; Logo, Etiket & İç Parça; Kauçuk, Kaplama & Küçük Montaj; Fren
+  Ayarı & Sızdırmazlık; Son Ayar & Kontroller. Bölümler ardışık olduğu
+  için ekran sırası madde sırasıyla aynıdır. Atama yine `seed_key` ile
+  madde madde yapılır; numaralar yalnızca bugünkü sırayı tarif eder.
+  0035'in 7 Sevk kategori anahtarı katalogdan çıkarıldı; hâlâ onları
+  taşıyan başka Sevk maddesi 0036 ile bölümsüz kalır.
 - **Birlikte değişir:** `shared/checklistSections.ts` (anahtar + sıra),
   `shared/i18n/messages.ts` (TR/EN ad), `database/seed/03` (madde
   başına anahtar/sıra) ve atamayı canlıya taşıyan migration.

@@ -222,10 +222,12 @@ CREATE TABLE checklist_template_items (
     UNIQUE (template_id, item_no)
 );
 
--- Section values (migration 0035, Karar 23), assigned per item by seed_key:
---   SHIPMENT identity 10, exterior 20, interior 30, closures 40,
---            electrical 50, sealing 60, chassis 70
---   TEST     cold_drag 10, bcm_ee 20, road_test 30, brake_test 40,
+-- Section values (Karar 23), assigned per item by seed_key:
+--   SHIPMENT (migration 0036, consecutive work steps) interior_fit 10,
+--            chassis_exterior 20, badges_trim 30, rubber_film 40,
+--            brake_sealing 50, final_adjust 60
+--   TEST     (migration 0035, by content)
+--            cold_drag 10, bcm_ee 20, road_test 30, brake_test 40,
 --            alignment 50, hot_drag 60, eng_quality 70
 --   EOL      none
 
