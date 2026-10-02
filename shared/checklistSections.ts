@@ -16,29 +16,29 @@ export type ChecklistSectionCatalogEntry = {
   titleKey: MessageKey;
 };
 
-/** Known Test checklist sections (historical mobile ranges 1-45). */
+/**
+ * Test checklist sections. Sort values are written to section_sort by
+ * migration 0035 and seed 03; change them together.
+ */
 export const TEST_CHECKLIST_SECTIONS: ChecklistSectionCatalogEntry[] = [
-  { key: 'brakes', sort: 10, titleKey: 'checklist.section.brakes' },
-  { key: 'steering', sort: 20, titleKey: 'checklist.section.steering' },
-  { key: 'lights', sort: 30, titleKey: 'checklist.section.lights' },
-  { key: 'diag', sort: 40, titleKey: 'checklist.section.diag' },
-  { key: 'hv', sort: 50, titleKey: 'checklist.section.hv' },
-  { key: 'drive', sort: 60, titleKey: 'checklist.section.drive' },
-  { key: 'dash', sort: 70, titleKey: 'checklist.section.dash' },
-  { key: 'body', sort: 80, titleKey: 'checklist.section.body' },
-  { key: 'adas', sort: 90, titleKey: 'checklist.section.adas' },
-  { key: 'infotainment', sort: 100, titleKey: 'checklist.section.infotainment' },
-  { key: 'final', sort: 110, titleKey: 'checklist.section.final' },
+  { key: 'cold_drag', sort: 10, titleKey: 'checklist.section.cold_drag' },
+  { key: 'bcm_ee', sort: 20, titleKey: 'checklist.section.bcm_ee' },
+  { key: 'road_test', sort: 30, titleKey: 'checklist.section.road_test' },
+  { key: 'brake_test', sort: 40, titleKey: 'checklist.section.brake_test' },
+  { key: 'alignment', sort: 50, titleKey: 'checklist.section.alignment' },
+  { key: 'hot_drag', sort: 60, titleKey: 'checklist.section.hot_drag' },
+  { key: 'eng_quality', sort: 70, titleKey: 'checklist.section.eng_quality' },
 ];
 
-/** Known Shipment checklist sections (historical mobile ranges 1-43). */
+/** Shipment checklist sections (same coupling with 0035 / seed 03). */
 export const SHIPMENT_CHECKLIST_SECTIONS: ChecklistSectionCatalogEntry[] = [
   { key: 'identity', sort: 10, titleKey: 'checklist.section.identity' },
   { key: 'exterior', sort: 20, titleKey: 'checklist.section.exterior' },
-  { key: 'locks', sort: 30, titleKey: 'checklist.section.locks' },
-  { key: 'lighting', sort: 40, titleKey: 'checklist.section.lighting' },
-  { key: 'interior', sort: 50, titleKey: 'checklist.section.interior' },
-  { key: 'charge', sort: 60, titleKey: 'checklist.section.charge' },
+  { key: 'interior', sort: 30, titleKey: 'checklist.section.interior' },
+  { key: 'closures', sort: 40, titleKey: 'checklist.section.closures' },
+  { key: 'electrical', sort: 50, titleKey: 'checklist.section.electrical' },
+  { key: 'sealing', sort: 60, titleKey: 'checklist.section.sealing' },
+  { key: 'chassis', sort: 70, titleKey: 'checklist.section.chassis' },
 ];
 
 const KNOWN_TITLE: Record<string, MessageKey> = Object.fromEntries(
