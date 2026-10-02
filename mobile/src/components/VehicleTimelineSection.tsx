@@ -89,15 +89,12 @@ function EntryRow({
   const stamp = formatActionStamp(entry.ActorName, entry.EventAt, locale);
   const issueLink = line.category === 'issue' && entry.IssueID && onIssuePress;
   const title = (
-    <Text
-      style={{
-        color: issueLink ? tokens.accent : tokens.textPrimary,
-        fontSize: 15,
-        fontWeight: '600',
-      }}
-    >
-      {line.title}
-    </Text>
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+      <Text style={{ color: tokens.textPrimary, fontSize: 15, fontWeight: '600', flexShrink: 1 }}>
+        {line.title}
+      </Text>
+      {issueLink ? <ChevronRight size={16} color={tokens.textSecondary} strokeWidth={2.25} /> : null}
+    </View>
   );
   return (
     <View style={{ flexDirection: 'row', gap: 10 }} testID={`timeline-row-${entry.EventType}`}>
@@ -179,6 +176,7 @@ function GroupRow({
           }}
           accessibilityRole="button"
           accessibilityState={{ expanded: open }}
+          testID="timeline-group-toggle"
           style={{ minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 4 }}
         >
           <Chevron size={16} color={tokens.accent} strokeWidth={2.25} />
@@ -250,6 +248,7 @@ export function VehicleTimelineSection({
               onPress={() => setFilter(f)}
               accessibilityRole="button"
               accessibilityState={{ selected }}
+              testID={`timeline-filter-${f}`}
               style={{
                 minHeight: 44,
                 paddingHorizontal: 12,

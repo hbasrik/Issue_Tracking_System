@@ -133,6 +133,7 @@ function GroupRow({ row }: { row: Extract<TimelineRow, { kind: 'checklistGroup' 
           type="button"
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
+          data-testid="timeline-group-toggle"
           className="mt-1 inline-flex min-h-touch items-center gap-1 text-[13px] font-medium text-[var(--accent)]"
         >
           {open ? <ChevronDown className="h-4 w-4" aria-hidden /> : <ChevronRight className="h-4 w-4" aria-hidden />}
@@ -196,6 +197,7 @@ export function VehicleTimeline({ vin, refreshKey }: { vin: string; refreshKey?:
             key={f}
             type="button"
             aria-pressed={filter === f}
+            data-testid={`timeline-filter-${f}`}
             onClick={() => setFilter(f)}
             className="min-h-touch rounded-full border px-3 text-[13px] font-medium"
             style={
