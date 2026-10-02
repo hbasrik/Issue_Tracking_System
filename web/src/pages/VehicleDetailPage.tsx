@@ -7,7 +7,7 @@ import { MediaGallery } from '../components/MediaGallery';
 import { VehicleIssuesPanel } from '../components/VehicleIssuesPanel';
 import { ShipmentReadinessBanner } from '../components/ShipmentReadinessBanner';
 import { StationStepsPanel } from '../components/StationStepsPanel';
-import { VehicleStatusHistory } from '../components/VehicleStatusHistory';
+import { VehicleTimeline } from '../components/VehicleTimeline';
 import { ActionStamp } from '../components/ActionStamp';
 import { VehicleStatusDisplay } from '../components/VehicleStatusDisplay';
 import { useConfirm } from '../components/ConfirmDialog';
@@ -72,7 +72,6 @@ export default function VehicleDetailPage() {
   const [busy, setBusy] = useState(false);
   const [readiness, setReadiness] = useState<ShipmentReadiness | null>(null);
   const [statusHistory, setStatusHistory] = useState<VehicleStatusHistoryEntry[]>([]);
-  const [historyError, setHistoryError] = useState<string | null>(null);
 
   const loadVehicle = useCallback(async () => {
     const v = await api.getVehicle(vin);
@@ -81,15 +80,13 @@ export default function VehicleDetailPage() {
       has(Perm.ChecklistShipmentView)
         ? api.shipmentReadiness(vin).catch(() => null)
         : Promise.resolve(null),
-      api.getVehicleStatusHistory(vin).catch(() => {
-        setHistoryError(t('vehicles.historyFailed'));
-        return { items: [] as VehicleStatusHistoryEntry[] };
-      }),
+      api
+        .getVehicleStatusHistory(vin)
+        .catch(() => ({ items: [] as VehicleStatusHistoryEntry[] })),
     ]);
     setReadiness(ready);
     setStatusHistory(historyRes.items ?? []);
-    if (historyRes.items) setHistoryError(null);
-  }, [vin, has, t]);
+  }, [vin, has]);
 
   useEffect(() => {
     const fromUrl = searchParams.get('tab');
@@ -102,24 +99,21 @@ export default function VehicleDetailPage() {
       setError(null);
       setLoadError(null);
       try {
-        let historyFailed = false;
         const [v, stationRes, ready, historyRes] = await Promise.all([
           api.getVehicle(vin),
           api.listStations().catch(() => ({ items: [] as Station[] })),
           has(Perm.ChecklistShipmentView)
             ? api.shipmentReadiness(vin).catch(() => null)
             : Promise.resolve(null),
-          api.getVehicleStatusHistory(vin).catch(() => {
-            historyFailed = true;
-            return { items: [] as VehicleStatusHistoryEntry[] };
-          }),
+          api
+            .getVehicleStatusHistory(vin)
+            .catch(() => ({ items: [] as VehicleStatusHistoryEntry[] })),
         ]);
         if (cancelled) return;
         setVehicle(v);
         setStations(stationRes.items ?? []);
         setReadiness(ready);
         setStatusHistory(historyRes.items ?? []);
-        setHistoryError(historyFailed ? t('vehicles.historyFailed') : null);
       } catch (err) {
         if (!cancelled) setLoadError(err);
       }
@@ -144,7 +138,6 @@ export default function VehicleDetailPage() {
       setHoldReason('');
       const historyRes = await api.getVehicleStatusHistory(vehicle.VIN);
       setStatusHistory(historyRes.items ?? []);
-      setHistoryError(null);
     } catch (err) {
       setError(err instanceof Error ? err : t('vehicles.holdFailed'));
     } finally {
@@ -167,7 +160,6 @@ export default function VehicleDetailPage() {
       setVehicle(updated);
       const historyRes = await api.getVehicleStatusHistory(vehicle.VIN);
       setStatusHistory(historyRes.items ?? []);
-      setHistoryError(null);
     } catch (err) {
       setError(err instanceof Error ? err : t('vehicles.holdFailed'));
     } finally {
@@ -407,7 +399,10 @@ export default function VehicleDetailPage() {
         )}
         {activeTab === 'issues' && has(Perm.IssueView) && <VehicleIssuesPanel vin={vehicle.VIN} />}
         {activeTab === 'audit' && (
-          <VehicleStatusHistory items={statusHistory} error={historyError} />
+          <VehicleTimeline
+            vin={vehicle.VIN}
+            refreshKey={`${statusHistory.length}:${vehicle.CurrentGlobalStatus}`}
+          />
         )}
       </div>
     </section>

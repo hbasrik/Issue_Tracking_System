@@ -6,6 +6,7 @@
 import type { EOLGates } from '../../../shared/eolGates';
 import type { ShipmentWarningLike } from '../../../shared/shipmentReadiness';
 import type { ClassificationChange } from '../../../shared/classificationChanges';
+import type { VehicleTimelineResponse } from '../../../shared/vehicleTimeline';
 
 export type {
   EOLGates,
@@ -294,6 +295,12 @@ export const api = {
   getVehicleStatusHistory(vin: string) {
     return request<{ items: VehicleStatusHistoryEntry[] }>(
       `/vehicles/${encodeURIComponent(vin)}/status-history`,
+    );
+  },
+
+  getVehicleTimeline(vin: string) {
+    return request<VehicleTimelineResponse>(
+      `/vehicles/${encodeURIComponent(vin)}/timeline`,
     );
   },
 
