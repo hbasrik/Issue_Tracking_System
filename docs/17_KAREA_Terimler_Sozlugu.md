@@ -743,6 +743,26 @@ kaba kuvvet denemesini pahalı hale getirir.*
 **Salt** — Her şifreye eklenen rastgele değer. *Aynı şifrenin aynı
 hash'i üretmesini ve toplu kırılmasını engeller.*
 
+**Checksum / fingerprint (sağlama, parmak izi)** — Bir veri
+kümesinden üretilen kısa özet. *Aynı veriden her zaman aynı özet
+çıkar; veri değişirse özet de değişir.* Binlerce satırı tek tek
+karşılaştırmak yerine iki özeti karşılaştırmak için kullanılır.
+**Bizde:** migration uygulanmadan önce ve sonra tablo özetleri
+alınıp karşılaştırılıyor; aynıysa hiçbir satırın değişmediği
+kanıtlanmış oluyor (53 bin ilerleme kaydı böyle doğrulandı).
+Ayrıca checklist maddelerinin `seed_key` değeri madde metninden
+böyle üretiliyor.
+
+**MD5** — Hızlı bir özetleme algoritması. *Parmak izi almak ve
+kararlı kimlik üretmek için uygundur; ŞİFRE SAKLAMAK İÇİN
+KESİNLİKLE UYGUN DEĞİLDİR.* Sebep hızı: saldırgan saniyede
+milyarlarca deneme yapabilir. Şifreler için kasıtlı olarak yavaş
+olan bcrypt kullanılır.
+**Bizde:** yalnızca doğrulama parmak izlerinde ve `seed_key`
+üretiminde geçiyor. Şifreler bcrypt ile, maliyet katsayısı 12 ile
+saklanıyor. Aynı algoritmanın bir iş için doğru, başka bir iş için
+yanlış olmasına iyi bir örnek.
+
 **Dummy hash** — Kullanıcı yokken de sahte bir hash doğrulaması yapmak.
 *Zamanlama saldırısını engeller.* **Bizde:** Girişte uygulandı.
 
