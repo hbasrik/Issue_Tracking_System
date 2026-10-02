@@ -748,6 +748,7 @@ DECLARE
     v_open_issue_count INT;
     v_incomplete_count INT;
     v_station_steps_remaining INT;
+    v_old_status TEXT;
 BEGIN
     IF NEW.branch_shipped_at IS NOT NULL AND OLD.branch_shipped_at IS NULL THEN
         -- Hard-block 1: tum istasyon adimlari tamamlanmis olmali (0014)
@@ -781,11 +782,26 @@ BEGIN
         NEW.branch_open_issue_count_at_shipment := v_open_issue_count;
         NEW.current_stage := 'DEPOT';
 
-        UPDATE vehicles SET current_global_status = 'IN_WAREHOUSE' WHERE vin = NEW.vin;
+        -- 2026-10-02 (migration 0037): durum degisikligi de STATUS_CHANGE
+        -- olarak yazilir (eol_deliver ile ayni desen, metadata
+        -- trigger=eol_branch_ship); yalnizca durum gercekten degisirse.
+        SELECT current_global_status::text INTO v_old_status
+        FROM vehicles WHERE vin = NEW.vin;
 
         INSERT INTO audit_logs (vin, event_type, old_value, new_value, performed_by, metadata)
         VALUES (NEW.vin, 'EOL_WORKFLOW_STAGE_CHANGE', 'BRANCH', 'DEPOT', NEW.branch_shipped_by,
                 jsonb_build_object('open_issue_count_warning', v_open_issue_count, 'blocked', FALSE));
+
+        UPDATE vehicles
+        SET current_global_status = 'IN_WAREHOUSE'
+        WHERE vin = NEW.vin
+          AND current_global_status IS DISTINCT FROM 'IN_WAREHOUSE';
+
+        IF FOUND THEN
+            INSERT INTO audit_logs (vin, event_type, old_value, new_value, performed_by, metadata)
+            VALUES (NEW.vin, 'STATUS_CHANGE', v_old_status, 'IN_WAREHOUSE', NEW.branch_shipped_by,
+                    jsonb_build_object('trigger', 'eol_branch_ship'));
+        END IF;
     END IF;
 
     RETURN NEW;

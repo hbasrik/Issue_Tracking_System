@@ -718,6 +718,16 @@ Test TR), `mobile-facts-check.txt` + `mobile/*.png` (Sevk ve Test
 ekranları, react-native-web düzeneği), `build-output.txt`. Gerçek
 cihazda görüntü alınmadı.
 
+### A40. Araç denetim kaydı: eksik olaylar + tek zaman çizelgesi `[ ]` — 2026-10-02
+- **Migration 0037:** `fn_enforce_branch_shipment` depoya sevkte aracı
+  `IN_WAREHOUSE` yaparken artık `STATUS_CHANGE` de yazar (teslim
+  tetikleyicisiyle aynı desen, `metadata.trigger = eol_branch_ship`,
+  yalnızca durum gerçekten değişirse). Geri alma 0022 gövdesini yazar.
+  Geçmiş kayıtlara dokunulmaz. Canlıya henüz uygulanmadı.
+- **Geliştirme sıfırlaması:** araç `IN_PRODUCTION`'a geri alınırken
+  `STATUS_CHANGE` yazılır (`metadata.dev_reset = true`), aşama satırının
+  yanında.
+
 ---
 
 ## B — Canlıya çıkmadan önce ZORUNLU
