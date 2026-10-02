@@ -1,0 +1,33 @@
+# Live apply of migration 0037 — 2026-10-02
+# All reads with default_transaction_read_only=on; the only write is the migration.
+
+== before (read-only)
+version 36 dirty false
+fn md5 5f9e6f4014be900904c3ddb714c4135c
+max_id 672
+audit 501 rows, md5 7d07bd3198e9fb5eefe474009cdb8cf3
+on
+
+== migrate up
+37/u branch_ship_status_audit (20.992083ms)
+
+== after (read-only)
+version 37 dirty false
+fn md5 608330a0e2a94943365832cfa3fe4106
+fn writes STATUS_CHANGE/eol_branch_ship: true
+audit id<=672: 501 rows, md5 7d07bd3198e9fb5eefe474009cdb8cf3
+audit total now: 501, max_id 672
+on
+
+== trigger + timeline count for one vehicle (read-only, same SQL as the endpoint)
+trigger trg_enforce_branch_shipment enabled=O -> fn_enforce_branch_shipment
+vehicle N7V1K1SA4TK000005 timeline events (endpoint query, LIMIT 1001): 116
+  by type: CHECKLIST_ITEM_UPDATE 104, EOL_WORKFLOW_STAGE_CHANGE 1, ISSUE_CLASSIFICATION_CHANGE 3, ISSUE_STATUS_CHANGE 7, STATUS_CHANGE 1
+  dev_reset rows: 0, eol_branch_ship status rows: 0
+on
+
+== API on 8080 (user's process, no login, no token)
+GET /api/v1/vehicles/N7V1K1SA4TK000005/timeline: 401 (route registered, auth required)
+GET /api/v1/vehicles/N7V1K1SA4TK000005/no-such-route: 404 (unknown route)
+
+Test DB reference (db-verification-output.txt): 0036 fn md5 5f9e6f4014be900904c3ddb714c4135c, 0037 fn md5 608330a0e2a94943365832cfa3fe4106

@@ -718,12 +718,18 @@ Test TR), `mobile-facts-check.txt` + `mobile/*.png` (Sevk ve Test
 ekranları, react-native-web düzeneği), `build-output.txt`. Gerçek
 cihazda görüntü alınmadı.
 
-### A40. Araç denetim kaydı: eksik olaylar + tek zaman çizelgesi `[x]` — 2026-10-02 (0037 canlıya uygulanmadı)
+### A40. Araç denetim kaydı: eksik olaylar + tek zaman çizelgesi `[x]` — 2026-10-02
 - **Migration 0037:** `fn_enforce_branch_shipment` depoya sevkte aracı
   `IN_WAREHOUSE` yaparken artık `STATUS_CHANGE` de yazar (teslim
   tetikleyicisiyle aynı desen, `metadata.trigger = eol_branch_ship`,
   yalnızca durum gerçekten değişirse). Geri alma 0022 gövdesini yazar.
-  Geçmiş kayıtlara dokunulmaz. Canlıya henüz uygulanmadı.
+  Geçmiş kayıtlara dokunulmaz.
+- **Canlı (2026-10-02):** 0037 uygulandı, sürüm 36 → 37. Fonksiyon md5'i
+  test ortamındaki 0037 gövdesiyle aynı (`608330a0…`), tetikleyici etkin.
+  Mevcut 501 denetim kaydının md5'i değişmedi (`7d07bd31…`). Canlıda
+  `/timeline` kayıtlı (tokensız 401, bilinmeyen yol 404); örnek araç
+  `N7V1K1SA4TK000005` için uç noktanın sorgusu 116 olay döndürür.
+  Kanıt: `live-apply-output.txt`.
 - **Geliştirme sıfırlaması:** araç `IN_PRODUCTION`'a geri alınırken
   `STATUS_CHANGE` yazılır (`metadata.dev_reset = true`), aşama satırının
   yanında.
@@ -760,7 +766,8 @@ döndürür), `api-timeline.json`, `capture-web-output.txt` + `web-*.png`
 (TR/EN 1280, TR 390, açık grup, üç filtre; tamamen açık metinde ham
 değer yok), `mobile-facts-check.txt` + `mobile/*.png` (react-native-web
 düzeneği, TR/EN 390), `build-output.txt`, `live-readonly-check.txt`
-(canlı sürüm 36, fonksiyon 0022 gövdesi). Gerçek cihazda görüntü
+(uygulama öncesi canlı: sürüm 36, fonksiyon 0022 gövdesi),
+`live-apply-output.txt` (canlıya uygulama). Gerçek cihazda görüntü
 alınmadı.
 
 ---
