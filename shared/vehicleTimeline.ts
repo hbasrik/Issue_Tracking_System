@@ -75,23 +75,31 @@ export type TimelineLine = {
   category: TimelineCategory;
 };
 
-/** Raw enum-looking values never reach the screen. */
-const RAW_VALUE = /^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$/;
+type Labeler = { label: (v: string, t: Translate) => string; known: readonly string[] };
 
-function named(value: string, label: (v: string) => string, t: Translate): string {
+const VEHICLE_STATUS: Labeler = {
+  label: vehicleStatusLabel,
+  known: ['PLANNED', 'IN_PRODUCTION', 'IN_WAREHOUSE', 'DELIVERED', 'WITH_CUSTOMER', 'SHIPPED', 'ON_HOLD'],
+};
+const EOL_STAGE: Labeler = { label: eolStageLabel, known: ['BRANCH', 'DEPOT', 'DOCUMENT', 'COMPLETED'] };
+const CHECK_STATUS: Labeler = {
+  label: checklistStatusLabel,
+  known: ['PENDING', 'OK', 'NOT_OK', 'REWORK', 'CONDITIONAL_OK'],
+};
+const ISSUE_STATUS: Labeler = {
+  label: issueStatusLabel,
+  known: ['OPEN', 'IN_PROGRESS', 'DONE', 'APPROVED', 'CONDITIONAL_APPROVED'],
+};
+
+/** A value outside the known set is named generically, never shown raw. */
+function named(value: string, l: Labeler, t: Translate): string {
   if (!value) return t('common.emDash');
-  const out = label(value);
-  return out === value && RAW_VALUE.test(value) ? t('timeline.value.unknown') : out;
+  return l.known.includes(value) ? l.label(value, t) : t('timeline.value.unknown');
 }
 
-function change(
-  ov: string,
-  nv: string,
-  label: (v: string) => string,
-  t: Translate,
-): string {
-  if (ov && nv) return `${named(ov, label, t)} → ${named(nv, label, t)}`;
-  return named(nv || ov, label, t);
+function change(ov: string, nv: string, l: Labeler, t: Translate): string {
+  if (ov && nv) return `${named(ov, l, t)} → ${named(nv, l, t)}`;
+  return named(nv || ov, l, t);
 }
 
 export function checklistKindLabel(type: string, t: Translate): string {
@@ -112,8 +120,7 @@ function issueRef(e: VehicleTimelineEntry, t: Translate): string {
 }
 
 function describeStatus(e: VehicleTimelineEntry, t: Translate): TimelineLine {
-  const vs = (v: string) => vehicleStatusLabel(v, t);
-  const statusLine = t('timeline.detail.status', { change: change(e.OldValue, e.NewValue, vs, t) });
+  const statusLine = t('timeline.detail.status', { change: change(e.OldValue, e.NewValue, VEHICLE_STATUS, t) });
   const base = { tag: null as string | null, category: 'status' as const };
   if (e.DevReset || e.Action === 'dev_reset') {
     return { ...base, title: t('timeline.status.devReset'), details: [statusLine], tag: t('timeline.tag.devReset'), tone: 'neutral' };
@@ -136,8 +143,7 @@ function describeStatus(e: VehicleTimelineEntry, t: Translate): TimelineLine {
 }
 
 function describeStage(e: VehicleTimelineEntry, t: Translate): TimelineLine {
-  const es = (v: string) => eolStageLabel(v, t);
-  const stageLine = t('timeline.detail.stage', { change: change(e.OldValue, e.NewValue, es, t) });
+  const stageLine = t('timeline.detail.stage', { change: change(e.OldValue, e.NewValue, EOL_STAGE, t) });
   const base = { tag: null as string | null, category: 'status' as const };
   if (e.DevReset) {
     return { ...base, title: t('timeline.stage.devReset'), details: [stageLine], tag: t('timeline.tag.devReset'), tone: 'neutral' };
@@ -176,7 +182,7 @@ function checklistTone(status: string): TimelineTone {
 
 function describeChecklist(e: VehicleTimelineEntry, t: Translate): TimelineLine {
   const kind = checklistKindLabel(e.ChecklistType, t);
-  const status = change(e.OldValue, e.NewValue, (v) => checklistStatusLabel(v, t), t);
+  const status = change(e.OldValue, e.NewValue, CHECK_STATUS, t);
   const title =
     e.ItemNo != null && e.ItemNo > 0
       ? t('timeline.checklist.item', { kind, n: e.ItemNo, status })
@@ -221,7 +227,7 @@ function describeIssue(e: VehicleTimelineEntry, t: Translate, locale: string): T
   ) {
     return {
       title: t('timeline.issue.approvalUndone', { ref }),
-      details: [t('timeline.detail.issueStatus', { change: change(e.OldValue, e.NewValue, (v) => issueStatusLabel(v, t), t) })],
+      details: [t('timeline.detail.issueStatus', { change: change(e.OldValue, e.NewValue, ISSUE_STATUS, t) })],
       tag: null,
       tone: 'warning',
       category: 'issue',
@@ -230,7 +236,7 @@ function describeIssue(e: VehicleTimelineEntry, t: Translate, locale: string): T
   return {
     title: t('timeline.issue.status', {
       ref,
-      change: change(e.OldValue, e.NewValue, (v) => issueStatusLabel(v, t), t),
+      change: change(e.OldValue, e.NewValue, ISSUE_STATUS, t),
     }),
     details: [],
     tag: null,
@@ -326,7 +332,7 @@ export function checklistGroupSummary(
   const counts = new Map<string, number>();
   for (const e of row.entries) counts.set(e.NewValue, (counts.get(e.NewValue) ?? 0) + 1);
   return [...counts.entries()]
-    .map(([status, n]) => `${named(status, (v) => checklistStatusLabel(v, t), t)}: ${n}`)
+    .map(([status, n]) => `${named(status, CHECK_STATUS, t)}: ${n}`)
     .join(' · ');
 }
 

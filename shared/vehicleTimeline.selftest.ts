@@ -98,13 +98,24 @@ assert.equal(describeTimelineEntry(all[9], tr, 'tr').title, 'Sevk maddesi 3: Bek
 assert.equal(describeTimelineEntry(all[14], tr, 'tr').title, 'Hata #49: Açık → İşlemde');
 assert.equal(describeTimelineEntry(all[19], tr, 'tr').details[0], 'Durum: Hatta → Bilinmeyen değer');
 
+const en = (key: MessageKey, vars?: Record<string, string | number>) => translate('en', key, vars);
+assert.equal(describeTimelineEntry(all[9], en, 'en').title, 'Shipment item 3: Pending → OK');
+// Only the deliberately unknown status falls back to the generic name.
+for (const [locale, tf, unknown] of [['tr', tr, 'Bilinmeyen değer'], ['en', en, 'Unknown value']] as const) {
+  const hits = all.filter((e) => {
+    const l = describeTimelineEntry(e, tf, locale);
+    return [l.title, ...l.details].some((x) => x.includes(unknown));
+  });
+  assert.deepEqual(hits.map((e) => e.NewValue), ['SOME_FUTURE_STATUS'], `${locale} unknown fallback`);
+}
+
 // Three Shipment ticks by the same person fold; the single Test and EOL ticks stay.
 const rows = buildTimelineRows(all, 'all');
 const groups = rows.filter((r) => r.kind === 'checklistGroup');
 assert.equal(groups.length, 1);
 assert.equal(groups[0].kind === 'checklistGroup' && groups[0].entries.length, 3);
 if (groups[0].kind === 'checklistGroup') {
-  assert.equal(checklistGroupTitle(groups[0], tr), 'Sevk listesinde 3 madde işaretlendi');
+  assert.equal(checklistGroupTitle(groups[0], tr), 'Sevk listesinde 3 işaretleme');
   assert.equal(checklistGroupSummary(groups[0], tr), 'Uygun: 2 · Şartlı uygun: 1');
 }
 assert.equal(rows.length, all.length - 2);
