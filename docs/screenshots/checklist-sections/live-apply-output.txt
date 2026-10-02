@@ -1,0 +1,88 @@
+Live apply of migration 0035 — 2026-10-02
+
+== BEFORE (read-only, live-snapshot.sql) ==
+                migration                 
+------------------------------------------
+ schema_migrations version=34 dirty=false
+(1 row)
+
+ all_items | active |     non_section_fingerprint      |         text_fingerprint         |        order_fingerprint         |        active_fingerprint        |       section_fingerprint        
+-----------+--------+----------------------------------+----------------------------------+----------------------------------+----------------------------------+----------------------------------
+       108 |    104 | 756f8f46ff05210be58a636c267d6e05 | 05569c6cdfd5f753a5b094843bbde883 | 32600eb878237a9612d91214c62e34e6 | 5aed41701f444f6c942f20c21f1def07 | bee822f22f47acfa3858d5b03d4c1412
+(1 row)
+
+ template_type | section_key  | section_sort | items | active |          item_nos          
+---------------+--------------+--------------+-------+--------+----------------------------
+ SHIPMENT      | identity     |           10 |     6 |      6 | 1,2,3,4,5,6
+ SHIPMENT      | exterior     |           20 |    10 |     10 | 7,8,9,10,11,12,13,14,15,16
+ SHIPMENT      | locks        |           30 |     4 |      4 | 17,18,19,20
+ SHIPMENT      | lighting     |           40 |     7 |      7 | 21,22,23,24,25,26,27
+ SHIPMENT      | interior     |           50 |     8 |      8 | 28,29,30,31,32,33,34,35
+ SHIPMENT      | charge       |           60 |     8 |      8 | 36,37,38,39,40,41,42,43
+ SHIPMENT      | -            |              |     3 |      3 | 44,45,46
+ TEST          | brakes       |           10 |     5 |      5 | 1,2,3,4,10
+ TEST          | steering     |           20 |     3 |      3 | 5,6,7
+ TEST          | lights       |           30 |     2 |      2 | 8,9
+ TEST          | diag         |           40 |     2 |      2 | 11,12
+ TEST          | hv           |           50 |     4 |      4 | 13,14,15,16
+ TEST          | drive        |           60 |     5 |      5 | 17,18,19,20,21
+ TEST          | dash         |           70 |     4 |      4 | 22,23,24,25
+ TEST          | body         |           80 |     4 |      4 | 26,27,28,29
+ TEST          | adas         |           90 |     7 |      7 | 30,31,32,33,34,35,36
+ TEST          | infotainment |          100 |     3 |      3 | 37,38,39
+ TEST          | final        |          110 |     6 |      4 | 40,41,42,43,44,45
+(18 rows)
+
+                                    progress                                     
+---------------------------------------------------------------------------------
+ checklist_item_progress rows=53000 fingerprint=4a59c65ba452928b62113f9806e759b6
+(1 row)
+
+== MIGRATE (docker migrate/migrate up) ==
+35/u checklist_sections_by_content (28.838417ms)
+
+== AFTER (read-only, live-snapshot.sql) ==
+                migration                 
+------------------------------------------
+ schema_migrations version=35 dirty=false
+(1 row)
+
+ all_items | active |     non_section_fingerprint      |         text_fingerprint         |        order_fingerprint         |        active_fingerprint        |       section_fingerprint        
+-----------+--------+----------------------------------+----------------------------------+----------------------------------+----------------------------------+----------------------------------
+       108 |    104 | 756f8f46ff05210be58a636c267d6e05 | 05569c6cdfd5f753a5b094843bbde883 | 32600eb878237a9612d91214c62e34e6 | 5aed41701f444f6c942f20c21f1def07 | 189f7709f71e610bde6b6489e5fa9dfd
+(1 row)
+
+ template_type | section_key | section_sort | items | active |            item_nos             
+---------------+-------------+--------------+-------+--------+---------------------------------
+ SHIPMENT      | identity    |           10 |     6 |      6 | 17,18,19,20,23,24
+ SHIPMENT      | exterior    |           20 |     6 |      6 | 3,4,16,28,29,45
+ SHIPMENT      | interior    |           30 |    13 |     13 | 1,2,5,6,7,8,9,10,11,12,21,22,32
+ SHIPMENT      | closures    |           40 |     3 |      3 | 25,26,43
+ SHIPMENT      | electrical  |           50 |     3 |      3 | 14,27,31
+ SHIPMENT      | sealing     |           60 |     8 |      8 | 15,30,34,35,36,37,38,46
+ SHIPMENT      | chassis     |           70 |     7 |      7 | 13,33,39,40,41,42,44
+ TEST          | cold_drag   |           10 |     3 |      3 | 1,2,3
+ TEST          | bcm_ee      |           20 |    12 |     12 | 4,5,6,7,8,9,10,11,12,13,14,15
+ TEST          | road_test   |           30 |     9 |      9 | 16,17,18,19,20,21,22,23,24
+ TEST          | brake_test  |           40 |     5 |      5 | 25,26,27,28,29
+ TEST          | alignment   |           50 |     3 |      3 | 30,31,32
+ TEST          | hot_drag    |           60 |     5 |      5 | 33,34,35,36,37
+ TEST          | eng_quality |           70 |     6 |      6 | 38,39,40,41,42,43
+ TEST          | -           |              |     2 |      0 | 44,45
+(15 rows)
+
+                                    progress                                     
+---------------------------------------------------------------------------------
+ checklist_item_progress rows=53000 fingerprint=4a59c65ba452928b62113f9806e759b6
+(1 row)
+
+== rows updated (per-item before/after comparison of SHIPMENT/TEST sections) ==
+items compared: 91, changed: 90 (SHIPMENT 45, TEST 45), unchanged: SHIPMENT #16 (exterior/20)
+
+== EOL (read-only) ==
+17 EOL items, with section_key: 0
+
+== before vs after ==
+non_section / text / order / active fingerprints: identical
+checklist_item_progress rows=53000 fingerprint 4a59c65ba452928b62113f9806e759b6: identical
+only section_fingerprint and schema_migrations (34 -> 35) changed

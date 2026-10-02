@@ -646,7 +646,7 @@ elle yenileme), `mobile-harness-regression.txt` (tüm sahneler),
 `live-scan-output.txt`, `build-output.txt`. Gerçek cihazda görüntü
 alınmadı; mobil kanıt react-native-web düzeneğinden.
 
-### A37. Checklist bölümleri madde içeriğine göre `[~]` — 2026-10-02
+### A37. Checklist bölümleri madde içeriğine göre `[x]` — 2026-10-02
 0024'ün `item_no` aralığıyla yaptığı bölüm ataması içerikle ilgisizdi
 (Karar 23).
 - **Sevk (7 bölüm):** Kimlik, Logo & Etiket; Dış Görünüm; İç Donanım &
@@ -661,9 +661,12 @@ alınmadı; mobil kanıt react-native-web düzeneğinden.
   yok; idempotent, geri alma dosyası 0035 öncesi canlı değerleri yazar.
   Seed 03 aynı değerleri taşır; katalog ve TR/EN adlar
   `shared/checklistSections.ts` + `messages.ts`.
-- **Açık:** 0035 canlıya **uygulanmadı** (onay bekliyor). Web ile
-  birlikte yayına alınmalı; mobilde yeni sürüm yüklenene kadar eski
-  uygulama bölüm başlığını ham anahtar olarak gösterir.
+- **Canlı (2026-10-02):** 0035 uygulandı, sürüm 34 → 35; 90 satırın
+  bölümü değişti (Sevk 45, Test 45; Sevk #16 zaten Dış Görünüm). Metin,
+  sıra, aktiflik md5'leri ve 53000 araç ilerleme kaydı aynı kaldı:
+  `live-apply-output.txt` + `live-snapshot.sql`. Yeni web birlikte
+  yayına alınmalı; mobilde yeni sürüm yüklenene kadar eski uygulama
+  bölüm başlığını ham anahtar olarak gösterir.
 Kanıt: `docs/screenshots/checklist-sections/`: `verification-output.txt`
 (canlı şablon satırlarının kopyası üzerinde 0035: madde tablosu, iki
 kez çalıştırma, geri alma, yeniden sıralamaya dayanıklılık, seed
