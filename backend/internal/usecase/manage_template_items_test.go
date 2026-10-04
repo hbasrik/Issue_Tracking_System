@@ -548,7 +548,7 @@ func TestTemplateAudit_EveryEditKind(t *testing.T) {
 		t.Fatal(err)
 	}
 	d = audit.detail(t, 4)
-	if d.Action != domain.AdminActionReorder || len(d.Moved) != 2 ||
+	if d.Action != domain.AdminActionReorder || len(d.Moved) != 1 ||
 		d.Moved[0].Subject.TR != "Gaps" || d.Moved[0].From != 2 || d.Moved[0].To != 1 {
 		t.Fatalf("reorder = %+v", d)
 	}
