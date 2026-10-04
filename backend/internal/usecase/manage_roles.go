@@ -111,7 +111,6 @@ func (a *RoleAdmin) CreateRole(ctx context.Context, actorID int, code, name stri
 			Subject:  roleValue(*role),
 		}
 		d.AddChange(domain.AdminFieldName, domain.AdminAuditValue{}, domain.AdminText(role.Name))
-		d.AddChange(domain.AdminFieldCode, domain.AdminAuditValue{}, domain.AdminAuditValue{Code: role.Code})
 		return a.auditor.record(txCtx, domain.AuditEventRolePermission, actorID, d)
 	})
 	if err != nil {
