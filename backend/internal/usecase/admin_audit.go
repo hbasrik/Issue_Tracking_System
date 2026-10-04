@@ -59,16 +59,12 @@ func permissionValue(p domain.Permission) domain.AdminAuditValue {
 	return domain.AdminAuditValue{Code: p.Code, TR: p.Description, EN: p.Description}
 }
 
-// movedPositions lists the subjects whose 1-based position differs between
-// the before and after id orders.
-func movedPositions(before, after []int, subject func(id int) domain.AdminAuditValue) []domain.AdminAuditMove {
-	pos := make(map[int]int, len(before))
-	for i, id := range before {
-		pos[id] = i + 1
-	}
+// movedPositions lists the subjects whose position (fromPos) differs from
+// their 1-based index in the new order.
+func movedPositions(fromPos map[int]int, after []int, subject func(id int) domain.AdminAuditValue) []domain.AdminAuditMove {
 	var out []domain.AdminAuditMove
 	for i, id := range after {
-		from, ok := pos[id]
+		from, ok := fromPos[id]
 		if !ok || from == i+1 {
 			continue
 		}

@@ -66,6 +66,7 @@ func (s *server) handleChecklistTemplateItemCreate(w http.ResponseWriter, r *htt
 		SectionKey:       req.SectionKey,
 		SectionSort:      req.SectionSort,
 		PropagationScope: scope,
+		ActorID:          actorID(r),
 	})
 	if err != nil {
 		writeError(w, err)
@@ -114,6 +115,7 @@ func (s *server) handleChecklistTemplateItemUpdate(w http.ResponseWriter, r *htt
 		SectionSort:      req.SectionSort,
 		IsActive:         req.IsActive,
 		PropagationScope: scope,
+		ActorID:          actorID(r),
 	})
 	if err != nil {
 		writeError(w, err)
@@ -132,7 +134,7 @@ func (s *server) handleChecklistTemplateItemDelete(w http.ResponseWriter, r *htt
 	if !ok {
 		return
 	}
-	if err := s.deps.Checklists.DeleteTemplateItem(r.Context(), templateID, itemID); err != nil {
+	if err := s.deps.Checklists.DeleteTemplateItem(r.Context(), actorID(r), templateID, itemID); err != nil {
 		writeError(w, err)
 		return
 	}
@@ -155,7 +157,7 @@ func (s *server) handleChecklistTemplateItemReorder(w http.ResponseWriter, r *ht
 		badRequest(w, "invalid request body")
 		return
 	}
-	if err := s.deps.Checklists.ReorderTemplateItems(r.Context(), templateID, req.ItemIDs); err != nil {
+	if err := s.deps.Checklists.ReorderTemplateItems(r.Context(), actorID(r), templateID, req.ItemIDs); err != nil {
 		writeError(w, err)
 		return
 	}

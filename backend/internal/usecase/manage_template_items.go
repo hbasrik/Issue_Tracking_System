@@ -18,10 +18,12 @@ type CreateTemplateItemInput struct {
 	SectionKey       *string
 	SectionSort      *int16
 	PropagationScope domain.TemplateItemPropagationScope
+	ActorID          int
 }
 
 // UpdateTemplateItemInput patches text, phase, section and/or active flag.
 type UpdateTemplateItemInput struct {
+	ActorID          int
 	TemplateID       int
 	ItemID           int
 	ItemText         *string
@@ -39,6 +41,65 @@ func (r *ChecklistResultRecorder) withTx(ctx context.Context, fn func(context.Co
 		return fn(ctx)
 	}
 	return r.uow.WithinTx(ctx, fn)
+}
+
+// recordTemplateChange writes a CHECKLIST_TEMPLATE_CHANGE row (Karar 25)
+// inside the caller's transaction.
+func (r *ChecklistResultRecorder) recordTemplateChange(ctx context.Context, actorID int, d domain.AdminAuditDetail) error {
+	return adminAuditor{audit: r.audit, uow: r.uow}.record(ctx, domain.AuditEventChecklistTemplate, actorID, d)
+}
+
+func templateItemDetail(action string, tmpl *domain.ChecklistTemplate, item *domain.ChecklistTemplateItem) domain.AdminAuditDetail {
+	return domain.AdminAuditDetail{
+		Action:       action,
+		Entity:       domain.AdminEntityTemplateItem,
+		EntityID:     item.ID,
+		Subject:      domain.AdminText(item.ItemText),
+		Parent:       domain.AdminAuditValue{Code: string(tmpl.Type), TR: tmpl.Name, EN: tmpl.Name},
+		TemplateType: string(tmpl.Type),
+		ItemNo:       int(item.ItemNo),
+	}
+}
+
+func phaseValue(p *domain.EOLItemPhase) domain.AdminAuditValue {
+	if p == nil {
+		return domain.AdminAuditValue{}
+	}
+	return domain.AdminAuditValue{Code: string(*p)}
+}
+
+func sectionValue(key *string) domain.AdminAuditValue {
+	if key == nil || *key == "" {
+		return domain.AdminAuditValue{}
+	}
+	return domain.AdminAuditValue{Code: *key}
+}
+
+// addItemFields lists the editable fields of a template item from → to.
+func addItemFields(d *domain.AdminAuditDetail, from, to *domain.ChecklistTemplateItem) {
+	var f, t domain.ChecklistTemplateItem
+	if from != nil {
+		f = *from
+	}
+	if to != nil {
+		t = *to
+	}
+	text := func(s string) domain.AdminAuditValue {
+		if s == "" {
+			return domain.AdminAuditValue{}
+		}
+		return domain.AdminText(s)
+	}
+	active := func(it *domain.ChecklistTemplateItem) domain.AdminAuditValue {
+		if it == nil {
+			return domain.AdminAuditValue{}
+		}
+		return domain.AdminBool(it.IsActive)
+	}
+	d.AddChange(domain.AdminFieldItemText, text(f.ItemText), text(t.ItemText))
+	d.AddChange(domain.AdminFieldEOLPhase, phaseValue(f.EolPhase), phaseValue(t.EolPhase))
+	d.AddChange(domain.AdminFieldSection, sectionValue(f.SectionKey), sectionValue(t.SectionKey))
+	d.AddChange(domain.AdminFieldActive, active(from), active(to))
 }
 
 // CreateTemplateItem appends an active item and backfills PENDING onto
@@ -116,6 +177,11 @@ func (r *ChecklistResultRecorder) createTemplateItemTx(ctx context.Context, in C
 		}
 		return nil, &domain.TemplatePropagationEmptyError{Scope: scope, MissingVehicles: missing}
 	}
+	d := templateItemDetail(domain.AdminActionCreate, tmpl, item)
+	addItemFields(&d, nil, item)
+	if err := r.recordTemplateChange(ctx, in.ActorID, d); err != nil {
+		return nil, err
+	}
 	return item, nil
 }
 
@@ -147,6 +213,7 @@ func (r *ChecklistResultRecorder) updateTemplateItemTx(ctx context.Context, in U
 	if item.TemplateID != in.TemplateID {
 		return nil, domain.ErrNotFound
 	}
+	before := *item
 	prevActive := item.IsActive
 	if in.ItemText != nil {
 		item.ItemText = strings.TrimSpace(*in.ItemText)
@@ -211,18 +278,26 @@ func (r *ChecklistResultRecorder) updateTemplateItemTx(ctx context.Context, in U
 			return nil, &domain.TemplatePropagationEmptyError{Scope: scope, MissingVehicles: missing}
 		}
 	}
+	d := templateItemDetail(domain.AdminActionUpdate, tmpl, &before)
+	addItemFields(&d, &before, item)
+	if len(d.Changes) > 0 {
+		d.Action = activeAction(&d, before.IsActive, item.IsActive)
+		if err := r.recordTemplateChange(ctx, in.ActorID, d); err != nil {
+			return nil, err
+		}
+	}
 	return item, nil
 }
 
 // DeleteTemplateItem hard-deletes only when nothing was evaluated and no
 // issue is linked. PENDING-only materialization is cleared first.
-func (r *ChecklistResultRecorder) DeleteTemplateItem(ctx context.Context, templateID, itemID int) error {
+func (r *ChecklistResultRecorder) DeleteTemplateItem(ctx context.Context, actorID, templateID, itemID int) error {
 	return r.withTx(ctx, func(txCtx context.Context) error {
-		return r.deleteTemplateItemTx(txCtx, templateID, itemID)
+		return r.deleteTemplateItemTx(txCtx, actorID, templateID, itemID)
 	})
 }
 
-func (r *ChecklistResultRecorder) deleteTemplateItemTx(ctx context.Context, templateID, itemID int) error {
+func (r *ChecklistResultRecorder) deleteTemplateItemTx(ctx context.Context, actorID, templateID, itemID int) error {
 	item, err := r.checklist.GetTemplateItem(ctx, itemID)
 	if err != nil {
 		return err
@@ -251,7 +326,16 @@ func (r *ChecklistResultRecorder) deleteTemplateItemTx(ctx context.Context, temp
 	if _, err := r.checklist.DeletePendingProgressForItem(ctx, itemID); err != nil {
 		return err
 	}
-	return r.checklist.DeleteTemplateItem(ctx, itemID)
+	if err := r.checklist.DeleteTemplateItem(ctx, itemID); err != nil {
+		return err
+	}
+	tmpl, err := r.checklist.GetTemplate(ctx, templateID)
+	if err != nil {
+		return err
+	}
+	d := templateItemDetail(domain.AdminActionDelete, tmpl, item)
+	addItemFields(&d, item, nil)
+	return r.recordTemplateChange(ctx, actorID, d)
 }
 
 // PreviewTemplateItemImpact returns how many vehicles a catalogue change
@@ -365,9 +449,11 @@ func (r *ChecklistResultRecorder) ListTemplateItemMissingVehicles(
 	return &domain.TemplateItemMissingVehicles{Count: total, Vehicles: rows}, nil
 }
 
-// ReorderTemplateItems sets item_no from the given id order.
-func (r *ChecklistResultRecorder) ReorderTemplateItems(ctx context.Context, templateID int, itemIDs []int) error {
-	if _, err := r.checklist.GetTemplate(ctx, templateID); err != nil {
+// ReorderTemplateItems sets item_no from the given id order. The audit row
+// lists the items whose number changed; an unchanged order writes nothing.
+func (r *ChecklistResultRecorder) ReorderTemplateItems(ctx context.Context, actorID, templateID int, itemIDs []int) error {
+	tmpl, err := r.checklist.GetTemplate(ctx, templateID)
+	if err != nil {
 		return err
 	}
 	existing, err := r.checklist.ListTemplateItems(ctx, templateID)
@@ -377,7 +463,30 @@ func (r *ChecklistResultRecorder) ReorderTemplateItems(ctx context.Context, temp
 	if !sameIDs(existing, itemIDs) {
 		return domain.ErrTemplateItemReorderInvalid
 	}
-	return r.checklist.ReorderTemplateItems(ctx, templateID, itemIDs)
+	byID := make(map[int]domain.ChecklistTemplateItem, len(existing))
+	fromPos := make(map[int]int, len(existing))
+	for _, it := range existing {
+		byID[it.ID] = it
+		fromPos[it.ID] = int(it.ItemNo)
+	}
+	d := domain.AdminAuditDetail{
+		Action:       domain.AdminActionReorder,
+		Entity:       domain.AdminEntityTemplateItem,
+		Parent:       domain.AdminAuditValue{Code: string(tmpl.Type), TR: tmpl.Name, EN: tmpl.Name},
+		TemplateType: string(tmpl.Type),
+		Moved: movedPositions(fromPos, itemIDs, func(id int) domain.AdminAuditValue {
+			return domain.AdminText(byID[id].ItemText)
+		}),
+	}
+	return r.withTx(ctx, func(txCtx context.Context) error {
+		if err := r.checklist.ReorderTemplateItems(txCtx, templateID, itemIDs); err != nil {
+			return err
+		}
+		if len(d.Moved) == 0 {
+			return nil
+		}
+		return r.recordTemplateChange(txCtx, actorID, d)
+	})
 }
 
 func sameIDs(items []domain.ChecklistTemplateItem, ids []int) bool {

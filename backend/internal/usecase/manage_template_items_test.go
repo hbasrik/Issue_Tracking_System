@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"testing"
 
@@ -335,7 +336,7 @@ func TestUpdateTemplateItem_TextOnlyNoPropagation(t *testing.T) {
 func TestDeleteTemplateItem_InUse(t *testing.T) {
 	fake := newTemplateCatalogueFake()
 	svc := NewChecklistResultRecorder(nil, fake, nil, nil)
-	err := svc.DeleteTemplateItem(context.Background(), 1, 10)
+	err := svc.DeleteTemplateItem(context.Background(), 7, 1, 10)
 	var inUse *domain.TemplateItemInUseError
 	if !errors.As(err, &inUse) || inUse.VehicleCount != 3 {
 		t.Fatalf("err = %v, want in-use with 3 vehicles", err)
@@ -348,7 +349,7 @@ func TestDeleteTemplateItem_InUse(t *testing.T) {
 func TestDeleteTemplateItem_Unused(t *testing.T) {
 	fake := newTemplateCatalogueFake()
 	svc := NewChecklistResultRecorder(nil, fake, nil, nil)
-	if err := svc.DeleteTemplateItem(context.Background(), 1, 11); err != nil {
+	if err := svc.DeleteTemplateItem(context.Background(), 7, 1, 11); err != nil {
 		t.Fatalf("delete unused: %v", err)
 	}
 	if _, err := fake.GetTemplateItem(context.Background(), 11); !errors.Is(err, domain.ErrNotFound) {
@@ -411,7 +412,7 @@ func TestPreviewTemplateItemImpact_PassesItemStage(t *testing.T) {
 func TestReorderTemplateItems(t *testing.T) {
 	fake := newTemplateCatalogueFake()
 	svc := NewChecklistResultRecorder(nil, fake, nil, nil)
-	if err := svc.ReorderTemplateItems(context.Background(), 1, []int{11, 10}); err != nil {
+	if err := svc.ReorderTemplateItems(context.Background(), 7, 1, []int{11, 10}); err != nil {
 		t.Fatalf("reorder: %v", err)
 	}
 	items, _ := fake.ListTemplateItems(context.Background(), 1)
@@ -423,7 +424,7 @@ func TestReorderTemplateItems(t *testing.T) {
 func TestReorderTemplateItems_RejectsPartialList(t *testing.T) {
 	fake := newTemplateCatalogueFake()
 	svc := NewChecklistResultRecorder(nil, fake, nil, nil)
-	err := svc.ReorderTemplateItems(context.Background(), 1, []int{10})
+	err := svc.ReorderTemplateItems(context.Background(), 7, 1, []int{10})
 	if !errors.Is(err, domain.ErrTemplateItemReorderInvalid) {
 		t.Fatalf("err = %v", err)
 	}
@@ -451,5 +452,112 @@ func TestCreateTemplateItem_RejectsEmptyPropagation(t *testing.T) {
 	}
 	if len(fake.items[1]) != before {
 		t.Fatalf("orphan catalogue row left behind: %d items", len(fake.items[1]))
+	}
+}
+
+type templateAudit struct {
+	repository.AuditRepository
+	rows []domain.AuditLog
+}
+
+func (a *templateAudit) Append(_ context.Context, e domain.AuditLog) error {
+	a.rows = append(a.rows, e)
+	return nil
+}
+
+func (a *templateAudit) detail(t *testing.T, i int) domain.AdminAuditDetail {
+	t.Helper()
+	if i >= len(a.rows) {
+		t.Fatalf("audit rows = %d, want > %d", len(a.rows), i)
+	}
+	e := a.rows[i]
+	if e.EventType != domain.AuditEventChecklistTemplate || e.VIN != "" || e.PerformedBy == nil || *e.PerformedBy != 7 {
+		t.Fatalf("entry = %+v", e)
+	}
+	raw, _ := json.Marshal(e.Metadata)
+	var d domain.AdminAuditDetail
+	if err := json.Unmarshal(raw, &d); err != nil {
+		t.Fatal(err)
+	}
+	return d
+}
+
+func TestTemplateAudit_EveryEditKind(t *testing.T) {
+	fake := newTemplateCatalogueFake()
+	audit := &templateAudit{}
+	svc := NewChecklistResultRecorder(nil, fake, audit, nil)
+	ctx := context.Background()
+	depot := domain.EOLItemPhaseDepot
+
+	created, err := svc.CreateTemplateItem(ctx, CreateTemplateItemInput{
+		TemplateID: 1, ItemText: "Şarj kapağı", EolPhase: &depot, ActorID: 7,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	d := audit.detail(t, 0)
+	if d.Action != domain.AdminActionCreate || d.Subject.TR != "Şarj kapağı" || d.Parent.TR != "EOL" || d.TemplateType != "EOL" {
+		t.Fatalf("create = %+v", d)
+	}
+
+	text := "Şarj kapağı kontrolü"
+	section := "final_adjust"
+	if _, err := svc.UpdateTemplateItem(ctx, UpdateTemplateItemInput{
+		TemplateID: 1, ItemID: created.ID, ItemText: &text, SectionKey: &section, ActorID: 7,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	d = audit.detail(t, 1)
+	byField := map[string]domain.AdminFieldChange{}
+	for _, c := range d.Changes {
+		byField[c.Field] = c
+	}
+	if d.Action != domain.AdminActionUpdate || len(d.Changes) != 2 ||
+		byField[domain.AdminFieldItemText].From.TR != "Şarj kapağı" ||
+		byField[domain.AdminFieldItemText].To.TR != text ||
+		!byField[domain.AdminFieldSection].From.IsZero() ||
+		byField[domain.AdminFieldSection].To.Code != section {
+		t.Fatalf("update = %+v", d)
+	}
+
+	off := false
+	if _, err := svc.UpdateTemplateItem(ctx, UpdateTemplateItemInput{TemplateID: 1, ItemID: 11, IsActive: &off, ActorID: 7}); err != nil {
+		t.Fatal(err)
+	}
+	if d = audit.detail(t, 2); d.Action != domain.AdminActionDeactivate || d.Subject.TR != "Gaps" {
+		t.Fatalf("deactivate = %+v", d)
+	}
+	on := true
+	fake.createAff = 1
+	if _, err := svc.UpdateTemplateItem(ctx, UpdateTemplateItemInput{TemplateID: 1, ItemID: 11, IsActive: &on, ActorID: 7}); err != nil {
+		t.Fatal(err)
+	}
+	if d = audit.detail(t, 3); d.Action != domain.AdminActionActivate {
+		t.Fatalf("activate = %+v", d)
+	}
+
+	sameText := "Gaps"
+	if _, err := svc.UpdateTemplateItem(ctx, UpdateTemplateItemInput{TemplateID: 1, ItemID: 11, ItemText: &sameText, ActorID: 7}); err != nil {
+		t.Fatal(err)
+	}
+	if len(audit.rows) != 4 {
+		t.Fatalf("unchanged edit wrote a row: %d", len(audit.rows))
+	}
+
+	if err := svc.ReorderTemplateItems(ctx, 7, 1, []int{11, 10, created.ID}); err != nil {
+		t.Fatal(err)
+	}
+	d = audit.detail(t, 4)
+	if d.Action != domain.AdminActionReorder || len(d.Moved) != 2 ||
+		d.Moved[0].Subject.TR != "Gaps" || d.Moved[0].From != 2 || d.Moved[0].To != 1 {
+		t.Fatalf("reorder = %+v", d)
+	}
+
+	if err := svc.DeleteTemplateItem(ctx, 7, 1, created.ID); err != nil {
+		t.Fatal(err)
+	}
+	d = audit.detail(t, 5)
+	if d.Action != domain.AdminActionDelete || d.Subject.TR != text || len(d.Changes) == 0 || !d.Changes[0].To.IsZero() {
+		t.Fatalf("delete = %+v", d)
 	}
 }
