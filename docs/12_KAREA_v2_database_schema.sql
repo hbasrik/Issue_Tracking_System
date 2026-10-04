@@ -118,7 +118,12 @@ CREATE TYPE audit_event_enum AS ENUM (
     'EOL_WORKFLOW_STAGE_CHANGE',  -- new: branch shipped / depot released / document approved
     'MEDIA_UPLOADED',             -- new: Karar 8
     'ISSUE_CLASSIFICATION_CHANGE',-- migration 0019: quality corrects part / defect type
-    'LOGIN_RATE_LIMITED'          -- migration 0028: blocked login attempt (vin IS NULL)
+    'LOGIN_RATE_LIMITED',         -- migration 0028: blocked login attempt (vin IS NULL)
+    -- migration 0038: management actions (vin IS NULL, docs/11 Karar 25)
+    'USER_ADMIN_CHANGE',          -- user create/update/delete, role, password reset (no value), unlock
+    'ROLE_PERMISSION_CHANGE',     -- role create, permission grants added/removed
+    'CHECKLIST_TEMPLATE_CHANGE',  -- template item create/edit/(de)activate/delete/reorder/section
+    'DEFECT_CATALOG_CHANGE'       -- zone/part/type/process create/rename/(de)activate/delete/reorder
     -- PHASE_ENTER / PHASE_EXIT (v1) removed — superseded by STATION_ENTER / STATION_EXIT
 );
 
@@ -455,7 +460,8 @@ COMMENT ON TABLE vehicle_eol_workflow IS
 CREATE TABLE audit_logs (
     id             BIGSERIAL PRIMARY KEY,
     -- NULLable since migration 0028: not every audited event belongs to a
-    -- vehicle. Login rate-limit blocks (LOGIN_RATE_LIMITED) have no VIN.
+    -- vehicle. Login rate-limit blocks (LOGIN_RATE_LIMITED) and management
+    -- actions (migration 0038) have no VIN.
     -- The FK still applies whenever vin is present.
     vin            VARCHAR(17) REFERENCES vehicles(vin) ON DELETE CASCADE,
     event_type     audit_event_enum NOT NULL,
