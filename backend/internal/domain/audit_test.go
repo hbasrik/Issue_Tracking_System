@@ -21,6 +21,10 @@ func TestWorkAuditEventTypesCoversAllConstants(t *testing.T) {
 		domain.AuditEventIssueClassification,
 		domain.AuditEventEOLWorkflowStage,
 		domain.AuditEventMediaUploaded,
+		domain.AuditEventUserAdmin,
+		domain.AuditEventRolePermission,
+		domain.AuditEventChecklistTemplate,
+		domain.AuditEventDefectCatalog,
 	}
 	nonWork := []domain.AuditEvent{
 		domain.AuditEventLoginRateLimited,
