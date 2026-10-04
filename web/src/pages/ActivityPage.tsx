@@ -6,16 +6,27 @@ import {
   Building2,
   CheckCircle2,
   ClipboardCheck,
+  ClipboardList,
   History,
+  ListTree,
+  ShieldCheck,
   Tags,
   Timer,
+  UserCog,
   Warehouse,
 } from 'lucide-react';
 import { api, type HomeActivityEntry } from '../lib/api';
 import { activityDetailLine } from '../lib/activityDetail';
 import { LoadErrorState } from '../components/LoadErrorState';
+import { useAuth } from '../auth/AuthProvider';
+import { Perm } from '../auth/permissions';
 import { useI18n } from '../i18n';
 import { localeTag } from '../../../shared/i18n';
+import {
+  adminAuditEventLabel,
+  isAdminAuditEvent,
+  SENSITIVE_ADMIN_AUDIT_EVENT_TYPES,
+} from '../../../shared/adminAudit';
 import { statusColors } from '../theme/tokens';
 import type { ReactNode } from 'react';
 
@@ -30,12 +41,19 @@ const EVENT_TYPES = [
   'EOL_WORKFLOW_STAGE_CHANGE',
   'CHECKLIST_ITEM_UPDATE',
   'MEDIA_UPLOADED',
+  'CHECKLIST_TEMPLATE_CHANGE',
+  'DEFECT_CATALOG_CHANGE',
+  'USER_ADMIN_CHANGE',
+  'ROLE_PERMISSION_CHANGE',
 ] as const;
+
+const SENSITIVE: readonly string[] = SENSITIVE_ADMIN_AUDIT_EVENT_TYPES;
 
 function eventLabel(
   type: string,
   t: ReturnType<typeof useI18n>['t'],
 ): string {
+  if (isAdminAuditEvent(type)) return adminAuditEventLabel(type, t);
   switch (type) {
     case 'ISSUE_STATUS_CHANGE':
       return t('activity.filter.issueStatus');
@@ -86,12 +104,27 @@ function activityIcon(eventType: string, newValue: string, oldValue?: string): {
   if (eventType === 'ISSUE_CLASSIFICATION_CHANGE') {
     return { color: statusColors.info, icon: <Tags size={16} /> };
   }
+  if (eventType === 'USER_ADMIN_CHANGE') {
+    return { color: statusColors.pending, icon: <UserCog size={16} /> };
+  }
+  if (eventType === 'ROLE_PERMISSION_CHANGE') {
+    return { color: statusColors.pending, icon: <ShieldCheck size={16} /> };
+  }
+  if (eventType === 'CHECKLIST_TEMPLATE_CHANGE') {
+    return { color: statusColors.info, icon: <ClipboardList size={16} /> };
+  }
+  if (eventType === 'DEFECT_CATALOG_CHANGE') {
+    return { color: statusColors.info, icon: <ListTree size={16} /> };
+  }
   return { color: statusColors.pending, icon: <AlertCircle size={16} /> };
 }
 
 /** Plant-wide audit activity — mirrors vehicle audit trail, paginated. */
 export default function ActivityPage() {
   const { t, locale } = useI18n();
+  const { has } = useAuth();
+  const canManageUsers = has(Perm.AdminManageUsers);
+  const eventTypes = EVENT_TYPES.filter((et) => canManageUsers || !SENSITIVE.includes(et));
   const [items, setItems] = useState<HomeActivityEntry[]>([]);
   const [total, setTotal] = useState(0);
   const [offset, setOffset] = useState(0);
@@ -187,7 +220,7 @@ export default function ActivityPage() {
             className="mt-1 block w-full rounded-lg border bg-[var(--bg-page)] px-2 py-1.5 text-[13px] text-[var(--text-primary)]"
             style={{ borderColor: 'var(--border)' }}
           >
-            {EVENT_TYPES.map((et) => (
+            {eventTypes.map((et) => (
               <option key={et || 'all'} value={et}>
                 {eventLabel(et, t)}
               </option>
@@ -312,7 +345,11 @@ export default function ActivityPage() {
                         </span>
                       )}
                     </td>
-                    <td className="max-w-[18rem] truncate px-3 py-2.5" style={muted} title={detail}>
+                    <td
+                      className={`px-3 py-2.5 ${isAdminAuditEvent(row.EventType) ? 'max-w-[32rem]' : 'max-w-[18rem] truncate'}`}
+                      style={muted}
+                      title={detail}
+                    >
                       {detail}
                     </td>
                     <td className="whitespace-nowrap px-3 py-2.5" style={muted}>

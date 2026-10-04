@@ -6,7 +6,24 @@ import {
   eolStageLabel,
   vehicleStatusLabel,
 } from '../../../shared/vehicleStatus';
+import { adminAuditDetailLine, isAdminAuditEvent, type AdminAuditLabelers } from '../../../shared/adminAudit';
 import { issueStatusLabel } from './issueStatus';
+import { PERMISSION_CATALOG } from './permissionLabels';
+import { roleDisplayName } from './roleLabels';
+
+const permissionKeys = new Map(
+  PERMISSION_CATALOG.flatMap((g) => g.items.map((p) => [p.code, p.labelKey] as const)),
+);
+
+function adminLabelers(t: Translate): AdminAuditLabelers {
+  return {
+    permission: (code, description) => {
+      const key = permissionKeys.get(code);
+      return key ? t(key) : description || t('timeline.value.unknown');
+    },
+    role: (code, name) => (code ? roleDisplayName(code, t, [{ code, name }]) : name || t('common.emDash')),
+  };
+}
 
 function change(
   ov: string,
@@ -27,11 +44,14 @@ function change(
 export function activityDetailLine(
   row: Pick<
     HomeActivityEntry,
-    'EventType' | 'OldValue' | 'NewValue' | 'ChecklistType' | 'ItemNo' | 'ItemText' | 'Classification'
+    'EventType' | 'OldValue' | 'NewValue' | 'ChecklistType' | 'ItemNo' | 'ItemText' | 'Classification' | 'Admin'
   >,
   t: Translate,
   locale: string,
 ): string {
+  if (isAdminAuditEvent(row.EventType)) {
+    return adminAuditDetailLine(row.Admin, t, locale, adminLabelers(t));
+  }
   const nv = row.NewValue || '';
   const ov = row.OldValue || '';
   const emDash = t('common.emDash');

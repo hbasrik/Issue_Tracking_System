@@ -6,6 +6,7 @@
 import type { EOLGates } from '../../../shared/eolGates';
 import type { ShipmentWarningLike } from '../../../shared/shipmentReadiness';
 import type { ClassificationChange } from '../../../shared/classificationChanges';
+import type { AdminAuditDetail } from '../../../shared/adminAudit';
 import type { VehicleTimelineResponse } from '../../../shared/vehicleTimeline';
 
 export type {
@@ -1251,6 +1252,7 @@ export interface HomeActivityEntry {
   ItemNo?: number | null;
   ItemText?: string;
   Classification?: ClassificationChange[] | null;
+  Admin?: AdminAuditDetail | null;
 }
 
 export interface AuditActivityPage {
