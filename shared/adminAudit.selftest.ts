@@ -136,4 +136,15 @@ assert.equal(
   adminAuditDetailLine(samples[9], tr, 'tr', labels),
   'Şablon maddesi (Sevkiyat) — sıralama değiştirildi · Paspas: 3. sıradan 1. sıraya',
 );
+const trOnlyRename: AdminAuditDetail = {
+  action: 'update',
+  entity: 'part',
+  subject: { code: '91-01', tr: 'Geçici parça', en: 'Temp part' },
+  changes: [{ field: 'name', from: { tr: 'Geçici parça', en: 'Temp part' }, to: { tr: 'Geçici parça 2', en: 'Temp part' } }],
+};
+assert.ok(
+  adminAuditDetailLine(trOnlyRename, en, 'en', labels).endsWith('Name: Geçici parça / Temp part → Geçici parça 2 / Temp part'),
+  adminAuditDetailLine(trOnlyRename, en, 'en', labels),
+);
+assert.ok(adminAuditDetailLine(trOnlyRename, tr, 'tr', labels).endsWith('Ad: Geçici parça → Geçici parça 2'));
 console.log('adminAudit selftest OK');

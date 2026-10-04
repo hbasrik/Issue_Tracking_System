@@ -113,6 +113,12 @@ function isEmpty(v: AdminAuditValue | null | undefined): boolean {
   return !v || (!v.code && !v.tr && !v.en);
 }
 
+function bilingual(v: AdminAuditValue): string {
+  const tr = (v.tr ?? '').trim();
+  const en = (v.en ?? '').trim();
+  return tr && en && tr !== en ? `${tr} / ${en}` : tr || en;
+}
+
 function named(v: AdminAuditValue, locale: string): string {
   const tr = (v.tr ?? '').trim();
   const en = (v.en ?? '').trim();
@@ -216,11 +222,18 @@ export function adminAuditChangeLines(
   for (const c of d.changes ?? []) {
     const key = FIELD_LABEL[c.field];
     if (!key) continue;
-    const from = fieldValue(c.field, c.from ?? {}, t, locale, labels);
-    const to = fieldValue(c.field, c.to ?? {}, t, locale, labels);
+    let from = fieldValue(c.field, c.from ?? {}, t, locale, labels);
+    let to = fieldValue(c.field, c.to ?? {}, t, locale, labels);
     if (d.action === 'create') lines.push(`${t(key)}: ${to}`);
     else if (d.action === 'delete') lines.push(`${t(key)}: ${from}`);
-    else lines.push(`${t(key)}: ${from} → ${to}`);
+    else {
+      if (from === to && c.field === 'name') {
+        // Only the other language changed; show both so the edit is visible.
+        from = bilingual(c.from ?? {});
+        to = bilingual(c.to ?? {});
+      }
+      lines.push(`${t(key)}: ${from} → ${to}`);
+    }
   }
   const perm = (v: AdminAuditValue) => labels.permission(v.code ?? '', named(v, locale));
   if (d.granted && d.granted.length > 0) {
