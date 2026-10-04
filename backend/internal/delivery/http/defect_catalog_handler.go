@@ -53,7 +53,7 @@ func (s *server) handleDefectProcessCreate(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	item, err := s.deps.DefectCatalog.CreateProcess(r.Context(), usecase.UpsertProcessInput{
-		Code: req.Code, NameTR: req.NameTR, NameEN: req.NameEN, SortOrder: req.SortOrder, IsActive: req.activeOrTrue(),
+		Code: req.Code, NameTR: req.NameTR, NameEN: req.NameEN, SortOrder: req.SortOrder, IsActive: req.activeOrTrue(), ActorID: actorID(r),
 	})
 	if err != nil {
 		writeError(w, err)
@@ -74,7 +74,7 @@ func (s *server) handleDefectProcessUpdate(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	if err := s.deps.DefectCatalog.UpdateProcess(r.Context(), id, usecase.UpsertProcessInput{
-		Code: req.Code, NameTR: req.NameTR, NameEN: req.NameEN, SortOrder: req.SortOrder, IsActive: req.activeOrTrue(),
+		Code: req.Code, NameTR: req.NameTR, NameEN: req.NameEN, SortOrder: req.SortOrder, IsActive: req.activeOrTrue(), ActorID: actorID(r),
 	}); err != nil {
 		writeError(w, err)
 		return
@@ -88,7 +88,7 @@ func (s *server) handleDefectProcessDelete(w http.ResponseWriter, r *http.Reques
 		badRequest(w, "id must be an integer")
 		return
 	}
-	if err := s.deps.DefectCatalog.DeleteProcess(r.Context(), id); err != nil {
+	if err := s.deps.DefectCatalog.DeleteProcess(r.Context(), actorID(r), id); err != nil {
 		writeError(w, err)
 		return
 	}
@@ -101,7 +101,7 @@ func (s *server) handleDefectProcessReorder(w http.ResponseWriter, r *http.Reque
 		badRequest(w, "invalid request body")
 		return
 	}
-	if err := s.deps.DefectCatalog.ReorderProcesses(r.Context(), req.IDs); err != nil {
+	if err := s.deps.DefectCatalog.ReorderProcesses(r.Context(), actorID(r), req.IDs); err != nil {
 		writeError(w, err)
 		return
 	}
@@ -126,7 +126,7 @@ func (s *server) handleDefectZoneCreate(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	item, err := s.deps.DefectCatalog.CreateZone(r.Context(), usecase.UpsertZoneInput{
-		Code: req.Code, NameTR: req.NameTR, NameEN: req.NameEN, SortOrder: req.SortOrder, IsActive: req.activeOrTrue(),
+		Code: req.Code, NameTR: req.NameTR, NameEN: req.NameEN, SortOrder: req.SortOrder, IsActive: req.activeOrTrue(), ActorID: actorID(r),
 	})
 	if err != nil {
 		writeError(w, err)
@@ -147,7 +147,7 @@ func (s *server) handleDefectZoneUpdate(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	if err := s.deps.DefectCatalog.UpdateZone(r.Context(), id, usecase.UpsertZoneInput{
-		Code: req.Code, NameTR: req.NameTR, NameEN: req.NameEN, SortOrder: req.SortOrder, IsActive: req.activeOrTrue(),
+		Code: req.Code, NameTR: req.NameTR, NameEN: req.NameEN, SortOrder: req.SortOrder, IsActive: req.activeOrTrue(), ActorID: actorID(r),
 	}); err != nil {
 		writeError(w, err)
 		return
@@ -161,7 +161,7 @@ func (s *server) handleDefectZoneDelete(w http.ResponseWriter, r *http.Request) 
 		badRequest(w, "id must be an integer")
 		return
 	}
-	if err := s.deps.DefectCatalog.DeleteZone(r.Context(), id); err != nil {
+	if err := s.deps.DefectCatalog.DeleteZone(r.Context(), actorID(r), id); err != nil {
 		writeError(w, err)
 		return
 	}
@@ -174,7 +174,7 @@ func (s *server) handleDefectZoneReorder(w http.ResponseWriter, r *http.Request)
 		badRequest(w, "invalid request body")
 		return
 	}
-	if err := s.deps.DefectCatalog.ReorderZones(r.Context(), req.IDs); err != nil {
+	if err := s.deps.DefectCatalog.ReorderZones(r.Context(), actorID(r), req.IDs); err != nil {
 		writeError(w, err)
 		return
 	}
@@ -209,7 +209,7 @@ func (s *server) handleDefectPartCreate(w http.ResponseWriter, r *http.Request) 
 	}
 	item, err := s.deps.DefectCatalog.CreatePart(r.Context(), usecase.UpsertPartInput{
 		ZoneID: req.ZoneID, Code: req.Code, NameTR: req.NameTR, NameEN: req.NameEN,
-		SortOrder: req.SortOrder, IsActive: req.activeOrTrue(),
+		SortOrder: req.SortOrder, IsActive: req.activeOrTrue(), ActorID: actorID(r),
 	})
 	if err != nil {
 		writeError(w, err)
@@ -231,7 +231,7 @@ func (s *server) handleDefectPartUpdate(w http.ResponseWriter, r *http.Request) 
 	}
 	if err := s.deps.DefectCatalog.UpdatePart(r.Context(), id, usecase.UpsertPartInput{
 		ZoneID: req.ZoneID, Code: req.Code, NameTR: req.NameTR, NameEN: req.NameEN,
-		SortOrder: req.SortOrder, IsActive: req.activeOrTrue(),
+		SortOrder: req.SortOrder, IsActive: req.activeOrTrue(), ActorID: actorID(r),
 	}); err != nil {
 		writeError(w, err)
 		return
@@ -245,7 +245,7 @@ func (s *server) handleDefectPartDelete(w http.ResponseWriter, r *http.Request) 
 		badRequest(w, "id must be an integer")
 		return
 	}
-	if err := s.deps.DefectCatalog.DeletePart(r.Context(), id); err != nil {
+	if err := s.deps.DefectCatalog.DeletePart(r.Context(), actorID(r), id); err != nil {
 		writeError(w, err)
 		return
 	}
@@ -263,7 +263,7 @@ func (s *server) handleDefectPartReorder(w http.ResponseWriter, r *http.Request)
 		badRequest(w, "invalid request body")
 		return
 	}
-	if err := s.deps.DefectCatalog.ReorderParts(r.Context(), zoneID, req.IDs); err != nil {
+	if err := s.deps.DefectCatalog.ReorderParts(r.Context(), actorID(r), zoneID, req.IDs); err != nil {
 		writeError(w, err)
 		return
 	}
@@ -289,7 +289,7 @@ func (s *server) handleDefectTypeCreate(w http.ResponseWriter, r *http.Request) 
 	}
 	item, err := s.deps.DefectCatalog.CreateType(r.Context(), usecase.UpsertTypeInput{
 		Code: req.Code, NameTR: req.NameTR, NameEN: req.NameEN,
-		DefaultProcessID: req.DefaultProcessID, SortOrder: req.SortOrder, IsActive: req.activeOrTrue(),
+		DefaultProcessID: req.DefaultProcessID, SortOrder: req.SortOrder, IsActive: req.activeOrTrue(), ActorID: actorID(r),
 	})
 	if err != nil {
 		writeError(w, err)
@@ -311,7 +311,7 @@ func (s *server) handleDefectTypeUpdate(w http.ResponseWriter, r *http.Request) 
 	}
 	if err := s.deps.DefectCatalog.UpdateType(r.Context(), id, usecase.UpsertTypeInput{
 		Code: req.Code, NameTR: req.NameTR, NameEN: req.NameEN,
-		DefaultProcessID: req.DefaultProcessID, SortOrder: req.SortOrder, IsActive: req.activeOrTrue(),
+		DefaultProcessID: req.DefaultProcessID, SortOrder: req.SortOrder, IsActive: req.activeOrTrue(), ActorID: actorID(r),
 	}); err != nil {
 		writeError(w, err)
 		return
@@ -325,7 +325,7 @@ func (s *server) handleDefectTypeDelete(w http.ResponseWriter, r *http.Request) 
 		badRequest(w, "id must be an integer")
 		return
 	}
-	if err := s.deps.DefectCatalog.DeleteType(r.Context(), id); err != nil {
+	if err := s.deps.DefectCatalog.DeleteType(r.Context(), actorID(r), id); err != nil {
 		writeError(w, err)
 		return
 	}
@@ -338,7 +338,7 @@ func (s *server) handleDefectTypeReorder(w http.ResponseWriter, r *http.Request)
 		badRequest(w, "invalid request body")
 		return
 	}
-	if err := s.deps.DefectCatalog.ReorderTypes(r.Context(), req.IDs); err != nil {
+	if err := s.deps.DefectCatalog.ReorderTypes(r.Context(), actorID(r), req.IDs); err != nil {
 		writeError(w, err)
 		return
 	}

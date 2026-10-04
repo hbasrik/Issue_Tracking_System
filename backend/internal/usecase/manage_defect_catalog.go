@@ -39,12 +39,14 @@ func (a *DefectCatalogAdmin) ListProcesses(ctx context.Context) ([]domain.Defect
 	return items, nil
 }
 
+// UpsertProcessInput is the process form. ActorID is the admin (audit).
 type UpsertProcessInput struct {
 	Code      string
 	NameTR    string
 	NameEN    string
 	SortOrder int
 	IsActive  bool
+	ActorID   int
 }
 
 func (a *DefectCatalogAdmin) CreateProcess(ctx context.Context, in UpsertProcessInput) (*domain.DefectProcess, error) {
@@ -58,11 +60,18 @@ func (a *DefectCatalogAdmin) CreateProcess(ctx context.Context, in UpsertProcess
 	if p.SortOrder <= 0 {
 		p.SortOrder = 1
 	}
-	id, err := a.catalog.CreateProcess(ctx, p)
+	to := processSnapshot(p)
+	var created int
+	d := catalogDetail(domain.AdminEntityProcess, 0, nil, &to)
+	err := a.writeCatalog(ctx, in.ActorID, d, func(txCtx context.Context) error {
+		id, err := a.catalog.CreateProcess(txCtx, p)
+		created = id
+		return err
+	})
 	if err != nil {
 		return nil, err
 	}
-	p.ID = id
+	p.ID = created
 	return p, nil
 }
 
@@ -70,13 +79,26 @@ func (a *DefectCatalogAdmin) UpdateProcess(ctx context.Context, id int, in Upser
 	if err := domain.ValidateDefectCatalogueFields(in.Code, in.NameTR, in.NameEN); err != nil {
 		return err
 	}
-	return a.catalog.UpdateProcess(ctx, &domain.DefectProcess{
+	current, err := a.catalog.GetProcess(ctx, id)
+	if err != nil {
+		return err
+	}
+	next := &domain.DefectProcess{
 		ID: id, Code: strings.TrimSpace(in.Code), NameTR: strings.TrimSpace(in.NameTR), NameEN: strings.TrimSpace(in.NameEN),
 		SortOrder: in.SortOrder, IsActive: in.IsActive,
+	}
+	from, to := processSnapshot(current), processSnapshot(next)
+	d := catalogDetail(domain.AdminEntityProcess, id, &from, &to)
+	return a.writeCatalog(ctx, in.ActorID, d, func(txCtx context.Context) error {
+		return a.catalog.UpdateProcess(txCtx, next)
 	})
 }
 
-func (a *DefectCatalogAdmin) DeleteProcess(ctx context.Context, id int) error {
+func (a *DefectCatalogAdmin) DeleteProcess(ctx context.Context, actorID, id int) error {
+	current, err := a.catalog.GetProcess(ctx, id)
+	if err != nil {
+		return err
+	}
 	n, err := a.catalog.CountProcessUsage(ctx, id)
 	if err != nil {
 		return err
@@ -84,11 +106,26 @@ func (a *DefectCatalogAdmin) DeleteProcess(ctx context.Context, id int) error {
 	if n > 0 {
 		return &domain.CatalogInUseError{Kind: "process", Count: n}
 	}
-	return a.catalog.DeleteProcess(ctx, id)
+	from := processSnapshot(current)
+	d := catalogDetail(domain.AdminEntityProcess, id, &from, nil)
+	return a.writeCatalog(ctx, actorID, d, func(txCtx context.Context) error {
+		return a.catalog.DeleteProcess(txCtx, id)
+	})
 }
 
-func (a *DefectCatalogAdmin) ReorderProcesses(ctx context.Context, ids []int) error {
-	return a.catalog.ReorderProcesses(ctx, ids)
+func (a *DefectCatalogAdmin) ReorderProcesses(ctx context.Context, actorID int, ids []int) error {
+	items, err := a.catalog.ListProcesses(ctx)
+	if err != nil {
+		return err
+	}
+	before := make([]catalogRank, len(items))
+	for i, p := range items {
+		before[i] = catalogRank{ID: p.ID, Subject: domain.AdminNames(p.Code, p.NameTR, p.NameEN)}
+	}
+	d := reorderDetail(domain.AdminEntityProcess, domain.AdminAuditValue{}, before, ids)
+	return a.writeReorder(ctx, actorID, d, func(txCtx context.Context) error {
+		return a.catalog.ReorderProcesses(txCtx, ids)
+	})
 }
 
 // --- Zones ---
@@ -104,12 +141,14 @@ func (a *DefectCatalogAdmin) ListZones(ctx context.Context) ([]domain.DefectZone
 	return items, nil
 }
 
+// UpsertZoneInput is the zone form. ActorID is the admin (audit).
 type UpsertZoneInput struct {
 	Code      string
 	NameTR    string
 	NameEN    string
 	SortOrder int
 	IsActive  bool
+	ActorID   int
 }
 
 func (a *DefectCatalogAdmin) CreateZone(ctx context.Context, in UpsertZoneInput) (*domain.DefectZone, error) {
@@ -123,11 +162,17 @@ func (a *DefectCatalogAdmin) CreateZone(ctx context.Context, in UpsertZoneInput)
 	if z.SortOrder <= 0 {
 		z.SortOrder = 1
 	}
-	id, err := a.catalog.CreateZone(ctx, z)
+	to := zoneSnapshot(z)
+	var created int
+	err := a.writeCatalog(ctx, in.ActorID, catalogDetail(domain.AdminEntityZone, 0, nil, &to), func(txCtx context.Context) error {
+		id, err := a.catalog.CreateZone(txCtx, z)
+		created = id
+		return err
+	})
 	if err != nil {
 		return nil, err
 	}
-	z.ID = id
+	z.ID = created
 	return z, nil
 }
 
@@ -142,13 +187,17 @@ func (a *DefectCatalogAdmin) UpdateZone(ctx context.Context, id int, in UpsertZo
 	if domain.IsOtherZone(current.Code) && (!in.IsActive || strings.TrimSpace(in.Code) != current.Code) {
 		return domain.ErrDefectCatalogueProtected
 	}
-	return a.catalog.UpdateZone(ctx, &domain.DefectZone{
+	next := &domain.DefectZone{
 		ID: id, Code: strings.TrimSpace(in.Code), NameTR: strings.TrimSpace(in.NameTR), NameEN: strings.TrimSpace(in.NameEN),
 		SortOrder: in.SortOrder, IsActive: in.IsActive,
+	}
+	from, to := zoneSnapshot(current), zoneSnapshot(next)
+	return a.writeCatalog(ctx, in.ActorID, catalogDetail(domain.AdminEntityZone, id, &from, &to), func(txCtx context.Context) error {
+		return a.catalog.UpdateZone(txCtx, next)
 	})
 }
 
-func (a *DefectCatalogAdmin) DeleteZone(ctx context.Context, id int) error {
+func (a *DefectCatalogAdmin) DeleteZone(ctx context.Context, actorID, id int) error {
 	zone, err := a.catalog.GetZone(ctx, id)
 	if err != nil {
 		return err
@@ -170,11 +219,25 @@ func (a *DefectCatalogAdmin) DeleteZone(ctx context.Context, id int) error {
 	if parts > 0 {
 		return &domain.CatalogInUseError{Kind: "zone", Count: parts}
 	}
-	return a.catalog.DeleteZone(ctx, id)
+	from := zoneSnapshot(zone)
+	return a.writeCatalog(ctx, actorID, catalogDetail(domain.AdminEntityZone, id, &from, nil), func(txCtx context.Context) error {
+		return a.catalog.DeleteZone(txCtx, id)
+	})
 }
 
-func (a *DefectCatalogAdmin) ReorderZones(ctx context.Context, ids []int) error {
-	return a.catalog.ReorderZones(ctx, ids)
+func (a *DefectCatalogAdmin) ReorderZones(ctx context.Context, actorID int, ids []int) error {
+	items, err := a.catalog.ListZones(ctx)
+	if err != nil {
+		return err
+	}
+	before := make([]catalogRank, len(items))
+	for i := range items {
+		before[i] = catalogRank{ID: items[i].ID, Subject: zoneValue(&items[i])}
+	}
+	d := reorderDetail(domain.AdminEntityZone, domain.AdminAuditValue{}, before, ids)
+	return a.writeReorder(ctx, actorID, d, func(txCtx context.Context) error {
+		return a.catalog.ReorderZones(txCtx, ids)
+	})
 }
 
 // --- Parts ---
@@ -190,6 +253,7 @@ func (a *DefectCatalogAdmin) ListParts(ctx context.Context, zoneID *int) ([]doma
 	return items, nil
 }
 
+// UpsertPartInput is the part form. ActorID is the admin (audit).
 type UpsertPartInput struct {
 	ZoneID    int
 	Code      string
@@ -197,6 +261,7 @@ type UpsertPartInput struct {
 	NameEN    string
 	SortOrder int
 	IsActive  bool
+	ActorID   int
 }
 
 func (a *DefectCatalogAdmin) CreatePart(ctx context.Context, in UpsertPartInput) (*domain.DefectPart, error) {
@@ -226,11 +291,17 @@ func (a *DefectCatalogAdmin) CreatePart(ctx context.Context, in UpsertPartInput)
 	if p.SortOrder <= 0 {
 		p.SortOrder = 1
 	}
-	id, err := a.catalog.CreatePart(ctx, p)
+	to := partSnapshot(p, zone)
+	var created int
+	err = a.writeCatalog(ctx, in.ActorID, catalogDetail(domain.AdminEntityPart, 0, nil, &to), func(txCtx context.Context) error {
+		id, err := a.catalog.CreatePart(txCtx, p)
+		created = id
+		return err
+	})
 	if err != nil {
 		return nil, err
 	}
-	p.ID = id
+	p.ID = created
 	return p, nil
 }
 
@@ -275,13 +346,23 @@ func (a *DefectCatalogAdmin) UpdatePart(ctx context.Context, id int, in UpsertPa
 			return err
 		}
 	}
-	return a.catalog.UpdatePart(ctx, &domain.DefectPart{
+	next := &domain.DefectPart{
 		ID: id, ZoneID: in.ZoneID, Code: strings.TrimSpace(in.Code), NameTR: strings.TrimSpace(in.NameTR), NameEN: strings.TrimSpace(in.NameEN),
 		SortOrder: in.SortOrder, IsActive: in.IsActive,
+	}
+	fromZone := zone
+	if zoneChanged {
+		if fromZone, err = a.catalog.GetZone(ctx, current.ZoneID); err != nil {
+			return err
+		}
+	}
+	from, to := partSnapshot(current, fromZone), partSnapshot(next, zone)
+	return a.writeCatalog(ctx, in.ActorID, catalogDetail(domain.AdminEntityPart, id, &from, &to), func(txCtx context.Context) error {
+		return a.catalog.UpdatePart(txCtx, next)
 	})
 }
 
-func (a *DefectCatalogAdmin) DeletePart(ctx context.Context, id int) error {
+func (a *DefectCatalogAdmin) DeletePart(ctx context.Context, actorID, id int) error {
 	part, err := a.catalog.GetPart(ctx, id)
 	if err != nil {
 		return err
@@ -296,7 +377,14 @@ func (a *DefectCatalogAdmin) DeletePart(ctx context.Context, id int) error {
 	if n > 0 {
 		return &domain.CatalogInUseError{Kind: "part", Count: n}
 	}
-	return a.catalog.DeletePart(ctx, id)
+	zone, err := a.catalog.GetZone(ctx, part.ZoneID)
+	if err != nil {
+		return err
+	}
+	from := partSnapshot(part, zone)
+	return a.writeCatalog(ctx, actorID, catalogDetail(domain.AdminEntityPart, id, &from, nil), func(txCtx context.Context) error {
+		return a.catalog.DeletePart(txCtx, id)
+	})
 }
 
 // partZoneAllowed decides whether a part with partCode may be placed in zone:
@@ -355,11 +443,26 @@ func (a *DefectCatalogAdmin) typeNameFree(ctx context.Context, selfID int, nameT
 	return nil
 }
 
-func (a *DefectCatalogAdmin) ReorderParts(ctx context.Context, zoneID int, ids []int) error {
+func (a *DefectCatalogAdmin) ReorderParts(ctx context.Context, actorID, zoneID int, ids []int) error {
 	if zoneID <= 0 {
 		return domain.ErrDefectZoneRequired
 	}
-	return a.catalog.ReorderParts(ctx, zoneID, ids)
+	zone, err := a.catalog.GetZone(ctx, zoneID)
+	if err != nil {
+		return err
+	}
+	items, err := a.catalog.ListParts(ctx, &zoneID)
+	if err != nil {
+		return err
+	}
+	before := make([]catalogRank, len(items))
+	for i, p := range items {
+		before[i] = catalogRank{ID: p.ID, Subject: domain.AdminNames(p.Code, p.NameTR, p.NameEN)}
+	}
+	d := reorderDetail(domain.AdminEntityPart, zoneValue(zone), before, ids)
+	return a.writeReorder(ctx, actorID, d, func(txCtx context.Context) error {
+		return a.catalog.ReorderParts(txCtx, zoneID, ids)
+	})
 }
 
 // --- Types ---
@@ -375,6 +478,7 @@ func (a *DefectCatalogAdmin) ListTypes(ctx context.Context) ([]domain.DefectType
 	return items, nil
 }
 
+// UpsertTypeInput is the defect type form. ActorID is the admin (audit).
 type UpsertTypeInput struct {
 	Code             string
 	NameTR           string
@@ -382,6 +486,7 @@ type UpsertTypeInput struct {
 	DefaultProcessID *int
 	SortOrder        int
 	IsActive         bool
+	ActorID          int
 }
 
 func (a *DefectCatalogAdmin) CreateType(ctx context.Context, in UpsertTypeInput) (*domain.DefectType, error) {
@@ -401,11 +506,21 @@ func (a *DefectCatalogAdmin) CreateType(ctx context.Context, in UpsertTypeInput)
 	if t.SortOrder <= 0 {
 		t.SortOrder = 1
 	}
-	id, err := a.catalog.CreateType(ctx, t)
+	process, err := a.processValue(ctx, t.DefaultProcessID)
 	if err != nil {
 		return nil, err
 	}
-	t.ID = id
+	to := typeSnapshot(t, process)
+	var created int
+	err = a.writeCatalog(ctx, in.ActorID, catalogDetail(domain.AdminEntityDefectType, 0, nil, &to), func(txCtx context.Context) error {
+		id, err := a.catalog.CreateType(txCtx, t)
+		created = id
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+	t.ID = created
 	return t, nil
 }
 
@@ -430,13 +545,25 @@ func (a *DefectCatalogAdmin) UpdateType(ctx context.Context, id int, in UpsertTy
 			return err
 		}
 	}
-	return a.catalog.UpdateType(ctx, &domain.DefectType{
+	next := &domain.DefectType{
 		ID: id, Code: strings.TrimSpace(in.Code), NameTR: strings.TrimSpace(in.NameTR), NameEN: strings.TrimSpace(in.NameEN),
 		DefaultProcessID: in.DefaultProcessID, SortOrder: in.SortOrder, IsActive: in.IsActive,
+	}
+	fromProcess, err := a.processValue(ctx, current.DefaultProcessID)
+	if err != nil {
+		return err
+	}
+	toProcess, err := a.processValue(ctx, next.DefaultProcessID)
+	if err != nil {
+		return err
+	}
+	from, to := typeSnapshot(current, fromProcess), typeSnapshot(next, toProcess)
+	return a.writeCatalog(ctx, in.ActorID, catalogDetail(domain.AdminEntityDefectType, id, &from, &to), func(txCtx context.Context) error {
+		return a.catalog.UpdateType(txCtx, next)
 	})
 }
 
-func (a *DefectCatalogAdmin) DeleteType(ctx context.Context, id int) error {
+func (a *DefectCatalogAdmin) DeleteType(ctx context.Context, actorID, id int) error {
 	typ, err := a.catalog.GetType(ctx, id)
 	if err != nil {
 		return err
@@ -451,11 +578,29 @@ func (a *DefectCatalogAdmin) DeleteType(ctx context.Context, id int) error {
 	if n > 0 {
 		return &domain.CatalogInUseError{Kind: "type", Count: n}
 	}
-	return a.catalog.DeleteType(ctx, id)
+	process, err := a.processValue(ctx, typ.DefaultProcessID)
+	if err != nil {
+		return err
+	}
+	from := typeSnapshot(typ, process)
+	return a.writeCatalog(ctx, actorID, catalogDetail(domain.AdminEntityDefectType, id, &from, nil), func(txCtx context.Context) error {
+		return a.catalog.DeleteType(txCtx, id)
+	})
 }
 
-func (a *DefectCatalogAdmin) ReorderTypes(ctx context.Context, ids []int) error {
-	return a.catalog.ReorderTypes(ctx, ids)
+func (a *DefectCatalogAdmin) ReorderTypes(ctx context.Context, actorID int, ids []int) error {
+	items, err := a.catalog.ListTypes(ctx)
+	if err != nil {
+		return err
+	}
+	before := make([]catalogRank, len(items))
+	for i, t := range items {
+		before[i] = catalogRank{ID: t.ID, Subject: domain.AdminNames(t.Code, t.NameTR, t.NameEN)}
+	}
+	d := reorderDetail(domain.AdminEntityDefectType, domain.AdminAuditValue{}, before, ids)
+	return a.writeReorder(ctx, actorID, d, func(txCtx context.Context) error {
+		return a.catalog.ReorderTypes(txCtx, ids)
+	})
 }
 
 // ListActiveProcesses returns active responsible-process rows for classification edit.
@@ -581,6 +726,11 @@ func (a *DefectCatalogAdmin) promoteOtherPart(ctx context.Context, in PromoteOth
 		if err != nil {
 			return err
 		}
+		to := partSnapshot(created, zone)
+		if err := (adminAuditor{audit: a.audit}).record(txCtx, domain.AuditEventDefectCatalog, in.ActorID,
+			catalogDetail(domain.AdminEntityPart, id, nil, &to)); err != nil {
+			return err
+		}
 		if !in.RebindIssues {
 			return nil
 		}
@@ -659,6 +809,15 @@ func (a *DefectCatalogAdmin) promoteOtherType(ctx context.Context, in PromoteOth
 		typ.ID = id
 		created, err = a.catalog.GetType(txCtx, id)
 		if err != nil {
+			return err
+		}
+		process, err := a.processValue(txCtx, created.DefaultProcessID)
+		if err != nil {
+			return err
+		}
+		to := typeSnapshot(created, process)
+		if err := (adminAuditor{audit: a.audit}).record(txCtx, domain.AuditEventDefectCatalog, in.ActorID,
+			catalogDetail(domain.AdminEntityDefectType, id, nil, &to)); err != nil {
 			return err
 		}
 		if !in.RebindIssues {

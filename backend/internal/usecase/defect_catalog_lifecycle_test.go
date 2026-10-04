@@ -311,12 +311,12 @@ func TestCatalogAdmin_OtherRowsProtected(t *testing.T) {
 	checks := map[string]error{
 		"deactivate Other zone": admin.UpdateZone(ctx, 9, usecase.UpsertZoneInput{Code: "99", NameTR: "Diğer", NameEN: "Other", IsActive: false}),
 		"recode Other zone":     admin.UpdateZone(ctx, 9, usecase.UpsertZoneInput{Code: "98", NameTR: "Diğer", NameEN: "Other", IsActive: true}),
-		"delete Other zone":     admin.DeleteZone(ctx, 9),
+		"delete Other zone":     admin.DeleteZone(ctx, 1, 9),
 		"deactivate Other part": admin.UpdatePart(ctx, 99, usecase.UpsertPartInput{ZoneID: 9, Code: "99-99", NameTR: "Diğer", NameEN: "Other", IsActive: false}),
 		"move Other part":       admin.UpdatePart(ctx, 99, usecase.UpsertPartInput{ZoneID: 1, Code: "99-99", NameTR: "Diğer", NameEN: "Other", IsActive: true}),
-		"delete Other part":     admin.DeletePart(ctx, 99),
+		"delete Other part":     admin.DeletePart(ctx, 1, 99),
 		"deactivate Other type": admin.UpdateType(ctx, 99, usecase.UpsertTypeInput{Code: "99", NameTR: "Diğer", NameEN: "Other", IsActive: false}),
-		"delete Other type":     admin.DeleteType(ctx, 99),
+		"delete Other type":     admin.DeleteType(ctx, 1, 99),
 		"move part into Other zone": admin.UpdatePart(ctx, 10, usecase.UpsertPartInput{ZoneID: 9, Code: "10-01", NameTR: "Kapı", NameEN: "Door", IsActive: true}),
 	}
 	_, createErr := admin.CreatePart(ctx, usecase.UpsertPartInput{ZoneID: 9, Code: "99-01", NameTR: "x", NameEN: "x", IsActive: true})
