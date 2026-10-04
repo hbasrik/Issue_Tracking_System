@@ -1,0 +1,10 @@
+tr filter USER_ADMIN_CHANGE: 8 rows, action column ["Kullanıcı yönetimi"]
+tr filter ROLE_PERMISSION_CHANGE: 3 rows, action column ["Rol ve izinler"]
+tr filter CHECKLIST_TEMPLATE_CHANGE: 11 rows, action column ["Şablon düzenleme"]
+tr filter DEFECT_CATALOG_CHANGE: 27 rows, action column ["Hata kataloğu"]
+en filter USER_ADMIN_CHANGE: 8 rows, action column ["User management"]
+en filter ROLE_PERMISSION_CHANGE: 3 rows, action column ["Roles & permissions"]
+en filter CHECKLIST_TEMPLATE_CHANGE: 11 rows, action column ["Template edits"]
+en filter DEFECT_CATALOG_CHANGE: 27 rows, action column ["Defect catalogue"]
+viewer: options ["","ISSUE_STATUS_CHANGE","ISSUE_CLASSIFICATION_CHANGE","STATUS_CHANGE","EOL_WORKFLOW_STAGE_CHANGE","CHECKLIST_ITEM_UPDATE","MEDIA_UPLOADED","CHECKLIST_TEMPLATE_CHANGE","DEFECT_CATALOG_CHANGE"]; action column ["Hata kataloğu","Şablon düzenleme","EOL aşaması değişti","Araç durumu"]
+WEB CHECKS PASSED (no raw values)

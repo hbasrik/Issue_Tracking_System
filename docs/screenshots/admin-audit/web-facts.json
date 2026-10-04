@@ -1,0 +1,1470 @@
+{
+ "tr-manager-all": {
+  "options": [
+   {
+    "value": "",
+    "label": "Tüm tipler"
+   },
+   {
+    "value": "ISSUE_STATUS_CHANGE",
+    "label": "Issue durumu"
+   },
+   {
+    "value": "ISSUE_CLASSIFICATION_CHANGE",
+    "label": "Hata sınıflandırması"
+   },
+   {
+    "value": "STATUS_CHANGE",
+    "label": "Araç durumu"
+   },
+   {
+    "value": "EOL_WORKFLOW_STAGE_CHANGE",
+    "label": "EOL aşaması değişti"
+   },
+   {
+    "value": "CHECKLIST_ITEM_UPDATE",
+    "label": "Kontrol listesi güncellendi"
+   },
+   {
+    "value": "MEDIA_UPLOADED",
+    "label": "Fotoğraf yüklendi"
+   },
+   {
+    "value": "CHECKLIST_TEMPLATE_CHANGE",
+    "label": "Şablon düzenleme"
+   },
+   {
+    "value": "DEFECT_CATALOG_CHANGE",
+    "label": "Hata kataloğu"
+   },
+   {
+    "value": "USER_ADMIN_CHANGE",
+    "label": "Kullanıcı yönetimi"
+   },
+   {
+    "value": "ROLE_PERMISSION_CHANGE",
+    "label": "Rol ve izinler"
+   }
+  ],
+  "raw": [],
+  "rows": [
+   [
+    "4 Eki 18:12",
+    "Kullanıcı yönetimi",
+    "—",
+    "Kullanıcı «Tmp Analiz İzleyici (tmp.audit.viewer@karea.local)» — oluşturuldu · Ad: Tmp Analiz İzleyici · E-posta: tmp.audit.viewer@karea.local · Rol: Geçici Denetim İzleyici · Durum: Aktif",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Hata kataloğu",
+    "—",
+    "Süreç «Geçici süreç 2» — silindi · Ad: Geçici süreç 2 · Kod: TMPPROC2 · Durum: Aktif",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Hata kataloğu",
+    "—",
+    "Bölge «Geçici bölge 2 (91)» — silindi · Ad: Geçici bölge 2 · Kod: 91 · Durum: Aktif",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Hata kataloğu",
+    "—",
+    "Kusur tipi «Geçici kusur 2 (98)» — silindi · Ad: Geçici kusur 2 · Kod: 98 · Varsayılan süreç: Montaj · Durum: Aktif",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Hata kataloğu",
+    "—",
+    "Parça «Geçici parça 2 (10-91)» (Body) — silindi · Ad: Geçici parça 2 · Kod: 10-91 · Bölge: Body (10) · Durum: Aktif",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Hata kataloğu",
+    "—",
+    "Parça (Body) — sıralama değiştirildi · Doghouse (10-09): 10. sıradan 1. sıraya",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Hata kataloğu",
+    "—",
+    "Süreç — sıralama değiştirildi · Elektrik: 5. sıradan 1. sıraya",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Hata kataloğu",
+    "—",
+    "Bölge — sıralama değiştirildi · Diğer (99): 6. sıradan 1. sıraya",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Hata kataloğu",
+    "—",
+    "Kusur tipi — sıralama değiştirildi · Diğer (99): 11. sıradan 1. sıraya",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Hata kataloğu",
+    "—",
+    "Kusur tipi «Geçici kusur 2 (98)» — aktif edildi · Durum: Pasif → Aktif",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Hata kataloğu",
+    "—",
+    "Kusur tipi «Geçici kusur 2 (98)» — pasife alındı · Durum: Aktif → Pasif",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Hata kataloğu",
+    "—",
+    "Kusur tipi «Geçici kusur (98)» — güncellendi · Ad: Geçici kusur → Geçici kusur 2",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Hata kataloğu",
+    "—",
+    "Kusur tipi «Geçici kusur (98)» — güncellendi · Varsayılan süreç: Geçici süreç 2 → Montaj",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Hata kataloğu",
+    "—",
+    "Kusur tipi «Geçici kusur (98)» — oluşturuldu · Ad: Geçici kusur · Kod: 98 · Varsayılan süreç: Geçici süreç 2 · Durum: Aktif",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Hata kataloğu",
+    "—",
+    "Parça «Geçici parça 2 (10-91)» (Body) — aktif edildi · Durum: Pasif → Aktif",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Hata kataloğu",
+    "—",
+    "Parça «Geçici parça 2 (10-91)» (Body) — pasife alındı · Durum: Aktif → Pasif",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Hata kataloğu",
+    "—",
+    "Parça «Geçici parça 2 (91-01)» (Body) — güncellendi · Kod: 91-01 → 10-91 · Bölge: Geçici bölge 2 (91) → Body (10)",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Hata kataloğu",
+    "—",
+    "Parça «Geçici parça (91-01)» (Geçici bölge 2) — güncellendi · Ad: Geçici parça → Geçici parça 2",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Hata kataloğu",
+    "—",
+    "Parça «Geçici parça (91-01)» (Geçici bölge 2) — oluşturuldu · Ad: Geçici parça · Kod: 91-01 · Bölge: Geçici bölge 2 (91) · Durum: Aktif",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Hata kataloğu",
+    "—",
+    "Bölge «Geçici bölge 2 (91)» — aktif edildi · Durum: Pasif → Aktif",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Hata kataloğu",
+    "—",
+    "Bölge «Geçici bölge 2 (91)» — pasife alındı · Durum: Aktif → Pasif",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Hata kataloğu",
+    "—",
+    "Bölge «Geçici bölge (90)» — güncellendi · Ad: Geçici bölge → Geçici bölge 2 · Kod: 90 → 91",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Hata kataloğu",
+    "—",
+    "Bölge «Geçici bölge (90)» — oluşturuldu · Ad: Geçici bölge · Kod: 90 · Durum: Aktif",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Hata kataloğu",
+    "—",
+    "Süreç «Geçici süreç 2» — aktif edildi · Durum: Pasif → Aktif",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Hata kataloğu",
+    "—",
+    "Süreç «Geçici süreç 2» — pasife alındı · Durum: Aktif → Pasif",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Hata kataloğu",
+    "—",
+    "Süreç «Geçici süreç 2» — güncellendi · Kod: TMPPROC → TMPPROC2",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Hata kataloğu",
+    "—",
+    "Süreç «Geçici süreç» — güncellendi · Ad: Geçici süreç → Geçici süreç 2",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Hata kataloğu",
+    "—",
+    "Süreç «Geçici süreç» — oluşturuldu · Ad: Geçici süreç · Kod: TMPPROC · Durum: Aktif",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Şablon düzenleme",
+    "—",
+    "Şablon maddesi «TMP EoL maddesi» (EOL) — silindi · Madde metni: TMP EoL maddesi · EoL aşaması: Depo · Durum: Aktif",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Şablon düzenleme",
+    "—",
+    "Şablon maddesi «TMP EoL maddesi» (EOL) — güncellendi · EoL aşaması: Fabrika → Depo",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Şablon düzenleme",
+    "—",
+    "Şablon maddesi «TMP EoL maddesi» (EOL) — oluşturuldu · Madde metni: TMP EoL maddesi · EoL aşaması: Fabrika · Durum: Aktif",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Şablon düzenleme",
+    "—",
+    "Şablon maddesi «TMP denetim maddesi (düzeltildi)» (Sevkiyat) — silindi · Madde metni: TMP denetim maddesi (düzeltildi) · Durum: Aktif",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Şablon düzenleme",
+    "—",
+    "Şablon maddesi (Sevkiyat) — sıralama değiştirildi · TMP denetim maddesi (düzeltildi): 47. sıradan 1. sıraya",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Şablon düzenleme",
+    "—",
+    "Şablon maddesi «TMP denetim maddesi (düzeltildi)» (Sevkiyat) — aktif edildi · Durum: Pasif → Aktif",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Şablon düzenleme",
+    "—",
+    "Şablon maddesi «TMP denetim maddesi (düzeltildi)» (Sevkiyat) — pasife alındı · Durum: Aktif → Pasif",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Şablon düzenleme",
+    "—",
+    "Şablon maddesi «TMP denetim maddesi (düzeltildi)» (Sevkiyat) — güncellendi · Bölüm: Son Ayar & Kontroller → Diğer maddeler",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Şablon düzenleme",
+    "—",
+    "Şablon maddesi «TMP denetim maddesi (düzeltildi)» (Sevkiyat) — güncellendi · Bölüm: İç Montaj & Kesim İşleri → Son Ayar & Kontroller",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Şablon düzenleme",
+    "—",
+    "Şablon maddesi «TMP denetim maddesi» (Sevkiyat) — güncellendi · Madde metni: TMP denetim maddesi → TMP denetim maddesi (düzeltildi)",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Şablon düzenleme",
+    "—",
+    "Şablon maddesi «TMP denetim maddesi» (Sevkiyat) — oluşturuldu · Madde metni: TMP denetim maddesi · Bölüm: İç Montaj & Kesim İşleri · Durum: Aktif",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Rol ve izinler",
+    "—",
+    "Rol «Geçici Denetim İzleyici» — izinleri değiştirildi · Alınan izin: Araçları görüntüle",
+    "Local Manager"
+   ]
+  ]
+ },
+ "tr-filter-USER_ADMIN_CHANGE": {
+  "rows": 8,
+  "actions": [
+   "Kullanıcı yönetimi"
+  ],
+  "raw": [],
+  "lines": [
+   [
+    "4 Eki 18:12",
+    "Kullanıcı yönetimi",
+    "—",
+    "Kullanıcı «Tmp Analiz İzleyici (tmp.audit.viewer@karea.local)» — oluşturuldu · Ad: Tmp Analiz İzleyici · E-posta: tmp.audit.viewer@karea.local · Rol: Geçici Denetim İzleyici · Durum: Aktif",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Kullanıcı yönetimi",
+    "—",
+    "Kullanıcı «Tmp Denetim Kullanıcı (tmp.audit.user@karea.local)» — silindi · Ad: Tmp Denetim Kullanıcı · E-posta: tmp.audit.user@karea.local · Rol: Kalite · Durum: Aktif",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Kullanıcı yönetimi",
+    "—",
+    "Kullanıcı «Tmp Denetim Kullanıcı (tmp.audit.user@karea.local)» — giriş kilidi açıldı",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Kullanıcı yönetimi",
+    "—",
+    "Kullanıcı «Tmp Denetim Kullanıcı (tmp.audit.user@karea.local)» — şifresi sıfırlandı",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Kullanıcı yönetimi",
+    "—",
+    "Kullanıcı «Tmp Denetim Kullanıcı (tmp.audit.user@karea.local)» — aktif edildi · Durum: Pasif → Aktif",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Kullanıcı yönetimi",
+    "—",
+    "Kullanıcı «Tmp Denetim Kullanıcı (tmp.audit.user@karea.local)» — pasife alındı · Durum: Aktif → Pasif",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Kullanıcı yönetimi",
+    "—",
+    "Kullanıcı «Tmp Denetim Kullanıcı (tmp.audit.user@karea.local)» — rolü değiştirildi · Rol: Operatör → Kalite",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Kullanıcı yönetimi",
+    "—",
+    "Kullanıcı «Tmp Denetim Kullanıcı (tmp.audit.user@karea.local)» — oluşturuldu · Ad: Tmp Denetim Kullanıcı · E-posta: tmp.audit.user@karea.local · Rol: Operatör · Durum: Aktif",
+    "Local Manager"
+   ]
+  ]
+ },
+ "tr-filter-ROLE_PERMISSION_CHANGE": {
+  "rows": 3,
+  "actions": [
+   "Rol ve izinler"
+  ],
+  "raw": [],
+  "lines": [
+   [
+    "4 Eki 18:12",
+    "Rol ve izinler",
+    "—",
+    "Rol «Geçici Denetim İzleyici» — izinleri değiştirildi · Alınan izin: Araçları görüntüle",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Rol ve izinler",
+    "—",
+    "Rol «Geçici Denetim İzleyici» — izinleri değiştirildi · Verilen izin: Analiz sayfası, Araçları görüntüle, Web uygulamasına giriş",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Rol ve izinler",
+    "—",
+    "Rol «Geçici Denetim İzleyici» — oluşturuldu · Ad: Geçici Denetim İzleyici",
+    "Local Manager"
+   ]
+  ]
+ },
+ "tr-filter-CHECKLIST_TEMPLATE_CHANGE": {
+  "rows": 11,
+  "actions": [
+   "Şablon düzenleme"
+  ],
+  "raw": [],
+  "lines": [
+   [
+    "4 Eki 18:12",
+    "Şablon düzenleme",
+    "—",
+    "Şablon maddesi «TMP EoL maddesi» (EOL) — silindi · Madde metni: TMP EoL maddesi · EoL aşaması: Depo · Durum: Aktif",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Şablon düzenleme",
+    "—",
+    "Şablon maddesi «TMP EoL maddesi» (EOL) — güncellendi · EoL aşaması: Fabrika → Depo",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Şablon düzenleme",
+    "—",
+    "Şablon maddesi «TMP EoL maddesi» (EOL) — oluşturuldu · Madde metni: TMP EoL maddesi · EoL aşaması: Fabrika · Durum: Aktif",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Şablon düzenleme",
+    "—",
+    "Şablon maddesi «TMP denetim maddesi (düzeltildi)» (Sevkiyat) — silindi · Madde metni: TMP denetim maddesi (düzeltildi) · Durum: Aktif",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Şablon düzenleme",
+    "—",
+    "Şablon maddesi (Sevkiyat) — sıralama değiştirildi · TMP denetim maddesi (düzeltildi): 47. sıradan 1. sıraya",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Şablon düzenleme",
+    "—",
+    "Şablon maddesi «TMP denetim maddesi (düzeltildi)» (Sevkiyat) — aktif edildi · Durum: Pasif → Aktif",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Şablon düzenleme",
+    "—",
+    "Şablon maddesi «TMP denetim maddesi (düzeltildi)» (Sevkiyat) — pasife alındı · Durum: Aktif → Pasif",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Şablon düzenleme",
+    "—",
+    "Şablon maddesi «TMP denetim maddesi (düzeltildi)» (Sevkiyat) — güncellendi · Bölüm: Son Ayar & Kontroller → Diğer maddeler",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Şablon düzenleme",
+    "—",
+    "Şablon maddesi «TMP denetim maddesi (düzeltildi)» (Sevkiyat) — güncellendi · Bölüm: İç Montaj & Kesim İşleri → Son Ayar & Kontroller",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Şablon düzenleme",
+    "—",
+    "Şablon maddesi «TMP denetim maddesi» (Sevkiyat) — güncellendi · Madde metni: TMP denetim maddesi → TMP denetim maddesi (düzeltildi)",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Şablon düzenleme",
+    "—",
+    "Şablon maddesi «TMP denetim maddesi» (Sevkiyat) — oluşturuldu · Madde metni: TMP denetim maddesi · Bölüm: İç Montaj & Kesim İşleri · Durum: Aktif",
+    "Local Manager"
+   ]
+  ]
+ },
+ "tr-filter-DEFECT_CATALOG_CHANGE": {
+  "rows": 27,
+  "actions": [
+   "Hata kataloğu"
+  ],
+  "raw": [],
+  "lines": [
+   [
+    "4 Eki 18:12",
+    "Hata kataloğu",
+    "—",
+    "Süreç «Geçici süreç 2» — silindi · Ad: Geçici süreç 2 · Kod: TMPPROC2 · Durum: Aktif",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Hata kataloğu",
+    "—",
+    "Bölge «Geçici bölge 2 (91)» — silindi · Ad: Geçici bölge 2 · Kod: 91 · Durum: Aktif",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Hata kataloğu",
+    "—",
+    "Kusur tipi «Geçici kusur 2 (98)» — silindi · Ad: Geçici kusur 2 · Kod: 98 · Varsayılan süreç: Montaj · Durum: Aktif",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Hata kataloğu",
+    "—",
+    "Parça «Geçici parça 2 (10-91)» (Body) — silindi · Ad: Geçici parça 2 · Kod: 10-91 · Bölge: Body (10) · Durum: Aktif",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Hata kataloğu",
+    "—",
+    "Parça (Body) — sıralama değiştirildi · Doghouse (10-09): 10. sıradan 1. sıraya",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Hata kataloğu",
+    "—",
+    "Süreç — sıralama değiştirildi · Elektrik: 5. sıradan 1. sıraya",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Hata kataloğu",
+    "—",
+    "Bölge — sıralama değiştirildi · Diğer (99): 6. sıradan 1. sıraya",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Hata kataloğu",
+    "—",
+    "Kusur tipi — sıralama değiştirildi · Diğer (99): 11. sıradan 1. sıraya",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Hata kataloğu",
+    "—",
+    "Kusur tipi «Geçici kusur 2 (98)» — aktif edildi · Durum: Pasif → Aktif",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Hata kataloğu",
+    "—",
+    "Kusur tipi «Geçici kusur 2 (98)» — pasife alındı · Durum: Aktif → Pasif",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Hata kataloğu",
+    "—",
+    "Kusur tipi «Geçici kusur (98)» — güncellendi · Ad: Geçici kusur → Geçici kusur 2",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Hata kataloğu",
+    "—",
+    "Kusur tipi «Geçici kusur (98)» — güncellendi · Varsayılan süreç: Geçici süreç 2 → Montaj",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Hata kataloğu",
+    "—",
+    "Kusur tipi «Geçici kusur (98)» — oluşturuldu · Ad: Geçici kusur · Kod: 98 · Varsayılan süreç: Geçici süreç 2 · Durum: Aktif",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Hata kataloğu",
+    "—",
+    "Parça «Geçici parça 2 (10-91)» (Body) — aktif edildi · Durum: Pasif → Aktif",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Hata kataloğu",
+    "—",
+    "Parça «Geçici parça 2 (10-91)» (Body) — pasife alındı · Durum: Aktif → Pasif",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Hata kataloğu",
+    "—",
+    "Parça «Geçici parça 2 (91-01)» (Body) — güncellendi · Kod: 91-01 → 10-91 · Bölge: Geçici bölge 2 (91) → Body (10)",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Hata kataloğu",
+    "—",
+    "Parça «Geçici parça (91-01)» (Geçici bölge 2) — güncellendi · Ad: Geçici parça → Geçici parça 2",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Hata kataloğu",
+    "—",
+    "Parça «Geçici parça (91-01)» (Geçici bölge 2) — oluşturuldu · Ad: Geçici parça · Kod: 91-01 · Bölge: Geçici bölge 2 (91) · Durum: Aktif",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Hata kataloğu",
+    "—",
+    "Bölge «Geçici bölge 2 (91)» — aktif edildi · Durum: Pasif → Aktif",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Hata kataloğu",
+    "—",
+    "Bölge «Geçici bölge 2 (91)» — pasife alındı · Durum: Aktif → Pasif",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Hata kataloğu",
+    "—",
+    "Bölge «Geçici bölge (90)» — güncellendi · Ad: Geçici bölge → Geçici bölge 2 · Kod: 90 → 91",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Hata kataloğu",
+    "—",
+    "Bölge «Geçici bölge (90)» — oluşturuldu · Ad: Geçici bölge · Kod: 90 · Durum: Aktif",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Hata kataloğu",
+    "—",
+    "Süreç «Geçici süreç 2» — aktif edildi · Durum: Pasif → Aktif",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Hata kataloğu",
+    "—",
+    "Süreç «Geçici süreç 2» — pasife alındı · Durum: Aktif → Pasif",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Hata kataloğu",
+    "—",
+    "Süreç «Geçici süreç 2» — güncellendi · Kod: TMPPROC → TMPPROC2",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Hata kataloğu",
+    "—",
+    "Süreç «Geçici süreç» — güncellendi · Ad: Geçici süreç → Geçici süreç 2",
+    "Local Manager"
+   ],
+   [
+    "4 Eki 18:12",
+    "Hata kataloğu",
+    "—",
+    "Süreç «Geçici süreç» — oluşturuldu · Ad: Geçici süreç · Kod: TMPPROC · Durum: Aktif",
+    "Local Manager"
+   ]
+  ]
+ },
+ "en-manager-all": {
+  "options": [
+   {
+    "value": "",
+    "label": "All types"
+   },
+   {
+    "value": "ISSUE_STATUS_CHANGE",
+    "label": "Issue status"
+   },
+   {
+    "value": "ISSUE_CLASSIFICATION_CHANGE",
+    "label": "Issue classification"
+   },
+   {
+    "value": "STATUS_CHANGE",
+    "label": "Vehicle status"
+   },
+   {
+    "value": "EOL_WORKFLOW_STAGE_CHANGE",
+    "label": "EOL stage changed"
+   },
+   {
+    "value": "CHECKLIST_ITEM_UPDATE",
+    "label": "Checklist updated"
+   },
+   {
+    "value": "MEDIA_UPLOADED",
+    "label": "Photo uploaded"
+   },
+   {
+    "value": "CHECKLIST_TEMPLATE_CHANGE",
+    "label": "Template edits"
+   },
+   {
+    "value": "DEFECT_CATALOG_CHANGE",
+    "label": "Defect catalogue"
+   },
+   {
+    "value": "USER_ADMIN_CHANGE",
+    "label": "User management"
+   },
+   {
+    "value": "ROLE_PERMISSION_CHANGE",
+    "label": "Roles & permissions"
+   }
+  ],
+  "raw": [],
+  "rows": [
+   [
+    "4 Oct, 18:12",
+    "User management",
+    "—",
+    "User «Tmp Analiz İzleyici (tmp.audit.viewer@karea.local)» — created · Name: Tmp Analiz İzleyici · Email: tmp.audit.viewer@karea.local · Role: Geçici Denetim İzleyici · Status: Active",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Defect catalogue",
+    "—",
+    "Process «Temp process 2» — deleted · Name: Temp process 2 · Code: TMPPROC2 · Status: Active",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Defect catalogue",
+    "—",
+    "Zone «Temp zone (91)» — deleted · Name: Temp zone · Code: 91 · Status: Active",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Defect catalogue",
+    "—",
+    "Defect type «Temp defect 2 (98)» — deleted · Name: Temp defect 2 · Code: 98 · Default process: Assembly · Status: Active",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Defect catalogue",
+    "—",
+    "Part «Temp part (10-91)» (Body) — deleted · Name: Temp part · Code: 10-91 · Zone: Body (10) · Status: Active",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Defect catalogue",
+    "—",
+    "Part (Body) — order changed · Doghouse (10-09): position 10 → 1",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Defect catalogue",
+    "—",
+    "Process — order changed · Electrical: position 5 → 1",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Defect catalogue",
+    "—",
+    "Zone — order changed · Other (99): position 6 → 1",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Defect catalogue",
+    "—",
+    "Defect type — order changed · Other (99): position 11 → 1",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Defect catalogue",
+    "—",
+    "Defect type «Temp defect 2 (98)» — activated · Status: Inactive → Active",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Defect catalogue",
+    "—",
+    "Defect type «Temp defect 2 (98)» — deactivated · Status: Active → Inactive",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Defect catalogue",
+    "—",
+    "Defect type «Temp defect (98)» — updated · Name: Temp defect → Temp defect 2",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Defect catalogue",
+    "—",
+    "Defect type «Temp defect (98)» — updated · Default process: Temp process 2 → Assembly",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Defect catalogue",
+    "—",
+    "Defect type «Temp defect (98)» — created · Name: Temp defect · Code: 98 · Default process: Temp process 2 · Status: Active",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Defect catalogue",
+    "—",
+    "Part «Temp part (10-91)» (Body) — activated · Status: Inactive → Active",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Defect catalogue",
+    "—",
+    "Part «Temp part (10-91)» (Body) — deactivated · Status: Active → Inactive",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Defect catalogue",
+    "—",
+    "Part «Temp part (91-01)» (Body) — updated · Code: 91-01 → 10-91 · Zone: Temp zone (91) → Body (10)",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Defect catalogue",
+    "—",
+    "Part «Temp part (91-01)» (Temp zone) — updated · Name: Geçici parça / Temp part → Geçici parça 2 / Temp part",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Defect catalogue",
+    "—",
+    "Part «Temp part (91-01)» (Temp zone) — created · Name: Temp part · Code: 91-01 · Zone: Temp zone (91) · Status: Active",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Defect catalogue",
+    "—",
+    "Zone «Temp zone (91)» — activated · Status: Inactive → Active",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Defect catalogue",
+    "—",
+    "Zone «Temp zone (91)» — deactivated · Status: Active → Inactive",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Defect catalogue",
+    "—",
+    "Zone «Temp zone (90)» — updated · Name: Geçici bölge / Temp zone → Geçici bölge 2 / Temp zone · Code: 90 → 91",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Defect catalogue",
+    "—",
+    "Zone «Temp zone (90)» — created · Name: Temp zone · Code: 90 · Status: Active",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Defect catalogue",
+    "—",
+    "Process «Temp process 2» — activated · Status: Inactive → Active",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Defect catalogue",
+    "—",
+    "Process «Temp process 2» — deactivated · Status: Active → Inactive",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Defect catalogue",
+    "—",
+    "Process «Temp process 2» — updated · Code: TMPPROC → TMPPROC2",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Defect catalogue",
+    "—",
+    "Process «Temp process» — updated · Name: Temp process → Temp process 2",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Defect catalogue",
+    "—",
+    "Process «Temp process» — created · Name: Temp process · Code: TMPPROC · Status: Active",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Template edits",
+    "—",
+    "Template item «TMP EoL maddesi» (EOL) — deleted · Item text: TMP EoL maddesi · EoL phase: Depot · Status: Active",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Template edits",
+    "—",
+    "Template item «TMP EoL maddesi» (EOL) — updated · EoL phase: Factory → Depot",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Template edits",
+    "—",
+    "Template item «TMP EoL maddesi» (EOL) — created · Item text: TMP EoL maddesi · EoL phase: Factory · Status: Active",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Template edits",
+    "—",
+    "Template item «TMP denetim maddesi (düzeltildi)» (Shipment) — deleted · Item text: TMP denetim maddesi (düzeltildi) · Status: Active",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Template edits",
+    "—",
+    "Template item (Shipment) — order changed · TMP denetim maddesi (düzeltildi): position 47 → 1",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Template edits",
+    "—",
+    "Template item «TMP denetim maddesi (düzeltildi)» (Shipment) — activated · Status: Inactive → Active",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Template edits",
+    "—",
+    "Template item «TMP denetim maddesi (düzeltildi)» (Shipment) — deactivated · Status: Active → Inactive",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Template edits",
+    "—",
+    "Template item «TMP denetim maddesi (düzeltildi)» (Shipment) — updated · Section: Final adjustments & checks → Other items",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Template edits",
+    "—",
+    "Template item «TMP denetim maddesi (düzeltildi)» (Shipment) — updated · Section: Interior fitting & cutting → Final adjustments & checks",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Template edits",
+    "—",
+    "Template item «TMP denetim maddesi» (Shipment) — updated · Item text: TMP denetim maddesi → TMP denetim maddesi (düzeltildi)",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Template edits",
+    "—",
+    "Template item «TMP denetim maddesi» (Shipment) — created · Item text: TMP denetim maddesi · Section: Interior fitting & cutting · Status: Active",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Roles & permissions",
+    "—",
+    "Role «Geçici Denetim İzleyici» — permissions changed · Revoked: View vehicles",
+    "Local Manager"
+   ]
+  ]
+ },
+ "en-filter-USER_ADMIN_CHANGE": {
+  "rows": 8,
+  "actions": [
+   "User management"
+  ],
+  "raw": [],
+  "lines": [
+   [
+    "4 Oct, 18:12",
+    "User management",
+    "—",
+    "User «Tmp Analiz İzleyici (tmp.audit.viewer@karea.local)» — created · Name: Tmp Analiz İzleyici · Email: tmp.audit.viewer@karea.local · Role: Geçici Denetim İzleyici · Status: Active",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "User management",
+    "—",
+    "User «Tmp Denetim Kullanıcı (tmp.audit.user@karea.local)» — deleted · Name: Tmp Denetim Kullanıcı · Email: tmp.audit.user@karea.local · Role: Quality · Status: Active",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "User management",
+    "—",
+    "User «Tmp Denetim Kullanıcı (tmp.audit.user@karea.local)» — login lock cleared",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "User management",
+    "—",
+    "User «Tmp Denetim Kullanıcı (tmp.audit.user@karea.local)» — password reset",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "User management",
+    "—",
+    "User «Tmp Denetim Kullanıcı (tmp.audit.user@karea.local)» — activated · Status: Inactive → Active",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "User management",
+    "—",
+    "User «Tmp Denetim Kullanıcı (tmp.audit.user@karea.local)» — deactivated · Status: Active → Inactive",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "User management",
+    "—",
+    "User «Tmp Denetim Kullanıcı (tmp.audit.user@karea.local)» — role changed · Role: Operator → Quality",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "User management",
+    "—",
+    "User «Tmp Denetim Kullanıcı (tmp.audit.user@karea.local)» — created · Name: Tmp Denetim Kullanıcı · Email: tmp.audit.user@karea.local · Role: Operator · Status: Active",
+    "Local Manager"
+   ]
+  ]
+ },
+ "en-filter-ROLE_PERMISSION_CHANGE": {
+  "rows": 3,
+  "actions": [
+   "Roles & permissions"
+  ],
+  "raw": [],
+  "lines": [
+   [
+    "4 Oct, 18:12",
+    "Roles & permissions",
+    "—",
+    "Role «Geçici Denetim İzleyici» — permissions changed · Revoked: View vehicles",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Roles & permissions",
+    "—",
+    "Role «Geçici Denetim İzleyici» — permissions changed · Granted: Analysis page, View vehicles, Sign in to the web app",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Roles & permissions",
+    "—",
+    "Role «Geçici Denetim İzleyici» — created · Name: Geçici Denetim İzleyici",
+    "Local Manager"
+   ]
+  ]
+ },
+ "en-filter-CHECKLIST_TEMPLATE_CHANGE": {
+  "rows": 11,
+  "actions": [
+   "Template edits"
+  ],
+  "raw": [],
+  "lines": [
+   [
+    "4 Oct, 18:12",
+    "Template edits",
+    "—",
+    "Template item «TMP EoL maddesi» (EOL) — deleted · Item text: TMP EoL maddesi · EoL phase: Depot · Status: Active",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Template edits",
+    "—",
+    "Template item «TMP EoL maddesi» (EOL) — updated · EoL phase: Factory → Depot",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Template edits",
+    "—",
+    "Template item «TMP EoL maddesi» (EOL) — created · Item text: TMP EoL maddesi · EoL phase: Factory · Status: Active",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Template edits",
+    "—",
+    "Template item «TMP denetim maddesi (düzeltildi)» (Shipment) — deleted · Item text: TMP denetim maddesi (düzeltildi) · Status: Active",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Template edits",
+    "—",
+    "Template item (Shipment) — order changed · TMP denetim maddesi (düzeltildi): position 47 → 1",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Template edits",
+    "—",
+    "Template item «TMP denetim maddesi (düzeltildi)» (Shipment) — activated · Status: Inactive → Active",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Template edits",
+    "—",
+    "Template item «TMP denetim maddesi (düzeltildi)» (Shipment) — deactivated · Status: Active → Inactive",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Template edits",
+    "—",
+    "Template item «TMP denetim maddesi (düzeltildi)» (Shipment) — updated · Section: Final adjustments & checks → Other items",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Template edits",
+    "—",
+    "Template item «TMP denetim maddesi (düzeltildi)» (Shipment) — updated · Section: Interior fitting & cutting → Final adjustments & checks",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Template edits",
+    "—",
+    "Template item «TMP denetim maddesi» (Shipment) — updated · Item text: TMP denetim maddesi → TMP denetim maddesi (düzeltildi)",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Template edits",
+    "—",
+    "Template item «TMP denetim maddesi» (Shipment) — created · Item text: TMP denetim maddesi · Section: Interior fitting & cutting · Status: Active",
+    "Local Manager"
+   ]
+  ]
+ },
+ "en-filter-DEFECT_CATALOG_CHANGE": {
+  "rows": 27,
+  "actions": [
+   "Defect catalogue"
+  ],
+  "raw": [],
+  "lines": [
+   [
+    "4 Oct, 18:12",
+    "Defect catalogue",
+    "—",
+    "Process «Temp process 2» — deleted · Name: Temp process 2 · Code: TMPPROC2 · Status: Active",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Defect catalogue",
+    "—",
+    "Zone «Temp zone (91)» — deleted · Name: Temp zone · Code: 91 · Status: Active",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Defect catalogue",
+    "—",
+    "Defect type «Temp defect 2 (98)» — deleted · Name: Temp defect 2 · Code: 98 · Default process: Assembly · Status: Active",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Defect catalogue",
+    "—",
+    "Part «Temp part (10-91)» (Body) — deleted · Name: Temp part · Code: 10-91 · Zone: Body (10) · Status: Active",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Defect catalogue",
+    "—",
+    "Part (Body) — order changed · Doghouse (10-09): position 10 → 1",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Defect catalogue",
+    "—",
+    "Process — order changed · Electrical: position 5 → 1",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Defect catalogue",
+    "—",
+    "Zone — order changed · Other (99): position 6 → 1",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Defect catalogue",
+    "—",
+    "Defect type — order changed · Other (99): position 11 → 1",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Defect catalogue",
+    "—",
+    "Defect type «Temp defect 2 (98)» — activated · Status: Inactive → Active",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Defect catalogue",
+    "—",
+    "Defect type «Temp defect 2 (98)» — deactivated · Status: Active → Inactive",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Defect catalogue",
+    "—",
+    "Defect type «Temp defect (98)» — updated · Name: Temp defect → Temp defect 2",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Defect catalogue",
+    "—",
+    "Defect type «Temp defect (98)» — updated · Default process: Temp process 2 → Assembly",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Defect catalogue",
+    "—",
+    "Defect type «Temp defect (98)» — created · Name: Temp defect · Code: 98 · Default process: Temp process 2 · Status: Active",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Defect catalogue",
+    "—",
+    "Part «Temp part (10-91)» (Body) — activated · Status: Inactive → Active",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Defect catalogue",
+    "—",
+    "Part «Temp part (10-91)» (Body) — deactivated · Status: Active → Inactive",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Defect catalogue",
+    "—",
+    "Part «Temp part (91-01)» (Body) — updated · Code: 91-01 → 10-91 · Zone: Temp zone (91) → Body (10)",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Defect catalogue",
+    "—",
+    "Part «Temp part (91-01)» (Temp zone) — updated · Name: Geçici parça / Temp part → Geçici parça 2 / Temp part",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Defect catalogue",
+    "—",
+    "Part «Temp part (91-01)» (Temp zone) — created · Name: Temp part · Code: 91-01 · Zone: Temp zone (91) · Status: Active",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Defect catalogue",
+    "—",
+    "Zone «Temp zone (91)» — activated · Status: Inactive → Active",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Defect catalogue",
+    "—",
+    "Zone «Temp zone (91)» — deactivated · Status: Active → Inactive",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Defect catalogue",
+    "—",
+    "Zone «Temp zone (90)» — updated · Name: Geçici bölge / Temp zone → Geçici bölge 2 / Temp zone · Code: 90 → 91",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Defect catalogue",
+    "—",
+    "Zone «Temp zone (90)» — created · Name: Temp zone · Code: 90 · Status: Active",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Defect catalogue",
+    "—",
+    "Process «Temp process 2» — activated · Status: Inactive → Active",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Defect catalogue",
+    "—",
+    "Process «Temp process 2» — deactivated · Status: Active → Inactive",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Defect catalogue",
+    "—",
+    "Process «Temp process 2» — updated · Code: TMPPROC → TMPPROC2",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Defect catalogue",
+    "—",
+    "Process «Temp process» — updated · Name: Temp process → Temp process 2",
+    "Local Manager"
+   ],
+   [
+    "4 Oct, 18:12",
+    "Defect catalogue",
+    "—",
+    "Process «Temp process» — created · Name: Temp process · Code: TMPPROC · Status: Active",
+    "Local Manager"
+   ]
+  ]
+ },
+ "tr-viewer": {
+  "options": [
+   {
+    "value": "",
+    "label": "Tüm tipler"
+   },
+   {
+    "value": "ISSUE_STATUS_CHANGE",
+    "label": "Issue durumu"
+   },
+   {
+    "value": "ISSUE_CLASSIFICATION_CHANGE",
+    "label": "Hata sınıflandırması"
+   },
+   {
+    "value": "STATUS_CHANGE",
+    "label": "Araç durumu"
+   },
+   {
+    "value": "EOL_WORKFLOW_STAGE_CHANGE",
+    "label": "EOL aşaması değişti"
+   },
+   {
+    "value": "CHECKLIST_ITEM_UPDATE",
+    "label": "Kontrol listesi güncellendi"
+   },
+   {
+    "value": "MEDIA_UPLOADED",
+    "label": "Fotoğraf yüklendi"
+   },
+   {
+    "value": "CHECKLIST_TEMPLATE_CHANGE",
+    "label": "Şablon düzenleme"
+   },
+   {
+    "value": "DEFECT_CATALOG_CHANGE",
+    "label": "Hata kataloğu"
+   }
+  ],
+  "actions": [
+   "Hata kataloğu",
+   "Şablon düzenleme",
+   "EOL aşaması değişti",
+   "Araç durumu"
+  ],
+  "raw": [],
+  "rows": 40
+ }
+}

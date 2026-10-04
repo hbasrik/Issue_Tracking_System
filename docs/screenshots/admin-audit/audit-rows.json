@@ -1,0 +1,1791 @@
+[
+ {
+  "step": "user create",
+  "id": 25,
+  "event_type": "USER_ADMIN_CHANGE",
+  "actor": "Local Manager",
+  "vin": "<NULL>",
+  "old_value": "<NULL>",
+  "new_value": "<NULL>",
+  "metadata": {
+   "action": "create",
+   "entity": "user",
+   "parent": {},
+   "changes": [
+    {
+     "to": {
+      "en": "Tmp Denetim Kullanıcı",
+      "tr": "Tmp Denetim Kullanıcı"
+     },
+     "from": {},
+     "field": "name"
+    },
+    {
+     "to": {
+      "en": "tmp.audit.user@karea.local",
+      "tr": "tmp.audit.user@karea.local"
+     },
+     "from": {},
+     "field": "email"
+    },
+    {
+     "to": {
+      "en": "Operator",
+      "tr": "Operator",
+      "code": "OPERATOR"
+     },
+     "from": {},
+     "field": "role"
+    },
+    {
+     "to": {
+      "code": "true"
+     },
+     "from": {},
+     "field": "is_active"
+    }
+   ],
+   "subject": {
+    "en": "Tmp Denetim Kullanıcı",
+    "tr": "Tmp Denetim Kullanıcı"
+   },
+   "entity_id": 6,
+   "subject_email": "tmp.audit.user@karea.local"
+  }
+ },
+ {
+  "step": "user role change OPERATOR -> QUALITY",
+  "id": 26,
+  "event_type": "USER_ADMIN_CHANGE",
+  "actor": "Local Manager",
+  "vin": "<NULL>",
+  "old_value": "<NULL>",
+  "new_value": "<NULL>",
+  "metadata": {
+   "action": "role_change",
+   "entity": "user",
+   "parent": {},
+   "changes": [
+    {
+     "to": {
+      "en": "Quality",
+      "tr": "Quality",
+      "code": "QUALITY"
+     },
+     "from": {
+      "en": "Operator",
+      "tr": "Operator",
+      "code": "OPERATOR"
+     },
+     "field": "role"
+    }
+   ],
+   "subject": {
+    "en": "Tmp Denetim Kullanıcı",
+    "tr": "Tmp Denetim Kullanıcı"
+   },
+   "entity_id": 6,
+   "subject_email": "tmp.audit.user@karea.local"
+  }
+ },
+ {
+  "step": "user deactivate",
+  "id": 27,
+  "event_type": "USER_ADMIN_CHANGE",
+  "actor": "Local Manager",
+  "vin": "<NULL>",
+  "old_value": "<NULL>",
+  "new_value": "<NULL>",
+  "metadata": {
+   "action": "deactivate",
+   "entity": "user",
+   "parent": {},
+   "changes": [
+    {
+     "to": {
+      "code": "false"
+     },
+     "from": {
+      "code": "true"
+     },
+     "field": "is_active"
+    }
+   ],
+   "subject": {
+    "en": "Tmp Denetim Kullanıcı",
+    "tr": "Tmp Denetim Kullanıcı"
+   },
+   "entity_id": 6,
+   "subject_email": "tmp.audit.user@karea.local"
+  }
+ },
+ {
+  "step": "user activate",
+  "id": 28,
+  "event_type": "USER_ADMIN_CHANGE",
+  "actor": "Local Manager",
+  "vin": "<NULL>",
+  "old_value": "<NULL>",
+  "new_value": "<NULL>",
+  "metadata": {
+   "action": "activate",
+   "entity": "user",
+   "parent": {},
+   "changes": [
+    {
+     "to": {
+      "code": "true"
+     },
+     "from": {
+      "code": "false"
+     },
+     "field": "is_active"
+    }
+   ],
+   "subject": {
+    "en": "Tmp Denetim Kullanıcı",
+    "tr": "Tmp Denetim Kullanıcı"
+   },
+   "entity_id": 6,
+   "subject_email": "tmp.audit.user@karea.local"
+  }
+ },
+ {
+  "step": "user password reset",
+  "id": 29,
+  "event_type": "USER_ADMIN_CHANGE",
+  "actor": "Local Manager",
+  "vin": "<NULL>",
+  "old_value": "<NULL>",
+  "new_value": "<NULL>",
+  "metadata": {
+   "action": "password_reset",
+   "entity": "user",
+   "parent": {},
+   "subject": {
+    "en": "Tmp Denetim Kullanıcı",
+    "tr": "Tmp Denetim Kullanıcı"
+   },
+   "entity_id": 6,
+   "subject_email": "tmp.audit.user@karea.local"
+  }
+ },
+ {
+  "step": "unlock-login after 5 failed logins",
+  "id": 30,
+  "event_type": "USER_ADMIN_CHANGE",
+  "actor": "Local Manager",
+  "vin": "<NULL>",
+  "old_value": "<NULL>",
+  "new_value": "<NULL>",
+  "metadata": {
+   "action": "login_unlock",
+   "entity": "user",
+   "parent": {},
+   "subject": {
+    "en": "Tmp Denetim Kullanıcı",
+    "tr": "Tmp Denetim Kullanıcı"
+   },
+   "entity_id": 6,
+   "subject_email": "tmp.audit.user@karea.local"
+  }
+ },
+ {
+  "step": "user delete",
+  "id": 31,
+  "event_type": "USER_ADMIN_CHANGE",
+  "actor": "Local Manager",
+  "vin": "<NULL>",
+  "old_value": "<NULL>",
+  "new_value": "<NULL>",
+  "metadata": {
+   "action": "delete",
+   "entity": "user",
+   "parent": {},
+   "changes": [
+    {
+     "to": {},
+     "from": {
+      "en": "Tmp Denetim Kullanıcı",
+      "tr": "Tmp Denetim Kullanıcı"
+     },
+     "field": "name"
+    },
+    {
+     "to": {},
+     "from": {
+      "en": "tmp.audit.user@karea.local",
+      "tr": "tmp.audit.user@karea.local"
+     },
+     "field": "email"
+    },
+    {
+     "to": {},
+     "from": {
+      "en": "Quality",
+      "tr": "Quality",
+      "code": "QUALITY"
+     },
+     "field": "role"
+    },
+    {
+     "to": {},
+     "from": {
+      "code": "true"
+     },
+     "field": "is_active"
+    }
+   ],
+   "subject": {
+    "en": "Tmp Denetim Kullanıcı",
+    "tr": "Tmp Denetim Kullanıcı"
+   },
+   "entity_id": 6,
+   "subject_email": "tmp.audit.user@karea.local"
+  }
+ },
+ {
+  "step": "role create",
+  "id": 32,
+  "event_type": "ROLE_PERMISSION_CHANGE",
+  "actor": "Local Manager",
+  "vin": "<NULL>",
+  "old_value": "<NULL>",
+  "new_value": "<NULL>",
+  "metadata": {
+   "action": "create",
+   "entity": "role",
+   "parent": {},
+   "changes": [
+    {
+     "to": {
+      "en": "Geçici Denetim İzleyici",
+      "tr": "Geçici Denetim İzleyici"
+     },
+     "from": {},
+     "field": "name"
+    }
+   ],
+   "subject": {
+    "en": "Geçici Denetim İzleyici",
+    "tr": "Geçici Denetim İzleyici",
+    "code": "TMP_AUDIT_VIEWER"
+   },
+   "entity_id": 7
+  }
+ },
+ {
+  "step": "role grant analysis.view + web.access + vehicle.view",
+  "id": 33,
+  "event_type": "ROLE_PERMISSION_CHANGE",
+  "actor": "Local Manager",
+  "vin": "<NULL>",
+  "old_value": "<NULL>",
+  "new_value": "<NULL>",
+  "metadata": {
+   "action": "grants_change",
+   "entity": "role",
+   "parent": {},
+   "granted": [
+    {
+     "en": "View the Analysis tab",
+     "tr": "View the Analysis tab",
+     "code": "analysis.view"
+    },
+    {
+     "en": "View vehicle records and progress",
+     "tr": "View vehicle records and progress",
+     "code": "vehicle.view"
+    },
+    {
+     "en": "Sign in to the web dashboard",
+     "tr": "Sign in to the web dashboard",
+     "code": "web.access"
+    }
+   ],
+   "subject": {
+    "en": "Geçici Denetim İzleyici",
+    "tr": "Geçici Denetim İzleyici",
+    "code": "TMP_AUDIT_VIEWER"
+   },
+   "entity_id": 7
+  }
+ },
+ {
+  "step": "role revoke vehicle.view",
+  "id": 34,
+  "event_type": "ROLE_PERMISSION_CHANGE",
+  "actor": "Local Manager",
+  "vin": "<NULL>",
+  "old_value": "<NULL>",
+  "new_value": "<NULL>",
+  "metadata": {
+   "action": "grants_change",
+   "entity": "role",
+   "parent": {},
+   "revoked": [
+    {
+     "en": "View vehicle records and progress",
+     "tr": "View vehicle records and progress",
+     "code": "vehicle.view"
+    }
+   ],
+   "subject": {
+    "en": "Geçici Denetim İzleyici",
+    "tr": "Geçici Denetim İzleyici",
+    "code": "TMP_AUDIT_VIEWER"
+   },
+   "entity_id": 7
+  }
+ },
+ {
+  "step": "template item create (shipment, section interior_fit)",
+  "id": 35,
+  "event_type": "CHECKLIST_TEMPLATE_CHANGE",
+  "actor": "Local Manager",
+  "vin": "<NULL>",
+  "old_value": "<NULL>",
+  "new_value": "<NULL>",
+  "metadata": {
+   "action": "create",
+   "entity": "template_item",
+   "parent": {
+    "en": "Default Customer Vehicle Checklist (43 items)",
+    "tr": "Default Customer Vehicle Checklist (43 items)",
+    "code": "SHIPMENT"
+   },
+   "changes": [
+    {
+     "to": {
+      "en": "TMP denetim maddesi",
+      "tr": "TMP denetim maddesi"
+     },
+     "from": {},
+     "field": "item_text"
+    },
+    {
+     "to": {
+      "code": "interior_fit"
+     },
+     "from": {},
+     "field": "section"
+    },
+    {
+     "to": {
+      "code": "true"
+     },
+     "from": {},
+     "field": "is_active"
+    }
+   ],
+   "item_no": 47,
+   "subject": {
+    "en": "TMP denetim maddesi",
+    "tr": "TMP denetim maddesi"
+   },
+   "entity_id": 105,
+   "template_type": "SHIPMENT"
+  }
+ },
+ {
+  "step": "template item text edit",
+  "id": 36,
+  "event_type": "CHECKLIST_TEMPLATE_CHANGE",
+  "actor": "Local Manager",
+  "vin": "<NULL>",
+  "old_value": "<NULL>",
+  "new_value": "<NULL>",
+  "metadata": {
+   "action": "update",
+   "entity": "template_item",
+   "parent": {
+    "en": "Default Customer Vehicle Checklist (43 items)",
+    "tr": "Default Customer Vehicle Checklist (43 items)",
+    "code": "SHIPMENT"
+   },
+   "changes": [
+    {
+     "to": {
+      "en": "TMP denetim maddesi (düzeltildi)",
+      "tr": "TMP denetim maddesi (düzeltildi)"
+     },
+     "from": {
+      "en": "TMP denetim maddesi",
+      "tr": "TMP denetim maddesi"
+     },
+     "field": "item_text"
+    }
+   ],
+   "item_no": 47,
+   "subject": {
+    "en": "TMP denetim maddesi",
+    "tr": "TMP denetim maddesi"
+   },
+   "entity_id": 105,
+   "template_type": "SHIPMENT"
+  }
+ },
+ {
+  "step": "template item section change",
+  "id": 37,
+  "event_type": "CHECKLIST_TEMPLATE_CHANGE",
+  "actor": "Local Manager",
+  "vin": "<NULL>",
+  "old_value": "<NULL>",
+  "new_value": "<NULL>",
+  "metadata": {
+   "action": "update",
+   "entity": "template_item",
+   "parent": {
+    "en": "Default Customer Vehicle Checklist (43 items)",
+    "tr": "Default Customer Vehicle Checklist (43 items)",
+    "code": "SHIPMENT"
+   },
+   "changes": [
+    {
+     "to": {
+      "code": "final_adjust"
+     },
+     "from": {
+      "code": "interior_fit"
+     },
+     "field": "section"
+    }
+   ],
+   "item_no": 47,
+   "subject": {
+    "en": "TMP denetim maddesi (düzeltildi)",
+    "tr": "TMP denetim maddesi (düzeltildi)"
+   },
+   "entity_id": 105,
+   "template_type": "SHIPMENT"
+  }
+ },
+ {
+  "step": "template item section cleared",
+  "id": 38,
+  "event_type": "CHECKLIST_TEMPLATE_CHANGE",
+  "actor": "Local Manager",
+  "vin": "<NULL>",
+  "old_value": "<NULL>",
+  "new_value": "<NULL>",
+  "metadata": {
+   "action": "update",
+   "entity": "template_item",
+   "parent": {
+    "en": "Default Customer Vehicle Checklist (43 items)",
+    "tr": "Default Customer Vehicle Checklist (43 items)",
+    "code": "SHIPMENT"
+   },
+   "changes": [
+    {
+     "to": {},
+     "from": {
+      "code": "final_adjust"
+     },
+     "field": "section"
+    }
+   ],
+   "item_no": 47,
+   "subject": {
+    "en": "TMP denetim maddesi (düzeltildi)",
+    "tr": "TMP denetim maddesi (düzeltildi)"
+   },
+   "entity_id": 105,
+   "template_type": "SHIPMENT"
+  }
+ },
+ {
+  "step": "template item deactivate",
+  "id": 39,
+  "event_type": "CHECKLIST_TEMPLATE_CHANGE",
+  "actor": "Local Manager",
+  "vin": "<NULL>",
+  "old_value": "<NULL>",
+  "new_value": "<NULL>",
+  "metadata": {
+   "action": "deactivate",
+   "entity": "template_item",
+   "parent": {
+    "en": "Default Customer Vehicle Checklist (43 items)",
+    "tr": "Default Customer Vehicle Checklist (43 items)",
+    "code": "SHIPMENT"
+   },
+   "changes": [
+    {
+     "to": {
+      "code": "false"
+     },
+     "from": {
+      "code": "true"
+     },
+     "field": "is_active"
+    }
+   ],
+   "item_no": 47,
+   "subject": {
+    "en": "TMP denetim maddesi (düzeltildi)",
+    "tr": "TMP denetim maddesi (düzeltildi)"
+   },
+   "entity_id": 105,
+   "template_type": "SHIPMENT"
+  }
+ },
+ {
+  "step": "template item activate",
+  "id": 40,
+  "event_type": "CHECKLIST_TEMPLATE_CHANGE",
+  "actor": "Local Manager",
+  "vin": "<NULL>",
+  "old_value": "<NULL>",
+  "new_value": "<NULL>",
+  "metadata": {
+   "action": "activate",
+   "entity": "template_item",
+   "parent": {
+    "en": "Default Customer Vehicle Checklist (43 items)",
+    "tr": "Default Customer Vehicle Checklist (43 items)",
+    "code": "SHIPMENT"
+   },
+   "changes": [
+    {
+     "to": {
+      "code": "true"
+     },
+     "from": {
+      "code": "false"
+     },
+     "field": "is_active"
+    }
+   ],
+   "item_no": 47,
+   "subject": {
+    "en": "TMP denetim maddesi (düzeltildi)",
+    "tr": "TMP denetim maddesi (düzeltildi)"
+   },
+   "entity_id": 105,
+   "template_type": "SHIPMENT"
+  }
+ },
+ {
+  "step": "template reorder (new item first)",
+  "id": 41,
+  "event_type": "CHECKLIST_TEMPLATE_CHANGE",
+  "actor": "Local Manager",
+  "vin": "<NULL>",
+  "old_value": "<NULL>",
+  "new_value": "<NULL>",
+  "metadata": {
+   "moved": [
+    {
+     "to": 1,
+     "from": 47,
+     "subject": {
+      "en": "TMP denetim maddesi (düzeltildi)",
+      "tr": "TMP denetim maddesi (düzeltildi)"
+     }
+    }
+   ],
+   "action": "reorder",
+   "entity": "template_item",
+   "parent": {
+    "en": "Default Customer Vehicle Checklist (43 items)",
+    "tr": "Default Customer Vehicle Checklist (43 items)",
+    "code": "SHIPMENT"
+   },
+   "subject": {},
+   "template_type": "SHIPMENT"
+  }
+ },
+ {
+  "step": "template item delete",
+  "id": 42,
+  "event_type": "CHECKLIST_TEMPLATE_CHANGE",
+  "actor": "Local Manager",
+  "vin": "<NULL>",
+  "old_value": "<NULL>",
+  "new_value": "<NULL>",
+  "metadata": {
+   "action": "delete",
+   "entity": "template_item",
+   "parent": {
+    "en": "Default Customer Vehicle Checklist (43 items)",
+    "tr": "Default Customer Vehicle Checklist (43 items)",
+    "code": "SHIPMENT"
+   },
+   "changes": [
+    {
+     "to": {},
+     "from": {
+      "en": "TMP denetim maddesi (düzeltildi)",
+      "tr": "TMP denetim maddesi (düzeltildi)"
+     },
+     "field": "item_text"
+    },
+    {
+     "to": {},
+     "from": {
+      "code": "true"
+     },
+     "field": "is_active"
+    }
+   ],
+   "item_no": 1,
+   "subject": {
+    "en": "TMP denetim maddesi (düzeltildi)",
+    "tr": "TMP denetim maddesi (düzeltildi)"
+   },
+   "entity_id": 105,
+   "template_type": "SHIPMENT"
+  }
+ },
+ {
+  "step": "eol item create (factory phase)",
+  "id": 43,
+  "event_type": "CHECKLIST_TEMPLATE_CHANGE",
+  "actor": "Local Manager",
+  "vin": "<NULL>",
+  "old_value": "<NULL>",
+  "new_value": "<NULL>",
+  "metadata": {
+   "action": "create",
+   "entity": "template_item",
+   "parent": {
+    "en": "Default EoL Template (16 items, Branch + Depot)",
+    "tr": "Default EoL Template (16 items, Branch + Depot)",
+    "code": "EOL"
+   },
+   "changes": [
+    {
+     "to": {
+      "en": "TMP EoL maddesi",
+      "tr": "TMP EoL maddesi"
+     },
+     "from": {},
+     "field": "item_text"
+    },
+    {
+     "to": {
+      "code": "BRANCH"
+     },
+     "from": {},
+     "field": "eol_phase"
+    },
+    {
+     "to": {
+      "code": "true"
+     },
+     "from": {},
+     "field": "is_active"
+    }
+   ],
+   "item_no": 16,
+   "subject": {
+    "en": "TMP EoL maddesi",
+    "tr": "TMP EoL maddesi"
+   },
+   "entity_id": 106,
+   "template_type": "EOL"
+  }
+ },
+ {
+  "step": "eol item phase change factory -> depot",
+  "id": 44,
+  "event_type": "CHECKLIST_TEMPLATE_CHANGE",
+  "actor": "Local Manager",
+  "vin": "<NULL>",
+  "old_value": "<NULL>",
+  "new_value": "<NULL>",
+  "metadata": {
+   "action": "update",
+   "entity": "template_item",
+   "parent": {
+    "en": "Default EoL Template (16 items, Branch + Depot)",
+    "tr": "Default EoL Template (16 items, Branch + Depot)",
+    "code": "EOL"
+   },
+   "changes": [
+    {
+     "to": {
+      "code": "DEPOT"
+     },
+     "from": {
+      "code": "BRANCH"
+     },
+     "field": "eol_phase"
+    }
+   ],
+   "item_no": 16,
+   "subject": {
+    "en": "TMP EoL maddesi",
+    "tr": "TMP EoL maddesi"
+   },
+   "entity_id": 106,
+   "template_type": "EOL"
+  }
+ },
+ {
+  "step": "eol item delete",
+  "id": 45,
+  "event_type": "CHECKLIST_TEMPLATE_CHANGE",
+  "actor": "Local Manager",
+  "vin": "<NULL>",
+  "old_value": "<NULL>",
+  "new_value": "<NULL>",
+  "metadata": {
+   "action": "delete",
+   "entity": "template_item",
+   "parent": {
+    "en": "Default EoL Template (16 items, Branch + Depot)",
+    "tr": "Default EoL Template (16 items, Branch + Depot)",
+    "code": "EOL"
+   },
+   "changes": [
+    {
+     "to": {},
+     "from": {
+      "en": "TMP EoL maddesi",
+      "tr": "TMP EoL maddesi"
+     },
+     "field": "item_text"
+    },
+    {
+     "to": {},
+     "from": {
+      "code": "DEPOT"
+     },
+     "field": "eol_phase"
+    },
+    {
+     "to": {},
+     "from": {
+      "code": "true"
+     },
+     "field": "is_active"
+    }
+   ],
+   "item_no": 16,
+   "subject": {
+    "en": "TMP EoL maddesi",
+    "tr": "TMP EoL maddesi"
+   },
+   "entity_id": 106,
+   "template_type": "EOL"
+  }
+ },
+ {
+  "step": "process create",
+  "id": 46,
+  "event_type": "DEFECT_CATALOG_CHANGE",
+  "actor": "Local Manager",
+  "vin": "<NULL>",
+  "old_value": "<NULL>",
+  "new_value": "<NULL>",
+  "metadata": {
+   "action": "create",
+   "entity": "process",
+   "parent": {},
+   "changes": [
+    {
+     "to": {
+      "en": "Temp process",
+      "tr": "Geçici süreç"
+     },
+     "from": {},
+     "field": "name"
+    },
+    {
+     "to": {
+      "code": "TMPPROC"
+     },
+     "from": {},
+     "field": "code"
+    },
+    {
+     "to": {
+      "code": "true"
+     },
+     "from": {},
+     "field": "is_active"
+    }
+   ],
+   "subject": {
+    "en": "Temp process",
+    "tr": "Geçici süreç",
+    "code": "TMPPROC"
+   }
+  }
+ },
+ {
+  "step": "process rename",
+  "id": 47,
+  "event_type": "DEFECT_CATALOG_CHANGE",
+  "actor": "Local Manager",
+  "vin": "<NULL>",
+  "old_value": "<NULL>",
+  "new_value": "<NULL>",
+  "metadata": {
+   "action": "update",
+   "entity": "process",
+   "parent": {},
+   "changes": [
+    {
+     "to": {
+      "en": "Temp process 2",
+      "tr": "Geçici süreç 2"
+     },
+     "from": {
+      "en": "Temp process",
+      "tr": "Geçici süreç"
+     },
+     "field": "name"
+    }
+   ],
+   "subject": {
+    "en": "Temp process",
+    "tr": "Geçici süreç",
+    "code": "TMPPROC"
+   },
+   "entity_id": 5
+  }
+ },
+ {
+  "step": "process code change",
+  "id": 48,
+  "event_type": "DEFECT_CATALOG_CHANGE",
+  "actor": "Local Manager",
+  "vin": "<NULL>",
+  "old_value": "<NULL>",
+  "new_value": "<NULL>",
+  "metadata": {
+   "action": "update",
+   "entity": "process",
+   "parent": {},
+   "changes": [
+    {
+     "to": {
+      "code": "TMPPROC2"
+     },
+     "from": {
+      "code": "TMPPROC"
+     },
+     "field": "code"
+    }
+   ],
+   "subject": {
+    "en": "Temp process 2",
+    "tr": "Geçici süreç 2",
+    "code": "TMPPROC"
+   },
+   "entity_id": 5
+  }
+ },
+ {
+  "step": "process deactivate",
+  "id": 49,
+  "event_type": "DEFECT_CATALOG_CHANGE",
+  "actor": "Local Manager",
+  "vin": "<NULL>",
+  "old_value": "<NULL>",
+  "new_value": "<NULL>",
+  "metadata": {
+   "action": "deactivate",
+   "entity": "process",
+   "parent": {},
+   "changes": [
+    {
+     "to": {
+      "code": "false"
+     },
+     "from": {
+      "code": "true"
+     },
+     "field": "is_active"
+    }
+   ],
+   "subject": {
+    "en": "Temp process 2",
+    "tr": "Geçici süreç 2",
+    "code": "TMPPROC2"
+   },
+   "entity_id": 5
+  }
+ },
+ {
+  "step": "process activate",
+  "id": 50,
+  "event_type": "DEFECT_CATALOG_CHANGE",
+  "actor": "Local Manager",
+  "vin": "<NULL>",
+  "old_value": "<NULL>",
+  "new_value": "<NULL>",
+  "metadata": {
+   "action": "activate",
+   "entity": "process",
+   "parent": {},
+   "changes": [
+    {
+     "to": {
+      "code": "true"
+     },
+     "from": {
+      "code": "false"
+     },
+     "field": "is_active"
+    }
+   ],
+   "subject": {
+    "en": "Temp process 2",
+    "tr": "Geçici süreç 2",
+    "code": "TMPPROC2"
+   },
+   "entity_id": 5
+  }
+ },
+ {
+  "step": "zone create",
+  "id": 51,
+  "event_type": "DEFECT_CATALOG_CHANGE",
+  "actor": "Local Manager",
+  "vin": "<NULL>",
+  "old_value": "<NULL>",
+  "new_value": "<NULL>",
+  "metadata": {
+   "action": "create",
+   "entity": "zone",
+   "parent": {},
+   "changes": [
+    {
+     "to": {
+      "en": "Temp zone",
+      "tr": "Geçici bölge"
+     },
+     "from": {},
+     "field": "name"
+    },
+    {
+     "to": {
+      "code": "90"
+     },
+     "from": {},
+     "field": "code"
+    },
+    {
+     "to": {
+      "code": "true"
+     },
+     "from": {},
+     "field": "is_active"
+    }
+   ],
+   "subject": {
+    "en": "Temp zone",
+    "tr": "Geçici bölge",
+    "code": "90"
+   }
+  }
+ },
+ {
+  "step": "zone rename + code change",
+  "id": 52,
+  "event_type": "DEFECT_CATALOG_CHANGE",
+  "actor": "Local Manager",
+  "vin": "<NULL>",
+  "old_value": "<NULL>",
+  "new_value": "<NULL>",
+  "metadata": {
+   "action": "update",
+   "entity": "zone",
+   "parent": {},
+   "changes": [
+    {
+     "to": {
+      "en": "Temp zone",
+      "tr": "Geçici bölge 2"
+     },
+     "from": {
+      "en": "Temp zone",
+      "tr": "Geçici bölge"
+     },
+     "field": "name"
+    },
+    {
+     "to": {
+      "code": "91"
+     },
+     "from": {
+      "code": "90"
+     },
+     "field": "code"
+    }
+   ],
+   "subject": {
+    "en": "Temp zone",
+    "tr": "Geçici bölge",
+    "code": "90"
+   },
+   "entity_id": 7
+  }
+ },
+ {
+  "step": "zone deactivate",
+  "id": 53,
+  "event_type": "DEFECT_CATALOG_CHANGE",
+  "actor": "Local Manager",
+  "vin": "<NULL>",
+  "old_value": "<NULL>",
+  "new_value": "<NULL>",
+  "metadata": {
+   "action": "deactivate",
+   "entity": "zone",
+   "parent": {},
+   "changes": [
+    {
+     "to": {
+      "code": "false"
+     },
+     "from": {
+      "code": "true"
+     },
+     "field": "is_active"
+    }
+   ],
+   "subject": {
+    "en": "Temp zone",
+    "tr": "Geçici bölge 2",
+    "code": "91"
+   },
+   "entity_id": 7
+  }
+ },
+ {
+  "step": "zone activate",
+  "id": 54,
+  "event_type": "DEFECT_CATALOG_CHANGE",
+  "actor": "Local Manager",
+  "vin": "<NULL>",
+  "old_value": "<NULL>",
+  "new_value": "<NULL>",
+  "metadata": {
+   "action": "activate",
+   "entity": "zone",
+   "parent": {},
+   "changes": [
+    {
+     "to": {
+      "code": "true"
+     },
+     "from": {
+      "code": "false"
+     },
+     "field": "is_active"
+    }
+   ],
+   "subject": {
+    "en": "Temp zone",
+    "tr": "Geçici bölge 2",
+    "code": "91"
+   },
+   "entity_id": 7
+  }
+ },
+ {
+  "step": "part create in temp zone",
+  "id": 55,
+  "event_type": "DEFECT_CATALOG_CHANGE",
+  "actor": "Local Manager",
+  "vin": "<NULL>",
+  "old_value": "<NULL>",
+  "new_value": "<NULL>",
+  "metadata": {
+   "action": "create",
+   "entity": "part",
+   "parent": {
+    "en": "Temp zone",
+    "tr": "Geçici bölge 2",
+    "code": "91"
+   },
+   "changes": [
+    {
+     "to": {
+      "en": "Temp part",
+      "tr": "Geçici parça"
+     },
+     "from": {},
+     "field": "name"
+    },
+    {
+     "to": {
+      "code": "91-01"
+     },
+     "from": {},
+     "field": "code"
+    },
+    {
+     "to": {
+      "en": "Temp zone",
+      "tr": "Geçici bölge 2",
+      "code": "91"
+     },
+     "from": {},
+     "field": "zone"
+    },
+    {
+     "to": {
+      "code": "true"
+     },
+     "from": {},
+     "field": "is_active"
+    }
+   ],
+   "subject": {
+    "en": "Temp part",
+    "tr": "Geçici parça",
+    "code": "91-01"
+   }
+  }
+ },
+ {
+  "step": "part rename",
+  "id": 56,
+  "event_type": "DEFECT_CATALOG_CHANGE",
+  "actor": "Local Manager",
+  "vin": "<NULL>",
+  "old_value": "<NULL>",
+  "new_value": "<NULL>",
+  "metadata": {
+   "action": "update",
+   "entity": "part",
+   "parent": {
+    "en": "Temp zone",
+    "tr": "Geçici bölge 2",
+    "code": "91"
+   },
+   "changes": [
+    {
+     "to": {
+      "en": "Temp part",
+      "tr": "Geçici parça 2"
+     },
+     "from": {
+      "en": "Temp part",
+      "tr": "Geçici parça"
+     },
+     "field": "name"
+    }
+   ],
+   "subject": {
+    "en": "Temp part",
+    "tr": "Geçici parça",
+    "code": "91-01"
+   },
+   "entity_id": 25
+  }
+ },
+ {
+  "step": "part zone + code change (temp zone -> Body 10)",
+  "id": 57,
+  "event_type": "DEFECT_CATALOG_CHANGE",
+  "actor": "Local Manager",
+  "vin": "<NULL>",
+  "old_value": "<NULL>",
+  "new_value": "<NULL>",
+  "metadata": {
+   "action": "update",
+   "entity": "part",
+   "parent": {
+    "en": "Body",
+    "tr": "Body",
+    "code": "10"
+   },
+   "changes": [
+    {
+     "to": {
+      "code": "10-91"
+     },
+     "from": {
+      "code": "91-01"
+     },
+     "field": "code"
+    },
+    {
+     "to": {
+      "en": "Body",
+      "tr": "Body",
+      "code": "10"
+     },
+     "from": {
+      "en": "Temp zone",
+      "tr": "Geçici bölge 2",
+      "code": "91"
+     },
+     "field": "zone"
+    }
+   ],
+   "subject": {
+    "en": "Temp part",
+    "tr": "Geçici parça 2",
+    "code": "91-01"
+   },
+   "entity_id": 25
+  }
+ },
+ {
+  "step": "part deactivate",
+  "id": 58,
+  "event_type": "DEFECT_CATALOG_CHANGE",
+  "actor": "Local Manager",
+  "vin": "<NULL>",
+  "old_value": "<NULL>",
+  "new_value": "<NULL>",
+  "metadata": {
+   "action": "deactivate",
+   "entity": "part",
+   "parent": {
+    "en": "Body",
+    "tr": "Body",
+    "code": "10"
+   },
+   "changes": [
+    {
+     "to": {
+      "code": "false"
+     },
+     "from": {
+      "code": "true"
+     },
+     "field": "is_active"
+    }
+   ],
+   "subject": {
+    "en": "Temp part",
+    "tr": "Geçici parça 2",
+    "code": "10-91"
+   },
+   "entity_id": 25
+  }
+ },
+ {
+  "step": "part activate",
+  "id": 59,
+  "event_type": "DEFECT_CATALOG_CHANGE",
+  "actor": "Local Manager",
+  "vin": "<NULL>",
+  "old_value": "<NULL>",
+  "new_value": "<NULL>",
+  "metadata": {
+   "action": "activate",
+   "entity": "part",
+   "parent": {
+    "en": "Body",
+    "tr": "Body",
+    "code": "10"
+   },
+   "changes": [
+    {
+     "to": {
+      "code": "true"
+     },
+     "from": {
+      "code": "false"
+     },
+     "field": "is_active"
+    }
+   ],
+   "subject": {
+    "en": "Temp part",
+    "tr": "Geçici parça 2",
+    "code": "10-91"
+   },
+   "entity_id": 25
+  }
+ },
+ {
+  "step": "defect type create (default process temp)",
+  "id": 60,
+  "event_type": "DEFECT_CATALOG_CHANGE",
+  "actor": "Local Manager",
+  "vin": "<NULL>",
+  "old_value": "<NULL>",
+  "new_value": "<NULL>",
+  "metadata": {
+   "action": "create",
+   "entity": "defect_type",
+   "parent": {},
+   "changes": [
+    {
+     "to": {
+      "en": "Temp defect",
+      "tr": "Geçici kusur"
+     },
+     "from": {},
+     "field": "name"
+    },
+    {
+     "to": {
+      "code": "98"
+     },
+     "from": {},
+     "field": "code"
+    },
+    {
+     "to": {
+      "en": "Temp process 2",
+      "tr": "Geçici süreç 2",
+      "code": "TMPPROC2"
+     },
+     "from": {},
+     "field": "default_process"
+    },
+    {
+     "to": {
+      "code": "true"
+     },
+     "from": {},
+     "field": "is_active"
+    }
+   ],
+   "subject": {
+    "en": "Temp defect",
+    "tr": "Geçici kusur",
+    "code": "98"
+   }
+  }
+ },
+ {
+  "step": "defect type default process -> Montaj",
+  "id": 61,
+  "event_type": "DEFECT_CATALOG_CHANGE",
+  "actor": "Local Manager",
+  "vin": "<NULL>",
+  "old_value": "<NULL>",
+  "new_value": "<NULL>",
+  "metadata": {
+   "action": "update",
+   "entity": "defect_type",
+   "parent": {},
+   "changes": [
+    {
+     "to": {
+      "en": "Assembly",
+      "tr": "Montaj",
+      "code": "ASSEMBLY"
+     },
+     "from": {
+      "en": "Temp process 2",
+      "tr": "Geçici süreç 2",
+      "code": "TMPPROC2"
+     },
+     "field": "default_process"
+    }
+   ],
+   "subject": {
+    "en": "Temp defect",
+    "tr": "Geçici kusur",
+    "code": "98"
+   },
+   "entity_id": 11
+  }
+ },
+ {
+  "step": "defect type rename",
+  "id": 62,
+  "event_type": "DEFECT_CATALOG_CHANGE",
+  "actor": "Local Manager",
+  "vin": "<NULL>",
+  "old_value": "<NULL>",
+  "new_value": "<NULL>",
+  "metadata": {
+   "action": "update",
+   "entity": "defect_type",
+   "parent": {},
+   "changes": [
+    {
+     "to": {
+      "en": "Temp defect 2",
+      "tr": "Geçici kusur 2"
+     },
+     "from": {
+      "en": "Temp defect",
+      "tr": "Geçici kusur"
+     },
+     "field": "name"
+    }
+   ],
+   "subject": {
+    "en": "Temp defect",
+    "tr": "Geçici kusur",
+    "code": "98"
+   },
+   "entity_id": 11
+  }
+ },
+ {
+  "step": "defect type deactivate",
+  "id": 63,
+  "event_type": "DEFECT_CATALOG_CHANGE",
+  "actor": "Local Manager",
+  "vin": "<NULL>",
+  "old_value": "<NULL>",
+  "new_value": "<NULL>",
+  "metadata": {
+   "action": "deactivate",
+   "entity": "defect_type",
+   "parent": {},
+   "changes": [
+    {
+     "to": {
+      "code": "false"
+     },
+     "from": {
+      "code": "true"
+     },
+     "field": "is_active"
+    }
+   ],
+   "subject": {
+    "en": "Temp defect 2",
+    "tr": "Geçici kusur 2",
+    "code": "98"
+   },
+   "entity_id": 11
+  }
+ },
+ {
+  "step": "defect type activate",
+  "id": 64,
+  "event_type": "DEFECT_CATALOG_CHANGE",
+  "actor": "Local Manager",
+  "vin": "<NULL>",
+  "old_value": "<NULL>",
+  "new_value": "<NULL>",
+  "metadata": {
+   "action": "activate",
+   "entity": "defect_type",
+   "parent": {},
+   "changes": [
+    {
+     "to": {
+      "code": "true"
+     },
+     "from": {
+      "code": "false"
+     },
+     "field": "is_active"
+    }
+   ],
+   "subject": {
+    "en": "Temp defect 2",
+    "tr": "Geçici kusur 2",
+    "code": "98"
+   },
+   "entity_id": 11
+  }
+ },
+ {
+  "step": "type reorder (last moved first)",
+  "id": 65,
+  "event_type": "DEFECT_CATALOG_CHANGE",
+  "actor": "Local Manager",
+  "vin": "<NULL>",
+  "old_value": "<NULL>",
+  "new_value": "<NULL>",
+  "metadata": {
+   "moved": [
+    {
+     "to": 1,
+     "from": 11,
+     "subject": {
+      "en": "Other",
+      "tr": "Diğer",
+      "code": "99"
+     }
+    }
+   ],
+   "action": "reorder",
+   "entity": "defect_type",
+   "parent": {},
+   "subject": {}
+  }
+ },
+ {
+  "step": "zone reorder (last moved first)",
+  "id": 66,
+  "event_type": "DEFECT_CATALOG_CHANGE",
+  "actor": "Local Manager",
+  "vin": "<NULL>",
+  "old_value": "<NULL>",
+  "new_value": "<NULL>",
+  "metadata": {
+   "moved": [
+    {
+     "to": 1,
+     "from": 6,
+     "subject": {
+      "en": "Other",
+      "tr": "Diğer",
+      "code": "99"
+     }
+    }
+   ],
+   "action": "reorder",
+   "entity": "zone",
+   "parent": {},
+   "subject": {}
+  }
+ },
+ {
+  "step": "process reorder (last moved first)",
+  "id": 67,
+  "event_type": "DEFECT_CATALOG_CHANGE",
+  "actor": "Local Manager",
+  "vin": "<NULL>",
+  "old_value": "<NULL>",
+  "new_value": "<NULL>",
+  "metadata": {
+   "moved": [
+    {
+     "to": 1,
+     "from": 5,
+     "subject": {
+      "en": "Electrical",
+      "tr": "Elektrik",
+      "code": "ELECTRICAL"
+     }
+    }
+   ],
+   "action": "reorder",
+   "entity": "process",
+   "parent": {},
+   "subject": {}
+  }
+ },
+ {
+  "step": "part reorder (last moved first)",
+  "id": 68,
+  "event_type": "DEFECT_CATALOG_CHANGE",
+  "actor": "Local Manager",
+  "vin": "<NULL>",
+  "old_value": "<NULL>",
+  "new_value": "<NULL>",
+  "metadata": {
+   "moved": [
+    {
+     "to": 1,
+     "from": 10,
+     "subject": {
+      "en": "Doghouse",
+      "tr": "Doghouse",
+      "code": "10-09"
+     }
+    }
+   ],
+   "action": "reorder",
+   "entity": "part",
+   "parent": {
+    "en": "Body",
+    "tr": "Body",
+    "code": "10"
+   },
+   "subject": {}
+  }
+ },
+ {
+  "step": "part delete",
+  "id": 69,
+  "event_type": "DEFECT_CATALOG_CHANGE",
+  "actor": "Local Manager",
+  "vin": "<NULL>",
+  "old_value": "<NULL>",
+  "new_value": "<NULL>",
+  "metadata": {
+   "action": "delete",
+   "entity": "part",
+   "parent": {
+    "en": "Body",
+    "tr": "Body",
+    "code": "10"
+   },
+   "changes": [
+    {
+     "to": {},
+     "from": {
+      "en": "Temp part",
+      "tr": "Geçici parça 2"
+     },
+     "field": "name"
+    },
+    {
+     "to": {},
+     "from": {
+      "code": "10-91"
+     },
+     "field": "code"
+    },
+    {
+     "to": {},
+     "from": {
+      "en": "Body",
+      "tr": "Body",
+      "code": "10"
+     },
+     "field": "zone"
+    },
+    {
+     "to": {},
+     "from": {
+      "code": "true"
+     },
+     "field": "is_active"
+    }
+   ],
+   "subject": {
+    "en": "Temp part",
+    "tr": "Geçici parça 2",
+    "code": "10-91"
+   },
+   "entity_id": 25
+  }
+ },
+ {
+  "step": "defect type delete",
+  "id": 70,
+  "event_type": "DEFECT_CATALOG_CHANGE",
+  "actor": "Local Manager",
+  "vin": "<NULL>",
+  "old_value": "<NULL>",
+  "new_value": "<NULL>",
+  "metadata": {
+   "action": "delete",
+   "entity": "defect_type",
+   "parent": {},
+   "changes": [
+    {
+     "to": {},
+     "from": {
+      "en": "Temp defect 2",
+      "tr": "Geçici kusur 2"
+     },
+     "field": "name"
+    },
+    {
+     "to": {},
+     "from": {
+      "code": "98"
+     },
+     "field": "code"
+    },
+    {
+     "to": {},
+     "from": {
+      "en": "Assembly",
+      "tr": "Montaj",
+      "code": "ASSEMBLY"
+     },
+     "field": "default_process"
+    },
+    {
+     "to": {},
+     "from": {
+      "code": "true"
+     },
+     "field": "is_active"
+    }
+   ],
+   "subject": {
+    "en": "Temp defect 2",
+    "tr": "Geçici kusur 2",
+    "code": "98"
+   },
+   "entity_id": 11
+  }
+ },
+ {
+  "step": "zone delete",
+  "id": 71,
+  "event_type": "DEFECT_CATALOG_CHANGE",
+  "actor": "Local Manager",
+  "vin": "<NULL>",
+  "old_value": "<NULL>",
+  "new_value": "<NULL>",
+  "metadata": {
+   "action": "delete",
+   "entity": "zone",
+   "parent": {},
+   "changes": [
+    {
+     "to": {},
+     "from": {
+      "en": "Temp zone",
+      "tr": "Geçici bölge 2"
+     },
+     "field": "name"
+    },
+    {
+     "to": {},
+     "from": {
+      "code": "91"
+     },
+     "field": "code"
+    },
+    {
+     "to": {},
+     "from": {
+      "code": "true"
+     },
+     "field": "is_active"
+    }
+   ],
+   "subject": {
+    "en": "Temp zone",
+    "tr": "Geçici bölge 2",
+    "code": "91"
+   },
+   "entity_id": 7
+  }
+ },
+ {
+  "step": "process delete",
+  "id": 72,
+  "event_type": "DEFECT_CATALOG_CHANGE",
+  "actor": "Local Manager",
+  "vin": "<NULL>",
+  "old_value": "<NULL>",
+  "new_value": "<NULL>",
+  "metadata": {
+   "action": "delete",
+   "entity": "process",
+   "parent": {},
+   "changes": [
+    {
+     "to": {},
+     "from": {
+      "en": "Temp process 2",
+      "tr": "Geçici süreç 2"
+     },
+     "field": "name"
+    },
+    {
+     "to": {},
+     "from": {
+      "code": "TMPPROC2"
+     },
+     "field": "code"
+    },
+    {
+     "to": {},
+     "from": {
+      "code": "true"
+     },
+     "field": "is_active"
+    }
+   ],
+   "subject": {
+    "en": "Temp process 2",
+    "tr": "Geçici süreç 2",
+    "code": "TMPPROC2"
+   },
+   "entity_id": 5
+  }
+ }
+]

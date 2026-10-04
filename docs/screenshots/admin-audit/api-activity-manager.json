@@ -1,0 +1,2298 @@
+{
+ "Items": [
+  {
+   "EventAt": "2026-10-04T18:12:36.563084+03:00",
+   "EventType": "DEFECT_CATALOG_CHANGE",
+   "VIN": "",
+   "OldValue": "",
+   "NewValue": "",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null,
+   "Admin": {
+    "action": "delete",
+    "entity": "process",
+    "entity_id": 5,
+    "subject": {
+     "code": "TMPPROC2",
+     "tr": "Geçici süreç 2",
+     "en": "Temp process 2"
+    },
+    "parent": {},
+    "changes": [
+     {
+      "field": "name",
+      "from": {
+       "tr": "Geçici süreç 2",
+       "en": "Temp process 2"
+      },
+      "to": {}
+     },
+     {
+      "field": "code",
+      "from": {
+       "code": "TMPPROC2"
+      },
+      "to": {}
+     },
+     {
+      "field": "is_active",
+      "from": {
+       "code": "true"
+      },
+      "to": {}
+     }
+    ]
+   }
+  },
+  {
+   "EventAt": "2026-10-04T18:12:36.492641+03:00",
+   "EventType": "DEFECT_CATALOG_CHANGE",
+   "VIN": "",
+   "OldValue": "",
+   "NewValue": "",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null,
+   "Admin": {
+    "action": "delete",
+    "entity": "zone",
+    "entity_id": 7,
+    "subject": {
+     "code": "91",
+     "tr": "Geçici bölge 2",
+     "en": "Temp zone"
+    },
+    "parent": {},
+    "changes": [
+     {
+      "field": "name",
+      "from": {
+       "tr": "Geçici bölge 2",
+       "en": "Temp zone"
+      },
+      "to": {}
+     },
+     {
+      "field": "code",
+      "from": {
+       "code": "91"
+      },
+      "to": {}
+     },
+     {
+      "field": "is_active",
+      "from": {
+       "code": "true"
+      },
+      "to": {}
+     }
+    ]
+   }
+  },
+  {
+   "EventAt": "2026-10-04T18:12:36.419895+03:00",
+   "EventType": "DEFECT_CATALOG_CHANGE",
+   "VIN": "",
+   "OldValue": "",
+   "NewValue": "",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null,
+   "Admin": {
+    "action": "delete",
+    "entity": "defect_type",
+    "entity_id": 11,
+    "subject": {
+     "code": "98",
+     "tr": "Geçici kusur 2",
+     "en": "Temp defect 2"
+    },
+    "parent": {},
+    "changes": [
+     {
+      "field": "name",
+      "from": {
+       "tr": "Geçici kusur 2",
+       "en": "Temp defect 2"
+      },
+      "to": {}
+     },
+     {
+      "field": "code",
+      "from": {
+       "code": "98"
+      },
+      "to": {}
+     },
+     {
+      "field": "default_process",
+      "from": {
+       "code": "ASSEMBLY",
+       "tr": "Montaj",
+       "en": "Assembly"
+      },
+      "to": {}
+     },
+     {
+      "field": "is_active",
+      "from": {
+       "code": "true"
+      },
+      "to": {}
+     }
+    ]
+   }
+  },
+  {
+   "EventAt": "2026-10-04T18:12:36.351876+03:00",
+   "EventType": "DEFECT_CATALOG_CHANGE",
+   "VIN": "",
+   "OldValue": "",
+   "NewValue": "",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null,
+   "Admin": {
+    "action": "delete",
+    "entity": "part",
+    "entity_id": 25,
+    "subject": {
+     "code": "10-91",
+     "tr": "Geçici parça 2",
+     "en": "Temp part"
+    },
+    "parent": {
+     "code": "10",
+     "tr": "Body",
+     "en": "Body"
+    },
+    "changes": [
+     {
+      "field": "name",
+      "from": {
+       "tr": "Geçici parça 2",
+       "en": "Temp part"
+      },
+      "to": {}
+     },
+     {
+      "field": "code",
+      "from": {
+       "code": "10-91"
+      },
+      "to": {}
+     },
+     {
+      "field": "zone",
+      "from": {
+       "code": "10",
+       "tr": "Body",
+       "en": "Body"
+      },
+      "to": {}
+     },
+     {
+      "field": "is_active",
+      "from": {
+       "code": "true"
+      },
+      "to": {}
+     }
+    ]
+   }
+  },
+  {
+   "EventAt": "2026-10-04T18:12:36.275476+03:00",
+   "EventType": "DEFECT_CATALOG_CHANGE",
+   "VIN": "",
+   "OldValue": "",
+   "NewValue": "",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null,
+   "Admin": {
+    "action": "reorder",
+    "entity": "part",
+    "subject": {},
+    "parent": {
+     "code": "10",
+     "tr": "Body",
+     "en": "Body"
+    },
+    "moved": [
+     {
+      "subject": {
+       "code": "10-09",
+       "tr": "Doghouse",
+       "en": "Doghouse"
+      },
+      "from": 10,
+      "to": 1
+     }
+    ]
+   }
+  },
+  {
+   "EventAt": "2026-10-04T18:12:36.200936+03:00",
+   "EventType": "DEFECT_CATALOG_CHANGE",
+   "VIN": "",
+   "OldValue": "",
+   "NewValue": "",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null,
+   "Admin": {
+    "action": "reorder",
+    "entity": "process",
+    "subject": {},
+    "parent": {},
+    "moved": [
+     {
+      "subject": {
+       "code": "ELECTRICAL",
+       "tr": "Elektrik",
+       "en": "Electrical"
+      },
+      "from": 5,
+      "to": 1
+     }
+    ]
+   }
+  },
+  {
+   "EventAt": "2026-10-04T18:12:36.120032+03:00",
+   "EventType": "DEFECT_CATALOG_CHANGE",
+   "VIN": "",
+   "OldValue": "",
+   "NewValue": "",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null,
+   "Admin": {
+    "action": "reorder",
+    "entity": "zone",
+    "subject": {},
+    "parent": {},
+    "moved": [
+     {
+      "subject": {
+       "code": "99",
+       "tr": "Diğer",
+       "en": "Other"
+      },
+      "from": 6,
+      "to": 1
+     }
+    ]
+   }
+  },
+  {
+   "EventAt": "2026-10-04T18:12:36.028224+03:00",
+   "EventType": "DEFECT_CATALOG_CHANGE",
+   "VIN": "",
+   "OldValue": "",
+   "NewValue": "",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null,
+   "Admin": {
+    "action": "reorder",
+    "entity": "defect_type",
+    "subject": {},
+    "parent": {},
+    "moved": [
+     {
+      "subject": {
+       "code": "99",
+       "tr": "Diğer",
+       "en": "Other"
+      },
+      "from": 11,
+      "to": 1
+     }
+    ]
+   }
+  },
+  {
+   "EventAt": "2026-10-04T18:12:35.943862+03:00",
+   "EventType": "DEFECT_CATALOG_CHANGE",
+   "VIN": "",
+   "OldValue": "",
+   "NewValue": "",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null,
+   "Admin": {
+    "action": "activate",
+    "entity": "defect_type",
+    "entity_id": 11,
+    "subject": {
+     "code": "98",
+     "tr": "Geçici kusur 2",
+     "en": "Temp defect 2"
+    },
+    "parent": {},
+    "changes": [
+     {
+      "field": "is_active",
+      "from": {
+       "code": "false"
+      },
+      "to": {
+       "code": "true"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "EventAt": "2026-10-04T18:12:35.853968+03:00",
+   "EventType": "DEFECT_CATALOG_CHANGE",
+   "VIN": "",
+   "OldValue": "",
+   "NewValue": "",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null,
+   "Admin": {
+    "action": "deactivate",
+    "entity": "defect_type",
+    "entity_id": 11,
+    "subject": {
+     "code": "98",
+     "tr": "Geçici kusur 2",
+     "en": "Temp defect 2"
+    },
+    "parent": {},
+    "changes": [
+     {
+      "field": "is_active",
+      "from": {
+       "code": "true"
+      },
+      "to": {
+       "code": "false"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "EventAt": "2026-10-04T18:12:35.733501+03:00",
+   "EventType": "DEFECT_CATALOG_CHANGE",
+   "VIN": "",
+   "OldValue": "",
+   "NewValue": "",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null,
+   "Admin": {
+    "action": "update",
+    "entity": "defect_type",
+    "entity_id": 11,
+    "subject": {
+     "code": "98",
+     "tr": "Geçici kusur",
+     "en": "Temp defect"
+    },
+    "parent": {},
+    "changes": [
+     {
+      "field": "name",
+      "from": {
+       "tr": "Geçici kusur",
+       "en": "Temp defect"
+      },
+      "to": {
+       "tr": "Geçici kusur 2",
+       "en": "Temp defect 2"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "EventAt": "2026-10-04T18:12:35.670698+03:00",
+   "EventType": "DEFECT_CATALOG_CHANGE",
+   "VIN": "",
+   "OldValue": "",
+   "NewValue": "",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null,
+   "Admin": {
+    "action": "update",
+    "entity": "defect_type",
+    "entity_id": 11,
+    "subject": {
+     "code": "98",
+     "tr": "Geçici kusur",
+     "en": "Temp defect"
+    },
+    "parent": {},
+    "changes": [
+     {
+      "field": "default_process",
+      "from": {
+       "code": "TMPPROC2",
+       "tr": "Geçici süreç 2",
+       "en": "Temp process 2"
+      },
+      "to": {
+       "code": "ASSEMBLY",
+       "tr": "Montaj",
+       "en": "Assembly"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "EventAt": "2026-10-04T18:12:35.606582+03:00",
+   "EventType": "DEFECT_CATALOG_CHANGE",
+   "VIN": "",
+   "OldValue": "",
+   "NewValue": "",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null,
+   "Admin": {
+    "action": "create",
+    "entity": "defect_type",
+    "subject": {
+     "code": "98",
+     "tr": "Geçici kusur",
+     "en": "Temp defect"
+    },
+    "parent": {},
+    "changes": [
+     {
+      "field": "name",
+      "from": {},
+      "to": {
+       "tr": "Geçici kusur",
+       "en": "Temp defect"
+      }
+     },
+     {
+      "field": "code",
+      "from": {},
+      "to": {
+       "code": "98"
+      }
+     },
+     {
+      "field": "default_process",
+      "from": {},
+      "to": {
+       "code": "TMPPROC2",
+       "tr": "Geçici süreç 2",
+       "en": "Temp process 2"
+      }
+     },
+     {
+      "field": "is_active",
+      "from": {},
+      "to": {
+       "code": "true"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "EventAt": "2026-10-04T18:12:35.542521+03:00",
+   "EventType": "DEFECT_CATALOG_CHANGE",
+   "VIN": "",
+   "OldValue": "",
+   "NewValue": "",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null,
+   "Admin": {
+    "action": "activate",
+    "entity": "part",
+    "entity_id": 25,
+    "subject": {
+     "code": "10-91",
+     "tr": "Geçici parça 2",
+     "en": "Temp part"
+    },
+    "parent": {
+     "code": "10",
+     "tr": "Body",
+     "en": "Body"
+    },
+    "changes": [
+     {
+      "field": "is_active",
+      "from": {
+       "code": "false"
+      },
+      "to": {
+       "code": "true"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "EventAt": "2026-10-04T18:12:35.476242+03:00",
+   "EventType": "DEFECT_CATALOG_CHANGE",
+   "VIN": "",
+   "OldValue": "",
+   "NewValue": "",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null,
+   "Admin": {
+    "action": "deactivate",
+    "entity": "part",
+    "entity_id": 25,
+    "subject": {
+     "code": "10-91",
+     "tr": "Geçici parça 2",
+     "en": "Temp part"
+    },
+    "parent": {
+     "code": "10",
+     "tr": "Body",
+     "en": "Body"
+    },
+    "changes": [
+     {
+      "field": "is_active",
+      "from": {
+       "code": "true"
+      },
+      "to": {
+       "code": "false"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "EventAt": "2026-10-04T18:12:35.385038+03:00",
+   "EventType": "DEFECT_CATALOG_CHANGE",
+   "VIN": "",
+   "OldValue": "",
+   "NewValue": "",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null,
+   "Admin": {
+    "action": "update",
+    "entity": "part",
+    "entity_id": 25,
+    "subject": {
+     "code": "91-01",
+     "tr": "Geçici parça 2",
+     "en": "Temp part"
+    },
+    "parent": {
+     "code": "10",
+     "tr": "Body",
+     "en": "Body"
+    },
+    "changes": [
+     {
+      "field": "code",
+      "from": {
+       "code": "91-01"
+      },
+      "to": {
+       "code": "10-91"
+      }
+     },
+     {
+      "field": "zone",
+      "from": {
+       "code": "91",
+       "tr": "Geçici bölge 2",
+       "en": "Temp zone"
+      },
+      "to": {
+       "code": "10",
+       "tr": "Body",
+       "en": "Body"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "EventAt": "2026-10-04T18:12:35.297919+03:00",
+   "EventType": "DEFECT_CATALOG_CHANGE",
+   "VIN": "",
+   "OldValue": "",
+   "NewValue": "",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null,
+   "Admin": {
+    "action": "update",
+    "entity": "part",
+    "entity_id": 25,
+    "subject": {
+     "code": "91-01",
+     "tr": "Geçici parça",
+     "en": "Temp part"
+    },
+    "parent": {
+     "code": "91",
+     "tr": "Geçici bölge 2",
+     "en": "Temp zone"
+    },
+    "changes": [
+     {
+      "field": "name",
+      "from": {
+       "tr": "Geçici parça",
+       "en": "Temp part"
+      },
+      "to": {
+       "tr": "Geçici parça 2",
+       "en": "Temp part"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "EventAt": "2026-10-04T18:12:35.157221+03:00",
+   "EventType": "DEFECT_CATALOG_CHANGE",
+   "VIN": "",
+   "OldValue": "",
+   "NewValue": "",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null,
+   "Admin": {
+    "action": "create",
+    "entity": "part",
+    "subject": {
+     "code": "91-01",
+     "tr": "Geçici parça",
+     "en": "Temp part"
+    },
+    "parent": {
+     "code": "91",
+     "tr": "Geçici bölge 2",
+     "en": "Temp zone"
+    },
+    "changes": [
+     {
+      "field": "name",
+      "from": {},
+      "to": {
+       "tr": "Geçici parça",
+       "en": "Temp part"
+      }
+     },
+     {
+      "field": "code",
+      "from": {},
+      "to": {
+       "code": "91-01"
+      }
+     },
+     {
+      "field": "zone",
+      "from": {},
+      "to": {
+       "code": "91",
+       "tr": "Geçici bölge 2",
+       "en": "Temp zone"
+      }
+     },
+     {
+      "field": "is_active",
+      "from": {},
+      "to": {
+       "code": "true"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "EventAt": "2026-10-04T18:12:34.982608+03:00",
+   "EventType": "DEFECT_CATALOG_CHANGE",
+   "VIN": "",
+   "OldValue": "",
+   "NewValue": "",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null,
+   "Admin": {
+    "action": "activate",
+    "entity": "zone",
+    "entity_id": 7,
+    "subject": {
+     "code": "91",
+     "tr": "Geçici bölge 2",
+     "en": "Temp zone"
+    },
+    "parent": {},
+    "changes": [
+     {
+      "field": "is_active",
+      "from": {
+       "code": "false"
+      },
+      "to": {
+       "code": "true"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "EventAt": "2026-10-04T18:12:34.807395+03:00",
+   "EventType": "DEFECT_CATALOG_CHANGE",
+   "VIN": "",
+   "OldValue": "",
+   "NewValue": "",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null,
+   "Admin": {
+    "action": "deactivate",
+    "entity": "zone",
+    "entity_id": 7,
+    "subject": {
+     "code": "91",
+     "tr": "Geçici bölge 2",
+     "en": "Temp zone"
+    },
+    "parent": {},
+    "changes": [
+     {
+      "field": "is_active",
+      "from": {
+       "code": "true"
+      },
+      "to": {
+       "code": "false"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "EventAt": "2026-10-04T18:12:34.728788+03:00",
+   "EventType": "DEFECT_CATALOG_CHANGE",
+   "VIN": "",
+   "OldValue": "",
+   "NewValue": "",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null,
+   "Admin": {
+    "action": "update",
+    "entity": "zone",
+    "entity_id": 7,
+    "subject": {
+     "code": "90",
+     "tr": "Geçici bölge",
+     "en": "Temp zone"
+    },
+    "parent": {},
+    "changes": [
+     {
+      "field": "name",
+      "from": {
+       "tr": "Geçici bölge",
+       "en": "Temp zone"
+      },
+      "to": {
+       "tr": "Geçici bölge 2",
+       "en": "Temp zone"
+      }
+     },
+     {
+      "field": "code",
+      "from": {
+       "code": "90"
+      },
+      "to": {
+       "code": "91"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "EventAt": "2026-10-04T18:12:34.657888+03:00",
+   "EventType": "DEFECT_CATALOG_CHANGE",
+   "VIN": "",
+   "OldValue": "",
+   "NewValue": "",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null,
+   "Admin": {
+    "action": "create",
+    "entity": "zone",
+    "subject": {
+     "code": "90",
+     "tr": "Geçici bölge",
+     "en": "Temp zone"
+    },
+    "parent": {},
+    "changes": [
+     {
+      "field": "name",
+      "from": {},
+      "to": {
+       "tr": "Geçici bölge",
+       "en": "Temp zone"
+      }
+     },
+     {
+      "field": "code",
+      "from": {},
+      "to": {
+       "code": "90"
+      }
+     },
+     {
+      "field": "is_active",
+      "from": {},
+      "to": {
+       "code": "true"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "EventAt": "2026-10-04T18:12:34.521781+03:00",
+   "EventType": "DEFECT_CATALOG_CHANGE",
+   "VIN": "",
+   "OldValue": "",
+   "NewValue": "",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null,
+   "Admin": {
+    "action": "activate",
+    "entity": "process",
+    "entity_id": 5,
+    "subject": {
+     "code": "TMPPROC2",
+     "tr": "Geçici süreç 2",
+     "en": "Temp process 2"
+    },
+    "parent": {},
+    "changes": [
+     {
+      "field": "is_active",
+      "from": {
+       "code": "false"
+      },
+      "to": {
+       "code": "true"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "EventAt": "2026-10-04T18:12:34.454798+03:00",
+   "EventType": "DEFECT_CATALOG_CHANGE",
+   "VIN": "",
+   "OldValue": "",
+   "NewValue": "",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null,
+   "Admin": {
+    "action": "deactivate",
+    "entity": "process",
+    "entity_id": 5,
+    "subject": {
+     "code": "TMPPROC2",
+     "tr": "Geçici süreç 2",
+     "en": "Temp process 2"
+    },
+    "parent": {},
+    "changes": [
+     {
+      "field": "is_active",
+      "from": {
+       "code": "true"
+      },
+      "to": {
+       "code": "false"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "EventAt": "2026-10-04T18:12:34.386463+03:00",
+   "EventType": "DEFECT_CATALOG_CHANGE",
+   "VIN": "",
+   "OldValue": "",
+   "NewValue": "",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null,
+   "Admin": {
+    "action": "update",
+    "entity": "process",
+    "entity_id": 5,
+    "subject": {
+     "code": "TMPPROC",
+     "tr": "Geçici süreç 2",
+     "en": "Temp process 2"
+    },
+    "parent": {},
+    "changes": [
+     {
+      "field": "code",
+      "from": {
+       "code": "TMPPROC"
+      },
+      "to": {
+       "code": "TMPPROC2"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "EventAt": "2026-10-04T18:12:34.2982+03:00",
+   "EventType": "DEFECT_CATALOG_CHANGE",
+   "VIN": "",
+   "OldValue": "",
+   "NewValue": "",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null,
+   "Admin": {
+    "action": "update",
+    "entity": "process",
+    "entity_id": 5,
+    "subject": {
+     "code": "TMPPROC",
+     "tr": "Geçici süreç",
+     "en": "Temp process"
+    },
+    "parent": {},
+    "changes": [
+     {
+      "field": "name",
+      "from": {
+       "tr": "Geçici süreç",
+       "en": "Temp process"
+      },
+      "to": {
+       "tr": "Geçici süreç 2",
+       "en": "Temp process 2"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "EventAt": "2026-10-04T18:12:34.195531+03:00",
+   "EventType": "DEFECT_CATALOG_CHANGE",
+   "VIN": "",
+   "OldValue": "",
+   "NewValue": "",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null,
+   "Admin": {
+    "action": "create",
+    "entity": "process",
+    "subject": {
+     "code": "TMPPROC",
+     "tr": "Geçici süreç",
+     "en": "Temp process"
+    },
+    "parent": {},
+    "changes": [
+     {
+      "field": "name",
+      "from": {},
+      "to": {
+       "tr": "Geçici süreç",
+       "en": "Temp process"
+      }
+     },
+     {
+      "field": "code",
+      "from": {},
+      "to": {
+       "code": "TMPPROC"
+      }
+     },
+     {
+      "field": "is_active",
+      "from": {},
+      "to": {
+       "code": "true"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "EventAt": "2026-10-04T18:12:34.104753+03:00",
+   "EventType": "CHECKLIST_TEMPLATE_CHANGE",
+   "VIN": "",
+   "OldValue": "",
+   "NewValue": "",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null,
+   "Admin": {
+    "action": "delete",
+    "entity": "template_item",
+    "entity_id": 106,
+    "subject": {
+     "tr": "TMP EoL maddesi",
+     "en": "TMP EoL maddesi"
+    },
+    "parent": {
+     "code": "EOL",
+     "tr": "Default EoL Template (16 items, Branch + Depot)",
+     "en": "Default EoL Template (16 items, Branch + Depot)"
+    },
+    "template_type": "EOL",
+    "item_no": 16,
+    "changes": [
+     {
+      "field": "item_text",
+      "from": {
+       "tr": "TMP EoL maddesi",
+       "en": "TMP EoL maddesi"
+      },
+      "to": {}
+     },
+     {
+      "field": "eol_phase",
+      "from": {
+       "code": "DEPOT"
+      },
+      "to": {}
+     },
+     {
+      "field": "is_active",
+      "from": {
+       "code": "true"
+      },
+      "to": {}
+     }
+    ]
+   }
+  },
+  {
+   "EventAt": "2026-10-04T18:12:34.000231+03:00",
+   "EventType": "CHECKLIST_TEMPLATE_CHANGE",
+   "VIN": "",
+   "OldValue": "",
+   "NewValue": "",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null,
+   "Admin": {
+    "action": "update",
+    "entity": "template_item",
+    "entity_id": 106,
+    "subject": {
+     "tr": "TMP EoL maddesi",
+     "en": "TMP EoL maddesi"
+    },
+    "parent": {
+     "code": "EOL",
+     "tr": "Default EoL Template (16 items, Branch + Depot)",
+     "en": "Default EoL Template (16 items, Branch + Depot)"
+    },
+    "template_type": "EOL",
+    "item_no": 16,
+    "changes": [
+     {
+      "field": "eol_phase",
+      "from": {
+       "code": "BRANCH"
+      },
+      "to": {
+       "code": "DEPOT"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "EventAt": "2026-10-04T18:12:33.87161+03:00",
+   "EventType": "CHECKLIST_TEMPLATE_CHANGE",
+   "VIN": "",
+   "OldValue": "",
+   "NewValue": "",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null,
+   "Admin": {
+    "action": "create",
+    "entity": "template_item",
+    "entity_id": 106,
+    "subject": {
+     "tr": "TMP EoL maddesi",
+     "en": "TMP EoL maddesi"
+    },
+    "parent": {
+     "code": "EOL",
+     "tr": "Default EoL Template (16 items, Branch + Depot)",
+     "en": "Default EoL Template (16 items, Branch + Depot)"
+    },
+    "template_type": "EOL",
+    "item_no": 16,
+    "changes": [
+     {
+      "field": "item_text",
+      "from": {},
+      "to": {
+       "tr": "TMP EoL maddesi",
+       "en": "TMP EoL maddesi"
+      }
+     },
+     {
+      "field": "eol_phase",
+      "from": {},
+      "to": {
+       "code": "BRANCH"
+      }
+     },
+     {
+      "field": "is_active",
+      "from": {},
+      "to": {
+       "code": "true"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "EventAt": "2026-10-04T18:12:33.788907+03:00",
+   "EventType": "CHECKLIST_TEMPLATE_CHANGE",
+   "VIN": "",
+   "OldValue": "",
+   "NewValue": "",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null,
+   "Admin": {
+    "action": "delete",
+    "entity": "template_item",
+    "entity_id": 105,
+    "subject": {
+     "tr": "TMP denetim maddesi (düzeltildi)",
+     "en": "TMP denetim maddesi (düzeltildi)"
+    },
+    "parent": {
+     "code": "SHIPMENT",
+     "tr": "Default Customer Vehicle Checklist (43 items)",
+     "en": "Default Customer Vehicle Checklist (43 items)"
+    },
+    "template_type": "SHIPMENT",
+    "item_no": 1,
+    "changes": [
+     {
+      "field": "item_text",
+      "from": {
+       "tr": "TMP denetim maddesi (düzeltildi)",
+       "en": "TMP denetim maddesi (düzeltildi)"
+      },
+      "to": {}
+     },
+     {
+      "field": "is_active",
+      "from": {
+       "code": "true"
+      },
+      "to": {}
+     }
+    ]
+   }
+  },
+  {
+   "EventAt": "2026-10-04T18:12:33.589049+03:00",
+   "EventType": "CHECKLIST_TEMPLATE_CHANGE",
+   "VIN": "",
+   "OldValue": "",
+   "NewValue": "",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null,
+   "Admin": {
+    "action": "reorder",
+    "entity": "template_item",
+    "subject": {},
+    "parent": {
+     "code": "SHIPMENT",
+     "tr": "Default Customer Vehicle Checklist (43 items)",
+     "en": "Default Customer Vehicle Checklist (43 items)"
+    },
+    "template_type": "SHIPMENT",
+    "moved": [
+     {
+      "subject": {
+       "tr": "TMP denetim maddesi (düzeltildi)",
+       "en": "TMP denetim maddesi (düzeltildi)"
+      },
+      "from": 47,
+      "to": 1
+     }
+    ]
+   }
+  },
+  {
+   "EventAt": "2026-10-04T18:12:33.511287+03:00",
+   "EventType": "CHECKLIST_TEMPLATE_CHANGE",
+   "VIN": "",
+   "OldValue": "",
+   "NewValue": "",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null,
+   "Admin": {
+    "action": "activate",
+    "entity": "template_item",
+    "entity_id": 105,
+    "subject": {
+     "tr": "TMP denetim maddesi (düzeltildi)",
+     "en": "TMP denetim maddesi (düzeltildi)"
+    },
+    "parent": {
+     "code": "SHIPMENT",
+     "tr": "Default Customer Vehicle Checklist (43 items)",
+     "en": "Default Customer Vehicle Checklist (43 items)"
+    },
+    "template_type": "SHIPMENT",
+    "item_no": 47,
+    "changes": [
+     {
+      "field": "is_active",
+      "from": {
+       "code": "false"
+      },
+      "to": {
+       "code": "true"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "EventAt": "2026-10-04T18:12:33.446326+03:00",
+   "EventType": "CHECKLIST_TEMPLATE_CHANGE",
+   "VIN": "",
+   "OldValue": "",
+   "NewValue": "",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null,
+   "Admin": {
+    "action": "deactivate",
+    "entity": "template_item",
+    "entity_id": 105,
+    "subject": {
+     "tr": "TMP denetim maddesi (düzeltildi)",
+     "en": "TMP denetim maddesi (düzeltildi)"
+    },
+    "parent": {
+     "code": "SHIPMENT",
+     "tr": "Default Customer Vehicle Checklist (43 items)",
+     "en": "Default Customer Vehicle Checklist (43 items)"
+    },
+    "template_type": "SHIPMENT",
+    "item_no": 47,
+    "changes": [
+     {
+      "field": "is_active",
+      "from": {
+       "code": "true"
+      },
+      "to": {
+       "code": "false"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "EventAt": "2026-10-04T18:12:33.382342+03:00",
+   "EventType": "CHECKLIST_TEMPLATE_CHANGE",
+   "VIN": "",
+   "OldValue": "",
+   "NewValue": "",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null,
+   "Admin": {
+    "action": "update",
+    "entity": "template_item",
+    "entity_id": 105,
+    "subject": {
+     "tr": "TMP denetim maddesi (düzeltildi)",
+     "en": "TMP denetim maddesi (düzeltildi)"
+    },
+    "parent": {
+     "code": "SHIPMENT",
+     "tr": "Default Customer Vehicle Checklist (43 items)",
+     "en": "Default Customer Vehicle Checklist (43 items)"
+    },
+    "template_type": "SHIPMENT",
+    "item_no": 47,
+    "changes": [
+     {
+      "field": "section",
+      "from": {
+       "code": "final_adjust"
+      },
+      "to": {}
+     }
+    ]
+   }
+  },
+  {
+   "EventAt": "2026-10-04T18:12:33.31208+03:00",
+   "EventType": "CHECKLIST_TEMPLATE_CHANGE",
+   "VIN": "",
+   "OldValue": "",
+   "NewValue": "",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null,
+   "Admin": {
+    "action": "update",
+    "entity": "template_item",
+    "entity_id": 105,
+    "subject": {
+     "tr": "TMP denetim maddesi (düzeltildi)",
+     "en": "TMP denetim maddesi (düzeltildi)"
+    },
+    "parent": {
+     "code": "SHIPMENT",
+     "tr": "Default Customer Vehicle Checklist (43 items)",
+     "en": "Default Customer Vehicle Checklist (43 items)"
+    },
+    "template_type": "SHIPMENT",
+    "item_no": 47,
+    "changes": [
+     {
+      "field": "section",
+      "from": {
+       "code": "interior_fit"
+      },
+      "to": {
+       "code": "final_adjust"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "EventAt": "2026-10-04T18:12:33.241094+03:00",
+   "EventType": "CHECKLIST_TEMPLATE_CHANGE",
+   "VIN": "",
+   "OldValue": "",
+   "NewValue": "",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null,
+   "Admin": {
+    "action": "update",
+    "entity": "template_item",
+    "entity_id": 105,
+    "subject": {
+     "tr": "TMP denetim maddesi",
+     "en": "TMP denetim maddesi"
+    },
+    "parent": {
+     "code": "SHIPMENT",
+     "tr": "Default Customer Vehicle Checklist (43 items)",
+     "en": "Default Customer Vehicle Checklist (43 items)"
+    },
+    "template_type": "SHIPMENT",
+    "item_no": 47,
+    "changes": [
+     {
+      "field": "item_text",
+      "from": {
+       "tr": "TMP denetim maddesi",
+       "en": "TMP denetim maddesi"
+      },
+      "to": {
+       "tr": "TMP denetim maddesi (düzeltildi)",
+       "en": "TMP denetim maddesi (düzeltildi)"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "EventAt": "2026-10-04T18:12:33.142073+03:00",
+   "EventType": "CHECKLIST_TEMPLATE_CHANGE",
+   "VIN": "",
+   "OldValue": "",
+   "NewValue": "",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null,
+   "Admin": {
+    "action": "create",
+    "entity": "template_item",
+    "entity_id": 105,
+    "subject": {
+     "tr": "TMP denetim maddesi",
+     "en": "TMP denetim maddesi"
+    },
+    "parent": {
+     "code": "SHIPMENT",
+     "tr": "Default Customer Vehicle Checklist (43 items)",
+     "en": "Default Customer Vehicle Checklist (43 items)"
+    },
+    "template_type": "SHIPMENT",
+    "item_no": 47,
+    "changes": [
+     {
+      "field": "item_text",
+      "from": {},
+      "to": {
+       "tr": "TMP denetim maddesi",
+       "en": "TMP denetim maddesi"
+      }
+     },
+     {
+      "field": "section",
+      "from": {},
+      "to": {
+       "code": "interior_fit"
+      }
+     },
+     {
+      "field": "is_active",
+      "from": {},
+      "to": {
+       "code": "true"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "EventAt": "2026-10-04T18:12:32.988476+03:00",
+   "EventType": "ROLE_PERMISSION_CHANGE",
+   "VIN": "",
+   "OldValue": "",
+   "NewValue": "",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null,
+   "Admin": {
+    "action": "grants_change",
+    "entity": "role",
+    "entity_id": 7,
+    "subject": {
+     "code": "TMP_AUDIT_VIEWER",
+     "tr": "Geçici Denetim İzleyici",
+     "en": "Geçici Denetim İzleyici"
+    },
+    "parent": {},
+    "revoked": [
+     {
+      "code": "vehicle.view",
+      "tr": "View vehicle records and progress",
+      "en": "View vehicle records and progress"
+     }
+    ]
+   }
+  },
+  {
+   "EventAt": "2026-10-04T18:12:32.924063+03:00",
+   "EventType": "ROLE_PERMISSION_CHANGE",
+   "VIN": "",
+   "OldValue": "",
+   "NewValue": "",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null,
+   "Admin": {
+    "action": "grants_change",
+    "entity": "role",
+    "entity_id": 7,
+    "subject": {
+     "code": "TMP_AUDIT_VIEWER",
+     "tr": "Geçici Denetim İzleyici",
+     "en": "Geçici Denetim İzleyici"
+    },
+    "parent": {},
+    "granted": [
+     {
+      "code": "analysis.view",
+      "tr": "View the Analysis tab",
+      "en": "View the Analysis tab"
+     },
+     {
+      "code": "vehicle.view",
+      "tr": "View vehicle records and progress",
+      "en": "View vehicle records and progress"
+     },
+     {
+      "code": "web.access",
+      "tr": "Sign in to the web dashboard",
+      "en": "Sign in to the web dashboard"
+     }
+    ]
+   }
+  },
+  {
+   "EventAt": "2026-10-04T18:12:32.854998+03:00",
+   "EventType": "ROLE_PERMISSION_CHANGE",
+   "VIN": "",
+   "OldValue": "",
+   "NewValue": "",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null,
+   "Admin": {
+    "action": "create",
+    "entity": "role",
+    "entity_id": 7,
+    "subject": {
+     "code": "TMP_AUDIT_VIEWER",
+     "tr": "Geçici Denetim İzleyici",
+     "en": "Geçici Denetim İzleyici"
+    },
+    "parent": {},
+    "changes": [
+     {
+      "field": "name",
+      "from": {},
+      "to": {
+       "tr": "Geçici Denetim İzleyici",
+       "en": "Geçici Denetim İzleyici"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "EventAt": "2026-10-04T18:12:32.788937+03:00",
+   "EventType": "USER_ADMIN_CHANGE",
+   "VIN": "",
+   "OldValue": "",
+   "NewValue": "",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null,
+   "Admin": {
+    "action": "delete",
+    "entity": "user",
+    "entity_id": 6,
+    "subject": {
+     "tr": "Tmp Denetim Kullanıcı",
+     "en": "Tmp Denetim Kullanıcı"
+    },
+    "subject_email": "tmp.audit.user@karea.local",
+    "parent": {},
+    "changes": [
+     {
+      "field": "name",
+      "from": {
+       "tr": "Tmp Denetim Kullanıcı",
+       "en": "Tmp Denetim Kullanıcı"
+      },
+      "to": {}
+     },
+     {
+      "field": "email",
+      "from": {
+       "tr": "tmp.audit.user@karea.local",
+       "en": "tmp.audit.user@karea.local"
+      },
+      "to": {}
+     },
+     {
+      "field": "role",
+      "from": {
+       "code": "QUALITY",
+       "tr": "Quality",
+       "en": "Quality"
+      },
+      "to": {}
+     },
+     {
+      "field": "is_active",
+      "from": {
+       "code": "true"
+      },
+      "to": {}
+     }
+    ]
+   }
+  },
+  {
+   "EventAt": "2026-10-04T18:12:32.703497+03:00",
+   "EventType": "USER_ADMIN_CHANGE",
+   "VIN": "",
+   "OldValue": "",
+   "NewValue": "",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null,
+   "Admin": {
+    "action": "login_unlock",
+    "entity": "user",
+    "entity_id": 6,
+    "subject": {
+     "tr": "Tmp Denetim Kullanıcı",
+     "en": "Tmp Denetim Kullanıcı"
+    },
+    "subject_email": "tmp.audit.user@karea.local",
+    "parent": {}
+   }
+  },
+  {
+   "EventAt": "2026-10-04T18:12:31.240702+03:00",
+   "EventType": "USER_ADMIN_CHANGE",
+   "VIN": "",
+   "OldValue": "",
+   "NewValue": "",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null,
+   "Admin": {
+    "action": "password_reset",
+    "entity": "user",
+    "entity_id": 6,
+    "subject": {
+     "tr": "Tmp Denetim Kullanıcı",
+     "en": "Tmp Denetim Kullanıcı"
+    },
+    "subject_email": "tmp.audit.user@karea.local",
+    "parent": {}
+   }
+  },
+  {
+   "EventAt": "2026-10-04T18:12:30.912884+03:00",
+   "EventType": "USER_ADMIN_CHANGE",
+   "VIN": "",
+   "OldValue": "",
+   "NewValue": "",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null,
+   "Admin": {
+    "action": "activate",
+    "entity": "user",
+    "entity_id": 6,
+    "subject": {
+     "tr": "Tmp Denetim Kullanıcı",
+     "en": "Tmp Denetim Kullanıcı"
+    },
+    "subject_email": "tmp.audit.user@karea.local",
+    "parent": {},
+    "changes": [
+     {
+      "field": "is_active",
+      "from": {
+       "code": "false"
+      },
+      "to": {
+       "code": "true"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "EventAt": "2026-10-04T18:12:30.845579+03:00",
+   "EventType": "USER_ADMIN_CHANGE",
+   "VIN": "",
+   "OldValue": "",
+   "NewValue": "",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null,
+   "Admin": {
+    "action": "deactivate",
+    "entity": "user",
+    "entity_id": 6,
+    "subject": {
+     "tr": "Tmp Denetim Kullanıcı",
+     "en": "Tmp Denetim Kullanıcı"
+    },
+    "subject_email": "tmp.audit.user@karea.local",
+    "parent": {},
+    "changes": [
+     {
+      "field": "is_active",
+      "from": {
+       "code": "true"
+      },
+      "to": {
+       "code": "false"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "EventAt": "2026-10-04T18:12:30.70621+03:00",
+   "EventType": "USER_ADMIN_CHANGE",
+   "VIN": "",
+   "OldValue": "",
+   "NewValue": "",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null,
+   "Admin": {
+    "action": "role_change",
+    "entity": "user",
+    "entity_id": 6,
+    "subject": {
+     "tr": "Tmp Denetim Kullanıcı",
+     "en": "Tmp Denetim Kullanıcı"
+    },
+    "subject_email": "tmp.audit.user@karea.local",
+    "parent": {},
+    "changes": [
+     {
+      "field": "role",
+      "from": {
+       "code": "OPERATOR",
+       "tr": "Operator",
+       "en": "Operator"
+      },
+      "to": {
+       "code": "QUALITY",
+       "tr": "Quality",
+       "en": "Quality"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "EventAt": "2026-10-04T18:12:30.612583+03:00",
+   "EventType": "USER_ADMIN_CHANGE",
+   "VIN": "",
+   "OldValue": "",
+   "NewValue": "",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null,
+   "Admin": {
+    "action": "create",
+    "entity": "user",
+    "entity_id": 6,
+    "subject": {
+     "tr": "Tmp Denetim Kullanıcı",
+     "en": "Tmp Denetim Kullanıcı"
+    },
+    "subject_email": "tmp.audit.user@karea.local",
+    "parent": {},
+    "changes": [
+     {
+      "field": "name",
+      "from": {},
+      "to": {
+       "tr": "Tmp Denetim Kullanıcı",
+       "en": "Tmp Denetim Kullanıcı"
+      }
+     },
+     {
+      "field": "email",
+      "from": {},
+      "to": {
+       "tr": "tmp.audit.user@karea.local",
+       "en": "tmp.audit.user@karea.local"
+      }
+     },
+     {
+      "field": "role",
+      "from": {},
+      "to": {
+       "code": "OPERATOR",
+       "tr": "Operator",
+       "en": "Operator"
+      }
+     },
+     {
+      "field": "is_active",
+      "from": {},
+      "to": {
+       "code": "true"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "EventAt": "2026-10-04T18:08:48.071099+03:00",
+   "EventType": "EOL_WORKFLOW_STAGE_CHANGE",
+   "VIN": "N7V1K1SA2TK000018",
+   "OldValue": "DEPOT",
+   "NewValue": "COMPLETED",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null
+  },
+  {
+   "EventAt": "2026-10-04T18:08:48.071099+03:00",
+   "EventType": "STATUS_CHANGE",
+   "VIN": "N7V1K1SA2TK000018",
+   "OldValue": "IN_PRODUCTION",
+   "NewValue": "IN_WAREHOUSE",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null
+  },
+  {
+   "EventAt": "2026-10-04T18:08:48.071099+03:00",
+   "EventType": "EOL_WORKFLOW_STAGE_CHANGE",
+   "VIN": "N7V1K1SA2TK000018",
+   "OldValue": "BRANCH",
+   "NewValue": "DEPOT",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null
+  },
+  {
+   "EventAt": "2026-10-04T18:08:48.071099+03:00",
+   "EventType": "EOL_WORKFLOW_STAGE_CHANGE",
+   "VIN": "N7V1K1SAXTK000017",
+   "OldValue": "DEPOT",
+   "NewValue": "COMPLETED",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null
+  },
+  {
+   "EventAt": "2026-10-04T18:08:48.071099+03:00",
+   "EventType": "STATUS_CHANGE",
+   "VIN": "N7V1K1SAXTK000017",
+   "OldValue": "IN_PRODUCTION",
+   "NewValue": "IN_WAREHOUSE",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null
+  },
+  {
+   "EventAt": "2026-10-04T18:08:48.071099+03:00",
+   "EventType": "EOL_WORKFLOW_STAGE_CHANGE",
+   "VIN": "N7V1K1SAXTK000017",
+   "OldValue": "BRANCH",
+   "NewValue": "DEPOT",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null
+  },
+  {
+   "EventAt": "2026-10-04T18:08:48.071099+03:00",
+   "EventType": "EOL_WORKFLOW_STAGE_CHANGE",
+   "VIN": "N7V1K1SA9TK000016",
+   "OldValue": "DEPOT",
+   "NewValue": "COMPLETED",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null
+  },
+  {
+   "EventAt": "2026-10-04T18:08:48.071099+03:00",
+   "EventType": "STATUS_CHANGE",
+   "VIN": "N7V1K1SA9TK000016",
+   "OldValue": "IN_PRODUCTION",
+   "NewValue": "IN_WAREHOUSE",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null
+  },
+  {
+   "EventAt": "2026-10-04T18:08:48.071099+03:00",
+   "EventType": "EOL_WORKFLOW_STAGE_CHANGE",
+   "VIN": "N7V1K1SA9TK000016",
+   "OldValue": "BRANCH",
+   "NewValue": "DEPOT",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null
+  },
+  {
+   "EventAt": "2026-10-04T18:08:48.071099+03:00",
+   "EventType": "EOL_WORKFLOW_STAGE_CHANGE",
+   "VIN": "N7V1K1SA7TK000015",
+   "OldValue": "DEPOT",
+   "NewValue": "COMPLETED",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null
+  },
+  {
+   "EventAt": "2026-10-04T18:08:48.071099+03:00",
+   "EventType": "STATUS_CHANGE",
+   "VIN": "N7V1K1SA7TK000015",
+   "OldValue": "IN_PRODUCTION",
+   "NewValue": "IN_WAREHOUSE",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null
+  },
+  {
+   "EventAt": "2026-10-04T18:08:48.071099+03:00",
+   "EventType": "EOL_WORKFLOW_STAGE_CHANGE",
+   "VIN": "N7V1K1SA7TK000015",
+   "OldValue": "BRANCH",
+   "NewValue": "DEPOT",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null
+  },
+  {
+   "EventAt": "2026-10-04T18:08:48.071099+03:00",
+   "EventType": "EOL_WORKFLOW_STAGE_CHANGE",
+   "VIN": "N7V1K1SA5TK000014",
+   "OldValue": "DEPOT",
+   "NewValue": "COMPLETED",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null
+  },
+  {
+   "EventAt": "2026-10-04T18:08:48.071099+03:00",
+   "EventType": "STATUS_CHANGE",
+   "VIN": "N7V1K1SA5TK000014",
+   "OldValue": "IN_PRODUCTION",
+   "NewValue": "IN_WAREHOUSE",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null
+  },
+  {
+   "EventAt": "2026-10-04T18:08:48.071099+03:00",
+   "EventType": "EOL_WORKFLOW_STAGE_CHANGE",
+   "VIN": "N7V1K1SA5TK000014",
+   "OldValue": "BRANCH",
+   "NewValue": "DEPOT",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null
+  },
+  {
+   "EventAt": "2026-10-04T18:08:48.071099+03:00",
+   "EventType": "EOL_WORKFLOW_STAGE_CHANGE",
+   "VIN": "N7V1K1SA3TK000013",
+   "OldValue": "DEPOT",
+   "NewValue": "COMPLETED",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null
+  },
+  {
+   "EventAt": "2026-10-04T18:08:48.071099+03:00",
+   "EventType": "STATUS_CHANGE",
+   "VIN": "N7V1K1SA3TK000013",
+   "OldValue": "IN_PRODUCTION",
+   "NewValue": "IN_WAREHOUSE",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null
+  },
+  {
+   "EventAt": "2026-10-04T18:08:48.071099+03:00",
+   "EventType": "EOL_WORKFLOW_STAGE_CHANGE",
+   "VIN": "N7V1K1SA3TK000013",
+   "OldValue": "BRANCH",
+   "NewValue": "DEPOT",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null
+  },
+  {
+   "EventAt": "2026-10-04T18:08:48.071099+03:00",
+   "EventType": "STATUS_CHANGE",
+   "VIN": "N7V1K1SA1TK000012",
+   "OldValue": "IN_PRODUCTION",
+   "NewValue": "IN_WAREHOUSE",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null
+  },
+  {
+   "EventAt": "2026-10-04T18:08:48.071099+03:00",
+   "EventType": "EOL_WORKFLOW_STAGE_CHANGE",
+   "VIN": "N7V1K1SA1TK000012",
+   "OldValue": "BRANCH",
+   "NewValue": "DEPOT",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null
+  },
+  {
+   "EventAt": "2026-10-04T18:08:48.071099+03:00",
+   "EventType": "STATUS_CHANGE",
+   "VIN": "N7V1K1SAXTK000011",
+   "OldValue": "IN_PRODUCTION",
+   "NewValue": "IN_WAREHOUSE",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null
+  },
+  {
+   "EventAt": "2026-10-04T18:08:48.071099+03:00",
+   "EventType": "EOL_WORKFLOW_STAGE_CHANGE",
+   "VIN": "N7V1K1SAXTK000011",
+   "OldValue": "BRANCH",
+   "NewValue": "DEPOT",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null
+  },
+  {
+   "EventAt": "2026-10-04T18:08:48.071099+03:00",
+   "EventType": "STATUS_CHANGE",
+   "VIN": "N7V1K1SA8TK000010",
+   "OldValue": "IN_PRODUCTION",
+   "NewValue": "IN_WAREHOUSE",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null
+  },
+  {
+   "EventAt": "2026-10-04T18:08:48.071099+03:00",
+   "EventType": "EOL_WORKFLOW_STAGE_CHANGE",
+   "VIN": "N7V1K1SA8TK000010",
+   "OldValue": "BRANCH",
+   "NewValue": "DEPOT",
+   "ActorName": "Local Manager",
+   "ActorEmail": "manager@karea.local",
+   "ChecklistType": "",
+   "ItemNo": null,
+   "ItemText": "",
+   "Classification": null
+  }
+ ],
+ "Total": 72
+}

@@ -1,0 +1,99 @@
+== tr (48 rows)
+DEFECT_CATALOG_CHANGE: Süreç «Geçici süreç 2» — silindi · Ad: Geçici süreç 2 · Kod: TMPPROC2 · Durum: Aktif
+DEFECT_CATALOG_CHANGE: Bölge «Geçici bölge 2 (91)» — silindi · Ad: Geçici bölge 2 · Kod: 91 · Durum: Aktif
+DEFECT_CATALOG_CHANGE: Kusur tipi «Geçici kusur 2 (98)» — silindi · Ad: Geçici kusur 2 · Kod: 98 · Varsayılan süreç: Montaj · Durum: Aktif
+DEFECT_CATALOG_CHANGE: Parça «Geçici parça 2 (10-91)» (Body) — silindi · Ad: Geçici parça 2 · Kod: 10-91 · Bölge: Body (10) · Durum: Aktif
+DEFECT_CATALOG_CHANGE: Parça (Body) — sıralama değiştirildi · Doghouse (10-09): 10. sıradan 1. sıraya
+DEFECT_CATALOG_CHANGE: Süreç — sıralama değiştirildi · Elektrik: 5. sıradan 1. sıraya
+DEFECT_CATALOG_CHANGE: Bölge — sıralama değiştirildi · Diğer (99): 6. sıradan 1. sıraya
+DEFECT_CATALOG_CHANGE: Kusur tipi — sıralama değiştirildi · Diğer (99): 11. sıradan 1. sıraya
+DEFECT_CATALOG_CHANGE: Kusur tipi «Geçici kusur 2 (98)» — aktif edildi · Durum: Pasif → Aktif
+DEFECT_CATALOG_CHANGE: Kusur tipi «Geçici kusur 2 (98)» — pasife alındı · Durum: Aktif → Pasif
+DEFECT_CATALOG_CHANGE: Kusur tipi «Geçici kusur (98)» — güncellendi · Ad: Geçici kusur → Geçici kusur 2
+DEFECT_CATALOG_CHANGE: Kusur tipi «Geçici kusur (98)» — güncellendi · Varsayılan süreç: Geçici süreç 2 → Montaj
+DEFECT_CATALOG_CHANGE: Kusur tipi «Geçici kusur (98)» — oluşturuldu · Ad: Geçici kusur · Kod: 98 · Varsayılan süreç: Geçici süreç 2 · Durum: Aktif
+DEFECT_CATALOG_CHANGE: Parça «Geçici parça 2 (10-91)» (Body) — aktif edildi · Durum: Pasif → Aktif
+DEFECT_CATALOG_CHANGE: Parça «Geçici parça 2 (10-91)» (Body) — pasife alındı · Durum: Aktif → Pasif
+DEFECT_CATALOG_CHANGE: Parça «Geçici parça 2 (91-01)» (Body) — güncellendi · Kod: 91-01 → 10-91 · Bölge: Geçici bölge 2 (91) → Body (10)
+DEFECT_CATALOG_CHANGE: Parça «Geçici parça (91-01)» (Geçici bölge 2) — güncellendi · Ad: Geçici parça → Geçici parça 2
+DEFECT_CATALOG_CHANGE: Parça «Geçici parça (91-01)» (Geçici bölge 2) — oluşturuldu · Ad: Geçici parça · Kod: 91-01 · Bölge: Geçici bölge 2 (91) · Durum: Aktif
+DEFECT_CATALOG_CHANGE: Bölge «Geçici bölge 2 (91)» — aktif edildi · Durum: Pasif → Aktif
+DEFECT_CATALOG_CHANGE: Bölge «Geçici bölge 2 (91)» — pasife alındı · Durum: Aktif → Pasif
+DEFECT_CATALOG_CHANGE: Bölge «Geçici bölge (90)» — güncellendi · Ad: Geçici bölge → Geçici bölge 2 · Kod: 90 → 91
+DEFECT_CATALOG_CHANGE: Bölge «Geçici bölge (90)» — oluşturuldu · Ad: Geçici bölge · Kod: 90 · Durum: Aktif
+DEFECT_CATALOG_CHANGE: Süreç «Geçici süreç 2» — aktif edildi · Durum: Pasif → Aktif
+DEFECT_CATALOG_CHANGE: Süreç «Geçici süreç 2» — pasife alındı · Durum: Aktif → Pasif
+DEFECT_CATALOG_CHANGE: Süreç «Geçici süreç 2» — güncellendi · Kod: TMPPROC → TMPPROC2
+DEFECT_CATALOG_CHANGE: Süreç «Geçici süreç» — güncellendi · Ad: Geçici süreç → Geçici süreç 2
+DEFECT_CATALOG_CHANGE: Süreç «Geçici süreç» — oluşturuldu · Ad: Geçici süreç · Kod: TMPPROC · Durum: Aktif
+CHECKLIST_TEMPLATE_CHANGE: Şablon maddesi «TMP EoL maddesi» (EOL) — silindi · Madde metni: TMP EoL maddesi · EoL aşaması: Depo · Durum: Aktif
+CHECKLIST_TEMPLATE_CHANGE: Şablon maddesi «TMP EoL maddesi» (EOL) — güncellendi · EoL aşaması: Fabrika → Depo
+CHECKLIST_TEMPLATE_CHANGE: Şablon maddesi «TMP EoL maddesi» (EOL) — oluşturuldu · Madde metni: TMP EoL maddesi · EoL aşaması: Fabrika · Durum: Aktif
+CHECKLIST_TEMPLATE_CHANGE: Şablon maddesi «TMP denetim maddesi (düzeltildi)» (Sevkiyat) — silindi · Madde metni: TMP denetim maddesi (düzeltildi) · Durum: Aktif
+CHECKLIST_TEMPLATE_CHANGE: Şablon maddesi (Sevkiyat) — sıralama değiştirildi · TMP denetim maddesi (düzeltildi): 47. sıradan 1. sıraya
+CHECKLIST_TEMPLATE_CHANGE: Şablon maddesi «TMP denetim maddesi (düzeltildi)» (Sevkiyat) — aktif edildi · Durum: Pasif → Aktif
+CHECKLIST_TEMPLATE_CHANGE: Şablon maddesi «TMP denetim maddesi (düzeltildi)» (Sevkiyat) — pasife alındı · Durum: Aktif → Pasif
+CHECKLIST_TEMPLATE_CHANGE: Şablon maddesi «TMP denetim maddesi (düzeltildi)» (Sevkiyat) — güncellendi · Bölüm: Son Ayar & Kontroller → Diğer maddeler
+CHECKLIST_TEMPLATE_CHANGE: Şablon maddesi «TMP denetim maddesi (düzeltildi)» (Sevkiyat) — güncellendi · Bölüm: İç Montaj & Kesim İşleri → Son Ayar & Kontroller
+CHECKLIST_TEMPLATE_CHANGE: Şablon maddesi «TMP denetim maddesi» (Sevkiyat) — güncellendi · Madde metni: TMP denetim maddesi → TMP denetim maddesi (düzeltildi)
+CHECKLIST_TEMPLATE_CHANGE: Şablon maddesi «TMP denetim maddesi» (Sevkiyat) — oluşturuldu · Madde metni: TMP denetim maddesi · Bölüm: İç Montaj & Kesim İşleri · Durum: Aktif
+ROLE_PERMISSION_CHANGE: Rol «Geçici Denetim İzleyici» — izinleri değiştirildi · Alınan izin: Araçları görüntüle
+ROLE_PERMISSION_CHANGE: Rol «Geçici Denetim İzleyici» — izinleri değiştirildi · Verilen izin: Analiz sayfası, Araçları görüntüle, Web uygulamasına giriş
+ROLE_PERMISSION_CHANGE: Rol «Geçici Denetim İzleyici» — oluşturuldu · Ad: Geçici Denetim İzleyici
+USER_ADMIN_CHANGE: Kullanıcı «Tmp Denetim Kullanıcı (tmp.audit.user@karea.local)» — silindi · Ad: Tmp Denetim Kullanıcı · E-posta: tmp.audit.user@karea.local · Rol: Kalite · Durum: Aktif
+USER_ADMIN_CHANGE: Kullanıcı «Tmp Denetim Kullanıcı (tmp.audit.user@karea.local)» — giriş kilidi açıldı
+USER_ADMIN_CHANGE: Kullanıcı «Tmp Denetim Kullanıcı (tmp.audit.user@karea.local)» — şifresi sıfırlandı
+USER_ADMIN_CHANGE: Kullanıcı «Tmp Denetim Kullanıcı (tmp.audit.user@karea.local)» — aktif edildi · Durum: Pasif → Aktif
+USER_ADMIN_CHANGE: Kullanıcı «Tmp Denetim Kullanıcı (tmp.audit.user@karea.local)» — pasife alındı · Durum: Aktif → Pasif
+USER_ADMIN_CHANGE: Kullanıcı «Tmp Denetim Kullanıcı (tmp.audit.user@karea.local)» — rolü değiştirildi · Rol: Operatör → Kalite
+USER_ADMIN_CHANGE: Kullanıcı «Tmp Denetim Kullanıcı (tmp.audit.user@karea.local)» — oluşturuldu · Ad: Tmp Denetim Kullanıcı · E-posta: tmp.audit.user@karea.local · Rol: Operatör · Durum: Aktif
+== en (48 rows)
+DEFECT_CATALOG_CHANGE: Process «Temp process 2» — deleted · Name: Temp process 2 · Code: TMPPROC2 · Status: Active
+DEFECT_CATALOG_CHANGE: Zone «Temp zone (91)» — deleted · Name: Temp zone · Code: 91 · Status: Active
+DEFECT_CATALOG_CHANGE: Defect type «Temp defect 2 (98)» — deleted · Name: Temp defect 2 · Code: 98 · Default process: Assembly · Status: Active
+DEFECT_CATALOG_CHANGE: Part «Temp part (10-91)» (Body) — deleted · Name: Temp part · Code: 10-91 · Zone: Body (10) · Status: Active
+DEFECT_CATALOG_CHANGE: Part (Body) — order changed · Doghouse (10-09): position 10 → 1
+DEFECT_CATALOG_CHANGE: Process — order changed · Electrical: position 5 → 1
+DEFECT_CATALOG_CHANGE: Zone — order changed · Other (99): position 6 → 1
+DEFECT_CATALOG_CHANGE: Defect type — order changed · Other (99): position 11 → 1
+DEFECT_CATALOG_CHANGE: Defect type «Temp defect 2 (98)» — activated · Status: Inactive → Active
+DEFECT_CATALOG_CHANGE: Defect type «Temp defect 2 (98)» — deactivated · Status: Active → Inactive
+DEFECT_CATALOG_CHANGE: Defect type «Temp defect (98)» — updated · Name: Temp defect → Temp defect 2
+DEFECT_CATALOG_CHANGE: Defect type «Temp defect (98)» — updated · Default process: Temp process 2 → Assembly
+DEFECT_CATALOG_CHANGE: Defect type «Temp defect (98)» — created · Name: Temp defect · Code: 98 · Default process: Temp process 2 · Status: Active
+DEFECT_CATALOG_CHANGE: Part «Temp part (10-91)» (Body) — activated · Status: Inactive → Active
+DEFECT_CATALOG_CHANGE: Part «Temp part (10-91)» (Body) — deactivated · Status: Active → Inactive
+DEFECT_CATALOG_CHANGE: Part «Temp part (91-01)» (Body) — updated · Code: 91-01 → 10-91 · Zone: Temp zone (91) → Body (10)
+DEFECT_CATALOG_CHANGE: Part «Temp part (91-01)» (Temp zone) — updated · Name: Geçici parça / Temp part → Geçici parça 2 / Temp part
+DEFECT_CATALOG_CHANGE: Part «Temp part (91-01)» (Temp zone) — created · Name: Temp part · Code: 91-01 · Zone: Temp zone (91) · Status: Active
+DEFECT_CATALOG_CHANGE: Zone «Temp zone (91)» — activated · Status: Inactive → Active
+DEFECT_CATALOG_CHANGE: Zone «Temp zone (91)» — deactivated · Status: Active → Inactive
+DEFECT_CATALOG_CHANGE: Zone «Temp zone (90)» — updated · Name: Geçici bölge / Temp zone → Geçici bölge 2 / Temp zone · Code: 90 → 91
+DEFECT_CATALOG_CHANGE: Zone «Temp zone (90)» — created · Name: Temp zone · Code: 90 · Status: Active
+DEFECT_CATALOG_CHANGE: Process «Temp process 2» — activated · Status: Inactive → Active
+DEFECT_CATALOG_CHANGE: Process «Temp process 2» — deactivated · Status: Active → Inactive
+DEFECT_CATALOG_CHANGE: Process «Temp process 2» — updated · Code: TMPPROC → TMPPROC2
+DEFECT_CATALOG_CHANGE: Process «Temp process» — updated · Name: Temp process → Temp process 2
+DEFECT_CATALOG_CHANGE: Process «Temp process» — created · Name: Temp process · Code: TMPPROC · Status: Active
+CHECKLIST_TEMPLATE_CHANGE: Template item «TMP EoL maddesi» (EOL) — deleted · Item text: TMP EoL maddesi · EoL phase: Depot · Status: Active
+CHECKLIST_TEMPLATE_CHANGE: Template item «TMP EoL maddesi» (EOL) — updated · EoL phase: Factory → Depot
+CHECKLIST_TEMPLATE_CHANGE: Template item «TMP EoL maddesi» (EOL) — created · Item text: TMP EoL maddesi · EoL phase: Factory · Status: Active
+CHECKLIST_TEMPLATE_CHANGE: Template item «TMP denetim maddesi (düzeltildi)» (Shipment) — deleted · Item text: TMP denetim maddesi (düzeltildi) · Status: Active
+CHECKLIST_TEMPLATE_CHANGE: Template item (Shipment) — order changed · TMP denetim maddesi (düzeltildi): position 47 → 1
+CHECKLIST_TEMPLATE_CHANGE: Template item «TMP denetim maddesi (düzeltildi)» (Shipment) — activated · Status: Inactive → Active
+CHECKLIST_TEMPLATE_CHANGE: Template item «TMP denetim maddesi (düzeltildi)» (Shipment) — deactivated · Status: Active → Inactive
+CHECKLIST_TEMPLATE_CHANGE: Template item «TMP denetim maddesi (düzeltildi)» (Shipment) — updated · Section: Final adjustments & checks → Other items
+CHECKLIST_TEMPLATE_CHANGE: Template item «TMP denetim maddesi (düzeltildi)» (Shipment) — updated · Section: Interior fitting & cutting → Final adjustments & checks
+CHECKLIST_TEMPLATE_CHANGE: Template item «TMP denetim maddesi» (Shipment) — updated · Item text: TMP denetim maddesi → TMP denetim maddesi (düzeltildi)
+CHECKLIST_TEMPLATE_CHANGE: Template item «TMP denetim maddesi» (Shipment) — created · Item text: TMP denetim maddesi · Section: Interior fitting & cutting · Status: Active
+ROLE_PERMISSION_CHANGE: Role «Geçici Denetim İzleyici» — permissions changed · Revoked: View vehicles
+ROLE_PERMISSION_CHANGE: Role «Geçici Denetim İzleyici» — permissions changed · Granted: Analysis page, View vehicles, Sign in to the web app
+ROLE_PERMISSION_CHANGE: Role «Geçici Denetim İzleyici» — created · Name: Geçici Denetim İzleyici
+USER_ADMIN_CHANGE: User «Tmp Denetim Kullanıcı (tmp.audit.user@karea.local)» — deleted · Name: Tmp Denetim Kullanıcı · Email: tmp.audit.user@karea.local · Role: Quality · Status: Active
+USER_ADMIN_CHANGE: User «Tmp Denetim Kullanıcı (tmp.audit.user@karea.local)» — login lock cleared
+USER_ADMIN_CHANGE: User «Tmp Denetim Kullanıcı (tmp.audit.user@karea.local)» — password reset
+USER_ADMIN_CHANGE: User «Tmp Denetim Kullanıcı (tmp.audit.user@karea.local)» — activated · Status: Inactive → Active
+USER_ADMIN_CHANGE: User «Tmp Denetim Kullanıcı (tmp.audit.user@karea.local)» — deactivated · Status: Active → Inactive
+USER_ADMIN_CHANGE: User «Tmp Denetim Kullanıcı (tmp.audit.user@karea.local)» — role changed · Role: Operator → Quality
+USER_ADMIN_CHANGE: User «Tmp Denetim Kullanıcı (tmp.audit.user@karea.local)» — created · Name: Tmp Denetim Kullanıcı · Email: tmp.audit.user@karea.local · Role: Operator · Status: Active
+NO RAW VALUES

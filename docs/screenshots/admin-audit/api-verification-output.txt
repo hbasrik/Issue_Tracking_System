@@ -1,0 +1,290 @@
+== 1. Users (USER_ADMIN_CHANGE) ==
+
+-- user create: HTTP 201
+   audit #25 USER_ADMIN_CHANGE by Local Manager vin=<NULL> old=<NULL> new=<NULL>
+     metadata {"action": "create", "entity": "user", "parent": {}, "changes": [{"to": {"en": "Tmp Denetim Kullanıcı", "tr": "Tmp Denetim Kullanıcı"}, "from": {}, "field": "name"}, {"to": {"en": "tmp.audit.user@karea.local", "tr": "tmp.audit.user@karea.local"}, "from": {}, "field": "email"}, {"to": {"en": "Operator", "tr": "Operator", "code": "OPERATOR"}, "from": {}, "field": "role"}, {"to": {"code": "true"}, "from": {}, "field": "is_active"}], "subject": {"en": "Tmp Denetim Kullanıcı", "tr": "Tmp Denetim Kullanıcı"}, "entity_id": 6, "subject_email": "tmp.audit.user@karea.local"}
+  [PASS] user create: 1 row(s), action create
+
+-- user role change OPERATOR -> QUALITY: HTTP 200
+   audit #26 USER_ADMIN_CHANGE by Local Manager vin=<NULL> old=<NULL> new=<NULL>
+     metadata {"action": "role_change", "entity": "user", "parent": {}, "changes": [{"to": {"en": "Quality", "tr": "Quality", "code": "QUALITY"}, "from": {"en": "Operator", "tr": "Operator", "code": "OPERATOR"}, "field": "role"}], "subject": {"en": "Tmp Denetim Kullanıcı", "tr": "Tmp Denetim Kullanıcı"}, "entity_id": 6, "subject_email": "tmp.audit.user@karea.local"}
+  [PASS] user role change OPERATOR -> QUALITY: 1 row(s), action role_change
+
+-- user no-op update (same role): HTTP 200
+  [PASS] user no-op update (same role): 0 row(s)
+
+-- user deactivate: HTTP 200
+   audit #27 USER_ADMIN_CHANGE by Local Manager vin=<NULL> old=<NULL> new=<NULL>
+     metadata {"action": "deactivate", "entity": "user", "parent": {}, "changes": [{"to": {"code": "false"}, "from": {"code": "true"}, "field": "is_active"}], "subject": {"en": "Tmp Denetim Kullanıcı", "tr": "Tmp Denetim Kullanıcı"}, "entity_id": 6, "subject_email": "tmp.audit.user@karea.local"}
+  [PASS] user deactivate: 1 row(s), action deactivate
+
+-- user activate: HTTP 200
+   audit #28 USER_ADMIN_CHANGE by Local Manager vin=<NULL> old=<NULL> new=<NULL>
+     metadata {"action": "activate", "entity": "user", "parent": {}, "changes": [{"to": {"code": "true"}, "from": {"code": "false"}, "field": "is_active"}], "subject": {"en": "Tmp Denetim Kullanıcı", "tr": "Tmp Denetim Kullanıcı"}, "entity_id": 6, "subject_email": "tmp.audit.user@karea.local"}
+  [PASS] user activate: 1 row(s), action activate
+
+-- user password reset: HTTP 200
+   audit #29 USER_ADMIN_CHANGE by Local Manager vin=<NULL> old=<NULL> new=<NULL>
+     metadata {"action": "password_reset", "entity": "user", "parent": {}, "subject": {"en": "Tmp Denetim Kullanıcı", "tr": "Tmp Denetim Kullanıcı"}, "entity_id": 6, "subject_email": "tmp.audit.user@karea.local"}
+  [PASS] user password reset: 1 row(s), action password_reset
+
+-- unlock-login while not locked: HTTP 200
+  [PASS] unlock-login while not locked: 0 row(s)
+
+-- unlock-login after 5 failed logins: HTTP 200
+   audit #30 USER_ADMIN_CHANGE by Local Manager vin=<NULL> old=<NULL> new=<NULL>
+     metadata {"action": "login_unlock", "entity": "user", "parent": {}, "subject": {"en": "Tmp Denetim Kullanıcı", "tr": "Tmp Denetim Kullanıcı"}, "entity_id": 6, "subject_email": "tmp.audit.user@karea.local"}
+  [PASS] unlock-login after 5 failed logins: 1 row(s), action login_unlock
+
+-- user delete: HTTP 204
+   audit #31 USER_ADMIN_CHANGE by Local Manager vin=<NULL> old=<NULL> new=<NULL>
+     metadata {"action": "delete", "entity": "user", "parent": {}, "changes": [{"to": {}, "from": {"en": "Tmp Denetim Kullanıcı", "tr": "Tmp Denetim Kullanıcı"}, "field": "name"}, {"to": {}, "from": {"en": "tmp.audit.user@karea.local", "tr": "tmp.audit.user@karea.local"}, "field": "email"}, {"to": {}, "from": {"en": "Quality", "tr": "Quality", "code": "QUALITY"}, "field": "role"}, {"to": {}, "from": {"code": "true"}, "field": "is_active"}], "subject": {"en": "Tmp Denetim Kullanıcı", "tr": "Tmp Denetim Kullanıcı"}, "entity_id": 6, "subject_email": "tmp.audit.user@karea.local"}
+  [PASS] user delete: 1 row(s), action delete
+
+== 2. Roles and permission matrix (ROLE_PERMISSION_CHANGE) ==
+
+-- role create: HTTP 201
+   audit #32 ROLE_PERMISSION_CHANGE by Local Manager vin=<NULL> old=<NULL> new=<NULL>
+     metadata {"action": "create", "entity": "role", "parent": {}, "changes": [{"to": {"en": "Geçici Denetim İzleyici", "tr": "Geçici Denetim İzleyici"}, "from": {}, "field": "name"}], "subject": {"en": "Geçici Denetim İzleyici", "tr": "Geçici Denetim İzleyici", "code": "TMP_AUDIT_VIEWER"}, "entity_id": 7}
+  [PASS] role create: 1 row(s), action create
+
+-- role grant analysis.view + web.access + vehicle.view: HTTP 200
+   audit #33 ROLE_PERMISSION_CHANGE by Local Manager vin=<NULL> old=<NULL> new=<NULL>
+     metadata {"action": "grants_change", "entity": "role", "parent": {}, "granted": [{"en": "View the Analysis tab", "tr": "View the Analysis tab", "code": "analysis.view"}, {"en": "View vehicle records and progress", "tr": "View vehicle records and progress", "code": "vehicle.view"}, {"en": "Sign in to the web dashboard", "tr": "Sign in to the web dashboard", "code": "web.access"}], "subject": {"en": "Geçici Denetim İzleyici", "tr": "Geçici Denetim İzleyici", "code": "TMP_AUDIT_VIEWER"}, "entity_id": 7}
+  [PASS] role grant analysis.view + web.access + vehicle.view: 1 row(s), action grants_change
+
+-- role revoke vehicle.view: HTTP 200
+   audit #34 ROLE_PERMISSION_CHANGE by Local Manager vin=<NULL> old=<NULL> new=<NULL>
+     metadata {"action": "grants_change", "entity": "role", "parent": {}, "revoked": [{"en": "View vehicle records and progress", "tr": "View vehicle records and progress", "code": "vehicle.view"}], "subject": {"en": "Geçici Denetim İzleyici", "tr": "Geçici Denetim İzleyici", "code": "TMP_AUDIT_VIEWER"}, "entity_id": 7}
+  [PASS] role revoke vehicle.view: 1 row(s), action grants_change
+
+-- role no-op grants: HTTP 200
+  [PASS] role no-op grants: 0 row(s)
+
+== 3. Checklist templates (CHECKLIST_TEMPLATE_CHANGE) ==
+
+-- template item create (shipment, section interior_fit): HTTP 201
+   audit #35 CHECKLIST_TEMPLATE_CHANGE by Local Manager vin=<NULL> old=<NULL> new=<NULL>
+     metadata {"action": "create", "entity": "template_item", "parent": {"en": "Default Customer Vehicle Checklist (43 items)", "tr": "Default Customer Vehicle Checklist (43 items)", "code": "SHIPMENT"}, "changes": [{"to": {"en": "TMP denetim maddesi", "tr": "TMP denetim maddesi"}, "from": {}, "field": "item_text"}, {"to": {"code": "interior_fit"}, "from": {}, "field": "section"}, {"to": {"code": "true"}, "from": {}, "field": "is_active"}], "item_no": 47, "subject": {"en": "TMP denetim maddesi", "tr": "TMP denetim maddesi"}, "entity_id": 105, "template_type": "SHIPMENT"}
+  [PASS] template item create (shipment, section interior_fit): 1 row(s), action create
+
+-- template item text edit: HTTP 200
+   audit #36 CHECKLIST_TEMPLATE_CHANGE by Local Manager vin=<NULL> old=<NULL> new=<NULL>
+     metadata {"action": "update", "entity": "template_item", "parent": {"en": "Default Customer Vehicle Checklist (43 items)", "tr": "Default Customer Vehicle Checklist (43 items)", "code": "SHIPMENT"}, "changes": [{"to": {"en": "TMP denetim maddesi (düzeltildi)", "tr": "TMP denetim maddesi (düzeltildi)"}, "from": {"en": "TMP denetim maddesi", "tr": "TMP denetim maddesi"}, "field": "item_text"}], "item_no": 47, "subject": {"en": "TMP denetim maddesi", "tr": "TMP denetim maddesi"}, "entity_id": 105, "template_type": "SHIPMENT"}
+  [PASS] template item text edit: 1 row(s), action update
+
+-- template item section change: HTTP 200
+   audit #37 CHECKLIST_TEMPLATE_CHANGE by Local Manager vin=<NULL> old=<NULL> new=<NULL>
+     metadata {"action": "update", "entity": "template_item", "parent": {"en": "Default Customer Vehicle Checklist (43 items)", "tr": "Default Customer Vehicle Checklist (43 items)", "code": "SHIPMENT"}, "changes": [{"to": {"code": "final_adjust"}, "from": {"code": "interior_fit"}, "field": "section"}], "item_no": 47, "subject": {"en": "TMP denetim maddesi (düzeltildi)", "tr": "TMP denetim maddesi (düzeltildi)"}, "entity_id": 105, "template_type": "SHIPMENT"}
+  [PASS] template item section change: 1 row(s), action update
+
+-- template item section cleared: HTTP 200
+   audit #38 CHECKLIST_TEMPLATE_CHANGE by Local Manager vin=<NULL> old=<NULL> new=<NULL>
+     metadata {"action": "update", "entity": "template_item", "parent": {"en": "Default Customer Vehicle Checklist (43 items)", "tr": "Default Customer Vehicle Checklist (43 items)", "code": "SHIPMENT"}, "changes": [{"to": {}, "from": {"code": "final_adjust"}, "field": "section"}], "item_no": 47, "subject": {"en": "TMP denetim maddesi (düzeltildi)", "tr": "TMP denetim maddesi (düzeltildi)"}, "entity_id": 105, "template_type": "SHIPMENT"}
+  [PASS] template item section cleared: 1 row(s), action update
+
+-- template item deactivate: HTTP 200
+   audit #39 CHECKLIST_TEMPLATE_CHANGE by Local Manager vin=<NULL> old=<NULL> new=<NULL>
+     metadata {"action": "deactivate", "entity": "template_item", "parent": {"en": "Default Customer Vehicle Checklist (43 items)", "tr": "Default Customer Vehicle Checklist (43 items)", "code": "SHIPMENT"}, "changes": [{"to": {"code": "false"}, "from": {"code": "true"}, "field": "is_active"}], "item_no": 47, "subject": {"en": "TMP denetim maddesi (düzeltildi)", "tr": "TMP denetim maddesi (düzeltildi)"}, "entity_id": 105, "template_type": "SHIPMENT"}
+  [PASS] template item deactivate: 1 row(s), action deactivate
+
+-- template item activate: HTTP 200
+   audit #40 CHECKLIST_TEMPLATE_CHANGE by Local Manager vin=<NULL> old=<NULL> new=<NULL>
+     metadata {"action": "activate", "entity": "template_item", "parent": {"en": "Default Customer Vehicle Checklist (43 items)", "tr": "Default Customer Vehicle Checklist (43 items)", "code": "SHIPMENT"}, "changes": [{"to": {"code": "true"}, "from": {"code": "false"}, "field": "is_active"}], "item_no": 47, "subject": {"en": "TMP denetim maddesi (düzeltildi)", "tr": "TMP denetim maddesi (düzeltildi)"}, "entity_id": 105, "template_type": "SHIPMENT"}
+  [PASS] template item activate: 1 row(s), action activate
+
+-- template reorder (new item first): HTTP 200
+   audit #41 CHECKLIST_TEMPLATE_CHANGE by Local Manager vin=<NULL> old=<NULL> new=<NULL>
+     metadata {"moved": [{"to": 1, "from": 47, "subject": {"en": "TMP denetim maddesi (düzeltildi)", "tr": "TMP denetim maddesi (düzeltildi)"}}], "action": "reorder", "entity": "template_item", "parent": {"en": "Default Customer Vehicle Checklist (43 items)", "tr": "Default Customer Vehicle Checklist (43 items)", "code": "SHIPMENT"}, "subject": {}, "template_type": "SHIPMENT"}
+  [PASS] template reorder (new item first): 1 row(s), action reorder
+
+-- template reorder unchanged: HTTP 200
+  [PASS] template reorder unchanged: 0 row(s)
+
+-- template item delete: HTTP 204
+   audit #42 CHECKLIST_TEMPLATE_CHANGE by Local Manager vin=<NULL> old=<NULL> new=<NULL>
+     metadata {"action": "delete", "entity": "template_item", "parent": {"en": "Default Customer Vehicle Checklist (43 items)", "tr": "Default Customer Vehicle Checklist (43 items)", "code": "SHIPMENT"}, "changes": [{"to": {}, "from": {"en": "TMP denetim maddesi (düzeltildi)", "tr": "TMP denetim maddesi (düzeltildi)"}, "field": "item_text"}, {"to": {}, "from": {"code": "true"}, "field": "is_active"}], "item_no": 1, "subject": {"en": "TMP denetim maddesi (düzeltildi)", "tr": "TMP denetim maddesi (düzeltildi)"}, "entity_id": 105, "template_type": "SHIPMENT"}
+  [PASS] template item delete: 1 row(s), action delete
+
+-- eol item create (factory phase): HTTP 201
+   audit #43 CHECKLIST_TEMPLATE_CHANGE by Local Manager vin=<NULL> old=<NULL> new=<NULL>
+     metadata {"action": "create", "entity": "template_item", "parent": {"en": "Default EoL Template (16 items, Branch + Depot)", "tr": "Default EoL Template (16 items, Branch + Depot)", "code": "EOL"}, "changes": [{"to": {"en": "TMP EoL maddesi", "tr": "TMP EoL maddesi"}, "from": {}, "field": "item_text"}, {"to": {"code": "BRANCH"}, "from": {}, "field": "eol_phase"}, {"to": {"code": "true"}, "from": {}, "field": "is_active"}], "item_no": 16, "subject": {"en": "TMP EoL maddesi", "tr": "TMP EoL maddesi"}, "entity_id": 106, "template_type": "EOL"}
+  [PASS] eol item create (factory phase): 1 row(s), action create
+
+-- eol item phase change factory -> depot: HTTP 200
+   audit #44 CHECKLIST_TEMPLATE_CHANGE by Local Manager vin=<NULL> old=<NULL> new=<NULL>
+     metadata {"action": "update", "entity": "template_item", "parent": {"en": "Default EoL Template (16 items, Branch + Depot)", "tr": "Default EoL Template (16 items, Branch + Depot)", "code": "EOL"}, "changes": [{"to": {"code": "DEPOT"}, "from": {"code": "BRANCH"}, "field": "eol_phase"}], "item_no": 16, "subject": {"en": "TMP EoL maddesi", "tr": "TMP EoL maddesi"}, "entity_id": 106, "template_type": "EOL"}
+  [PASS] eol item phase change factory -> depot: 1 row(s), action update
+
+-- eol item delete: HTTP 204
+   audit #45 CHECKLIST_TEMPLATE_CHANGE by Local Manager vin=<NULL> old=<NULL> new=<NULL>
+     metadata {"action": "delete", "entity": "template_item", "parent": {"en": "Default EoL Template (16 items, Branch + Depot)", "tr": "Default EoL Template (16 items, Branch + Depot)", "code": "EOL"}, "changes": [{"to": {}, "from": {"en": "TMP EoL maddesi", "tr": "TMP EoL maddesi"}, "field": "item_text"}, {"to": {}, "from": {"code": "DEPOT"}, "field": "eol_phase"}, {"to": {}, "from": {"code": "true"}, "field": "is_active"}], "item_no": 16, "subject": {"en": "TMP EoL maddesi", "tr": "TMP EoL maddesi"}, "entity_id": 106, "template_type": "EOL"}
+  [PASS] eol item delete: 1 row(s), action delete
+
+== 4. Defect catalogue (DEFECT_CATALOG_CHANGE) ==
+
+-- process create: HTTP 201
+   audit #46 DEFECT_CATALOG_CHANGE by Local Manager vin=<NULL> old=<NULL> new=<NULL>
+     metadata {"action": "create", "entity": "process", "parent": {}, "changes": [{"to": {"en": "Temp process", "tr": "Geçici süreç"}, "from": {}, "field": "name"}, {"to": {"code": "TMPPROC"}, "from": {}, "field": "code"}, {"to": {"code": "true"}, "from": {}, "field": "is_active"}], "subject": {"en": "Temp process", "tr": "Geçici süreç", "code": "TMPPROC"}}
+  [PASS] process create: 1 row(s), action create
+
+-- process rename: HTTP 200
+   audit #47 DEFECT_CATALOG_CHANGE by Local Manager vin=<NULL> old=<NULL> new=<NULL>
+     metadata {"action": "update", "entity": "process", "parent": {}, "changes": [{"to": {"en": "Temp process 2", "tr": "Geçici süreç 2"}, "from": {"en": "Temp process", "tr": "Geçici süreç"}, "field": "name"}], "subject": {"en": "Temp process", "tr": "Geçici süreç", "code": "TMPPROC"}, "entity_id": 5}
+  [PASS] process rename: 1 row(s), action update
+
+-- process code change: HTTP 200
+   audit #48 DEFECT_CATALOG_CHANGE by Local Manager vin=<NULL> old=<NULL> new=<NULL>
+     metadata {"action": "update", "entity": "process", "parent": {}, "changes": [{"to": {"code": "TMPPROC2"}, "from": {"code": "TMPPROC"}, "field": "code"}], "subject": {"en": "Temp process 2", "tr": "Geçici süreç 2", "code": "TMPPROC"}, "entity_id": 5}
+  [PASS] process code change: 1 row(s), action update
+
+-- process deactivate: HTTP 200
+   audit #49 DEFECT_CATALOG_CHANGE by Local Manager vin=<NULL> old=<NULL> new=<NULL>
+     metadata {"action": "deactivate", "entity": "process", "parent": {}, "changes": [{"to": {"code": "false"}, "from": {"code": "true"}, "field": "is_active"}], "subject": {"en": "Temp process 2", "tr": "Geçici süreç 2", "code": "TMPPROC2"}, "entity_id": 5}
+  [PASS] process deactivate: 1 row(s), action deactivate
+
+-- process activate: HTTP 200
+   audit #50 DEFECT_CATALOG_CHANGE by Local Manager vin=<NULL> old=<NULL> new=<NULL>
+     metadata {"action": "activate", "entity": "process", "parent": {}, "changes": [{"to": {"code": "true"}, "from": {"code": "false"}, "field": "is_active"}], "subject": {"en": "Temp process 2", "tr": "Geçici süreç 2", "code": "TMPPROC2"}, "entity_id": 5}
+  [PASS] process activate: 1 row(s), action activate
+
+-- process no-op update: HTTP 200
+  [PASS] process no-op update: 0 row(s)
+
+-- zone create: HTTP 201
+   audit #51 DEFECT_CATALOG_CHANGE by Local Manager vin=<NULL> old=<NULL> new=<NULL>
+     metadata {"action": "create", "entity": "zone", "parent": {}, "changes": [{"to": {"en": "Temp zone", "tr": "Geçici bölge"}, "from": {}, "field": "name"}, {"to": {"code": "90"}, "from": {}, "field": "code"}, {"to": {"code": "true"}, "from": {}, "field": "is_active"}], "subject": {"en": "Temp zone", "tr": "Geçici bölge", "code": "90"}}
+  [PASS] zone create: 1 row(s), action create
+
+-- zone rename + code change: HTTP 200
+   audit #52 DEFECT_CATALOG_CHANGE by Local Manager vin=<NULL> old=<NULL> new=<NULL>
+     metadata {"action": "update", "entity": "zone", "parent": {}, "changes": [{"to": {"en": "Temp zone", "tr": "Geçici bölge 2"}, "from": {"en": "Temp zone", "tr": "Geçici bölge"}, "field": "name"}, {"to": {"code": "91"}, "from": {"code": "90"}, "field": "code"}], "subject": {"en": "Temp zone", "tr": "Geçici bölge", "code": "90"}, "entity_id": 7}
+  [PASS] zone rename + code change: 1 row(s), action update
+
+-- zone deactivate: HTTP 200
+   audit #53 DEFECT_CATALOG_CHANGE by Local Manager vin=<NULL> old=<NULL> new=<NULL>
+     metadata {"action": "deactivate", "entity": "zone", "parent": {}, "changes": [{"to": {"code": "false"}, "from": {"code": "true"}, "field": "is_active"}], "subject": {"en": "Temp zone", "tr": "Geçici bölge 2", "code": "91"}, "entity_id": 7}
+  [PASS] zone deactivate: 1 row(s), action deactivate
+
+-- zone activate: HTTP 200
+   audit #54 DEFECT_CATALOG_CHANGE by Local Manager vin=<NULL> old=<NULL> new=<NULL>
+     metadata {"action": "activate", "entity": "zone", "parent": {}, "changes": [{"to": {"code": "true"}, "from": {"code": "false"}, "field": "is_active"}], "subject": {"en": "Temp zone", "tr": "Geçici bölge 2", "code": "91"}, "entity_id": 7}
+  [PASS] zone activate: 1 row(s), action activate
+
+-- part create in temp zone: HTTP 201
+   audit #55 DEFECT_CATALOG_CHANGE by Local Manager vin=<NULL> old=<NULL> new=<NULL>
+     metadata {"action": "create", "entity": "part", "parent": {"en": "Temp zone", "tr": "Geçici bölge 2", "code": "91"}, "changes": [{"to": {"en": "Temp part", "tr": "Geçici parça"}, "from": {}, "field": "name"}, {"to": {"code": "91-01"}, "from": {}, "field": "code"}, {"to": {"en": "Temp zone", "tr": "Geçici bölge 2", "code": "91"}, "from": {}, "field": "zone"}, {"to": {"code": "true"}, "from": {}, "field": "is_active"}], "subject": {"en": "Temp part", "tr": "Geçici parça", "code": "91-01"}}
+  [PASS] part create in temp zone: 1 row(s), action create
+
+-- part rename: HTTP 200
+   audit #56 DEFECT_CATALOG_CHANGE by Local Manager vin=<NULL> old=<NULL> new=<NULL>
+     metadata {"action": "update", "entity": "part", "parent": {"en": "Temp zone", "tr": "Geçici bölge 2", "code": "91"}, "changes": [{"to": {"en": "Temp part", "tr": "Geçici parça 2"}, "from": {"en": "Temp part", "tr": "Geçici parça"}, "field": "name"}], "subject": {"en": "Temp part", "tr": "Geçici parça", "code": "91-01"}, "entity_id": 25}
+  [PASS] part rename: 1 row(s), action update
+
+-- part zone + code change (temp zone -> Body 10): HTTP 200
+   audit #57 DEFECT_CATALOG_CHANGE by Local Manager vin=<NULL> old=<NULL> new=<NULL>
+     metadata {"action": "update", "entity": "part", "parent": {"en": "Body", "tr": "Body", "code": "10"}, "changes": [{"to": {"code": "10-91"}, "from": {"code": "91-01"}, "field": "code"}, {"to": {"en": "Body", "tr": "Body", "code": "10"}, "from": {"en": "Temp zone", "tr": "Geçici bölge 2", "code": "91"}, "field": "zone"}], "subject": {"en": "Temp part", "tr": "Geçici parça 2", "code": "91-01"}, "entity_id": 25}
+  [PASS] part zone + code change (temp zone -> Body 10): 1 row(s), action update
+
+-- part deactivate: HTTP 200
+   audit #58 DEFECT_CATALOG_CHANGE by Local Manager vin=<NULL> old=<NULL> new=<NULL>
+     metadata {"action": "deactivate", "entity": "part", "parent": {"en": "Body", "tr": "Body", "code": "10"}, "changes": [{"to": {"code": "false"}, "from": {"code": "true"}, "field": "is_active"}], "subject": {"en": "Temp part", "tr": "Geçici parça 2", "code": "10-91"}, "entity_id": 25}
+  [PASS] part deactivate: 1 row(s), action deactivate
+
+-- part activate: HTTP 200
+   audit #59 DEFECT_CATALOG_CHANGE by Local Manager vin=<NULL> old=<NULL> new=<NULL>
+     metadata {"action": "activate", "entity": "part", "parent": {"en": "Body", "tr": "Body", "code": "10"}, "changes": [{"to": {"code": "true"}, "from": {"code": "false"}, "field": "is_active"}], "subject": {"en": "Temp part", "tr": "Geçici parça 2", "code": "10-91"}, "entity_id": 25}
+  [PASS] part activate: 1 row(s), action activate
+
+-- defect type create (default process temp): HTTP 201
+   audit #60 DEFECT_CATALOG_CHANGE by Local Manager vin=<NULL> old=<NULL> new=<NULL>
+     metadata {"action": "create", "entity": "defect_type", "parent": {}, "changes": [{"to": {"en": "Temp defect", "tr": "Geçici kusur"}, "from": {}, "field": "name"}, {"to": {"code": "98"}, "from": {}, "field": "code"}, {"to": {"en": "Temp process 2", "tr": "Geçici süreç 2", "code": "TMPPROC2"}, "from": {}, "field": "default_process"}, {"to": {"code": "true"}, "from": {}, "field": "is_active"}], "subject": {"en": "Temp defect", "tr": "Geçici kusur", "code": "98"}}
+  [PASS] defect type create (default process temp): 1 row(s), action create
+
+-- defect type default process -> Montaj: HTTP 200
+   audit #61 DEFECT_CATALOG_CHANGE by Local Manager vin=<NULL> old=<NULL> new=<NULL>
+     metadata {"action": "update", "entity": "defect_type", "parent": {}, "changes": [{"to": {"en": "Assembly", "tr": "Montaj", "code": "ASSEMBLY"}, "from": {"en": "Temp process 2", "tr": "Geçici süreç 2", "code": "TMPPROC2"}, "field": "default_process"}], "subject": {"en": "Temp defect", "tr": "Geçici kusur", "code": "98"}, "entity_id": 11}
+  [PASS] defect type default process -> Montaj: 1 row(s), action update
+
+-- defect type rename: HTTP 200
+   audit #62 DEFECT_CATALOG_CHANGE by Local Manager vin=<NULL> old=<NULL> new=<NULL>
+     metadata {"action": "update", "entity": "defect_type", "parent": {}, "changes": [{"to": {"en": "Temp defect 2", "tr": "Geçici kusur 2"}, "from": {"en": "Temp defect", "tr": "Geçici kusur"}, "field": "name"}], "subject": {"en": "Temp defect", "tr": "Geçici kusur", "code": "98"}, "entity_id": 11}
+  [PASS] defect type rename: 1 row(s), action update
+
+-- defect type deactivate: HTTP 200
+   audit #63 DEFECT_CATALOG_CHANGE by Local Manager vin=<NULL> old=<NULL> new=<NULL>
+     metadata {"action": "deactivate", "entity": "defect_type", "parent": {}, "changes": [{"to": {"code": "false"}, "from": {"code": "true"}, "field": "is_active"}], "subject": {"en": "Temp defect 2", "tr": "Geçici kusur 2", "code": "98"}, "entity_id": 11}
+  [PASS] defect type deactivate: 1 row(s), action deactivate
+
+-- defect type activate: HTTP 200
+   audit #64 DEFECT_CATALOG_CHANGE by Local Manager vin=<NULL> old=<NULL> new=<NULL>
+     metadata {"action": "activate", "entity": "defect_type", "parent": {}, "changes": [{"to": {"code": "true"}, "from": {"code": "false"}, "field": "is_active"}], "subject": {"en": "Temp defect 2", "tr": "Geçici kusur 2", "code": "98"}, "entity_id": 11}
+  [PASS] defect type activate: 1 row(s), action activate
+
+-- type reorder (last moved first): HTTP 200
+   audit #65 DEFECT_CATALOG_CHANGE by Local Manager vin=<NULL> old=<NULL> new=<NULL>
+     metadata {"moved": [{"to": 1, "from": 11, "subject": {"en": "Other", "tr": "Diğer", "code": "99"}}], "action": "reorder", "entity": "defect_type", "parent": {}, "subject": {}}
+  [PASS] type reorder (last moved first): 1 row(s), action reorder
+
+-- zone reorder (last moved first): HTTP 200
+   audit #66 DEFECT_CATALOG_CHANGE by Local Manager vin=<NULL> old=<NULL> new=<NULL>
+     metadata {"moved": [{"to": 1, "from": 6, "subject": {"en": "Other", "tr": "Diğer", "code": "99"}}], "action": "reorder", "entity": "zone", "parent": {}, "subject": {}}
+  [PASS] zone reorder (last moved first): 1 row(s), action reorder
+
+-- process reorder (last moved first): HTTP 200
+   audit #67 DEFECT_CATALOG_CHANGE by Local Manager vin=<NULL> old=<NULL> new=<NULL>
+     metadata {"moved": [{"to": 1, "from": 5, "subject": {"en": "Electrical", "tr": "Elektrik", "code": "ELECTRICAL"}}], "action": "reorder", "entity": "process", "parent": {}, "subject": {}}
+  [PASS] process reorder (last moved first): 1 row(s), action reorder
+
+-- part reorder (last moved first): HTTP 200
+   audit #68 DEFECT_CATALOG_CHANGE by Local Manager vin=<NULL> old=<NULL> new=<NULL>
+     metadata {"moved": [{"to": 1, "from": 10, "subject": {"en": "Doghouse", "tr": "Doghouse", "code": "10-09"}}], "action": "reorder", "entity": "part", "parent": {"en": "Body", "tr": "Body", "code": "10"}, "subject": {}}
+  [PASS] part reorder (last moved first): 1 row(s), action reorder
+
+-- part delete: HTTP 204
+   audit #69 DEFECT_CATALOG_CHANGE by Local Manager vin=<NULL> old=<NULL> new=<NULL>
+     metadata {"action": "delete", "entity": "part", "parent": {"en": "Body", "tr": "Body", "code": "10"}, "changes": [{"to": {}, "from": {"en": "Temp part", "tr": "Geçici parça 2"}, "field": "name"}, {"to": {}, "from": {"code": "10-91"}, "field": "code"}, {"to": {}, "from": {"en": "Body", "tr": "Body", "code": "10"}, "field": "zone"}, {"to": {}, "from": {"code": "true"}, "field": "is_active"}], "subject": {"en": "Temp part", "tr": "Geçici parça 2", "code": "10-91"}, "entity_id": 25}
+  [PASS] part delete: 1 row(s), action delete
+
+-- defect type delete: HTTP 204
+   audit #70 DEFECT_CATALOG_CHANGE by Local Manager vin=<NULL> old=<NULL> new=<NULL>
+     metadata {"action": "delete", "entity": "defect_type", "parent": {}, "changes": [{"to": {}, "from": {"en": "Temp defect 2", "tr": "Geçici kusur 2"}, "field": "name"}, {"to": {}, "from": {"code": "98"}, "field": "code"}, {"to": {}, "from": {"en": "Assembly", "tr": "Montaj", "code": "ASSEMBLY"}, "field": "default_process"}, {"to": {}, "from": {"code": "true"}, "field": "is_active"}], "subject": {"en": "Temp defect 2", "tr": "Geçici kusur 2", "code": "98"}, "entity_id": 11}
+  [PASS] defect type delete: 1 row(s), action delete
+
+-- zone delete: HTTP 204
+   audit #71 DEFECT_CATALOG_CHANGE by Local Manager vin=<NULL> old=<NULL> new=<NULL>
+     metadata {"action": "delete", "entity": "zone", "parent": {}, "changes": [{"to": {}, "from": {"en": "Temp zone", "tr": "Geçici bölge 2"}, "field": "name"}, {"to": {}, "from": {"code": "91"}, "field": "code"}, {"to": {}, "from": {"code": "true"}, "field": "is_active"}], "subject": {"en": "Temp zone", "tr": "Geçici bölge 2", "code": "91"}, "entity_id": 7}
+  [PASS] zone delete: 1 row(s), action delete
+
+-- process delete: HTTP 204
+   audit #72 DEFECT_CATALOG_CHANGE by Local Manager vin=<NULL> old=<NULL> new=<NULL>
+     metadata {"action": "delete", "entity": "process", "parent": {}, "changes": [{"to": {}, "from": {"en": "Temp process 2", "tr": "Geçici süreç 2"}, "field": "name"}, {"to": {}, "from": {"code": "TMPPROC2"}, "field": "code"}, {"to": {}, "from": {"code": "true"}, "field": "is_active"}], "subject": {"en": "Temp process 2", "tr": "Geçici süreç 2", "code": "TMPPROC2"}, "entity_id": 5}
+  [PASS] process delete: 1 row(s), action delete
+
+-- refused delete (process in use) writes nothing: HTTP 200
+  [PASS] refused delete (process in use) writes nothing: 0 row(s)
+
+== 5. No password or hash in any audit field ==
+  [PASS] no temporary password in audit_logs — 2 plaintexts checked
+  [PASS] no bcrypt hash ($2a$/$2b$/$2y$) in audit_logs
+  password_reset row keys: ['action', 'en', 'entity', 'entity_id', 'parent', 'subject', 'subject_email', 'tr']; old=<NULL> new=<NULL>
+  [PASS] password_reset row has no password/hash key and no old/new value
+
+== 6. Activity endpoint visibility ==
+  manager (admin.manage_users): 72 rows, types ['CHECKLIST_TEMPLATE_CHANGE', 'DEFECT_CATALOG_CHANGE', 'EOL_WORKFLOW_STAGE_CHANGE', 'ROLE_PERMISSION_CHANGE', 'STATUS_CHANGE', 'USER_ADMIN_CHANGE']
+  [PASS] manager sees all four management types
+  [PASS] manager filter USER_ADMIN_CHANGE: only that type — 7 rows
+  [PASS] manager filter ROLE_PERMISSION_CHANGE: only that type — 3 rows
+  [PASS] manager filter CHECKLIST_TEMPLATE_CHANGE: only that type — 11 rows
+  [PASS] manager filter DEFECT_CATALOG_CHANGE: only that type — 27 rows
+  viewer (analysis.view only): HTTP 200, 62 rows, types ['CHECKLIST_TEMPLATE_CHANGE', 'DEFECT_CATALOG_CHANGE', 'EOL_WORKFLOW_STAGE_CHANGE', 'STATUS_CHANGE']
+  [PASS] viewer list hides user/role events, keeps template/catalogue
+  [PASS] viewer asking for USER_ADMIN_CHANGE: 403 — HTTP 403 {'error': 'operation not permitted for role', 'request_id': "Basri's Macbook/Wxk
+  [PASS] viewer asking for ROLE_PERMISSION_CHANGE: 403 — HTTP 403 {'error': 'operation not permitted for role', 'request_id': "Basri's Macbook/Wxk
+  [PASS] viewer asking for DEFECT_CATALOG_CHANGE: 200 with rows — 27 rows
+  [PASS] home overview activity excludes management events — types ['EOL_WORKFLOW_STAGE_CHANGE', 'STATUS_CHANGE']
+  [PASS] viewer temp/new passwords not in audit_logs
+
+  saved api-activity-manager.json, api-activity-viewer.json, audit-rows.json (48 rows)
+
+ALL CHECKS PASSED

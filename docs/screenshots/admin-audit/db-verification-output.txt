@@ -1,0 +1,20 @@
+== 1. Migration 0038 on karea_admin_mig_test (0001-0037 + seeds 01-06) ==
+  before: enum STATUS_CHANGE,LOCATION_CHANGE,STATION_ENTER,STATION_EXIT,CHECKLIST_ITEM_UPDATE,ISSUE_STATUS_CHANGE,EOL_WORKFLOW_STAGE_CHANGE,MEDIA_UPLOADED,ISSUE_CLASSIFICATION_CHANGE,LOGIN_RATE_LIMITED
+  before: audit_logs 24 rows, md5 ac5a8191f95f1e995030d05b30109e87
+  after up: enum STATUS_CHANGE,LOCATION_CHANGE,STATION_ENTER,STATION_EXIT,CHECKLIST_ITEM_UPDATE,ISSUE_STATUS_CHANGE,EOL_WORKFLOW_STAGE_CHANGE,MEDIA_UPLOADED,ISSUE_CLASSIFICATION_CHANGE,LOGIN_RATE_LIMITED,USER_ADMIN_CHANGE,ROLE_PERMISSION_CHANGE,CHECKLIST_TEMPLATE_CHANGE,DEFECT_CATALOG_CHANGE
+  [PASS] 0038 up adds the four management values
+  [PASS] 0038 up twice: enum unchanged
+  [PASS] existing audit rows unchanged by up
+  [PASS] 0038 down refuses while management rows exist — psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0038_admin_audit_events.down.sql:53: ERROR:  0038 down refused: 1 audit_logs rows use management event types; they are history and are not deleted
+  [PASS] refused down left enum and rows intact
+  [PASS] 0038 down restores the 0037 enum — STATUS_CHANGE,LOCATION_CHANGE,STATION_ENTER,STATION_EXIT,CHECKLIST_ITEM_UPDATE,ISSUE_STATUS_CHANGE,EOL_WORKFLOW_STAGE_CHANGE,MEDIA_UPLOADED,ISSUE_CLASSIFICATION_CHANGE,LOGIN_RATE_LIMITED
+  [PASS] 0038 down twice: no-op
+  [PASS] audit rows unchanged by down
+  [PASS] 0038 up after down: values back
+  [PASS] event_type column uses the rebuilt type, no leftover type
+  dropped karea_admin_mig_test
+
+== 2. karea_admin_test: every migration + seeds 01-06 ==
+  applied 38 migrations; enum STATUS_CHANGE,LOCATION_CHANGE,STATION_ENTER,STATION_EXIT,CHECKLIST_ITEM_UPDATE,ISSUE_STATUS_CHANGE,EOL_WORKFLOW_STAGE_CHANGE,MEDIA_UPLOADED,ISSUE_CLASSIFICATION_CHANGE,LOGIN_RATE_LIMITED,USER_ADMIN_CHANGE,ROLE_PERMISSION_CHANGE,CHECKLIST_TEMPLATE_CHANGE,DEFECT_CATALOG_CHANGE
+
+ALL CHECKS PASSED

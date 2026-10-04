@@ -1,0 +1,14 @@
+?   	github.com/karea/backend/cmd/api	[no test files]
+ok  	github.com/karea/backend/internal/delivery/http	15.976s
+ok  	github.com/karea/backend/internal/domain	(cached)
+ok  	github.com/karea/backend/internal/platform/applog	(cached)
+?   	github.com/karea/backend/internal/platform/auth	[no test files]
+ok  	github.com/karea/backend/internal/platform/config	(cached)
+ok  	github.com/karea/backend/internal/platform/storage	(cached)
+?   	github.com/karea/backend/internal/repository	[no test files]
+ok  	github.com/karea/backend/internal/repository/postgres	(cached)
+ok  	github.com/karea/backend/internal/usecase	(cached)
+WEB_TSC_OK
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 2.79s
+MOBILE_TSC_OK
