@@ -424,31 +424,27 @@ func (r *ChecklistProgressRepo) DeleteTemplateItem(ctx context.Context, itemID i
 // ReorderTemplateItems assigns item_no 1..n. Temporary negative numbers
 // avoid UNIQUE (template_id, item_no) collisions mid-swap.
 func (r *ChecklistProgressRepo) ReorderTemplateItems(ctx context.Context, templateID int, itemIDs []int) error {
-	tx, err := r.pool.Begin(ctx)
-	if err != nil {
-		return err
-	}
-	defer func() { _ = tx.Rollback(ctx) }()
-
-	for i, id := range itemIDs {
-		tag, err := tx.Exec(ctx,
-			`UPDATE checklist_template_items SET item_no = $1 WHERE id = $2 AND template_id = $3`,
-			-(i + 1), id, templateID)
-		if err != nil {
-			return err
+	return inTx(ctx, r.pool, func(tx dbExecutor) error {
+		for i, id := range itemIDs {
+			tag, err := tx.Exec(ctx,
+				`UPDATE checklist_template_items SET item_no = $1 WHERE id = $2 AND template_id = $3`,
+				-(i + 1), id, templateID)
+			if err != nil {
+				return err
+			}
+			if tag.RowsAffected() == 0 {
+				return domain.ErrNotFound
+			}
 		}
-		if tag.RowsAffected() == 0 {
-			return domain.ErrNotFound
+		for i, id := range itemIDs {
+			if _, err := tx.Exec(ctx,
+				`UPDATE checklist_template_items SET item_no = $1 WHERE id = $2 AND template_id = $3`,
+				i+1, id, templateID); err != nil {
+				return err
+			}
 		}
-	}
-	for i, id := range itemIDs {
-		if _, err := tx.Exec(ctx,
-			`UPDATE checklist_template_items SET item_no = $1 WHERE id = $2 AND template_id = $3`,
-			i+1, id, templateID); err != nil {
-			return err
-		}
-	}
-	return tx.Commit(ctx)
+		return nil
+	})
 }
 
 // CountEvaluatedProgressVINs returns distinct vehicles with non-PENDING

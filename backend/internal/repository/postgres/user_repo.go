@@ -44,7 +44,7 @@ func scanUser(row pgx.Row) (*domain.User, error) {
 
 // GetByEmail returns the user with the given email.
 func (r *UserRepo) GetByEmail(ctx context.Context, email string) (*domain.User, error) {
-	row := r.pool.QueryRow(ctx, userSelect+` WHERE lower(u.email) = lower($1)`, email)
+	row := executor(ctx, r.pool).QueryRow(ctx, userSelect+` WHERE lower(u.email) = lower($1)`, email)
 	u, err := scanUser(row)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, domain.ErrNotFound
@@ -54,7 +54,7 @@ func (r *UserRepo) GetByEmail(ctx context.Context, email string) (*domain.User, 
 
 // GetByID returns the user with the given ID.
 func (r *UserRepo) GetByID(ctx context.Context, id int) (*domain.User, error) {
-	row := r.pool.QueryRow(ctx, userSelect+` WHERE u.id = $1`, id)
+	row := executor(ctx, r.pool).QueryRow(ctx, userSelect+` WHERE u.id = $1`, id)
 	u, err := scanUser(row)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, domain.ErrNotFound
@@ -64,7 +64,7 @@ func (r *UserRepo) GetByID(ctx context.Context, id int) (*domain.User, error) {
 
 // List returns every user ordered by id.
 func (r *UserRepo) List(ctx context.Context) ([]domain.User, error) {
-	rows, err := r.pool.Query(ctx, userSelect+` ORDER BY u.id`)
+	rows, err := executor(ctx, r.pool).Query(ctx, userSelect+` ORDER BY u.id`)
 	if err != nil {
 		return nil, err
 	}
@@ -87,7 +87,7 @@ func (r *UserRepo) List(ctx context.Context) ([]domain.User, error) {
 // UpdateRoleAndActive assigns a role and is_active flag and bumps
 // tokens_valid_from so outstanding JWTs are rejected immediately.
 func (r *UserRepo) UpdateRoleAndActive(ctx context.Context, id, roleID int, isActive bool) error {
-	tag, err := r.pool.Exec(ctx,
+	tag, err := executor(ctx, r.pool).Exec(ctx,
 		`UPDATE users SET role_id = $2, is_active = $3, tokens_valid_from = now() WHERE id = $1`,
 		id, roleID, isActive)
 	if err != nil {
@@ -102,7 +102,7 @@ func (r *UserRepo) UpdateRoleAndActive(ctx context.Context, id, roleID int, isAc
 // CountActiveUsersWithPermission counts active users whose role grants code.
 func (r *UserRepo) CountActiveUsersWithPermission(ctx context.Context, permissionCode string) (int, error) {
 	var n int
-	err := r.pool.QueryRow(ctx,
+	err := executor(ctx, r.pool).QueryRow(ctx,
 		`SELECT COUNT(*)
 		   FROM users u
 		   JOIN roles r ON r.id = u.role_id
@@ -116,7 +116,7 @@ func (r *UserRepo) CountActiveUsersWithPermission(ctx context.Context, permissio
 // CountActiveUsersWithPermissionExceptRole excludes one role from the count.
 func (r *UserRepo) CountActiveUsersWithPermissionExceptRole(ctx context.Context, permissionCode string, roleID int) (int, error) {
 	var n int
-	err := r.pool.QueryRow(ctx,
+	err := executor(ctx, r.pool).QueryRow(ctx,
 		`SELECT COUNT(*)
 		   FROM users u
 		   JOIN roles r ON r.id = u.role_id
@@ -131,7 +131,7 @@ func (r *UserRepo) CountActiveUsersWithPermissionExceptRole(ctx context.Context,
 // rather than a unique-violation 500.
 func (r *UserRepo) Create(ctx context.Context, user *domain.User) (*domain.User, error) {
 	var id int
-	err := r.pool.QueryRow(ctx,
+	err := executor(ctx, r.pool).QueryRow(ctx,
 		`INSERT INTO users (full_name, email, password_hash, role_id, is_active, must_change_password)
 		 VALUES ($1, $2, $3, $4, $5, $6)
 		 RETURNING id`,
@@ -146,7 +146,7 @@ func (r *UserRepo) Create(ctx context.Context, user *domain.User) (*domain.User,
 // UpdatePassword replaces the hash and the must-change flag and bumps
 // tokens_valid_from so the previous JWT stops working immediately.
 func (r *UserRepo) UpdatePassword(ctx context.Context, id int, passwordHash string, mustChange bool) error {
-	tag, err := r.pool.Exec(ctx,
+	tag, err := executor(ctx, r.pool).Exec(ctx,
 		`UPDATE users SET password_hash = $2, must_change_password = $3, tokens_valid_from = now() WHERE id = $1`,
 		id, passwordHash, mustChange)
 	if err != nil {
@@ -161,7 +161,7 @@ func (r *UserRepo) UpdatePassword(ctx context.Context, id int, passwordHash stri
 // UpdatePasswordHash upgrades the stored bcrypt hash without revoking JWTs or
 // flipping must_change_password (login-time cost migration).
 func (r *UserRepo) UpdatePasswordHash(ctx context.Context, id int, passwordHash string) error {
-	tag, err := r.pool.Exec(ctx,
+	tag, err := executor(ctx, r.pool).Exec(ctx,
 		`UPDATE users SET password_hash = $2 WHERE id = $1`,
 		id, passwordHash)
 	if err != nil {
@@ -178,7 +178,7 @@ func (r *UserRepo) UpdatePasswordHash(ctx context.Context, id int, passwordHash 
 // is excluded so a rate-limit row never blocks user hard-delete.
 func (r *UserRepo) CountReferences(ctx context.Context, id int) (int, error) {
 	var n int
-	err := r.pool.QueryRow(ctx, `
+	err := executor(ctx, r.pool).QueryRow(ctx, `
 		SELECT COALESCE(SUM(n), 0) FROM (
 			SELECT COUNT(*) AS n FROM issue_list WHERE issue_reporter_id = $1
 			UNION ALL
@@ -216,7 +216,7 @@ func (r *UserRepo) CountReferences(ctx context.Context, id int) (int, error) {
 // Delete removes the users row. performed_by on audit_logs is never nulled
 // (Karar 7 history). A leftover FK maps to UserInUseError.
 func (r *UserRepo) Delete(ctx context.Context, id int) error {
-	tag, err := r.pool.Exec(ctx, `DELETE FROM users WHERE id = $1`, id)
+	tag, err := executor(ctx, r.pool).Exec(ctx, `DELETE FROM users WHERE id = $1`, id)
 	if err != nil {
 		return mapUserDelete(err)
 	}

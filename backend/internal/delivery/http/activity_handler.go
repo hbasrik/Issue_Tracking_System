@@ -10,16 +10,29 @@ import (
 
 // handleAuditActivity lists plant-wide audit_logs for the Hareketler page.
 // Gated by analysis.view — same operational analytics surface as Analysis.
+// User and role management rows are listed only for admin.manage_users
+// holders (Karar 25); asking for them by type without it is 403.
 func (s *server) handleAuditActivity(w http.ResponseWriter, r *http.Request) {
 	if s.deps.Activity == nil {
 		writeJSON(w, http.StatusOK, domain.AuditActivityPage{Items: []domain.HomeActivityEntry{}})
 		return
 	}
 	q := r.URL.Query()
+	perms, _ := PermissionsFromContext(r.Context())
+	canManageUsers := perms.Has(domain.PermissionAdminManageUsers)
 	f := domain.AuditActivityFilter{
 		EventType:  q.Get("event_type"),
 		VINSuffix:  q.Get("vin_suffix"),
 		ActorQuery: q.Get("actor"),
+		Visible:    domain.ActivityVisibleEventTypes(canManageUsers),
+	}
+	if !canManageUsers {
+		for _, t := range domain.SensitiveAdminAuditEventTypes {
+			if f.EventType == string(t) {
+				writeError(w, domain.ErrForbidden)
+				return
+			}
+		}
 	}
 	if v := q.Get("from"); v != "" {
 		if t, err := time.Parse(time.RFC3339, v); err == nil {

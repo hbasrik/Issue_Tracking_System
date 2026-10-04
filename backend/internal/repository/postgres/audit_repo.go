@@ -253,28 +253,26 @@ func (r *AuditRepo) ListActivity(ctx context.Context, f domain.AuditActivityFilt
 		   AND ($5::text = '' OR right(COALESCE(a.vin, ''), length($5)) = $5)
 		   AND ($6::text = '' OR COALESCE(u.full_name, '') ILIKE '%' || $6 || '%'
 		        OR COALESCE(u.email, '') ILIKE '%' || $6 || '%')
-		   AND a.event_type IN (
-		          'ISSUE_STATUS_CHANGE',
-		          'ISSUE_CLASSIFICATION_CHANGE',
-		          'STATUS_CHANGE',
-		          'EOL_WORKFLOW_STAGE_CHANGE',
-		          'CHECKLIST_ITEM_UPDATE',
-		          'MEDIA_UPLOADED',
-		          'LOCATION_CHANGE',
-		          'STATION_ENTER',
-		          'STATION_EXIT'
-		        )`
+		   AND a.event_type::text = ANY($7::text[])`
 
 	eventType := f.EventType
 	vinSuffix := f.VINSuffix
 	actorQuery := f.ActorQuery
+	visible := f.Visible
+	if len(visible) == 0 {
+		visible = domain.ActivityWorkEventTypes
+	}
+	visibleTypes := make([]string, len(visible))
+	for i, t := range visible {
+		visibleTypes[i] = string(t)
+	}
 
 	var total int64
 	if err := r.pool.QueryRow(ctx,
 		`SELECT count(*)::bigint
 		   FROM audit_logs a
 		   LEFT JOIN users u ON u.id = a.performed_by`+where,
-		f.From, f.To, eventType, f.ActorID, vinSuffix, actorQuery,
+		f.From, f.To, eventType, f.ActorID, vinSuffix, actorQuery, visibleTypes,
 	).Scan(&total); err != nil {
 		return nil, err
 	}
@@ -294,7 +292,8 @@ func (r *AuditRepo) ListActivity(ctx context.Context, f domain.AuditActivityFilt
 		        END,
 		        COALESCE(cti.item_no, 0),
 		        COALESCE(cti.item_text, ''),
-		        CASE WHEN a.event_type = 'ISSUE_CLASSIFICATION_CHANGE' THEN a.metadata END
+		        CASE WHEN a.event_type::text = 'ISSUE_CLASSIFICATION_CHANGE'
+		               OR a.event_type::text = ANY($10::text[]) THEN a.metadata END
 		   FROM audit_logs a
 		   LEFT JOIN users u ON u.id = a.performed_by
 		   LEFT JOIN checklist_template_items cti
@@ -302,8 +301,9 @@ func (r *AuditRepo) ListActivity(ctx context.Context, f domain.AuditActivityFilt
 		         AND a.metadata ? 'item_id'
 		         AND cti.id = (a.metadata->>'item_id')::int`+where+`
 		  ORDER BY a.event_at DESC, a.id DESC
-		  LIMIT $7 OFFSET $8`,
-		f.From, f.To, eventType, f.ActorID, vinSuffix, actorQuery, limit, offset,
+		  LIMIT $8 OFFSET $9`,
+		f.From, f.To, eventType, f.ActorID, vinSuffix, actorQuery, visibleTypes, limit, offset,
+		adminAuditEventTypeStrings(),
 	)
 	if err != nil {
 		return nil, err
@@ -337,6 +337,8 @@ func (r *AuditRepo) ListActivity(ctx context.Context, f domain.AuditActivityFilt
 			e.OldValue, e.NewValue = "", ""
 			parsed = append(parsed, parseClassificationMetadata(classMeta))
 			classIdx = append(classIdx, len(out))
+		} else if domain.IsAdminAuditEvent(e.EventType) {
+			e.Admin = parseAdminAuditMetadata(classMeta)
 		}
 		out = append(out, e)
 	}

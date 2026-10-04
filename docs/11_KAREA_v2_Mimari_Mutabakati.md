@@ -526,6 +526,51 @@ kalıyordu.
   `status-history` uç noktası başlıktaki "son durum değişikliği" damgası
   için kalır.
 
+## Karar 25 — Yönetim işlemleri denetim kaydına yazılır; kullanıcı/yetki olayları yalnız kullanıcı yöneticisine görünür (NEW — 2026-10-02)
+
+- **Kural (yazma):** yönetim işlemleri `audit_logs`'a araçsız
+  (`vin` NULL) yazılır; migration 0038 dört olay türü ekler:
+  `USER_ADMIN_CHANGE` (kullanıcı oluşturma, rol ataması, aktif/pasif,
+  silme, yönetici şifre sıfırlaması, giriş kilidinin elle açılması),
+  `ROLE_PERMISSION_CHANGE` (rol oluşturma, izin verme/alma),
+  `CHECKLIST_TEMPLATE_CHANGE` (şablon maddesi ekleme, metin / hat sonu
+  aşaması / bölüm düzenleme, aktif-pasif, silme, sıralama) ve
+  `DEFECT_CATALOG_CHANGE` (bölge, parça, kusur tipi, süreç: ekleme, ad /
+  kod / bölge / varsayılan süreç / sıra değişikliği, aktif-pasif, silme,
+  sıralama; "Diğer"den katalog satırı oluşturma). Satır, değişikliği yapan
+  işlemle aynı transaction'da yazılır: değişiklik geri alınırsa kayıt da
+  kalmaz. Hiçbir şey değişmediyse satır yazılmaz.
+- **Kayıt içeriği:** `performed_by` kimin, `event_at` ne zaman;
+  `metadata` = eylem, nesne türü ve kimliği, nesnenin adı (kullanıcıda ad
+  + e-posta), değişen her alan için eski ve yeni değer. Değerler yazma
+  anındaki adlarıyla saklanır (rol adı, bölge/parça/tip/süreç TR+EN adı,
+  madde metni); böylece sonradan silinen ya da adı değişen nesneler de
+  okunur kalır. `old_value` / `new_value` NULL kalır.
+  **Şifre ve hash hiçbir alana yazılmaz:** şifre sıfırlamada yalnızca
+  eylem ve kimin şifresi olduğu kaydedilir; oluşturmada geçici şifre
+  kayda girmez.
+- **Kullanıcı silme:** yönetim olayları da "iş geçmişi" sayılır
+  (`WorkAuditEventTypes`): yönetim işlemi yapmış bir hesap silinemez,
+  pasife alınır (Karar 7 ile aynı gerekçe — `performed_by` boşaltılmaz).
+- **Görünürlük:** Hareketler ekranı `analysis.view` ile açılır. Şablon ve
+  katalog olayları bu izinle görünür: hat ve sevk kapılarını etkilerler,
+  kalite ve analiz kullanıcısının görmesi gerekir. Kullanıcı ve
+  rol/izin olayları ek olarak `admin.manage_users` ister: kimin kime
+  hangi yetkiyi verdiği, kimin şifresinin sıfırlandığı ve e-posta
+  adresleri hassastır; bu bilgiyi zaten yönetebilen kişi dışında
+  göstermek gereksiz bilgi yayar. İzni olmayan çağrıda bu olaylar
+  listeden çıkarılır, türle açıkça istenirse 403 döner. Ana sayfadaki
+  "son hareketler" yönetim olaylarını hiç göstermez (orası sahadaki iş
+  akışıdır).
+- **Gösterim:** sunucu metadata'yı yapılandırılmış olarak döndürür
+  (`Admin` alanı); cümleye çevirme istemcidedir. Bilinen anahtarlar
+  (rol kodu, izin kodu, aktif/pasif, hat sonu aşaması, bölüm) çevrilir;
+  bilinmeyen izin için veritabanındaki açıklama, özel bölüm için
+  kullanıcının verdiği bölüm adı gösterilir. Ham kimlik numarası ya da
+  enum değeri gösterilmez.
+- **Geri alma:** 0038 down, yönetim olayı içeren satır varsa durur
+  (geçmiş silinmez); yoksa enum'u bu dört değer olmadan yeniden kurar.
+
 ## Değişmeyen / Yeniden Kullanılacaklar
 
 Şunlara **dokunulmuyor**, olduğu gibi kalıyor: JWT auth + bcrypt (üstteki JWT_SECRET ve iptal sıkılaştırmaları hariç), CORS allowlist mimarisi, Unit-of-Work (pgx.Tx) transaction pattern, `.cursor/rules` (commit ve environment-check kuralları), Analysis sekmesi temel yapısı (VIN×severity kırılımı, Pie/Bar chart'lar — yeni station/EOL alanlarıyla genişleyecek ama sıfırdan kurulmayacak), Docker/migration/seed altyapısı.

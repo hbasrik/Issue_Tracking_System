@@ -37,6 +37,10 @@ var WorkAuditEventTypes = []AuditEvent{
 	AuditEventIssueClassification, // defect catalogue label corrections
 	AuditEventEOLWorkflowStage,    // branch/depot/document sign-off
 	AuditEventMediaUploaded,       // photo attached to an entity
+	AuditEventUserAdmin,           // management history keeps its actor (Karar 25)
+	AuditEventRolePermission,
+	AuditEventChecklistTemplate,
+	AuditEventDefectCatalog,
 }
 
 // WorkAuditEventTypeStrings is WorkAuditEventTypes as plain strings for SQL.

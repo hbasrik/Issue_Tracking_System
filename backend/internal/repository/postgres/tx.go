@@ -51,6 +51,23 @@ func (u *UnitOfWork) WithinTx(ctx context.Context, fn func(ctx context.Context) 
 	return tx.Commit(ctx)
 }
 
+// inTx runs fn on the transaction already on ctx (WithinTx), or on a new one
+// committed when fn succeeds.
+func inTx(ctx context.Context, pool *pgxpool.Pool, fn func(dbExecutor) error) error {
+	if tx, ok := ctx.Value(txContextKey{}).(pgx.Tx); ok {
+		return fn(tx)
+	}
+	tx, err := pool.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("begin tx: %w", err)
+	}
+	defer tx.Rollback(ctx) //nolint:errcheck // no-op after successful Commit
+	if err := fn(tx); err != nil {
+		return err
+	}
+	return tx.Commit(ctx)
+}
+
 // executor returns the pgx.Tx stored on ctx when WithinTx is active, otherwise
 // the connection pool.
 func executor(ctx context.Context, pool *pgxpool.Pool) dbExecutor {

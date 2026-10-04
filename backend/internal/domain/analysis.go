@@ -195,6 +195,8 @@ type HomeActivityEntry struct {
 	ItemText        string
 	// Classification is set on ISSUE_CLASSIFICATION_CHANGE rows.
 	Classification []ClassificationChange
+	// Admin is set on management rows (USER_ADMIN_CHANGE, ...).
+	Admin *AdminAuditDetail `json:",omitempty"`
 }
 
 // AuditActivityFilter scopes the paginated plant-wide activity list.
@@ -205,8 +207,36 @@ type AuditActivityFilter struct {
 	ActorID    *int
 	ActorQuery string // matches actor full_name or email (case-insensitive)
 	VINSuffix  string
-	Limit      int
-	Offset     int
+	// Visible is the event types the caller may read; empty means
+	// ActivityWorkEventTypes (no management rows).
+	Visible []AuditEvent
+	Limit   int
+	Offset  int
+}
+
+// ActivityWorkEventTypes are the shop-floor rows of the activity lists.
+var ActivityWorkEventTypes = []AuditEvent{
+	AuditEventIssueStatusChange,
+	AuditEventIssueClassification,
+	AuditEventStatusChange,
+	AuditEventEOLWorkflowStage,
+	AuditEventChecklistItemUpdate,
+	AuditEventMediaUploaded,
+	AuditEventLocationChange,
+	AuditEventStationEnter,
+	AuditEventStationExit,
+}
+
+// ActivityVisibleEventTypes is what the Activity page shows a caller:
+// shop-floor and template/catalogue rows for analysis.view, plus user and
+// role rows only with admin.manage_users (Karar 25).
+func ActivityVisibleEventTypes(canManageUsers bool) []AuditEvent {
+	out := append([]AuditEvent{}, ActivityWorkEventTypes...)
+	out = append(out, MasterDataAuditEventTypes...)
+	if canManageUsers {
+		out = append(out, SensitiveAdminAuditEventTypes...)
+	}
+	return out
 }
 
 // AuditActivityPage is one page of audit activity rows.
