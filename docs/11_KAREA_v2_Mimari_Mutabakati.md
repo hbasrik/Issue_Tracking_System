@@ -545,7 +545,10 @@ kalıyordu.
   + e-posta), değişen her alan için eski ve yeni değer. Değerler yazma
   anındaki adlarıyla saklanır (rol adı, bölge/parça/tip/süreç TR+EN adı,
   madde metni); böylece sonradan silinen ya da adı değişen nesneler de
-  okunur kalır. `old_value` / `new_value` NULL kalır.
+  okunur kalır. `old_value` / `new_value` NULL kalır. Sıralamada yalnız
+  sürüklenen öğeler (göreli sırasını koruyan en uzun dizinin dışında
+  kalanlar) eski → yeni sıra numarasıyla yazılır; aradaki kayan
+  satırlar listelenmez.
   **Şifre ve hash hiçbir alana yazılmaz:** şifre sıfırlamada yalnızca
   eylem ve kimin şifresi olduğu kaydedilir; oluşturmada geçici şifre
   kayda girmez.

@@ -770,6 +770,45 @@ düzeneği, TR/EN 390), `build-output.txt`, `live-readonly-check.txt`
 `live-apply-output.txt` (canlıya uygulama). Gerçek cihazda görüntü
 alınmadı.
 
+### A41. Yönetim işlemleri denetim kaydında `[~]` — 2026-10-02
+Kod, test ve doğrulama tamam; **migration 0038 canlıya uygulanmadı,
+onay bekliyor** (kesinti gerekmez: yalnız `ALTER TYPE … ADD VALUE`).
+- **Migration 0038:** `audit_event_enum`'a `USER_ADMIN_CHANGE`,
+  `ROLE_PERMISSION_CHANGE`, `CHECKLIST_TEMPLATE_CHANGE`,
+  `DEFECT_CATALOG_CHANGE`. Geri alma, bu türde satır varsa durur;
+  yoksa enum'u eski değerlerle yeniden kurar.
+- **Yazılanlar (Karar 25):** kullanıcı oluşturma / rol değişikliği /
+  aktif-pasif / silme / yönetici şifre sıfırlaması / giriş kilidinin
+  elle açılması; rol oluşturma ve izin verme-alma; şablon maddesi
+  ekleme, metin / hat sonu aşaması / bölüm düzenleme, aktif-pasif,
+  silme, sıralama; bölge, parça, kusur tipi, süreç ekleme, ad / kod /
+  bölge / varsayılan süreç değişikliği, aktif-pasif, silme, sıralama
+  ("Diğer"den oluşturma dahil). Her satır: kim, ne zaman, nesne, alan,
+  eski → yeni değer (adlarıyla); `vin` NULL; aynı transaction'da.
+  Değişiklik yoksa ya da işlem reddedildiyse satır yok. Şifre ve hash
+  hiçbir alana yazılmaz.
+- **Görünürlük:** Hareketler ekranında dört yeni olay türü filtresi.
+  Şablon ve katalog olayları `analysis.view` ile; kullanıcı ve rol/izin
+  olayları ek olarak `admin.manage_users` ile (yoksa filtrede çıkmaz,
+  listeden düşer, türle istenirse 403). Ana sayfa son hareketlerinde
+  yönetim olayı yok.
+- **Ekran:** satır cümle olarak çevrilir ("Kullanıcı «Ali (ali@…)» —
+  rolü değiştirildi · Rol: Operatör → Kalite", "Şablon maddesi (Sevkiyat)
+  — sıralama değiştirildi · X: 47. sıradan 1. sıraya"); ham kod, enum ya
+  da true/false görünmez. Mobilde Hareketler ekranı yok, değişiklik yok.
+- **Yan etki:** yönetim işlemi yapmış hesap artık silinemez, pasife
+  alınır (iş geçmişi sayılır).
+
+Kanıt: `docs/screenshots/admin-audit/`: `db-verification-output.txt`
+(0038 iki kez up, mevcut denetim satırları değişmedi, satır varken down
+reddi, down iki kez, tekrar up), `api-verification-output.txt` (68
+kontrol: her işlem türü için kim/ne/eski/yeni, değişmeyen işlemde satır
+yok, şifre/hash taraması, izleyici rolünde 403 ve filtreleme, ana sayfa),
+`audit-rows.json`, `api-activity-*.json`, `render-check-output.txt` (48
+satır TR+EN, ham değer yok), `capture-web-output.txt` + `web-*.png`
+(TR/EN, dört filtre, izleyici görünümü). Gerçek cihazda görüntü yok
+(mobil ekran değişmedi).
+
 ---
 
 ## B — Canlıya çıkmadan önce ZORUNLU
