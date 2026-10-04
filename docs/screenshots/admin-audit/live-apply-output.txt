@@ -1,0 +1,36 @@
+# Live apply of migration 0038 — 2026-10-04 (19:0x UTC)
+# All reads with default_transaction_read_only=on; the only write is the migration.
+# The API on 8080 kept running the old code; no login, no token.
+
+== before (read-only)
+version 37 dirty false
+server_version 16.14
+enum STATUS_CHANGE,LOCATION_CHANGE,STATION_ENTER,STATION_EXIT,CHECKLIST_ITEM_UPDATE,ISSUE_STATUS_CHANGE,EOL_WORKFLOW_STAGE_CHANGE,MEDIA_UPLOADED,ISSUE_CLASSIFICATION_CHANGE,LOGIN_RATE_LIMITED
+max_id 687
+audit 516 rows, md5 77fe872eb14008f468a4b25ef6e2f364
+on
+
+== migrate up 1 (~/go/bin/migrate -path database/migrations)
+38/u admin_audit_events (27.195625ms)
+
+== after (read-only)
+version 38 dirty false
+enum STATUS_CHANGE,LOCATION_CHANGE,STATION_ENTER,STATION_EXIT,CHECKLIST_ITEM_UPDATE,ISSUE_STATUS_CHANGE,EOL_WORKFLOW_STAGE_CHANGE,MEDIA_UPLOADED,ISSUE_CLASSIFICATION_CHANGE,LOGIN_RATE_LIMITED,USER_ADMIN_CHANGE,ROLE_PERMISSION_CHANGE,CHECKLIST_TEMPLATE_CHANGE,DEFECT_CATALOG_CHANGE
+new values present: 4
+audit id<=687: 516 rows, md5 77fe872eb14008f468a4b25ef6e2f364
+audit total now: 516, max_id 687
+rows with management types: 0
+event_type column type: audit_event_enum
+activity read: 516 rows, newest 2026-10-02 14:20:07.521132+00
+by type: CHECKLIST_ITEM_UPDATE 444, EOL_WORKFLOW_STAGE_CHANGE 13, ISSUE_CLASSIFICATION_CHANGE 4, ISSUE_STATUS_CHANGE 49, STATUS_CHANGE 6
+on
+
+== API on 8080 (user's process PID 69825, old code, no login, no token)
+GET /health: {"status":"ok"} HTTP 200
+GET /api/v1/audit/activity without token: HTTP 401
+GET /api/v1/home/overview without token: HTTP 401
+backend/logs/karea-api.log: 0 ERROR/WARN lines on 2026-10-04 (last line: 2026-10-02T13:49:44Z listening)
+
+Note: /health does not query the database, and an authenticated API read was
+not made (login on the live system rewrites a password hash). The read query
+above is run directly against the database instead.
