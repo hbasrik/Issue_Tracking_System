@@ -61,7 +61,7 @@ func (s *server) handleRoleCreate(w http.ResponseWriter, r *http.Request) {
 		badRequest(w, "invalid request body")
 		return
 	}
-	role, err := s.deps.RoleAdmin.CreateRole(r.Context(), req.Code, req.Name)
+	role, err := s.deps.RoleAdmin.CreateRole(r.Context(), actorID(r), req.Code, req.Name)
 	if err != nil {
 		writeError(w, err)
 		return
@@ -96,7 +96,7 @@ func (s *server) handleRolePermissionsPut(w http.ResponseWriter, r *http.Request
 	if req.Permissions == nil {
 		req.Permissions = []string{}
 	}
-	if err := s.deps.RoleAdmin.ReplaceGrants(r.Context(), id, req.Permissions); err != nil {
+	if err := s.deps.RoleAdmin.ReplaceGrants(r.Context(), actorID(r), id, req.Permissions); err != nil {
 		writeError(w, err)
 		return
 	}

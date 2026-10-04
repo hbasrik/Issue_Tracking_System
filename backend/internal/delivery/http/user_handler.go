@@ -83,10 +83,12 @@ func (s *server) handleUserCreate(w http.ResponseWriter, r *http.Request) {
 		badRequest(w, "invalid request body")
 		return
 	}
+	claims, _ := ClaimsFromContext(r.Context())
 	created, err := s.deps.Users.Create(r.Context(), usecase.CreateUserInput{
 		FullName: req.FullName,
 		Email:    req.Email,
 		Role:     req.Role,
+		ActorID:  claims.UserID,
 	})
 	if err != nil {
 		writeError(w, err)
@@ -136,6 +138,13 @@ func (s *server) handleUserUnlockLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if s.deps.LoginLimiter != nil {
+		if !s.deps.LoginLimiter.LockedUntil(user.Email).IsZero() {
+			claims, _ := ClaimsFromContext(r.Context())
+			if err := s.deps.Users.RecordLoginUnlock(r.Context(), claims.UserID, user); err != nil {
+				writeError(w, err)
+				return
+			}
+		}
 		s.deps.LoginLimiter.Unlock(user.Email)
 	}
 	writeJSON(w, http.StatusOK, publicUserWithLock(user, s.deps.LoginLimiter))

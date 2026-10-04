@@ -97,6 +97,14 @@ func ClaimsFromContext(ctx context.Context) (*auth.Claims, bool) {
 	return claims, ok
 }
 
+// actorID is the authenticated user id, or 0 outside RequireAuth.
+func actorID(r *http.Request) int {
+	if claims, ok := ClaimsFromContext(r.Context()); ok {
+		return claims.UserID
+	}
+	return 0
+}
+
 // PermissionsFromContext returns the permission set cached by Resolve.
 func PermissionsFromContext(ctx context.Context) (domain.PermissionSet, bool) {
 	permissions, ok := ctx.Value(permissionsContextKey).(domain.PermissionSet)

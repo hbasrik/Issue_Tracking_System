@@ -233,7 +233,7 @@ func newAdmin(users ...*domain.User) *usecase.UserAdmin {
 		copied := *u
 		byID[u.ID] = &copied
 	}
-	return usecase.NewUserAdmin(&adminUserRepo{users: byID}, adminRoleRepo{}, nil)
+	return usecase.NewUserAdmin(&adminUserRepo{users: byID}, adminRoleRepo{}, nil, nil, nil)
 }
 
 func newAdminWithRefs(refs map[int]int, users ...*domain.User) *usecase.UserAdmin {
@@ -242,7 +242,7 @@ func newAdminWithRefs(refs map[int]int, users ...*domain.User) *usecase.UserAdmi
 		copied := *u
 		byID[u.ID] = &copied
 	}
-	return usecase.NewUserAdmin(&adminUserRepo{users: byID, refs: refs}, adminRoleRepo{}, nil)
+	return usecase.NewUserAdmin(&adminUserRepo{users: byID, refs: refs}, adminRoleRepo{}, nil, nil, nil)
 }
 
 func TestUserAdmin_LastManagerCannotDemoteSelf(t *testing.T) {
@@ -444,6 +444,7 @@ func TestUserAdmin_CreateRejectsDisallowedDomain(t *testing.T) {
 	admin := usecase.NewUserAdmin(
 		&adminUserRepo{users: map[int]*domain.User{1: user(1, managerRole, true)}},
 		adminRoleRepo{},
+		nil, nil,
 		[]string{"karea.local"},
 	)
 	_, err := admin.Create(context.Background(), usecase.CreateUserInput{

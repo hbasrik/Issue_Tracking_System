@@ -11,19 +11,39 @@ import (
 // UserAdmin lists users and updates role / is_active under self-lockout and
 // last-admin.manage_users invariants. Authorization to call these methods is
 // admin.manage_users at the route; the rules below keep Users & Roles reachable.
+// Every change writes a USER_ADMIN_CHANGE audit row in the same transaction;
+// passwords and hashes are never part of it.
 type UserAdmin struct {
 	users               repository.UserRepository
 	roles               repository.RoleRepository
+	auditor             adminAuditor
 	allowedEmailDomains []string
 }
 
 // NewUserAdmin wires the usecase with its repositories. allowedEmailDomains
 // is the create-user allowlist; empty means any well-formed address is accepted.
-func NewUserAdmin(users repository.UserRepository, roles repository.RoleRepository, allowedEmailDomains []string) *UserAdmin {
+func NewUserAdmin(
+	users repository.UserRepository,
+	roles repository.RoleRepository,
+	audit repository.AuditRepository,
+	uow repository.TransactionManager,
+	allowedEmailDomains []string,
+) *UserAdmin {
 	return &UserAdmin{
 		users:               users,
 		roles:               roles,
+		auditor:             adminAuditor{audit: audit, uow: uow},
 		allowedEmailDomains: domain.NormalizeEmailDomains(allowedEmailDomains),
+	}
+}
+
+func userAuditDetail(action string, u *domain.User) domain.AdminAuditDetail {
+	return domain.AdminAuditDetail{
+		Action:       action,
+		Entity:       domain.AdminEntityUser,
+		EntityID:     u.ID,
+		Subject:      domain.AdminText(u.FullName),
+		SubjectEmail: u.Email,
 	}
 }
 
@@ -114,17 +134,33 @@ func (a *UserAdmin) Update(ctx context.Context, actorID, targetID int, in Update
 		}
 	}
 
-	if err := a.users.UpdateRoleAndActive(ctx, targetID, newRole.ID, newActive); err != nil {
+	d := userAuditDetail(domain.AdminActionUpdate, target)
+	d.AddChange(domain.AdminFieldRole, roleValue(target.Role), roleValue(newRole))
+	d.AddChange(domain.AdminFieldActive, domain.AdminBool(target.IsActive), domain.AdminBool(newActive))
+	switch {
+	case roleChanging && newActive == target.IsActive:
+		d.Action = domain.AdminActionRoleChange
+	default:
+		d.Action = activeAction(&d, target.IsActive, newActive)
+	}
+	err = a.auditor.withTx(ctx, func(txCtx context.Context) error {
+		if err := a.users.UpdateRoleAndActive(txCtx, targetID, newRole.ID, newActive); err != nil {
+			return err
+		}
+		return a.auditor.record(txCtx, domain.AuditEventUserAdmin, actorID, d)
+	})
+	if err != nil {
 		return nil, err
 	}
 	return a.users.GetByID(ctx, targetID)
 }
 
-// CreateUserInput is the admin create-user form.
+// CreateUserInput is the admin create-user form. ActorID is the admin.
 type CreateUserInput struct {
 	FullName string
 	Email    string
 	Role     string
+	ActorID  int
 }
 
 // CreatedUser is the stored user plus the one-time plaintext password. The
@@ -172,13 +208,26 @@ func (a *UserAdmin) Create(ctx context.Context, in CreateUserInput) (*CreatedUse
 	if err != nil {
 		return nil, err
 	}
-	stored, err := a.users.Create(ctx, &domain.User{
-		FullName:           name,
-		Email:              email,
-		PasswordHash:       hash,
-		Role:               *role,
-		IsActive:           true,
-		MustChangePassword: true,
+	var stored *domain.User
+	err = a.auditor.withTx(ctx, func(txCtx context.Context) error {
+		var err error
+		stored, err = a.users.Create(txCtx, &domain.User{
+			FullName:           name,
+			Email:              email,
+			PasswordHash:       hash,
+			Role:               *role,
+			IsActive:           true,
+			MustChangePassword: true,
+		})
+		if err != nil {
+			return err
+		}
+		d := userAuditDetail(domain.AdminActionCreate, stored)
+		d.AddChange(domain.AdminFieldName, domain.AdminAuditValue{}, domain.AdminText(stored.FullName))
+		d.AddChange(domain.AdminFieldEmail, domain.AdminAuditValue{}, domain.AdminText(stored.Email))
+		d.AddChange(domain.AdminFieldRole, domain.AdminAuditValue{}, roleValue(*role))
+		d.AddChange(domain.AdminFieldActive, domain.AdminAuditValue{}, domain.AdminBool(true))
+		return a.auditor.record(txCtx, domain.AuditEventUserAdmin, in.ActorID, d)
 	})
 	if err != nil {
 		return nil, err
@@ -208,10 +257,25 @@ func (a *UserAdmin) ResetPassword(ctx context.Context, actorID, targetID int) (s
 	if err != nil {
 		return "", err
 	}
-	if err := a.users.UpdatePassword(ctx, targetID, hash, true); err != nil {
+	err = a.auditor.withTx(ctx, func(txCtx context.Context) error {
+		if err := a.users.UpdatePassword(txCtx, targetID, hash, true); err != nil {
+			return err
+		}
+		// Only the fact of the reset is recorded — never the value or hash.
+		return a.auditor.record(txCtx, domain.AuditEventUserAdmin, actorID,
+			userAuditDetail(domain.AdminActionPasswordReset, target))
+	})
+	if err != nil {
 		return "", err
 	}
 	return plain, nil
+}
+
+// RecordLoginUnlock audits an admin clearing a login lockout. The lockout
+// itself lives in process memory (LoginLimiter).
+func (a *UserAdmin) RecordLoginUnlock(ctx context.Context, actorID int, target *domain.User) error {
+	return a.auditor.record(ctx, domain.AuditEventUserAdmin, actorID,
+		userAuditDetail(domain.AdminActionLoginUnlock, target))
 }
 
 // Delete hard-deletes a user who has never produced shop-floor, media, or
@@ -251,7 +315,17 @@ func (a *UserAdmin) Delete(ctx context.Context, actorID, targetID int) error {
 	if refs > 0 {
 		return &domain.UserInUseError{ReferenceCount: refs}
 	}
-	return a.users.Delete(ctx, targetID)
+	d := userAuditDetail(domain.AdminActionDelete, target)
+	d.AddChange(domain.AdminFieldName, domain.AdminText(target.FullName), domain.AdminAuditValue{})
+	d.AddChange(domain.AdminFieldEmail, domain.AdminText(target.Email), domain.AdminAuditValue{})
+	d.AddChange(domain.AdminFieldRole, roleValue(target.Role), domain.AdminAuditValue{})
+	d.AddChange(domain.AdminFieldActive, domain.AdminBool(target.IsActive), domain.AdminAuditValue{})
+	return a.auditor.withTx(ctx, func(txCtx context.Context) error {
+		if err := a.users.Delete(txCtx, targetID); err != nil {
+			return err
+		}
+		return a.auditor.record(txCtx, domain.AuditEventUserAdmin, actorID, d)
+	})
 }
 
 func isUserAdminHolder(ctx context.Context, roles repository.RoleRepository, active bool, role domain.Role) (bool, error) {

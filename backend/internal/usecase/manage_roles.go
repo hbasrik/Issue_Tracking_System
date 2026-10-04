@@ -15,14 +15,21 @@ var roleCodePattern = regexp.MustCompile(`^[A-Z][A-Z0-9_]{1,48}$`)
 // RoleAdmin is the permission-matrix editor (Karar 3). Route gate is
 // admin.manage_users. Removing admin.manage_users from the last granting
 // role, or from the last active holders, is rejected with ErrLastActiveManager.
+// Role creation and grant changes write ROLE_PERMISSION_CHANGE audit rows.
 type RoleAdmin struct {
-	roles repository.RoleRepository
-	users repository.UserRepository
+	roles   repository.RoleRepository
+	users   repository.UserRepository
+	auditor adminAuditor
 }
 
 // NewRoleAdmin wires the matrix usecase.
-func NewRoleAdmin(roles repository.RoleRepository, users repository.UserRepository) *RoleAdmin {
-	return &RoleAdmin{roles: roles, users: users}
+func NewRoleAdmin(
+	roles repository.RoleRepository,
+	users repository.UserRepository,
+	audit repository.AuditRepository,
+	uow repository.TransactionManager,
+) *RoleAdmin {
+	return &RoleAdmin{roles: roles, users: users, auditor: adminAuditor{audit: audit, uow: uow}}
 }
 
 // RoleGrant is one catalogue role plus the permission codes it currently holds.
@@ -74,7 +81,7 @@ func (a *RoleAdmin) Matrix(ctx context.Context) (*Matrix, error) {
 
 // CreateRole inserts a new role with no grants. Code is normalized to upper
 // snake so matrix-created roles match the seeded catalogue style.
-func (a *RoleAdmin) CreateRole(ctx context.Context, code, name string) (*domain.Role, error) {
+func (a *RoleAdmin) CreateRole(ctx context.Context, actorID int, code, name string) (*domain.Role, error) {
 	code = strings.ToUpper(strings.TrimSpace(code))
 	name = strings.TrimSpace(name)
 	if name == "" {
@@ -90,12 +97,35 @@ func (a *RoleAdmin) CreateRole(ctx context.Context, code, name string) (*domain.
 	if err != nil && !errors.Is(err, domain.ErrNotFound) {
 		return nil, err
 	}
-	return a.roles.CreateRole(ctx, code, name)
+	var role *domain.Role
+	err = a.auditor.withTx(ctx, func(txCtx context.Context) error {
+		var err error
+		role, err = a.roles.CreateRole(txCtx, code, name)
+		if err != nil {
+			return err
+		}
+		d := domain.AdminAuditDetail{
+			Action:   domain.AdminActionCreate,
+			Entity:   domain.AdminEntityRole,
+			EntityID: role.ID,
+			Subject:  roleValue(*role),
+		}
+		d.AddChange(domain.AdminFieldName, domain.AdminAuditValue{}, domain.AdminText(role.Name))
+		d.AddChange(domain.AdminFieldCode, domain.AdminAuditValue{}, domain.AdminAuditValue{Code: role.Code})
+		return a.auditor.record(txCtx, domain.AuditEventRolePermission, actorID, d)
+	})
+	if err != nil {
+		return nil, err
+	}
+	return role, nil
 }
 
 // ReplaceGrants overwrites one role's permission set. Unknown codes 400.
-func (a *RoleAdmin) ReplaceGrants(ctx context.Context, roleID int, codes []string) error {
-	if _, err := a.roles.GetByID(ctx, roleID); err != nil {
+// The audit row lists the permissions granted and revoked; an unchanged set
+// writes nothing.
+func (a *RoleAdmin) ReplaceGrants(ctx context.Context, actorID, roleID int, codes []string) error {
+	role, err := a.roles.GetByID(ctx, roleID)
+	if err != nil {
 		return err
 	}
 	catalogue, err := a.roles.ListPermissions(ctx)
@@ -148,5 +178,38 @@ func (a *RoleAdmin) ReplaceGrants(ctx context.Context, roleID int, codes []strin
 		}
 	}
 
-	return a.roles.ReplaceRolePermissions(ctx, roleID, ids)
+	current, err := a.roles.GetPermissionsForRole(ctx, roleID)
+	if err != nil {
+		return err
+	}
+	had := make(map[string]struct{}, len(current))
+	d := domain.AdminAuditDetail{
+		Action:   domain.AdminActionGrantsChange,
+		Entity:   domain.AdminEntityRole,
+		EntityID: role.ID,
+		Subject:  roleValue(*role),
+	}
+	for _, p := range current {
+		had[p.Code] = struct{}{}
+		if _, keep := seen[p.Code]; !keep {
+			d.Revoked = append(d.Revoked, permissionValue(p))
+		}
+	}
+	for code := range seen {
+		if _, ok := had[code]; !ok {
+			d.Granted = append(d.Granted, permissionValue(byCode[code]))
+		}
+	}
+	sortValuesByCode(d.Granted)
+	sortValuesByCode(d.Revoked)
+
+	return a.auditor.withTx(ctx, func(txCtx context.Context) error {
+		if err := a.roles.ReplaceRolePermissions(txCtx, roleID, ids); err != nil {
+			return err
+		}
+		if len(d.Granted) == 0 && len(d.Revoked) == 0 {
+			return nil
+		}
+		return a.auditor.record(txCtx, domain.AuditEventRolePermission, actorID, d)
+	})
 }

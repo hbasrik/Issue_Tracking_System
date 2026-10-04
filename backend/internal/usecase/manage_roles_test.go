@@ -169,40 +169,83 @@ func (matrixUserRepo) Delete(context.Context, int) error { return nil }
 
 func TestRoleAdmin_CannotStripLastUserAdminGrant(t *testing.T) {
 	roles := newMatrixRoleRepo()
-	admin := usecase.NewRoleAdmin(roles, matrixUserRepo{holders: map[int]int{2: 1}})
+	audit := newFakeAuditRepo()
+	admin := usecase.NewRoleAdmin(roles, matrixUserRepo{holders: map[int]int{2: 1}}, audit, nil)
 
-	err := admin.ReplaceGrants(context.Background(), 2, []string{domain.PermissionVehicleView})
+	err := admin.ReplaceGrants(context.Background(), 9, 2, []string{domain.PermissionVehicleView})
 	if !errors.Is(err, domain.ErrLastActiveManager) {
 		t.Fatalf("err = %v, want ErrLastActiveManager", err)
+	}
+	if n := len(audit.Entries()); n != 0 {
+		t.Fatalf("rejected change wrote %d audit rows", n)
 	}
 }
 
 func TestRoleAdmin_CanStripWhenAnotherRoleHoldsIt(t *testing.T) {
 	roles := newMatrixRoleRepo()
 	roles.grants[1] = []int{1, 2, 3}
-	admin := usecase.NewRoleAdmin(roles, matrixUserRepo{holders: map[int]int{1: 1, 2: 1}})
+	audit := newFakeAuditRepo()
+	admin := usecase.NewRoleAdmin(roles, matrixUserRepo{holders: map[int]int{1: 1, 2: 1}}, audit, nil)
 
-	if err := admin.ReplaceGrants(context.Background(), 2, []string{domain.PermissionVehicleView}); err != nil {
+	if err := admin.ReplaceGrants(context.Background(), 9, 2, []string{domain.PermissionVehicleView}); err != nil {
 		t.Fatalf("ReplaceGrants: %v", err)
+	}
+	entries := audit.Entries()
+	if len(entries) != 1 {
+		t.Fatalf("audit rows = %d, want 1", len(entries))
+	}
+	e := entries[0]
+	if e.EventType != domain.AuditEventRolePermission || e.VIN != "" || e.PerformedBy == nil || *e.PerformedBy != 9 {
+		t.Fatalf("entry = %+v", e)
+	}
+	revoked, _ := e.Metadata["revoked"].([]any)
+	if e.Metadata["action"] != domain.AdminActionGrantsChange || len(revoked) != 2 || e.Metadata["granted"] != nil {
+		t.Fatalf("metadata = %v", e.Metadata)
+	}
+	first, _ := revoked[0].(map[string]any)
+	if first["code"] != domain.PermissionAdminManageUsers {
+		t.Fatalf("revoked = %v, want sorted codes", revoked)
+	}
+}
+
+func TestRoleAdmin_UnchangedGrantsWriteNoAudit(t *testing.T) {
+	roles := newMatrixRoleRepo()
+	audit := newFakeAuditRepo()
+	admin := usecase.NewRoleAdmin(roles, matrixUserRepo{}, audit, nil)
+	if err := admin.ReplaceGrants(context.Background(), 9, 1,
+		[]string{domain.PermissionIssueView, domain.PermissionVehicleView}); err != nil {
+		t.Fatalf("ReplaceGrants: %v", err)
+	}
+	if n := len(audit.Entries()); n != 0 {
+		t.Fatalf("audit rows = %d, want 0", n)
 	}
 }
 
 func TestRoleAdmin_CreateRole(t *testing.T) {
 	roles := newMatrixRoleRepo()
-	admin := usecase.NewRoleAdmin(roles, matrixUserRepo{})
+	audit := newFakeAuditRepo()
+	admin := usecase.NewRoleAdmin(roles, matrixUserRepo{}, audit, nil)
 
-	role, err := admin.CreateRole(context.Background(), "shift_lead", "Shift Lead")
+	role, err := admin.CreateRole(context.Background(), 9, "shift_lead", "Shift Lead")
 	if err != nil {
 		t.Fatalf("CreateRole: %v", err)
 	}
 	if role.Code != "SHIFT_LEAD" {
 		t.Fatalf("code = %q", role.Code)
 	}
+	entries := audit.Entries()
+	if len(entries) != 1 || entries[0].Metadata["action"] != domain.AdminActionCreate {
+		t.Fatalf("audit = %+v", entries)
+	}
+	subject, _ := entries[0].Metadata["subject"].(map[string]any)
+	if subject["code"] != "SHIFT_LEAD" || subject["tr"] != "Shift Lead" {
+		t.Fatalf("subject = %v", subject)
+	}
 }
 
 func TestRoleAdmin_CreateRoleInvalidCode(t *testing.T) {
-	admin := usecase.NewRoleAdmin(newMatrixRoleRepo(), matrixUserRepo{})
-	if _, err := admin.CreateRole(context.Background(), "bad-code", "Bad"); !errors.Is(err, domain.ErrInvalidEnumValue) {
+	admin := usecase.NewRoleAdmin(newMatrixRoleRepo(), matrixUserRepo{}, nil, nil)
+	if _, err := admin.CreateRole(context.Background(), 9, "bad-code", "Bad"); !errors.Is(err, domain.ErrInvalidEnumValue) {
 		t.Fatalf("err = %v", err)
 	}
 }

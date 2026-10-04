@@ -198,7 +198,7 @@ func usersRouterWithLimiter(
 		Issuer:       issuer,
 		Auth:         usecase.NewAuthenticator(&httpAdminUserRepo{users: copied, refs: refs}),
 		Roles:        roles,
-		Users:        usecase.NewUserAdmin(&httpAdminUserRepo{users: copied, refs: refs}, roles, domains),
+		Users:        usecase.NewUserAdmin(&httpAdminUserRepo{users: copied, refs: refs}, roles, nil, nil, domains),
 		LoginLimiter: lim,
 	})
 }
