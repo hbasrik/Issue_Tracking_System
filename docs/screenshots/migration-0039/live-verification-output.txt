@@ -1,0 +1,41 @@
+# migration 0039 live check, read-only (default_transaction_read_only=on), 2026-10-06 17:13 +03
+# pre-apply baseline (2026-10-06, before 0039): version 38, items 108, templates 3,
+#   md5 items 421ab06c7777bedd6b2a33a256e5cd8f, md5 templates af3c2e35a4f7767985f381cf013fb08f
+ default_transaction_read_only 
+-------------------------------
+ on
+(1 row)
+
+ version | dirty 
+---------+-------
+      39 | f
+(1 row)
+
+        table_name        |     column_name      | data_type | is_nullable | column_default 
+--------------------------+----------------------+-----------+-------------+----------------
+ checklist_template_items | acceptance_criterion | text      | YES         | 
+ checklist_template_items | control_method       | text      | YES         | 
+ checklist_templates      | form_code            | text      | YES         | 
+ checklist_templates      | form_revision        | text      | YES         | 
+ checklist_templates      | form_published_at    | date      | YES         | 
+(5 rows)
+
+ items | templates | items_nonnull | tpl_nonnull 
+-------+-----------+---------------+-------------
+   108 |         3 |             0 |           0
+(1 row)
+
+   what    |               md5                
+-----------+----------------------------------
+ md5 items | 421ab06c7777bedd6b2a33a256e5cd8f
+(1 row)
+
+     what      |               md5                
+---------------+----------------------------------
+ md5 templates | af3c2e35a4f7767985f381cf013fb08f
+(1 row)
+
+# GET http://localhost:8080/health
+HTTP/1.1 200 OK
+{"status":"ok"}
+
