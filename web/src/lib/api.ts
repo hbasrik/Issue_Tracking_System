@@ -965,6 +965,8 @@ export interface ChecklistItem {
   RejectedAt?: string | null;
   ApprovedByName?: string;
   ApprovedAt?: string | null;
+  /** Every photo attached to this item's progress row, oldest first. */
+  Photos?: MediaAttachment[];
 }
 
 export type EOLStage = 'BRANCH' | 'DEPOT' | 'DOCUMENT' | 'COMPLETED';

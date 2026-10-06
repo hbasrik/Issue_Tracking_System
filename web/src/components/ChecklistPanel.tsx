@@ -22,6 +22,7 @@ import {
   splitChecklistByActive,
 } from '../../../shared/checklistActive';
 import { ActiveBadge } from './ActiveBadge';
+import { ChecklistItemPhotos } from './ChecklistItemPhotos';
 
 interface ChecklistPanelProps {
   vin: string;
@@ -389,6 +390,7 @@ function EolItemRow({
         <StatusBadge kind="eol" value={item.Status} />
       </div>
       <ActionStamp lines={checklistActorLines(item, t, locale)} />
+      <ChecklistItemPhotos photos={item.Photos ?? []} />
       <div className="mt-2 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
         {EOL_STATUSES.map((value) => {
           const selected = status === value;
