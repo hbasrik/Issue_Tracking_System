@@ -1,43 +1,120 @@
 answer item 1: HTTP 200
 photo for progress 209: HTTP 201
 == 1280px tr ==
-  [PASS] item 1 is a badge
-  [PASS] badge shows the answer
-  [PASS] badge shows the note — "Not: Akü 12.6 V"
-  [PASS] badge shows the photo — 1 photo(s)
-  [PASS] badge has no status buttons or Save
-  [PASS] pending items stay open
-  [PASS] tap opens the editor
+  [PASS] answered item 1 starts closed
+  [PASS] header: number + name and answer pill — ["1.Software Update","Uygun"]
+  [PASS] header: chevron icon
+  [PASS] header: aria-expanded=false
+  [PASS] card has its own frame — {"border":"1px","radius":"12px"}
+  [PASS] no "Edit" label on the card
+  [PASS] closed body: note — "Not: Akü 12.6 V"
+  [PASS] closed body: who/when
+  [PASS] closed body: photo
+  [PASS] closed body: no status buttons or Save
+  [PASS] pending item: pill reads Bekliyor — ["2.Araç Motoru","Bekliyor"]
+  [PASS] pending item starts open
+  [PASS] hover tints the header — header=rgb(241, 245, 249) card=rgb(255, 255, 255)
+  [PASS] hover does not tint the body — rgba(0, 0, 0, 0)
+  [PASS] photo click opens the lightbox
+  [PASS] photo click does not toggle the card
+  [PASS] header click opens the card
+  [PASS] no focus ring after a mouse click (focused, but not :focus-visible) — none
   [PASS] editor prefilled with the saved note — "Akü 12.6 V"
-  [PASS] Cancel closes it back to the badge
+  [PASS] Cancel and Save side by side at bottom right — cancel x=1080 save x=1148..1222 card right=1235
+  [PASS] header reachable with the keyboard (Tab / Shift+Tab)
+  [PASS] focus ring visible on keyboard focus (:focus-visible) — rgb(255, 255, 255) 0px 0px 0px 0px inset, rgb(255, 59, 30) 0px 0px 0px 2px inset, rgba(0, 0, 0, 0) 0px 0px 0px 0px
+  [PASS] Enter closes the card
+  [PASS] Space opens the card
+  [PASS] Cancel closes the card
   [PASS] Cancel discards the draft
-  [PASS] after Save the item is a badge with the new answer — ["1.Software Update","Uygun değil","Düzenle","","Not: conta yırtık","","Local Manager · 06.10.2026 16:08"]
+  [PASS] after Save the card is closed with the new answer — ["1.Software Update","Uygun değil","","Not: conta yırtık","","Local Manager · 06.10.2026 17:36"]
   [PASS] server has the edited answer — NOT_OK / conta yırtık
   [PASS] no horizontal overflow
   [PASS] no page errors
 == 375px tr ==
-  [PASS] item 1 is a badge
-  [PASS] badge shows the answer
-  [PASS] badge shows the note — "Not: Akü 12.6 V"
-  [PASS] badge shows the photo — 1 photo(s)
-  [PASS] badge has no status buttons or Save
-  [PASS] pending items stay open
-  [PASS] tap opens the editor
+  [PASS] answered item 1 starts closed
+  [PASS] header: number + name and answer pill — ["1.Software Update","Uygun"]
+  [PASS] header: chevron icon
+  [PASS] header: aria-expanded=false
+  [PASS] card has its own frame — {"border":"1px","radius":"12px"}
+  [PASS] no "Edit" label on the card
+  [PASS] closed body: note — "Not: Akü 12.6 V"
+  [PASS] closed body: who/when
+  [PASS] closed body: photo
+  [PASS] closed body: no status buttons or Save
+  [PASS] pending item: pill reads Bekliyor — ["2.Araç Motoru","Bekliyor"]
+  [PASS] pending item starts open
+  [PASS] hover tints the header — header=rgb(241, 245, 249) card=rgb(255, 255, 255)
+  [PASS] hover does not tint the body — rgba(0, 0, 0, 0)
+  [PASS] photo click opens the lightbox
+  [PASS] photo click does not toggle the card
+  [PASS] header click opens the card
+  [PASS] no focus ring after a mouse click (focused, but not :focus-visible) — none
   [PASS] editor prefilled with the saved note — "Akü 12.6 V"
-  [PASS] Cancel closes it back to the badge
+  [PASS] Cancel and Save side by side at bottom right — cancel x=191 save x=259..333 card right=346
+  [PASS] header reachable with the keyboard (Tab / Shift+Tab)
+  [PASS] focus ring visible on keyboard focus (:focus-visible) — rgb(255, 255, 255) 0px 0px 0px 0px inset, rgb(255, 59, 30) 0px 0px 0px 2px inset, rgba(0, 0, 0, 0) 0px 0px 0px 0px
+  [PASS] Enter closes the card
+  [PASS] Space opens the card
+  [PASS] Cancel closes the card
   [PASS] Cancel discards the draft
   [PASS] no horizontal overflow
   [PASS] no page errors
 == 1280px en ==
-  [PASS] item 1 is a badge
-  [PASS] badge shows the answer
-  [PASS] badge shows the note — "Note: Akü 12.6 V"
-  [PASS] badge shows the photo — 1 photo(s)
-  [PASS] badge has no status buttons or Save
-  [PASS] pending items stay open
-  [PASS] tap opens the editor
+  [PASS] answered item 1 starts closed
+  [PASS] header: number + name and answer pill — ["1.Software Update","OK"]
+  [PASS] header: chevron icon
+  [PASS] header: aria-expanded=false
+  [PASS] card has its own frame — {"border":"1px","radius":"12px"}
+  [PASS] no "Edit" label on the card
+  [PASS] closed body: note — "Note: Akü 12.6 V"
+  [PASS] closed body: who/when
+  [PASS] closed body: photo
+  [PASS] closed body: no status buttons or Save
+  [PASS] pending item: pill reads Pending — ["2.Araç Motoru","Pending"]
+  [PASS] pending item starts open
+  [PASS] hover tints the header — header=rgb(241, 245, 249) card=rgb(255, 255, 255)
+  [PASS] hover does not tint the body — rgba(0, 0, 0, 0)
+  [PASS] photo click opens the lightbox
+  [PASS] photo click does not toggle the card
+  [PASS] header click opens the card
+  [PASS] no focus ring after a mouse click (focused, but not :focus-visible) — none
   [PASS] editor prefilled with the saved note — "Akü 12.6 V"
-  [PASS] Cancel closes it back to the badge
+  [PASS] Cancel and Save side by side at bottom right — cancel x=1077 save x=1161..1222 card right=1235
+  [PASS] header reachable with the keyboard (Tab / Shift+Tab)
+  [PASS] focus ring visible on keyboard focus (:focus-visible) — rgb(255, 255, 255) 0px 0px 0px 0px inset, rgb(255, 59, 30) 0px 0px 0px 2px inset, rgba(0, 0, 0, 0) 0px 0px 0px 0px
+  [PASS] Enter closes the card
+  [PASS] Space opens the card
+  [PASS] Cancel closes the card
+  [PASS] Cancel discards the draft
+  [PASS] no horizontal overflow
+  [PASS] no page errors
+== 375px en ==
+  [PASS] answered item 1 starts closed
+  [PASS] header: number + name and answer pill — ["1.Software Update","OK"]
+  [PASS] header: chevron icon
+  [PASS] header: aria-expanded=false
+  [PASS] card has its own frame — {"border":"1px","radius":"12px"}
+  [PASS] no "Edit" label on the card
+  [PASS] closed body: note — "Note: Akü 12.6 V"
+  [PASS] closed body: who/when
+  [PASS] closed body: photo
+  [PASS] closed body: no status buttons or Save
+  [PASS] pending item: pill reads Pending — ["2.Araç Motoru","Pending"]
+  [PASS] pending item starts open
+  [PASS] hover tints the header — header=rgb(241, 245, 249) card=rgb(255, 255, 255)
+  [PASS] hover does not tint the body — rgba(0, 0, 0, 0)
+  [PASS] photo click opens the lightbox
+  [PASS] photo click does not toggle the card
+  [PASS] header click opens the card
+  [PASS] no focus ring after a mouse click (focused, but not :focus-visible) — none
+  [PASS] editor prefilled with the saved note — "Akü 12.6 V"
+  [PASS] Cancel and Save side by side at bottom right — cancel x=188 save x=272..333 card right=346
+  [PASS] header reachable with the keyboard (Tab / Shift+Tab)
+  [PASS] focus ring visible on keyboard focus (:focus-visible) — rgb(255, 255, 255) 0px 0px 0px 0px inset, rgb(255, 59, 30) 0px 0px 0px 2px inset, rgba(0, 0, 0, 0) 0px 0px 0px 0px
+  [PASS] Enter closes the card
+  [PASS] Space opens the card
+  [PASS] Cancel closes the card
   [PASS] Cancel discards the draft
   [PASS] no horizontal overflow
   [PASS] no page errors

@@ -32,7 +32,7 @@ async function open(scene, locale, width) {
   await page.waitForFunction(() => document.querySelectorAll('#root div').length > 20, null, { timeout: 15000 });
   await page.waitForTimeout(300);
   // Item 1 is answered in the scene, so it starts collapsed; open it.
-  await page.locator('[data-testid="eol-answered-toggle-1"]').click();
+  await page.locator('[data-testid="eol-item-header-1"]').click();
   await page.waitForTimeout(200);
   return { page, errors };
 }

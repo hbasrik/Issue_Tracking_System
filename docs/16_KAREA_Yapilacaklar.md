@@ -959,6 +959,27 @@ başlatılınca devreye girer.
   `capture-mobile.mjs` ve `eol-note/capture-web.mjs` önce rozete dokunacak
   şekilde güncellendi; hepsi geçiyor.
 
+### A49. EOL madde kartı düzeni `[x]` — 2026-10-06
+- **Değişiklik (yalnız görsel; web `EolItemRow`, mobil `EOLChecklistScreen`):**
+  her EOL maddesi çerçeveli bir kart (ince ayırıcı çizgi yerine). Başlık
+  satırı açık/kapalı aynı: solda numara + ad, sağda durum rozeti (bekleyende
+  "Bekliyor"), rozetin sağında açıkken dönen ok ikonu. "Düzenle" yazısı ve
+  çevirisi kaldırıldı. Tıklama hedefi yalnız başlık satırı (web `<button>`:
+  Enter/Boşluk, `aria-expanded`, `:focus-visible` iç halka; mobil
+  `Pressable`, `aria-expanded`); hover zemini yalnız başlıkta. Kapalı gövde:
+  not, kim/ne zaman, fotoğraflar. Açık gövde: cevap düğmeleri, not kutusu,
+  fotoğraf seçimi, sağ altta İptal + Kaydet. Bekleyen madde açık, cevaplı
+  kapalı başlar; bekleyen kart da başlıktan kapatılabilir. Cevap, not,
+  fotoğraf ve kaydetme mantığı değişmedi. Test/Sevk ekranları değişmedi
+  (liste sınıfı yalnız EOL'da kart aralığına döner).
+- **Kanıt:** `docs/screenshots/eol-photo/capture-web-collapse-output.txt`
+  (test DB + test API; TR/EN × 1280/375; çerçeve, rozet, "Bekliyor", ok,
+  hover yalnız başlık, fotoğraf kendi lightbox'ını açar ve kartı açmaz, fare
+  tıklamasında halka yok / klavye odağında 2px halka, Enter/Boşluk, İptal +
+  Kaydet sağ altta) + `web-collapse-*-{badge,editing}.png`,
+  `web-collapse-tr-1280-focus.png`. Mobil düzenek:
+  `capture-mobile-collapse-output.txt` + `mobile-collapse-*-{badge,editing}.png`.
+
 ### A48. Migration 0039 — checklist form alanları `[x]` (şema) — 2026-10-06
 - **Şema:** `checklist_template_items.acceptance_criterion TEXT NULL`,
   `control_method TEXT NULL`; `checklist_templates.form_code TEXT NULL`,

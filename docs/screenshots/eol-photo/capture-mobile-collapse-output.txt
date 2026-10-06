@@ -1,57 +1,97 @@
-collapse-tr-375 [PASS] answered item 1 is a badge
-collapse-tr-375 [PASS] badge shows the answer — ["1. Software Update","Uygun","Düzenle","Not: ölçüm 12.6","Quality Operator · 04.10.2026 16:09"]
-collapse-tr-375 [PASS] badge shows the note
-collapse-tr-375 [PASS] badge shows all 3 photos
-collapse-tr-375 [PASS] badge has no editor (no Save)
-collapse-tr-375 [PASS] every answered active item collapsed (items 1,2,3) — 3
-collapse-tr-375 [PASS] tap opens the editor
+collapse-tr-375 [PASS] answered item 1 starts closed
+collapse-tr-375 [PASS] header shows number + name and the answer pill — ["1. Software Update","Uygun"]
+collapse-tr-375 [PASS] header has a chevron icon
+collapse-tr-375 [PASS] header aria-expanded=false when closed
+collapse-tr-375 [PASS] no "Edit" label anywhere
+collapse-tr-375 [PASS] closed body shows the note
+collapse-tr-375 [PASS] closed body shows who/when
+collapse-tr-375 [PASS] closed body shows all 3 photos
+collapse-tr-375 [PASS] closed body has no editor (no Save)
+collapse-tr-375 [PASS] every answered active item starts closed (items 1,2,3) — 3
+collapse-tr-375 [PASS] pending item shows the pending pill — ["16. Şarj kapağı kontrolü","Bekliyor"]
+collapse-tr-375 [PASS] pending item starts open
+collapse-tr-375 [PASS] photo tap opens its own viewer
+collapse-tr-375 [PASS] photo tap does not toggle the card
+collapse-tr-375 [PASS] header tap opens the editor
 collapse-tr-375 [PASS] editor prefilled with the saved note — "ölçüm 12.6"
-collapse-tr-375 [PASS] Cancel closes it back to the badge
-collapse-tr-375 [PASS] Cancel sends nothing
+collapse-tr-375 [PASS] Cancel and Save side by side, Save on the right — cancel(140,828) save(259,828)
+collapse-tr-375 [PASS] Enter on the header closes it
+collapse-tr-375 [PASS] Space on the header opens it
+collapse-tr-375 [PASS] Cancel closes it back to the summary
+collapse-tr-375 [PASS] toggling and Cancel send nothing
 collapse-tr-375 [PASS] Save records the edited answer — [1,{"status":"NOT_OK","note":"conta yırtık"}]
-collapse-tr-375 [PASS] after Save the item is a badge again
-collapse-tr-375 [PASS] pending item 113 stays open (has Save)
+collapse-tr-375 [PASS] after Save the item is closed again
 collapse-tr-375 [PASS] no page errors
-collapse-tr-1280 [PASS] answered item 1 is a badge
-collapse-tr-1280 [PASS] badge shows the answer — ["1. Software Update","Uygun","Düzenle","Not: ölçüm 12.6","Quality Operator · 04.10.2026 16:09"]
-collapse-tr-1280 [PASS] badge shows the note
-collapse-tr-1280 [PASS] badge shows all 3 photos
-collapse-tr-1280 [PASS] badge has no editor (no Save)
-collapse-tr-1280 [PASS] every answered active item collapsed (items 1,2,3) — 3
-collapse-tr-1280 [PASS] tap opens the editor
+collapse-tr-1280 [PASS] answered item 1 starts closed
+collapse-tr-1280 [PASS] header shows number + name and the answer pill — ["1. Software Update","Uygun"]
+collapse-tr-1280 [PASS] header has a chevron icon
+collapse-tr-1280 [PASS] header aria-expanded=false when closed
+collapse-tr-1280 [PASS] no "Edit" label anywhere
+collapse-tr-1280 [PASS] closed body shows the note
+collapse-tr-1280 [PASS] closed body shows who/when
+collapse-tr-1280 [PASS] closed body shows all 3 photos
+collapse-tr-1280 [PASS] closed body has no editor (no Save)
+collapse-tr-1280 [PASS] every answered active item starts closed (items 1,2,3) — 3
+collapse-tr-1280 [PASS] pending item shows the pending pill — ["16. Şarj kapağı kontrolü","Bekliyor"]
+collapse-tr-1280 [PASS] pending item starts open
+collapse-tr-1280 [PASS] photo tap opens its own viewer
+collapse-tr-1280 [PASS] photo tap does not toggle the card
+collapse-tr-1280 [PASS] header tap opens the editor
 collapse-tr-1280 [PASS] editor prefilled with the saved note — "ölçüm 12.6"
-collapse-tr-1280 [PASS] Cancel closes it back to the badge
-collapse-tr-1280 [PASS] Cancel sends nothing
+collapse-tr-1280 [PASS] Cancel and Save side by side, Save on the right — cancel(1045,786) save(1164,786)
+collapse-tr-1280 [PASS] Enter on the header closes it
+collapse-tr-1280 [PASS] Space on the header opens it
+collapse-tr-1280 [PASS] Cancel closes it back to the summary
+collapse-tr-1280 [PASS] toggling and Cancel send nothing
 collapse-tr-1280 [PASS] Save records the edited answer — [1,{"status":"NOT_OK","note":"conta yırtık"}]
-collapse-tr-1280 [PASS] after Save the item is a badge again
-collapse-tr-1280 [PASS] pending item 113 stays open (has Save)
+collapse-tr-1280 [PASS] after Save the item is closed again
 collapse-tr-1280 [PASS] no page errors
-collapse-en-375 [PASS] answered item 1 is a badge
-collapse-en-375 [PASS] badge shows the answer — ["1. Software Update","OK","Edit","Note: ölçüm 12.6","Quality Operator · 04/10/2026, 16:09"]
-collapse-en-375 [PASS] badge shows the note
-collapse-en-375 [PASS] badge shows all 3 photos
-collapse-en-375 [PASS] badge has no editor (no Save)
-collapse-en-375 [PASS] every answered active item collapsed (items 1,2,3) — 3
-collapse-en-375 [PASS] tap opens the editor
+collapse-en-375 [PASS] answered item 1 starts closed
+collapse-en-375 [PASS] header shows number + name and the answer pill — ["1. Software Update","OK"]
+collapse-en-375 [PASS] header has a chevron icon
+collapse-en-375 [PASS] header aria-expanded=false when closed
+collapse-en-375 [PASS] no "Edit" label anywhere
+collapse-en-375 [PASS] closed body shows the note
+collapse-en-375 [PASS] closed body shows who/when
+collapse-en-375 [PASS] closed body shows all 3 photos
+collapse-en-375 [PASS] closed body has no editor (no Save)
+collapse-en-375 [PASS] every answered active item starts closed (items 1,2,3) — 3
+collapse-en-375 [PASS] pending item shows the pending pill — ["16. Şarj kapağı kontrolü","Pending"]
+collapse-en-375 [PASS] pending item starts open
+collapse-en-375 [PASS] photo tap opens its own viewer
+collapse-en-375 [PASS] photo tap does not toggle the card
+collapse-en-375 [PASS] header tap opens the editor
 collapse-en-375 [PASS] editor prefilled with the saved note — "ölçüm 12.6"
-collapse-en-375 [PASS] Cancel closes it back to the badge
-collapse-en-375 [PASS] Cancel sends nothing
+collapse-en-375 [PASS] Cancel and Save side by side, Save on the right — cancel(131,786) save(267,786)
+collapse-en-375 [PASS] Enter on the header closes it
+collapse-en-375 [PASS] Space on the header opens it
+collapse-en-375 [PASS] Cancel closes it back to the summary
+collapse-en-375 [PASS] toggling and Cancel send nothing
 collapse-en-375 [PASS] Save records the edited answer — [1,{"status":"NOT_OK","note":"conta yırtık"}]
-collapse-en-375 [PASS] after Save the item is a badge again
-collapse-en-375 [PASS] pending item 113 stays open (has Save)
+collapse-en-375 [PASS] after Save the item is closed again
 collapse-en-375 [PASS] no page errors
-collapse-en-1280 [PASS] answered item 1 is a badge
-collapse-en-1280 [PASS] badge shows the answer — ["1. Software Update","OK","Edit","Note: ölçüm 12.6","Quality Operator · 04/10/2026, 16:09"]
-collapse-en-1280 [PASS] badge shows the note
-collapse-en-1280 [PASS] badge shows all 3 photos
-collapse-en-1280 [PASS] badge has no editor (no Save)
-collapse-en-1280 [PASS] every answered active item collapsed (items 1,2,3) — 3
-collapse-en-1280 [PASS] tap opens the editor
+collapse-en-1280 [PASS] answered item 1 starts closed
+collapse-en-1280 [PASS] header shows number + name and the answer pill — ["1. Software Update","OK"]
+collapse-en-1280 [PASS] header has a chevron icon
+collapse-en-1280 [PASS] header aria-expanded=false when closed
+collapse-en-1280 [PASS] no "Edit" label anywhere
+collapse-en-1280 [PASS] closed body shows the note
+collapse-en-1280 [PASS] closed body shows who/when
+collapse-en-1280 [PASS] closed body shows all 3 photos
+collapse-en-1280 [PASS] closed body has no editor (no Save)
+collapse-en-1280 [PASS] every answered active item starts closed (items 1,2,3) — 3
+collapse-en-1280 [PASS] pending item shows the pending pill — ["16. Şarj kapağı kontrolü","Pending"]
+collapse-en-1280 [PASS] pending item starts open
+collapse-en-1280 [PASS] photo tap opens its own viewer
+collapse-en-1280 [PASS] photo tap does not toggle the card
+collapse-en-1280 [PASS] header tap opens the editor
 collapse-en-1280 [PASS] editor prefilled with the saved note — "ölçüm 12.6"
-collapse-en-1280 [PASS] Cancel closes it back to the badge
-collapse-en-1280 [PASS] Cancel sends nothing
+collapse-en-1280 [PASS] Cancel and Save side by side, Save on the right — cancel(1036,786) save(1172,786)
+collapse-en-1280 [PASS] Enter on the header closes it
+collapse-en-1280 [PASS] Space on the header opens it
+collapse-en-1280 [PASS] Cancel closes it back to the summary
+collapse-en-1280 [PASS] toggling and Cancel send nothing
 collapse-en-1280 [PASS] Save records the edited answer — [1,{"status":"NOT_OK","note":"conta yırtık"}]
-collapse-en-1280 [PASS] after Save the item is a badge again
-collapse-en-1280 [PASS] pending item 113 stays open (has Save)
+collapse-en-1280 [PASS] after Save the item is closed again
 collapse-en-1280 [PASS] no page errors
 COLLAPSE CHECKS PASSED
