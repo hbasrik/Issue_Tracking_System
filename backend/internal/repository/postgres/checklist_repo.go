@@ -30,7 +30,7 @@ func (r *ChecklistProgressRepo) ListByVINAndType(ctx context.Context, vin string
 	rows, err := executor(ctx, r.pool).Query(ctx,
 		`SELECT id, vin, checklist_type, check_item_id, check_status, checker_id, check_date,
 		        COALESCE(rework_desc, ''), COALESCE(conditional_desc, ''), COALESCE(rejected_desc, ''),
-		        related_issue_id, created_at, updated_at
+		        COALESCE(approved_desc, ''), related_issue_id, created_at, updated_at
 		 FROM checklist_item_progress
 		 WHERE vin = $1 AND checklist_type = $2
 		 ORDER BY check_item_id`, vin, string(checklistType))
@@ -46,7 +46,7 @@ func (r *ChecklistProgressRepo) ListByVINAndType(ctx context.Context, vin string
 		if err := rows.Scan(
 			&p.ID, &p.VIN, &clType, &p.CheckItemID, &status, &p.CheckerID, &p.CheckDate,
 			&p.ReworkDesc, &p.ConditionalDesc, &p.RejectedDesc,
-			&p.RelatedIssueID, &p.CreatedAt, &p.UpdatedAt,
+			&p.ApprovedDesc, &p.RelatedIssueID, &p.CreatedAt, &p.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}

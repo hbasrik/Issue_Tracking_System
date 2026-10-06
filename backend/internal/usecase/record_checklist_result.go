@@ -113,14 +113,20 @@ func (r *ChecklistResultRecorder) Record(ctx context.Context, in RecordChecklist
 		ApprovedDesc:    notes.Approved,
 	}
 
-	oldStatus := domain.CheckStatusPending
+	change := checklistChange{oldStatus: domain.CheckStatusPending, newNote: notes.NoteFor(in.Status)}
 	existing, err := r.checklist.ListByVINAndType(ctx, in.VIN, in.ChecklistType)
 	if err != nil {
 		return nil, err
 	}
 	for _, row := range existing {
 		if row.CheckItemID == in.ItemID {
-			oldStatus = row.CheckStatus
+			change.oldStatus = row.CheckStatus
+			change.oldNote = domain.ChecklistNotes{
+				Rework:      row.ReworkDesc,
+				Conditional: row.ConditionalDesc,
+				Rejected:    row.RejectedDesc,
+				Approved:    row.ApprovedDesc,
+			}.NoteFor(row.CheckStatus)
 			break
 		}
 	}
@@ -129,7 +135,7 @@ func (r *ChecklistResultRecorder) Record(ctx context.Context, in RecordChecklist
 		if err := r.checklist.SaveResult(ctx, result); err != nil {
 			return err
 		}
-		return r.appendChecklistAudit(ctx, in, oldStatus)
+		return r.appendChecklistAudit(ctx, in, change)
 	}
 	if r.uow != nil {
 		if err := r.uow.WithinTx(ctx, save); err != nil {
@@ -215,21 +221,41 @@ func (r *ChecklistResultRecorder) ListApplicableForVehicle(ctx context.Context, 
 	return r.checklist.ListApplicableItems(ctx, vin, checklistType)
 }
 
-func (r *ChecklistResultRecorder) appendChecklistAudit(ctx context.Context, in RecordChecklistInput, old domain.CheckStatus) error {
+// checklistChange is the before/after of one item for its audit row. The
+// notes are the ones shown for each status (domain.ChecklistNotes.NoteFor).
+type checklistChange struct {
+	oldStatus domain.CheckStatus
+	oldNote   string
+	newNote   string
+}
+
+// appendChecklistAudit writes CHECKLIST_ITEM_UPDATE. On EoL the replaced and
+// the new note go into metadata as old_note / new_note so an overwritten note
+// is not lost; a key is left out entirely when its note is empty.
+func (r *ChecklistResultRecorder) appendChecklistAudit(ctx context.Context, in RecordChecklistInput, change checklistChange) error {
 	if r == nil || r.audit == nil {
 		return nil
+	}
+	metadata := map[string]any{
+		"item_id":        in.ItemID,
+		"checklist_type": string(in.ChecklistType),
+	}
+	if in.ChecklistType == domain.ChecklistTypeEOL {
+		if strings.TrimSpace(change.oldNote) != "" {
+			metadata["old_note"] = change.oldNote
+		}
+		if strings.TrimSpace(change.newNote) != "" {
+			metadata["new_note"] = change.newNote
+		}
 	}
 	actor := in.CheckerID
 	return r.audit.Append(ctx, domain.AuditLog{
 		VIN:         in.VIN,
 		EventType:   domain.AuditEventChecklistItemUpdate,
-		OldValue:    string(old),
+		OldValue:    string(change.oldStatus),
 		NewValue:    string(in.Status),
 		PerformedBy: &actor,
-		Metadata: map[string]any{
-			"item_id":        in.ItemID,
-			"checklist_type": string(in.ChecklistType),
-		},
+		Metadata:    metadata,
 	})
 }
 

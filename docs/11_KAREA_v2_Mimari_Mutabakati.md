@@ -611,6 +611,14 @@ kalıyordu.
   seferinde dört kolonu yeniden yazar) ve hiçbir yerde saklanmaz;
   `CHECKLIST_ITEM_UPDATE` denetim kaydı yalnız eski/yeni durumu ve madde
   kimliğini tutar, metni tutmaz. Bu davranış bu kararla değişmedi.
+- **Güncelleme (2026-10-06 — not geçmişi):** EOL'de `CHECKLIST_ITEM_UPDATE`
+  metadata'sı artık `old_note` (değiştirilen cevabın gösterilen notu) ve
+  `new_note` (yeni cevabın notu) taşır; boş olan anahtar hiç yazılmaz
+  (boş dize yazılmaz). Kolondaki not yine üzerine yazılır, eski değer
+  denetim kaydında kalır. Yalnız bundan sonraki kayıtlar; mevcut denetim
+  satırlarına dokunulmaz. Metadata'ya parola, parola özeti veya oturum
+  anahtarı yazılmaz (yalnız `item_id`, `checklist_type`, notlar). Test ve
+  Sevk kayıtları değişmedi.
 
 ## Değişmeyen / Yeniden Kullanılacaklar
 
