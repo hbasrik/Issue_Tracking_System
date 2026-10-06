@@ -1,0 +1,32 @@
+== A. screen opened online, then airplane mode (no request made yet)
+A1 after airplane mode, before any action
+  {"photoButtonDisabled":false,"offlineReasonShown":false,"pickedInMemory":false,"errorLine":null,"calls":[]}
+
+== B. pick a photo and press Save while airplane mode is on
+B1 photo picked
+  {"photoButtonDisabled":false,"offlineReasonShown":false,"pickedInMemory":true,"errorLine":null,"calls":[]}
+B2 after Save
+  {"photoButtonDisabled":true,"offlineReasonShown":true,"pickedInMemory":true,"errorLine":"Sunucuya bağlanılamadı. İnternet bağlantınızı kontrol edip tekrar deneyin.","calls":["recordChecklist:transport-failed"]}
+
+== C. network back, wait 35 s, no user action
+C1 35 s after network returned
+  {"photoButtonDisabled":true,"offlineReasonShown":true,"pickedInMemory":true,"errorLine":"Sunucuya bağlanılamadı. İnternet bağlantınızı kontrol edip tekrar deneyin.","calls":["recordChecklist:transport-failed"]}
+C2 Save pressed again with network back
+  {"photoButtonDisabled":true,"offlineReasonShown":true,"pickedInMemory":true,"errorLine":null,"calls":["recordChecklist:transport-failed"]}
+
+== D. photo waiting in memory, app killed (page reload)
+D1 photo picked, Save failed offline
+  {"photoButtonDisabled":true,"offlineReasonShown":true,"pickedInMemory":true,"errorLine":"Sunucuya bağlanılamadı. İnternet bağlantınızı kontrol edip tekrar deneyin.","calls":["recordChecklist:transport-failed"]}
+D2 after kill + reopen (calls reset with the page)
+  {"photoButtonDisabled":false,"offlineReasonShown":false,"pickedInMemory":false,"errorLine":null,"calls":[]}
+
+== E. same photo picked twice while waiting
+E1 second pick attempt (button disabled)
+  {"photoButtonDisabled":true,"offlineReasonShown":true,"pickedInMemory":true,"errorLine":"Sunucuya bağlanılamadı. İnternet bağlantınızı kontrol edip tekrar deneyin.","calls":["recordChecklist:transport-failed"]}
+
+== F. upload reaches the server but the reply is lost (15 s timeout), then retry
+F1 first Save: server stored the photo, client saw a timeout
+  {"photoButtonDisabled":true,"offlineReasonShown":true,"pickedInMemory":true,"errorLine":"Cevap kaydedildi, fotoğraf yüklenemedi: Sunucu zamanında yanıt vermedi. Bağlantınızı kontrol edip tekrar deneyin. Bağlantı gelince Kaydet’e yeniden basın.","calls":["recordChecklist","uploadMedia"]}
+F2 Save again (store offline after the timeout)
+  {"photoButtonDisabled":true,"offlineReasonShown":true,"pickedInMemory":true,"errorLine":null,"calls":["recordChecklist","uploadMedia"]}
+  uploadMedia calls that reached the "server": 1

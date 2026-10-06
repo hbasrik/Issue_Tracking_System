@@ -7,12 +7,14 @@ import { useEffect, type ReactNode } from 'react';
 import { View } from 'react-native';
 import { activeScene } from './scenes';
 import * as RealReferenceCache from '../../../mobile/src/offline/ReferenceCacheProvider';
+import { noteTransportFailure, noteTransportSuccess } from '../../../mobile/src/offline/connectivityStore';
 
 declare global {
   interface Window {
     __KAREA_STORE: Record<string, string>;
     __nav: unknown[];
     __calls: unknown[];
+    __net?: { down?: boolean; uploadTimesOutAfterServer?: boolean };
   }
 }
 
@@ -118,6 +120,16 @@ export class ApiError extends Error {
     this.body = body;
   }
 }
+// window.__net mirrors client.ts request(): no response -> noteTransportFailure
+// + ApiError(0, 'network unavailable'); any response -> noteTransportSuccess.
+function transport(name: string) {
+  if (window.__net?.down) {
+    window.__calls.push({ name: `${name}:transport-failed`, args: [] });
+    noteTransportFailure();
+    throw new ApiError(0, { error: 'network unavailable' });
+  }
+  noteTransportSuccess();
+}
 export const api = {
   listVehicles: async () => ({ Items: [], Total: 0, Size: 100 }),
   listStations: async () => ({ items: [] }),
@@ -148,11 +160,21 @@ export const api = {
   updateIssueStatus: record('updateIssueStatus'),
   updateIssueClassification: record('updateIssueClassification'),
   uploadMedia: async (...args: unknown[]) => {
+    transport('uploadMedia');
     window.__calls.push({ name: 'uploadMedia', args });
+    if (window.__net?.uploadTimesOutAfterServer) {
+      // The server stored it; the client gave up (15 s abort) before the reply.
+      noteTransportFailure();
+      throw new ApiError(0, { error: 'request timed out' });
+    }
     if (scene.harness?.uploadError) throw new TypeError(scene.harness.uploadError);
     return {};
   },
-  recordChecklist: record('recordChecklist'),
+  recordChecklist: async (...args: unknown[]) => {
+    transport('recordChecklist');
+    window.__calls.push({ name: 'recordChecklist', args });
+    return {};
+  },
   recordStationStep: record('recordStationStep'),
   placeOnHold: record('placeOnHold'),
   releaseFromHold: record('releaseFromHold'),
