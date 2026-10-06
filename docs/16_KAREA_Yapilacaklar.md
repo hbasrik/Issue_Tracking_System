@@ -958,6 +958,24 @@ başlatılınca devreye girer.
   rozet, PENDING 113 açık) + `mobile-collapse-*.png`. `offline-retry.mjs`,
   `capture-mobile.mjs` ve `eol-note/capture-web.mjs` önce rozete dokunacak
   şekilde güncellendi; hepsi geçiyor.
+
+### A48. Migration 0039 — checklist form alanları `[~]` — 2026-10-06
+- **Şema:** `checklist_template_items.acceptance_criterion TEXT NULL`,
+  `control_method TEXT NULL`; `checklist_templates.form_code TEXT NULL`,
+  `form_revision TEXT NULL`, `form_published_at DATE NULL` (docs/21: kabul
+  kriteri, kontrol yöntemi, form no / revizyon / yayın tarihi). Varsayılan
+  yok, mevcut satırlara UPDATE yok; hepsi NULL. Down yalnız bu beş kolonu
+  düşürür. Up/down `IF NOT EXISTS` / `IF EXISTS` ile idempotent.
+- **Kanıt (test DB `karea_m0039_test`, golang-migrate):**
+  `docs/screenshots/migration-0039/verification-output.txt`: 0038 + seed →
+  up → down → up; her adımda `\d`, satır sayıları (104 madde / 3 şablon /
+  1872 ilerleme) ve mevcut kolonların md5'i
+  (`888aff6e…` madde, `bac65809…` şablon) değişmedi; dosyalar psql ile
+  ikişer kez çalıştı. Backend repo testleri 0038 ve 0039 şemasında aynı
+  sonucu veriyor (mevcut kod yeni kolonlardan etkilenmiyor).
+- **Canlıya alma:** kolon ekleme, kesinti yok; kod kolonları okumadığı için
+  sıra serbest. **Canlıya uygulanmadı — onay bekliyor.**
+- **Kalan:** kolonları okuyan/yazan backend ve arayüz kodu (ayrı konuşulacak).
 ---
 
 ## B — Canlıya çıkmadan önce ZORUNLU

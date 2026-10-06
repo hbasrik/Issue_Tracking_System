@@ -210,7 +210,10 @@ CREATE TABLE checklist_templates (
     type              checklist_type_enum NOT NULL,
     name              VARCHAR(150) NOT NULL,
     is_active         BOOLEAN NOT NULL DEFAULT TRUE,
-    created_at        TIMESTAMPTZ NOT NULL DEFAULT now()
+    created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
+    form_code         TEXT,  -- migration 0039: "Form no" of the printed form (docs/21); NULL until entered
+    form_revision     TEXT,  -- migration 0039: form revision; NULL until entered
+    form_published_at DATE   -- migration 0039: form publication date; NULL until entered
 );
 
 CREATE TABLE checklist_template_items (
@@ -224,6 +227,8 @@ CREATE TABLE checklist_template_items (
     section_key   VARCHAR(64),  -- migration 0024: display section id (NULL = "Other items"); titles in shared/checklistSections.ts + i18n
     section_sort  SMALLINT,     -- migration 0024: section order, copied from the catalogue sort
     seed_key      TEXT,  -- migration 0034: md5 of the seed text at creation, never updated; NULL for admin-created items
+    acceptance_criterion TEXT,  -- migration 0039: "Kabul kriteri" (docs/21), fixed text per item, not an answer; NULL until entered
+    control_method       TEXT,  -- migration 0039: "Kontrol yöntemi" (docs/21), fixed text; NULL until entered
     UNIQUE (template_id, item_no)
 );
 

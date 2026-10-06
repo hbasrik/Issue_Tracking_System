@@ -1,0 +1,259 @@
+built karea_m0039_test: golang-migrate version 38 + seeds 01-06
+pre-0039 checklist_template_items columns (10): id, template_id, item_no, item_text, station_id, is_active, eol_phase, section_key, section_sort, seed_key
+pre-0039 checklist_templates columns (6): id, vehicle_model_id, type, name, is_active, created_at
+
+--- \d after 0038 (before 0039) ---
+Table "public.checklist_template_items"
+    Column    |          Type          | Collation | Nullable |                       Default                        
+--------------+------------------------+-----------+----------+------------------------------------------------------
+ id           | integer                |           | not null | nextval('checklist_template_items_id_seq'::regclass)
+ template_id  | integer                |           | not null | 
+ item_no      | smallint               |           | not null | 
+ item_text    | character varying(250) |           | not null | 
+ station_id   | integer                |           |          | 
+ is_active    | boolean                |           | not null | true
+ eol_phase    | eol_item_phase_enum    |           |          | 
+ section_key  | character varying(64)  |           |          | 
+ section_sort | smallint               |           |          | 
+ seed_key     | text                   |           |          | 
+Indexes:
+    "checklist_template_items_pkey" PRIMARY KEY, btree (id)
+    "checklist_template_items_template_id_item_no_key" UNIQUE CONSTRAINT, btree (template_id, item_no)
+Foreign-key constraints:
+    "checklist_template_items_station_id_fkey" FOREIGN KEY (station_id) REFERENCES stations(id)
+    "checklist_template_items_template_id_fkey" FOREIGN KEY (template_id) REFERENCES checklist_templates(id) ON DELETE CASCADE
+Referenced by:
+    TABLE "checklist_item_progress" CONSTRAINT "checklist_item_progress_check_item_id_fkey" FOREIGN KEY (check_item_id) REFERENCES checklist_template_items(id)
+    TABLE "issue_list" CONSTRAINT "issue_list_source_check_item_id_fkey" FOREIGN KEY (source_check_item_id) REFERENCES checklist_template_items(id)
+Table "public.checklist_templates"
+      Column      |           Type           | Collation | Nullable |                     Default                     
+------------------+--------------------------+-----------+----------+-------------------------------------------------
+ id               | integer                  |           | not null | nextval('checklist_templates_id_seq'::regclass)
+ vehicle_model_id | integer                  |           |          | 
+ type             | checklist_type_enum      |           | not null | 
+ name             | character varying(150)   |           | not null | 
+ is_active        | boolean                  |           | not null | true
+ created_at       | timestamp with time zone |           | not null | now()
+Indexes:
+    "checklist_templates_pkey" PRIMARY KEY, btree (id)
+    "uq_checklist_templates_active_type_generic" UNIQUE, btree (type) WHERE is_active AND vehicle_model_id IS NULL
+    "uq_checklist_templates_active_type_model" UNIQUE, btree (type, vehicle_model_id) WHERE is_active AND vehicle_model_id IS NOT NULL
+Foreign-key constraints:
+    "checklist_templates_vehicle_model_id_fkey" FOREIGN KEY (vehicle_model_id) REFERENCES vehicle_models(id)
+Referenced by:
+    TABLE "checklist_template_items" CONSTRAINT "checklist_template_items_template_id_fkey" FOREIGN KEY (template_id) REFERENCES checklist_templates(id) ON DELETE CASCADE
+    TABLE "vehicles" CONSTRAINT "vehicles_eol_template_id_fkey" FOREIGN KEY (eol_template_id) REFERENCES checklist_templates(id)
+    TABLE "vehicles" CONSTRAINT "vehicles_shipment_template_id_fkey" FOREIGN KEY (shipment_template_id) REFERENCES checklist_templates(id)
+    TABLE "vehicles" CONSTRAINT "vehicles_test_template_id_fkey" FOREIGN KEY (test_template_id) REFERENCES checklist_templates(id)
+row counts: checklist_template_items=104 checklist_templates=3 checklist_item_progress=1872
+md5 checklist_template_items (pre-existing columns) = 888aff6e71aa0ad6c5edf7254fcd7564
+md5 checklist_templates      (pre-existing columns) = bac65809af093b05616aeb8e2e22be57
+
+== 1. migrate up 1 (0039 up) ==
+39/u checklist_form_fields (15.181125ms)
+
+--- \d after 1. up ---
+Table "public.checklist_template_items"
+        Column        |          Type          | Collation | Nullable |                       Default                        
+----------------------+------------------------+-----------+----------+------------------------------------------------------
+ id                   | integer                |           | not null | nextval('checklist_template_items_id_seq'::regclass)
+ template_id          | integer                |           | not null | 
+ item_no              | smallint               |           | not null | 
+ item_text            | character varying(250) |           | not null | 
+ station_id           | integer                |           |          | 
+ is_active            | boolean                |           | not null | true
+ eol_phase            | eol_item_phase_enum    |           |          | 
+ section_key          | character varying(64)  |           |          | 
+ section_sort         | smallint               |           |          | 
+ seed_key             | text                   |           |          | 
+ acceptance_criterion | text                   |           |          | 
+ control_method       | text                   |           |          | 
+Indexes:
+    "checklist_template_items_pkey" PRIMARY KEY, btree (id)
+    "checklist_template_items_template_id_item_no_key" UNIQUE CONSTRAINT, btree (template_id, item_no)
+Foreign-key constraints:
+    "checklist_template_items_station_id_fkey" FOREIGN KEY (station_id) REFERENCES stations(id)
+    "checklist_template_items_template_id_fkey" FOREIGN KEY (template_id) REFERENCES checklist_templates(id) ON DELETE CASCADE
+Referenced by:
+    TABLE "checklist_item_progress" CONSTRAINT "checklist_item_progress_check_item_id_fkey" FOREIGN KEY (check_item_id) REFERENCES checklist_template_items(id)
+    TABLE "issue_list" CONSTRAINT "issue_list_source_check_item_id_fkey" FOREIGN KEY (source_check_item_id) REFERENCES checklist_template_items(id)
+Table "public.checklist_templates"
+      Column       |           Type           | Collation | Nullable |                     Default                     
+-------------------+--------------------------+-----------+----------+-------------------------------------------------
+ id                | integer                  |           | not null | nextval('checklist_templates_id_seq'::regclass)
+ vehicle_model_id  | integer                  |           |          | 
+ type              | checklist_type_enum      |           | not null | 
+ name              | character varying(150)   |           | not null | 
+ is_active         | boolean                  |           | not null | true
+ created_at        | timestamp with time zone |           | not null | now()
+ form_code         | text                     |           |          | 
+ form_revision     | text                     |           |          | 
+ form_published_at | date                     |           |          | 
+Indexes:
+    "checklist_templates_pkey" PRIMARY KEY, btree (id)
+    "uq_checklist_templates_active_type_generic" UNIQUE, btree (type) WHERE is_active AND vehicle_model_id IS NULL
+    "uq_checklist_templates_active_type_model" UNIQUE, btree (type, vehicle_model_id) WHERE is_active AND vehicle_model_id IS NOT NULL
+Foreign-key constraints:
+    "checklist_templates_vehicle_model_id_fkey" FOREIGN KEY (vehicle_model_id) REFERENCES vehicle_models(id)
+Referenced by:
+    TABLE "checklist_template_items" CONSTRAINT "checklist_template_items_template_id_fkey" FOREIGN KEY (template_id) REFERENCES checklist_templates(id) ON DELETE CASCADE
+    TABLE "vehicles" CONSTRAINT "vehicles_eol_template_id_fkey" FOREIGN KEY (eol_template_id) REFERENCES checklist_templates(id)
+    TABLE "vehicles" CONSTRAINT "vehicles_shipment_template_id_fkey" FOREIGN KEY (shipment_template_id) REFERENCES checklist_templates(id)
+    TABLE "vehicles" CONSTRAINT "vehicles_test_template_id_fkey" FOREIGN KEY (test_template_id) REFERENCES checklist_templates(id)
+row counts: checklist_template_items=104 checklist_templates=3 checklist_item_progress=1872
+golang-migrate version: 39
+  [PASS] 1. up: five new columns present
+  [PASS] 1. up: pre-existing columns unchanged
+  [PASS] 1. up: row counts unchanged — 104|3|1872
+  [PASS] 1. up: md5 checklist_template_items unchanged — 888aff6e71aa0ad6c5edf7254fcd7564
+  [PASS] 1. up: md5 checklist_templates unchanged — bac65809af093b05616aeb8e2e22be57
+  [PASS] 1. up: every existing row has NULL in all five columns — non-null rows items|templates = 0|0
+  [PASS] 1. up: no default, all nullable — 0 offending columns
+
+== 2. migrate down 1 (0039 down) ==
+39/d checklist_form_fields (8.778333ms)
+
+--- \d after 2. down ---
+Table "public.checklist_template_items"
+    Column    |          Type          | Collation | Nullable |                       Default                        
+--------------+------------------------+-----------+----------+------------------------------------------------------
+ id           | integer                |           | not null | nextval('checklist_template_items_id_seq'::regclass)
+ template_id  | integer                |           | not null | 
+ item_no      | smallint               |           | not null | 
+ item_text    | character varying(250) |           | not null | 
+ station_id   | integer                |           |          | 
+ is_active    | boolean                |           | not null | true
+ eol_phase    | eol_item_phase_enum    |           |          | 
+ section_key  | character varying(64)  |           |          | 
+ section_sort | smallint               |           |          | 
+ seed_key     | text                   |           |          | 
+Indexes:
+    "checklist_template_items_pkey" PRIMARY KEY, btree (id)
+    "checklist_template_items_template_id_item_no_key" UNIQUE CONSTRAINT, btree (template_id, item_no)
+Foreign-key constraints:
+    "checklist_template_items_station_id_fkey" FOREIGN KEY (station_id) REFERENCES stations(id)
+    "checklist_template_items_template_id_fkey" FOREIGN KEY (template_id) REFERENCES checklist_templates(id) ON DELETE CASCADE
+Referenced by:
+    TABLE "checklist_item_progress" CONSTRAINT "checklist_item_progress_check_item_id_fkey" FOREIGN KEY (check_item_id) REFERENCES checklist_template_items(id)
+    TABLE "issue_list" CONSTRAINT "issue_list_source_check_item_id_fkey" FOREIGN KEY (source_check_item_id) REFERENCES checklist_template_items(id)
+Table "public.checklist_templates"
+      Column      |           Type           | Collation | Nullable |                     Default                     
+------------------+--------------------------+-----------+----------+-------------------------------------------------
+ id               | integer                  |           | not null | nextval('checklist_templates_id_seq'::regclass)
+ vehicle_model_id | integer                  |           |          | 
+ type             | checklist_type_enum      |           | not null | 
+ name             | character varying(150)   |           | not null | 
+ is_active        | boolean                  |           | not null | true
+ created_at       | timestamp with time zone |           | not null | now()
+Indexes:
+    "checklist_templates_pkey" PRIMARY KEY, btree (id)
+    "uq_checklist_templates_active_type_generic" UNIQUE, btree (type) WHERE is_active AND vehicle_model_id IS NULL
+    "uq_checklist_templates_active_type_model" UNIQUE, btree (type, vehicle_model_id) WHERE is_active AND vehicle_model_id IS NOT NULL
+Foreign-key constraints:
+    "checklist_templates_vehicle_model_id_fkey" FOREIGN KEY (vehicle_model_id) REFERENCES vehicle_models(id)
+Referenced by:
+    TABLE "checklist_template_items" CONSTRAINT "checklist_template_items_template_id_fkey" FOREIGN KEY (template_id) REFERENCES checklist_templates(id) ON DELETE CASCADE
+    TABLE "vehicles" CONSTRAINT "vehicles_eol_template_id_fkey" FOREIGN KEY (eol_template_id) REFERENCES checklist_templates(id)
+    TABLE "vehicles" CONSTRAINT "vehicles_shipment_template_id_fkey" FOREIGN KEY (shipment_template_id) REFERENCES checklist_templates(id)
+    TABLE "vehicles" CONSTRAINT "vehicles_test_template_id_fkey" FOREIGN KEY (test_template_id) REFERENCES checklist_templates(id)
+row counts: checklist_template_items=104 checklist_templates=3 checklist_item_progress=1872
+golang-migrate version: 38
+  [PASS] 2. down: five new columns absent
+  [PASS] 2. down: pre-existing columns unchanged
+  [PASS] 2. down: row counts unchanged — 104|3|1872
+  [PASS] 2. down: md5 checklist_template_items unchanged — 888aff6e71aa0ad6c5edf7254fcd7564
+  [PASS] 2. down: md5 checklist_templates unchanged — bac65809af093b05616aeb8e2e22be57
+
+== 3. migrate up 1 (0039 up again) ==
+39/u checklist_form_fields (17.020875ms)
+
+--- \d after 3. up again ---
+Table "public.checklist_template_items"
+        Column        |          Type          | Collation | Nullable |                       Default                        
+----------------------+------------------------+-----------+----------+------------------------------------------------------
+ id                   | integer                |           | not null | nextval('checklist_template_items_id_seq'::regclass)
+ template_id          | integer                |           | not null | 
+ item_no              | smallint               |           | not null | 
+ item_text            | character varying(250) |           | not null | 
+ station_id           | integer                |           |          | 
+ is_active            | boolean                |           | not null | true
+ eol_phase            | eol_item_phase_enum    |           |          | 
+ section_key          | character varying(64)  |           |          | 
+ section_sort         | smallint               |           |          | 
+ seed_key             | text                   |           |          | 
+ acceptance_criterion | text                   |           |          | 
+ control_method       | text                   |           |          | 
+Indexes:
+    "checklist_template_items_pkey" PRIMARY KEY, btree (id)
+    "checklist_template_items_template_id_item_no_key" UNIQUE CONSTRAINT, btree (template_id, item_no)
+Foreign-key constraints:
+    "checklist_template_items_station_id_fkey" FOREIGN KEY (station_id) REFERENCES stations(id)
+    "checklist_template_items_template_id_fkey" FOREIGN KEY (template_id) REFERENCES checklist_templates(id) ON DELETE CASCADE
+Referenced by:
+    TABLE "checklist_item_progress" CONSTRAINT "checklist_item_progress_check_item_id_fkey" FOREIGN KEY (check_item_id) REFERENCES checklist_template_items(id)
+    TABLE "issue_list" CONSTRAINT "issue_list_source_check_item_id_fkey" FOREIGN KEY (source_check_item_id) REFERENCES checklist_template_items(id)
+Table "public.checklist_templates"
+      Column       |           Type           | Collation | Nullable |                     Default                     
+-------------------+--------------------------+-----------+----------+-------------------------------------------------
+ id                | integer                  |           | not null | nextval('checklist_templates_id_seq'::regclass)
+ vehicle_model_id  | integer                  |           |          | 
+ type              | checklist_type_enum      |           | not null | 
+ name              | character varying(150)   |           | not null | 
+ is_active         | boolean                  |           | not null | true
+ created_at        | timestamp with time zone |           | not null | now()
+ form_code         | text                     |           |          | 
+ form_revision     | text                     |           |          | 
+ form_published_at | date                     |           |          | 
+Indexes:
+    "checklist_templates_pkey" PRIMARY KEY, btree (id)
+    "uq_checklist_templates_active_type_generic" UNIQUE, btree (type) WHERE is_active AND vehicle_model_id IS NULL
+    "uq_checklist_templates_active_type_model" UNIQUE, btree (type, vehicle_model_id) WHERE is_active AND vehicle_model_id IS NOT NULL
+Foreign-key constraints:
+    "checklist_templates_vehicle_model_id_fkey" FOREIGN KEY (vehicle_model_id) REFERENCES vehicle_models(id)
+Referenced by:
+    TABLE "checklist_template_items" CONSTRAINT "checklist_template_items_template_id_fkey" FOREIGN KEY (template_id) REFERENCES checklist_templates(id) ON DELETE CASCADE
+    TABLE "vehicles" CONSTRAINT "vehicles_eol_template_id_fkey" FOREIGN KEY (eol_template_id) REFERENCES checklist_templates(id)
+    TABLE "vehicles" CONSTRAINT "vehicles_shipment_template_id_fkey" FOREIGN KEY (shipment_template_id) REFERENCES checklist_templates(id)
+    TABLE "vehicles" CONSTRAINT "vehicles_test_template_id_fkey" FOREIGN KEY (test_template_id) REFERENCES checklist_templates(id)
+row counts: checklist_template_items=104 checklist_templates=3 checklist_item_progress=1872
+golang-migrate version: 39
+  [PASS] 3. up again: five new columns present
+  [PASS] 3. up again: pre-existing columns unchanged
+  [PASS] 3. up again: row counts unchanged — 104|3|1872
+  [PASS] 3. up again: md5 checklist_template_items unchanged — 888aff6e71aa0ad6c5edf7254fcd7564
+  [PASS] 3. up again: md5 checklist_templates unchanged — bac65809af093b05616aeb8e2e22be57
+  [PASS] 3. up again: every existing row has NULL in all five columns — non-null rows items|templates = 0|0
+  [PASS] 3. up again: no default, all nullable — 0 offending columns
+
+== 4. idempotency: each file run twice via psql ==
+ALTER TABLE
+ALTER TABLE
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0039_checklist_form_fields.up.sql:15: NOTICE:  column "acceptance_criterion" of relation "checklist_template_items" already exists, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0039_checklist_form_fields.up.sql:15: NOTICE:  column "control_method" of relation "checklist_template_items" already exists, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0039_checklist_form_fields.up.sql:20: NOTICE:  column "form_code" of relation "checklist_templates" already exists, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0039_checklist_form_fields.up.sql:20: NOTICE:  column "form_revision" of relation "checklist_templates" already exists, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0039_checklist_form_fields.up.sql:20: NOTICE:  column "form_published_at" of relation "checklist_templates" already exists, skipping
+  [PASS] up file re-run on an applied schema succeeds (IF NOT EXISTS)
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0039_checklist_form_fields.down.sql:7: NOTICE:  column "form_published_at" of relation "checklist_templates" does not exist, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0039_checklist_form_fields.down.sql:7: NOTICE:  column "form_revision" of relation "checklist_templates" does not exist, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0039_checklist_form_fields.down.sql:7: NOTICE:  column "form_code" of relation "checklist_templates" does not exist, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0039_checklist_form_fields.down.sql:11: NOTICE:  column "control_method" of relation "checklist_template_items" does not exist, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0039_checklist_form_fields.down.sql:11: NOTICE:  column "acceptance_criterion" of relation "checklist_template_items" does not exist, skipping
+  [PASS] down file run twice succeeds (IF EXISTS)
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0039_checklist_form_fields.up.sql:15: NOTICE:  column "acceptance_criterion" of relation "checklist_template_items" already exists, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0039_checklist_form_fields.up.sql:15: NOTICE:  column "control_method" of relation "checklist_template_items" already exists, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0039_checklist_form_fields.up.sql:20: NOTICE:  column "form_code" of relation "checklist_templates" already exists, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0039_checklist_form_fields.up.sql:20: NOTICE:  column "form_revision" of relation "checklist_templates" already exists, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0039_checklist_form_fields.up.sql:20: NOTICE:  column "form_published_at" of relation "checklist_templates" already exists, skipping
+  [PASS] up file run twice succeeds
+  [PASS] after the psql re-runs: md5 checklist_template_items unchanged
+
+ALL CHECKS PASSED
