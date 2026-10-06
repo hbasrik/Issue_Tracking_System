@@ -12,6 +12,7 @@ import {
   type RouteProp,
 } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
+import Svg, { Path } from 'react-native-svg';
 import {
   api,
   type ChecklistItem,
@@ -77,6 +78,16 @@ function stageLabel(stage: EOLStage, t: Translate): string {
     COMPLETED: 'status.eolStage.completed',
   };
   return t(keys[stage]);
+}
+
+function ChevronIcon({ color, open }: { color: string; open: boolean }) {
+  return (
+    <View style={{ transform: [{ rotate: open ? '180deg' : '0deg' }] }}>
+      <Svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+        <Path d="m6 9 6 6 6-6" />
+      </Svg>
+    </View>
+  );
 }
 
 function needsDesc(s: ChecklistItem['Status']): boolean {
@@ -417,157 +428,171 @@ export default function EOLChecklistScreen() {
         {activeItems.map((item) => {
           const d = drafts[item.ItemID] ?? { status: '', desc: '' };
           const answered = item.Status !== 'PENDING';
-          if (answered && !editingIds[item.ItemID]) {
-            const s = STATUS_KEYS.find((k) => k.value === item.Status);
-            const label = s ? t(s.key) : item.Status;
-            const note = (item.Note ?? '').trim();
+          const open = editingIds[item.ItemID] ?? !answered;
+          const s = STATUS_KEYS.find((k) => k.value === item.Status);
+          const label = s ? t(s.key) : t('status.eol.pending');
+          const pillColor = s?.color ?? tokens.textSecondary;
+          const note = (item.Note ?? '').trim();
+          const header = (
+            <Pressable
+              onPress={() => setEditing(item.ItemID, !open)}
+              accessibilityRole="button"
+              accessibilityState={{ expanded: open }}
+              aria-expanded={open}
+              accessibilityLabel={`${item.ItemNo}. ${item.ItemText} — ${label}`}
+              testID={`eol-item-header-${item.ItemID}`}
+              style={({ pressed, hovered }: { pressed: boolean; hovered?: boolean }) => ({
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 8,
+                minHeight: 48,
+                paddingHorizontal: 14,
+                paddingVertical: 10,
+                backgroundColor: pressed || hovered ? tokens.bgSurface2 : 'transparent',
+              })}
+            >
+              <Text style={{ flex: 1, color: tokens.textPrimary, fontSize: 15 }}>
+                {item.ItemNo}. {item.ItemText}
+              </Text>
+              <View
+                style={{
+                  paddingHorizontal: 10,
+                  paddingVertical: 4,
+                  borderRadius: 999,
+                  borderWidth: 1,
+                  borderColor: pillColor,
+                  backgroundColor: pillColor + '33',
+                }}
+              >
+                <Text style={{ color: pillColor, fontSize: 11, fontWeight: '700' }}>{label}</Text>
+              </View>
+              <ChevronIcon color={tokens.textSecondary} open={open} />
+            </Pressable>
+          );
+          if (!open) {
+            const hasBody = answered;
             return (
-              <Card key={item.ItemID}>
+              <Card key={item.ItemID} style={{ padding: 0, overflow: 'hidden' }}>
                 <View testID={`eol-answered-${item.ItemID}`}>
-                  <Pressable
-                    onPress={() => setEditing(item.ItemID, true)}
-                    accessibilityRole="button"
-                    accessibilityState={{ expanded: false }}
-                    accessibilityLabel={`${item.ItemNo}. ${item.ItemText} — ${label}`}
-                    accessibilityHint={t('checklist.tapToEdit')}
-                    testID={`eol-answered-toggle-${item.ItemID}`}
-                    style={{ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 44 }}
-                  >
-                    <Text style={{ flex: 1, color: tokens.textPrimary, fontSize: 15 }}>
-                      {item.ItemNo}. {item.ItemText}
-                    </Text>
-                    <View
-                      style={{
-                        paddingHorizontal: 10,
-                        paddingVertical: 4,
-                        borderRadius: 999,
-                        borderWidth: 1,
-                        borderColor: s?.color ?? tokens.border,
-                        backgroundColor: (s?.color ?? tokens.border) + '33',
-                      }}
-                    >
-                      <Text style={{ color: s?.color ?? tokens.textSecondary, fontSize: 11, fontWeight: '700' }}>
-                        {label}
-                      </Text>
+                  {header}
+                  {hasBody ? (
+                    <View style={{ paddingHorizontal: 14, paddingBottom: 12 }}>
+                      {note ? (
+                        <Text style={{ color: tokens.textSecondary, fontSize: 13 }}>
+                          {t('checklist.noteLabel', { note })}
+                        </Text>
+                      ) : null}
+                      <ActionStamp lines={checklistActorLines(item, t, locale)} />
+                      <ChecklistItemPhotos photos={item.Photos ?? []} />
                     </View>
-                    <Text style={{ color: tokens.accent, fontSize: 12, fontWeight: '600' }}>
-                      {t('checklist.edit')}
-                    </Text>
-                  </Pressable>
-                  {note ? (
-                    <Text style={{ color: tokens.textSecondary, fontSize: 13, marginTop: 4 }}>
-                      {t('checklist.noteLabel', { note })}
-                    </Text>
                   ) : null}
-                  <ActionStamp lines={checklistActorLines(item, t, locale)} />
-                  <ChecklistItemPhotos photos={item.Photos ?? []} />
                 </View>
               </Card>
             );
           }
           return (
-            <Card key={item.ItemID}>
-              <Text style={{ color: tokens.textPrimary, fontSize: 15 }}>
-                {item.ItemNo}. {item.ItemText}
-              </Text>
-              <ActionStamp lines={checklistActorLines(item, t, locale)} />
-              <ChecklistItemPhotos photos={item.Photos ?? []} />
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
-                {STATUS_KEYS.map((s) => {
-                  const selected = d.status === s.value;
-                  return (
-                    <Pressable
-                      key={s.value}
-                      onPress={() =>
-                        setDrafts((prev) => ({
-                          ...prev,
-                          [item.ItemID]: { ...d, status: s.value },
-                        }))
-                      }
-                      style={{
-                        paddingHorizontal: 10,
-                        minHeight: 36,
-                        borderRadius: 8,
-                        borderWidth: 1,
-                        borderColor: selected ? s.color : tokens.border,
-                        backgroundColor: selected ? s.color + '33' : 'transparent',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <Text style={{ color: selected ? s.color : tokens.textSecondary, fontSize: 11, fontWeight: '600' }}>
-                        {t(s.key)}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-              {d.status ? (
-                <AppTextInput
-                  value={d.desc}
-                  onChangeText={(text) =>
-                    setDrafts((prev) => ({
-                      ...prev,
-                      [item.ItemID]: { ...d, desc: text },
-                    }))
-                  }
-                  placeholder={
-                    needsDesc(d.status as ChecklistItem['Status'])
-                      ? t('checklist.descRequiredStar')
-                      : t('checklist.noteOptionalPlaceholder')
-                  }
-                  placeholderTextColor={tokens.textSecondary}
-                  multiline
-                  numberOfLines={3}
-                  style={{
-                    marginTop: 10,
-                    borderWidth: 1,
-                    borderColor: needsDesc(d.status as ChecklistItem['Status'])
-                      ? statusColors.notOk
-                      : tokens.border,
-                    borderRadius: 8,
-                    padding: 10,
-                    color: tokens.textPrimary,
-                    fontSize: 15,
-                    minHeight: 80,
-                    textAlignVertical: 'top',
-                  }}
-                />
-              ) : null}
-              <View style={{ marginTop: 10, gap: 8 }}>
-                <OutlineButton
-                  label={
-                    photos[item.ItemID]
-                      ? t('report.pickedGallery', { name: photos[item.ItemID].name })
-                      : t('report.pickGallery')
-                  }
-                  onPress={() => void pickPhoto(item.ItemID, 'library')}
-                  disabled={busy}
-                />
-                <OutlineButton
-                  label={t('report.takePhoto')}
-                  onPress={() => void pickPhoto(item.ItemID, 'camera')}
-                  disabled={busy}
-                />
-                {!online ? <InfoText>{t('checklist.photoOffline')}</InfoText> : null}
-              </View>
-              {itemError?.itemId === item.ItemID ? (
-                <ErrorText>{itemError.message}</ErrorText>
-              ) : null}
-              <View style={{ marginTop: 10 }}>
-                <PrimaryButton
-                  label={busy ? t('common.saving') : t('common.save')}
-                  onPress={() => saveItem(item)}
-                  disabled={busy}
-                />
-                {answered ? (
-                  <View style={{ marginTop: 8 }}>
-                    <OutlineButton
-                      label={t('common.cancel')}
-                      onPress={() => cancelEdit(item)}
+            <Card key={item.ItemID} style={{ padding: 0, overflow: 'hidden' }}>
+              {header}
+              <View style={{ paddingHorizontal: 14, paddingBottom: 14 }}>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
+                  {STATUS_KEYS.map((s) => {
+                    const selected = d.status === s.value;
+                    return (
+                      <Pressable
+                        key={s.value}
+                        onPress={() =>
+                          setDrafts((prev) => ({
+                            ...prev,
+                            [item.ItemID]: { ...d, status: s.value },
+                          }))
+                        }
+                        style={{
+                          paddingHorizontal: 10,
+                          minHeight: 36,
+                          borderRadius: 8,
+                          borderWidth: 1,
+                          borderColor: selected ? s.color : tokens.border,
+                          backgroundColor: selected ? s.color + '33' : 'transparent',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <Text style={{ color: selected ? s.color : tokens.textSecondary, fontSize: 11, fontWeight: '600' }}>
+                          {t(s.key)}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+                {d.status ? (
+                  <AppTextInput
+                    value={d.desc}
+                    onChangeText={(text) =>
+                      setDrafts((prev) => ({
+                        ...prev,
+                        [item.ItemID]: { ...d, desc: text },
+                      }))
+                    }
+                    placeholder={
+                      needsDesc(d.status as ChecklistItem['Status'])
+                        ? t('checklist.descRequiredStar')
+                        : t('checklist.noteOptionalPlaceholder')
+                    }
+                    placeholderTextColor={tokens.textSecondary}
+                    multiline
+                    numberOfLines={3}
+                    style={{
+                      marginTop: 10,
+                      borderWidth: 1,
+                      borderColor: needsDesc(d.status as ChecklistItem['Status'])
+                        ? statusColors.notOk
+                        : tokens.border,
+                      borderRadius: 8,
+                      padding: 10,
+                      color: tokens.textPrimary,
+                      fontSize: 15,
+                      minHeight: 80,
+                      textAlignVertical: 'top',
+                    }}
+                  />
+                ) : null}
+                <View style={{ marginTop: 10, gap: 8 }}>
+                  <OutlineButton
+                    label={
+                      photos[item.ItemID]
+                        ? t('report.pickedGallery', { name: photos[item.ItemID].name })
+                        : t('report.pickGallery')
+                    }
+                    onPress={() => void pickPhoto(item.ItemID, 'library')}
+                    disabled={busy}
+                  />
+                  <OutlineButton
+                    label={t('report.takePhoto')}
+                    onPress={() => void pickPhoto(item.ItemID, 'camera')}
+                    disabled={busy}
+                  />
+                  {!online ? <InfoText>{t('checklist.photoOffline')}</InfoText> : null}
+                </View>
+                {itemError?.itemId === item.ItemID ? (
+                  <ErrorText>{itemError.message}</ErrorText>
+                ) : null}
+                <View style={{ marginTop: 12, flexDirection: 'row', justifyContent: 'flex-end', gap: 8 }}>
+                  {answered ? (
+                    <View style={{ flexBasis: 120, flexShrink: 1 }}>
+                      <OutlineButton
+                        label={t('common.cancel')}
+                        onPress={() => cancelEdit(item)}
+                        disabled={busy}
+                      />
+                    </View>
+                  ) : null}
+                  <View style={{ flexBasis: 120, flexShrink: 1 }}>
+                    <PrimaryButton
+                      label={busy ? t('common.saving') : t('common.save')}
+                      onPress={() => saveItem(item)}
                       disabled={busy}
                     />
                   </View>
-                ) : null}
+                </View>
               </View>
             </Card>
           );
