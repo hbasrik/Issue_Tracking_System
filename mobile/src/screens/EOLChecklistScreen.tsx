@@ -11,17 +11,20 @@ import {
   useRoute,
   type RouteProp,
 } from '@react-navigation/native';
+import * as ImagePicker from 'expo-image-picker';
 import {
   api,
   type ChecklistItem,
   type EOLStage,
   type EOLWorkflowView,
+  type LocalFile,
 } from '../api/client';
 import {
   Card,
   ErrorText,
   InfoText,
   Loading,
+  OutlineButton,
   PrimaryButton,
   Screen,
   Subtitle,
@@ -40,6 +43,8 @@ import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n';
 import { apiErrorMessage } from '../lib/password';
 import { loadFailureMessage } from '../offline/userFacingError';
+import { useAppOnline } from '../offline/connectivity';
+import { prepareUploadImage } from '../lib/prepareUploadImage';
 import { isTransportError } from '../../../shared/networkError';
 import { statusColors } from '../theme/tokens';
 import type { RootStackParamList } from '../navigation/types';
@@ -91,6 +96,9 @@ export default function EOLChecklistScreen() {
   const [workflow, setWorkflow] = useState<EOLWorkflowView | null>(null);
   const [items, setItems] = useState<ChecklistItem[]>([]);
   const [drafts, setDrafts] = useState<Record<number, { status: string; desc: string }>>({});
+  const [photos, setPhotos] = useState<Record<number, LocalFile>>({});
+  const [itemError, setItemError] = useState<{ itemId: number; message: string } | null>(null);
+  const online = useAppOnline();
   const [error, setError] = useState<string | null>(null);
   const [offlineHint, setOfflineHint] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -183,27 +191,74 @@ export default function EOLChecklistScreen() {
   ).map((r) => t(r.key, r.params));
 
   async function saveItem(item: ChecklistItem) {
+    const fail = (message: string) => setItemError({ itemId: item.ItemID, message });
     const d = drafts[item.ItemID];
     if (!d?.status) {
-      setError(t('checklist.pickStatusShort'));
+      fail(t('checklist.pickStatusShort'));
       return;
     }
     if (needsDesc(d.status as ChecklistItem['Status']) && !d.desc.trim()) {
-      setError(t('checklist.descRequired'));
+      fail(t('checklist.descRequired'));
+      return;
+    }
+    const photo = photos[item.ItemID];
+    if (photo && !online) {
+      fail(t('checklist.photoOffline'));
       return;
     }
     setBusy(true);
-    setError(null);
+    setItemError(null);
     try {
       await api.recordChecklist(vin, 'eol', item.ItemID, {
         status: d.status,
         note: d.desc.trim(),
       });
-      await load();
     } catch (err) {
-      setError(apiErrorMessage(err, t));
-    } finally {
+      fail(apiErrorMessage(err, t));
       setBusy(false);
+      return;
+    }
+    let uploadError: string | null = null;
+    if (photo) {
+      try {
+        if (!item.ProgressID) throw new Error(t('checklist.noProgressId'));
+        await api.uploadMedia('CHECKLIST_ITEM_PROGRESS', String(item.ProgressID), photo);
+        setPhotos((prev) => {
+          const next = { ...prev };
+          delete next[item.ItemID];
+          return next;
+        });
+      } catch (err) {
+        uploadError = t('checklist.photoUploadFailed', { reason: apiErrorMessage(err, t) });
+      }
+    }
+    await load();
+    if (uploadError) fail(uploadError);
+    setBusy(false);
+  }
+
+  async function pickPhoto(itemId: number, source: 'camera' | 'library') {
+    const fail = (message: string) => setItemError({ itemId, message });
+    const perm =
+      source === 'camera'
+        ? await ImagePicker.requestCameraPermissionsAsync()
+        : await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) {
+      fail(t(source === 'camera' ? 'issueDetail.cameraDenied' : 'issueDetail.galleryDenied'));
+      return;
+    }
+    const options: ImagePicker.ImagePickerOptions = { mediaTypes: ['images'], quality: 1 };
+    const result =
+      source === 'camera'
+        ? await ImagePicker.launchCameraAsync(options)
+        : await ImagePicker.launchImageLibraryAsync(options);
+    const asset = result.canceled ? null : result.assets[0];
+    if (!asset) return;
+    try {
+      const file = await prepareUploadImage(asset);
+      setPhotos((prev) => ({ ...prev, [itemId]: file }));
+    } catch (err) {
+      fail(apiErrorMessage(err, t));
     }
   }
 
@@ -410,6 +465,26 @@ export default function EOLChecklistScreen() {
                     textAlignVertical: 'top',
                   }}
                 />
+              ) : null}
+              <View style={{ marginTop: 10, gap: 8 }}>
+                <OutlineButton
+                  label={
+                    photos[item.ItemID]
+                      ? t('report.pickedGallery', { name: photos[item.ItemID].name })
+                      : t('report.pickGallery')
+                  }
+                  onPress={() => void pickPhoto(item.ItemID, 'library')}
+                  disabled={!online || busy}
+                />
+                <OutlineButton
+                  label={t('report.takePhoto')}
+                  onPress={() => void pickPhoto(item.ItemID, 'camera')}
+                  disabled={!online || busy}
+                />
+                {!online ? <InfoText>{t('checklist.photoOffline')}</InfoText> : null}
+              </View>
+              {itemError?.itemId === item.ItemID ? (
+                <ErrorText>{itemError.message}</ErrorText>
               ) : null}
               <View style={{ marginTop: 10 }}>
                 <PrimaryButton
