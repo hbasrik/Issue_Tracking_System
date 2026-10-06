@@ -1,0 +1,8 @@
+=== RUN   TestSaveResult_NoteTransitionsKeepOneColumn
+    checklist_note_save_test.go:74: step 1 OK             approved=ölçüm 12.6 conditional=<NULL> rejected=<NULL> rework=<NULL>
+    checklist_note_save_test.go:74: step 2 NOT_OK         approved=<NULL> conditional=<NULL> rejected=conta yırtık rework=<NULL>
+    checklist_note_save_test.go:74: step 3 OK             approved=<NULL> conditional=<NULL> rejected=<NULL> rework=<NULL>
+    checklist_note_save_test.go:74: step 4 CONDITIONAL_OK approved=<NULL> conditional=paspas sonra rejected=<NULL> rework=<NULL>
+--- PASS: TestSaveResult_NoteTransitionsKeepOneColumn (0.07s)
+PASS
+ok  	github.com/karea/backend/internal/repository/postgres	0.399s
