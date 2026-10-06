@@ -332,6 +332,7 @@ function EolItemRow({
   const [desc, setDesc] = useState(existingDescription(item));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
 
   useEffect(() => {
     const next = (EOL_STATUSES as readonly string[]).includes(item.Status)
@@ -340,6 +341,15 @@ function EolItemRow({
     setStatus(next);
     setDesc(existingDescription(item));
   }, [item]);
+
+  function cancelEdit() {
+    setStatus(savedStatus);
+    setDesc(existingDescription(item));
+    setFileName('');
+    if (fileRef.current) fileRef.current.value = '';
+    setError(null);
+    setEditing(false);
+  }
 
   async function save() {
     if (!status) {
@@ -365,6 +375,7 @@ function EolItemRow({
         setFileName('');
       }
       await onSaved();
+      setEditing(false);
     } catch (err) {
       const message =
         err instanceof ApiError
@@ -376,6 +387,46 @@ function EolItemRow({
     } finally {
       setBusy(false);
     }
+  }
+
+  const answered = item.Status !== 'PENDING';
+  const savedNote = existingDescription(item).trim();
+
+  if (answered && !editing) {
+    return (
+      <li
+        className="py-3 text-[15px]"
+        data-checklist-active-item={item.ItemID}
+        data-checklist-collapsed={item.ItemID}
+      >
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => setEditing(true)}
+          aria-expanded={false}
+          aria-label={`${item.ItemNo}. ${item.ItemText} — ${checklistStatusLabel(item.Status, t)}. ${t('checklist.tapToEdit')}`}
+          className="flex w-full flex-wrap items-start justify-between gap-2 rounded-lg px-1 py-1 text-left hover:bg-[var(--bg-surface-2)]"
+        >
+          <span className="min-w-0 flex-1 break-words">
+            <span className="mr-2 text-[13px] text-[var(--text-secondary)]">
+              {item.ItemNo}.
+            </span>
+            {item.ItemText}
+          </span>
+          <span className="flex items-center gap-2">
+            <StatusBadge kind="eol" value={item.Status} />
+            <span className="text-[12px] text-[var(--accent)]">{t('checklist.edit')}</span>
+          </span>
+        </button>
+        {savedNote ? (
+          <p className="mt-1 whitespace-pre-wrap break-words px-1 text-[13px] text-[var(--text-secondary)]" data-checklist-note>
+            {t('checklist.noteLabel', { note: savedNote })}
+          </p>
+        ) : null}
+        <ActionStamp lines={checklistActorLines(item, t, locale)} />
+        <ChecklistItemPhotos photos={item.Photos ?? []} />
+      </li>
+    );
   }
 
   return (
@@ -460,6 +511,17 @@ function EolItemRow({
         >
           {busy ? t('common.saving') : t('common.save')}
         </button>
+        {answered ? (
+          <button
+            type="button"
+            disabled={busy}
+            onClick={cancelEdit}
+            className="min-h-touch rounded-lg border px-4 text-[13px] disabled:opacity-60"
+            style={{ borderColor: 'var(--border)' }}
+          >
+            {t('common.cancel')}
+          </button>
+        ) : null}
       </div>
       {error && (
         <p className="mt-2 text-[13px]" style={{ color: 'var(--status-not-ok)' }} role="alert">
