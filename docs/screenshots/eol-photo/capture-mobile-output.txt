@@ -1,0 +1,57 @@
+online-tr-375 [PASS] picked file name shown
+online-tr-375 [PASS] recordChecklist before uploadMedia — recordChecklist,uploadMedia
+online-tr-375 [PASS] upload goes to CHECKLIST_ITEM_PROGRESS/1001 — ["CHECKLIST_ITEM_PROGRESS","1001"]
+online-tr-375 [PASS] uploaded file is the prepared JPEG
+online-tr-375 [PASS] no issue created
+online-tr-375 [PASS] picked name cleared after upload
+online-tr-375 [PASS] no page errors
+offline-tr-375 [PASS] gallery button disabled — aria-disabled=true
+offline-tr-375 [PASS] offline reason shown in card
+offline-tr-375 [PASS] click while offline picks nothing
+offline-tr-375 [PASS] no page errors
+upload-fails-tr-375 [PASS] upload error shown in the card — "Cevap kaydedildi, fotoğraf yüklenemedi: Sunucuya bağlanılamadı. İnternet bağlantınızı kontrol edip tekrar deneyin. Bağlantı gelince Kaydet’e yeniden basın."
+upload-fails-tr-375 [PASS] picked photo kept for retry
+upload-fails-tr-375 [PASS] no page errors
+online-tr-1280 [PASS] picked file name shown
+online-tr-1280 [PASS] recordChecklist before uploadMedia — recordChecklist,uploadMedia
+online-tr-1280 [PASS] upload goes to CHECKLIST_ITEM_PROGRESS/1001 — ["CHECKLIST_ITEM_PROGRESS","1001"]
+online-tr-1280 [PASS] uploaded file is the prepared JPEG
+online-tr-1280 [PASS] no issue created
+online-tr-1280 [PASS] picked name cleared after upload
+online-tr-1280 [PASS] no page errors
+offline-tr-1280 [PASS] gallery button disabled — aria-disabled=true
+offline-tr-1280 [PASS] offline reason shown in card
+offline-tr-1280 [PASS] click while offline picks nothing
+offline-tr-1280 [PASS] no page errors
+upload-fails-tr-1280 [PASS] upload error shown in the card — "Cevap kaydedildi, fotoğraf yüklenemedi: Sunucuya bağlanılamadı. İnternet bağlantınızı kontrol edip tekrar deneyin. Bağlantı gelince Kaydet’e yeniden basın."
+upload-fails-tr-1280 [PASS] picked photo kept for retry
+upload-fails-tr-1280 [PASS] no page errors
+online-en-375 [PASS] picked file name shown
+online-en-375 [PASS] recordChecklist before uploadMedia — recordChecklist,uploadMedia
+online-en-375 [PASS] upload goes to CHECKLIST_ITEM_PROGRESS/1001 — ["CHECKLIST_ITEM_PROGRESS","1001"]
+online-en-375 [PASS] uploaded file is the prepared JPEG
+online-en-375 [PASS] no issue created
+online-en-375 [PASS] picked name cleared after upload
+online-en-375 [PASS] no page errors
+offline-en-375 [PASS] gallery button disabled — aria-disabled=true
+offline-en-375 [PASS] offline reason shown in card
+offline-en-375 [PASS] click while offline picks nothing
+offline-en-375 [PASS] no page errors
+upload-fails-en-375 [PASS] upload error shown in the card — "Answer saved, photo not uploaded: Could not reach the server. Check your internet connection and try again. Press Save again once you are connected."
+upload-fails-en-375 [PASS] picked photo kept for retry
+upload-fails-en-375 [PASS] no page errors
+online-en-1280 [PASS] picked file name shown
+online-en-1280 [PASS] recordChecklist before uploadMedia — recordChecklist,uploadMedia
+online-en-1280 [PASS] upload goes to CHECKLIST_ITEM_PROGRESS/1001 — ["CHECKLIST_ITEM_PROGRESS","1001"]
+online-en-1280 [PASS] uploaded file is the prepared JPEG
+online-en-1280 [PASS] no issue created
+online-en-1280 [PASS] picked name cleared after upload
+online-en-1280 [PASS] no page errors
+offline-en-1280 [PASS] gallery button disabled — aria-disabled=true
+offline-en-1280 [PASS] offline reason shown in card
+offline-en-1280 [PASS] click while offline picks nothing
+offline-en-1280 [PASS] no page errors
+upload-fails-en-1280 [PASS] upload error shown in the card — "Answer saved, photo not uploaded: Could not reach the server. Check your internet connection and try again. Press Save again once you are connected."
+upload-fails-en-1280 [PASS] picked photo kept for retry
+upload-fails-en-1280 [PASS] no page errors
+MOBILE CHECKS PASSED

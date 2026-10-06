@@ -838,6 +838,33 @@ başlatılınca devreye girer.
   aynı), `capture-web-output.txt` + `web-*-ok-note.png` (1280/375 px,
   TR/EN). Mobil yalnız `tsc` ile doğrulandı; mobil ekran görüntüsü bu
   adımda alınmadı.
+- **Geçiş testi (kalıcı):** `checklist_note_save_test.go` aynı satırı
+  OK+not → NOT_OK+not → OK notsuz → CONDITIONAL_OK+not geçirir; her adımda
+  yalnız cevabın kolonu dolu, diğer üçü NULL. Test DB'de geçti
+  (`note-transition-test-output.txt`); `TEST_DATABASE_URL` yoksa atlanır.
+
+### A43. Mobil EOL fotoğraf yükleme (yalnız çevrimiçi) `[x]` — 2026-10-06
+- **Akış:** maddede "Galeriden fotoğraf seç" / "Kamerayla çek" →
+  mevcut `prepareUploadImage` (uzun kenar ≤ 2048, JPEG 0.8) → Kaydet önce
+  cevabı yazar, sonra mevcut `POST /media` ucuna
+  `CHECKLIST_ITEM_PROGRESS/<ProgressID>` olarak yükler. Yeni uç yok;
+  `issue_list`'e hiçbir şey yazılmaz.
+- **Çevrimdışı kuyruk yok (bilinçli):** EOL cevabı kuyruklanmadığı için
+  fotoğraf da kuyruklanmaz. Çevrimdışıyken iki düğme devre dışı ve kartta
+  "Çevrimdışısınız. Fotoğraf yalnızca bağlantı varken yüklenebilir."
+  yazar (TR/EN). Seçilmiş fotoğrafla bağlantı giderse Kaydet aynı
+  gerekçeyle durur.
+- **Yükleme ortasında kopma:** cevap kaydedilmişse kartta "Cevap
+  kaydedildi, fotoğraf yüklenemedi: … Bağlantı gelince Kaydet'e yeniden
+  basın." görünür; seçilen fotoğraf yeniden deneme için korunur. Madde
+  hataları artık ekranın tepesinde değil ilgili kartta gösterilir.
+- **Kanıt:** `docs/screenshots/eol-photo/` — `capture-mobile-output.txt`
+  (57 kontrol, react-native-web düzeneğinde gerçek ekran, sahte API:
+  çağrı sırası recordChecklist → uploadMedia, hedef
+  `CHECKLIST_ITEM_PROGRESS/1001`, createIssue yok, çevrimdışı düğme
+  `aria-disabled=true`), `mobile-*.png` (375/1280 px, TR/EN). Gerçek
+  cihazda deneme ve gerçek küçültme sonrası boyut ölçümü yapılmadı
+  (düzenek küçültmeyi taklit eder).
 ---
 
 ## B — Canlıya çıkmadan önce ZORUNLU

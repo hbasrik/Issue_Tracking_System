@@ -10,6 +10,7 @@ import IssueDetailScreen from '../../../mobile/src/screens/IssueDetailScreen';
 import PendingReportsScreen from '../../../mobile/src/screens/PendingReportsScreen';
 import { ReferenceCacheProvider } from '../../../mobile/src/offline/ReferenceCacheProvider';
 import { IssueReportQueueProvider } from '../../../mobile/src/offline/IssueReportQueueProvider';
+import { resetConnectivityForTests } from '../../../mobile/src/offline/connectivityStore';
 import { activeScene, type ScreenMap } from './scenes';
 
 const params = new URLSearchParams(location.search);
@@ -20,6 +21,7 @@ window.__KAREA_STORE = {
   'karea-locale': params.get('locale') ?? 'tr',
 };
 const scene = activeScene();
+if (scene.harness?.offline) resetConnectivityForTests(false);
 if (scene.live) {
   window.__KAREA_STORE['karea.issueReportQueue.v1'] = JSON.stringify({
     [String(scene.live.userId)]: scene.live.queue,

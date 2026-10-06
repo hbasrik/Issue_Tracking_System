@@ -46,6 +46,12 @@ export interface Scene {
     timeline?: unknown;
   };
   live?: LiveData;
+  /**
+   * offline starts the app-level connectivity flag false; pickPhoto makes the
+   * gallery picker return one image; uploadError makes uploadMedia throw a
+   * transport error with that message (connection lost mid-upload).
+   */
+  harness?: { offline?: boolean; pickPhoto?: boolean; uploadError?: string };
 }
 
 const HOUR = 3_600_000;
@@ -355,6 +361,39 @@ export const SCENES: Scene[] = [
       checklists: { eol: eolBranch(false, ['PENDING', 'PENDING', 'PENDING']) },
       eolWorkflow: eolWorkflow(LINE_VIN, 'BRANCH', null, null, 3),
     },
+  },
+  {
+    id: 'eol-photo-online',
+    screen: 'eol',
+    params: { vin: LINE_VIN },
+    api: {
+      vehicle: vehicle(LINE_VIN, 'IN_PRODUCTION', 'BRANCH', 43.53),
+      checklists: { eol: eolBranch(false, ['PENDING', 'PENDING', 'PENDING']) },
+      eolWorkflow: eolWorkflow(LINE_VIN, 'BRANCH', null, null, 3),
+    },
+    harness: { pickPhoto: true },
+  },
+  {
+    id: 'eol-photo-offline',
+    screen: 'eol',
+    params: { vin: LINE_VIN },
+    api: {
+      vehicle: vehicle(LINE_VIN, 'IN_PRODUCTION', 'BRANCH', 43.53),
+      checklists: { eol: eolBranch(false, ['PENDING', 'PENDING', 'PENDING']) },
+      eolWorkflow: eolWorkflow(LINE_VIN, 'BRANCH', null, null, 3),
+    },
+    harness: { offline: true, pickPhoto: true },
+  },
+  {
+    id: 'eol-photo-upload-fails',
+    screen: 'eol',
+    params: { vin: LINE_VIN },
+    api: {
+      vehicle: vehicle(LINE_VIN, 'IN_PRODUCTION', 'BRANCH', 43.53),
+      checklists: { eol: eolBranch(false, ['PENDING', 'PENDING', 'PENDING']) },
+      eolWorkflow: eolWorkflow(LINE_VIN, 'BRANCH', null, null, 3),
+    },
+    harness: { pickPhoto: true, uploadError: 'Network request failed' },
   },
   {
     id: 'issue-detail',

@@ -147,7 +147,11 @@ export const api = {
   listMedia: async () => ({ items: [] }),
   updateIssueStatus: record('updateIssueStatus'),
   updateIssueClassification: record('updateIssueClassification'),
-  uploadMedia: record('uploadMedia'),
+  uploadMedia: async (...args: unknown[]) => {
+    window.__calls.push({ name: 'uploadMedia', args });
+    if (scene.harness?.uploadError) throw new TypeError(scene.harness.uploadError);
+    return {};
+  },
   recordChecklist: record('recordChecklist'),
   recordStationStep: record('recordStationStep'),
   placeOnHold: record('placeOnHold'),
@@ -173,13 +177,21 @@ export function useApprovalUndo() {
   return undo;
 }
 
-// --- expo-image-picker, ../lib/prepareUploadImage (no picking in the harness)
-export const requestMediaLibraryPermissionsAsync = async () => ({ granted: false });
+// --- expo-image-picker, ../lib/prepareUploadImage (picks only when the scene asks)
+const pick = Boolean(scene.harness?.pickPhoto);
+export const requestMediaLibraryPermissionsAsync = async () => ({ granted: pick });
 export const requestCameraPermissionsAsync = async () => ({ granted: false });
-export const launchImageLibraryAsync = async () => ({ canceled: true, assets: [] });
+export const launchImageLibraryAsync = async () =>
+  pick
+    ? { canceled: false, assets: [{ uri: 'file:///harness/eol.jpg', fileName: 'eol-akü.jpg', width: 1600, height: 1200 }] }
+    : { canceled: true, assets: [] };
 export const launchCameraAsync = async () => ({ canceled: true, assets: [] });
 export const MediaTypeOptions = { Images: 'Images' };
-export const prepareUploadImage = async (f: unknown) => f;
+export const prepareUploadImage = async (a: { uri: string; fileName?: string }) => ({
+  uri: a.uri,
+  name: (a.fileName ?? 'photo').replace(/\.[^.]+$/, '') + '.jpg',
+  type: 'image/jpeg',
+});
 
 // --- @react-native/assets-registry/registry (react-native-svg image assets)
 export const getAssetByID = () => null;

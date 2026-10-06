@@ -1,0 +1,86 @@
+{
+ "online-tr-375": {
+  "calls": [
+   {
+    "name": "recordChecklist",
+    "args": [
+     "N7V1K1SA1TK000009",
+     "eol"
+    ]
+   },
+   {
+    "name": "uploadMedia",
+    "args": [
+     "CHECKLIST_ITEM_PROGRESS",
+     "1001"
+    ]
+   }
+  ]
+ },
+ "upload-fails-tr-375": {
+  "error": "Cevap kaydedildi, fotoğraf yüklenemedi: Sunucuya bağlanılamadı. İnternet bağlantınızı kontrol edip tekrar deneyin. Bağlantı gelince Kaydet’e yeniden basın."
+ },
+ "online-tr-1280": {
+  "calls": [
+   {
+    "name": "recordChecklist",
+    "args": [
+     "N7V1K1SA1TK000009",
+     "eol"
+    ]
+   },
+   {
+    "name": "uploadMedia",
+    "args": [
+     "CHECKLIST_ITEM_PROGRESS",
+     "1001"
+    ]
+   }
+  ]
+ },
+ "upload-fails-tr-1280": {
+  "error": "Cevap kaydedildi, fotoğraf yüklenemedi: Sunucuya bağlanılamadı. İnternet bağlantınızı kontrol edip tekrar deneyin. Bağlantı gelince Kaydet’e yeniden basın."
+ },
+ "online-en-375": {
+  "calls": [
+   {
+    "name": "recordChecklist",
+    "args": [
+     "N7V1K1SA1TK000009",
+     "eol"
+    ]
+   },
+   {
+    "name": "uploadMedia",
+    "args": [
+     "CHECKLIST_ITEM_PROGRESS",
+     "1001"
+    ]
+   }
+  ]
+ },
+ "upload-fails-en-375": {
+  "error": "Answer saved, photo not uploaded: Could not reach the server. Check your internet connection and try again. Press Save again once you are connected."
+ },
+ "online-en-1280": {
+  "calls": [
+   {
+    "name": "recordChecklist",
+    "args": [
+     "N7V1K1SA1TK000009",
+     "eol"
+    ]
+   },
+   {
+    "name": "uploadMedia",
+    "args": [
+     "CHECKLIST_ITEM_PROGRESS",
+     "1001"
+    ]
+   }
+  ]
+ },
+ "upload-fails-en-1280": {
+  "error": "Answer saved, photo not uploaded: Could not reach the server. Check your internet connection and try again. Press Save again once you are connected."
+ }
+}
