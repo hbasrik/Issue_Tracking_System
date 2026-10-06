@@ -203,10 +203,6 @@ export default function EOLChecklistScreen() {
       return;
     }
     const photo = photos[item.ItemID];
-    if (photo && !online) {
-      fail(t('checklist.photoOffline'));
-      return;
-    }
     setBusy(true);
     setItemError(null);
     try {
@@ -476,12 +472,12 @@ export default function EOLChecklistScreen() {
                       : t('report.pickGallery')
                   }
                   onPress={() => void pickPhoto(item.ItemID, 'library')}
-                  disabled={!online || busy}
+                  disabled={busy}
                 />
                 <OutlineButton
                   label={t('report.takePhoto')}
                   onPress={() => void pickPhoto(item.ItemID, 'camera')}
-                  disabled={!online || busy}
+                  disabled={busy}
                 />
                 {!online ? <InfoText>{t('checklist.photoOffline')}</InfoText> : null}
               </View>

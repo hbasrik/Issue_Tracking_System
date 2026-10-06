@@ -645,7 +645,7 @@ export const tr = {
   'checklist.descRequired': 'Bu durum için açıklama gerekli',
   'checklist.descPlaceholder': 'Bu durum için açıklama zorunlu',
   'checklist.noteOptionalPlaceholder': 'Açıklama (isteğe bağlı): ölçüm değeri, not',
-  'checklist.photoOffline': 'Çevrimdışısınız. Fotoğraf yalnızca bağlantı varken yüklenebilir.',
+  'checklist.photoOffline': 'Çevrimdışı görünüyorsunuz. Yine de Kaydet’e basabilirsiniz; bağlantı yoksa hata gösterilir.',
   'checklist.photoUploadFailed':
     'Cevap kaydedildi, fotoğraf yüklenemedi: {reason} Bağlantı gelince Kaydet’e yeniden basın.',
   'checklist.saveFailed': 'Kayıt başarısız',
@@ -1777,7 +1777,7 @@ export const en: Record<MessageKey, string> = {
   'checklist.descRequired': 'A description is required for this status',
   'checklist.descPlaceholder': 'Description required for this status',
   'checklist.noteOptionalPlaceholder': 'Note (optional): measured value, remark',
-  'checklist.photoOffline': 'You are offline. Photos can only be uploaded while connected.',
+  'checklist.photoOffline': 'You appear to be offline. You can still press Save; if there is no connection you will see the error.',
   'checklist.photoUploadFailed':
     'Answer saved, photo not uploaded: {reason} Press Save again once you are connected.',
   'checklist.saveFailed': 'Save failed',
