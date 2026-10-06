@@ -99,6 +99,7 @@ export default function EOLChecklistScreen() {
   const [drafts, setDrafts] = useState<Record<number, { status: string; desc: string }>>({});
   const [photos, setPhotos] = useState<Record<number, LocalFile>>({});
   const [itemError, setItemError] = useState<{ itemId: number; message: string } | null>(null);
+  const [editingIds, setEditingIds] = useState<Record<number, boolean>>({});
   const online = useAppOnline();
   const [error, setError] = useState<string | null>(null);
   const [offlineHint, setOfflineHint] = useState<string | null>(null);
@@ -231,7 +232,26 @@ export default function EOLChecklistScreen() {
     }
     await load();
     if (uploadError) fail(uploadError);
+    else setEditing(item.ItemID, false);
     setBusy(false);
+  }
+
+  function setEditing(itemId: number, on: boolean) {
+    setEditingIds((prev) => ({ ...prev, [itemId]: on }));
+  }
+
+  function cancelEdit(item: ChecklistItem) {
+    setDrafts((prev) => ({
+      ...prev,
+      [item.ItemID]: { status: item.Status === 'PENDING' ? '' : item.Status, desc: item.Note ?? '' },
+    }));
+    setPhotos((prev) => {
+      const next = { ...prev };
+      delete next[item.ItemID];
+      return next;
+    });
+    setItemError(null);
+    setEditing(item.ItemID, false);
   }
 
   async function pickPhoto(itemId: number, source: 'camera' | 'library') {
@@ -396,6 +416,55 @@ export default function EOLChecklistScreen() {
 
         {activeItems.map((item) => {
           const d = drafts[item.ItemID] ?? { status: '', desc: '' };
+          const answered = item.Status !== 'PENDING';
+          if (answered && !editingIds[item.ItemID]) {
+            const s = STATUS_KEYS.find((k) => k.value === item.Status);
+            const label = s ? t(s.key) : item.Status;
+            const note = (item.Note ?? '').trim();
+            return (
+              <Card key={item.ItemID}>
+                <View testID={`eol-answered-${item.ItemID}`}>
+                  <Pressable
+                    onPress={() => setEditing(item.ItemID, true)}
+                    accessibilityRole="button"
+                    accessibilityState={{ expanded: false }}
+                    accessibilityLabel={`${item.ItemNo}. ${item.ItemText} — ${label}`}
+                    accessibilityHint={t('checklist.tapToEdit')}
+                    testID={`eol-answered-toggle-${item.ItemID}`}
+                    style={{ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 44 }}
+                  >
+                    <Text style={{ flex: 1, color: tokens.textPrimary, fontSize: 15 }}>
+                      {item.ItemNo}. {item.ItemText}
+                    </Text>
+                    <View
+                      style={{
+                        paddingHorizontal: 10,
+                        paddingVertical: 4,
+                        borderRadius: 999,
+                        borderWidth: 1,
+                        borderColor: s?.color ?? tokens.border,
+                        backgroundColor: (s?.color ?? tokens.border) + '33',
+                      }}
+                    >
+                      <Text style={{ color: s?.color ?? tokens.textSecondary, fontSize: 11, fontWeight: '700' }}>
+                        {label}
+                      </Text>
+                    </View>
+                    <Text style={{ color: tokens.accent, fontSize: 12, fontWeight: '600' }}>
+                      {t('checklist.edit')}
+                    </Text>
+                  </Pressable>
+                  {note ? (
+                    <Text style={{ color: tokens.textSecondary, fontSize: 13, marginTop: 4 }}>
+                      {t('checklist.noteLabel', { note })}
+                    </Text>
+                  ) : null}
+                  <ActionStamp lines={checklistActorLines(item, t, locale)} />
+                  <ChecklistItemPhotos photos={item.Photos ?? []} />
+                </View>
+              </Card>
+            );
+          }
           return (
             <Card key={item.ItemID}>
               <Text style={{ color: tokens.textPrimary, fontSize: 15 }}>
@@ -490,6 +559,15 @@ export default function EOLChecklistScreen() {
                   onPress={() => saveItem(item)}
                   disabled={busy}
                 />
+                {answered ? (
+                  <View style={{ marginTop: 8 }}>
+                    <OutlineButton
+                      label={t('common.cancel')}
+                      onPress={() => cancelEdit(item)}
+                      disabled={busy}
+                    />
+                  </View>
+                ) : null}
               </View>
             </Card>
           );
