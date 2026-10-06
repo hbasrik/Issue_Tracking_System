@@ -11,6 +11,7 @@ import PendingReportsScreen from '../../../mobile/src/screens/PendingReportsScre
 import { ReferenceCacheProvider } from '../../../mobile/src/offline/ReferenceCacheProvider';
 import { IssueReportQueueProvider } from '../../../mobile/src/offline/IssueReportQueueProvider';
 import { resetConnectivityForTests } from '../../../mobile/src/offline/connectivityStore';
+import { watchOsNetwork } from '../../../mobile/src/offline/osNetwork';
 import { activeScene, type ScreenMap } from './scenes';
 
 const params = new URLSearchParams(location.search);
@@ -22,6 +23,7 @@ window.__KAREA_STORE = {
 };
 const scene = activeScene();
 if (scene.harness?.offline) resetConnectivityForTests(false);
+watchOsNetwork();
 if (scene.live) {
   window.__KAREA_STORE['karea.issueReportQueue.v1'] = JSON.stringify({
     [String(scene.live.userId)]: scene.live.queue,

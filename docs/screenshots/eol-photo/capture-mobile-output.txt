@@ -5,9 +5,9 @@ online-tr-375 [PASS] uploaded file is the prepared JPEG
 online-tr-375 [PASS] no issue created
 online-tr-375 [PASS] picked name cleared after upload
 online-tr-375 [PASS] no page errors
-offline-tr-375 [PASS] gallery button disabled — aria-disabled=true
-offline-tr-375 [PASS] offline reason shown in card
-offline-tr-375 [PASS] click while offline picks nothing
+offline-tr-375 [PASS] gallery button stays enabled (flag is informational) — aria-disabled=undefined
+offline-tr-375 [PASS] offline hint shown in card
+offline-tr-375 [PASS] photo can be picked while flagged offline
 offline-tr-375 [PASS] no page errors
 upload-fails-tr-375 [PASS] upload error shown in the card — "Cevap kaydedildi, fotoğraf yüklenemedi: Sunucuya bağlanılamadı. İnternet bağlantınızı kontrol edip tekrar deneyin. Bağlantı gelince Kaydet’e yeniden basın."
 upload-fails-tr-375 [PASS] picked photo kept for retry
@@ -19,9 +19,9 @@ online-tr-1280 [PASS] uploaded file is the prepared JPEG
 online-tr-1280 [PASS] no issue created
 online-tr-1280 [PASS] picked name cleared after upload
 online-tr-1280 [PASS] no page errors
-offline-tr-1280 [PASS] gallery button disabled — aria-disabled=true
-offline-tr-1280 [PASS] offline reason shown in card
-offline-tr-1280 [PASS] click while offline picks nothing
+offline-tr-1280 [PASS] gallery button stays enabled (flag is informational) — aria-disabled=undefined
+offline-tr-1280 [PASS] offline hint shown in card
+offline-tr-1280 [PASS] photo can be picked while flagged offline
 offline-tr-1280 [PASS] no page errors
 upload-fails-tr-1280 [PASS] upload error shown in the card — "Cevap kaydedildi, fotoğraf yüklenemedi: Sunucuya bağlanılamadı. İnternet bağlantınızı kontrol edip tekrar deneyin. Bağlantı gelince Kaydet’e yeniden basın."
 upload-fails-tr-1280 [PASS] picked photo kept for retry
@@ -33,9 +33,9 @@ online-en-375 [PASS] uploaded file is the prepared JPEG
 online-en-375 [PASS] no issue created
 online-en-375 [PASS] picked name cleared after upload
 online-en-375 [PASS] no page errors
-offline-en-375 [PASS] gallery button disabled — aria-disabled=true
-offline-en-375 [PASS] offline reason shown in card
-offline-en-375 [PASS] click while offline picks nothing
+offline-en-375 [PASS] gallery button stays enabled (flag is informational) — aria-disabled=undefined
+offline-en-375 [PASS] offline hint shown in card
+offline-en-375 [PASS] photo can be picked while flagged offline
 offline-en-375 [PASS] no page errors
 upload-fails-en-375 [PASS] upload error shown in the card — "Answer saved, photo not uploaded: Could not reach the server. Check your internet connection and try again. Press Save again once you are connected."
 upload-fails-en-375 [PASS] picked photo kept for retry
@@ -47,9 +47,9 @@ online-en-1280 [PASS] uploaded file is the prepared JPEG
 online-en-1280 [PASS] no issue created
 online-en-1280 [PASS] picked name cleared after upload
 online-en-1280 [PASS] no page errors
-offline-en-1280 [PASS] gallery button disabled — aria-disabled=true
-offline-en-1280 [PASS] offline reason shown in card
-offline-en-1280 [PASS] click while offline picks nothing
+offline-en-1280 [PASS] gallery button stays enabled (flag is informational) — aria-disabled=undefined
+offline-en-1280 [PASS] offline hint shown in card
+offline-en-1280 [PASS] photo can be picked while flagged offline
 offline-en-1280 [PASS] no page errors
 upload-fails-en-1280 [PASS] upload error shown in the card — "Answer saved, photo not uploaded: Could not reach the server. Check your internet connection and try again. Press Save again once you are connected."
 upload-fails-en-1280 [PASS] picked photo kept for retry

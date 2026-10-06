@@ -31,6 +31,7 @@ export async function build(outdir) {
     /\/components\/ApprovalUndoToast$/,
     /^expo-image-picker$/,
     /^expo-file-system\/legacy$/,
+    /^expo-network$/,
     /\/lib\/prepareUploadImage$/,
   ];
   const fromMobile = /^(react|react-dom|react-native-web|react-native-svg|lucide-react-native)(\/.*)?$/;

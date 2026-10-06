@@ -1,8 +1,8 @@
 // Mobile EoL photo upload (docs/16 A43) on the react-native-web harness: the
 // real EOLChecklistScreen with stubbed API (no backend, nothing written).
 // Online: pick -> Save records the answer then uploads to
-// CHECKLIST_ITEM_PROGRESS/<ProgressID>. Offline: both photo buttons disabled
-// with the reason shown. Upload failing mid-way: error shown in the card.
+// CHECKLIST_ITEM_PROGRESS/<ProgressID>. Flagged offline: buttons stay enabled,
+// an informational hint is shown. Upload failing mid-way: error in the card.
 import path from 'node:path';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -14,8 +14,8 @@ const OUT = path.dirname(fileURLToPath(import.meta.url));
 const bundle = await build(fs.mkdtempSync(path.join(os.tmpdir(), 'karea-eol-photo-')));
 const browser = await chromium.launch({ headless: true });
 const L = {
-  tr: { gallery: 'Galeriden fotoğraf seç', picked: 'Seçildi: eol-akü.jpg', save: 'Kaydet', offline: 'Çevrimdışısınız. Fotoğraf yalnızca bağlantı varken yüklenebilir.', failed: 'fotoğraf yüklenemedi' },
-  en: { gallery: 'Choose from gallery', picked: 'Selected: eol-akü.jpg', save: 'Save', offline: 'You are offline. Photos can only be uploaded while connected.', failed: 'photo not uploaded' },
+  tr: { gallery: 'Galeriden fotoğraf seç', picked: 'Seçildi: eol-akü.jpg', save: 'Kaydet', offline: 'Çevrimdışı görünüyorsunuz. Yine de Kaydet’e basabilirsiniz; bağlantı yoksa hata gösterilir.', failed: 'fotoğraf yüklenemedi' },
+  en: { gallery: 'Choose from gallery', picked: 'Selected: eol-akü.jpg', save: 'Save', offline: 'You appear to be offline. You can still press Save; if there is no connection you will see the error.', failed: 'photo not uploaded' },
 };
 const facts = {};
 let failed = false;
@@ -74,11 +74,11 @@ for (const locale of ['tr', 'en']) {
       const card = firstCard(page, t);
       const btn = card.getByText(t.gallery, { exact: true });
       const disabled = await btn.evaluate((el) => el.closest('[aria-disabled]')?.getAttribute('aria-disabled'));
-      check(key, 'gallery button disabled', disabled === 'true', `aria-disabled=${disabled}`);
-      check(key, 'offline reason shown in card', await card.getByText(t.offline, { exact: true }).isVisible());
-      await btn.click({ force: true });
+      check(key, 'gallery button stays enabled (flag is informational)', disabled !== 'true', `aria-disabled=${disabled}`);
+      check(key, 'offline hint shown in card', await card.getByText(t.offline, { exact: true }).isVisible());
+      await btn.click();
       await page.waitForTimeout(200);
-      check(key, 'click while offline picks nothing', !(await card.getByText(t.picked).count()));
+      check(key, 'photo can be picked while flagged offline', await card.getByText(t.picked).isVisible());
       check(key, 'no page errors', errors.length === 0, errors.join('; '));
       await shootCard(page, card, `mobile-${key}.png`);
       await page.close();

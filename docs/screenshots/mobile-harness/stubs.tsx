@@ -15,6 +15,7 @@ declare global {
     __nav: unknown[];
     __calls: unknown[];
     __net?: { down?: boolean; uploadTimesOutAfterServer?: boolean };
+    __setOsNetwork: (connected: boolean) => void;
   }
 }
 
@@ -96,6 +97,20 @@ export const copyAsync = async () => undefined;
 export const getInfoAsync = async () => ({ exists: true, size: 1 });
 export const deleteAsync = async (uri: string) => {
   window.__calls.push({ name: 'deleteAsync', args: [uri.slice(0, 40)] });
+};
+
+// --- expo-network: window.__setOsNetwork(bool) plays an OS network change.
+type OsListener = (s: { isConnected: boolean }) => void;
+const osListeners = new Set<OsListener>();
+export function addNetworkStateListener(fn: OsListener) {
+  osListeners.add(fn);
+  return { remove: () => osListeners.delete(fn) };
+}
+export async function getNetworkStateAsync() {
+  return { isConnected: !scene.harness?.offline };
+}
+window.__setOsNetwork = (connected: boolean) => {
+  for (const fn of osListeners) fn({ isConnected: connected });
 };
 
 // --- ../api/client

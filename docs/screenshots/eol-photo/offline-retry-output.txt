@@ -1,0 +1,20 @@
+os-reconnect [PASS] OS offline: hint shown
+os-reconnect [PASS] OS offline: photo button still enabled
+os-reconnect [PASS] OS offline: photo can be picked
+os-reconnect [PASS] Save attempted and the real network error shown
+os-reconnect [PASS] picked photo kept after the failure
+os-reconnect [PASS] OS back: hint gone without any request
+os-reconnect [PASS] retry with no other action: answer then photo uploaded — recordChecklist,uploadMedia
+os-reconnect [PASS] no error after retry, picked cleared
+os-reconnect [PASS] no page errors
+stale-flag [PASS] Save fails while the network is down
+stale-flag [PASS] flag now offline (hint shown)
+stale-flag [PASS] stale flag: photo button enabled
+stale-flag [PASS] stale flag does not block: answer then photo uploaded — recordChecklist,uploadMedia
+stale-flag [PASS] successful reply clears the flag
+stale-flag [PASS] no page errors
+starts-offline [PASS] hint shown
+starts-offline [PASS] photo button enabled
+starts-offline [PASS] Save is sent (network actually up) — recordChecklist,uploadMedia
+starts-offline [PASS] no page errors
+OFFLINE RETRY CHECKS PASSED
