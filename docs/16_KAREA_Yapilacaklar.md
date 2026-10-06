@@ -770,9 +770,14 @@ düzeneği, TR/EN 390), `build-output.txt`, `live-readonly-check.txt`
 `live-apply-output.txt` (canlıya uygulama). Gerçek cihazda görüntü
 alınmadı.
 
-### A41. Yönetim işlemleri denetim kaydında `[~]` — 2026-10-02
-Kod, test ve doğrulama tamam; **migration 0038 canlıya uygulanmadı,
-onay bekliyor** (kesinti gerekmez: yalnız `ALTER TYPE … ADD VALUE`).
+### A41. Yönetim işlemleri denetim kaydında `[x]` — 2026-10-02
+Kod, test ve doğrulama tamam. Kesinti gerekmez (yalnız `ALTER TYPE …
+ADD VALUE`).
+- **Canlı (2026-10-04):** 0038 uygulandı, sürüm 37 → 38, `dirty=false`.
+  Dört değer enum'da; mevcut 516 denetim kaydının md5'i değişmedi
+  (`77fe872e…`). Eski kodla çalışan API sağlıklı (`/health` 200,
+  korumalı yollar tokensız 401, logda hata yok). Yeni kod API yeniden
+  başlatılınca devreye girer. Kanıt: `live-apply-output.txt`.
 - **Migration 0038:** `audit_event_enum`'a `USER_ADMIN_CHANGE`,
   `ROLE_PERMISSION_CHANGE`, `CHECKLIST_TEMPLATE_CHANGE`,
   `DEFECT_CATALOG_CHANGE`. Geri alma, bu türde satır varsa durur;
