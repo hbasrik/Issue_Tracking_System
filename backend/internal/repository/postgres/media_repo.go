@@ -68,12 +68,13 @@ func (r *MediaRepo) ListForEntity(ctx context.Context, entityType domain.MediaEn
 	return scanMediaRows(rows)
 }
 
-// ListByVIN returns every attachment for one vehicle, newest first.
+// ListByVIN returns the vehicle gallery, newest first. EoL/Test/Shipment item
+// photos are left out: they are shown on their checklist item instead.
 func (r *MediaRepo) ListByVIN(ctx context.Context, vin string) ([]domain.MediaAttachment, error) {
-	rows, err := r.pool.Query(ctx,
+	rows, err := executor(ctx, r.pool).Query(ctx,
 		`SELECT `+mediaColumns+`
 		 FROM media_attachments
-		 WHERE vin = $1
+		 WHERE vin = $1 AND entity_type <> 'CHECKLIST_ITEM_PROGRESS'
 		 ORDER BY uploaded_at DESC, id DESC`,
 		vin)
 	if err != nil {

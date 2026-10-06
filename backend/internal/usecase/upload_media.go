@@ -116,7 +116,8 @@ func (u *MediaUploader) ListForEntity(ctx context.Context, entityType domain.Med
 	return attachments, nil
 }
 
-// ListByVIN returns every attachment for one vehicle (Karar 11). A VIN that
+// ListByVIN returns the vehicle gallery (Karar 11; checklist item photos
+// excluded, see MediaRepository.ListByVIN). A VIN that
 // does not exist is ErrNotFound; a known vehicle with no photos is an empty
 // slice so Vehicle Detail can render an empty gallery.
 func (u *MediaUploader) ListByVIN(ctx context.Context, vin string) ([]domain.MediaAttachment, error) {

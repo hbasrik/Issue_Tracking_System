@@ -327,7 +327,7 @@ func TestUploadMedia_RejectsKnownCorruptIssueResolution68(t *testing.T) {
 }
 
 // TestListMediaByVIN_ReturnsEveryEntityType is the Vehicle Detail "all photos"
-// query: issue, checklist and vehicle attachments for one VIN come back together.
+// query: issue and vehicle attachments for one VIN come back together.
 func TestListMediaByVIN_ReturnsEveryEntityType(t *testing.T) {
 	const vin = "N7V1K1SA9SK000001"
 

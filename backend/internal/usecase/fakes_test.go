@@ -993,7 +993,7 @@ func (f *fakeMediaRepo) ListForEntity(_ context.Context, entityType domain.Media
 func (f *fakeMediaRepo) ListByVIN(_ context.Context, vin string) ([]domain.MediaAttachment, error) {
 	var out []domain.MediaAttachment
 	for _, row := range f.rows {
-		if row.VIN == vin {
+		if row.VIN == vin && row.EntityType != domain.MediaEntityChecklistItemProgress {
 			out = append(out, row)
 		}
 	}

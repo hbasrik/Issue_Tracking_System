@@ -117,6 +117,11 @@ Diğer sonuçlar:
 
 **Etki:** Migration ile kolon eklenir, mevcut satırlar `entity_type`+`entity_id` üzerinden ilgili tablo join'iyle backfill edilir. Upload endpoint'leri `vin`'i de yazacak şekilde güncellenir.
 
+**Güncelleme (2026-10-06 — galeri):** Araç galerisi (`ListByVIN`) checklist
+madde fotoğraflarını (`CHECKLIST_ITEM_PROGRESS`) artık listelemez; onlar
+maddenin üzerinde görünür (Karar 26). `vin` kolonu ve diğer türler
+değişmedi.
+
 **Güncelleme (2026-09-21 — güvenlik):** `GET /uploads/*` artık kimlik doğrulaması ister. Giriş yetmez: çağıranın medyanın `vin`'i üzerinde `vehicle.view` yetkisi olmalıdır. Web/mobil istemciler Bearer ile yükler. Depolanan dosya adları 16 bayt `crypto/rand` hex (tahmin edilemez); sıralı değildir.
 
 ## Karar 12 — Token iptali (`tokens_valid_from`) (NEW — 2026-09-21)
@@ -594,6 +599,14 @@ kalıyordu.
 - **Değişmeyen:** `chk_description_required_by_status` aynen kalır (EOL'de
   üç hata cevabı için not zorunlu; OK serbest). `check_image_url` ve
   diğer kullanılmayan kolonlara dokunulmaz.
+- **Madde fotoğrafları (2026-10-06):** `CHECKLIST_ITEM_PROGRESS`
+  fotoğrafları maddenin kendisinde gösterilir (öğe listesi `Photos`, tek
+  sorguda LATERAL join) ve araç galerisinden çıkarılır:
+  `MediaRepository.ListByVIN` (`GET /vehicles/{vin}/media`) artık
+  `entity_type <> 'CHECKLIST_ITEM_PROGRESS'` filtreler. ISSUE,
+  ISSUE_RESOLUTION, VEHICLE ve STATION_STEP_PROGRESS fotoğrafları galeride
+  kalır. Satırlar silinmez; yalnız galeri sorgusu değişir. EOL
+  fotoğrafı arıza kaydı açmaz.
 - **Bilinen sınır:** cevap değişince eski cevabın notu silinir (kayıt her
   seferinde dört kolonu yeniden yazar) ve hiçbir yerde saklanmaz;
   `CHECKLIST_ITEM_UPDATE` denetim kaydı yalnız eski/yeni durumu ve madde
