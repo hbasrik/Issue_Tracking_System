@@ -1,3 +1,11 @@
+# ESKİ DAVRANIŞ — bugünkü kod böyle çalışmaz.
+# Bu çıktı 3194a22 commit'inde alındı; o andaki mobil kod e27614b'deki
+# EOLChecklistScreen.tsx ve connectivityStore.ts'tir (çevrimdışı bayrağı
+# yalnız istek sonuçlarından gelir ve Kaydet'i/fotoğrafı engeller).
+# Düzeltme: e2ebd69 (bayrak işletim sisteminin ağ durumuna bağlandı) ve
+# 2463cac (bayrak artık hiçbir şeyi engellemez). Bugünkü davranışın kanıtı:
+# offline-retry-output.txt (kalıcı test offline-retry.mjs).
+
 == A. screen opened online, then airplane mode (no request made yet)
 A1 after airplane mode, before any action
   {"photoButtonDisabled":false,"offlineReasonShown":false,"pickedInMemory":false,"errorLine":null,"calls":[]}
