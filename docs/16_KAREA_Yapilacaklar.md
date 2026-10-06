@@ -865,6 +865,14 @@ başlatılınca devreye girer.
   `aria-disabled=true`), `mobile-*.png` (375/1280 px, TR/EN). Gerçek
   cihazda deneme ve gerçek küçültme sonrası boyut ölçümü yapılmadı
   (düzenek küçültmeyi taklit eder).
+- **Açık sorun (2026-10-06, karar bekliyor):** çevrimdışı bilgisi
+  `connectivityStore`'dan gelir ve yalnız bir istek yanıtsız kalınca
+  "çevrimdışı"ya döner. Uçak moduna geçince düğmeler ilk başarısız
+  Kaydet'e kadar açık kalır; bağlantı dönünce ekran başka istek atmadığı
+  için düğmeler ve Kaydet (fotoğraf seçiliyse) kapalı kalır. Kanıt:
+  `docs/screenshots/eol-photo/repro-offline-output.txt` (düzenek, cihaz
+  değil). Sahada bildirilen "uyarısız yüklendi" vakasında sunucu kayıtları
+  cevap ile fotoğrafın 170 ms arayla tek Kaydet'te geldiğini gösteriyor.
 
 ### A44. EOL maddesinde ekli fotoğrafların gösterimi `[x]` — 2026-10-06
 - **Sunucu:** `ListItemsWithProgress` her madde için
