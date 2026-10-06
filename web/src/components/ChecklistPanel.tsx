@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { ChevronDown } from 'lucide-react';
 import {
   api,
   ApiError,
@@ -180,7 +181,7 @@ export function ChecklistPanel({
         </p>
       )}
       <ul
-        className="mt-4 divide-y"
+        className={editor === 'eol' ? 'mt-4' : 'mt-4 divide-y'}
         style={{
           borderColor: 'var(--border)',
           pointerEvents: readOnly ? 'none' : undefined,
@@ -194,7 +195,10 @@ export function ChecklistPanel({
                 {g.title}
               </p>
             ) : null}
-            <ul className="divide-y" style={{ borderColor: 'var(--border)' }}>
+            <ul
+              className={editor === 'eol' ? 'flex flex-col gap-2' : 'divide-y'}
+              style={{ borderColor: 'var(--border)' }}
+            >
               {g.items.map((item) =>
                 editor === 'eol' ? (
                   <EolItemRow
@@ -332,7 +336,8 @@ function EolItemRow({
   const [desc, setDesc] = useState(existingDescription(item));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [editing, setEditing] = useState(false);
+  const [open, setOpen] = useState(item.Status === 'PENDING');
+  const bodyId = `eol-item-body-${item.ItemID}`;
 
   useEffect(() => {
     const next = (EOL_STATUSES as readonly string[]).includes(item.Status)
@@ -348,7 +353,7 @@ function EolItemRow({
     setFileName('');
     if (fileRef.current) fileRef.current.value = '';
     setError(null);
-    setEditing(false);
+    setOpen(false);
   }
 
   async function save() {
@@ -375,7 +380,7 @@ function EolItemRow({
         setFileName('');
       }
       await onSaved();
-      setEditing(false);
+      setOpen(false);
     } catch (err) {
       const message =
         err instanceof ApiError
@@ -391,142 +396,141 @@ function EolItemRow({
 
   const answered = item.Status !== 'PENDING';
   const savedNote = existingDescription(item).trim();
-
-  if (answered && !editing) {
-    return (
-      <li
-        className="py-3 text-[15px]"
-        data-checklist-active-item={item.ItemID}
-        data-checklist-collapsed={item.ItemID}
-      >
-        <button
-          type="button"
-          disabled={disabled}
-          onClick={() => setEditing(true)}
-          aria-expanded={false}
-          aria-label={`${item.ItemNo}. ${item.ItemText} — ${checklistStatusLabel(item.Status, t)}. ${t('checklist.tapToEdit')}`}
-          className="flex w-full flex-wrap items-start justify-between gap-2 rounded-lg px-1 py-1 text-left hover:bg-[var(--bg-surface-2)]"
-        >
-          <span className="min-w-0 flex-1 break-words">
-            <span className="mr-2 text-[13px] text-[var(--text-secondary)]">
-              {item.ItemNo}.
-            </span>
-            {item.ItemText}
-          </span>
-          <span className="flex items-center gap-2">
-            <StatusBadge kind="eol" value={item.Status} />
-            <span className="text-[12px] text-[var(--accent)]">{t('checklist.edit')}</span>
-          </span>
-        </button>
-        {savedNote ? (
-          <p className="mt-1 whitespace-pre-wrap break-words px-1 text-[13px] text-[var(--text-secondary)]" data-checklist-note>
-            {t('checklist.noteLabel', { note: savedNote })}
-          </p>
-        ) : null}
-        <ActionStamp lines={checklistActorLines(item, t, locale)} />
-        <ChecklistItemPhotos photos={item.Photos ?? []} />
-      </li>
-    );
-  }
+  const actorLines = checklistActorLines(item, t, locale);
+  const photos = item.Photos ?? [];
+  const showClosedBody = answered && (savedNote || actorLines.length > 0 || photos.length > 0);
 
   return (
-    <li className="py-3 text-[15px]" data-checklist-active-item={item.ItemID}>
-      <div className="flex flex-wrap items-start justify-between gap-2">
+    <li
+      className="overflow-hidden rounded-xl border bg-[var(--bg-surface-1)] text-[15px]"
+      style={{ borderColor: 'var(--border)' }}
+      data-checklist-active-item={item.ItemID}
+      data-checklist-collapsed={open ? undefined : item.ItemID}
+    >
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        aria-controls={bodyId}
+        data-checklist-item-header
+        className="flex w-full items-center gap-2 px-3 py-2.5 text-left outline-none hover:bg-[var(--bg-surface-2)] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--accent)]"
+      >
         <span className="min-w-0 flex-1 break-words">
           <span className="mr-2 text-[13px] text-[var(--text-secondary)]">
             {item.ItemNo}.
           </span>
           {item.ItemText}
         </span>
-        <StatusBadge kind="eol" value={item.Status} />
-      </div>
-      <ActionStamp lines={checklistActorLines(item, t, locale)} />
-      <ChecklistItemPhotos photos={item.Photos ?? []} />
-      <div className="mt-2 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
-        {EOL_STATUSES.map((value) => {
-          const selected = status === value;
-          const color = STATUS_COLOR[value];
-          return (
-            <button
-              key={value}
-              type="button"
-              disabled={disabled || busy}
-              onClick={() => setStatus(value)}
-              className="min-h-touch rounded-lg border px-2.5 text-[12px] font-medium disabled:opacity-50 sm:px-3 sm:text-[13px]"
-              style={{
-                borderColor: selected ? color : 'var(--border)',
-                color: selected ? color : 'var(--text-secondary)',
-                backgroundColor: selected ? `${color}22` : 'transparent',
-              }}
-            >
-              {checklistStatusLabel(value, t)}
-            </button>
-          );
-        })}
-      </div>
-      {status && (
-        <textarea
-          value={desc}
-          onChange={(e) => setDesc(e.target.value)}
-          required={needsDescription(status)}
-          disabled={disabled}
-          placeholder={
-            needsDescription(status)
-              ? t('checklist.descPlaceholder')
-              : t('checklist.noteOptionalPlaceholder')
-          }
-          className="mt-2 w-full max-w-full rounded-lg border bg-[var(--bg-page)] px-3 py-2 text-[13px]"
-          style={{
-            borderColor: needsDescription(status) ? 'var(--status-not-ok)' : 'var(--border)',
-            minHeight: 64,
-          }}
+        <StatusBadge kind="eol" value={item.Status} className="shrink-0" />
+        <ChevronDown
+          aria-hidden
+          className={`h-4 w-4 shrink-0 text-[var(--text-secondary)] transition-transform ${open ? 'rotate-180' : ''}`}
         />
-      )}
-      <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-        <label className="flex min-h-touch flex-wrap items-center gap-2 text-[13px] text-[var(--text-secondary)]">
-          {t('checklist.photo')}
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/*"
-            disabled={disabled}
-            className="sr-only"
-            onChange={(e) => setFileName(e.target.files?.[0]?.name ?? '')}
-          />
-          <span
-            className="inline-flex min-h-touch cursor-pointer items-center rounded-lg border px-3 text-[13px]"
-            style={{ borderColor: 'var(--border)', color: 'var(--text-primary)' }}
-          >
-            {t('checklist.chooseFile')}
-          </span>
-          {fileName ? (
-            <span className="max-w-[12rem] truncate">{fileName}</span>
-          ) : null}
-        </label>
-        <button
-          type="button"
-          disabled={busy || disabled}
-          onClick={() => void save()}
-          className="min-h-touch rounded-lg bg-[var(--accent)] px-4 text-[13px] text-white disabled:opacity-60"
-        >
-          {busy ? t('common.saving') : t('common.save')}
-        </button>
-        {answered ? (
-          <button
-            type="button"
-            disabled={busy}
-            onClick={cancelEdit}
-            className="min-h-touch rounded-lg border px-4 text-[13px] disabled:opacity-60"
-            style={{ borderColor: 'var(--border)' }}
-          >
-            {t('common.cancel')}
-          </button>
-        ) : null}
-      </div>
-      {error && (
-        <p className="mt-2 text-[13px]" style={{ color: 'var(--status-not-ok)' }} role="alert">
-          {error}
-        </p>
+      </button>
+      {!open ? (
+        showClosedBody ? (
+          <div id={bodyId} className="px-3 pb-3">
+            {savedNote ? (
+              <p className="whitespace-pre-wrap break-words text-[13px] text-[var(--text-secondary)]" data-checklist-note>
+                {t('checklist.noteLabel', { note: savedNote })}
+              </p>
+            ) : null}
+            <ActionStamp lines={actorLines} />
+            <ChecklistItemPhotos photos={photos} />
+          </div>
+        ) : null
+      ) : (
+        <div id={bodyId} className="px-3 pb-3">
+          <div className="mt-1 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+            {EOL_STATUSES.map((value) => {
+              const selected = status === value;
+              const color = STATUS_COLOR[value];
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  disabled={disabled || busy}
+                  onClick={() => setStatus(value)}
+                  className="min-h-touch rounded-lg border px-2.5 text-[12px] font-medium disabled:opacity-50 sm:px-3 sm:text-[13px]"
+                  style={{
+                    borderColor: selected ? color : 'var(--border)',
+                    color: selected ? color : 'var(--text-secondary)',
+                    backgroundColor: selected ? `${color}22` : 'transparent',
+                  }}
+                >
+                  {checklistStatusLabel(value, t)}
+                </button>
+              );
+            })}
+          </div>
+          {status && (
+            <textarea
+              value={desc}
+              onChange={(e) => setDesc(e.target.value)}
+              required={needsDescription(status)}
+              disabled={disabled}
+              placeholder={
+                needsDescription(status)
+                  ? t('checklist.descPlaceholder')
+                  : t('checklist.noteOptionalPlaceholder')
+              }
+              className="mt-2 w-full max-w-full rounded-lg border bg-[var(--bg-page)] px-3 py-2 text-[13px]"
+              style={{
+                borderColor: needsDescription(status) ? 'var(--status-not-ok)' : 'var(--border)',
+                minHeight: 64,
+              }}
+            />
+          )}
+          <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+            <label className="flex min-h-touch min-w-0 flex-wrap items-center gap-2 text-[13px] text-[var(--text-secondary)]">
+              {t('checklist.photo')}
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/*"
+                disabled={disabled}
+                className="sr-only"
+                onChange={(e) => setFileName(e.target.files?.[0]?.name ?? '')}
+              />
+              <span
+                className="inline-flex min-h-touch cursor-pointer items-center rounded-lg border px-3 text-[13px]"
+                style={{ borderColor: 'var(--border)', color: 'var(--text-primary)' }}
+              >
+                {t('checklist.chooseFile')}
+              </span>
+              {fileName ? (
+                <span className="max-w-[12rem] truncate">{fileName}</span>
+              ) : null}
+            </label>
+            <div className="ml-auto flex items-center gap-2">
+              {answered ? (
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={cancelEdit}
+                  className="min-h-touch rounded-lg border px-4 text-[13px] disabled:opacity-60"
+                  style={{ borderColor: 'var(--border)' }}
+                >
+                  {t('common.cancel')}
+                </button>
+              ) : null}
+              <button
+                type="button"
+                disabled={busy || disabled}
+                onClick={() => void save()}
+                className="min-h-touch rounded-lg bg-[var(--accent)] px-4 text-[13px] text-white disabled:opacity-60"
+              >
+                {busy ? t('common.saving') : t('common.save')}
+              </button>
+            </div>
+          </div>
+          {error && (
+            <p className="mt-2 text-[13px]" style={{ color: 'var(--status-not-ok)' }} role="alert">
+              {error}
+            </p>
+          )}
+        </div>
       )}
     </li>
   );
