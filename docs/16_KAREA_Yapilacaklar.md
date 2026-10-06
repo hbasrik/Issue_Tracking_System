@@ -900,6 +900,19 @@ başlatılınca devreye girer.
   (POST /issues + POST /media). Kalıcı test:
   `TestListByVIN_LeavesOutChecklistItemPhotos` (beş türün her biri; yalnız
   CHECKLIST_ITEM_PROGRESS düşer).
+
+### A46. EOL not geçmişi denetim kaydında `[x]` — 2026-10-06
+- **Değişiklik:** EOL cevabı kaydedilirken `CHECKLIST_ITEM_UPDATE`
+  metadata'sına `old_note` / `new_note` eklenir (Karar 26 güncellemesi).
+  Boş not → anahtar yok. Eski not, önceki satırın önceki durumuna ait
+  kolondan okunur (`ListByVINAndType` artık `approved_desc`'i de okur).
+  Migration yok; mevcut denetim satırları değişmez.
+- **Kanıt:** `docs/screenshots/eol-note/audit-note-verification-output.txt`
+  (test DB, gerçek API: OK+"ölçüm 12.6" → yalnız new_note; NOT_OK+"conta
+  yırtık" → old/new; notsuz OK → yalnız old_note; CONDITIONAL_OK+"paspas
+  sonra" → yalnız new_note; mevcut 24 denetim satırının md5'i önce/sonra
+  aynı). Kalıcı testler: `TestRecordChecklistAudit_KeepsOldAndNewEOLNote`,
+  `TestRecordChecklistAudit_NoNoteKeysOutsideEOL`.
 ---
 
 ## B — Canlıya çıkmadan önce ZORUNLU

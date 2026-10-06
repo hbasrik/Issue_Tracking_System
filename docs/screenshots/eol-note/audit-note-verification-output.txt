@@ -1,0 +1,36 @@
+existing audit_logs: 24 rows, max id 24, md5 9197a4892581439b9e57e9f2b75aee76
+fixture: vin=N7V1K1SA0TK000003 item=3 (seeded test vehicle, test DB)
+
+step 1 POST {"status": "OK", "note": "ölçüm 12.6"} -> 200
+  audit id=30 PENDING -> OK metadata={"item_id": 3, "new_note": "ölçüm 12.6", "checklist_type": "EOL"}
+  [PASS] HTTP 200
+  [PASS] old_note absent
+  [PASS] new_note 'ölçüm 12.6'
+  [PASS] no empty-string note key
+  [PASS] only item_id/checklist_type/old_note/new_note keys — checklist_type,item_id,new_note
+step 2 POST {"status": "NOT_OK", "note": "conta yırtık"} -> 200
+  audit id=31 OK -> NOT_OK metadata={"item_id": 3, "new_note": "conta yırtık", "old_note": "ölçüm 12.6", "checklist_type": "EOL"}
+  [PASS] HTTP 200
+  [PASS] old_note 'ölçüm 12.6'
+  [PASS] new_note 'conta yırtık'
+  [PASS] no empty-string note key
+  [PASS] only item_id/checklist_type/old_note/new_note keys — checklist_type,item_id,new_note,old_note
+step 3 POST {"status": "OK"} -> 200
+  audit id=32 NOT_OK -> OK metadata={"item_id": 3, "old_note": "conta yırtık", "checklist_type": "EOL"}
+  [PASS] HTTP 200
+  [PASS] old_note 'conta yırtık'
+  [PASS] new_note absent
+  [PASS] no empty-string note key
+  [PASS] only item_id/checklist_type/old_note/new_note keys — checklist_type,item_id,old_note
+step 4 POST {"status": "CONDITIONAL_OK", "note": "paspas sonra"} -> 200
+  audit id=33 OK -> CONDITIONAL_OK metadata={"item_id": 3, "new_note": "paspas sonra", "checklist_type": "EOL"}
+  [PASS] HTTP 200
+  [PASS] old_note absent
+  [PASS] new_note 'paspas sonra'
+  [PASS] no empty-string note key
+  [PASS] only item_id/checklist_type/old_note/new_note keys — checklist_type,item_id,new_note
+
+existing audit_logs after: 24 rows (id <= 24), md5 9197a4892581439b9e57e9f2b75aee76
+  [PASS] pre-existing audit rows unchanged
+
+ALL CHECKS PASSED
