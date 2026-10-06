@@ -8,8 +8,8 @@ import (
 )
 
 // TestListItemsWithProgress_ReturnsEveryPhoto attaches three photos to one
-// EoL progress row and checks the item list returns all three, oldest first,
-// while other items carry an empty list. Rolled back.
+// EoL progress row that had none and checks the item list returns all three,
+// oldest first, on that item only; no item has a nil list. Rolled back.
 func TestListItemsWithProgress_ReturnsEveryPhoto(t *testing.T) {
 	ctx, tx := stageTestTx(t)
 
@@ -21,6 +21,8 @@ func TestListItemsWithProgress_ReturnsEveryPhoto(t *testing.T) {
 		FROM checklist_item_progress p
 		JOIN checklist_template_items cti ON cti.id = p.check_item_id
 		WHERE p.checklist_type = 'EOL' AND cti.is_active
+		  AND NOT EXISTS (SELECT 1 FROM media_attachments m
+		                  WHERE m.entity_type = 'CHECKLIST_ITEM_PROGRESS' AND m.entity_id = p.id::text)
 		ORDER BY p.vin, cti.item_no LIMIT 1`).Scan(&vin, &itemID, &templateID, &progressID)
 	if err != nil {
 		t.Fatalf("no EoL progress row: %v", err)
@@ -45,8 +47,10 @@ func TestListItemsWithProgress_ReturnsEveryPhoto(t *testing.T) {
 			t.Fatalf("item %d: Photos is nil, want empty slice", it.ItemID)
 		}
 		if it.ItemID != itemID {
-			if len(it.Photos) != 0 {
-				t.Errorf("item %d: unexpected photos %+v", it.ItemID, it.Photos)
+			for _, p := range it.Photos {
+				if p.EntityID == strconv.FormatInt(progressID, 10) {
+					t.Errorf("item %d: carries photo %s of progress %d", it.ItemID, p.FileName, progressID)
+				}
 			}
 			continue
 		}
