@@ -64,20 +64,7 @@ function needsDescription(status: string): boolean {
 }
 
 function existingDescription(item: ChecklistItem): string {
-  return item.ReworkDesc || item.ConditionalDesc || item.RejectedDesc || '';
-}
-
-function bodyForStatus(status: string, desc: string): {
-  status: string;
-  rework_desc?: string;
-  conditional_desc?: string;
-  rejected_desc?: string;
-} {
-  const trimmed = desc.trim();
-  if (status === 'REWORK') return { status, rework_desc: trimmed };
-  if (status === 'CONDITIONAL_OK') return { status, conditional_desc: trimmed };
-  if (status === 'NOT_OK') return { status, rejected_desc: trimmed };
-  return { status };
+  return item.Note ?? '';
 }
 
 /** Progress-counter checklist used by Shipment, Test, and EoL stages. */
@@ -365,7 +352,7 @@ function EolItemRow({
     setBusy(true);
     setError(null);
     try {
-      await api.recordChecklist(vin, 'eol', item.ItemID, bodyForStatus(status, desc));
+      await api.recordChecklist(vin, 'eol', item.ItemID, { status, note: desc.trim() });
       const file = fileRef.current?.files?.[0];
       if (file) {
         const progressId = item.ProgressID;
@@ -424,15 +411,22 @@ function EolItemRow({
           );
         })}
       </div>
-      {needsDescription(status) && (
+      {status && (
         <textarea
           value={desc}
           onChange={(e) => setDesc(e.target.value)}
-          required
+          required={needsDescription(status)}
           disabled={disabled}
-          placeholder={t('checklist.descPlaceholder')}
+          placeholder={
+            needsDescription(status)
+              ? t('checklist.descPlaceholder')
+              : t('checklist.noteOptionalPlaceholder')
+          }
           className="mt-2 w-full max-w-full rounded-lg border bg-[var(--bg-page)] px-3 py-2 text-[13px]"
-          style={{ borderColor: 'var(--status-not-ok)', minHeight: 64 }}
+          style={{
+            borderColor: needsDescription(status) ? 'var(--status-not-ok)' : 'var(--border)',
+            minHeight: 64,
+          }}
         />
       )}
       <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">

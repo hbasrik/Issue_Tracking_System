@@ -644,6 +644,7 @@ export const tr = {
   'checklist.pickStatus': 'Uygun, Uygun değil, Yeniden işlem veya Şartlı uygun seçin',
   'checklist.descRequired': 'Bu durum için açıklama gerekli',
   'checklist.descPlaceholder': 'Bu durum için açıklama zorunlu',
+  'checklist.noteOptionalPlaceholder': 'Açıklama (isteğe bağlı): ölçüm değeri, not',
   'checklist.saveFailed': 'Kayıt başarısız',
   'checklist.noProgressId':
     'Madde kaydedildi ama fotoğraf yüklemesi için ilerleme kimliği yok',
@@ -1772,6 +1773,7 @@ export const en: Record<MessageKey, string> = {
   'checklist.pickStatus': 'Select OK, Not OK, Rework, or Conditional OK',
   'checklist.descRequired': 'A description is required for this status',
   'checklist.descPlaceholder': 'Description required for this status',
+  'checklist.noteOptionalPlaceholder': 'Note (optional): measured value, remark',
   'checklist.saveFailed': 'Save failed',
   'checklist.noProgressId':
     'Item saved but has no progress id for photo upload',

@@ -529,9 +529,7 @@ export const api = {
     itemId: number,
     body: {
       status: string;
-      rework_desc?: string;
-      conditional_desc?: string;
-      rejected_desc?: string;
+      note?: string;
     },
   ) {
     return request(
@@ -952,6 +950,8 @@ export interface ChecklistItem {
   ReworkDesc: string;
   ConditionalDesc: string;
   RejectedDesc: string;
+  /** Description of the current answer, OK included. */
+  Note?: string;
   EolPhase?: 'BRANCH' | 'DEPOT' | null;
   SectionKey?: string | null;
   SectionSort?: number | null;

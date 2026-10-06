@@ -15,9 +15,7 @@ import {
 import { PrintButton, PrintHeader, PrintRoot } from './PrintRoot';
 
 function itemNotes(item: ChecklistItem): string {
-  return [item.ReworkDesc, item.ConditionalDesc, item.RejectedDesc]
-    .map((s) => s?.trim())
-    .find(Boolean) ?? '';
+  return item.Note?.trim() ?? '';
 }
 
 function checklistTitleKey(type: ChecklistType): 'print.checklistEol' | 'print.checklistShipment' | 'print.checklistTest' {
