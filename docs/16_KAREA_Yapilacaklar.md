@@ -959,7 +959,7 @@ başlatılınca devreye girer.
   `capture-mobile.mjs` ve `eol-note/capture-web.mjs` önce rozete dokunacak
   şekilde güncellendi; hepsi geçiyor.
 
-### A48. Migration 0039 — checklist form alanları `[~]` — 2026-10-06
+### A48. Migration 0039 — checklist form alanları `[x]` (şema) — 2026-10-06
 - **Şema:** `checklist_template_items.acceptance_criterion TEXT NULL`,
   `control_method TEXT NULL`; `checklist_templates.form_code TEXT NULL`,
   `form_revision TEXT NULL`, `form_published_at DATE NULL` (docs/21: kabul
@@ -974,7 +974,21 @@ başlatılınca devreye girer.
   ikişer kez çalıştı. Backend repo testleri 0038 ve 0039 şemasında aynı
   sonucu veriyor (mevcut kod yeni kolonlardan etkilenmiyor).
 - **Canlıya alma:** kolon ekleme, kesinti yok; kod kolonları okumadığı için
-  sıra serbest. **Canlıya uygulanmadı — onay bekliyor.**
+  sıra serbest.
+- **Canlıya uygulandı (2026-10-06, kullanıcı tarafından):** salt okunur
+  kontrol `docs/screenshots/migration-0039/live-verification-output.txt`:
+  `schema_migrations` 39, `dirty=false`; beş kolon var, hepsi nullable,
+  varsayılan yok, dolu satır 0; 108 madde / 3 şablon (önceyle aynı); mevcut
+  kolonların md5'i önceki ölçümle aynı (`421ab06c…` madde, `af3c2e35…`
+  şablon); `GET /health` 200.
+- **Canlıda 108, seed'de 104 madde:** fark seed dışı 4 pasif madde (EOL #16
+  "Test Depo Madde", #17 "Test Depo Madde 2", TEST #44/#45 eski İngilizce
+  metinler; `database/seed/README.md` ve B6 notu). Dokunulmadı.
+- **Test fikstürü:** `TestApplicableSet_ProgressMatchesOpenItems` seed'de
+  teslim edilmiş araç olmadığı için düşüyordu; test artık kendi teslim
+  edilmiş aracını (`TMPDELIVER0000001`) işlem içinde kuruyor (adımlar ve
+  maddeler OK → `EOLWorkflowRepo` ile şube sevki, depo çıkışı, teslim) ve
+  geri alıyor. Test mantığı değişmedi; `go test ./...` yeşil.
 - **Kalan:** kolonları okuyan/yazan backend ve arayüz kodu (ayrı konuşulacak).
 ---
 

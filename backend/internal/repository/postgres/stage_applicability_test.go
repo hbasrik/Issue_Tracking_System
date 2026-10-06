@@ -16,8 +16,8 @@ import (
 
 // stageTestTx opens a transaction on TEST_DATABASE_URL (database name must
 // end in _test: migrations + database/seed, with at least one vehicle on the
-// line, one branch-shipped, one depot-released and one delivered). Every
-// write is rolled back.
+// line, one branch-shipped and one depot-released). Every write is rolled
+// back.
 func stageTestTx(t *testing.T) (context.Context, pgx.Tx) {
 	t.Helper()
 	raw := os.Getenv("TEST_DATABASE_URL")
@@ -189,6 +189,36 @@ func TestInsertPendingForVehicles_OnlyBeforeItemStage(t *testing.T) {
 	}
 }
 
+// addDeliveredVehicle builds a delivered vehicle inside the test transaction:
+// a new vehicle (triggers create its PENDING rows), every step and checklist
+// row OK, then branch ship → depot release → deliver through the workflow repo.
+func addDeliveredVehicle(ctx context.Context, t *testing.T, tx pgx.Tx, vin string) {
+	t.Helper()
+	for _, sql := range []string{
+		`INSERT INTO vehicles (vin) VALUES ($1)`,
+		`UPDATE vehicle_station_step_progress SET status = 'OK' WHERE vin = $1`,
+		`UPDATE checklist_item_progress SET check_status = 'OK' WHERE vin = $1`,
+	} {
+		if _, err := tx.Exec(ctx, sql, vin); err != nil {
+			t.Fatalf("%s: %v", sql, err)
+		}
+	}
+	var actor int
+	if err := tx.QueryRow(ctx, `SELECT id FROM users ORDER BY id LIMIT 1`).Scan(&actor); err != nil {
+		t.Fatal(err)
+	}
+	workflow := &EOLWorkflowRepo{}
+	if err := workflow.MarkBranchShipped(ctx, vin, actor, 0); err != nil {
+		t.Fatalf("branch ship %s: %v", vin, err)
+	}
+	if err := workflow.MarkDepotReleased(ctx, vin, actor); err != nil {
+		t.Fatalf("depot release %s: %v", vin, err)
+	}
+	if err := workflow.MarkDelivered(ctx, vin, actor); err != nil {
+		t.Fatalf("deliver %s: %v", vin, err)
+	}
+}
+
 // Progress % and the warning list come from one set: for every vehicle,
 // percentage == passing/applicable and 100% exactly when nothing is open.
 // A wrongly distributed PENDING row on a passed stage (migration 0023 style)
@@ -198,6 +228,7 @@ func TestApplicableSet_ProgressMatchesOpenItems(t *testing.T) {
 	checklists := &ChecklistProgressRepo{}
 	steps := &StationStepProgressRepo{}
 	vehiclesRepo := &VehicleRepo{}
+	addDeliveredVehicle(ctx, t, tx, "TMPDELIVER0000001")
 	vehicles := loadStageVehicles(ctx, t, tx)
 
 	shipTmpl := templateOf(ctx, t, tx, "shipment_template_id")
