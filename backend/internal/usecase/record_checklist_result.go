@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"github.com/karea/backend/internal/domain"
 	"github.com/karea/backend/internal/repository"
@@ -37,11 +38,15 @@ func NewChecklistResultRecorder(
 
 // RecordChecklistInput is the request to record one checklist item result.
 type RecordChecklistInput struct {
-	VIN             string
-	ChecklistType   domain.ChecklistType
-	ItemID          int
-	Status          domain.CheckStatus
-	CheckerID       int
+	VIN           string
+	ChecklistType domain.ChecklistType
+	ItemID        int
+	Status        domain.CheckStatus
+	CheckerID     int
+	// Note is the single description for any answer, OK included. When it is
+	// empty the legacy per-answer fields below are used as sent (older
+	// mobile builds still send them).
+	Note            string
 	ReworkDesc      string
 	ConditionalDesc string
 	RejectedDesc    string
@@ -50,6 +55,17 @@ type RecordChecklistInput struct {
 	// only performed if ALL items are OK/CONDITIONAL_OK; otherwise a
 	// *domain.GateBlockedError is returned and no transition is attempted.
 	RequestGateExit bool
+}
+
+func (in RecordChecklistInput) notes() domain.ChecklistNotes {
+	if note := strings.TrimSpace(in.Note); note != "" {
+		return domain.NotesForStatus(in.Status, note)
+	}
+	return domain.ChecklistNotes{
+		Rework:      in.ReworkDesc,
+		Conditional: in.ConditionalDesc,
+		Rejected:    in.RejectedDesc,
+	}
 }
 
 // RecordChecklistOutput reports the resulting gate state.
@@ -71,7 +87,8 @@ func (r *ChecklistResultRecorder) Record(ctx context.Context, in RecordChecklist
 	if !in.ChecklistType.Valid() || !in.Status.Valid() {
 		return nil, domain.ErrInvalidEnumValue
 	}
-	if err := ValidateChecklistDescription(in.ChecklistType, in.Status, in.ReworkDesc, in.ConditionalDesc, in.RejectedDesc); err != nil {
+	notes := in.notes()
+	if err := ValidateChecklistDescription(in.ChecklistType, in.Status, notes.Rework, notes.Conditional, notes.Rejected); err != nil {
 		return nil, err
 	}
 	if in.ChecklistType == domain.ChecklistTypeEOL && in.Status != domain.CheckStatusPending {
@@ -90,9 +107,10 @@ func (r *ChecklistResultRecorder) Record(ctx context.Context, in RecordChecklist
 		CheckItemID:     in.ItemID,
 		CheckStatus:     in.Status,
 		CheckerID:       &in.CheckerID,
-		ReworkDesc:      in.ReworkDesc,
-		ConditionalDesc: in.ConditionalDesc,
-		RejectedDesc:    in.RejectedDesc,
+		ReworkDesc:      notes.Rework,
+		ConditionalDesc: notes.Conditional,
+		RejectedDesc:    notes.Rejected,
+		ApprovedDesc:    notes.Approved,
 	}
 
 	oldStatus := domain.CheckStatusPending

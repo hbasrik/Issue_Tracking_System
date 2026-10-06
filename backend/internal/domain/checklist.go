@@ -194,7 +194,7 @@ type ChecklistTemplateItem struct {
 	SectionKey *string `json:"SectionKey,omitempty"`
 	// SectionSort orders sections; not rewritten by item reorder.
 	SectionSort *int16 `json:"SectionSort,omitempty"`
-	IsActive   bool
+	IsActive    bool
 	// EvaluatedCount is non-PENDING progress rows for this item (list join).
 	// Used to warn before renaming catalogue text.
 	EvaluatedCount int `json:"EvaluatedCount,omitempty"`
@@ -213,6 +213,7 @@ type ChecklistProgress struct {
 	ReworkDesc      string
 	ConditionalDesc string
 	RejectedDesc    string
+	ApprovedDesc    string
 	RelatedIssueID  *int64
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
@@ -234,20 +235,25 @@ type ChecklistItemView struct {
 	ReworkDesc      string
 	ConditionalDesc string
 	RejectedDesc    string
-	EolPhase        *EOLItemPhase
-	SectionKey      *string `json:"SectionKey,omitempty"`
-	SectionSort     *int16  `json:"SectionSort,omitempty"`
-	ProgressID      *int64
-	IsActive        bool
+	ApprovedDesc    string
+	// Note is the description of the current answer, read from the column
+	// that answer owns (ChecklistNotes). Clients should prefer it over the
+	// per-answer fields above.
+	Note        string
+	EolPhase    *EOLItemPhase
+	SectionKey  *string `json:"SectionKey,omitempty"`
+	SectionSort *int16  `json:"SectionSort,omitempty"`
+	ProgressID  *int64
+	IsActive    bool
 	// StageClosed marks an active item the vehicle can no longer complete:
 	// its stage is passed and it was never evaluated (or the vehicle is
 	// delivered and it is not passing). It counts in no total, gate or
 	// warning; the row is kept as history.
-	StageClosed     bool
-	CheckerName     string     `json:"CheckerName,omitempty"`
-	CheckDate       *time.Time `json:"CheckDate,omitempty"`
-	RejectedByName  string     `json:"RejectedByName,omitempty"`
-	RejectedAt      *time.Time `json:"RejectedAt,omitempty"`
-	ApprovedByName  string     `json:"ApprovedByName,omitempty"`
-	ApprovedAt      *time.Time `json:"ApprovedAt,omitempty"`
+	StageClosed    bool
+	CheckerName    string     `json:"CheckerName,omitempty"`
+	CheckDate      *time.Time `json:"CheckDate,omitempty"`
+	RejectedByName string     `json:"RejectedByName,omitempty"`
+	RejectedAt     *time.Time `json:"RejectedAt,omitempty"`
+	ApprovedByName string     `json:"ApprovedByName,omitempty"`
+	ApprovedAt     *time.Time `json:"ApprovedAt,omitempty"`
 }

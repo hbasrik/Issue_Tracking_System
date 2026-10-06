@@ -574,6 +574,31 @@ kalıyordu.
 - **Geri alma:** 0038 down, yönetim olayı içeren satır varsa durur
   (geçmiş silinmez); yoksa enum'u bu dört değer olmadan yeniden kurar.
 
+## Karar 26 — Checklist cevabında tek not alanı; şema değişmez (NEW — 2026-10-06)
+
+- **Karar:** API her cevap için tek `note` alanı alır ve öğe listesinde
+  tek `Note` alanı döndürür. Uygun (OK) dahil her cevapta not girilebilir
+  (ölçüm değeri, gözlem). Yeni kolon açılmaz; not cevabın sahip olduğu
+  mevcut kolona yazılır: OK → `approved_desc` (0001'den beri var,
+  kullanılmıyordu), Şartlı uygun → `conditional_desc`, Uygun değil →
+  `rejected_desc`, Yeniden işlem → `rework_desc`. PENDING'in kolonu
+  yoktur, not düşer.
+- **Tek yer:** cevap→kolon eşlemesi yalnız `domain/checklist_note.go`
+  içindeki `ChecklistNotes.slot`'tadır; yazma (`NotesForStatus`) ve okuma
+  (`NoteFor`) aynı fonksiyondan geçer. İleride tek kolona geçilirse
+  değişecek yer burasıdır.
+- **Geriye uyum:** `rework_desc`, `conditional_desc`, `rejected_desc`
+  istek alanları kabul edilmeye devam eder (eski mobil sürüm). `note`
+  boşsa bu alanlar eskisi gibi olduğu gibi yazılır; `note` doluysa onlar
+  yok sayılır. Yanıttaki eski alanlar da durur.
+- **Değişmeyen:** `chk_description_required_by_status` aynen kalır (EOL'de
+  üç hata cevabı için not zorunlu; OK serbest). `check_image_url` ve
+  diğer kullanılmayan kolonlara dokunulmaz.
+- **Bilinen sınır:** cevap değişince eski cevabın notu silinir (kayıt her
+  seferinde dört kolonu yeniden yazar) ve hiçbir yerde saklanmaz;
+  `CHECKLIST_ITEM_UPDATE` denetim kaydı yalnız eski/yeni durumu ve madde
+  kimliğini tutar, metni tutmaz. Bu davranış bu kararla değişmedi.
+
 ## Değişmeyen / Yeniden Kullanılacaklar
 
 Şunlara **dokunulmuyor**, olduğu gibi kalıyor: JWT auth + bcrypt (üstteki JWT_SECRET ve iptal sıkılaştırmaları hariç), CORS allowlist mimarisi, Unit-of-Work (pgx.Tx) transaction pattern, `.cursor/rules` (commit ve environment-check kuralları), Analysis sekmesi temel yapısı (VIN×severity kırılımı, Pie/Bar chart'lar — yeni station/EOL alanlarıyla genişleyecek ama sıfırdan kurulmayacak), Docker/migration/seed altyapısı.

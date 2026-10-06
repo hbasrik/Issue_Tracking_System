@@ -325,6 +325,7 @@ func (f *fakeChecklistRepo) SaveResult(_ context.Context, result domain.Checklis
 			rows[i].ReworkDesc = result.ReworkDesc
 			rows[i].ConditionalDesc = result.ConditionalDesc
 			rows[i].RejectedDesc = result.RejectedDesc
+			rows[i].ApprovedDesc = result.ApprovedDesc
 			f.rows[result.VIN] = rows
 			return nil
 		}

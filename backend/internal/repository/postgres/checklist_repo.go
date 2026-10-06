@@ -99,6 +99,7 @@ func (r *ChecklistProgressRepo) ListItemsWithProgress(ctx context.Context, vin s
 		        COALESCE(NULLIF(trim(p.item_text_snapshot), ''), cti.item_text),
 		        COALESCE(p.check_status::text, 'PENDING'),
 		        COALESCE(p.rework_desc, ''), COALESCE(p.conditional_desc, ''), COALESCE(p.rejected_desc, ''),
+		        COALESCE(p.approved_desc, ''),
 		        cti.eol_phase::text, p.id, cti.is_active,
 		        cti.section_key, cti.section_sort,
 		        p.check_date, COALESCE(checker.full_name, ''),
@@ -121,6 +122,7 @@ func (r *ChecklistProgressRepo) ListItemsWithProgress(ctx context.Context, vin s
 		        COALESCE(NULLIF(trim(p.item_text_snapshot), ''), cti.item_text),
 		        p.check_status::text,
 		        COALESCE(p.rework_desc, ''), COALESCE(p.conditional_desc, ''), COALESCE(p.rejected_desc, ''),
+		        COALESCE(p.approved_desc, ''),
 		        cti.eol_phase::text, p.id, cti.is_active,
 		        cti.section_key, cti.section_sort,
 		        p.check_date, COALESCE(checker.full_name, ''),
@@ -149,6 +151,7 @@ func (r *ChecklistProgressRepo) ListItemsWithProgress(ctx context.Context, vin s
 		if err := rows.Scan(
 			&item.ItemID, &item.ItemNo, &item.ItemText, &status,
 			&item.ReworkDesc, &item.ConditionalDesc, &item.RejectedDesc,
+			&item.ApprovedDesc,
 			&eolPhase, &item.ProgressID, &item.IsActive,
 			&item.SectionKey, &item.SectionSort,
 			&item.CheckDate, &item.CheckerName,
@@ -159,6 +162,12 @@ func (r *ChecklistProgressRepo) ListItemsWithProgress(ctx context.Context, vin s
 			return nil, err
 		}
 		item.Status = domain.CheckStatus(status)
+		item.Note = domain.ChecklistNotes{
+			Rework:      item.ReworkDesc,
+			Conditional: item.ConditionalDesc,
+			Rejected:    item.RejectedDesc,
+			Approved:    item.ApprovedDesc,
+		}.NoteFor(item.Status)
 		if eolPhase != nil && *eolPhase != "" {
 			p := domain.EOLItemPhase(*eolPhase)
 			item.EolPhase = &p
@@ -220,6 +229,7 @@ func (r *ChecklistProgressRepo) SaveResult(ctx context.Context, result domain.Ch
 		     rework_desc = NULLIF($5, ''),
 		     conditional_desc = NULLIF($6, ''),
 		     rejected_desc = NULLIF($7, ''),
+		     approved_desc = NULLIF($9, ''),
 		     rejected_by = CASE WHEN $3::check_status_enum = 'NOT_OK' THEN $4::int ELSE NULL END,
 		     rejected_date = CASE WHEN $3::check_status_enum = 'NOT_OK' THEN now() ELSE NULL END,
 		     approved_by = CASE WHEN $3::check_status_enum IN ('OK', 'CONDITIONAL_OK') THEN $4::int ELSE NULL END,
@@ -231,7 +241,8 @@ func (r *ChecklistProgressRepo) SaveResult(ctx context.Context, result domain.Ch
 		     END
 		 WHERE p.vin = $1 AND p.check_item_id = $2 AND p.checklist_type = $8`,
 		result.VIN, result.CheckItemID, string(result.CheckStatus), result.CheckerID,
-		result.ReworkDesc, result.ConditionalDesc, result.RejectedDesc, string(result.ChecklistType))
+		result.ReworkDesc, result.ConditionalDesc, result.RejectedDesc, string(result.ChecklistType),
+		result.ApprovedDesc)
 	if err != nil {
 		return mapRaiseException(err)
 	}

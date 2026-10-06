@@ -12,7 +12,10 @@ import (
 )
 
 type checklistRequest struct {
-	Status          string `json:"status"`
+	Status string `json:"status"`
+	// Note is the description for any answer. The per-answer fields below
+	// are still accepted for older mobile builds.
+	Note            string `json:"note"`
 	ReworkDesc      string `json:"rework_desc"`
 	ConditionalDesc string `json:"conditional_desc"`
 	RejectedDesc    string `json:"rejected_desc"`
@@ -64,6 +67,7 @@ func (s *server) handleRecordChecklist(w http.ResponseWriter, r *http.Request) {
 		ItemID:          itemID,
 		Status:          status,
 		CheckerID:       claims.UserID,
+		Note:            req.Note,
 		ReworkDesc:      req.ReworkDesc,
 		ConditionalDesc: req.ConditionalDesc,
 		RejectedDesc:    req.RejectedDesc,
