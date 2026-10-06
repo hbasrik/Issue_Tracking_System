@@ -256,4 +256,7 @@ type ChecklistItemView struct {
 	RejectedAt     *time.Time `json:"RejectedAt,omitempty"`
 	ApprovedByName string     `json:"ApprovedByName,omitempty"`
 	ApprovedAt     *time.Time `json:"ApprovedAt,omitempty"`
+	// Photos are every CHECKLIST_ITEM_PROGRESS attachment of this row,
+	// oldest first; empty (never nil) when there are none.
+	Photos []MediaAttachment
 }

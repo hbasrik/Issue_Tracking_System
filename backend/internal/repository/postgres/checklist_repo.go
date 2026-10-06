@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -88,6 +89,21 @@ func (r *ChecklistProgressRepo) ResolveDefaultTemplateID(ctx context.Context, ch
 	return domain.PreferredActiveTemplateID(candidates, vehicleModelID)
 }
 
+// checklistPhotosLateral aggregates every photo of progress row p into one
+// JSON array shaped like domain.MediaAttachment, so the item list carries all
+// photos in the same statement (no per-item media query).
+const checklistPhotosLateral = `
+		 LEFT JOIN LATERAL (
+		   SELECT COALESCE(json_agg(json_build_object(
+		            'id', m.id, 'entity_type', m.entity_type, 'entity_id', m.entity_id,
+		            'vin', m.vin, 'file_name', m.file_name, 'storage_path', m.storage_path,
+		            'mime_type', COALESCE(m.mime_type, ''), 'file_size', COALESCE(m.file_size, 0),
+		            'uploaded_by', m.uploaded_by, 'uploaded_at', m.uploaded_at)
+		          ORDER BY m.uploaded_at, m.id), '[]'::json) AS photos
+		   FROM media_attachments m
+		   WHERE m.entity_type = 'CHECKLIST_ITEM_PROGRESS' AND m.entity_id = p.id::text
+		 ) ph ON TRUE`
+
 // ListItemsWithProgress returns every active catalogue item for the template
 // (LEFT JOIN progress — missing rows appear as PENDING with nil ProgressID)
 // plus inactive items that already have progress so historical ticks stay
@@ -105,7 +121,8 @@ func (r *ChecklistProgressRepo) ListItemsWithProgress(ctx context.Context, vin s
 		        p.check_date, COALESCE(checker.full_name, ''),
 		        p.rejected_date, COALESCE(rej.full_name, ''),
 		        p.approved_date, COALESCE(appr.full_name, ''),
-		        COALESCE(`+checklistStageClosedSQL("v", "w", "t.type", "cti.eol_phase", "p")+`, false)
+		        COALESCE(`+checklistStageClosedSQL("v", "w", "t.type", "cti.eol_phase", "p")+`, false),
+		        ph.photos
 		 FROM checklist_template_items cti
 		 JOIN checklist_templates t ON t.id = cti.template_id
 		 LEFT JOIN vehicles v ON v.vin = $1
@@ -114,7 +131,7 @@ func (r *ChecklistProgressRepo) ListItemsWithProgress(ctx context.Context, vin s
 		   ON p.check_item_id = cti.id AND p.vin = $1 AND p.checklist_type = $2
 		 LEFT JOIN users checker ON checker.id = p.checker_id
 		 LEFT JOIN users rej ON rej.id = p.rejected_by
-		 LEFT JOIN users appr ON appr.id = p.approved_by
+		 LEFT JOIN users appr ON appr.id = p.approved_by`+checklistPhotosLateral+`
 		 WHERE cti.template_id = $3
 		   AND cti.is_active
 		 UNION ALL
@@ -128,12 +145,13 @@ func (r *ChecklistProgressRepo) ListItemsWithProgress(ctx context.Context, vin s
 		        p.check_date, COALESCE(checker.full_name, ''),
 		        p.rejected_date, COALESCE(rej.full_name, ''),
 		        p.approved_date, COALESCE(appr.full_name, ''),
-		        false
+		        false,
+		        ph.photos
 		 FROM checklist_item_progress p
 		 JOIN checklist_template_items cti ON cti.id = p.check_item_id
 		 LEFT JOIN users checker ON checker.id = p.checker_id
 		 LEFT JOIN users rej ON rej.id = p.rejected_by
-		 LEFT JOIN users appr ON appr.id = p.approved_by
+		 LEFT JOIN users appr ON appr.id = p.approved_by`+checklistPhotosLateral+`
 		 WHERE p.vin = $1 AND p.checklist_type = $2
 		   AND cti.template_id = $3
 		   AND NOT cti.is_active
@@ -148,6 +166,7 @@ func (r *ChecklistProgressRepo) ListItemsWithProgress(ctx context.Context, vin s
 		var item domain.ChecklistItemView
 		var status string
 		var eolPhase *string
+		var photos []byte
 		if err := rows.Scan(
 			&item.ItemID, &item.ItemNo, &item.ItemText, &status,
 			&item.ReworkDesc, &item.ConditionalDesc, &item.RejectedDesc,
@@ -158,8 +177,13 @@ func (r *ChecklistProgressRepo) ListItemsWithProgress(ctx context.Context, vin s
 			&item.RejectedAt, &item.RejectedByName,
 			&item.ApprovedAt, &item.ApprovedByName,
 			&item.StageClosed,
+			&photos,
 		); err != nil {
 			return nil, err
+		}
+		item.Photos = []domain.MediaAttachment{}
+		if err := json.Unmarshal(photos, &item.Photos); err != nil {
+			return nil, fmt.Errorf("checklist photos: %w", err)
 		}
 		item.Status = domain.CheckStatus(status)
 		item.Note = domain.ChecklistNotes{
