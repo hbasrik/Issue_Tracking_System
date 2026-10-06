@@ -1,0 +1,3 @@
+1280px: gallery tiles 4 ["gallery-vehicle-1.jpg","gallery-resolution-1.jpg","gallery-issue-2.jpg","gallery-issue-1.jpg"]; EoL item photos 0 — PASS
+375px: gallery tiles 4 ["gallery-vehicle-1.jpg","gallery-resolution-1.jpg","gallery-issue-2.jpg","gallery-issue-1.jpg"]; EoL item photos 0 — PASS
+GALLERY CHECKS PASSED

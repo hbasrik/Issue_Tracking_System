@@ -1,0 +1,7 @@
+[after] GET /vehicles/N7V1K1SA0TK000003/media -> 200: 4 rows; ISSUE=2, ISSUE_RESOLUTION=1, VEHICLE=1
+[after] media_attachments rows for the VIN in the DB: CHECKLIST_ITEM_PROGRESS=4, ISSUE=2, ISSUE_RESOLUTION=1, VEHICLE=1
+[after]   id=15 VEHICLE/N7V1K1SA0TK000003 gallery-vehicle-1.jpg
+[after]   id=14 ISSUE_RESOLUTION/17 gallery-resolution-1.jpg
+[after]   id=13 ISSUE/17 gallery-issue-2.jpg
+[after]   id=12 ISSUE/17 gallery-issue-1.jpg
+[after] GET /vehicles/N7V1K1SA0TK000003/checklist/eol -> 200: 50 items, items with photos: [(1, ['madde1-a.jpg', 'madde1-b.jpg', 'madde1-c.jpg']), (2, ['madde2-a.jpg'])]

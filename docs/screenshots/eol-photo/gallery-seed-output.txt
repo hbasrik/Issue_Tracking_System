@@ -1,0 +1,5 @@
+POST /issues -> 201, issue id 17
+POST /media ISSUE/17 gallery-issue-1.jpg -> 201, media id 12
+POST /media ISSUE/17 gallery-issue-2.jpg -> 201, media id 13
+POST /media ISSUE_RESOLUTION/17 gallery-resolution-1.jpg -> 201, media id 14
+POST /media VEHICLE/N7V1K1SA0TK000003 gallery-vehicle-1.jpg -> 201, media id 15

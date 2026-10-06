@@ -884,6 +884,22 @@ başlatılınca devreye girer.
   `-lightbox.png` (1280/375), `capture-mobile-photos-output.txt` (20
   kontrol) + `mobile-photos-*.png`. Kalıcı test:
   `TestListItemsWithProgress_ReturnsEveryPhoto`.
+
+### A45. Araç galerisinden EOL madde fotoğraflarının çıkarılması `[x]` — 2026-10-06
+- **Değişiklik:** `MediaRepo.ListByVIN` (`GET /vehicles/{vin}/media`,
+  Araç Detay "Tüm fotoğraflar") `entity_type <> 'CHECKLIST_ITEM_PROGRESS'`
+  filtresi alır. Madde fotoğrafları maddede görünür (A44); veritabanındaki
+  satırlar aynen durur. Migration yok.
+- **Kanıt (test DB, aynı VIN `N7V1K1SA0TK000003`):**
+  `gallery-before-output.txt` → 8 satır (CHECKLIST_ITEM_PROGRESS=4,
+  ISSUE=2, ISSUE_RESOLUTION=1, VEHICLE=1); `gallery-after-output.txt` →
+  4 satır (ISSUE=2, ISSUE_RESOLUTION=1, VEHICLE=1), DB'de satırlar hâlâ 8,
+  EOL listesi madde 1'de 3, madde 2'de 1 fotoğrafı dönmeye devam ediyor.
+  `capture-gallery-output.txt` + `web-tr-{1280,375}-gallery.png`.
+  Fikstür `run-gallery-verification.py seed` ile uygulama akışından
+  (POST /issues + POST /media). Kalıcı test:
+  `TestListByVIN_LeavesOutChecklistItemPhotos` (beş türün her biri; yalnız
+  CHECKLIST_ITEM_PROGRESS düşer).
 ---
 
 ## B — Canlıya çıkmadan önce ZORUNLU
