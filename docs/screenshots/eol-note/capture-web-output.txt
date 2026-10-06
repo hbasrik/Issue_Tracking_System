@@ -1,0 +1,4 @@
+1280px tr: saved OK note="Akü 12.6 V"; new OK placeholder="Açıklama (isteğe bağlı): ölçüm değeri, not" required=false
+375px tr: saved OK note="Akü 12.6 V"; new OK placeholder="Açıklama (isteğe bağlı): ölçüm değeri, not" required=false
+1280px en: saved OK note="Akü 12.6 V"; new OK placeholder="Note (optional): measured value, remark" required=false
+WEB CHECKS PASSED

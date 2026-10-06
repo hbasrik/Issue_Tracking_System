@@ -1,0 +1,41 @@
+fixture: vin=N7V1K1SA0TK000003 item=1 (seeded test vehicle, test DB)
+
+== 1. OK with note -> approved_desc ==
+  [PASS] POST OK + note accepted — HTTP 200
+   db: OK|Akü 12.6 V|<NULL>|<NULL>|<NULL>
+  [PASS] note stored in approved_desc only
+   api Note: 'Akü 12.6 V' ApprovedDesc: 'Akü 12.6 V'
+  [PASS] GET returns Note for OK
+
+== 2. CONDITIONAL_OK with note -> conditional_desc; OK note cleared ==
+  [PASS] POST CONDITIONAL_OK + note accepted — HTTP 200
+   db: CONDITIONAL_OK|<NULL>|Paspas sonra|<NULL>|<NULL>
+  [PASS] note moved to conditional_desc
+  [PASS] GET Note follows answer
+
+== 3. Legacy field still accepted (old mobile) ==
+  [PASS] POST NOT_OK + rejected_desc accepted — HTTP 200
+   db: NOT_OK|<NULL>|<NULL>|Conta yırtık|<NULL>
+  [PASS] legacy rejected_desc stored
+  [PASS] GET Note reads rejected_desc
+
+== 4. Failure answers still require a note ==
+  [PASS] REWORK with blank note -> 400 — HTTP 400 {'error': 'description is required for this status', 'request_id': "Basri's Macbook/tFFhC5YBrf-000009"}
+  [PASS] REWORK with no note -> 400 — HTTP 400 {'error': 'description is required for this status', 'request_id': "Basri's Macbook/tFFhC5YBrf-000010"}
+  [PASS] row unchanged after refusals
+
+== 5. OK without note clears the old note ==
+   db: OK|<NULL>|<NULL>|<NULL>|<NULL>
+  [PASS] OK without note: all four columns NULL
+
+== 6. Constraint unchanged ==
+   CHECK (((checklist_type <> 'EOL'::checklist_type_enum) OR (check_status = ANY (ARRAY['PENDING'::check_status_enum, 'OK'::check_status_enum])) OR ((check_status = 'NOT_OK'::check_status_enum) AND (rejected_desc IS NOT NULL)) OR ((check_status = 'REWORK'::check_status_enum) AND (rework_desc IS NOT NULL)) OR ((check_status = 'CONDITIONAL_OK'::check_status_enum) AND (conditional_desc IS NOT NULL))))
+  [PASS] chk_description_required_by_status present and does not mention approved_desc
+
+== 7. Audit rows for this item (status only, no text) ==
+25|PENDING|OK|{"item_id": 1, "checklist_type": "EOL"}
+26|OK|CONDITIONAL_OK|{"item_id": 1, "checklist_type": "EOL"}
+27|CONDITIONAL_OK|NOT_OK|{"item_id": 1, "checklist_type": "EOL"}
+28|NOT_OK|OK|{"item_id": 1, "checklist_type": "EOL"}
+
+ALL CHECKS PASSED

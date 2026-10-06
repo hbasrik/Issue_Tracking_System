@@ -809,6 +809,30 @@ satır TR+EN, ham değer yok), `capture-web-output.txt` + `web-*.png`
 (TR/EN, dört filtre, izleyici görünümü). Gerçek cihazda görüntü yok
 (mobil ekran değişmedi).
 
+
+### A42. EOL: her cevapta tek not alanı `[x]` — 2026-10-06
+Şema değişmedi, migration yok (Karar 26). Kod değişti; API yeniden
+başlatılınca devreye girer.
+- **API:** `POST …/checklist/{type}/{itemId}` tek `note` alanı alır;
+  öğe listesi her maddede `Note` döndürür. Not cevabın kolonuna yazılır:
+  OK → `approved_desc`, Şartlı uygun → `conditional_desc`, Uygun değil →
+  `rejected_desc`, Yeniden işlem → `rework_desc`. Eşleme tek fonksiyonda
+  (`domain/checklist_note.go`).
+- **Geriye uyum:** eski `rework_desc` / `conditional_desc` /
+  `rejected_desc` alanları kabul edilir (eski mobil sürüm).
+  `chk_description_required_by_status` aynen duruyor.
+- **Web ve mobil EOL:** cevap seçilince açıklama kutusu her cevapta
+  açılır; üç hata cevabında zorunlu (kırmızı kenar), OK'te isteğe bağlı
+  ("Açıklama (isteğe bağlı): ölçüm değeri, not" / EN karşılığı). Yazdırma
+  `Note`'u okur. Test ve Sevk ekranlarına dokunulmadı.
+- **Bilinen sınır (değişmedi):** cevap değişince eski not silinir ve
+  hiçbir yerde saklanmaz; denetim kaydı yalnız durumu tutar.
+- **Kanıt:** `docs/screenshots/eol-note/`: `api-verification-output.txt`
+  (test DB'de 15 kontrol: OK notu `approved_desc`'e, cevap değişince not
+  yeni kolona, eski alan adı kabul, boş notla hata cevabı 400, kısıt
+  aynı), `capture-web-output.txt` + `web-*-ok-note.png` (1280/375 px,
+  TR/EN). Mobil yalnız `tsc` ile doğrulandı; mobil ekran görüntüsü bu
+  adımda alınmadı.
 ---
 
 ## B — Canlıya çıkmadan önce ZORUNLU
