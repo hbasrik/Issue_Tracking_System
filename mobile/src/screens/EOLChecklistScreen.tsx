@@ -35,6 +35,7 @@ import {
   DismissKeyboardScrollView,
 } from '../components/keyboard';
 import { ActionStamp } from '../components/ActionStamp';
+import { ChecklistItemPhotos } from '../components/ChecklistItemPhotos';
 import { ChecklistCollapsedSection } from '../components/ChecklistCollapsedSection';
 import { checklistActorLines } from '../lib/actionStamp';
 import { useAuth } from '../auth/AuthProvider';
@@ -405,6 +406,7 @@ export default function EOLChecklistScreen() {
                 {item.ItemNo}. {item.ItemText}
               </Text>
               <ActionStamp lines={checklistActorLines(item, t, locale)} />
+              <ChecklistItemPhotos photos={item.Photos ?? []} />
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
                 {STATUS_KEYS.map((s) => {
                   const selected = d.status === s.value;

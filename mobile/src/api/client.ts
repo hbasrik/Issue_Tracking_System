@@ -235,6 +235,8 @@ export interface ChecklistItem {
   RejectedDesc?: string;
   /** Description of the current answer, OK included. */
   Note?: string;
+  /** Every photo attached to this item's progress row, oldest first. */
+  Photos?: MediaAttachment[];
   EolPhase?: EOLItemPhase | null;
   SectionKey?: string | null;
   SectionSort?: number | null;
