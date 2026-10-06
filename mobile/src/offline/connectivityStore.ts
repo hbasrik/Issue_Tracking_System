@@ -21,6 +21,18 @@ export function noteTransportFailure(): void {
   emit();
 }
 
+/**
+ * OS network state (expo-network). A reconnect also clears a stale transport
+ * failure, so the flag never stays "offline" until some screen happens to
+ * make a request. The flag is informational only: nothing may refuse to send
+ * because of it.
+ */
+export function noteOsNetwork(connected: boolean): void {
+  if (online === connected) return;
+  online = connected;
+  emit();
+}
+
 export function isAppOnline(): boolean {
   return online;
 }

@@ -620,6 +620,23 @@ kalıyordu.
   anahtarı yazılmaz (yalnız `item_id`, `checklist_type`, notlar). Test ve
   Sevk kayıtları değişmedi.
 
+## Karar 27 — Mobil çevrimdışı bayrağı yalnız bilgilendirir (NEW — 2026-10-06)
+
+- **Kaynak:** `connectivityStore` iki sinyali birleştirir: işletim sisteminin
+  ağ durumu (`expo-network`, `isConnected`; `watchOsNetwork` App açılışında
+  başlar) ve istek sonuçları (yanıtsız istek → çevrimdışı, herhangi bir
+  yanıt → çevrimiçi). İşletim sistemi bağlantının döndüğünü bildirince bayrak
+  da düzelir; bir ekranın istek atmasını beklemez. `isInternetReachable`
+  kullanılmaz: API yerel ağda, internetsiz Wi-Fi'de de ulaşılabilir.
+- **Kural:** Bayrak hiçbir zaman Kaydet'i veya yüklemeyi engellemez. Şerit
+  ve "çevrimdışı görünüyorsunuz" yazısı gösterir; istek her zaman denenir,
+  düşerse gerçek hata gösterilir. Bayat bir tahminin işlemi kilitlemesi
+  hatadır.
+- **Neden `expo-network`:** NetInfo da Expo Go'da hazır gelir; ikisi de ek
+  native kurulum istemez. `expo-network` Expo SDK ile aynı sürüm çizgisinde
+  (`~57`) ve `npx expo install` ile SDK'ya uygun sürüm seçilir; ihtiyaç
+  yalnız bağlı/bağlı değil olduğu için daha küçük API yeterli.
+
 ## Değişmeyen / Yeniden Kullanılacaklar
 
 Şunlara **dokunulmuyor**, olduğu gibi kalıyor: JWT auth + bcrypt (üstteki JWT_SECRET ve iptal sıkılaştırmaları hariç), CORS allowlist mimarisi, Unit-of-Work (pgx.Tx) transaction pattern, `.cursor/rules` (commit ve environment-check kuralları), Analysis sekmesi temel yapısı (VIN×severity kırılımı, Pie/Bar chart'lar — yeni station/EOL alanlarıyla genişleyecek ama sıfırdan kurulmayacak), Docker/migration/seed altyapısı.

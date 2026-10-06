@@ -5,6 +5,7 @@ import { AuthProvider } from './src/auth/AuthProvider';
 import { IssueReportQueueProvider } from './src/offline/IssueReportQueueProvider';
 import { ReferenceCacheProvider } from './src/offline/ReferenceCacheProvider';
 import { OfflineBanner } from './src/offline/OfflineBanner';
+import { watchOsNetwork } from './src/offline/osNetwork';
 import { KeyboardDoneAccessory } from './src/components/keyboard';
 import { ConfirmProvider } from './src/components/ConfirmDialog';
 import { ApprovalUndoProvider } from './src/components/ApprovalUndoToast';
@@ -15,6 +16,8 @@ import { RootNavigator } from './src/navigation/RootNavigator';
 if (__DEV__) {
   console.info('[karea] App module evaluated');
 }
+
+watchOsNetwork();
 
 function AppShell() {
   const { mode } = useTheme();
