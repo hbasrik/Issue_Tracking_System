@@ -112,7 +112,7 @@ export default function EOLChecklistScreen() {
       for (const it of list) {
         next[it.ItemID] = {
           status: it.Status === 'PENDING' ? '' : it.Status,
-          desc: it.ReworkDesc || it.ConditionalDesc || it.RejectedDesc || '',
+          desc: it.Note ?? '',
         };
       }
       setDrafts(next);
@@ -195,16 +195,10 @@ export default function EOLChecklistScreen() {
     setBusy(true);
     setError(null);
     try {
-      const body: {
-        status: string;
-        rework_desc?: string;
-        conditional_desc?: string;
-        rejected_desc?: string;
-      } = { status: d.status };
-      if (d.status === 'REWORK') body.rework_desc = d.desc.trim();
-      if (d.status === 'CONDITIONAL_OK') body.conditional_desc = d.desc.trim();
-      if (d.status === 'NOT_OK') body.rejected_desc = d.desc.trim();
-      await api.recordChecklist(vin, 'eol', item.ItemID, body);
+      await api.recordChecklist(vin, 'eol', item.ItemID, {
+        status: d.status,
+        note: d.desc.trim(),
+      });
       await load();
     } catch (err) {
       setError(apiErrorMessage(err, t));
@@ -385,7 +379,7 @@ export default function EOLChecklistScreen() {
                   );
                 })}
               </View>
-              {needsDesc(d.status as ChecklistItem['Status']) ? (
+              {d.status ? (
                 <AppTextInput
                   value={d.desc}
                   onChangeText={(text) =>
@@ -394,14 +388,20 @@ export default function EOLChecklistScreen() {
                       [item.ItemID]: { ...d, desc: text },
                     }))
                   }
-                  placeholder={t('checklist.descRequiredStar')}
+                  placeholder={
+                    needsDesc(d.status as ChecklistItem['Status'])
+                      ? t('checklist.descRequiredStar')
+                      : t('checklist.noteOptionalPlaceholder')
+                  }
                   placeholderTextColor={tokens.textSecondary}
                   multiline
                   numberOfLines={3}
                   style={{
                     marginTop: 10,
                     borderWidth: 1,
-                    borderColor: statusColors.notOk,
+                    borderColor: needsDesc(d.status as ChecklistItem['Status'])
+                      ? statusColors.notOk
+                      : tokens.border,
                     borderRadius: 8,
                     padding: 10,
                     color: tokens.textPrimary,
