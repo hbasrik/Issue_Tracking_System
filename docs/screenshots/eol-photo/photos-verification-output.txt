@@ -1,0 +1,26 @@
+progress ids: item 1 -> 209, item 2 -> 210
+
+== 1. Upload through POST /media (CHECKLIST_ITEM_PROGRESS) ==
+  [PASS] upload madde1-a.jpg to progress 209 — HTTP 201 id=8 vin=N7V1K1SA0TK000003 size=62294
+  [PASS] upload madde1-b.jpg to progress 209 — HTTP 201 id=9 vin=N7V1K1SA0TK000003 size=88021
+  [PASS] upload madde1-c.jpg to progress 209 — HTTP 201 id=10 vin=N7V1K1SA0TK000003 size=62294
+  [PASS] upload madde2-a.jpg to progress 210 — HTTP 201 id=11
+  [PASS] issue_list unchanged by uploads — before=16 after=16
+
+== 2. List returns every photo ==
+   50 items; item 1 photos ['madde1-a.jpg', 'madde1-b.jpg', 'madde1-c.jpg']; item 2 photos ['madde2-a.jpg']
+  [PASS] list has 50 active items
+  [PASS] item 1 returns all three photos, oldest first
+  [PASS] item 2 returns its one photo
+  [PASS] every other item has Photos == []
+
+== 3. SQL statements for one GET /vehicles/{vin}/checklist/eol ==
+    execute stmtcache_8b98e99f3220fce10be79d15b724ca0b5270c20382aabac0: SELECT u.id, u.full_name, u.email, u.password_hash,
+    execute stmtcache_e4ee88e56e66db11935d30612c0434673442df110faeb9fe: SELECT p.id, p.code
+    execute stmtcache_3aeda960057f1f4bebc72caf06b2086d14e6f0835338df7a: SELECT vehicles.vin, vehicles.vehicle_model_id,
+    execute stmtcache_681bcc9b0831f807d418a81bc463fed02b30425894524098: SELECT cti.id, cti.item_no,
+   total statements: 4; 'FROM media_attachments' occurrences: 2 (one per UNION branch of the single item-list statement)
+  [PASS] 4 statements for the whole request, independent of item/photo count
+  [PASS] media read only inside the item-list statement (2 = its two UNION branches)
+
+ALL CHECKS PASSED

@@ -1,0 +1,53 @@
+{
+ "ItemID": 1,
+ "ItemNo": 1,
+ "ItemText": "Software Update",
+ "Status": "PENDING",
+ "ReworkDesc": "",
+ "ConditionalDesc": "",
+ "RejectedDesc": "",
+ "ApprovedDesc": "",
+ "Note": "",
+ "EolPhase": "BRANCH",
+ "ProgressID": 209,
+ "IsActive": true,
+ "StageClosed": false,
+ "Photos": [
+  {
+   "id": 8,
+   "entity_type": "CHECKLIST_ITEM_PROGRESS",
+   "entity_id": "209",
+   "vin": "N7V1K1SA0TK000003",
+   "file_name": "madde1-a.jpg",
+   "storage_path": "checklist_item_progress/209/c6851d6086f6e9aaa68afe93c642ddf2.jpg",
+   "mime_type": "image/jpeg",
+   "file_size": 62294,
+   "uploaded_by": 3,
+   "uploaded_at": "2026-10-06T08:48:51.075179Z"
+  },
+  {
+   "id": 9,
+   "entity_type": "CHECKLIST_ITEM_PROGRESS",
+   "entity_id": "209",
+   "vin": "N7V1K1SA0TK000003",
+   "file_name": "madde1-b.jpg",
+   "storage_path": "checklist_item_progress/209/47890dffa291e621b257a77ff7de2b42.jpg",
+   "mime_type": "image/jpeg",
+   "file_size": 88021,
+   "uploaded_by": 3,
+   "uploaded_at": "2026-10-06T08:48:51.138841Z"
+  },
+  {
+   "id": 10,
+   "entity_type": "CHECKLIST_ITEM_PROGRESS",
+   "entity_id": "209",
+   "vin": "N7V1K1SA0TK000003",
+   "file_name": "madde1-c.jpg",
+   "storage_path": "checklist_item_progress/209/268098a5e23d70a18e134088cc8c8840.jpg",
+   "mime_type": "image/jpeg",
+   "file_size": 62294,
+   "uploaded_by": 3,
+   "uploaded_at": "2026-10-06T08:48:51.207617Z"
+  }
+ ]
+}

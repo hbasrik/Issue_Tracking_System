@@ -1,0 +1,21 @@
+photos-tr-375 [PASS] photo strips per item are [3,1] — [3,1]
+photos-tr-375 [PASS] all 4 thumbnails loaded — 4/4
+photos-tr-375 [PASS] no horizontal overflow
+photos-tr-375 [PASS] tap opens full-size viewer
+photos-tr-375 [PASS] no page errors
+photos-tr-1280 [PASS] photo strips per item are [3,1] — [3,1]
+photos-tr-1280 [PASS] all 4 thumbnails loaded — 4/4
+photos-tr-1280 [PASS] no horizontal overflow
+photos-tr-1280 [PASS] tap opens full-size viewer
+photos-tr-1280 [PASS] no page errors
+photos-en-375 [PASS] photo strips per item are [3,1] — [3,1]
+photos-en-375 [PASS] all 4 thumbnails loaded — 4/4
+photos-en-375 [PASS] no horizontal overflow
+photos-en-375 [PASS] tap opens full-size viewer
+photos-en-375 [PASS] no page errors
+photos-en-1280 [PASS] photo strips per item are [3,1] — [3,1]
+photos-en-1280 [PASS] all 4 thumbnails loaded — 4/4
+photos-en-1280 [PASS] no horizontal overflow
+photos-en-1280 [PASS] tap opens full-size viewer
+photos-en-1280 [PASS] no page errors
+MOBILE PHOTO CHECKS PASSED

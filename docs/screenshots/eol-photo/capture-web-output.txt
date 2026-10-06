@@ -1,0 +1,5 @@
+1280px: 50 item rows; photo strips [3,1]; thumbnails loaded 4/4; horizontal overflow false
+1280px: lightbox opened, original naturalWidth=375
+375px: 50 item rows; photo strips [3,1]; thumbnails loaded 4/4; horizontal overflow false
+375px: lightbox opened, original naturalWidth=375
+WEB CHECKS PASSED

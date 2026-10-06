@@ -173,6 +173,18 @@ const stationSteps = {
 const ISSUE_VIN = 'KAREA0LAYOUT00042';
 const PHOTO =
   'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="192" height="144"><rect width="192" height="144" fill="#8E9E7C"/><circle cx="96" cy="72" r="40" fill="#C0A89B"/></svg>';
+const eolPhoto = (itemId: number, n: number) => ({
+  id: 500 + n,
+  entity_type: 'CHECKLIST_ITEM_PROGRESS',
+  entity_id: String(1000 + itemId),
+  vin: LINE_VIN,
+  file_name: `eol-${n}.jpg`,
+  storage_path: PHOTO,
+  mime_type: 'image/jpeg',
+  file_size: 1024,
+  uploaded_by: 3,
+  uploaded_at: ago(2),
+});
 const issue = (id: number, severity: string, status: string, description: string, h: number, extra: Record<string, unknown> = {}) => ({
   ID: id,
   VIN: ISSUE_VIN,
@@ -394,6 +406,21 @@ export const SCENES: Scene[] = [
       eolWorkflow: eolWorkflow(LINE_VIN, 'BRANCH', null, null, 3),
     },
     harness: { pickPhoto: true, uploadError: 'Network request failed' },
+  },
+  {
+    id: 'eol-photos-list',
+    screen: 'eol',
+    params: { vin: LINE_VIN },
+    api: {
+      vehicle: vehicle(LINE_VIN, 'IN_PRODUCTION', 'BRANCH', 43.53),
+      checklists: {
+        eol: eolBranch(false, ['PENDING', 'PENDING', 'PENDING']).map((it) =>
+          it.ItemID === 1 ? { ...it, Photos: [1, 2, 3].map((n) => eolPhoto(it.ItemID, n)) }
+            : it.ItemID === 2 ? { ...it, Photos: [eolPhoto(it.ItemID, 4)] }
+              : { ...it, Photos: [] }),
+      },
+      eolWorkflow: eolWorkflow(LINE_VIN, 'BRANCH', null, null, 3),
+    },
   },
   {
     id: 'issue-detail',

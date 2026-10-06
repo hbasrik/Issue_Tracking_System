@@ -865,6 +865,25 @@ başlatılınca devreye girer.
   `aria-disabled=true`), `mobile-*.png` (375/1280 px, TR/EN). Gerçek
   cihazda deneme ve gerçek küçültme sonrası boyut ölçümü yapılmadı
   (düzenek küçültmeyi taklit eder).
+
+### A44. EOL maddesinde ekli fotoğrafların gösterimi `[x]` — 2026-10-06
+- **Sunucu:** `ListItemsWithProgress` her madde için
+  `CHECKLIST_ITEM_PROGRESS/<progress id>` fotoğraflarını tek sorguda
+  (`LEFT JOIN LATERAL … json_agg`, en eski önce) `Photos` alanında döner;
+  fotoğraf yoksa `[]`. Madde başına ayrı sorgu yok (N+1 yok); mevcut
+  `idx_media_attachments_entity` indeksini kullanır. Migration yok.
+- **Web / mobil:** EOL maddesinde (web `EolItemRow`, mobil
+  `EOLChecklistScreen`) tüm fotoğraflar küçük resim olarak görünür,
+  dokununca tam boy açılır. Test/Sevk ekranları ve paylaşılan
+  `CollapsedItemsSection` değişmedi.
+- **Kanıt:** `docs/screenshots/eol-photo/` — `photos-verification-output.txt`
+  (test DB, 50 aktif madde, 4+1 fotoğraf: liste isteği başına toplam 4 SQL
+  ifadesi — kullanıcı, izin, araç, madde listesi; `media_attachments` tek
+  ifadenin iki UNION kolunda; `issue_list` 16 → 16), `api-item1.json`,
+  `capture-web-output.txt` + `web-tr-*-photos.png` / `-50-items.png` /
+  `-lightbox.png` (1280/375), `capture-mobile-photos-output.txt` (20
+  kontrol) + `mobile-photos-*.png`. Kalıcı test:
+  `TestListItemsWithProgress_ReturnsEveryPhoto`.
 ---
 
 ## B — Canlıya çıkmadan önce ZORUNLU
