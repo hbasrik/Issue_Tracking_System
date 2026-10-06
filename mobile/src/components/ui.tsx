@@ -177,19 +177,23 @@ export function OutlineButton({
   label,
   onPress,
   danger,
+  disabled,
 }: {
   label: string;
   onPress: () => void;
   danger?: boolean;
+  disabled?: boolean;
 }) {
   const { tokens } = useTheme();
   const color = danger ? statusColors.notOk : tokens.accent;
   return (
     <Pressable
       onPress={onPress}
+      disabled={disabled}
+      accessibilityState={{ disabled: Boolean(disabled) }}
       style={({ pressed }) => [
         styles.outlineBtn,
-        { borderColor: color, opacity: pressed ? 0.85 : 1 },
+        { borderColor: color, opacity: disabled ? 0.5 : pressed ? 0.85 : 1 },
       ]}
     >
       <Text style={[styles.outlineText, { color }]}>{label}</Text>
