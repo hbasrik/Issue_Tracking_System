@@ -415,7 +415,7 @@ export const SCENES: Scene[] = [
       vehicle: vehicle(LINE_VIN, 'IN_PRODUCTION', 'BRANCH', 43.53),
       checklists: {
         eol: eolBranch(false, ['PENDING', 'PENDING', 'PENDING']).map((it) =>
-          it.ItemID === 1 ? { ...it, Photos: [1, 2, 3].map((n) => eolPhoto(it.ItemID, n)) }
+          it.ItemID === 1 ? { ...it, Note: 'ölçüm 12.6', Photos: [1, 2, 3].map((n) => eolPhoto(it.ItemID, n)) }
             : it.ItemID === 2 ? { ...it, Photos: [eolPhoto(it.ItemID, 4)] }
               : { ...it, Photos: [] }),
       },

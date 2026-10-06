@@ -5,7 +5,7 @@ os-reconnect [PASS] Save attempted and the real network error shown
 os-reconnect [PASS] picked photo kept after the failure
 os-reconnect [PASS] OS back: hint gone without any request
 os-reconnect [PASS] retry with no other action: answer then photo uploaded — recordChecklist,uploadMedia
-os-reconnect [PASS] no error after retry, picked cleared
+os-reconnect [PASS] after a successful retry the item collapses back to its badge
 os-reconnect [PASS] no page errors
 stale-flag [PASS] Save fails while the network is down
 stale-flag [PASS] flag now offline (hint shown)

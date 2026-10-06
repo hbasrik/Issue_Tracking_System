@@ -936,6 +936,28 @@ başlatılınca devreye girer.
   sonra" → yalnız new_note; mevcut 24 denetim satırının md5'i önce/sonra
   aynı). Kalıcı testler: `TestRecordChecklistAudit_KeepsOldAndNewEOLNote`,
   `TestRecordChecklistAudit_NoNoteKeysOutsideEOL`.
+
+### A47. Cevaplanan EOL maddesi rozete daralır `[x]` — 2026-10-06
+- **Değişiklik (web `ChecklistPanel` → `EolItemRow`, mobil
+  `EOLChecklistScreen`):** PENDING dışındaki EOL maddesi kapalı gösterilir:
+  madde adı, durum rozeti, "Düzenle", "Not: …" (not varsa), kim/ne zaman ve
+  fotoğraflar. Durum düğmeleri, not kutusu ve Kaydet görünmez. Rozete
+  dokununca editör kayıtlı durum ve notla dolu açılır; İptal taslağı atıp
+  kapatır, başarılı Kaydet listeyi yeniledikten sonra kapatır. Fotoğraf
+  yükleme düşerse madde açık kalır (hata ve seçili fotoğraf görünür).
+  PENDING maddeler eskisi gibi açık. Test ve Sevk ekranları ile ortak
+  `CollapsedItemsSection` değişmedi. Backend ve migration yok.
+- **Kanıt (web, test DB `karea_eolnote_test` + test API 18081):**
+  `docs/screenshots/eol-photo/capture-web-collapse-output.txt` (1280 TR,
+  375 TR, 1280 EN; rozet/not/fotoğraf, editörsüz rozet, dolu editör, İptal
+  taslağı atar, NOT_OK+"conta yırtık" Kaydet → yeni rozet ve sunucuda aynı
+  değer) + `web-collapse-*.png`.
+- **Kanıt (mobil düzenek):** `capture-mobile-collapse-output.txt` (TR/EN ×
+  375/1280; 3 cevaplı madde rozet, İptal istek atmaz, Kaydet
+  `recordChecklist(1, {status:'NOT_OK', note:'conta yırtık'})` sonra yine
+  rozet, PENDING 113 açık) + `mobile-collapse-*.png`. `offline-retry.mjs`,
+  `capture-mobile.mjs` ve `eol-note/capture-web.mjs` önce rozete dokunacak
+  şekilde güncellendi; hepsi geçiyor.
 ---
 
 ## B — Canlıya çıkmadan önce ZORUNLU

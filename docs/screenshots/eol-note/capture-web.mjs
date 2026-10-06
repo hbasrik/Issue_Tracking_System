@@ -39,6 +39,7 @@ for (const [width, locale] of [[1280, 'tr'], [375, 'tr'], [1280, 'en']]) {
   await page.goto(`${BASE}/vehicles/${VIN}?tab=eol`, { waitUntil: 'networkidle' });
   const saved = page.locator('[data-checklist-active-item="1"]');
   await saved.waitFor({ timeout: 15000 });
+  await saved.locator('button[aria-expanded="false"]').click();
   const savedNote = await saved.locator('textarea').inputValue();
   const fresh = page.locator('[data-checklist-active-item="2"]');
   await fresh.getByRole('button', { name: locale === 'tr' ? 'Uygun' : 'OK', exact: true }).click();

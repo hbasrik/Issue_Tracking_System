@@ -1,0 +1,44 @@
+answer item 1: HTTP 200
+photo for progress 209: HTTP 201
+== 1280px tr ==
+  [PASS] item 1 is a badge
+  [PASS] badge shows the answer
+  [PASS] badge shows the note — "Not: Akü 12.6 V"
+  [PASS] badge shows the photo — 1 photo(s)
+  [PASS] badge has no status buttons or Save
+  [PASS] pending items stay open
+  [PASS] tap opens the editor
+  [PASS] editor prefilled with the saved note — "Akü 12.6 V"
+  [PASS] Cancel closes it back to the badge
+  [PASS] Cancel discards the draft
+  [PASS] after Save the item is a badge with the new answer — ["1.Software Update","Uygun değil","Düzenle","","Not: conta yırtık","","Local Manager · 06.10.2026 16:08"]
+  [PASS] server has the edited answer — NOT_OK / conta yırtık
+  [PASS] no horizontal overflow
+  [PASS] no page errors
+== 375px tr ==
+  [PASS] item 1 is a badge
+  [PASS] badge shows the answer
+  [PASS] badge shows the note — "Not: Akü 12.6 V"
+  [PASS] badge shows the photo — 1 photo(s)
+  [PASS] badge has no status buttons or Save
+  [PASS] pending items stay open
+  [PASS] tap opens the editor
+  [PASS] editor prefilled with the saved note — "Akü 12.6 V"
+  [PASS] Cancel closes it back to the badge
+  [PASS] Cancel discards the draft
+  [PASS] no horizontal overflow
+  [PASS] no page errors
+== 1280px en ==
+  [PASS] item 1 is a badge
+  [PASS] badge shows the answer
+  [PASS] badge shows the note — "Note: Akü 12.6 V"
+  [PASS] badge shows the photo — 1 photo(s)
+  [PASS] badge has no status buttons or Save
+  [PASS] pending items stay open
+  [PASS] tap opens the editor
+  [PASS] editor prefilled with the saved note — "Akü 12.6 V"
+  [PASS] Cancel closes it back to the badge
+  [PASS] Cancel discards the draft
+  [PASS] no horizontal overflow
+  [PASS] no page errors
+WEB COLLAPSE CHECKS PASSED

@@ -31,8 +31,12 @@ async function open(scene) {
   await page.goto(`${pathToFileURL(path.join(bundle, 'index.html')).href}?scene=${scene}&locale=tr&theme=light`);
   await page.waitForFunction(() => document.querySelectorAll('#root div').length > 20, null, { timeout: 15000 });
   await page.waitForTimeout(300);
+  // Item 1 is answered in the scene, so it starts collapsed; open it.
+  await page.locator('[data-testid="eol-answered-toggle-1"]').click();
+  await page.waitForTimeout(200);
   return { page, errors };
 }
+const collapsedAgain = (page) => page.locator('[data-testid="eol-answered-1"]').isVisible();
 const card = (page) => page.locator('div', { has: page.getByText(T.save, { exact: true }) })
   .filter({ hasText: '1. Software Update' }).last();
 const calls = (page) => page.evaluate(() => window.__calls.map((c) => c.name));
@@ -72,7 +76,7 @@ const uploadedAfter = (names, from) => {
   await save(page);
   const names = await calls(page);
   check(key, 'retry with no other action: answer then photo uploaded', uploadedAfter(names, before), names.slice(before).join(','));
-  check(key, 'no error after retry, picked cleared', !(await has(page, T.netError)) && !(await has(page, T.picked)));
+  check(key, 'after a successful retry the item collapses back to its badge', await collapsedAgain(page));
   check(key, 'no page errors', errors.length === 0, errors.join('; '));
   await page.screenshot({ path: path.join(OUT, 'mobile-offline-retry-os.png') });
   await page.close();
@@ -93,7 +97,7 @@ const uploadedAfter = (names, from) => {
   await save(page);
   const names = await calls(page);
   check(key, 'stale flag does not block: answer then photo uploaded', uploadedAfter(names, before), names.slice(before).join(','));
-  check(key, 'successful reply clears the flag', !(await has(page, T.hint)));
+  check(key, 'successful reply clears the flag', !(await page.locator('#root').innerText()).includes(T.hint));
   check(key, 'no page errors', errors.length === 0, errors.join('; '));
   await page.close();
 }
