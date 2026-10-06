@@ -73,7 +73,7 @@ func (f *httpFakeMediaRepo) ListForEntity(_ context.Context, entityType domain.M
 	return out, nil
 }
 
-func (f *httpFakeMediaRepo) ListByVIN(_ context.Context, vin string) ([]domain.MediaAttachment, error) {
+func (f *httpFakeMediaRepo) ListGalleryByVIN(_ context.Context, vin string) ([]domain.MediaAttachment, error) {
 	var out []domain.MediaAttachment
 	for _, row := range f.rows {
 		if row.VIN == vin {

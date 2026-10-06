@@ -6,10 +6,10 @@ import (
 	"github.com/karea/backend/internal/domain"
 )
 
-// TestListByVIN_LeavesOutChecklistItemPhotos attaches one photo of every
-// entity type to a vehicle and checks the gallery keeps all but the checklist
-// item photo. Rolled back.
-func TestListByVIN_LeavesOutChecklistItemPhotos(t *testing.T) {
+// TestListGalleryByVIN_LeavesOutChecklistItemPhotos attaches one photo of
+// every entity type to a vehicle and checks the gallery keeps all but the
+// checklist item photo. Rolled back.
+func TestListGalleryByVIN_LeavesOutChecklistItemPhotos(t *testing.T) {
 	ctx, tx := stageTestTx(t)
 
 	var vin string
@@ -17,7 +17,7 @@ func TestListByVIN_LeavesOutChecklistItemPhotos(t *testing.T) {
 		t.Fatalf("no vehicle: %v", err)
 	}
 	before := map[domain.MediaEntityType]int{}
-	existing, err := NewMediaRepo(nil).ListByVIN(ctx, vin)
+	existing, err := NewMediaRepo(nil).ListGalleryByVIN(ctx, vin)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -38,7 +38,7 @@ func TestListByVIN_LeavesOutChecklistItemPhotos(t *testing.T) {
 		}
 	}
 
-	got, err := NewMediaRepo(nil).ListByVIN(ctx, vin)
+	got, err := NewMediaRepo(nil).ListGalleryByVIN(ctx, vin)
 	if err != nil {
 		t.Fatal(err)
 	}

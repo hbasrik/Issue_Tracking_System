@@ -990,7 +990,7 @@ func (f *fakeMediaRepo) ListForEntity(_ context.Context, entityType domain.Media
 	return out, nil
 }
 
-func (f *fakeMediaRepo) ListByVIN(_ context.Context, vin string) ([]domain.MediaAttachment, error) {
+func (f *fakeMediaRepo) ListGalleryByVIN(_ context.Context, vin string) ([]domain.MediaAttachment, error) {
 	var out []domain.MediaAttachment
 	for _, row := range f.rows {
 		if row.VIN == vin && row.EntityType != domain.MediaEntityChecklistItemProgress {

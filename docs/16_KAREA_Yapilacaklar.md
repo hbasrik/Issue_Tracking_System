@@ -907,7 +907,9 @@ başlatılınca devreye girer.
   `TestListItemsWithProgress_ReturnsEveryPhoto`.
 
 ### A45. Araç galerisinden EOL madde fotoğraflarının çıkarılması `[x]` — 2026-10-06
-- **Değişiklik:** `MediaRepo.ListByVIN` (`GET /vehicles/{vin}/media`,
+- **Değişiklik:** `MediaRepo.ListGalleryByVIN` (eski adı `ListByVIN`;
+  ad 2026-10-06'da galeriye özel olduğu görünsün diye değişti, davranış
+  aynı) (`GET /vehicles/{vin}/media`,
   Araç Detay "Tüm fotoğraflar") `entity_type <> 'CHECKLIST_ITEM_PROGRESS'`
   filtresi alır. Madde fotoğrafları maddede görünür (A44); veritabanındaki
   satırlar aynen durur. Migration yok.
@@ -919,7 +921,7 @@ başlatılınca devreye girer.
   `capture-gallery-output.txt` + `web-tr-{1280,375}-gallery.png`.
   Fikstür `run-gallery-verification.py seed` ile uygulama akışından
   (POST /issues + POST /media). Kalıcı test:
-  `TestListByVIN_LeavesOutChecklistItemPhotos` (beş türün her biri; yalnız
+  `TestListGalleryByVIN_LeavesOutChecklistItemPhotos` (beş türün her biri; yalnız
   CHECKLIST_ITEM_PROGRESS düşer).
 
 ### A46. EOL not geçmişi denetim kaydında `[x]` — 2026-10-06

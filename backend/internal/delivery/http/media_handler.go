@@ -131,7 +131,7 @@ func (s *server) handleMediaList(w http.ResponseWriter, r *http.Request) {
 // no photos yields items: [].
 func (s *server) handleVehicleMediaList(w http.ResponseWriter, r *http.Request) {
 	vin := chi.URLParam(r, "vin")
-	attachments, err := s.deps.Media.ListByVIN(r.Context(), vin)
+	attachments, err := s.deps.Media.ListGalleryByVIN(r.Context(), vin)
 	if err != nil {
 		writeError(w, err)
 		return

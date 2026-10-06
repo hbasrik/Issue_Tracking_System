@@ -116,11 +116,11 @@ func (u *MediaUploader) ListForEntity(ctx context.Context, entityType domain.Med
 	return attachments, nil
 }
 
-// ListByVIN returns the vehicle gallery (Karar 11; checklist item photos
-// excluded, see MediaRepository.ListByVIN). A VIN that
+// ListGalleryByVIN returns the vehicle gallery (Karar 11; checklist item
+// photos excluded, see MediaRepository.ListGalleryByVIN). A VIN that
 // does not exist is ErrNotFound; a known vehicle with no photos is an empty
 // slice so Vehicle Detail can render an empty gallery.
-func (u *MediaUploader) ListByVIN(ctx context.Context, vin string) ([]domain.MediaAttachment, error) {
+func (u *MediaUploader) ListGalleryByVIN(ctx context.Context, vin string) ([]domain.MediaAttachment, error) {
 	if err := domain.MediaEntityVehicle.ValidateEntityID(vin); err != nil {
 		return nil, err
 	}
@@ -128,7 +128,7 @@ func (u *MediaUploader) ListByVIN(ctx context.Context, vin string) ([]domain.Med
 		return nil, err
 	}
 
-	attachments, err := u.media.ListByVIN(ctx, vin)
+	attachments, err := u.media.ListGalleryByVIN(ctx, vin)
 	if err != nil {
 		return nil, err
 	}

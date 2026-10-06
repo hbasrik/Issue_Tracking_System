@@ -349,7 +349,7 @@ func TestListMediaByVIN_ReturnsEveryEntityType(t *testing.T) {
 		}
 	}
 
-	attachments, err := uploader.ListByVIN(ctx, vin)
+	attachments, err := uploader.ListGalleryByVIN(ctx, vin)
 	if err != nil {
 		t.Fatalf("list: %v", err)
 	}
@@ -365,7 +365,7 @@ func TestListMediaByVIN_ReturnsEveryEntityType(t *testing.T) {
 
 func TestListMediaByVIN_UnknownVehicleNotFound(t *testing.T) {
 	uploader := usecase.NewMediaUploader(newFakeMediaRepo(), &fakeMediaStore{})
-	_, err := uploader.ListByVIN(context.Background(), "NOSUCHVIN00000000")
+	_, err := uploader.ListGalleryByVIN(context.Background(), "NOSUCHVIN00000000")
 	if !errors.Is(err, domain.ErrNotFound) {
 		t.Fatalf("err = %v, want domain.ErrNotFound", err)
 	}

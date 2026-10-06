@@ -264,10 +264,12 @@ type MediaRepository interface {
 	// ListForEntity returns every attachment hanging off one entity, newest
 	// first. An entity with no attachments yields an empty slice, not an error.
 	ListForEntity(ctx context.Context, entityType domain.MediaEntityType, entityID string) ([]domain.MediaAttachment, error)
-	// ListByVIN returns the vehicle gallery, newest first (Karar 11): every
-	// attachment for the VIN except CHECKLIST_ITEM_PROGRESS photos, which are
-	// shown on their checklist item. None yields an empty slice, not an error.
-	ListByVIN(ctx context.Context, vin string) ([]domain.MediaAttachment, error)
+	// ListGalleryByVIN returns the Vehicle Detail gallery, newest first
+	// (Karar 11): every attachment for the VIN except CHECKLIST_ITEM_PROGRESS
+	// photos, which are shown on their checklist item. Not a complete list of
+	// the vehicle's media — exports must not use it. None yields an empty
+	// slice, not an error.
+	ListGalleryByVIN(ctx context.Context, vin string) ([]domain.MediaAttachment, error)
 	// VINForEntity returns the vehicle VIN for the attachable entity, or
 	// domain.ErrNotFound if that row does not exist. The polymorphic
 	// entity_id still has no FK; this lookup is that missing check and also
