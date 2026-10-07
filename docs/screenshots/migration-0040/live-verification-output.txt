@@ -1,0 +1,42 @@
+--- session
+session_user=karea_ro transaction_read_only=on now=2026-10-07 15:03:02.338264+00
+--- schema_migrations
+version=40 dirty=false
+--- functions: md5(prosrc) live vs body in the migration file
+fn_checklist_item_frozen_reason file=15241735b940e2766eac9056af4177aa live=15241735b940e2766eac9056af4177aa volatility=s SAME
+fn_enforce_checklist_frozen file=e52915d15aefb111522624c5da19a878 live=e52915d15aefb111522624c5da19a878 volatility=v SAME
+fn_checklist_media_frozen_reason file=e92776ba25b712f65482a27efc285186 live=e92776ba25b712f65482a27efc285186 volatility=s SAME
+fn_enforce_checklist_media_frozen file=405069798a50ae2633bece5a0f4b4072 live=405069798a50ae2633bece5a0f4b4072 volatility=v SAME
+--- triggers: table, function, enabled, definition
+trg_enforce_checklist_frozen | checklist_item_progress | fn_enforce_checklist_frozen | O | CREATE TRIGGER trg_enforce_checklist_frozen BEFORE INSERT OR UPDATE ON public.checklist_item_progress FOR EACH ROW EXECUTE FUNCTION fn_enforce_checklist_frozen()
+trg_enforce_checklist_media_frozen | media_attachments | fn_enforce_checklist_media_frozen | O | CREATE TRIGGER trg_enforce_checklist_media_frozen BEFORE INSERT OR UPDATE ON public.media_attachments FOR EACH ROW EXECUTE FUNCTION fn_enforce_checklist_media_frozen()
+--- row counts and md5
+checklist_item_progress rows=53000 md5=e94d6bcd1db26a143392d94359852782
+media_attachments rows=45 md5=e84882baf12754c43fdb8ead3f6f3b3b
+progress rows written after the pre-migration measurement (14:50 UTC):
+632 | N7V1K1SA8TK000007 | EOL | 8 | OK | 2026-10-07 15:00:13.688036+00 | 3 | not frozen
+633 | N7V1K1SA8TK000007 | EOL | 9 | OK | 2026-10-07 15:00:16.600206+00 | 3 | not frozen
+audit 697 N7V1K1SA8TK000007 CHECKLIST_ITEM_UPDATE PENDING->OK by 3 {"item_id": 8, "checklist_type": "EOL"}
+audit 698 N7V1K1SA8TK000007 CHECKLIST_ITEM_UPDATE PENDING->OK by 3 {"item_id": 9, "checklist_type": "EOL"}
+media rows uploaded after 14:50 UTC=0
+--- rows that are frozen now
+(not frozen) | 52590 | 498
+cannot change branch-stage checklist items after the vehicle has shipped from the branch | 299 | 3
+cannot change checklist items of a delivered vehicle | 104 | 1
+cannot change depot-stage EoL items after the vehicle has been released from the depot | 7 | 1
+BRANCH_SHIPPED | EOL BRANCH | PENDING | 1 | 1
+BRANCH_SHIPPED | EOL BRANCH | OK | 28 | 3
+BRANCH_SHIPPED | EOL BRANCH | CONDITIONAL_OK | 1 | 1
+BRANCH_SHIPPED | SHIPMENT | PENDING | 3 | 1
+BRANCH_SHIPPED | SHIPMENT | OK | 135 | 3
+BRANCH_SHIPPED | TEST | OK | 131 | 3
+DELIVERED | EOL BRANCH | OK | 9 | 1
+DELIVERED | EOL DEPOT | OK | 7 | 1
+DELIVERED | SHIPMENT | OK | 43 | 1
+DELIVERED | TEST | OK | 45 | 1
+DEPOT_RELEASED | EOL DEPOT | OK | 7 | 1
+frozen checklist photos=0
+--- GET /health
+{"status":"ok"}
+
+HTTP 200

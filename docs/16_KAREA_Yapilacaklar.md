@@ -1004,7 +1004,17 @@ başlatılınca devreye girer.
   başlığı düğme değildir, açılmaz, cevap düğmeleri, not, dosya seçimi ve
   Kaydet yoktur; var olan fotoğraf tam boy açılır. Test/Sevkiyat
   maddelerinde onay kutusunun yerinde kilit simgesi durur.
-- **Migration 0040 (canlıya uygulanmadı, onay bekliyor):** donma kuralı
+- **Canlı (2026-10-07, kullanıcı uyguladı):** `migration-0040/live-verification.sh`
+  → `-output.txt`, yalnız `karea_ro` ile okuma: sürüm 40, dirty=false; dört
+  fonksiyonun `md5(prosrc)`'u migration dosyasındaki gövdeyle aynı; iki
+  tetikleyici `checklist_item_progress` ve `media_attachments` üzerinde,
+  etkin; `/health` 200. Progress 53000 satır (öncesiyle aynı); md5 farkı
+  ölçümden sonra uygulamadan yazılan iki şube EOL cevabı (id 632, 633, denetim
+  697/698, donmuş değil). Medya 45 satır, ölçümden sonra yükleme yok (öncesi md5
+  ölçülmemişti). Donmuş: 299 satır şube sevki (3 araç), 7 depo çıkışı
+  (1 araç), 104 teslim (1 araç); donmuş fotoğraf 0. Canlıda yazma denemesi
+  yapılmadı.
+- **Migration 0040:** donma kuralı
   tetikleyici olarak; doğrudan SQL de aynı metinle reddedilir. Seed 06'daki
   iki yeniden cevaplama kaldırıldı: 0012'nin depoda NOT_OK'a çevrilen Test
   maddesi (arıza kaydı duruyor; depoda bulunan kusur arıza kaydıdır) ve
