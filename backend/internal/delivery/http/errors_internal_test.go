@@ -66,6 +66,71 @@ func TestWriteErrorDepotChecklistLocked(t *testing.T) {
 	}
 }
 
+// TestWriteErrorDepotReleaseBlockedNamesRealReason: an incomplete depot item
+// is named as such, never as "0 open issue(s)"; both reasons are listed when
+// both block. The body fields stay as they were.
+func TestWriteErrorDepotReleaseBlockedNamesRealReason(t *testing.T) {
+	issues := []domain.BlockingIssue{{ID: 13, Status: domain.IssueStatusOpen, Severity: domain.IssueSeverityCritical}}
+	cases := []struct {
+		name string
+		err  *domain.DepotReleaseBlockedError
+		want string
+	}{
+		{"depot items only", &domain.DepotReleaseBlockedError{VIN: "N7V1K1SAXTK000011", DepotItemsRemaining: 1},
+			"depot release blocked for N7V1K1SAXTK000011: 1 depot-phase EoL item(s) incomplete"},
+		{"both", &domain.DepotReleaseBlockedError{VIN: "N7V1K1SA1TK000012", DepotItemsRemaining: 4, BlockingIssues: issues},
+			"depot release blocked for N7V1K1SA1TK000012: 4 depot-phase EoL item(s) incomplete; 1 open issue(s) remain (issue ids: 13)"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			rec := httptest.NewRecorder()
+			writeError(rec, tc.err)
+			if rec.Code != http.StatusConflict {
+				t.Fatalf("status = %d, want 409", rec.Code)
+			}
+			var body struct {
+				Error               string                 `json:"error"`
+				DepotItemsRemaining int                    `json:"depot_items_remaining"`
+				BlockingIssues      []domain.BlockingIssue `json:"blocking_issues"`
+			}
+			if err := json.NewDecoder(rec.Body).Decode(&body); err != nil {
+				t.Fatal(err)
+			}
+			if body.Error != tc.want {
+				t.Errorf("error = %q, want %q", body.Error, tc.want)
+			}
+			if body.DepotItemsRemaining != tc.err.DepotItemsRemaining || len(body.BlockingIssues) != len(tc.err.BlockingIssues) {
+				t.Errorf("fields = %+v", body)
+			}
+		})
+	}
+}
+
+// TestWriteErrorChecklistFrozen: the three Karar 29 refusals are 409 with the
+// trigger's own text.
+func TestWriteErrorChecklistFrozen(t *testing.T) {
+	for _, sentinel := range []error{
+		domain.ErrChecklistFrozenDelivered,
+		domain.ErrChecklistFrozenBranchShipped,
+		domain.ErrChecklistFrozenDepotReleased,
+	} {
+		rec := httptest.NewRecorder()
+		writeError(rec, sentinel)
+		if rec.Code != http.StatusConflict {
+			t.Errorf("%v: status = %d, want 409", sentinel, rec.Code)
+		}
+		var body struct {
+			Error string `json:"error"`
+		}
+		if err := json.NewDecoder(rec.Body).Decode(&body); err != nil {
+			t.Fatal(err)
+		}
+		if body.Error != sentinel.Error() {
+			t.Errorf("error = %q, want %q", body.Error, sentinel.Error())
+		}
+	}
+}
+
 func TestWriteErrorAccountInactive(t *testing.T) {
 	rec := httptest.NewRecorder()
 	writeError(rec, domain.ErrAccountInactive)
