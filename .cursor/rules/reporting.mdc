@@ -72,6 +72,10 @@ if a section does not apply, say so explicitly.
   "looks working" is forbidden. A visible gap (missing file, missing
   row) is better than a silently corrupted record.
 - If a destructive action seems unavoidable, stop and ask first.
+- Reddedilen veya hata dönen bir araç çağrısı, çalışmadığı anlamına
+  gelmez. Böyle bir durumda komutu tekrarlamadan önce sonucunu doğrula
+  — dosya değişti mi, commit atıldı mı, süreç ayakta mı. Doğrulamadan
+  tekrar çalıştırma.
 - Report any such action under "Destructive actions". Attempting to
   restore afterwards does not make it non-destructive; a partial or
   substitute restore still counts as data loss.
