@@ -50,7 +50,7 @@ func (r *MediaRepo) Create(ctx context.Context, attachment *domain.MediaAttachme
 		attachment.FileName, attachment.StoragePath, attachment.MimeType,
 		attachment.FileSize, attachment.UploadedBy,
 	).Scan(&id)
-	return id, err
+	return id, mapRaiseException(err)
 }
 
 // ListForEntity returns every attachment for one entity, newest first.
@@ -163,4 +163,25 @@ func (r *MediaRepo) ChecklistTypeForProgressID(ctx context.Context, progressID s
 		return "", domain.ErrInvalidEnumValue
 	}
 	return t, nil
+}
+
+// ChecklistFrozenReasonForProgressID returns why the item behind a progress
+// row is frozen, or "" (stage_applicability.go, Karar 29).
+func (r *MediaRepo) ChecklistFrozenReasonForProgressID(ctx context.Context, progressID string) (domain.ChecklistFrozenReason, error) {
+	var reason *string
+	err := executor(ctx, r.pool).QueryRow(ctx,
+		`SELECT `+checklistFrozenReasonSQL("v", "w", "p.checklist_type", "cti.eol_phase")+`
+		 FROM checklist_item_progress p
+		 JOIN checklist_template_items cti ON cti.id = p.check_item_id
+		 JOIN vehicles v ON v.vin = p.vin
+		 LEFT JOIN vehicle_eol_workflow w ON w.vin = p.vin
+		 WHERE p.id = $1::bigint`,
+		progressID).Scan(&reason)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return "", domain.ErrNotFound
+	}
+	if err != nil || reason == nil {
+		return "", err
+	}
+	return domain.ChecklistFrozenReason(*reason), nil
 }

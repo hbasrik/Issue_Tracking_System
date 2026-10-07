@@ -108,6 +108,13 @@ func (f *httpFakeMediaRepo) ChecklistTypeForProgressID(_ context.Context, progre
 	return domain.ChecklistTypeTest, nil
 }
 
+func (f *httpFakeMediaRepo) ChecklistFrozenReasonForProgressID(_ context.Context, progressID string) (domain.ChecklistFrozenReason, error) {
+	if _, ok := f.existing[string(domain.MediaEntityChecklistItemProgress)+"|"+progressID]; !ok {
+		return "", domain.ErrNotFound
+	}
+	return "", nil
+}
+
 type httpFakeMediaStore struct{ saved int }
 
 func (f *httpFakeMediaStore) Save(_ context.Context, entityType domain.MediaEntityType, entityID, fileName string, content io.Reader) (string, int64, error) {

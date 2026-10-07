@@ -82,7 +82,8 @@ type RecordChecklistOutput struct {
 // Shipment do not), but a requested gate exit is rejected with a
 // *domain.GateBlockedError unless every item of the checklist is OK or
 // CONDITIONAL_OK. Depot-phase EoL items are additionally refused until every
-// Branch-phase item is passing — application layer plus the database trigger.
+// Branch-phase item is passing, and an item whose stage is behind the vehicle
+// is refused outright (Karar 29) — application layer plus database triggers.
 func (r *ChecklistResultRecorder) Record(ctx context.Context, in RecordChecklistInput) (*RecordChecklistOutput, error) {
 	if !in.ChecklistType.Valid() || !in.Status.Valid() {
 		return nil, domain.ErrInvalidEnumValue
@@ -91,11 +92,14 @@ func (r *ChecklistResultRecorder) Record(ctx context.Context, in RecordChecklist
 	if err := ValidateChecklistDescription(in.ChecklistType, in.Status, notes.Rework, notes.Conditional, notes.Rejected); err != nil {
 		return nil, err
 	}
+	views, err := r.ListForVehicle(ctx, in.VIN, in.ChecklistType)
+	if err != nil && !errors.Is(err, domain.ErrNotFound) {
+		return nil, err
+	}
+	if err := EnforceChecklistNotFrozen(views, in.ItemID); err != nil {
+		return nil, err
+	}
 	if in.ChecklistType == domain.ChecklistTypeEOL && in.Status != domain.CheckStatusPending {
-		views, err := r.ListForVehicle(ctx, in.VIN, in.ChecklistType)
-		if err != nil && !errors.Is(err, domain.ErrNotFound) {
-			return nil, err
-		}
 		if err := EnforceEOLDepotSequencing(views, in.ItemID); err != nil {
 			return nil, err
 		}

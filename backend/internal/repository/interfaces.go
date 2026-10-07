@@ -280,6 +280,9 @@ type MediaRepository interface {
 	GetByStoragePath(ctx context.Context, storagePath string) (*domain.MediaAttachment, error)
 	// ChecklistTypeForProgressID returns the checklist_type for a progress row.
 	ChecklistTypeForProgressID(ctx context.Context, progressID string) (domain.ChecklistType, error)
+	// ChecklistFrozenReasonForProgressID returns why the progress row's item
+	// is frozen (Karar 29), "" when it is not, or domain.ErrNotFound.
+	ChecklistFrozenReasonForProgressID(ctx context.Context, progressID string) (domain.ChecklistFrozenReason, error)
 }
 
 // RoleRepository reads the table-driven RBAC catalogue (Karar 3).

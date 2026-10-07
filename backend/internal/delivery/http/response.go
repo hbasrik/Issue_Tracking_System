@@ -96,6 +96,9 @@ func writeError(w http.ResponseWriter, err error) {
 		w.Header().Set("Retry-After", strconv.Itoa(secs))
 		writeJSON(w, http.StatusTooManyRequests, errorResponse{Error: rateLimited.Error()})
 	case errors.Is(err, domain.ErrDepotChecklistLocked),
+		errors.Is(err, domain.ErrChecklistFrozenDelivered),
+		errors.Is(err, domain.ErrChecklistFrozenBranchShipped),
+		errors.Is(err, domain.ErrChecklistFrozenDepotReleased),
 		errors.Is(err, domain.ErrInvalidStatusTransition),
 		errors.Is(err, domain.ErrCannotHold),
 		errors.Is(err, domain.ErrNotOnHold),

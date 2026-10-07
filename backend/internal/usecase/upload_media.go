@@ -50,7 +50,8 @@ type UploadMediaInput struct {
 // media_attachments is polymorphic on entity_id, so the database cannot reject
 // a row that points at a vehicle or issue which does not exist. VINForEntity
 // below is that missing check (and supplies the denormalized vin, Karar 11).
-// It runs before the file is written so a rejected upload leaves nothing on disk.
+// It runs before the file is written so a rejected upload leaves nothing on disk;
+// so does the frozen-item check (Karar 29).
 func (u *MediaUploader) Upload(ctx context.Context, in UploadMediaInput) (*domain.MediaAttachment, error) {
 	if err := in.EntityType.ValidateEntityID(in.EntityID); err != nil {
 		return nil, err
@@ -62,6 +63,15 @@ func (u *MediaUploader) Upload(ctx context.Context, in UploadMediaInput) (*domai
 	vin, err := u.media.VINForEntity(ctx, in.EntityType, in.EntityID)
 	if err != nil {
 		return nil, err
+	}
+	if in.EntityType == domain.MediaEntityChecklistItemProgress {
+		reason, err := u.media.ChecklistFrozenReasonForProgressID(ctx, in.EntityID)
+		if err != nil {
+			return nil, err
+		}
+		if err := reason.Err(); err != nil {
+			return nil, err
+		}
 	}
 
 	// Keep only the base name: the client's path is not ours to reproduce.

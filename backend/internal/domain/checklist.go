@@ -219,6 +219,30 @@ type ChecklistProgress struct {
 	UpdatedAt       time.Time
 }
 
+// ChecklistFrozenReason says why a checklist item is frozen (Karar 29). The
+// stage rule is stage_applicability.go: every item of a delivered vehicle,
+// EoL depot items after depot release, every other item after branch ship.
+type ChecklistFrozenReason string
+
+const (
+	ChecklistFrozenDelivered     ChecklistFrozenReason = "DELIVERED"
+	ChecklistFrozenBranchShipped ChecklistFrozenReason = "BRANCH_SHIPPED"
+	ChecklistFrozenDepotReleased ChecklistFrozenReason = "DEPOT_RELEASED"
+)
+
+// Err returns the 409 sentinel for the reason, or nil when not frozen.
+func (r ChecklistFrozenReason) Err() error {
+	switch r {
+	case ChecklistFrozenDelivered:
+		return ErrChecklistFrozenDelivered
+	case ChecklistFrozenBranchShipped:
+		return ErrChecklistFrozenBranchShipped
+	case ChecklistFrozenDepotReleased:
+		return ErrChecklistFrozenDepotReleased
+	}
+	return nil
+}
+
 // ChecklistItemView is the operator-facing join of template items with
 // per-vehicle checklist progress. EolPhase is set only for EoL items so the
 // Vehicle Detail stepper can split Branch vs Depot without a second query.
@@ -250,6 +274,9 @@ type ChecklistItemView struct {
 	// delivered and it is not passing). It counts in no total, gate or
 	// warning; the row is kept as history.
 	StageClosed    bool
+	// FrozenReason is set once the item's stage is behind the vehicle
+	// (Karar 29): its answer and photos can no longer change.
+	FrozenReason   ChecklistFrozenReason `json:"FrozenReason,omitempty"`
 	CheckerName    string     `json:"CheckerName,omitempty"`
 	CheckDate      *time.Time `json:"CheckDate,omitempty"`
 	RejectedByName string     `json:"RejectedByName,omitempty"`

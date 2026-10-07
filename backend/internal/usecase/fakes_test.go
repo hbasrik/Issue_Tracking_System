@@ -949,6 +949,7 @@ const defaultFakeMediaVIN = "N7V1K1SA0FAKE00001"
 type fakeMediaRepo struct {
 	rows     []domain.MediaAttachment
 	existing map[string]string
+	frozen   map[string]domain.ChecklistFrozenReason
 	nextID   int64
 }
 
@@ -1023,6 +1024,13 @@ func (f *fakeMediaRepo) ChecklistTypeForProgressID(_ context.Context, progressID
 		return "", domain.ErrNotFound
 	}
 	return domain.ChecklistTypeTest, nil
+}
+
+func (f *fakeMediaRepo) ChecklistFrozenReasonForProgressID(_ context.Context, progressID string) (domain.ChecklistFrozenReason, error) {
+	if _, ok := f.existing[string(domain.MediaEntityChecklistItemProgress)+"|"+progressID]; !ok {
+		return "", domain.ErrNotFound
+	}
+	return f.frozen[progressID], nil
 }
 
 // fakeMediaStore records what was written instead of touching the filesystem,

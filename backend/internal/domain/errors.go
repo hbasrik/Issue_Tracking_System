@@ -90,6 +90,14 @@ var (
 	// CONDITIONAL_OK. The message matches the database trigger so API and
 	// SQL bypasses surface the same text.
 	ErrDepotChecklistLocked = errors.New("cannot update depot-phase EoL items until every branch-phase item is OK or CONDITIONAL_OK")
+	// ErrChecklistFrozenDelivered, ErrChecklistFrozenBranchShipped and
+	// ErrChecklistFrozenDepotReleased refuse an answer or photo on a checklist
+	// item whose stage is behind the vehicle (Karar 29). The messages match
+	// fn_checklist_item_frozen_reason so API and SQL bypasses surface the
+	// same text.
+	ErrChecklistFrozenDelivered     = errors.New("cannot change checklist items of a delivered vehicle")
+	ErrChecklistFrozenBranchShipped = errors.New("cannot change branch-stage checklist items after the vehicle has shipped from the branch")
+	ErrChecklistFrozenDepotReleased = errors.New("cannot change depot-stage EoL items after the vehicle has been released from the depot")
 	// ErrTemplateItemTextRequired indicates a template item create/update
 	// omitted item_text.
 	ErrTemplateItemTextRequired = errors.New("item_text is required")

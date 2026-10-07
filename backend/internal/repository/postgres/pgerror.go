@@ -14,8 +14,15 @@ import (
 func mapRaiseException(err error) error {
 	var pgErr *pgconn.PgError
 	if errors.As(err, &pgErr) && pgErr.Code == "P0001" {
-		if pgErr.Message == domain.ErrDepotChecklistLocked.Error() {
-			return domain.ErrDepotChecklistLocked
+		for _, sentinel := range []error{
+			domain.ErrDepotChecklistLocked,
+			domain.ErrChecklistFrozenDelivered,
+			domain.ErrChecklistFrozenBranchShipped,
+			domain.ErrChecklistFrozenDepotReleased,
+		} {
+			if pgErr.Message == sentinel.Error() {
+				return sentinel
+			}
 		}
 		return &domain.DatabaseRejectedError{Message: pgErr.Message}
 	}

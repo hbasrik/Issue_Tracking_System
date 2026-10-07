@@ -122,6 +122,7 @@ func (r *ChecklistProgressRepo) ListItemsWithProgress(ctx context.Context, vin s
 		        p.rejected_date, COALESCE(rej.full_name, ''),
 		        p.approved_date, COALESCE(appr.full_name, ''),
 		        COALESCE(`+checklistStageClosedSQL("v", "w", "t.type", "cti.eol_phase", "p")+`, false),
+		        `+checklistFrozenReasonSQL("v", "w", "t.type", "cti.eol_phase")+`,
 		        ph.photos
 		 FROM checklist_template_items cti
 		 JOIN checklist_templates t ON t.id = cti.template_id
@@ -146,9 +147,13 @@ func (r *ChecklistProgressRepo) ListItemsWithProgress(ctx context.Context, vin s
 		        p.rejected_date, COALESCE(rej.full_name, ''),
 		        p.approved_date, COALESCE(appr.full_name, ''),
 		        false,
+		        `+checklistFrozenReasonSQL("v", "w", "t.type", "cti.eol_phase")+`,
 		        ph.photos
 		 FROM checklist_item_progress p
 		 JOIN checklist_template_items cti ON cti.id = p.check_item_id
+		 JOIN checklist_templates t ON t.id = cti.template_id
+		 LEFT JOIN vehicles v ON v.vin = p.vin
+		 LEFT JOIN vehicle_eol_workflow w ON w.vin = p.vin
 		 LEFT JOIN users checker ON checker.id = p.checker_id
 		 LEFT JOIN users rej ON rej.id = p.rejected_by
 		 LEFT JOIN users appr ON appr.id = p.approved_by`+checklistPhotosLateral+`
@@ -167,6 +172,7 @@ func (r *ChecklistProgressRepo) ListItemsWithProgress(ctx context.Context, vin s
 		var status string
 		var eolPhase *string
 		var photos []byte
+		var frozen *string
 		if err := rows.Scan(
 			&item.ItemID, &item.ItemNo, &item.ItemText, &status,
 			&item.ReworkDesc, &item.ConditionalDesc, &item.RejectedDesc,
@@ -177,6 +183,7 @@ func (r *ChecklistProgressRepo) ListItemsWithProgress(ctx context.Context, vin s
 			&item.RejectedAt, &item.RejectedByName,
 			&item.ApprovedAt, &item.ApprovedByName,
 			&item.StageClosed,
+			&frozen,
 			&photos,
 		); err != nil {
 			return nil, err
@@ -186,6 +193,9 @@ func (r *ChecklistProgressRepo) ListItemsWithProgress(ctx context.Context, vin s
 			return nil, fmt.Errorf("checklist photos: %w", err)
 		}
 		item.Status = domain.CheckStatus(status)
+		if frozen != nil {
+			item.FrozenReason = domain.ChecklistFrozenReason(*frozen)
+		}
 		item.Note = domain.ChecklistNotes{
 			Rework:      item.ReworkDesc,
 			Conditional: item.ConditionalDesc,

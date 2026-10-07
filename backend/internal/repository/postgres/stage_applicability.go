@@ -35,6 +35,18 @@ func checklistStagePassedSQL(v, w, typ, phase string) string {
 	    END)`, vehicleTerminalSQL(v), w, typ, phase)
 }
 
+// checklistFrozenReasonSQL is the domain.ChecklistFrozenReason of an item, or
+// NULL: a passed stage freezes the item (Karar 29). Same rule as
+// fn_checklist_item_frozen_reason (migration 0040).
+func checklistFrozenReasonSQL(v, w, typ, phase string) string {
+	return fmt.Sprintf(`(CASE
+	    WHEN %[1]s THEN 'DELIVERED'
+	    WHEN %[3]s::text = 'EOL' AND %[4]s::text = 'DEPOT'
+	         THEN CASE WHEN %[2]s.depot_released_at IS NOT NULL THEN 'DEPOT_RELEASED' END
+	    WHEN %[2]s.branch_shipped_at IS NOT NULL THEN 'BRANCH_SHIPPED'
+	  END)`, vehicleTerminalSQL(v), w, typ, phase)
+}
+
 // checklistStageClosedSQL is true when an item (progress alias p, LEFT JOIN,
 // may be NULL) is outside the applicable set: its stage is passed and it was
 // never evaluated, or the vehicle is terminal and the row is not passing.

@@ -994,7 +994,12 @@ başlatılınca devreye girer.
   aynı. Kontrol: hepsi OK (ya da CONDITIONAL_OK) ve açık sorun yok → 200,
   `COMPLETED`, bir denetim satırı. Teslim de iki katmanda depodan çıkışı
   şart koşuyor (`eol_deliver.go`, `fn_enforce_eol_deliver`).
-- **Bekleyen:** migration 0040 + uygulama/arayüz kilidi onayda.
+- **Uygulama katmanı (Karar 29):** `ListForVehicle` her maddeye
+  `FrozenReason` (DELIVERED / BRANCH_SHIPPED / DEPOT_RELEASED) koyar;
+  `RecordChecklistResult` ve checklist fotoğraf yüklemesi donmuş maddede 409
+  döner, fotoğraf diske yazılmaz. Tetikleyici metinleri
+  `ErrChecklistFrozen*` sentinel'lerine eşlenir.
+- **Bekleyen:** migration 0040, arayüz kilidi, kalıcı testler.
 
 ### A53. "Sevk öncesi uyarı" açıklama cümlesi `[x]` — 2026-10-07
 - **Değişiklik:** `vehicles.readinessHint` (TR/EN) artık "Depot Release

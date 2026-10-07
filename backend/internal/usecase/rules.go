@@ -91,6 +91,19 @@ func ValidateChecklistDescription(checklistType domain.ChecklistType, status dom
 	return nil
 }
 
+// EnforceChecklistNotFrozen rejects any write (answer, note or photo) to an
+// item whose stage is behind the vehicle (Karar 29), with the same 409 the
+// fn_checklist_item_frozen_reason trigger raises. An item missing from the
+// list is left to the database.
+func EnforceChecklistNotFrozen(items []domain.ChecklistItemView, itemID int) error {
+	for _, it := range items {
+		if it.ItemID == itemID {
+			return it.FrozenReason.Err()
+		}
+	}
+	return nil
+}
+
 // EnforceEOLDepotSequencing rejects a Depot-phase EoL update while any
 // Branch-phase item for the same vehicle is not yet OK or CONDITIONAL_OK.
 // Branch items whose stage is closed never block (they can no longer be

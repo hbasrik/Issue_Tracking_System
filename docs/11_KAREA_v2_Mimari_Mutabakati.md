@@ -659,6 +659,30 @@ kalıyordu.
   (`postgres://karea_ro@localhost:5432/karea`, parola `~/.pgpass`'ten).
   `docker exec` + `karea` + oturum ayarı ile canlı okuma yapılmaz.
 
+## Karar 29 — Aracın geçtiği aşamanın checklist maddeleri donar (NEW — 2026-10-07)
+
+- **Kural:** Teslim edilen (veya sevk edilen) araçta hiçbir checklist maddesi
+  değişmez. Fabrikadan sevk (`branch_shipped_at`) şube EOL, Test ve Sevkiyat
+  maddelerini dondurur (seçenek B); depodan çıkış (`depot_released_at`) depo
+  EOL maddelerini dondurur. Donmuş maddeye yeni cevap, not veya fotoğraf
+  yazılamaz; var olan fotoğraflar görünür ve tam boy açılır. EOL sıfırlama
+  (`ResetToBranch`) damgaları sildiği için kilidi de kaldırır.
+- **Neden:** Cevap verildiği aşamanın kaydıdır. Depoda bulunan bir kusur
+  şubede verilmiş Test cevabını değiştirerek değil, arıza kaydıyla
+  yazılır; depoda yapılan kontrol depo maddesidir (KY.FR-19). Seed'deki
+  "depoda OBD taraması" bu yüzden kaldırıldı; açık arıza kaydı duruyor.
+- **Katmanlar:** Uygulama `ListForVehicle` üzerinden `FrozenReason`'ı okur;
+  `RecordChecklistResult` ve checklist fotoğraf yüklemesi 409 döner, dosya
+  diske yazılmaz (`ErrChecklistFrozen*`). Veritabanı tetikleyicisi
+  (migration 0040: `fn_checklist_item_frozen_reason`,
+  `trg_enforce_checklist_frozen`, `trg_enforce_checklist_media_frozen`)
+  doğrudan SQL'i de aynı metinle reddeder; `mapRaiseException` metni
+  sentinel'e çevirir. Değişmeyen yazım (aynı cevap) ve PENDING satırın
+  eklenmesi geçer. Arayüz donmuş maddede başlığı tıklanamaz yapar, cevap
+  düğmelerini ve Kaydet'i göstermez, sebebi kısaca iki dilde yazar.
+- **Sıra:** Önce kod (eski şemada da çalışır, kilidi kendisi uygular), sonra
+  migration; kesinti yok.
+
 ## Değişmeyen / Yeniden Kullanılacaklar
 
 Şunlara **dokunulmuyor**, olduğu gibi kalıyor: JWT auth + bcrypt (üstteki JWT_SECRET ve iptal sıkılaştırmaları hariç), CORS allowlist mimarisi, Unit-of-Work (pgx.Tx) transaction pattern, `.cursor/rules` (commit ve environment-check kuralları), Analysis sekmesi temel yapısı (VIN×severity kırılımı, Pie/Bar chart'lar — yeni station/EOL alanlarıyla genişleyecek ama sıfırdan kurulmayacak), Docker/migration/seed altyapısı.
