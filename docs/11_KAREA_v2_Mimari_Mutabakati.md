@@ -683,6 +683,23 @@ kalıyordu.
 - **Sıra:** Önce kod (eski şemada da çalışır, kilidi kendisi uygular), sonra
   migration; kesinti yok.
 
+## Karar 30 — Form kimliği maddede durur (NEW — 2026-10-07)
+
+- **Kural:** Form no, revizyon ve yayın tarihi şablonda değil maddede
+  tutulur (`checklist_template_items.form_code`, `form_revision`,
+  `form_published_at`); kağıttaki madde numarası `form_item_ref`'tir
+  (E001, 46). Migration 0041, 0039'un şablon düzeyindeki üç kolonunu
+  düşürür.
+- **Neden:** Araç başına tek EOL şablonu var ve iki form taşıyor: şube
+  maddeleri KY.FR-09, depo maddeleri KY.FR-19. Şablon düzeyinde tek form
+  no yanlış olur.
+- **seed_key:** Formdan gelen maddelerde metnin md5'i değil kimlik:
+  `"<form_code>:<form_item_ref>"`, örn. "KY.FR-09:E001", "KY.FR-19:46".
+  Metin düzeltilse de kimlik değişmez. Şablon başına benzersiz (kısmi
+  index; admin'in eklediği maddelerde NULL serbest).
+- **Şablon adları** madde sayısı taşımaz; sayı madde eklenip çıkınca
+  bayatlıyordu.
+
 ## Değişmeyen / Yeniden Kullanılacaklar
 
 Şunlara **dokunulmuyor**, olduğu gibi kalıyor: JWT auth + bcrypt (üstteki JWT_SECRET ve iptal sıkılaştırmaları hariç), CORS allowlist mimarisi, Unit-of-Work (pgx.Tx) transaction pattern, `.cursor/rules` (commit ve environment-check kuralları), Analysis sekmesi temel yapısı (VIN×severity kırılımı, Pie/Bar chart'lar — yeni station/EOL alanlarıyla genişleyecek ama sıfırdan kurulmayacak), Docker/migration/seed altyapısı.

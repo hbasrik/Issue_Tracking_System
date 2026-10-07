@@ -64,7 +64,7 @@ CREATE TYPE check_status_enum AS ENUM (
 
 CREATE TYPE checklist_type_enum AS ENUM (
     'EOL',
-    'SHIPMENT',   -- Customer Vehicle Checklist (43 items)
+    'SHIPMENT',   -- Customer Vehicle Checklist
     'TEST'        -- Karar 4: new, independent 45-item checklist module
 );
 
@@ -210,10 +210,9 @@ CREATE TABLE checklist_templates (
     type              checklist_type_enum NOT NULL,
     name              VARCHAR(150) NOT NULL,
     is_active         BOOLEAN NOT NULL DEFAULT TRUE,
-    created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
-    form_code         TEXT,  -- migration 0039: "Form no" of the printed form (docs/21); NULL until entered
-    form_revision     TEXT,  -- migration 0039: form revision; NULL until entered
-    form_published_at DATE   -- migration 0039: form publication date; NULL until entered
+    created_at        TIMESTAMPTZ NOT NULL DEFAULT now()
+    -- form_code / form_revision / form_published_at: added by 0039, dropped by
+    -- 0041 (Karar 30: one template carries two forms; identity is per item).
 );
 
 CREATE TABLE checklist_template_items (
@@ -229,8 +228,18 @@ CREATE TABLE checklist_template_items (
     seed_key      TEXT,  -- migration 0034: md5 of the seed text at creation, never updated; NULL for admin-created items
     acceptance_criterion TEXT,  -- migration 0039: "Kabul kriteri" (docs/21), fixed text per item, not an answer; NULL until entered
     control_method       TEXT,  -- migration 0039: "Kontrol yöntemi" (docs/21), fixed text; NULL until entered
+    form_code            TEXT,  -- migration 0041: "Form no" of the printed form, e.g. KY.FR-09; NULL for non-form items
+    form_item_ref        TEXT,  -- migration 0041: item id on paper, e.g. E001 / 46
+    form_revision        TEXT,  -- migration 0041: revision of that form; NULL until entered
+    form_published_at    DATE,  -- migration 0041: publication date of that form; NULL until entered
     UNIQUE (template_id, item_no)
 );
+
+-- migration 0041: form items use seed_key '<form_code>:<form_item_ref>'
+-- (e.g. 'KY.FR-19:46'); older seed items keep md5(text). Admin-created items: NULL.
+CREATE UNIQUE INDEX uq_checklist_template_items_template_seed_key
+    ON checklist_template_items (template_id, seed_key)
+    WHERE seed_key IS NOT NULL;
 
 -- Section values (Karar 23), assigned per item by seed_key:
 --   SHIPMENT (migration 0036, consecutive work steps) interior_fit 10,
@@ -1210,11 +1219,12 @@ INSERT INTO stations (name, sequence_no) VALUES
     ('Station 1', 1), ('Station 2', 2), ('Station 3', 3), ('Station 4', 4),
     ('Station 5', 5), ('Station 6', 6), ('Station 7', 7), ('Station 8', 8);
 
--- Sample checklist templates (generic defaults, vehicle_model_id = NULL)
+-- Sample checklist templates (generic defaults, vehicle_model_id = NULL).
+-- Migration 0002 creates them with item counts in the name; 0041 drops the counts.
 INSERT INTO checklist_templates (vehicle_model_id, type, name, is_active) VALUES
-    (NULL, 'EOL', 'Default EoL Template (16 items, Branch + Depot)', TRUE),
-    (NULL, 'SHIPMENT', 'Default Customer Vehicle Checklist (43 items)', TRUE),
-    (NULL, 'TEST', 'Default Test Checklist (45 items)', TRUE);
+    (NULL, 'EOL', 'Default EoL Template (Branch + Depot)', TRUE),
+    (NULL, 'SHIPMENT', 'Default Customer Vehicle Checklist', TRUE),
+    (NULL, 'TEST', 'Default Test Checklist', TRUE);
 
 -- Item rows are omitted here for brevity — see 09_KAREA_DB_Mimari_ve_Kurulum_Notlari.md
 -- for the seed-data loading plan (to be updated alongside the v2 prompt sequence).

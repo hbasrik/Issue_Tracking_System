@@ -1089,6 +1089,37 @@ başlatılınca devreye girer.
   13, 14)", "2 open issue(s) remain (issue ids: 13, 14)", "1 depot-phase
   EoL item(s) incomplete").
 
+### A55. Form maddelerinin gömülmesi (KY.FR-09 / KY.FR-19) `[~]` — 2026-10-07
+- **Adım 1 — migration 0041 `[x]` (test DB'de doğrulandı, canlıya
+  uygulanmadı):** `checklist_template_items` üzerine `form_code`,
+  `form_item_ref`, `form_revision`, `form_published_at` (hepsi NULL);
+  0039'un `checklist_templates.form_*` üç kolonu düşürüldü (Karar 30).
+  Koruma: şablonda dolu form kolonu varsa migration hata verip durur.
+  `uq_checklist_template_items_template_seed_key` kısmi benzersiz index
+  `(template_id, seed_key) WHERE seed_key IS NOT NULL`. Şablon adlarından
+  madde sayısı çıktı: "Default EoL Template (Branch + Depot)", "Default
+  Customer Vehicle Checklist", "Default Test Checklist". Seed 03'teki
+  `template_name` değerleri aynı commit'te yeni adlara çekildi (seed
+  şablonu adla bulur); madde satırları değişmedi.
+- **Kanıt:** `docs/screenshots/migration-0041/live-precheck-output.txt`
+  (`karea_ro`: 3 şablonda form kolonları 0/0/0 dolu, tekrar eden
+  `(template_id, seed_key)` yok, 108/108 madde seed_key'li);
+  `apply-verification-output.txt` (`karea_eolnote_test`: kurulum →
+  down → up → up → down → down → up; ilerleme/medya/madde/şablon md5'i 8
+  ölçümde aynı; kolonlar, index ve adlar her adımda tam tersine döner;
+  tekrar eden seed_key reddedilir, NULL'lar serbest; dolu şablon kolonu
+  up'ı durdurur ve işlem geri alınır; geçici `tmp-0041-verify` şablonu
+  silindi); `go-test-output.txt` (0041 şemasında `go test ./...` yeşil).
+- **Canlıya alma:** kod bu kolonları ve şablon adlarını okumuyor; kesinti
+  yok, sıra serbest. Canlıya kullanıcı onayıyla uygulanır.
+- **Adım 2 — seed 03 `[ ]`:** 39 KY.FR-09 (şube) + 56 KY.FR-19 (depo)
+  maddesi; seed_key "KY.FR-09:E001" / "KY.FR-19:46"; iki ayrı "Dış"
+  bölümü; seed 06 aşama bazlı işaretleme; EOL bölüm kataloğu + i18n.
+- **Sonraki iş `[ ]`:** kabul kriteri ve kontrol yöntemi hiçbir ekranda
+  gösterilmiyor; gösterim ayrı iş olarak yapılacak.
+- **Kalite ekibine:** belirsiz sekiz eşleşme; Araç Motoru ve Yağmur Testi
+  dört formun hiçbirinde yok (su sızdırmazlık kontrolü tamamen düşüyor).
+
 ### A50. Canlı için salt-okunur `karea_ro` rolü `[~]` — 2026-10-07
 - **Betik:** `scripts/create-readonly-role.sql` (Karar 28). Migration değil;
   canlıda kullanıcı `karea` olarak `-v ro_password=...` ile çalıştırır.
