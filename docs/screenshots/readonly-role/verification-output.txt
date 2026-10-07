@@ -1,0 +1,256 @@
+== throwaway server: 16.14 (container karea_ro_verify_5821, port 55439)
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0001_init.up.sql:453: NOTICE:  trigger "trg_vehicles_updated_at" for relation "vehicles" does not exist, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0001_init.up.sql:458: NOTICE:  trigger "trg_issue_list_updated_at" for relation "issue_list" does not exist, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0001_init.up.sql:463: NOTICE:  trigger "trg_ppp_updated_at" for relation "production_phase_progress" does not exist, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0001_init.up.sql:468: NOTICE:  trigger "trg_eol_ship_updated_at" for relation "eol_and_shipment_checklist_progress" does not exist, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0001_init.up.sql:503: NOTICE:  trigger "trg_assign_checklist_templates" for relation "vehicles" does not exist, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0001_init.up.sql:534: NOTICE:  trigger "trg_initialize_vehicle_progress" for relation "vehicles" does not exist, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0001_init.up.sql:597: NOTICE:  trigger "trg_recalculate_vehicle_progress" for relation "production_phase_progress" does not exist, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0001_init.up.sql:641: NOTICE:  trigger "trg_recheck_eol_gate" for relation "eol_and_shipment_checklist_progress" does not exist, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0001_init.up.sql:680: NOTICE:  trigger "trg_check_shipment_completion" for relation "eol_and_shipment_checklist_progress" does not exist, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0001_init.up.sql:713: NOTICE:  trigger "trg_enforce_manual_status_change" for relation "vehicles" does not exist, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0001_init.up.sql:741: NOTICE:  trigger "trg_link_latest_issue_to_source" for relation "issue_list" does not exist, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0002_v2_architecture.up.sql:22: NOTICE:  view "vw_eol_workflow_funnel" does not exist, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0002_v2_architecture.up.sql:58: NOTICE:  function fn_enforce_branch_shipment() does not exist, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0002_v2_architecture.up.sql:59: NOTICE:  function fn_enforce_depot_release() does not exist, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0002_v2_architecture.up.sql:60: NOTICE:  function fn_enforce_document_approval() does not exist, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0002_v2_architecture.up.sql:66: NOTICE:  truncate cascades to table "production_phase_progress"
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0002_v2_architecture.up.sql:66: NOTICE:  truncate cascades to table "eol_and_shipment_checklist_progress"
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0002_v2_architecture.up.sql:67: NOTICE:  truncate cascades to table "issue_list"
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0002_v2_architecture.up.sql:67: NOTICE:  truncate cascades to table "production_phase_progress"
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0002_v2_architecture.up.sql:67: NOTICE:  truncate cascades to table "eol_and_shipment_checklist_progress"
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0002_v2_architecture.up.sql:67: NOTICE:  truncate cascades to table "audit_logs"
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0002_v2_architecture.up.sql:85: NOTICE:  index "idx_ppp_vin_phase" does not exist, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0002_v2_architecture.up.sql:86: NOTICE:  index "idx_ppp_checkpoint" does not exist, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0002_v2_architecture.up.sql:87: NOTICE:  index "idx_ppp_checked_at" does not exist, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0002_v2_architecture.up.sql:88: NOTICE:  index "idx_eol_ship_vin_type" does not exist, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0002_v2_architecture.up.sql:89: NOTICE:  index "idx_eol_ship_status" does not exist, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0002_v2_architecture.up.sql:122: NOTICE:  table "station_steps" does not exist, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0002_v2_architecture.up.sql:347: NOTICE:  constraint "checklist_template_items_station_id_fkey" of relation "checklist_template_items" does not exist, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0002_v2_architecture.up.sql:353: NOTICE:  constraint "issue_list_station_id_fkey" of relation "issue_list" does not exist, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0002_v2_architecture.up.sql:359: NOTICE:  constraint "audit_logs_station_id_fkey" of relation "audit_logs" does not exist, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0002_v2_architecture.up.sql:397: NOTICE:  constraint "chk_issue_source" of relation "issue_list" does not exist, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0002_v2_architecture.up.sql:404: NOTICE:  constraint "chk_conditional_approve_pair" of relation "issue_list" does not exist, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0002_v2_architecture.up.sql:508: NOTICE:  relation "idx_vehicles_vin_trgm" already exists, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0002_v2_architecture.up.sql:510: NOTICE:  relation "idx_vehicles_status" already exists, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0002_v2_architecture.up.sql:511: NOTICE:  relation "idx_vehicles_model" already exists, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0002_v2_architecture.up.sql:514: NOTICE:  relation "idx_issue_list_vin" already exists, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0002_v2_architecture.up.sql:518: NOTICE:  relation "idx_issue_list_status_date" already exists, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0002_v2_architecture.up.sql:519: NOTICE:  relation "idx_issue_list_station" already exists, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0002_v2_architecture.up.sql:520: NOTICE:  relation "idx_issue_list_severity" already exists, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0002_v2_architecture.up.sql:527: NOTICE:  relation "idx_issue_list_issue_date_day" already exists, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0002_v2_architecture.up.sql:541: NOTICE:  relation "idx_audit_logs_vin_event_at" already exists, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0002_v2_architecture.up.sql:542: NOTICE:  relation "idx_audit_logs_type_event_at" already exists, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0002_v2_architecture.up.sql:543: NOTICE:  relation "idx_audit_logs_event_at_brin" already exists, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0002_v2_architecture.up.sql:559: NOTICE:  trigger "trg_vehicles_updated_at" for relation "vehicles" does not exist, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0002_v2_architecture.up.sql:564: NOTICE:  trigger "trg_issue_list_updated_at" for relation "issue_list" does not exist, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0002_v2_architecture.up.sql:569: NOTICE:  trigger "trg_vssp_updated_at" for relation "vehicle_station_step_progress" does not exist, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0002_v2_architecture.up.sql:574: NOTICE:  trigger "trg_cip_updated_at" for relation "checklist_item_progress" does not exist, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0002_v2_architecture.up.sql:579: NOTICE:  trigger "trg_eol_workflow_updated_at" for relation "vehicle_eol_workflow" does not exist, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0002_v2_architecture.up.sql:628: NOTICE:  trigger "trg_assign_checklist_templates" for relation "vehicles" does not exist, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0002_v2_architecture.up.sql:668: NOTICE:  trigger "trg_initialize_vehicle_progress" for relation "vehicles" does not exist, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0002_v2_architecture.up.sql:714: NOTICE:  trigger "trg_recalculate_vehicle_progress" for relation "vehicle_station_step_progress" does not exist, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0002_v2_architecture.up.sql:748: NOTICE:  trigger "trg_enforce_branch_shipment" for relation "vehicle_eol_workflow" does not exist, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0002_v2_architecture.up.sql:782: NOTICE:  trigger "trg_enforce_depot_release" for relation "vehicle_eol_workflow" does not exist, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0002_v2_architecture.up.sql:804: NOTICE:  trigger "trg_enforce_document_approval" for relation "vehicle_eol_workflow" does not exist, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0002_v2_architecture.up.sql:845: NOTICE:  trigger "trg_check_shipment_completion" for relation "checklist_item_progress" does not exist, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0002_v2_architecture.up.sql:891: NOTICE:  trigger "trg_enforce_manual_status_change" for relation "vehicles" does not exist, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0002_v2_architecture.up.sql:919: NOTICE:  trigger "trg_link_latest_issue_to_source" for relation "issue_list" does not exist, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0004_eol_depot_after_branch.up.sql:68: NOTICE:  trigger "trg_enforce_eol_depot_after_branch" for relation "checklist_item_progress" does not exist, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0011_eol_two_stage_depot_ships.up.sql:147: NOTICE:  trigger "trg_eol_depot_release_ships" for relation "vehicle_eol_workflow" does not exist, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0013_eol_deliver_flow.up.sql:206: NOTICE:  trigger "trg_enforce_eol_deliver" for relation "vehicle_eol_workflow" does not exist, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0025_model_aware_templates.up.sql:125: NOTICE:  trigger "trg_reassign_checklist_templates_on_model_change" for relation "vehicles" does not exist, skipping
+psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0025_model_aware_templates.up.sql:165: NOTICE:  trigger "trg_rematerialize_checklist_after_template_reassign" for relation "vehicles" does not exist, skipping
+== migrations + seeds applied; public schema ACL like live: {pg_database_owner=UC/pg_database_owner,=UC/pg_database_owner}
+
+== 1. script without a password (must stop before doing anything)
+ro_password is not set: run with -v ro_password=...
+   karea_ro exists after that: 0
+
+== 2. script with a password, run twice (idempotent)
+-- run 1
+BEGIN
+CREATE ROLE
+ALTER ROLE
+ALTER ROLE
+REVOKE
+REVOKE
+GRANT
+GRANT
+REVOKE
+GRANT
+REVOKE
+GRANT
+ALTER DEFAULT PRIVILEGES
+ALTER DEFAULT PRIVILEGES
+COMMIT
+   exit=0
+-- run 2
+BEGIN
+ALTER ROLE
+ALTER ROLE
+REVOKE
+REVOKE
+GRANT
+GRANT
+REVOKE
+GRANT
+REVOKE
+GRANT
+ALTER DEFAULT PRIVILEGES
+ALTER DEFAULT PRIVILEGES
+COMMIT
+   exit=0
+   public schema ACL now: {pg_database_owner=UC/pg_database_owner,=U/pg_database_owner,karea_ro=U/pg_database_owner}
+   database ACL now:      {=c/karea,karea=CTc/karea,karea_ro=c/karea}
+   role attributes:       t|f|f|f|f|f|5|{default_transaction_read_only=on}
+   table privileges of karea_ro (distinct): SELECT
+   tables without SELECT for karea_ro: 0
+   tables where karea_ro has any write privilege: 0
+
+== 3. connected as karea_ro
+
+-- who am I
+   SQL: SELECT current_user, session_user, current_setting('default_transaction_read_only') AS read_only_default
+    current_user | session_user | read_only_default 
+   --------------+--------------+-------------------
+    karea_ro     | karea_ro     | on
+   (1 row)
+   
+   exit=0
+
+-- SELECT (must work)
+   SQL: SELECT count(*) AS vehicles, (SELECT count(*) FROM checklist_template_items) AS items, (SELECT version FROM schema_migrations) AS migration FROM vehicles
+    vehicles | items | migration 
+   ----------+-------+-----------
+          18 |   104 |        39
+   (1 row)
+   
+   exit=0
+
+-- INSERT into vehicles (must fail)
+   SQL: INSERT INTO vehicles (vin) VALUES ('ROTEST00000000001')
+   ERROR:  cannot execute INSERT in a read-only transaction
+   exit=1
+
+-- INSERT into vehicles with the read-only default off (must fail on privilege)
+   SQL: SET default_transaction_read_only = off;  then, as a separate transaction:  INSERT INTO vehicles (vin) VALUES ('ROTEST00000000001')
+   SET
+    read_only_now 
+   ---------------
+    off
+   (1 row)
+   
+   ERROR:  permission denied for table vehicles
+   exit=1
+
+-- UPDATE schema_migrations (must fail)
+   SQL: SET default_transaction_read_only = off;  then, as a separate transaction:  UPDATE schema_migrations SET dirty = true
+   SET
+    read_only_now 
+   ---------------
+    off
+   (1 row)
+   
+   ERROR:  permission denied for table schema_migrations
+   exit=1
+
+-- INSERT schema_migrations (must fail)
+   SQL: SET default_transaction_read_only = off;  then, as a separate transaction:  INSERT INTO schema_migrations VALUES (40, false)
+   SET
+    read_only_now 
+   ---------------
+    off
+   (1 row)
+   
+   ERROR:  permission denied for table schema_migrations
+   exit=1
+
+-- DELETE from audit_logs (must fail)
+   SQL: SET default_transaction_read_only = off;  then, as a separate transaction:  DELETE FROM audit_logs
+   SET
+    read_only_now 
+   ---------------
+    off
+   (1 row)
+   
+   ERROR:  permission denied for table audit_logs
+   exit=1
+
+-- TRUNCATE issue_list (must fail)
+   SQL: SET default_transaction_read_only = off;  then, as a separate transaction:  TRUNCATE issue_list
+   SET
+    read_only_now 
+   ---------------
+    off
+   (1 row)
+   
+   ERROR:  permission denied for table issue_list
+   exit=1
+
+-- CREATE TABLE in public (must fail)
+   SQL: SET default_transaction_read_only = off;  then, as a separate transaction:  CREATE TABLE public.ro_probe (id int)
+   SET
+    read_only_now 
+   ---------------
+    off
+   (1 row)
+   
+   ERROR:  permission denied for schema public
+   LINE 1: CREATE TABLE public.ro_probe (id int)
+                        ^
+   exit=1
+
+-- CREATE TEMP TABLE (must fail)
+   SQL: SET default_transaction_read_only = off;  then, as a separate transaction:  CREATE TEMP TABLE ro_probe (id int)
+   SET
+    read_only_now 
+   ---------------
+    off
+   (1 row)
+   
+   ERROR:  permission denied to create temporary tables in database "karea"
+   LINE 1: CREATE TEMP TABLE ro_probe (id int)
+                             ^
+   exit=1
+
+-- nextval on a sequence (must fail)
+   SQL: SET default_transaction_read_only = off;  then, as a separate transaction:  SELECT nextval('vehicle_models_id_seq')
+   SET
+    read_only_now 
+   ---------------
+    off
+   (1 row)
+   
+   ERROR:  permission denied for sequence vehicle_models_id_seq
+   exit=1
+
+== 4. a table created later by karea (default privileges)
+
+-- SELECT from the new table (must work)
+   SQL: SELECT * FROM ro_future_probe
+    id 
+   ----
+     1
+   (1 row)
+   
+   exit=0
+
+-- INSERT into the new table (must fail)
+   SQL: SET default_transaction_read_only = off;  then, as a separate transaction:  INSERT INTO ro_future_probe VALUES (2)
+   SET
+    read_only_now 
+   ---------------
+    off
+   (1 row)
+   
+   ERROR:  permission denied for table ro_future_probe
+   exit=1
+
+== 5. data unchanged by every attempt
+   vehicles ROTEST rows: 0
+   schema_migrations:    39|f
+   ro_future_probe rows: 1
+   tables named ro_probe: 0
+
+== container karea_ro_verify_5821 removed on exit
