@@ -1,0 +1,37 @@
+== tr 1280x720, N7V1K1SA9TK000002 ==
+  title: Sevk öncesi uyarı
+  hint : İstasyon adımları ile Test, Sevkiyat ve fabrika aşaması EOL maddeleri tamamlanmadan araç fabrikadan sevk edilemez. Depo aşaması EOL maddeleri tamamlanmadan ve açık hatalar kapanmadan depodan çıkamaz.
+  list items: 25
+  [PASS] panel title — Sevk öncesi uyarı
+  [PASS] hint is the new text
+  [PASS] old sentence gone
+  [PASS] no "şube"/"branch" in the hint
+  [PASS] warning list still rendered — 25 items
+== tr 375x667, N7V1K1SA9TK000002 ==
+  title: Sevk öncesi uyarı
+  hint : İstasyon adımları ile Test, Sevkiyat ve fabrika aşaması EOL maddeleri tamamlanmadan araç fabrikadan sevk edilemez. Depo aşaması EOL maddeleri tamamlanmadan ve açık hatalar kapanmadan depodan çıkamaz.
+  list items: 25
+  [PASS] panel title — Sevk öncesi uyarı
+  [PASS] hint is the new text
+  [PASS] old sentence gone
+  [PASS] no "şube"/"branch" in the hint
+  [PASS] warning list still rendered — 25 items
+== en 1280x720, N7V1K1SA9TK000002 ==
+  title: Pre-shipment warning
+  hint : The vehicle cannot ship from the Factory until station steps and the Test, Shipment and Factory-phase EOL items are complete. It cannot leave the depot until the depot-phase EOL items are complete and open issues are closed.
+  list items: 25
+  [PASS] panel title — Pre-shipment warning
+  [PASS] hint is the new text
+  [PASS] old sentence gone
+  [PASS] no "şube"/"branch" in the hint
+  [PASS] warning list still rendered — 25 items
+== en 375x667, N7V1K1SA9TK000002 ==
+  title: Pre-shipment warning
+  hint : The vehicle cannot ship from the Factory until station steps and the Test, Shipment and Factory-phase EOL items are complete. It cannot leave the depot until the depot-phase EOL items are complete and open issues are closed.
+  list items: 25
+  [PASS] panel title — Pre-shipment warning
+  [PASS] hint is the new text
+  [PASS] old sentence gone
+  [PASS] no "şube"/"branch" in the hint
+  [PASS] warning list still rendered — 25 items
+RESULT: PASS

@@ -12,9 +12,10 @@ const BASE = 'http://localhost:5175';
 const API = 'http://localhost:18081/api/v1';
 const VIN = 'N7V1K1SA9TK000002';
 
+// "Fabrika"/"Factory" as in the rest of the UI (docs/16 A53 terim düzeltmesi).
 const HINT = {
-  tr: 'İstasyon adımları ile Test, Sevkiyat ve şube aşaması EOL maddeleri tamamlanmadan araç şubeden çıkamaz. Depo aşaması EOL maddeleri tamamlanmadan ve açık hatalar kapanmadan depodan çıkamaz.',
-  en: 'The vehicle cannot ship from the branch until station steps and the Test, Shipment and branch-phase EOL items are complete. It cannot leave the depot until the depot-phase EOL items are complete and open issues are closed.',
+  tr: 'İstasyon adımları ile Test, Sevkiyat ve fabrika aşaması EOL maddeleri tamamlanmadan araç fabrikadan sevk edilemez. Depo aşaması EOL maddeleri tamamlanmadan ve açık hatalar kapanmadan depodan çıkamaz.',
+  en: 'The vehicle cannot ship from the Factory until station steps and the Test, Shipment and Factory-phase EOL items are complete. It cannot leave the depot until the depot-phase EOL items are complete and open issues are closed.',
 };
 const TITLE = { tr: 'Sevk öncesi uyarı', en: 'Pre-shipment warning' };
 
@@ -59,11 +60,12 @@ for (const locale of ['tr', 'en']) {
     check('panel title', title === TITLE[locale], title);
     check('hint is the new text', hint === HINT[locale]);
     check('old sentence gone', !/hard-block/i.test(text));
+    check('no "şube"/"branch" in the hint', !/şube|branch/i.test(hint));
     check('warning list still rendered', items > 0, `${items} items`);
     await panel.evaluate((el) => el.scrollIntoView({ block: 'start' }));
     const box = await panel.boundingBox();
     await page.screenshot({
-      path: path.join(OUT, `web-${locale}-${width}.png`),
+      path: path.join(OUT, `web-${locale}-${width}-factory.png`),
       clip: { x: box.x, y: box.y, width: box.width, height: Math.min(box.height, height - box.y, 320) },
     });
     await context.close();
