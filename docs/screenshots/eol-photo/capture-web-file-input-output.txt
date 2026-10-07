@@ -1,0 +1,51 @@
+== 1280x720 tr, N7V1K1SA9TK000002 (10 branch + 5 depot items) ==
+  [PASS] item 10 card is open
+  [PASS] file input is in flow (position static) — position=static
+  [PASS] file input sits inside its label box — input top=641, label 619..663
+  [PASS] click on "Dosya seç" keeps every scrollTop — before app=2760 up1=0 up2=0 up3=0 up4=0 html=0 | after app=2760 up1=0 up2=0 up3=0 up4=0 html=0
+  [PASS] card still in the viewport after the click
+  [PASS] click on "Dosya seç" keeps the address
+  [PASS] choosing a file keeps the address
+  [PASS] chosen file name shown on the card
+  [PASS] choosing a file keeps every scrollTop
+  [PASS] Save uploads the photo — POST /media 201
+  [PASS] Save keeps the address
+  [PASS] server lists the photo on the item — Photos=["scroll-1280.jpg","scroll-1280-1791369730338.jpg","scroll-1280-1791369781499.jpg","scroll-1280-1791369906829.jpg"]
+  [PASS] media_attachments row exists for the progress row — progress 114: 1 row(s)
+  [PASS] card shows the photo after Save
+  [PASS] item 9 is pending and open by default
+  [PASS] pending card: click on "Dosya seç" keeps every scrollTop — before app=2760 up1=0 up2=0 up3=0 up4=0 html=0 | after app=2760 up1=0 up2=0 up3=0 up4=0 html=0
+  [PASS] pending card still in the viewport after the click
+  [PASS] Tab reaches the file input — activeElement type=file
+  [PASS] focusing the input by Tab keeps every scrollTop — before app=2760 up1=0 up2=0 up3=0 up4=0 html=0 | after app=2760 up1=0 up2=0 up3=0 up4=0 html=0
+  [PASS] "Dosya seç" shows a focus ring while the input has keyboard focus — rgb(255, 255, 255) 0px 0px 0px 0px, rgb(255, 59, 30) 0px 0px 0px 2px, rgba(0, 0, 0, 0) 0px 0px 0px 0px
+  [PASS] Space on the focused input opens the file chooser
+  [PASS] Enter on the focused input opens the file chooser
+  [PASS] keyboard steps keep every scrollTop
+  [PASS] no page errors
+== 375x667 tr, N7V1K1SA9TK000002 (10 branch + 5 depot items) ==
+  [PASS] item 8 card is open
+  [PASS] file input is in flow (position static) — position=static
+  [PASS] file input sits inside its label box — input top=645, label 623..667
+  [PASS] click on "Dosya seç" keeps every scrollTop — before app=3574 up1=0 up2=0 up3=0 up4=0 html=0 | after app=3574 up1=0 up2=0 up3=0 up4=0 html=0
+  [PASS] card still in the viewport after the click
+  [PASS] click on "Dosya seç" keeps the address
+  [PASS] choosing a file keeps the address
+  [PASS] chosen file name shown on the card
+  [PASS] choosing a file keeps every scrollTop
+  [PASS] Save uploads the photo — POST /media 201
+  [PASS] Save keeps the address
+  [PASS] server lists the photo on the item — Photos=["scroll-375.jpg","scroll-375-1791369737746.jpg","scroll-375-1791369786139.jpg","scroll-375-1791369911381.jpg"]
+  [PASS] media_attachments row exists for the progress row — progress 112: 1 row(s)
+  [PASS] card shows the photo after Save
+  [PASS] item 7 is pending and open by default
+  [PASS] pending card: click on "Dosya seç" keeps every scrollTop — before app=3485 up1=0 up2=0 up3=0 up4=0 html=0 | after app=3485 up1=0 up2=0 up3=0 up4=0 html=0
+  [PASS] pending card still in the viewport after the click
+  [PASS] Tab reaches the file input — activeElement type=file
+  [PASS] focusing the input by Tab keeps every scrollTop — before app=3485 up1=0 up2=0 up3=0 up4=0 html=0 | after app=3485 up1=0 up2=0 up3=0 up4=0 html=0
+  [PASS] "Dosya seç" shows a focus ring while the input has keyboard focus — rgb(255, 255, 255) 0px 0px 0px 0px, rgb(255, 59, 30) 0px 0px 0px 2px, rgba(0, 0, 0, 0) 0px 0px 0px 0px
+  [PASS] Space on the focused input opens the file chooser
+  [PASS] Enter on the focused input opens the file chooser
+  [PASS] keyboard steps keep every scrollTop
+  [PASS] no page errors
+RESULT: PASS
