@@ -619,7 +619,7 @@ export const tr = {
   'vehicles.none': 'Araç bulunamadı',
   'vehicles.pageInfo': '{total} toplam · sayfa {page}',
   'vehicles.readinessHint':
-    'İstasyon adımları ile Test, Sevkiyat ve şube aşaması EOL maddeleri tamamlanmadan araç şubeden çıkamaz. Depo aşaması EOL maddeleri tamamlanmadan ve açık hatalar kapanmadan depodan çıkamaz.',
+    'İstasyon adımları ile Test, Sevkiyat ve fabrika aşaması EOL maddeleri tamamlanmadan araç fabrikadan sevk edilemez. Depo aşaması EOL maddeleri tamamlanmadan ve açık hatalar kapanmadan depodan çıkamaz.',
   'vehicles.readinessListShipment': 'Sevkiyat checklist',
   'vehicles.readinessListTest': 'Test checklist',
   'vehicles.readinessListEol': 'EOL checklist',
@@ -2816,7 +2816,7 @@ export const en: Record<MessageKey, string> = {
   'vehicles.plannedHint':
     'Planned status cannot be selected manually; the first station step on the line sets the status to On line automatically.',
   'vehicles.readinessHint':
-    'The vehicle cannot ship from the branch until station steps and the Test, Shipment and branch-phase EOL items are complete. It cannot leave the depot until the depot-phase EOL items are complete and open issues are closed.',
+    'The vehicle cannot ship from the Factory until station steps and the Test, Shipment and Factory-phase EOL items are complete. It cannot leave the depot until the depot-phase EOL items are complete and open issues are closed.',
   'vehicles.readinessListShipment': 'Shipment checklist',
   'vehicles.readinessListTest': 'Test checklist',
   'vehicles.readinessListEol': 'EOL checklist',

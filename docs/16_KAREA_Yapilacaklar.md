@@ -1049,6 +1049,10 @@ başlatılınca devreye girer.
   durdurduğunu söylüyor: istasyon adımları + Test, Sevkiyat ve şube EOL
   maddeleri şubeden çıkışı, depo EOL maddeleri + açık hatalar depodan çıkışı
   (A52 kanıtları). Panelin başlığı ve uyarı listesi değişmedi.
+- **Terim düzeltmesi:** metin arayüzün geri kalanı gibi "şube/branch"
+  yerine "fabrika/Factory" der ("…fabrika aşaması EOL maddeleri
+  tamamlanmadan araç fabrikadan sevk edilemez", "…ship from the Factory
+  … Factory-phase EOL items…").
 - **Kanıt (test DB + test API 18081, `N7V1K1SA9TK000002`):**
   `docs/screenshots/readiness-hint/capture-web.mjs` →
   `capture-web-output.txt` (TR/EN × 1280/375: başlık, yeni metin, eski cümle
