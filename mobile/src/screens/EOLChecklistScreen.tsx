@@ -494,7 +494,8 @@ export default function EOLChecklistScreen() {
             <Card key={item.ItemID} style={{ padding: 0, overflow: 'hidden' }}>
               {header}
               <View style={{ paddingHorizontal: 14, paddingBottom: 14 }}>
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
+                <ChecklistItemPhotos photos={item.Photos ?? []} />
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
                   {STATUS_KEYS.map((s) => {
                     const selected = d.status === s.value;
                     return (

@@ -14,7 +14,9 @@ collapse-tr-375 [PASS] photo tap opens its own viewer
 collapse-tr-375 [PASS] photo tap does not toggle the card
 collapse-tr-375 [PASS] header tap opens the editor
 collapse-tr-375 [PASS] editor prefilled with the saved note — "ölçüm 12.6"
-collapse-tr-375 [PASS] Cancel and Save side by side, Save on the right — cancel(140,828) save(259,828)
+collapse-tr-375 [PASS] open card still shows all 3 photos
+collapse-tr-375 [PASS] open card hides who/when
+collapse-tr-375 [PASS] Cancel and Save side by side, Save on the right — cancel(140,906) save(259,906)
 collapse-tr-375 [PASS] Enter on the header closes it
 collapse-tr-375 [PASS] Space on the header opens it
 collapse-tr-375 [PASS] Cancel closes it back to the summary
@@ -38,7 +40,9 @@ collapse-tr-1280 [PASS] photo tap opens its own viewer
 collapse-tr-1280 [PASS] photo tap does not toggle the card
 collapse-tr-1280 [PASS] header tap opens the editor
 collapse-tr-1280 [PASS] editor prefilled with the saved note — "ölçüm 12.6"
-collapse-tr-1280 [PASS] Cancel and Save side by side, Save on the right — cancel(1045,786) save(1164,786)
+collapse-tr-1280 [PASS] open card still shows all 3 photos
+collapse-tr-1280 [PASS] open card hides who/when
+collapse-tr-1280 [PASS] Cancel and Save side by side, Save on the right — cancel(1045,864) save(1164,864)
 collapse-tr-1280 [PASS] Enter on the header closes it
 collapse-tr-1280 [PASS] Space on the header opens it
 collapse-tr-1280 [PASS] Cancel closes it back to the summary
@@ -62,7 +66,9 @@ collapse-en-375 [PASS] photo tap opens its own viewer
 collapse-en-375 [PASS] photo tap does not toggle the card
 collapse-en-375 [PASS] header tap opens the editor
 collapse-en-375 [PASS] editor prefilled with the saved note — "ölçüm 12.6"
-collapse-en-375 [PASS] Cancel and Save side by side, Save on the right — cancel(131,786) save(267,786)
+collapse-en-375 [PASS] open card still shows all 3 photos
+collapse-en-375 [PASS] open card hides who/when
+collapse-en-375 [PASS] Cancel and Save side by side, Save on the right — cancel(131,864) save(267,864)
 collapse-en-375 [PASS] Enter on the header closes it
 collapse-en-375 [PASS] Space on the header opens it
 collapse-en-375 [PASS] Cancel closes it back to the summary
@@ -86,7 +92,9 @@ collapse-en-1280 [PASS] photo tap opens its own viewer
 collapse-en-1280 [PASS] photo tap does not toggle the card
 collapse-en-1280 [PASS] header tap opens the editor
 collapse-en-1280 [PASS] editor prefilled with the saved note — "ölçüm 12.6"
-collapse-en-1280 [PASS] Cancel and Save side by side, Save on the right — cancel(1036,786) save(1172,786)
+collapse-en-1280 [PASS] open card still shows all 3 photos
+collapse-en-1280 [PASS] open card hides who/when
+collapse-en-1280 [PASS] Cancel and Save side by side, Save on the right — cancel(1036,864) save(1172,864)
 collapse-en-1280 [PASS] Enter on the header closes it
 collapse-en-1280 [PASS] Space on the header opens it
 collapse-en-1280 [PASS] Cancel closes it back to the summary

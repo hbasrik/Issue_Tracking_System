@@ -20,6 +20,8 @@ photo for progress 209: HTTP 201
   [PASS] header click opens the card
   [PASS] no focus ring after a mouse click (focused, but not :focus-visible) — none
   [PASS] editor prefilled with the saved note — "Akü 12.6 V"
+  [PASS] open card still shows the photos
+  [PASS] open card hides who/when
   [PASS] Cancel and Save side by side at bottom right — cancel x=1080 save x=1148..1222 card right=1235
   [PASS] header reachable with the keyboard (Tab / Shift+Tab)
   [PASS] focus ring visible on keyboard focus (:focus-visible) — rgb(255, 255, 255) 0px 0px 0px 0px inset, rgb(255, 59, 30) 0px 0px 0px 2px inset, rgba(0, 0, 0, 0) 0px 0px 0px 0px
@@ -27,7 +29,7 @@ photo for progress 209: HTTP 201
   [PASS] Space opens the card
   [PASS] Cancel closes the card
   [PASS] Cancel discards the draft
-  [PASS] after Save the card is closed with the new answer — ["1.Software Update","Uygun değil","","Not: conta yırtık","","Local Manager · 06.10.2026 17:36"]
+  [PASS] after Save the card is closed with the new answer — ["1.Software Update","Uygun değil","","Not: conta yırtık","","Local Manager · 07.10.2026 10:30"]
   [PASS] server has the edited answer — NOT_OK / conta yırtık
   [PASS] no horizontal overflow
   [PASS] no page errors
@@ -51,6 +53,8 @@ photo for progress 209: HTTP 201
   [PASS] header click opens the card
   [PASS] no focus ring after a mouse click (focused, but not :focus-visible) — none
   [PASS] editor prefilled with the saved note — "Akü 12.6 V"
+  [PASS] open card still shows the photos
+  [PASS] open card hides who/when
   [PASS] Cancel and Save side by side at bottom right — cancel x=191 save x=259..333 card right=346
   [PASS] header reachable with the keyboard (Tab / Shift+Tab)
   [PASS] focus ring visible on keyboard focus (:focus-visible) — rgb(255, 255, 255) 0px 0px 0px 0px inset, rgb(255, 59, 30) 0px 0px 0px 2px inset, rgba(0, 0, 0, 0) 0px 0px 0px 0px
@@ -80,6 +84,8 @@ photo for progress 209: HTTP 201
   [PASS] header click opens the card
   [PASS] no focus ring after a mouse click (focused, but not :focus-visible) — none
   [PASS] editor prefilled with the saved note — "Akü 12.6 V"
+  [PASS] open card still shows the photos
+  [PASS] open card hides who/when
   [PASS] Cancel and Save side by side at bottom right — cancel x=1077 save x=1161..1222 card right=1235
   [PASS] header reachable with the keyboard (Tab / Shift+Tab)
   [PASS] focus ring visible on keyboard focus (:focus-visible) — rgb(255, 255, 255) 0px 0px 0px 0px inset, rgb(255, 59, 30) 0px 0px 0px 2px inset, rgba(0, 0, 0, 0) 0px 0px 0px 0px
@@ -109,6 +115,8 @@ photo for progress 209: HTTP 201
   [PASS] header click opens the card
   [PASS] no focus ring after a mouse click (focused, but not :focus-visible) — none
   [PASS] editor prefilled with the saved note — "Akü 12.6 V"
+  [PASS] open card still shows the photos
+  [PASS] open card hides who/when
   [PASS] Cancel and Save side by side at bottom right — cancel x=188 save x=272..333 card right=346
   [PASS] header reachable with the keyboard (Tab / Shift+Tab)
   [PASS] focus ring visible on keyboard focus (:focus-visible) — rgb(255, 255, 255) 0px 0px 0px 0px inset, rgb(255, 59, 30) 0px 0px 0px 2px inset, rgba(0, 0, 0, 0) 0px 0px 0px 0px

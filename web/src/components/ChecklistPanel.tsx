@@ -442,7 +442,8 @@ function EolItemRow({
         ) : null
       ) : (
         <div id={bodyId} className="px-3 pb-3">
-          <div className="mt-1 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+          <ChecklistItemPhotos photos={photos} />
+          <div className="mt-2 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
             {EOL_STATUSES.map((value) => {
               const selected = status === value;
               const color = STATUS_COLOR[value];

@@ -71,6 +71,8 @@ for (const locale of ['tr', 'en']) {
     const editor = page.locator('div', { has: page.getByText(t.cancel, { exact: true }) }).filter({ hasText: '1. Software Update' }).last();
     const noteValue = await editor.locator('textarea').first().inputValue();
     check(key, 'editor prefilled with the saved note', noteValue === 'ölçüm 12.6', JSON.stringify(noteValue));
+    check(key, 'open card still shows all 3 photos', (await editor.locator('[data-testid="checklist-item-photos"] img').count()) === 3);
+    check(key, 'open card hides who/when', !(await editor.innerText()).includes('Quality Operator'));
     const cancelBox = await editor.getByText(t.cancel, { exact: true }).boundingBox();
     const saveBox = await editor.getByText(t.save, { exact: true }).boundingBox();
     check(key, 'Cancel and Save side by side, Save on the right', Math.abs(cancelBox.y - saveBox.y) < 4 && cancelBox.x < saveBox.x, `cancel(${Math.round(cancelBox.x)},${Math.round(cancelBox.y)}) save(${Math.round(saveBox.x)},${Math.round(saveBox.y)})`);

@@ -139,6 +139,8 @@ for (const [width, locale] of [[1280, 'tr'], [375, 'tr'], [1280, 'en'], [375, 'e
     clickRing.focused && !visibleRing(clickRing.shadow), clickRing.shadow);
   const prefilled = await card.locator('textarea').inputValue();
   check('editor prefilled with the saved note', prefilled === 'Akü 12.6 V', JSON.stringify(prefilled));
+  check('open card still shows the photos', (await card.locator('[data-checklist-photos] img').count()) >= 1);
+  check('open card hides who/when', !(await card.innerText()).includes('Local Manager'));
   const cancelBox = await card.getByRole('button', { name: L.cancel, exact: true }).boundingBox();
   const saveBox = await card.getByRole('button', { name: L.save, exact: true }).boundingBox();
   const cardBox = await card.boundingBox();
