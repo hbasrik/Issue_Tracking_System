@@ -982,7 +982,7 @@ başlatılınca devreye girer.
   `POST /media` 201, sunucuda `media_attachments` satırı) +
   `web-file-input-*-focus.png`.
 
-### A52. Geçilen aşamanın maddelerini dondurma `[~]` — 2026-10-07
+### A52. Geçilen aşamanın maddelerini dondurma `[x]` — 2026-10-07
 - **Ön koşul kanıtı — depodan çıkış iki katmanda sert (test DB
   `karea_eolnote_test`, 0040 geri alınmış, `fn_enforce_depot_release` md5
   canlıyla aynı `bf508f54…`, test API 18081):**
@@ -1010,7 +1010,38 @@ başlatılınca devreye girer.
   maddesi (arıza kaydı duruyor; depoda bulunan kusur arıza kaydıdır) ve
   0015'in eski Sevkiyat yeniden işaretlemesi. Sıra: önce kod, sonra
   migration; kesinti yok.
-- **Bekleyen:** kalıcı testlerin kanıtı.
+- **Kanıt — migration:** `docs/screenshots/migration-0040/`:
+  `apply-verification.sh` (up/down/up/up/down/down/up; 1872 progress, 18
+  iş akışı satırı ve medya md5'i hep aynı), `sql-trials.sql` (21 doğrudan
+  SQL denemesi; 16 örnek satır, denetim ve medya değişmedi).
+- **Kanıt — Go (`docs/screenshots/eol-freeze/go-test-output.txt`, temiz
+  test DB):** tüm paketler yeşil. `repository/postgres/checklist_frozen_test.go`:
+  uygulamanın okuduğu sebep 1872 satırın hepsinde tetikleyiciyle aynı
+  (teslimden önce ve sonra); her sebep × tür için SaveResult ve fotoğraf
+  satırı sentinel ile reddedilir, satır md5'i ve medya sayısı aynı.
+  `usecase/checklist_frozen_test.go`: 409 sonrası satır aynı, 0 denetim
+  kaydı, dosya saklanmaz.
+- **Kanıt — API (`eol-freeze/run-api-trials.sh` → `-output.txt`, test
+  API 18081):** depodaki aracın şube EOL / Test / Sevkiyat maddesi ve
+  fotoğrafı, teslim edilen aracın şube ve depo maddesi ve fotoğrafı, depodan
+  çıkmış aracın depo maddesi ve fotoğrafı → 9 × 409; aynı yazımlar doğrudan
+  SQL ile 6 × tetikleyici hatası. Her denemeden sonra satır md5'i, aracın
+  `audit_logs` sayısı + md5'i, medya satırları + md5'i ve yükleme
+  klasöründeki dosya sayısı aynı. Kontrol: şubedeki araç 200 + 201, depodaki
+  aracın açık depo maddesi 200 (satır ve denetim değişir).
+- **Kanıt — web (`eol-freeze/capture-web.mjs`, TR/EN × 1280/375, 204
+  denetim):** donmuş panelde açıklama, opaklık 1, başlık düğme değil ve
+  tıklayınca açılmıyor, cevap düğmesi / Kaydet / dosya girdisi / onay kutusu
+  yok; depodan çıkmadan önce eklenen fotoğraf tam boy açılıyor; açık depo
+  paneli tıklanabilir. `web-*.png`.
+- **Kanıt — mobil (`eol-freeze/capture-mobile.mjs`, gerçek
+  `EOLChecklistScreen`, kodu değişmedi, istekler test API'ye):** mobil yalnız
+  aracın bulunduğu aşamayı gösterdiği için donmuş maddeye ancak bayat
+  ekrandan ulaşılır. Depo listesi açıkken araç API'den depodan çıkarıldı;
+  TR/EN × 375/1280'de Kaydet → API 409, maddede donmuş-depo mesajı, satır,
+  denetim ve medya md5'i aynı. Yeniden yüklenince depodan çıkmış ve teslim
+  edilmiş araçta düzenlenebilir madde yok. Düzenekte `proxy-eol` sahnesi
+  (`mobile-harness/scenes.ts`, `stubs.tsx`). `mobile-*.png`.
 
 ### A53. "Sevk öncesi uyarı" açıklama cümlesi `[x]` — 2026-10-07
 - **Değişiklik:** `vehicles.readinessHint` (TR/EN) artık "Depot Release
@@ -1023,7 +1054,7 @@ başlatılınca devreye girer.
   `capture-web-output.txt` (TR/EN × 1280/375: başlık, yeni metin, eski cümle
   yok, 25 uyarı satırı) + `web-*.png`.
 
-### A54. Depodan çıkış 409 mesajı gerçek sebebi söylüyor `[~]` — 2026-10-07
+### A54. Depodan çıkış 409 mesajı gerçek sebebi söylüyor `[x]` — 2026-10-07
 - **Sorun:** `DepotReleaseBlockedError` her zaman "N open issue(s) remain"
   yazıyordu; sebep eksik depo maddesiyken "0 open issue(s) remain (issue
   ids: )" çıkıyordu.
@@ -1036,7 +1067,13 @@ başlatılınca devreye girer.
   açık hata), `error.depotReleaseBlockedBoth` ya da
   `error.depotReleaseBlockedGeneric` ile çevirir; eski "0 open issue(s)"
   metni de genel cümleye düşer, "0 açık issue" yazılmaz.
-- **Bekleyen:** kanıt.
+- **Kanıt:** `delivery/http/errors_internal_test.go` (yalnız madde, ikisi
+  birden; gövde alanları aynı) + mevcut yalnız-hata testi;
+  `shared/apiErrorCopy.selftest.ts` (14 çeviri TR/EN);
+  `eol-freeze/run-api-trials-output.txt` 19–21: canlı API'den üç biçim
+  ("4 depot-phase EoL item(s) incomplete; 2 open issue(s) remain (issue ids:
+  13, 14)", "2 open issue(s) remain (issue ids: 13, 14)", "1 depot-phase
+  EoL item(s) incomplete").
 
 ### A50. Canlı için salt-okunur `karea_ro` rolü `[~]` — 2026-10-07
 - **Betik:** `scripts/create-readonly-role.sql` (Karar 28). Migration değil;

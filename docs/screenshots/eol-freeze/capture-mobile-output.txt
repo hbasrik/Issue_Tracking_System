@@ -1,0 +1,34 @@
+fixture: answer N7V1K1SA8TK000010 depot item 11 OK: HTTP 200
+stale-tr-375 [PASS] depot stage: depot items listed before release — 5 items
+stale-tr-375 [PASS] item 11 header is a toggle
+stale-tr-1280 [PASS] depot stage: depot items listed before release — 5 items
+stale-tr-1280 [PASS] item 11 header is a toggle
+stale-en-375 [PASS] depot stage: depot items listed before release — 5 items
+stale-en-375 [PASS] item 11 header is a toggle
+stale-en-1280 [PASS] depot stage: depot items listed before release — 5 items
+stale-en-1280 [PASS] item 11 header is a toggle
+
+release N7V1K1SA8TK000010 through the API while the screens are open: HTTP 200
+before : row=938c5686b75515eda694bfb23ca19072 audit_rows=3 audit_md5=a1d4ccb0b78a75d5938840452e6e21f9 media_rows=0 depot_rows_md5=c8f08847da6ad6cbae5ca4a6c1156364
+stale-tr-375 [PASS] save shows the frozen-depot message on the item — Araç depodan çıktı; depo aşaması EOL maddeleri değiştirilemez, fotoğraf eklenemez.
+stale-tr-375 [PASS] API answered the save with 409 — tr-375 POST /vehicles/N7V1K1SA8TK000010/checklist/eol/11 -> 409
+stale-tr-1280 [PASS] save shows the frozen-depot message on the item — Araç depodan çıktı; depo aşaması EOL maddeleri değiştirilemez, fotoğraf eklenemez.
+stale-tr-1280 [PASS] API answered the save with 409 — tr-1280 POST /vehicles/N7V1K1SA8TK000010/checklist/eol/11 -> 409
+stale-en-375 [PASS] save shows the frozen-depot message on the item — The vehicle has been released from the depot; depot-phase EOL items cannot change and no photos can be added.
+stale-en-375 [PASS] API answered the save with 409 — en-375 POST /vehicles/N7V1K1SA8TK000010/checklist/eol/11 -> 409
+stale-en-1280 [PASS] save shows the frozen-depot message on the item — The vehicle has been released from the depot; depot-phase EOL items cannot change and no photos can be added.
+stale-en-1280 [PASS] API answered the save with 409 — en-1280 POST /vehicles/N7V1K1SA8TK000010/checklist/eol/11 -> 409
+after release: row=938c5686b75515eda694bfb23ca19072 audit_rows=4 audit_md5=36b7a50abc3e3941c794474beed506c0 media_rows=0 depot_rows_md5=c8f08847da6ad6cbae5ca4a6c1156364
+after saves  : row=938c5686b75515eda694bfb23ca19072 audit_rows=4 audit_md5=36b7a50abc3e3941c794474beed506c0 media_rows=0 depot_rows_md5=c8f08847da6ad6cbae5ca4a6c1156364
+db [PASS] four refused saves changed nothing (row, audit log, media, every progress row)
+reload-tr-released [PASS] released vehicle: no editable EoL items after reload — 0 items
+reload-tr-delivered [PASS] delivered vehicle: no editable EoL items after reload — 0 items
+reload-en-released [PASS] released vehicle: no editable EoL items after reload — 0 items
+reload-en-delivered [PASS] delivered vehicle: no editable EoL items after reload — 0 items
+
+proxy log:
+  tr-375 POST /vehicles/N7V1K1SA8TK000010/checklist/eol/11 -> 409
+  tr-1280 POST /vehicles/N7V1K1SA8TK000010/checklist/eol/11 -> 409
+  en-375 POST /vehicles/N7V1K1SA8TK000010/checklist/eol/11 -> 409
+  en-1280 POST /vehicles/N7V1K1SA8TK000010/checklist/eol/11 -> 409
+RESULT: PASS

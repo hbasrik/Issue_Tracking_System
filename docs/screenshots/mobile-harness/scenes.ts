@@ -49,9 +49,12 @@ export interface Scene {
   /**
    * offline starts the app-level connectivity flag false; pickPhoto makes the
    * gallery picker return one image; uploadError makes uploadMedia throw a
-   * transport error with that message (connection lost mid-upload).
+   * transport error with that message (connection lost mid-upload). proxy
+   * sends vehicle, checklist and EoL reads and checklist/media writes to
+   * http://karea-proxy/api/v1, which the Playwright script routes to a test
+   * API (never live); `api` is then unused.
    */
-  harness?: { offline?: boolean; pickPhoto?: boolean; uploadError?: string };
+  harness?: { offline?: boolean; pickPhoto?: boolean; uploadError?: string; proxy?: boolean };
 }
 
 const HOUR = 3_600_000;
@@ -463,6 +466,14 @@ export const SCENES: Scene[] = [
       catalogAfter: CATALOG_AFTER,
       rejectPartIds: [MIRROR.ID],
     },
+  },
+  {
+    // Real EOLChecklistScreen against a test API; ?vin= picks the vehicle.
+    id: 'proxy-eol',
+    screen: 'eol',
+    params: { vin: new URLSearchParams(location.search).get('vin') ?? '' },
+    api: {},
+    harness: { proxy: true },
   },
 ];
 

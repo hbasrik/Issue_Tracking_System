@@ -145,6 +145,35 @@ function transport(name: string) {
   }
   noteTransportSuccess();
 }
+async function proxied<T>(apiPath: string, init?: RequestInit): Promise<T> {
+  window.__calls.push({ name: `proxy ${init?.method ?? 'GET'} ${apiPath}`, args: [] });
+  const res = await fetch(`http://karea-proxy/api/v1${apiPath}`, init);
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new ApiError(res.status, body);
+  return body as T;
+}
+const enc = encodeURIComponent;
+const proxyApi = scene.harness?.proxy
+  ? {
+      getVehicle: (vin: string) => proxied(`/vehicles/${enc(vin)}`),
+      getChecklist: (vin: string, type: string) => proxied(`/vehicles/${enc(vin)}/checklist/${type}`),
+      getEOLWorkflow: (vin: string) => proxied(`/vehicles/${enc(vin)}/eol`),
+      recordChecklist: (vin: string, type: string, itemId: number, body: unknown) =>
+        proxied(`/vehicles/${enc(vin)}/checklist/${type}/${itemId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        }),
+      uploadMedia: async (entityType: string, entityId: string, file: { name: string }) => {
+        const form = new FormData();
+        form.append('entity_type', entityType);
+        form.append('entity_id', entityId);
+        const jpeg = await (await fetch('http://karea-proxy/fixture.jpg')).blob();
+        form.append('file', jpeg, file.name);
+        return proxied('/media', { method: 'POST', body: form });
+      },
+    }
+  : {};
 export const api = {
   listVehicles: async () => ({ Items: [], Total: 0, Size: 100 }),
   listStations: async () => ({ items: [] }),
@@ -196,6 +225,7 @@ export const api = {
   eolBranchShip: record('eolBranchShip'),
   eolDepotRelease: record('eolDepotRelease'),
   eolDeliver: record('eolDeliver'),
+  ...proxyApi,
 };
 export const mediaFileUrl = (p: string) => p;
 export const mediaThumbUrl = (p: string) => p;
