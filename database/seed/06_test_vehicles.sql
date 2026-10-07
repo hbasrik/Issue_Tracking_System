@@ -512,10 +512,8 @@ BEGIN
         'Coolant leak found during depot fluid inspection.',
         'OPEN', op2, now() - interval '20 hours'
     );
-    PERFORM pg_temp.tick_checklist_item(
-        'N7V1K1SA1TK000012', 'TEST', 11, 'NOT_OK', op1, now() - interval '18 hours',
-        'Active P0A0F DTC on OBD scan at depot.'
-    );
+    -- TEST answers freeze at branch ship (Karar 29): the depot finding is an
+    -- issue on the TEST item, its OK answer from the branch stays.
     PERFORM pg_temp.add_checklist_issue(
         'N7V1K1SA1TK000012', 'TEST_ITEM', 11, 'Hata', 'MEDIUM',
         'OBD scan shows active drive-motor DTC at depot.',
@@ -558,9 +556,6 @@ BEGIN
             depot_released_by = mgr
         WHERE vehicle_eol_workflow.vin = v_vin;
     END LOOP;
-
-    -- 10056: complete the customer checklist so IN_WAREHOUSE → WITH_CUSTOMER.
-    PERFORM pg_temp.tick_all_checklist('N7V1K1SA7TK000015', 'SHIPMENT', op1, now() - interval '10 hours');
 
     -- ============================================================
     -- Bucket 6: document approved → COMPLETED / SHIPPED.

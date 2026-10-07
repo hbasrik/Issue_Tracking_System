@@ -1004,7 +1004,13 @@ başlatılınca devreye girer.
   başlığı düğme değildir, açılmaz, cevap düğmeleri, not, dosya seçimi ve
   Kaydet yoktur; var olan fotoğraf tam boy açılır. Test/Sevkiyat
   maddelerinde onay kutusunun yerinde kilit simgesi durur.
-- **Bekleyen:** migration 0040, kalıcı testler.
+- **Migration 0040 (canlıya uygulanmadı, onay bekliyor):** donma kuralı
+  tetikleyici olarak; doğrudan SQL de aynı metinle reddedilir. Seed 06'daki
+  iki yeniden cevaplama kaldırıldı: 0012'nin depoda NOT_OK'a çevrilen Test
+  maddesi (arıza kaydı duruyor; depoda bulunan kusur arıza kaydıdır) ve
+  0015'in eski Sevkiyat yeniden işaretlemesi. Sıra: önce kod, sonra
+  migration; kesinti yok.
+- **Bekleyen:** kalıcı testlerin kanıtı.
 
 ### A53. "Sevk öncesi uyarı" açıklama cümlesi `[x]` — 2026-10-07
 - **Değişiklik:** `vehicles.readinessHint` (TR/EN) artık "Depot Release

@@ -956,6 +956,26 @@ CREATE TRIGGER trg_enforce_eol_deliver
     BEFORE UPDATE OF delivered_at ON vehicle_eol_workflow
     FOR EACH ROW EXECUTE FUNCTION fn_enforce_eol_deliver();
 
+-- --- Gecilen asamanin maddeleri donar (docs/11 Karar 29) -----------------
+-- 2026-10-07 (migration 0040; govdeler icin migration dosyasi yetkili):
+--   fn_checklist_item_frozen_reason(vin, type, item_id) RETURNS TEXT STABLE
+--     teslim/SHIPPED arac -> 'cannot change checklist items of a delivered vehicle'
+--     EOL DEPOT maddesi + depot_released_at -> 'cannot change depot-stage EoL
+--       items after the vehicle has been released from the depot'
+--     diger maddeler (EOL BRANCH, TEST, SHIPMENT) + branch_shipped_at ->
+--       'cannot change branch-stage checklist items after the vehicle has
+--       shipped from the branch'
+--     aksi halde NULL. Metinler domain.ErrChecklistFrozen* ile ayni.
+--   trg_enforce_checklist_frozen BEFORE INSERT OR UPDATE ON
+--     checklist_item_progress: PENDING INSERT ve cevap kolonlarini
+--     degistirmeyen UPDATE gecer; digerleri donmus maddede RAISE.
+--   fn_checklist_media_frozen_reason(entity_type, entity_id) +
+--   trg_enforce_checklist_media_frozen BEFORE INSERT OR UPDATE ON
+--     media_attachments: donmus CHECKLIST_ITEM_PROGRESS satirina fotograf
+--     eklenemez; degismeyen UPDATE gecer, DELETE kapsam disi.
+--   Hicbir satir degismez; down dosyasi iki tetikleyici + dort fonksiyonu
+--   kaldirir.
+
 -- --- fn_check_shipment_completion — KALDIRILDI ---------------------------
 -- 2026-08-31 (migration 0013): sevk/musteri checklist'i artik otomatik
 -- durum degistiren bir tetikleyici degil. Yerine, SUBEDEN DEPOYA SEVK'i
