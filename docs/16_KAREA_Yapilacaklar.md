@@ -996,6 +996,17 @@ başlatılınca devreye girer.
   şart koşuyor (`eol_deliver.go`, `fn_enforce_eol_deliver`).
 - **Bekleyen:** migration 0040 + uygulama/arayüz kilidi onayda.
 
+### A53. "Sevk öncesi uyarı" açıklama cümlesi `[x]` — 2026-10-07
+- **Değişiklik:** `vehicles.readinessHint` (TR/EN) artık "Depot Release
+  hard-block kuralları değişmedi" demiyor; hangi maddenin hangi çıkışı
+  durdurduğunu söylüyor: istasyon adımları + Test, Sevkiyat ve şube EOL
+  maddeleri şubeden çıkışı, depo EOL maddeleri + açık hatalar depodan çıkışı
+  (A52 kanıtları). Panelin başlığı ve uyarı listesi değişmedi.
+- **Kanıt (test DB + test API 18081, `N7V1K1SA9TK000002`):**
+  `docs/screenshots/readiness-hint/capture-web.mjs` →
+  `capture-web-output.txt` (TR/EN × 1280/375: başlık, yeni metin, eski cümle
+  yok, 25 uyarı satırı) + `web-*.png`.
+
 ### A50. Canlı için salt-okunur `karea_ro` rolü `[~]` — 2026-10-07
 - **Betik:** `scripts/create-readonly-role.sql` (Karar 28). Migration değil;
   canlıda kullanıcı `karea` olarak `-v ro_password=...` ile çalıştırır.
