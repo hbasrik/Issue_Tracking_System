@@ -959,6 +959,29 @@ başlatılınca devreye girer.
   `capture-mobile.mjs` ve `eol-note/capture-web.mjs` önce rozete dokunacak
   şekilde güncellendi; hepsi geçiyor.
 
+### A51. Web EOL "Dosya seç" sayfayı kaydırıyordu `[x]` — 2026-10-07
+- **Kök sebep:** `web/src/components/ChecklistPanel.tsx` (`EolItemRow`)
+  fotoğraf girdisi Tailwind `sr-only` ile gizliydi (`position: absolute`,
+  1×1 px, `clip`). Kartta ve `AppShell`'de konumlandırılmış ata yok; girdi
+  ilk kapsayıcı bloğa bağlanıyor ve uygulamanın kaydırma kabı
+  (`[data-app-scroll]`) kaydırılmamış gibi belge koordinatına düşüyordu
+  (1280 px'de top 3257, etiket 365..409). Belge bu yüzden uzuyordu; etikete
+  tıklama veya Tab odağı girdiyi görünür yapmak için `<html>`'i kaydırıyordu
+  (`scrollTop` 0 → 2897): sayfa boş görünüyordu, yukarı kaydırınca geri
+  geliyordu. Kart düzeni (A49) öncesinde de aynı kalıp vardı.
+- **Düzeltme:** girdi akış içinde, etiketin içinde: `peer -ml-2 h-px w-px
+  shrink-0 overflow-hidden opacity-0` (konumlandırma yok). Tab ile ulaşılır,
+  Enter/Boşluk seçiciyi açar; odaktayken "Dosya seç" `peer-focus-visible`
+  ile halka gösterir. Kaydetme ve yükleme mantığı değişmedi.
+- **Kanıt (test DB, `N7V1K1SA9TK000002`, 10 şube + 5 depo, 1280×720 ve
+  375×667):** `docs/screenshots/eol-photo/capture-web-file-input.mjs`.
+  Düzeltme öncesi `capture-web-file-input-before-fix.txt` (her ata
+  `scrollTop`'u; `html` 0 → 3041 / 3885, kart görünür alandan çıkıyor),
+  sonrası `capture-web-file-input-output.txt` (cevaplı ve bekleyen açık
+  kartta tıklama, Tab, Boşluk, Enter `scrollTop`'u değiştirmiyor, adres aynı,
+  `POST /media` 201, sunucuda `media_attachments` satırı) +
+  `web-file-input-*-focus.png`.
+
 ### A50. Canlı için salt-okunur `karea_ro` rolü `[~]` — 2026-10-07
 - **Betik:** `scripts/create-readonly-role.sql` (Karar 28). Migration değil;
   canlıda kullanıcı `karea` olarak `-v ro_password=...` ile çalıştırır.

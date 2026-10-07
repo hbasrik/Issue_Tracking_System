@@ -491,11 +491,11 @@ function EolItemRow({
                 type="file"
                 accept="image/*"
                 disabled={disabled}
-                className="sr-only"
+                className="peer -ml-2 h-px w-px shrink-0 overflow-hidden opacity-0"
                 onChange={(e) => setFileName(e.target.files?.[0]?.name ?? '')}
               />
               <span
-                className="inline-flex min-h-touch cursor-pointer items-center rounded-lg border px-3 text-[13px]"
+                className="inline-flex min-h-touch cursor-pointer items-center rounded-lg border px-3 text-[13px] peer-focus-visible:ring-2 peer-focus-visible:ring-[var(--accent)]"
                 style={{ borderColor: 'var(--border)', color: 'var(--text-primary)' }}
               >
                 {t('checklist.chooseFile')}
