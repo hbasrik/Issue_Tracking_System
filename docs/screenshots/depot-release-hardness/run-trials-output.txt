@@ -1,0 +1,116 @@
+fn_enforce_depot_release md5: bf508f5483c4edf011825376112d35c4
+trg_enforce_checklist_frozen present: 0
+
+=== 1a depot item PENDING (N7V1K1SAXTK000011, api)
+depot rows : 11:PENDING 12:OK 13:OK 14:OK 15:OK
+open issues: 0
+before     : workflow=4d8ab51b2e66d5ad80c7157e446e1a32 stage=DEPOT depot_released_at=null vehicle_status=IN_WAREHOUSE audit_rows=2 audit_md5=fa61faee2b450fc49127da8c8ec755c5
+{"error":"depot release blocked for N7V1K1SAXTK000011: 0 open issue(s) remain (issue ids: )","request_id":"Basri's Macbook/RtsNCq74EZ-000002","depot_items_remaining":1}
+
+HTTP 409
+after      : workflow=4d8ab51b2e66d5ad80c7157e446e1a32 stage=DEPOT depot_released_at=null vehicle_status=IN_WAREHOUSE audit_rows=2 audit_md5=fa61faee2b450fc49127da8c8ec755c5
+UNCHANGED
+
+=== 1b depot item PENDING (N7V1K1SAXTK000011, sql)
+depot rows : 11:PENDING 12:OK 13:OK 14:OK 15:OK
+open issues: 0
+before     : workflow=4d8ab51b2e66d5ad80c7157e446e1a32 stage=DEPOT depot_released_at=null vehicle_status=IN_WAREHOUSE audit_rows=2 audit_md5=fa61faee2b450fc49127da8c8ec755c5
+sql: ERROR:  Cannot release vehicle N7V1K1SAXTK000011 from depot — depot-phase EoL items are not all OK/CONDITIONAL_OK
+CONTEXT:  PL/pgSQL function fn_enforce_depot_release() line 34 at RAISE
+after      : workflow=4d8ab51b2e66d5ad80c7157e446e1a32 stage=DEPOT depot_released_at=null vehicle_status=IN_WAREHOUSE audit_rows=2 audit_md5=fa61faee2b450fc49127da8c8ec755c5
+UNCHANGED
+
+=== 2a depot item NOT_OK (N7V1K1SAXTK000011, api)
+depot rows : 11:NOT_OK 12:OK 13:OK 14:OK 15:OK
+open issues: 0
+before     : workflow=4d8ab51b2e66d5ad80c7157e446e1a32 stage=DEPOT depot_released_at=null vehicle_status=IN_WAREHOUSE audit_rows=2 audit_md5=fa61faee2b450fc49127da8c8ec755c5
+{"error":"depot release blocked for N7V1K1SAXTK000011: 0 open issue(s) remain (issue ids: )","request_id":"Basri's Macbook/RtsNCq74EZ-000003","depot_items_remaining":1}
+
+HTTP 409
+after      : workflow=4d8ab51b2e66d5ad80c7157e446e1a32 stage=DEPOT depot_released_at=null vehicle_status=IN_WAREHOUSE audit_rows=2 audit_md5=fa61faee2b450fc49127da8c8ec755c5
+UNCHANGED
+
+=== 2b depot item NOT_OK (N7V1K1SAXTK000011, sql)
+depot rows : 11:NOT_OK 12:OK 13:OK 14:OK 15:OK
+open issues: 0
+before     : workflow=4d8ab51b2e66d5ad80c7157e446e1a32 stage=DEPOT depot_released_at=null vehicle_status=IN_WAREHOUSE audit_rows=2 audit_md5=fa61faee2b450fc49127da8c8ec755c5
+sql: ERROR:  Cannot release vehicle N7V1K1SAXTK000011 from depot — depot-phase EoL items are not all OK/CONDITIONAL_OK
+CONTEXT:  PL/pgSQL function fn_enforce_depot_release() line 34 at RAISE
+after      : workflow=4d8ab51b2e66d5ad80c7157e446e1a32 stage=DEPOT depot_released_at=null vehicle_status=IN_WAREHOUSE audit_rows=2 audit_md5=fa61faee2b450fc49127da8c8ec755c5
+UNCHANGED
+
+=== 3a depot row missing (N7V1K1SAXTK000011, api)
+depot rows : 12:OK 13:OK 14:OK 15:OK
+open issues: 0
+before     : workflow=4d8ab51b2e66d5ad80c7157e446e1a32 stage=DEPOT depot_released_at=null vehicle_status=IN_WAREHOUSE audit_rows=2 audit_md5=fa61faee2b450fc49127da8c8ec755c5
+{"error":"depot release blocked for N7V1K1SAXTK000011: 0 open issue(s) remain (issue ids: )","request_id":"Basri's Macbook/RtsNCq74EZ-000004","depot_items_remaining":1}
+
+HTTP 409
+after      : workflow=4d8ab51b2e66d5ad80c7157e446e1a32 stage=DEPOT depot_released_at=null vehicle_status=IN_WAREHOUSE audit_rows=2 audit_md5=fa61faee2b450fc49127da8c8ec755c5
+UNCHANGED
+
+=== 3b depot row missing (N7V1K1SAXTK000011, sql)
+depot rows : 12:OK 13:OK 14:OK 15:OK
+open issues: 0
+before     : workflow=4d8ab51b2e66d5ad80c7157e446e1a32 stage=DEPOT depot_released_at=null vehicle_status=IN_WAREHOUSE audit_rows=2 audit_md5=fa61faee2b450fc49127da8c8ec755c5
+sql: ERROR:  Cannot release vehicle N7V1K1SAXTK000011 from depot — 1 depot-phase EoL item(s) not yet on the vehicle
+CONTEXT:  PL/pgSQL function fn_enforce_depot_release() line 29 at RAISE
+after      : workflow=4d8ab51b2e66d5ad80c7157e446e1a32 stage=DEPOT depot_released_at=null vehicle_status=IN_WAREHOUSE audit_rows=2 audit_md5=fa61faee2b450fc49127da8c8ec755c5
+UNCHANGED
+
+=== 4a all depot OK, open issues (N7V1K1SA1TK000012, api)
+depot rows : 11:OK 12:OK 13:OK 14:OK 15:OK
+open issues: 2
+before     : workflow=133defa39c5765343e4937008ff4cf75 stage=DEPOT depot_released_at=null vehicle_status=IN_WAREHOUSE audit_rows=2 audit_md5=a92a86c75502de6d42a6c335878cdf38
+{"error":"depot release blocked for N7V1K1SA1TK000012: 2 open issue(s) remain (issue ids: 13, 14)","request_id":"Basri's Macbook/RtsNCq74EZ-000005","blocking_issues":[{"id":13,"status":"OPEN","severity":"CRITICAL"},{"id":14,"status":"IN_PROGRESS","severity":"MEDIUM"}]}
+
+HTTP 409
+after      : workflow=133defa39c5765343e4937008ff4cf75 stage=DEPOT depot_released_at=null vehicle_status=IN_WAREHOUSE audit_rows=2 audit_md5=a92a86c75502de6d42a6c335878cdf38
+UNCHANGED
+
+=== 4b all depot OK, open issues (N7V1K1SA1TK000012, sql)
+depot rows : 11:OK 12:OK 13:OK 14:OK 15:OK
+open issues: 2
+before     : workflow=133defa39c5765343e4937008ff4cf75 stage=DEPOT depot_released_at=null vehicle_status=IN_WAREHOUSE audit_rows=2 audit_md5=a92a86c75502de6d42a6c335878cdf38
+sql: ERROR:  Cannot release vehicle N7V1K1SA1TK000012 from depot — 2 open issue(s) remain
+CONTEXT:  PL/pgSQL function fn_enforce_depot_release() line 44 at RAISE
+after      : workflow=133defa39c5765343e4937008ff4cf75 stage=DEPOT depot_released_at=null vehicle_status=IN_WAREHOUSE audit_rows=2 audit_md5=a92a86c75502de6d42a6c335878cdf38
+UNCHANGED
+
+=== 5a branch not shipped (N7V1K1SA9TK000002, api)
+depot rows : 11:PENDING 12:PENDING 13:PENDING 14:PENDING 15:PENDING
+open issues: 0
+before     : workflow=c7a8eeaee13f3bdea2968aba9d015ddb stage=BRANCH depot_released_at=null vehicle_status=IN_PRODUCTION audit_rows=0 audit_md5=none
+{"error":"invalid status transition","request_id":"Basri's Macbook/RtsNCq74EZ-000006"}
+
+HTTP 409
+after      : workflow=c7a8eeaee13f3bdea2968aba9d015ddb stage=BRANCH depot_released_at=null vehicle_status=IN_PRODUCTION audit_rows=0 audit_md5=none
+UNCHANGED
+
+=== 5b branch not shipped (N7V1K1SA9TK000002, sql)
+depot rows : 11:PENDING 12:PENDING 13:PENDING 14:PENDING 15:PENDING
+open issues: 0
+before     : workflow=c7a8eeaee13f3bdea2968aba9d015ddb stage=BRANCH depot_released_at=null vehicle_status=IN_PRODUCTION audit_rows=0 audit_md5=none
+sql: ERROR:  Cannot release vehicle N7V1K1SA9TK000002 from depot — branch shipment has not been recorded
+CONTEXT:  PL/pgSQL function fn_enforce_depot_release() line 9 at RAISE
+after      : workflow=c7a8eeaee13f3bdea2968aba9d015ddb stage=BRANCH depot_released_at=null vehicle_status=IN_PRODUCTION audit_rows=0 audit_md5=none
+UNCHANGED
+
+=== 6 depot CONDITIONAL_OK, no open issues (informative, expect release) (N7V1K1SA8TK000010, api)
+depot rows : 11:OK 12:OK 13:OK 14:CONDITIONAL_OK 15:OK
+open issues: 0
+before     : workflow=7a25b46c5308c111636f796dcf0b4e4d stage=DEPOT depot_released_at=null vehicle_status=IN_WAREHOUSE audit_rows=2 audit_md5=9f169b5c6d328ad75ab7daaf3619fb1c
+{"vin":"N7V1K1SA8TK000010","current_stage":"COMPLETED","vehicle_status":"IN_WAREHOUSE"}
+
+HTTP 200
+after      : workflow=f1108ad5778d920047d34e3549fee2aa stage=COMPLETED depot_released_at=2026-10-07 12:01:30.73077+00 vehicle_status=IN_WAREHOUSE audit_rows=3 audit_md5=c17e8bfda55b64ee81f21cb546f62232
+CHANGED
+
+=== 7 control: all depot OK, no open issues (N7V1K1SAXTK000011, api)
+depot rows : 11:OK 12:OK 13:OK 14:OK 15:OK
+open issues: 0
+before     : workflow=4d8ab51b2e66d5ad80c7157e446e1a32 stage=DEPOT depot_released_at=null vehicle_status=IN_WAREHOUSE audit_rows=2 audit_md5=fa61faee2b450fc49127da8c8ec755c5
+{"vin":"N7V1K1SAXTK000011","current_stage":"COMPLETED","vehicle_status":"IN_WAREHOUSE"}
+
+HTTP 200
+after      : workflow=da8b5f04ae99c365cdb6f5c8702fddda stage=COMPLETED depot_released_at=2026-10-07 12:01:30.916588+00 vehicle_status=IN_WAREHOUSE audit_rows=3 audit_md5=07f7cc59b2c2d24b1bebb44f6647fc46

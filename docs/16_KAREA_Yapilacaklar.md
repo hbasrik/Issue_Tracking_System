@@ -982,6 +982,20 @@ başlatılınca devreye girer.
   `POST /media` 201, sunucuda `media_attachments` satırı) +
   `web-file-input-*-focus.png`.
 
+### A52. Geçilen aşamanın maddelerini dondurma `[~]` — 2026-10-07
+- **Ön koşul kanıtı — depodan çıkış iki katmanda sert (test DB
+  `karea_eolnote_test`, 0040 geri alınmış, `fn_enforce_depot_release` md5
+  canlıyla aynı `bf508f54…`, test API 18081):**
+  `docs/screenshots/depot-release-hardness/run-trials.sh` →
+  `run-trials-output.txt`. Bekleyen, NOT_OK ve eksik depo satırı ile açık
+  sorunlu araçta API 409, doğrudan SQL `depot_released_at` yazımı
+  tetikleyiciden hata; şube çıkışı yokken API 409 / SQL hata. Her denemeden
+  sonra iş akışı satırı md5'i, araç durumu ve `audit_logs` sayısı + md5'i
+  aynı. Kontrol: hepsi OK (ya da CONDITIONAL_OK) ve açık sorun yok → 200,
+  `COMPLETED`, bir denetim satırı. Teslim de iki katmanda depodan çıkışı
+  şart koşuyor (`eol_deliver.go`, `fn_enforce_eol_deliver`).
+- **Bekleyen:** migration 0040 + uygulama/arayüz kilidi onayda.
+
 ### A50. Canlı için salt-okunur `karea_ro` rolü `[~]` — 2026-10-07
 - **Betik:** `scripts/create-readonly-role.sql` (Karar 28). Migration değil;
   canlıda kullanıcı `karea` olarak `-v ro_password=...` ile çalıştırır.
