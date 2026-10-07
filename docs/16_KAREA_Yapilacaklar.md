@@ -967,8 +967,10 @@ başlatılınca devreye girer.
   çevirisi kaldırıldı. Tıklama hedefi yalnız başlık satırı (web `<button>`:
   Enter/Boşluk, `aria-expanded`, `:focus-visible` iç halka; mobil
   `Pressable`, `aria-expanded`); hover zemini yalnız başlıkta. Kapalı gövde:
-  not, kim/ne zaman, fotoğraflar. Açık gövde: cevap düğmeleri, not kutusu,
-  fotoğraf seçimi, sağ altta İptal + Kaydet. Bekleyen madde açık, cevaplı
+  not, kim/ne zaman, fotoğraflar. Açık gövde: mevcut fotoğraflar, cevap
+  düğmeleri, not kutusu, fotoğraf seçimi, sağ altta İptal + Kaydet (kim/ne
+  zaman yalnız kapalıda; fotoğraflar her iki durumda, 2026-10-07). Bekleyen
+  maddede İptal yok (geri dönülecek kayıt yok). Bekleyen madde açık, cevaplı
   kapalı başlar; bekleyen kart da başlıktan kapatılabilir. Cevap, not,
   fotoğraf ve kaydetme mantığı değişmedi. Test/Sevk ekranları değişmedi
   (liste sınıfı yalnız EOL'da kart aralığına döner).
