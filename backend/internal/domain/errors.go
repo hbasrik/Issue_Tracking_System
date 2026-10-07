@@ -312,16 +312,27 @@ type DepotReleaseBlockedError struct {
 	DepotItemsRemaining int `json:"depot_items_remaining,omitempty"`
 }
 
-// Error implements the error interface.
+// Error implements the error interface. It names only the reasons that
+// actually block: incomplete depot items, open issues, or both.
 func (e *DepotReleaseBlockedError) Error() string {
-	ids := make([]string, len(e.BlockingIssues))
-	for i, issue := range e.BlockingIssues {
-		ids[i] = fmt.Sprintf("%d", issue.ID)
+	parts := []string{}
+	if e.DepotItemsRemaining > 0 {
+		parts = append(parts, fmt.Sprintf("%d depot-phase EoL item(s) incomplete", e.DepotItemsRemaining))
 	}
-	return fmt.Sprintf(
-		"depot release blocked for %s: %d open issue(s) remain (issue ids: %s)",
-		e.VIN, len(e.BlockingIssues), strings.Join(ids, ", "),
-	)
+	if len(e.BlockingIssues) > 0 {
+		ids := make([]string, len(e.BlockingIssues))
+		for i, issue := range e.BlockingIssues {
+			ids[i] = fmt.Sprintf("%d", issue.ID)
+		}
+		parts = append(parts, fmt.Sprintf(
+			"%d open issue(s) remain (issue ids: %s)",
+			len(e.BlockingIssues), strings.Join(ids, ", "),
+		))
+	}
+	if len(parts) == 0 {
+		return fmt.Sprintf("depot release blocked for %s", e.VIN)
+	}
+	return fmt.Sprintf("depot release blocked for %s: %s", e.VIN, strings.Join(parts, "; "))
 }
 
 // TemplateItemInUseError is returned when DELETE is attempted on a catalogue

@@ -1007,6 +1007,16 @@ başlatılınca devreye girer.
   `capture-web-output.txt` (TR/EN × 1280/375: başlık, yeni metin, eski cümle
   yok, 25 uyarı satırı) + `web-*.png`.
 
+### A54. Depodan çıkış 409 mesajı gerçek sebebi söylüyor `[~]` — 2026-10-07
+- **Sorun:** `DepotReleaseBlockedError` her zaman "N open issue(s) remain"
+  yazıyordu; sebep eksik depo maddesiyken "0 open issue(s) remain (issue
+  ids: )" çıkıyordu.
+- **Düzeltme (backend):** mesaj yalnız durduran sebepleri sayar: "depot
+  release blocked for VIN: 1 depot-phase EoL item(s) incomplete", "…: 2
+  open issue(s) remain (issue ids: 13, 14)" ya da ikisi "; " ile. Gövdedeki
+  `depot_items_remaining` ve `blocking_issues` alanları değişmedi.
+- **Bekleyen:** istemci çevirisi (TR/EN) ve kanıt.
+
 ### A50. Canlı için salt-okunur `karea_ro` rolü `[~]` — 2026-10-07
 - **Betik:** `scripts/create-readonly-role.sql` (Karar 28). Migration değil;
   canlıda kullanıcı `karea` olarak `-v ro_password=...` ile çalıştırır.
