@@ -959,6 +959,21 @@ başlatılınca devreye girer.
   `capture-mobile.mjs` ve `eol-note/capture-web.mjs` önce rozete dokunacak
   şekilde güncellendi; hepsi geçiyor.
 
+### A50. Canlı için salt-okunur `karea_ro` rolü `[~]` — 2026-10-07
+- **Betik:** `scripts/create-readonly-role.sql` (Karar 28). Migration değil;
+  canlıda kullanıcı `karea` olarak `-v ro_password=...` ile çalıştırır.
+  Parola yoksa hiçbir şey yapmadan çıkar; tekrar çalıştırmak güvenli.
+- **Kanıt (atılabilir `postgres:16-alpine`, port 55439, canlı kümeye
+  dokunmadan):** `docs/screenshots/readonly-role/run-verification.sh` →
+  `verification-output.txt`. `karea_ro` ile SELECT çalışıyor (18 araç, 104
+  madde, migration 39). Oturum salt-okunur varsayılanı kapatılsa da INSERT /
+  UPDATE / DELETE / TRUNCATE `permission denied` (vehicles,
+  schema_migrations, audit_logs, issue_list), şemada CREATE TABLE ve TEMP
+  tablo reddediliyor, `nextval` reddediliyor; sonradan `karea`'nın açtığı
+  tabloda SELECT var, INSERT yok. Veri değişmedi.
+- **Bekleyen:** Canlıda çalıştırma kullanıcıda; o zamana kadar canlıda
+  `karea_ro` yok.
+
 ### A49. EOL madde kartı düzeni `[x]` — 2026-10-06
 - **Değişiklik (yalnız görsel; web `EolItemRow`, mobil `EOLChecklistScreen`):**
   her EOL maddesi çerçeveli bir kart (ince ayırıcı çizgi yerine). Başlık

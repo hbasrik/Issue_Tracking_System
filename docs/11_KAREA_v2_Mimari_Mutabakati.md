@@ -637,6 +637,28 @@ kalıyordu.
   (`~57`) ve `npx expo install` ile SDK'ya uygun sürüm seçilir; ihtiyaç
   yalnız bağlı/bağlı değil olduğu için daha küçük API yeterli.
 
+## Karar 28 — Canlı veritabanı yalnız salt-okunur `karea_ro` rolüyle incelenir (NEW — 2026-10-07)
+
+- **Neden:** Araç onay adımı her zaman tutmuyor; "reddedildi" dönen çağrıların
+  gerçekte çalıştığı görüldü. Oturum ayarı (`default_transaction_read_only`)
+  bağlanan tarafın elinde, tek komutla kapatılabilir. Koruma bu yüzden
+  yetkide olmalı.
+- **Rol:** `scripts/create-readonly-role.sql` (migration değil; sunucu başına
+  bir kez, `karea` olarak elle çalıştırılır, parola `-v ro_password=...` ile
+  verilir, dosyada yok). `karea_ro`: LOGIN, süper kullanıcı/rol/DB oluşturma
+  yok, en çok 5 bağlantı. Yetkiler: veritabanında CONNECT, `public` şemasında
+  USAGE, bütün tablo/görünüm/dizilerde SELECT. INSERT, UPDATE, DELETE,
+  TRUNCATE, REFERENCES, TRIGGER hiçbir tabloda yok, `schema_migrations` dahil.
+  `ALTER DEFAULT PRIVILEGES FOR ROLE karea` ile sonradan eklenen tablolarda da
+  yalnız SELECT. İkinci güvence olarak rolün oturumu salt-okunur başlar.
+- **PUBLIC yetkileri:** Her rol PUBLIC'in yetkilerini miras aldığı için betik
+  `public` şemasındaki CREATE'i (canlıda ACL `=UC/karea` idi) ve veritabanındaki
+  TEMPORARY'yi PUBLIC'ten geri alır. Uygulama `karea` (şema sahibi, süper
+  kullanıcı) ile bağlandığı için etkilenmez.
+- **Kural:** Ajan canlıya yalnız `karea_ro` ile bağlanır
+  (`postgres://karea_ro@localhost:5432/karea`, parola `~/.pgpass`'ten).
+  `docker exec` + `karea` + oturum ayarı ile canlı okuma yapılmaz.
+
 ## Değişmeyen / Yeniden Kullanılacaklar
 
 Şunlara **dokunulmuyor**, olduğu gibi kalıyor: JWT auth + bcrypt (üstteki JWT_SECRET ve iptal sıkılaştırmaları hariç), CORS allowlist mimarisi, Unit-of-Work (pgx.Tx) transaction pattern, `.cursor/rules` (commit ve environment-check kuralları), Analysis sekmesi temel yapısı (VIN×severity kırılımı, Pie/Bar chart'lar — yeni station/EOL alanlarıyla genişleyecek ama sıfırdan kurulmayacak), Docker/migration/seed altyapısı.
