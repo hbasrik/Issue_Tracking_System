@@ -942,6 +942,8 @@ export interface TemplateItemMissingVehicles {
 
 export type ChecklistType = 'eol' | 'shipment' | 'test';
 
+export type ChecklistFrozenReason = 'DELIVERED' | 'BRANCH_SHIPPED' | 'DEPOT_RELEASED';
+
 export interface ChecklistItem {
   ItemID: number;
   ItemNo: number;
@@ -958,6 +960,8 @@ export interface ChecklistItem {
   IsActive?: boolean;
   /** Stage passed, never completed — shown collapsed, counts nowhere. */
   StageClosed?: boolean;
+  /** Stage behind the vehicle: answer and photos locked (docs/11 Karar 29). */
+  FrozenReason?: ChecklistFrozenReason;
   ProgressID?: number | null;
   CheckerName?: string;
   CheckDate?: string | null;

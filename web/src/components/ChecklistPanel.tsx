@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Lock } from 'lucide-react';
 import {
   api,
   ApiError,
+  type ChecklistFrozenReason,
   type ChecklistItem,
   type ChecklistType,
 } from '../lib/api';
@@ -60,6 +61,12 @@ function checklistEditPerm(type: ChecklistType): string {
       return Perm.ChecklistEOLEdit;
   }
 }
+
+const FROZEN_HINT = {
+  BRANCH_SHIPPED: 'checklist.frozenBranchShipped',
+  DEPOT_RELEASED: 'checklist.frozenDepotReleased',
+  DELIVERED: 'checklist.frozenDelivered',
+} as const satisfies Record<ChecklistFrozenReason, string>;
 
 function needsDescription(status: string): boolean {
   return status === 'NOT_OK' || status === 'REWORK' || status === 'CONDITIONAL_OK';
@@ -135,7 +142,10 @@ export function ChecklistPanel({
   }, [activeItems, t]);
 
   const editor = type === 'eol' ? 'eol' : 'yesno';
-  const readOnly = locked || !canEdit;
+  const frozenReason = activeItems.find((i) => i.FrozenReason)?.FrozenReason;
+  // A frozen stage is history, not a disabled form: no dimming and no
+  // pointer block, so photos still open full size.
+  const readOnly = (locked || !canEdit) && !frozenReason;
 
   return (
     <div
@@ -148,6 +158,7 @@ export function ChecklistPanel({
       data-checklist-active-remaining={counts.remaining}
       data-checklist-inactive-count={inactiveHistorical.length}
       data-checklist-stage-closed-count={stageClosed.length}
+      data-checklist-frozen={frozenReason}
     >
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-lg font-semibold">{title}</h2>
@@ -168,7 +179,17 @@ export function ChecklistPanel({
       {hint && (
         <p className="mt-1 text-[13px] text-[var(--text-secondary)]">{hint}</p>
       )}
-      {(locked || !canEdit) && (
+      {frozenReason ? (
+        <p
+          className="mt-2 flex items-start gap-1.5 text-[13px] text-[var(--text-secondary)]"
+          role="status"
+          data-checklist-frozen-hint
+        >
+          <Lock aria-hidden className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+          {t(FROZEN_HINT[frozenReason])}
+        </p>
+      ) : null}
+      {readOnly && (
         <p className="mt-2 text-[13px]" style={{ color: 'var(--status-conditional-ok)' }} role="status">
           {locked
             ? (lockHint ?? t('checklist.lockHint'))
@@ -336,8 +357,13 @@ function EolItemRow({
   const [desc, setDesc] = useState(existingDescription(item));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [open, setOpen] = useState(item.Status === 'PENDING');
+  const frozen = Boolean(item.FrozenReason);
+  const [open, setOpen] = useState(item.Status === 'PENDING' && !frozen);
   const bodyId = `eol-item-body-${item.ItemID}`;
+
+  useEffect(() => {
+    if (frozen) setOpen(false);
+  }, [frozen]);
 
   useEffect(() => {
     const next = (EOL_STATUSES as readonly string[]).includes(item.Status)
@@ -399,6 +425,17 @@ function EolItemRow({
   const actorLines = checklistActorLines(item, t, locale);
   const photos = item.Photos ?? [];
   const showClosedBody = answered && (savedNote || actorLines.length > 0 || photos.length > 0);
+  const headerContent = (
+    <>
+      <span className="min-w-0 flex-1 break-words">
+        <span className="mr-2 text-[13px] text-[var(--text-secondary)]">
+          {item.ItemNo}.
+        </span>
+        {item.ItemText}
+      </span>
+      <StatusBadge kind="eol" value={item.Status} className="shrink-0" />
+    </>
+  );
 
   return (
     <li
@@ -406,29 +443,31 @@ function EolItemRow({
       style={{ borderColor: 'var(--border)' }}
       data-checklist-active-item={item.ItemID}
       data-checklist-collapsed={open ? undefined : item.ItemID}
+      data-checklist-frozen={item.FrozenReason}
     >
-      <button
-        type="button"
-        disabled={disabled}
-        onClick={() => setOpen((v) => !v)}
-        aria-expanded={open}
-        aria-controls={bodyId}
-        data-checklist-item-header
-        className="flex w-full items-center gap-2 px-3 py-2.5 text-left outline-none hover:bg-[var(--bg-surface-2)] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--accent)]"
-      >
-        <span className="min-w-0 flex-1 break-words">
-          <span className="mr-2 text-[13px] text-[var(--text-secondary)]">
-            {item.ItemNo}.
-          </span>
-          {item.ItemText}
-        </span>
-        <StatusBadge kind="eol" value={item.Status} className="shrink-0" />
-        <ChevronDown
-          aria-hidden
-          className={`h-4 w-4 shrink-0 text-[var(--text-secondary)] transition-transform ${open ? 'rotate-180' : ''}`}
-        />
-      </button>
-      {!open ? (
+      {frozen ? (
+        <div data-checklist-item-header className="flex w-full items-center gap-2 px-3 py-2.5 text-left">
+          {headerContent}
+          <Lock aria-hidden className="h-4 w-4 shrink-0 text-[var(--text-secondary)]" />
+        </div>
+      ) : (
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
+          aria-controls={bodyId}
+          data-checklist-item-header
+          className="flex w-full items-center gap-2 px-3 py-2.5 text-left outline-none hover:bg-[var(--bg-surface-2)] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--accent)]"
+        >
+          {headerContent}
+          <ChevronDown
+            aria-hidden
+            className={`h-4 w-4 shrink-0 text-[var(--text-secondary)] transition-transform ${open ? 'rotate-180' : ''}`}
+          />
+        </button>
+      )}
+      {!open || frozen ? (
         showClosedBody ? (
           <div id={bodyId} className="px-3 pb-3">
             {savedNote ? (
@@ -584,16 +623,24 @@ function YesNoItemRow({
   }
 
   return (
-    <li className="py-3 text-[15px]" data-checklist-active-item={item.ItemID}>
+    <li
+      className="py-3 text-[15px]"
+      data-checklist-active-item={item.ItemID}
+      data-checklist-frozen={item.FrozenReason}
+    >
       <div className="flex flex-wrap items-start justify-between gap-2">
         <label className="flex min-h-touch flex-1 items-center gap-3">
-          <input
-            type="checkbox"
-            checked={yes}
-            disabled={busy || disabled}
-            onChange={(e) => void toggle(e.target.checked)}
-            className="h-5 w-5 shrink-0"
-          />
+          {item.FrozenReason ? (
+            <Lock aria-hidden className="h-4 w-4 shrink-0 text-[var(--text-secondary)]" />
+          ) : (
+            <input
+              type="checkbox"
+              checked={yes}
+              disabled={busy || disabled}
+              onChange={(e) => void toggle(e.target.checked)}
+              className="h-5 w-5 shrink-0"
+            />
+          )}
           <span className="min-w-0 break-words">
             <span className="mr-2 text-[13px] text-[var(--text-secondary)]">
               {item.ItemNo}.

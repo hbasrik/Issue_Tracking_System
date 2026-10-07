@@ -999,7 +999,12 @@ başlatılınca devreye girer.
   `RecordChecklistResult` ve checklist fotoğraf yüklemesi donmuş maddede 409
   döner, fotoğraf diske yazılmaz. Tetikleyici metinleri
   `ErrChecklistFrozen*` sentinel'lerine eşlenir.
-- **Bekleyen:** migration 0040, arayüz kilidi, kalıcı testler.
+- **Web arayüzü:** `ChecklistPanel` donmuş panelde kilit simgeli kısa
+  açıklama gösterir (TR/EN, sebebe göre), paneli soldurmaz; EOL maddesinin
+  başlığı düğme değildir, açılmaz, cevap düğmeleri, not, dosya seçimi ve
+  Kaydet yoktur; var olan fotoğraf tam boy açılır. Test/Sevkiyat
+  maddelerinde onay kutusunun yerinde kilit simgesi durur.
+- **Bekleyen:** migration 0040, kalıcı testler.
 
 ### A53. "Sevk öncesi uyarı" açıklama cümlesi `[x]` — 2026-10-07
 - **Değişiklik:** `vehicles.readinessHint` (TR/EN) artık "Depot Release
