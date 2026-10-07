@@ -640,6 +640,12 @@ export const tr = {
   'checklist.passing': '{done}/{total} geçti',
   'checklist.lockHint': 'Önce fabrika kontrol listesini tamamlayın',
   'checklist.viewOnly': 'Yalnızca görüntüleme — düzenleme yetkiniz yok',
+  'checklist.frozenBranchShipped':
+    'Araç fabrikadan sevk edildi; bu maddeler kilitli. Cevaplar değiştirilemez, yeni fotoğraf eklenemez.',
+  'checklist.frozenDepotReleased':
+    'Araç depodan çıktı; bu maddeler kilitli. Cevaplar değiştirilemez, yeni fotoğraf eklenemez.',
+  'checklist.frozenDelivered':
+    'Araç teslim edildi; bu maddeler kilitli. Cevaplar değiştirilemez, yeni fotoğraf eklenemez.',
   'checklist.emptyStage': 'Bu aşamada madde yok',
   'checklist.pickStatus': 'Uygun, Uygun değil, Yeniden işlem veya Şartlı uygun seçin',
   'checklist.descRequired': 'Bu durum için açıklama gerekli',
@@ -1320,6 +1326,12 @@ export const tr = {
     'Devam etmek için şifrenizi değiştirmeniz gerekiyor.',
   'error.depotLocked':
     'Fabrika maddelerinin tümü Uygun veya Şartlı uygun olmadan depo maddeleri güncellenemez.',
+  'error.checklistFrozenDelivered':
+    'Araç teslim edildi; kontrol listesi maddeleri değiştirilemez, fotoğraf eklenemez.',
+  'error.checklistFrozenBranchShipped':
+    'Araç fabrikadan sevk edildi; fabrika aşaması EOL, Test ve Sevkiyat maddeleri değiştirilemez, fotoğraf eklenemez.',
+  'error.checklistFrozenDepotReleased':
+    'Araç depodan çıktı; depo aşaması EOL maddeleri değiştirilemez, fotoğraf eklenemez.',
   'error.itemTextRequired': 'Madde metni gerekli.',
   'error.itemTextTooLong': 'Madde metni en fazla 250 karakter olabilir.',
   'error.eolPhaseRequired': 'EOL maddeleri için aşama (Fabrika / Depo) seçilmeli.',
@@ -1339,6 +1351,11 @@ export const tr = {
     '{type} geçişi engellendi: {n} madde Uygun / Şartlı uygun değil (madde no: {ids}).',
   'error.depotReleaseBlocked':
     '{vin} için depo çıkışı engellendi: {n} açık issue kaldı (issue no: {ids}).',
+  'error.depotReleaseBlockedItems':
+    '{vin} için depo çıkışı engellendi: {n} depo aşaması EOL maddesi tamamlanmadı.',
+  'error.depotReleaseBlockedBoth':
+    '{vin} için depo çıkışı engellendi: {items} depo aşaması EOL maddesi tamamlanmadı ve {n} açık issue kaldı (issue no: {ids}).',
+  'error.depotReleaseBlockedGeneric': '{vin} için depo çıkışı engellendi.',
   'error.dbRejected': 'Veritabanı değişikliği reddetti.',
   'error.clientRequestIdInvalid': 'İstek anahtarı geçersiz.',
   'error.offline':
@@ -1773,6 +1790,12 @@ export const en: Record<MessageKey, string> = {
   'checklist.passing': '{done}/{total} passing',
   'checklist.lockHint': 'Complete the Factory checklist first',
   'checklist.viewOnly': 'View only — checklist.edit is not granted',
+  'checklist.frozenBranchShipped':
+    'The vehicle has shipped from the Factory; these items are locked. Answers cannot change and no new photos can be added.',
+  'checklist.frozenDepotReleased':
+    'The vehicle has been released from the depot; these items are locked. Answers cannot change and no new photos can be added.',
+  'checklist.frozenDelivered':
+    'The vehicle has been delivered; these items are locked. Answers cannot change and no new photos can be added.',
   'checklist.emptyStage': 'No items for this stage',
   'checklist.pickStatus': 'Select OK, Not OK, Rework, or Conditional OK',
   'checklist.descRequired': 'A description is required for this status',
@@ -2192,6 +2215,12 @@ export const en: Record<MessageKey, string> = {
   'error.mustChangePassword': 'You must change your password before continuing.',
   'error.depotLocked':
     'Depot-phase EoL items cannot be updated until every Factory-phase item is OK or Conditional OK.',
+  'error.checklistFrozenDelivered':
+    'The vehicle has been delivered; its checklist items cannot change and no photos can be added.',
+  'error.checklistFrozenBranchShipped':
+    'The vehicle has shipped from the Factory; Factory-phase EOL, Test and Shipment items cannot change and no photos can be added.',
+  'error.checklistFrozenDepotReleased':
+    'The vehicle has been released from the depot; depot-phase EOL items cannot change and no photos can be added.',
   'error.itemTextRequired': 'Item text is required.',
   'error.itemTextTooLong': 'Item text must be at most 250 characters.',
   'error.eolPhaseRequired': 'A phase (Factory / Depot) is required for EOL template items.',
@@ -2211,6 +2240,11 @@ export const en: Record<MessageKey, string> = {
     '{type} gate blocked: {n} item(s) not OK / Conditional OK (item ids: {ids}).',
   'error.depotReleaseBlocked':
     'Depot release blocked for {vin}: {n} open Issue(s) remain (issue ids: {ids}).',
+  'error.depotReleaseBlockedItems':
+    'Depot release blocked for {vin}: {n} depot-phase EOL item(s) incomplete.',
+  'error.depotReleaseBlockedBoth':
+    'Depot release blocked for {vin}: {items} depot-phase EOL item(s) incomplete and {n} open Issue(s) remain (issue ids: {ids}).',
+  'error.depotReleaseBlockedGeneric': 'Depot release blocked for {vin}.',
   'error.dbRejected': 'The database rejected the change.',
   'error.clientRequestIdInvalid': 'The request key is not valid.',
   'error.offline':

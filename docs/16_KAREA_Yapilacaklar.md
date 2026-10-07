@@ -1020,7 +1020,12 @@ başlatılınca devreye girer.
   release blocked for VIN: 1 depot-phase EoL item(s) incomplete", "…: 2
   open issue(s) remain (issue ids: 13, 14)" ya da ikisi "; " ile. Gövdedeki
   `depot_items_remaining` ve `blocking_issues` alanları değişmedi.
-- **Bekleyen:** istemci çevirisi (TR/EN) ve kanıt.
+- **İstemci (TR/EN):** `shared/i18n/errors.ts` mesajı sebebine göre
+  `error.depotReleaseBlockedItems`, `error.depotReleaseBlocked` (yalnız
+  açık hata), `error.depotReleaseBlockedBoth` ya da
+  `error.depotReleaseBlockedGeneric` ile çevirir; eski "0 open issue(s)"
+  metni de genel cümleye düşer, "0 açık issue" yazılmaz.
+- **Bekleyen:** kanıt.
 
 ### A50. Canlı için salt-okunur `karea_ro` rolü `[~]` — 2026-10-07
 - **Betik:** `scripts/create-readonly-role.sql` (Karar 28). Migration değil;

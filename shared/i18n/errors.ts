@@ -54,6 +54,11 @@ const EXACT: Record<string, MessageKey> = {
   'password must be changed before continuing': 'error.mustChangePassword',
   'cannot update depot-phase EoL items until every branch-phase item is OK or CONDITIONAL_OK':
     'error.depotLocked',
+  'cannot change checklist items of a delivered vehicle': 'error.checklistFrozenDelivered',
+  'cannot change branch-stage checklist items after the vehicle has shipped from the branch':
+    'error.checklistFrozenBranchShipped',
+  'cannot change depot-stage EoL items after the vehicle has been released from the depot':
+    'error.checklistFrozenDepotReleased',
   'item_text is required': 'error.itemTextRequired',
   'item_text must be at most 250 characters': 'error.itemTextTooLong',
   'eol_phase is required for EOL template items': 'error.eolPhaseRequired',
@@ -220,15 +225,23 @@ function translateApiErrorMessage(t: Translate, err: unknown): string {
   if (branchShip) {
     return t('error.branchShipBlocked', { vin: branchShip[1], n: branchShip[2] });
   }
-  const depot = msg.match(
-    /^depot release blocked for (\S+): (\d+) open issue\(s\) remain \(issue ids: ([^)]+)\)/,
-  );
+  const depot = msg.match(/^depot release blocked for (\S+)(?::\s*(.*))?$/);
   if (depot) {
-    return t('error.depotReleaseBlocked', {
-      vin: depot[1],
-      n: depot[2],
-      ids: depot[3],
-    });
+    const vin = depot[1];
+    const reasons = depot[2] ?? '';
+    const items = reasons.match(/(\d+) depot-phase EoL item\(s\) incomplete/);
+    const issues = reasons.match(/(\d+) open issue\(s\) remain \(issue ids: ([^)]+)\)/);
+    if (items && issues) {
+      return t('error.depotReleaseBlockedBoth', {
+        vin,
+        items: items[1],
+        n: issues[1],
+        ids: issues[2],
+      });
+    }
+    if (items) return t('error.depotReleaseBlockedItems', { vin, n: items[1] });
+    if (issues) return t('error.depotReleaseBlocked', { vin, n: issues[1], ids: issues[2] });
+    return t('error.depotReleaseBlockedGeneric', { vin });
   }
   const dbGate = msg.match(/^Cannot (?:move|ship|release|mark) vehicle (\S+)/);
   if (dbGate) {
