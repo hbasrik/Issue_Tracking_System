@@ -1,0 +1,224 @@
+BEGIN
+UPDATE 1
+        vin        | current_global_status | current_stage | branch_shipped | depot_released 
+-------------------+-----------------------+---------------+----------------+----------------
+ N7V1K1SA1TK000012 | IN_WAREHOUSE          | DEPOT         | t              | f
+ N7V1K1SA2TK000018 | DELIVERED             | COMPLETED     | t              | t
+ N7V1K1SA3TK000013 | IN_WAREHOUSE          | COMPLETED     | t              | t
+ N7V1K1SA9TK000002 | IN_PRODUCTION         | BRANCH        | f              | f
+ N7V1K1SAXTK000011 | IN_WAREHOUSE          | DEPOT         | t              | f
+(5 rows)
+
+SELECT 16
+  id  |        vin        |   type   | phase  | item_no 
+------+-------------------+----------+--------+---------
+ 1145 | N7V1K1SA1TK000012 | EOL      | BRANCH |       1
+ 1159 | N7V1K1SA1TK000012 | EOL      | DEPOT  |      15
+ 1160 | N7V1K1SA1TK000012 | SHIPMENT | -      |       1
+ 1206 | N7V1K1SA1TK000012 | TEST     | -      |       1
+ 1769 | N7V1K1SA2TK000018 | EOL      | BRANCH |       1
+ 1783 | N7V1K1SA2TK000018 | EOL      | DEPOT  |      15
+ 1784 | N7V1K1SA2TK000018 | SHIPMENT | -      |       1
+ 1830 | N7V1K1SA2TK000018 | TEST     | -      |       1
+ 1249 | N7V1K1SA3TK000013 | EOL      | BRANCH |       1
+ 1263 | N7V1K1SA3TK000013 | EOL      | DEPOT  |      15
+ 1264 | N7V1K1SA3TK000013 | SHIPMENT | -      |       1
+ 1310 | N7V1K1SA3TK000013 | TEST     | -      |       1
+  105 | N7V1K1SA9TK000002 | EOL      | BRANCH |       1
+  119 | N7V1K1SA9TK000002 | EOL      | DEPOT  |      15
+  120 | N7V1K1SA9TK000002 | SHIPMENT | -      |       1
+  166 | N7V1K1SA9TK000002 | TEST     | -      |       1
+(16 rows)
+
+SELECT 3
+SELECT 1
+
+== checklist_item_progress ==
+-- 1. depot vehicle, EOL branch item -> NOT_OK (must fail: branch stage)
+SAVEPOINT
+psql:docs/screenshots/migration-0040/sql-trials.sql:37: ERROR:  cannot change branch-stage checklist items after the vehicle has shipped from the branch
+CONTEXT:  PL/pgSQL function fn_enforce_checklist_frozen() line 28 at RAISE
+ROLLBACK
+-- 2. depot vehicle, TEST item -> NOT_OK (must fail: branch stage)
+SAVEPOINT
+psql:docs/screenshots/migration-0040/sql-trials.sql:39: ERROR:  cannot change branch-stage checklist items after the vehicle has shipped from the branch
+CONTEXT:  PL/pgSQL function fn_enforce_checklist_frozen() line 28 at RAISE
+ROLLBACK
+-- 3. depot vehicle, SHIPMENT item -> CONDITIONAL_OK (must fail: branch stage)
+SAVEPOINT
+psql:docs/screenshots/migration-0040/sql-trials.sql:41: ERROR:  cannot change branch-stage checklist items after the vehicle has shipped from the branch
+CONTEXT:  PL/pgSQL function fn_enforce_checklist_frozen() line 28 at RAISE
+ROLLBACK
+-- 4. depot vehicle, EOL depot item -> OK (must pass: depot not released)
+SAVEPOINT
+  id  | check_status 
+------+--------------
+ 1159 | OK
+(1 row)
+
+UPDATE 1
+ROLLBACK
+-- 5. depot-released vehicle, EOL depot item -> NOT_OK (must fail: depot stage)
+SAVEPOINT
+psql:docs/screenshots/migration-0040/sql-trials.sql:45: ERROR:  cannot change depot-stage EoL items after the vehicle has been released from the depot
+CONTEXT:  PL/pgSQL function fn_enforce_checklist_frozen() line 28 at RAISE
+ROLLBACK
+-- 6. depot-released vehicle, TEST item -> NOT_OK (must fail: branch stage)
+SAVEPOINT
+psql:docs/screenshots/migration-0040/sql-trials.sql:47: ERROR:  cannot change branch-stage checklist items after the vehicle has shipped from the branch
+CONTEXT:  PL/pgSQL function fn_enforce_checklist_frozen() line 28 at RAISE
+ROLLBACK
+-- 7. delivered vehicle, EOL branch item -> NOT_OK (must fail: delivered)
+SAVEPOINT
+psql:docs/screenshots/migration-0040/sql-trials.sql:49: ERROR:  cannot change checklist items of a delivered vehicle
+CONTEXT:  PL/pgSQL function fn_enforce_checklist_frozen() line 28 at RAISE
+ROLLBACK
+-- 8. delivered vehicle, EOL depot item -> NOT_OK (must fail: delivered)
+SAVEPOINT
+psql:docs/screenshots/migration-0040/sql-trials.sql:51: ERROR:  cannot change checklist items of a delivered vehicle
+CONTEXT:  PL/pgSQL function fn_enforce_checklist_frozen() line 28 at RAISE
+ROLLBACK
+-- 9. delivered vehicle, SHIPMENT item -> NOT_OK (must fail: delivered)
+SAVEPOINT
+psql:docs/screenshots/migration-0040/sql-trials.sql:53: ERROR:  cannot change checklist items of a delivered vehicle
+CONTEXT:  PL/pgSQL function fn_enforce_checklist_frozen() line 28 at RAISE
+ROLLBACK
+-- 10. delivered vehicle, note-only change on branch item (must fail: delivered)
+SAVEPOINT
+psql:docs/screenshots/migration-0040/sql-trials.sql:55: ERROR:  cannot change checklist items of a delivered vehicle
+CONTEXT:  PL/pgSQL function fn_enforce_checklist_frozen() line 28 at RAISE
+ROLLBACK
+-- 11. delivered vehicle, move frozen answer to another item (must fail: delivered)
+SAVEPOINT
+psql:docs/screenshots/migration-0040/sql-trials.sql:57: ERROR:  cannot change checklist items of a delivered vehicle
+CONTEXT:  PL/pgSQL function fn_enforce_checklist_frozen() line 28 at RAISE
+ROLLBACK
+-- 12. delivered vehicle, related_issue_id / item_text_snapshot only (must pass: issue link, snapshot)
+SAVEPOINT
+  id  
+------
+ 1769
+(1 row)
+
+UPDATE 1
+ROLLBACK
+-- 13. delivered vehicle, INSERT PENDING row for a new item (must pass), then an answered row (must fail)
+SAVEPOINT
+INSERT 0 1
+  id  | check_status 
+------+--------------
+ 1873 | PENDING
+(1 row)
+
+INSERT 0 1
+SAVEPOINT
+psql:docs/screenshots/migration-0040/sql-trials.sql:66: ERROR:  cannot change checklist items of a delivered vehicle
+CONTEXT:  PL/pgSQL function fn_enforce_checklist_frozen() line 34 at RAISE
+ROLLBACK
+-- 14. branch-stage vehicle, EOL branch item and TEST item -> OK (must pass: lock does not over-close)
+SAVEPOINT
+ id  | checklist_type | check_status 
+-----+----------------+--------------
+ 105 | EOL            | OK
+ 166 | TEST           | OK
+(2 rows)
+
+UPDATE 2
+ROLLBACK
+
+== media_attachments ==
+-- 15. photo on depot vehicle EOL branch item (must fail: branch stage)
+SAVEPOINT
+psql:docs/screenshots/migration-0040/sql-trials.sql:77: ERROR:  cannot change branch-stage checklist items after the vehicle has shipped from the branch
+CONTEXT:  PL/pgSQL function fn_enforce_checklist_media_frozen() line 17 at RAISE
+ROLLBACK
+-- 16. photo on depot vehicle TEST item (must fail: branch stage)
+SAVEPOINT
+psql:docs/screenshots/migration-0040/sql-trials.sql:80: ERROR:  cannot change branch-stage checklist items after the vehicle has shipped from the branch
+CONTEXT:  PL/pgSQL function fn_enforce_checklist_media_frozen() line 17 at RAISE
+ROLLBACK
+-- 17. photo on depot-released vehicle EOL depot item (must fail: depot stage)
+SAVEPOINT
+psql:docs/screenshots/migration-0040/sql-trials.sql:83: ERROR:  cannot change depot-stage EoL items after the vehicle has been released from the depot
+CONTEXT:  PL/pgSQL function fn_enforce_checklist_media_frozen() line 17 at RAISE
+ROLLBACK
+-- 18. photo on delivered vehicle SHIPMENT item (must fail: delivered)
+SAVEPOINT
+psql:docs/screenshots/migration-0040/sql-trials.sql:86: ERROR:  cannot change checklist items of a delivered vehicle
+CONTEXT:  PL/pgSQL function fn_enforce_checklist_media_frozen() line 17 at RAISE
+ROLLBACK
+-- 19. photo on depot vehicle EOL depot item and branch-stage EOL item (must pass)
+SAVEPOINT
+ entity_id |        vin        
+-----------+-------------------
+ 105       | N7V1K1SA9TK000002
+ 1159      | N7V1K1SA1TK000012
+(2 rows)
+
+INSERT 0 2
+ROLLBACK
+-- 20. non-checklist photo on a delivered vehicle (must pass: only checklist photos freeze)
+SAVEPOINT
+ entity_type 
+-------------
+ VEHICLE
+(1 row)
+
+INSERT 0 1
+ROLLBACK
+-- 21. existing photo stays readable after its item freezes; editing it fails
+SAVEPOINT
+INSERT 0 1
+        vin        | current_stage 
+-------------------+---------------
+ N7V1K1SAXTK000011 | COMPLETED
+(1 row)
+
+UPDATE 1
+ id |     file_name     |      storage_path       
+----+-------------------+-------------------------
+  8 | before-freeze.jpg | probe/before-freeze.jpg
+(1 row)
+
+SAVEPOINT
+psql:docs/screenshots/migration-0040/sql-trials.sql:105: ERROR:  cannot change depot-stage EoL items after the vehicle has been released from the depot
+CONTEXT:  PL/pgSQL function fn_enforce_checklist_media_frozen() line 11 at RAISE
+ROLLBACK
+psql:docs/screenshots/migration-0040/sql-trials.sql:108: ERROR:  cannot change depot-stage EoL items after the vehicle has been released from the depot
+CONTEXT:  PL/pgSQL function fn_enforce_checklist_media_frozen() line 17 at RAISE
+ROLLBACK
+
+== state after every attempt ==
+        vin        |   type   | phase  | item_no | row_unchanged 
+-------------------+----------+--------+---------+---------------
+ N7V1K1SA1TK000012 | EOL      | BRANCH |       1 | t
+ N7V1K1SA1TK000012 | EOL      | DEPOT  |      15 | t
+ N7V1K1SA1TK000012 | SHIPMENT | -      |       1 | t
+ N7V1K1SA1TK000012 | TEST     | -      |       1 | t
+ N7V1K1SA2TK000018 | EOL      | BRANCH |       1 | t
+ N7V1K1SA2TK000018 | EOL      | DEPOT  |      15 | t
+ N7V1K1SA2TK000018 | SHIPMENT | -      |       1 | t
+ N7V1K1SA2TK000018 | TEST     | -      |       1 | t
+ N7V1K1SA3TK000013 | EOL      | BRANCH |       1 | t
+ N7V1K1SA3TK000013 | EOL      | DEPOT  |      15 | t
+ N7V1K1SA3TK000013 | SHIPMENT | -      |       1 | t
+ N7V1K1SA3TK000013 | TEST     | -      |       1 | t
+ N7V1K1SA9TK000002 | EOL      | BRANCH |       1 | t
+ N7V1K1SA9TK000002 | EOL      | DEPOT  |      15 | t
+ N7V1K1SA9TK000002 | SHIPMENT | -      |       1 | t
+ N7V1K1SA9TK000002 | TEST     | -      |       1 | t
+(16 rows)
+
+        vin        | audit_rows_before | audit_rows_after | audit_unchanged 
+-------------------+-------------------+------------------+-----------------
+ N7V1K1SA1TK000012 |                 2 |                2 | t
+ N7V1K1SA2TK000018 |                 4 |                4 | t
+ N7V1K1SA3TK000013 |                 3 |                3 | t
+(3 rows)
+
+ media_rows_before | media_rows_after 
+-------------------+------------------
+                 0 |                0
+(1 row)
+
+ROLLBACK

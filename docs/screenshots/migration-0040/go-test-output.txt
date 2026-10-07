@@ -1,0 +1,27 @@
+?   	github.com/karea/backend/cmd/api	[no test files]
+ok  	github.com/karea/backend/internal/delivery/http	16.981s
+ok  	github.com/karea/backend/internal/domain	0.341s
+ok  	github.com/karea/backend/internal/platform/applog	1.143s
+?   	github.com/karea/backend/internal/platform/auth	[no test files]
+ok  	github.com/karea/backend/internal/platform/config	0.943s
+ok  	github.com/karea/backend/internal/platform/storage	0.541s
+?   	github.com/karea/backend/internal/repository	[no test files]
+ok  	github.com/karea/backend/internal/repository/postgres	2.353s
+ok  	github.com/karea/backend/internal/usecase	7.961s
+--- PASS: TestParseClassificationMetadata_ManualCorrection (0.00s)
+--- PASS: TestParseClassificationMetadata_PromoteOther (0.00s)
+--- PASS: TestParseClassificationMetadata_NoChange (0.00s)
+--- PASS: TestRefName (0.00s)
+--- PASS: TestUniqueItemNoRejectsDuplicateInsert (0.05s)
+--- PASS: TestCreateTemplateItemConcurrentDistinctItemNos (0.03s)
+--- PASS: TestSaveResult_NoteTransitionsKeepOneColumn (0.02s)
+--- PASS: TestListItemsWithProgress_ReturnsEveryPhoto (0.02s)
+--- PASS: TestListGalleryByVIN_LeavesOutChecklistItemPhotos (0.02s)
+--- PASS: TestProgress_HundredOnlyAfterDepotItems (0.26s)
+--- PASS: TestProgress_SameNumberOnEveryReadPath (0.08s)
+--- PASS: TestSchema_NoStoredProgressPercentage (0.05s)
+--- PASS: TestInsertPendingForVehicles_OnlyBeforeItemStage (0.05s)
+--- PASS: TestApplicableSet_ProgressMatchesOpenItems (0.15s)
+--- PASS: TestListItemsWithProgress_StageClosedIsApplicableComplement (0.13s)
+--- PASS: TestDepotSequencingTrigger_IgnoresClosedBranchRows (0.02s)
+ok  	github.com/karea/backend/internal/repository/postgres	1.202s

@@ -1,0 +1,44 @@
+# fresh karea_eolnote_test (migrations 0001-0040 + seeds 01-06), before the trial scripts; HEAD 1e5bb9c feat: add migration 0040 to freeze passed checklist items
+ok  	github.com/karea/backend/internal/delivery/http	16.273s
+ok  	github.com/karea/backend/internal/domain	0.533s
+ok  	github.com/karea/backend/internal/platform/applog	0.742s
+ok  	github.com/karea/backend/internal/platform/config	1.137s
+ok  	github.com/karea/backend/internal/platform/storage	0.339s
+ok  	github.com/karea/backend/internal/repository/postgres	2.369s
+ok  	github.com/karea/backend/internal/usecase	8.463s
+# freeze and depot-message tests, verbose
+=== RUN   TestChecklistFrozen_ReasonMatchesTrigger
+    checklist_frozen_test.go:56: seeded: 1872 rows, 0 differ
+    checklist_frozen_test.go:56: after deliver: 1872 rows, 0 differ
+--- PASS: TestChecklistFrozen_ReasonMatchesTrigger (0.15s)
+=== RUN   TestChecklistFrozen_WritesRefused
+    checklist_frozen_test.go:117: DELIVERED EOL progress 1769: refused, row md5 4eaa36a016edaaf381a719ef2cdf02e8 unchanged
+    checklist_frozen_test.go:117: DELIVERED TEST progress 1830: refused, row md5 ce75db5911935dbf753e3311ea3da4c6 unchanged
+    checklist_frozen_test.go:117: DELIVERED SHIPMENT progress 1784: refused, row md5 80ba3ea3ef7e739f2fa98b861cefd271 unchanged
+    checklist_frozen_test.go:117: BRANCH_SHIPPED EOL progress 937: refused, row md5 766ef7732b7ed6b54d36d26a5572be76 unchanged
+    checklist_frozen_test.go:117: BRANCH_SHIPPED TEST progress 998: refused, row md5 64728100e2d8babae7f59f6a03bbbbc4 unchanged
+    checklist_frozen_test.go:117: BRANCH_SHIPPED SHIPMENT progress 952: refused, row md5 9f9f914976c0f3acc0298396e08c86e5 unchanged
+    checklist_frozen_test.go:117: DEPOT_RELEASED EOL progress 1259: refused, row md5 3d28f2fa2c43ae1d989a346499dd86c4 unchanged
+--- PASS: TestChecklistFrozen_WritesRefused (0.07s)
+PASS
+ok  	github.com/karea/backend/internal/repository/postgres	1.123s
+=== RUN   TestRecordChecklist_NotFrozenItemWrites
+--- PASS: TestRecordChecklist_NotFrozenItemWrites (0.00s)
+=== RUN   TestUploadMedia_FrozenChecklistItemRefused
+--- PASS: TestUploadMedia_FrozenChecklistItemRefused (0.00s)
+=== RUN   TestUploadMedia_OpenChecklistItemAccepted
+--- PASS: TestUploadMedia_OpenChecklistItemAccepted (0.00s)
+PASS
+ok  	github.com/karea/backend/internal/usecase	0.920s
+=== RUN   TestWriteErrorDepotReleaseBlocked
+--- PASS: TestWriteErrorDepotReleaseBlocked (0.00s)
+=== RUN   TestWriteErrorDepotReleaseBlockedNamesRealReason
+=== RUN   TestWriteErrorDepotReleaseBlockedNamesRealReason/depot_items_only
+=== RUN   TestWriteErrorDepotReleaseBlockedNamesRealReason/both
+--- PASS: TestWriteErrorDepotReleaseBlockedNamesRealReason (0.00s)
+    --- PASS: TestWriteErrorDepotReleaseBlockedNamesRealReason/depot_items_only (0.00s)
+    --- PASS: TestWriteErrorDepotReleaseBlockedNamesRealReason/both (0.00s)
+=== RUN   TestWriteErrorChecklistFrozen
+--- PASS: TestWriteErrorChecklistFrozen (0.00s)
+PASS
+ok  	github.com/karea/backend/internal/delivery/http	0.729s

@@ -1,0 +1,19 @@
+built karea_eolnote_test: 40 migrations + seeds 01-06
+built with 0040: progress 1872 rows md5 e019f883c633b7790ebebeac690fa135 | media 0 rows md5 none | workflow 18 rows md5 8b3cf777b7c56f63a08073fff0792104; triggers=2 functions=4
+after down:      progress 1872 rows md5 e019f883c633b7790ebebeac690fa135 | media 0 rows md5 none | workflow 18 rows md5 8b3cf777b7c56f63a08073fff0792104; triggers=0 functions=0
+  psql:database/migrations/0040_freeze_passed_checklist_items.up.sql:111: NOTICE:  trigger "trg_enforce_checklist_frozen" for relation "checklist_item_progress" does not exist, skipping
+  psql:database/migrations/0040_freeze_passed_checklist_items.up.sql:164: NOTICE:  trigger "trg_enforce_checklist_media_frozen" for relation "media_attachments" does not exist, skipping
+after up:        progress 1872 rows md5 e019f883c633b7790ebebeac690fa135 | media 0 rows md5 none | workflow 18 rows md5 8b3cf777b7c56f63a08073fff0792104; triggers=2 functions=4
+up twice:        progress 1872 rows md5 e019f883c633b7790ebebeac690fa135 | media 0 rows md5 none | workflow 18 rows md5 8b3cf777b7c56f63a08073fff0792104; triggers=2 functions=4
+psql:database/migrations/0040_freeze_passed_checklist_items.down.sql:1: NOTICE:  trigger "trg_enforce_checklist_media_frozen" for relation "media_attachments" does not exist, skipping
+psql:database/migrations/0040_freeze_passed_checklist_items.down.sql:2: NOTICE:  function fn_enforce_checklist_media_frozen() does not exist, skipping
+psql:database/migrations/0040_freeze_passed_checklist_items.down.sql:3: NOTICE:  function fn_checklist_media_frozen_reason(pg_catalog.varchar,text) does not exist, skipping
+psql:database/migrations/0040_freeze_passed_checklist_items.down.sql:5: NOTICE:  trigger "trg_enforce_checklist_frozen" for relation "checklist_item_progress" does not exist, skipping
+psql:database/migrations/0040_freeze_passed_checklist_items.down.sql:6: NOTICE:  function fn_enforce_checklist_frozen() does not exist, skipping
+psql:database/migrations/0040_freeze_passed_checklist_items.down.sql:7: NOTICE:  function fn_checklist_item_frozen_reason(pg_catalog.varchar,checklist_type_enum,pg_catalog.int4) does not exist, skipping
+down twice:      progress 1872 rows md5 e019f883c633b7790ebebeac690fa135 | media 0 rows md5 none | workflow 18 rows md5 8b3cf777b7c56f63a08073fff0792104; triggers=0 functions=0
+  psql:database/migrations/0040_freeze_passed_checklist_items.up.sql:111: NOTICE:  trigger "trg_enforce_checklist_frozen" for relation "checklist_item_progress" does not exist, skipping
+  psql:database/migrations/0040_freeze_passed_checklist_items.up.sql:164: NOTICE:  trigger "trg_enforce_checklist_media_frozen" for relation "media_attachments" does not exist, skipping
+final up:        progress 1872 rows md5 e019f883c633b7790ebebeac690fa135 | media 0 rows md5 none | workflow 18 rows md5 8b3cf777b7c56f63a08073fff0792104; triggers=2 functions=4
+CREATE TRIGGER trg_enforce_checklist_frozen BEFORE INSERT OR UPDATE ON public.checklist_item_progress FOR EACH ROW EXECUTE FUNCTION fn_enforce_checklist_frozen()
+CREATE TRIGGER trg_enforce_checklist_media_frozen BEFORE INSERT OR UPDATE ON public.media_attachments FOR EACH ROW EXECUTE FUNCTION fn_enforce_checklist_media_frozen()
