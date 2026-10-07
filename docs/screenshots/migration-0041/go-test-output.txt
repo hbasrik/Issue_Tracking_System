@@ -1,0 +1,20 @@
+go: downloading github.com/joho/godotenv v1.5.1
+go: downloading github.com/jackc/pgx/v5 v5.10.0
+go: downloading github.com/go-chi/chi/v5 v5.3.1
+go: downloading golang.org/x/crypto v0.54.0
+go: downloading github.com/go-chi/cors v1.2.2
+go: downloading github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761
+go: downloading github.com/jackc/pgpassfile v1.0.0
+go: downloading golang.org/x/text v0.40.0
+go: downloading github.com/jackc/puddle/v2 v2.2.2
+go: downloading golang.org/x/sync v0.22.0
+?   	github.com/karea/backend/cmd/api	[no test files]
+ok  	github.com/karea/backend/internal/delivery/http	15.334s
+ok  	github.com/karea/backend/internal/domain	0.774s
+ok  	github.com/karea/backend/internal/platform/applog	1.665s
+?   	github.com/karea/backend/internal/platform/auth	[no test files]
+ok  	github.com/karea/backend/internal/platform/config	1.358s
+ok  	github.com/karea/backend/internal/platform/storage	1.066s
+?   	github.com/karea/backend/internal/repository	[no test files]
+ok  	github.com/karea/backend/internal/repository/postgres	2.571s
+ok  	github.com/karea/backend/internal/usecase	8.667s

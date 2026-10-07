@@ -1,0 +1,30 @@
+ current_user | schema_version | dirty 
+--------------+----------------+-------
+ karea_ro     |             40 | f
+(1 row)
+
+ templates | form_code_not_null | form_revision_not_null | form_published_at_not_null 
+-----------+--------------------+------------------------+----------------------------
+         3 |                  0 |                      0 |                          0
+(1 row)
+
+ id |   type   |                      name                       | is_active | vehicle_model_id 
+----+----------+-------------------------------------------------+-----------+------------------
+  3 | EOL      | Default EoL Template (16 items, Branch + Depot) | t         |                 
+  4 | SHIPMENT | Default Customer Vehicle Checklist (43 items)   | t         |                 
+  5 | TEST     | Default Test Checklist (45 items)               | t         |                 
+(3 rows)
+
+ template_id | seed_key | count 
+-------------+----------+-------
+(0 rows)
+
+ items | with_seed_key 
+-------+---------------
+   108 |           108
+(1 row)
+
+ column_name 
+-------------
+(0 rows)
+

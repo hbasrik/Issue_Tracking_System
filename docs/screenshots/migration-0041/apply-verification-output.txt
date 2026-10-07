@@ -1,0 +1,51 @@
+built karea_eolnote_test: 41 migrations + seeds 01-06
+built (all migrations incl. 0041, seeds 01-06):
+  progress 1872 md5 f11c56406f963475bae6101cd95b3bb8 | media 0 md5 none | items 104 md5 594b35226aaec745442813605a92cf63 | templates md5 e758e504889d6abc1af4238fe790c549
+  item cols=form_code,form_item_ref,form_published_at,form_revision | template cols=- | index=1 | names=Default EoL Template (Branch + Depot) ; Default Customer Vehicle Checklist ; Default Test Checklist
+seeded EOL/SHIPMENT/TEST item counts: EOL=15 SHIPMENT=46 TEST=43
+after DOWN:
+  progress 1872 md5 f11c56406f963475bae6101cd95b3bb8 | media 0 md5 none | items 104 md5 594b35226aaec745442813605a92cf63 | templates md5 e758e504889d6abc1af4238fe790c549
+  item cols=- | template cols=form_code,form_published_at,form_revision | index=0 | names=Default EoL Template (16 items, Branch + Depot) ; Default Customer Vehicle Checklist (43 items) ; Default Test Checklist (45 items)
+after UP:
+  progress 1872 md5 f11c56406f963475bae6101cd95b3bb8 | media 0 md5 none | items 104 md5 594b35226aaec745442813605a92cf63 | templates md5 e758e504889d6abc1af4238fe790c549
+  item cols=form_code,form_item_ref,form_published_at,form_revision | template cols=- | index=1 | names=Default EoL Template (Branch + Depot) ; Default Customer Vehicle Checklist ; Default Test Checklist
+  psql:database/migrations/0041_checklist_item_form_identity.up.sql:21: NOTICE:  column "form_code" of relation "checklist_template_items" already exists, skipping
+  psql:database/migrations/0041_checklist_item_form_identity.up.sql:21: NOTICE:  column "form_item_ref" of relation "checklist_template_items" already exists, skipping
+  psql:database/migrations/0041_checklist_item_form_identity.up.sql:21: NOTICE:  column "form_revision" of relation "checklist_template_items" already exists, skipping
+  psql:database/migrations/0041_checklist_item_form_identity.up.sql:21: NOTICE:  column "form_published_at" of relation "checklist_template_items" already exists, skipping
+  psql:database/migrations/0041_checklist_item_form_identity.up.sql:45: NOTICE:  column "form_published_at" of relation "checklist_templates" does not exist, skipping
+  psql:database/migrations/0041_checklist_item_form_identity.up.sql:45: NOTICE:  column "form_revision" of relation "checklist_templates" does not exist, skipping
+  psql:database/migrations/0041_checklist_item_form_identity.up.sql:45: NOTICE:  column "form_code" of relation "checklist_templates" does not exist, skipping
+  psql:database/migrations/0041_checklist_item_form_identity.up.sql:49: NOTICE:  relation "uq_checklist_template_items_template_seed_key" already exists, skipping
+after UP:
+  progress 1872 md5 f11c56406f963475bae6101cd95b3bb8 | media 0 md5 none | items 104 md5 594b35226aaec745442813605a92cf63 | templates md5 e758e504889d6abc1af4238fe790c549
+  item cols=form_code,form_item_ref,form_published_at,form_revision | template cols=- | index=1 | names=Default EoL Template (Branch + Depot) ; Default Customer Vehicle Checklist ; Default Test Checklist
+after DOWN:
+  progress 1872 md5 f11c56406f963475bae6101cd95b3bb8 | media 0 md5 none | items 104 md5 594b35226aaec745442813605a92cf63 | templates md5 e758e504889d6abc1af4238fe790c549
+  item cols=- | template cols=form_code,form_published_at,form_revision | index=0 | names=Default EoL Template (16 items, Branch + Depot) ; Default Customer Vehicle Checklist (43 items) ; Default Test Checklist (45 items)
+  psql:database/migrations/0041_checklist_item_form_identity.down.sql:14: NOTICE:  index "uq_checklist_template_items_template_seed_key" does not exist, skipping
+  psql:database/migrations/0041_checklist_item_form_identity.down.sql:19: NOTICE:  column "form_code" of relation "checklist_templates" already exists, skipping
+  psql:database/migrations/0041_checklist_item_form_identity.down.sql:19: NOTICE:  column "form_revision" of relation "checklist_templates" already exists, skipping
+  psql:database/migrations/0041_checklist_item_form_identity.down.sql:19: NOTICE:  column "form_published_at" of relation "checklist_templates" already exists, skipping
+  psql:database/migrations/0041_checklist_item_form_identity.down.sql:25: NOTICE:  column "form_published_at" of relation "checklist_template_items" does not exist, skipping
+  psql:database/migrations/0041_checklist_item_form_identity.down.sql:25: NOTICE:  column "form_revision" of relation "checklist_template_items" does not exist, skipping
+  psql:database/migrations/0041_checklist_item_form_identity.down.sql:25: NOTICE:  column "form_item_ref" of relation "checklist_template_items" does not exist, skipping
+  psql:database/migrations/0041_checklist_item_form_identity.down.sql:25: NOTICE:  column "form_code" of relation "checklist_template_items" does not exist, skipping
+after DOWN:
+  progress 1872 md5 f11c56406f963475bae6101cd95b3bb8 | media 0 md5 none | items 104 md5 594b35226aaec745442813605a92cf63 | templates md5 e758e504889d6abc1af4238fe790c549
+  item cols=- | template cols=form_code,form_published_at,form_revision | index=0 | names=Default EoL Template (16 items, Branch + Depot) ; Default Customer Vehicle Checklist (43 items) ; Default Test Checklist (45 items)
+after UP:
+  progress 1872 md5 f11c56406f963475bae6101cd95b3bb8 | media 0 md5 none | items 104 md5 594b35226aaec745442813605a92cf63 | templates md5 e758e504889d6abc1af4238fe790c549
+  item cols=form_code,form_item_ref,form_published_at,form_revision | template cols=- | index=1 | names=Default EoL Template (Branch + Depot) ; Default Customer Vehicle Checklist ; Default Test Checklist
+--- unique (template_id, seed_key) trial ---
+  ERROR:  duplicate key value violates unique constraint "uq_checklist_template_items_template_seed_key"
+  DETAIL:  Key (template_id, seed_key)=(6, KY.FR-19:46) already exists.
+  temp items now: 1:KY.FR-19:46 3:NULL 4:NULL
+--- guard trial: filled template form column must block the drop ---
+  psql:database/migrations/0041_checklist_item_form_identity.up.sql:40: ERROR:  0041: 1 checklist_templates row(s) hold form_code/form_revision/form_published_at; move them to items before dropping
+  CONTEXT:  PL/pgSQL function inline_code_block line 16 at RAISE
+  after refused up: item cols=- | template cols=form_code,form_published_at,form_revision | index=0 | names=Default EoL Template (16 items, Branch + Depot) ; Default Customer Vehicle Checklist (43 items) ; Default Test Checklist (45 items) ; tmp-0041-verify
+  temp template rows left: 0
+final up:
+  progress 1872 md5 f11c56406f963475bae6101cd95b3bb8 | media 0 md5 none | items 104 md5 594b35226aaec745442813605a92cf63 | templates md5 e758e504889d6abc1af4238fe790c549
+  item cols=form_code,form_item_ref,form_published_at,form_revision | template cols=- | index=1 | names=Default EoL Template (Branch + Depot) ; Default Customer Vehicle Checklist ; Default Test Checklist
