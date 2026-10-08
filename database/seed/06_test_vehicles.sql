@@ -143,10 +143,11 @@ BEGIN
 END;
 $$;
 
--- EOL items are addressed by phase, not by item_no: the template's numbering
--- is a position (reorder renumbers it) and branch / depot items interleave
--- once forms are added. p_n is the 1-based position within the phase.
-CREATE OR REPLACE FUNCTION pg_temp.eol_item_no(p_vin varchar, p_phase eol_item_phase_enum, p_n int)
+-- EOL items are addressed by identity, not by item_no: the template's
+-- numbering is a position (reorder renumbers it). Returns the item_no of the
+-- vehicle's EOL item with this seed_key ('KY.FR-09:E004', md5(text) for
+-- non-form items), so a finding's text always matches the item it describes.
+CREATE OR REPLACE FUNCTION pg_temp.eol_item_no_by_key(p_vin varchar, p_seed_key text)
 RETURNS int LANGUAGE plpgsql AS $$
 DECLARE
     v_item_no int;
@@ -154,11 +155,9 @@ BEGIN
     SELECT cti.item_no INTO v_item_no
     FROM vehicles v
     JOIN checklist_template_items cti ON cti.template_id = v.eol_template_id
-    WHERE v.vin = p_vin AND cti.eol_phase = p_phase AND cti.is_active
-    ORDER BY cti.item_no
-    OFFSET p_n - 1 LIMIT 1;
+    WHERE v.vin = p_vin AND cti.seed_key = p_seed_key;
     IF v_item_no IS NULL THEN
-        RAISE EXCEPTION 'no % EOL item #% for %', p_phase, p_n, p_vin;
+        RAISE EXCEPTION 'no EOL item % for %', p_seed_key, p_vin;
     END IF;
     RETURN v_item_no;
 END;
@@ -337,7 +336,7 @@ BEGIN
     -- Bucket 2: mid-production. Mixed station steps + OPEN/IN_PROGRESS
     -- station-step issues (soft-warning badge on the vehicle).
     -- ============================================================
-    -- 10045: stations 1–3 OK, station 4 step 3 NOT_OK + OPEN CRITICAL.
+    -- 10045: stations 1–3 OK, station 4 step 4 (connector lock) NOT_OK + OPEN CRITICAL.
     PERFORM pg_temp.mark_stations_ok('N7V1K1SA2TK000004', 3, op1, now() - interval '8 days');
     UPDATE vehicle_station_step_progress vssp
     SET status = 'OK', checked_by = op1, checked_at = now() - interval '7 days'
@@ -345,10 +344,10 @@ BEGIN
     JOIN stations s ON s.id = ss.station_id
     WHERE vssp.station_step_id = ss.id
       AND vssp.vin = 'N7V1K1SA2TK000004'
-      AND s.sequence_no = 4 AND ss.sequence_no <= 2;
-    PERFORM pg_temp.fail_station_step('N7V1K1SA2TK000004', 4, 3, op1, now() - interval '7 days');
+      AND s.sequence_no = 4 AND ss.sequence_no <= 3;
+    PERFORM pg_temp.fail_station_step('N7V1K1SA2TK000004', 4, 4, op1, now() - interval '7 days');
     PERFORM pg_temp.add_station_issue(
-        'N7V1K1SA2TK000004', 4, 3, 'Hata', 'CRITICAL',
+        'N7V1K1SA2TK000004', 4, 4, 'Hata', 'CRITICAL',
         'High voltage connector lock did not engage on the left-hand pack cable.',
         'OPEN', op1, now() - interval '7 days'
     );
@@ -388,58 +387,63 @@ BEGIN
 
     -- 10048: BRANCH EoL mixed — branch-ship soft-warning vehicle.
     PERFORM pg_temp.tick_eol_phase('N7V1K1SA8TK000007', 'BRANCH', 5, op1, now() - interval '3 days');
+    -- KY.FR-09 E004 "Sol kapı contası"
     PERFORM pg_temp.tick_checklist_item(
-        'N7V1K1SA8TK000007', 'EOL', pg_temp.eol_item_no('N7V1K1SA8TK000007', 'BRANCH', 6), 'NOT_OK', op2, now() - interval '3 days',
-        'Horn inoperative; washer pump dry.'
+        'N7V1K1SA8TK000007', 'EOL', pg_temp.eol_item_no_by_key('N7V1K1SA8TK000007', 'KY.FR-09:E004'), 'NOT_OK', op2, now() - interval '3 days',
+        'Left door seal lifted at the upper rear corner; daylight visible.'
     );
     PERFORM pg_temp.add_checklist_issue(
-        'N7V1K1SA8TK000007', 'EOL_ITEM', pg_temp.eol_item_no('N7V1K1SA8TK000007', 'BRANCH', 6), 'Hata', 'CRITICAL',
-        'Horn and washer circuit failed during branch EoL.',
+        'N7V1K1SA8TK000007', 'EOL_ITEM', pg_temp.eol_item_no_by_key('N7V1K1SA8TK000007', 'KY.FR-09:E004'), 'Hata', 'CRITICAL',
+        'Left door seal not seated; water ingress risk.',
         'OPEN', op2, now() - interval '3 days'
     );
+    -- KY.FR-09 E035 "Sol / sağ emniyet kemeri ve askıları"
     PERFORM pg_temp.tick_checklist_item(
-        'N7V1K1SA8TK000007', 'EOL', pg_temp.eol_item_no('N7V1K1SA8TK000007', 'BRANCH', 7), 'REWORK', op1, now() - interval '2 days',
-        'Seat-belt pretensioner connector reseated; awaiting retest.'
+        'N7V1K1SA8TK000007', 'EOL', pg_temp.eol_item_no_by_key('N7V1K1SA8TK000007', 'KY.FR-09:E035'), 'REWORK', op1, now() - interval '2 days',
+        'Driver seat belt twisted at the upper anchor; re-routed, awaiting recheck.'
     );
     PERFORM pg_temp.add_checklist_issue(
-        'N7V1K1SA8TK000007', 'EOL_ITEM', pg_temp.eol_item_no('N7V1K1SA8TK000007', 'BRANCH', 7), 'Hata', 'MEDIUM',
-        'Driver seat-belt pretensioner connector not fully latched.',
+        'N7V1K1SA8TK000007', 'EOL_ITEM', pg_temp.eol_item_no_by_key('N7V1K1SA8TK000007', 'KY.FR-09:E035'), 'Hata', 'MEDIUM',
+        'Driver seat belt twisted at the B-pillar anchor.',
         'IN_PROGRESS', op1, now() - interval '2 days',
         p_process_by => op1, p_process_at => now() - interval '36 hours'
     );
 
     -- 10049: one NOT_OK EoL item whose repair is DONE (quality pending).
     PERFORM pg_temp.tick_eol_phase('N7V1K1SAXTK000008', 'BRANCH', 8, op2, now() - interval '3 days');
+    -- Kept pre-form item "Araç Motoru" (seed_key = md5 of its text)
     PERFORM pg_temp.tick_checklist_item(
-        'N7V1K1SAXTK000008', 'EOL', pg_temp.eol_item_no('N7V1K1SAXTK000008', 'BRANCH', 9), 'NOT_OK', op2, now() - interval '2 days',
-        'Active U0100 lost-communication DTC on scan.'
+        'N7V1K1SAXTK000008', 'EOL', pg_temp.eol_item_no_by_key('N7V1K1SAXTK000008', md5('Araç Motoru')), 'NOT_OK', op2, now() - interval '2 days',
+        'Drive motor whine above 40 km/h on the branch test drive.'
     );
     PERFORM pg_temp.add_checklist_issue(
-        'N7V1K1SAXTK000008', 'EOL_ITEM', pg_temp.eol_item_no('N7V1K1SAXTK000008', 'BRANCH', 9), 'Hata', 'CRITICAL',
-        'Lost communication with vehicle control module on EoL scan.',
+        'N7V1K1SAXTK000008', 'EOL_ITEM', pg_temp.eol_item_no_by_key('N7V1K1SAXTK000008', md5('Araç Motoru')), 'Hata', 'CRITICAL',
+        'Abnormal drive-motor noise during branch EoL.',
         'DONE', op2, now() - interval '2 days',
         p_process_by => op1, p_process_at => now() - interval '30 hours',
         p_finish_by => op1, p_finish_at => now() - interval '18 hours',
-        p_solution => 'Gateway harness repaired; DTC cleared. Awaiting quality sign-off.'
+        p_solution => 'Motor mount bolts retorqued; noise gone on retest. Awaiting quality sign-off.'
     );
+    -- SHIPMENT 11 "C_Pillar Stop tırnaklarının kesilmesi"
     PERFORM pg_temp.tick_checklist_item(
         'N7V1K1SAXTK000008', 'SHIPMENT', 11, 'NOT_OK', op1, now() - interval '2 days',
-        'Left rear door paint inclusion.'
+        'Left C-pillar stop tabs not cut; trim does not seat.'
     );
     PERFORM pg_temp.add_checklist_issue(
         'N7V1K1SAXTK000008', 'SHIPMENT_ITEM', 11, 'Tamir Gerekiyor', 'LOW',
-        'Paint inclusion on left body side, customer-visible.',
+        'C-pillar stop tabs left uncut on the left side.',
         'OPEN', op1, now() - interval '2 days'
     );
 
     -- 10050: all BRANCH EoL items OK; TEST item OPEN so warning still fires.
     PERFORM pg_temp.tick_eol_phase('N7V1K1SA1TK000009', 'BRANCH', NULL, op1, now() - interval '2 days');
+    -- TEST 17 "Fren — 30 → 0 x5"
     PERFORM pg_temp.tick_checklist_item(
-        'N7V1K1SA1TK000009', 'TEST', 2, 'NOT_OK', op2, now() - interval '2 days',
+        'N7V1K1SA1TK000009', 'TEST', 17, 'NOT_OK', op2, now() - interval '2 days',
         'Service brake stopping distance above limit on first run.'
     );
     PERFORM pg_temp.add_checklist_issue(
-        'N7V1K1SA1TK000009', 'TEST_ITEM', 2, 'Tamir Gerekiyor', 'MEDIUM',
+        'N7V1K1SA1TK000009', 'TEST_ITEM', 17, 'Tamir Gerekiyor', 'MEDIUM',
         'Dynamic service brake performance outside spec.',
         'OPEN', op2, now() - interval '2 days'
     );
@@ -466,14 +470,15 @@ BEGIN
         p_approve_by => mgr, p_approve_at => now() - interval '2 days 12 hours',
         p_solution => 'Spot repaired, recleared, and signed off by quality.'
     );
-    -- DEPOT phase: every item OK, the 4th conditional (depot-release still passes).
+    -- DEPOT phase: every item OK; KY.FR-19 5 (key, remote and accessory set)
+    -- conditional, depot-release still passes.
     PERFORM pg_temp.tick_eol_phase('N7V1K1SA8TK000010', 'DEPOT', NULL, op2, now() - interval '20 hours');
     PERFORM pg_temp.tick_checklist_item(
-        'N7V1K1SA8TK000010', 'EOL', pg_temp.eol_item_no('N7V1K1SA8TK000010', 'DEPOT', 4), 'CONDITIONAL_OK', op1, now() - interval '2 days',
+        'N7V1K1SA8TK000010', 'EOL', pg_temp.eol_item_no_by_key('N7V1K1SA8TK000010', 'KY.FR-19:5'), 'CONDITIONAL_OK', op1, now() - interval '2 days',
         'Tool kit missing wheel chock; accepted for depot with note.'
     );
     PERFORM pg_temp.add_checklist_issue(
-        'N7V1K1SA8TK000010', 'EOL_ITEM', pg_temp.eol_item_no('N7V1K1SA8TK000010', 'DEPOT', 4), 'Hata', 'LOW',
+        'N7V1K1SA8TK000010', 'EOL_ITEM', pg_temp.eol_item_no_by_key('N7V1K1SA8TK000010', 'KY.FR-19:5'), 'Hata', 'LOW',
         'Accessory pack missing one wheel chock.',
         'CONDITIONAL_APPROVED', op1, now() - interval '2 days',
         p_process_by => op2, p_process_at => now() - interval '40 hours',
@@ -481,29 +486,31 @@ BEGIN
         p_cond_by => mgr, p_cond_at => now() - interval '30 hours',
         p_solution => 'Ship with note; chock to be added at dealer PDI.'
     );
+    -- TEST 13 "Geri görüş kamerası"
     PERFORM pg_temp.tick_checklist_item(
         'N7V1K1SA8TK000010', 'TEST', 13, 'OK', op2, now() - interval '2 days', NULL
     );
     PERFORM pg_temp.add_checklist_issue(
         'N7V1K1SA8TK000010', 'TEST_ITEM', 13, 'Hata', 'CRITICAL',
-        'Isolation resistance initially below 100 MΩ; retested after drying.',
+        'Rear-view camera image dropped out on first R selection.',
         'APPROVED', op2, now() - interval '2 days 6 hours',
         p_process_by => op1, p_process_at => now() - interval '2 days',
         p_finish_by => op1, p_finish_at => now() - interval '40 hours',
         p_approve_by => mgr, p_approve_at => now() - interval '36 hours',
-        p_solution => 'Connector dried, retest passed. Full quality approval.'
+        p_solution => 'Camera connector reseated, retest passed. Full quality approval.'
     );
+    -- SHIPMENT 39 "Arka davlumbaz sol fren borusu girişim bölgesi kesimi"
     PERFORM pg_temp.tick_checklist_item(
         'N7V1K1SA8TK000010', 'SHIPMENT', 39, 'OK', op1, now() - interval '2 days', NULL
     );
     PERFORM pg_temp.add_checklist_issue(
         'N7V1K1SA8TK000010', 'SHIPMENT_ITEM', 39, 'Tamir Gerekiyor', 'MEDIUM',
-        'Left-front tyre 4 psi low at customer checklist.',
+        'Left rear wheel-arch liner not trimmed at the brake line; liner touches the pipe.',
         'APPROVED', op1, now() - interval '2 days',
         p_process_by => op1, p_process_at => now() - interval '40 hours',
         p_finish_by => op2, p_finish_at => now() - interval '38 hours',
         p_approve_by => mgr, p_approve_at => now() - interval '32 hours',
-        p_solution => 'Inflated to spec and rechecked.'
+        p_solution => 'Liner trimmed at the brake line and rechecked.'
     );
     PERFORM pg_temp.tick_eol_phase('N7V1K1SAXTK000011', 'DEPOT', NULL, op1, now() - interval '20 hours');
 
@@ -527,19 +534,21 @@ BEGIN
     WHERE vin = 'N7V1K1SA1TK000012';
 
     -- 10053: after branch ship, leave OPEN + IN_PROGRESS at depot (blocks depot-release).
+    -- KY.FR-19 33 "Fren hortum ve hatlarında sıvı kaçağı yok"
     PERFORM pg_temp.tick_checklist_item(
-        'N7V1K1SA1TK000012', 'EOL', pg_temp.eol_item_no('N7V1K1SA1TK000012', 'DEPOT', 2), 'NOT_OK', op2, now() - interval '20 hours',
-        'Visible coolant weep at water-pump housing.'
+        'N7V1K1SA1TK000012', 'EOL', pg_temp.eol_item_no_by_key('N7V1K1SA1TK000012', 'KY.FR-19:33'), 'NOT_OK', op2, now() - interval '20 hours',
+        'Brake fluid weep at the left-front hose union.'
     );
     PERFORM pg_temp.add_checklist_issue(
-        'N7V1K1SA1TK000012', 'EOL_ITEM', pg_temp.eol_item_no('N7V1K1SA1TK000012', 'DEPOT', 2), 'Tamir Gerekiyor', 'CRITICAL',
-        'Coolant leak found during depot fluid inspection.',
+        'N7V1K1SA1TK000012', 'EOL_ITEM', pg_temp.eol_item_no_by_key('N7V1K1SA1TK000012', 'KY.FR-19:33'), 'Tamir Gerekiyor', 'CRITICAL',
+        'Brake fluid leak found during depot inspection.',
         'OPEN', op2, now() - interval '20 hours'
     );
     -- TEST answers freeze at branch ship (Karar 29): the depot finding is an
-    -- issue on the TEST item, its OK answer from the branch stays.
+    -- issue on TEST 42 "DTC / Diyagnostik tarama", its OK answer from the
+    -- branch stays.
     PERFORM pg_temp.add_checklist_issue(
-        'N7V1K1SA1TK000012', 'TEST_ITEM', 11, 'Hata', 'MEDIUM',
+        'N7V1K1SA1TK000012', 'TEST_ITEM', 42, 'Hata', 'MEDIUM',
         'OBD scan shows active drive-motor DTC at depot.',
         'IN_PROGRESS', op1, now() - interval '18 hours',
         p_process_by => op2, p_process_at => now() - interval '12 hours'
@@ -556,18 +565,19 @@ BEGIN
     END LOOP;
 
     -- Closed shipment issue on 10054 so Analysis has another CONDITIONAL_APPROVED.
+    -- SHIPMENT 32 "Kelebek camı düşmemesi için sünger konulması"
     PERFORM pg_temp.tick_checklist_item(
         'N7V1K1SA3TK000013', 'SHIPMENT', 32, 'CONDITIONAL_OK', op2, now() - interval '2 days',
-        'Infotainment speaker rattle at 40% volume; accepted with note.'
+        'Right quarter-glass foam fitted short; slight rattle. Accepted with note.'
     );
     PERFORM pg_temp.add_checklist_issue(
         'N7V1K1SA3TK000013', 'SHIPMENT_ITEM', 32, 'Hata', 'LOW',
-        'Infotainment speaker rattle on customer checklist.',
+        'Right quarter-glass foam shorter than specified.',
         'CONDITIONAL_APPROVED', op2, now() - interval '2 days',
         p_process_by => op1, p_process_at => now() - interval '36 hours',
         p_finish_by => op1, p_finish_at => now() - interval '30 hours',
         p_cond_by => mgr, p_cond_at => now() - interval '24 hours',
-        p_solution => 'Cannot duplicate at other volumes; ship with dealer follow-up.'
+        p_solution => 'Glass holds in place; dealer to fit full-length foam at PDI.'
     );
 
     FOREACH v_vin IN ARRAY document_vins LOOP
@@ -607,12 +617,13 @@ BEGIN
     -- DONE would have blocked depot-release. Keep this one APPROVED.
     -- Already covered. Add a DONE issue on 10047 (still IN_PRODUCTION) for
     -- the Analysis "pending quality" view — TEST_ITEM DONE LOW.
+    -- TEST 4 "Dış aydınlatma"
     PERFORM pg_temp.tick_checklist_item(
-        'N7V1K1SA6TK000006', 'TEST', 8, 'NOT_OK', op2, now() - interval '4 days',
+        'N7V1K1SA6TK000006', 'TEST', 4, 'NOT_OK', op2, now() - interval '4 days',
         'Low-beam cutoff 0.4° high on left lamp.'
     );
     PERFORM pg_temp.add_checklist_issue(
-        'N7V1K1SA6TK000006', 'TEST_ITEM', 8, 'Hata', 'LOW',
+        'N7V1K1SA6TK000006', 'TEST_ITEM', 4, 'Hata', 'LOW',
         'Left headlamp aim out of spec during test.',
         'DONE', op2, now() - interval '4 days',
         p_process_by => op1, p_process_at => now() - interval '3 days',

@@ -1153,6 +1153,17 @@ başlatılınca devreye girer.
   kalmadı. Seed insert-only: yalnız sıfırdan kurulumda geçerli, mevcut
   satırların bölümü güncellenmez. Kanıt:
   `docs/screenshots/form-seed-sections/`.
+- **Seed 06 arıza açıklamaları `[x]` (2026-10-08):** açıklamalar ilgisiz
+  maddelere bağlıydı (ör. "Horn inoperative" → "Bagaj kapağı contası").
+  EOL bulguları artık seed_key ile bulunuyor
+  (`pg_temp.eol_item_no_by_key`; konuma göre çalışan `eol_item_no`
+  kaldırıldı). Uyan madde varsa taşındı (aksesuar seti → KY.FR-19:5, fren
+  mesafesi → TEST 17, far ayarı → TEST 4, DTC → TEST 42, HV konnektör
+  kilidi → istasyon 4 adım 4), yoksa açıklama maddesine göre yeniden
+  yazıldı (KY.FR-09:E004 kapı contası, E035 emniyet kemeri, Araç Motoru,
+  KY.FR-19:33 fren hortumu kaçağı, SHIPMENT 11 / 32 / 39, TEST 13 kamera).
+  Önem derecesi, durum ve araç senaryoları aynı (10053 depo çıkışı
+  OPEN arızayla kilitli, 10051 geçer).
 - **Sonraki iş `[ ]`:** kabul kriteri ve kontrol yöntemi hiçbir ekranda
   gösterilmiyor; gösterim ayrı iş olarak yapılacak.
 - **Kalite ekibine:** belirsiz sekiz eşleşme; Araç Motoru ve Yağmur Testi
