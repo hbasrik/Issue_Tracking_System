@@ -601,6 +601,11 @@ tr.cursor-pointer:focus:not(:focus-visible) {
     font-weight: 600;
   }
 
+  .print-item-criteria {
+    font-size: 9.5pt;
+    overflow-wrap: anywhere;
+  }
+
   .print-item-status {
     font-weight: 700;
     text-transform: none;

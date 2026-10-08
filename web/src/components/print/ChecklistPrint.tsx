@@ -6,6 +6,7 @@ import { useI18n } from '../../i18n';
 import { api, type ChecklistItem, type ChecklistType, type EOLWorkflowView, type Vehicle } from '../../lib/api';
 import { checklistActorLines } from '../../lib/actionStamp';
 import { formatDateTime } from '../../../../shared/i18n';
+import { checklistCriteriaLines } from '../../../../shared/checklistCriteria';
 import { printSection } from '../../lib/print';
 import {
   checklistStatusLabel,
@@ -121,6 +122,11 @@ export function ChecklistPrint({
                     <p className="print-item-title">
                       {item.ItemNo}. {item.ItemText}
                     </p>
+                    {checklistCriteriaLines(item).map((line) => (
+                      <p key={line.kind} className="print-item-criteria" data-print-criteria={line.kind}>
+                        {t(line.labelKey)}: {line.text}
+                      </p>
+                    ))}
                     <p>
                       {t('print.itemStatus')}:{' '}
                       <span className="print-item-status">
