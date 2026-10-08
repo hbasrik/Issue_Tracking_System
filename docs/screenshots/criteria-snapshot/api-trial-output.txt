@@ -1,0 +1,52 @@
+fixtures on N7V1K1SAXTK000008: {'answered': 206, 'none': 207, 'legacy': 208, 'pending': 209}; audit baseline id 24
+
+== 1. answer: the four columns are filled and stamped
+    column                          before    after
+    check_status                    PENDING   OK  (changed)
+    item_text_snapshot              <NULL>    tmp-snap answered  (changed)
+    acceptance_criterion_snapshot   <NULL>    Boşluk 3–5 mm  (changed)
+    control_method_snapshot         <NULL>    Görsel  (changed)
+    form_revision_snapshot          <NULL>    Rev. 02  (changed)
+    criteria_snapshot_at            <NULL>    2026-10-08 07:41:42.972696  (changed)
+  [PASS] POST OK 200 — 200
+  [PASS] criterion, method, revision copied, stamp written
+
+== 2. template revised, answer changes: the copy is renewed
+    column                          before                       after
+    check_status                    OK                           NOT_OK  (changed)
+    item_text_snapshot              tmp-snap answered            tmp-snap answered (metin rev. 03)  (changed)
+    acceptance_criterion_snapshot   Boşluk 3–5 mm                Boşluk 2–4 mm  (changed)
+    control_method_snapshot         Görsel                       Kumpas  (changed)
+    form_revision_snapshot          Rev. 02                      Rev. 03  (changed)
+    criteria_snapshot_at            2026-10-08 07:41:42.972696   2026-10-08 07:41:43.054875  (changed)
+  [PASS] POST NOT_OK 200 — 200
+  [PASS] copy renewed to the revised template
+  [PASS] stamp moved forward — 2026-10-08 07:41:42.972696 -> 2026-10-08 07:41:43.054875
+
+== 3. item without criteria: stamp set, copies NULL
+    {"check_status": "OK", "item_text_snapshot": "tmp-snap none", "acceptance_criterion_snapshot": "<NULL>", "control_method_snapshot": "<NULL>", "form_revision_snapshot": "<NULL>", "criteria_snapshot_at": "2026-10-08 07:41:43.129559"}
+  [PASS] POST OK 200 — 200
+  [PASS] stamp set, three copies NULL
+
+== 4. API: template fields current, copy separate
+    answered  {"Status": "NOT_OK", "ItemText": "tmp-snap answered (metin rev. 03)", "AcceptanceCriterion": "Boşluk 1–3 mm", "ControlMethod": "Mikrometre", "FormRevision": "Rev. 04", "AnsweredCriteria": {"AcceptanceCriterion": "Boşluk 2–4 mm", "ControlMethod": "Kumpas", "FormRevision": "Rev. 03", "CopiedAt": "2026-10-08T10:41:43.054875+03:00"}}
+    none      {"Status": "OK", "ItemText": "tmp-snap none", "AcceptanceCriterion": null, "ControlMethod": null, "FormRevision": null, "AnsweredCriteria": {"CopiedAt": "2026-10-08T10:41:43.129559+03:00"}}
+    legacy    {"Status": "OK", "ItemText": "tmp-snap legacy", "AcceptanceCriterion": "Eski kriter (kopyasız cevap)", "ControlMethod": "Eski yöntem", "FormRevision": "Rev. 01", "AnsweredCriteria": null}
+    pending   {"Status": "PENDING", "ItemText": "tmp-snap pending", "AcceptanceCriterion": "Conta boyunca boşluk yok", "ControlMethod": "Görsel + el ile", "FormRevision": "Rev. 05", "AnsweredCriteria": null}
+  [PASS] answered: template fields = current template (Rev. 04)
+  [PASS] answered: AnsweredCriteria = copy (Rev. 03)
+  [PASS] none: AnsweredCriteria present with no values
+  [PASS] legacy: no AnsweredCriteria (template still in its own fields)
+  [PASS] pending: no AnsweredCriteria, template with revision
+
+== 5. frozen item: API 409 and direct SQL refused, md5 unchanged
+    N7V1K1SA1TK000012 item 1: {"check_status": "OK", "item_text_snapshot": "Araç kimliği ve varyant", "acceptance_criterion_snapshot": "Araç ve kayıt bilgileri eşleşmeli", "control_method_snapshot": "Kayıt / etiket karşılaştırma", "form_revision_snapshot": "<NULL>", "criteria_snapshot_at": "2026-10-05 07:39:20.226168"}
+  [PASS] API POST OK on frozen item -> 409 — 409 {"error": "cannot change branch-stage checklist items after the vehicle has shipped from the branch", "request_id": "Basri's Macbook/lb7eGmiLmH-000007"}
+  [PASS] API POST NOT_OK on frozen item -> 409 — 409 {"error": "cannot change branch-stage checklist items after the vehicle has shipped from the branch", "request_id": "Basri's Macbook/lb7eGmiLmH-000008"}
+  [PASS] SQL SET acceptance_criterion_snapshot refused — ERROR:  cannot change branch-stage checklist items after the vehicle has shipped from the branch
+  [PASS] SQL SET control_method_snapshot refused — ERROR:  cannot change branch-stage checklist items after the vehicle has shipped from the branch
+  [PASS] SQL SET form_revision_snapshot refused — ERROR:  cannot change branch-stage checklist items after the vehicle has shipped from the branch
+  [PASS] SQL SET criteria_snapshot_at refused — ERROR:  cannot change branch-stage checklist items after the vehicle has shipped from the branch
+  [PASS] frozen row md5 unchanged — bccce5aebde7336d4aa5349439b9ae7d -> bccce5aebde7336d4aa5349439b9ae7d
+
+RESULT: ALL PASS

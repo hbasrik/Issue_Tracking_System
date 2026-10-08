@@ -1,0 +1,55 @@
+== web ==
+  [PASS] web tr 1280 answered closed: icon (copy has a criterion), no text
+  [PASS] web tr 1280 none closed: no icon
+  [PASS] web tr 1280 legacy closed: no icon, no criteria line
+  [PASS] web tr 1280 pending open: template lines — [["Kabul kriteri","Conta boyunca boşluk yok"],["Kontrol yöntemi","Görsel + el ile"]]
+  [PASS] web tr 1280 answered opened for edit: current template, not the copy — [["Kabul kriteri","Boşluk 1–3 mm"],["Kontrol yöntemi","Mikrometre"]]
+  [PASS] web tr 1280 print answered: the copy with its revision — [["criterion","Kabul kriteri: Boşluk 2–4 mm"],["method","Kontrol yöntemi: Kumpas"],["revision","Form revizyonu: Rev. 03"]]
+  [PASS] web tr 1280 print none: no criteria line
+  [PASS] web tr 1280 print legacy: no criteria line — []
+  [PASS] web tr 1280 print pending: the template with its revision — [["criterion","Kabul kriteri: Conta boyunca boşluk yok"],["method","Kontrol yöntemi: Görsel + el ile"],["revision","Form revizyonu: Rev. 05"]]
+  [PASS] web tr 375 answered closed: icon (copy has a criterion), no text
+  [PASS] web tr 375 none closed: no icon
+  [PASS] web tr 375 legacy closed: no icon, no criteria line
+  [PASS] web tr 375 pending open: template lines — [["Kabul kriteri","Conta boyunca boşluk yok"],["Kontrol yöntemi","Görsel + el ile"]]
+  [PASS] web tr 375 answered opened for edit: current template, not the copy — [["Kabul kriteri","Boşluk 1–3 mm"],["Kontrol yöntemi","Mikrometre"]]
+  [PASS] web en 1280 answered closed: icon (copy has a criterion), no text
+  [PASS] web en 1280 none closed: no icon
+  [PASS] web en 1280 legacy closed: no icon, no criteria line
+  [PASS] web en 1280 pending open: template lines — [["Acceptance criterion","Conta boyunca boşluk yok"],["Control method","Görsel + el ile"]]
+  [PASS] web en 1280 answered opened for edit: current template, not the copy — [["Acceptance criterion","Boşluk 1–3 mm"],["Control method","Mikrometre"]]
+  [PASS] web en 1280 print answered: the copy with its revision — [["criterion","Acceptance criterion: Boşluk 2–4 mm"],["method","Control method: Kumpas"],["revision","Form revision: Rev. 03"]]
+  [PASS] web en 1280 print none: no criteria line
+  [PASS] web en 1280 print legacy: no criteria line — []
+  [PASS] web en 1280 print pending: the template with its revision — [["criterion","Acceptance criterion: Conta boyunca boşluk yok"],["method","Control method: Görsel + el ile"],["revision","Form revision: Rev. 05"]]
+  [PASS] web en 375 answered closed: icon (copy has a criterion), no text
+  [PASS] web en 375 none closed: no icon
+  [PASS] web en 375 legacy closed: no icon, no criteria line
+  [PASS] web en 375 pending open: template lines — [["Acceptance criterion","Conta boyunca boşluk yok"],["Control method","Görsel + el ile"]]
+  [PASS] web en 375 answered opened for edit: current template, not the copy — [["Acceptance criterion","Boşluk 1–3 mm"],["Control method","Mikrometre"]]
+== mobile (react-native-web harness, real EOLChecklistScreen) ==
+  [PASS] mobile tr 375 answered closed: icon, no text
+  [PASS] mobile tr 375 none closed: no icon
+  [PASS] mobile tr 375 legacy closed: no icon, no criteria line
+  [PASS] mobile tr 375 pending open: template lines — [["Kabul kriteri","Conta boyunca boşluk yok"],["Kontrol yöntemi","Görsel + el ile"]]
+  [PASS] mobile tr 375 answered opened for edit: current template, not the copy — [["Kabul kriteri","Boşluk 1–3 mm"],["Kontrol yöntemi","Mikrometre"]]
+  [PASS] mobile tr 375 read-only (no write request) — 0
+  [PASS] mobile tr 1280 answered closed: icon, no text
+  [PASS] mobile tr 1280 none closed: no icon
+  [PASS] mobile tr 1280 legacy closed: no icon, no criteria line
+  [PASS] mobile tr 1280 pending open: template lines — [["Kabul kriteri","Conta boyunca boşluk yok"],["Kontrol yöntemi","Görsel + el ile"]]
+  [PASS] mobile tr 1280 answered opened for edit: current template, not the copy — [["Kabul kriteri","Boşluk 1–3 mm"],["Kontrol yöntemi","Mikrometre"]]
+  [PASS] mobile tr 1280 read-only (no write request) — 0
+  [PASS] mobile en 375 answered closed: icon, no text
+  [PASS] mobile en 375 none closed: no icon
+  [PASS] mobile en 375 legacy closed: no icon, no criteria line
+  [PASS] mobile en 375 pending open: template lines — [["Acceptance criterion","Conta boyunca boşluk yok"],["Control method","Görsel + el ile"]]
+  [PASS] mobile en 375 answered opened for edit: current template, not the copy — [["Acceptance criterion","Boşluk 1–3 mm"],["Control method","Mikrometre"]]
+  [PASS] mobile en 375 read-only (no write request) — 0
+  [PASS] mobile en 1280 answered closed: icon, no text
+  [PASS] mobile en 1280 none closed: no icon
+  [PASS] mobile en 1280 legacy closed: no icon, no criteria line
+  [PASS] mobile en 1280 pending open: template lines — [["Acceptance criterion","Conta boyunca boşluk yok"],["Control method","Görsel + el ile"]]
+  [PASS] mobile en 1280 answered opened for edit: current template, not the copy — [["Acceptance criterion","Boşluk 1–3 mm"],["Control method","Mikrometre"]]
+  [PASS] mobile en 1280 read-only (no write request) — 0
+RESULT: PASS

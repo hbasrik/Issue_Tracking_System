@@ -1,0 +1,2 @@
+deleted: 3 audit, 4 progress, 4 template items; media on fixtures before delete: 0; audit rows after baseline left: 0
+left: 0 items, 0 progress, 0 audit

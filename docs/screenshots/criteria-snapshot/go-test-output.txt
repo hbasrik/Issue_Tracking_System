@@ -1,0 +1,43 @@
+    checklist_criteria_snapshot_test.go:118: answer 1 (OK):     criterion=Boşluk 3–5 mm method=Görsel revision=Rev. 02 stamped
+    checklist_criteria_snapshot_test.go:119: answer 2 (NOT_OK): criterion=Boşluk 2–4 mm method=Kumpas revision=Rev. 03 stamped
+    checklist_criteria_snapshot_test.go:127: back to PENDING:   criterion=Boşluk 2–4 mm method=Kumpas revision=Rev. 03 stamped
+--- PASS: TestSaveResult_CopiesCriteriaOnEveryAnswer (0.04s)
+    checklist_criteria_snapshot_test.go:169: PENDING:               {"AcceptanceCriterion":"Kriter A","AnsweredCriteria":null,"ControlMethod":"Yöntem A","FormRevision":"Rev. A","Status":"PENDING"}
+    checklist_criteria_snapshot_test.go:191: OK, template changed:  {"AcceptanceCriterion":"Kriter B","AnsweredCriteria":{"AcceptanceCriterion":"Kriter A","ControlMethod":"Yöntem A","FormRevision":"Rev. A","CopiedAt":"2026-10-08T10:43:54.264514+03:00"},"ControlMethod":null,"FormRevision":"Rev. B","Status":"OK"}
+    checklist_criteria_snapshot_test.go:202: OK without copy:       {"AcceptanceCriterion":"Kriter L","AnsweredCriteria":null,"ControlMethod":"Yöntem L","FormRevision":null,"Status":"OK"}
+--- PASS: TestListItems_AnsweredCriteriaSource (0.06s)
+    checklist_criteria_snapshot_test.go:220: no criteria: criterion=<NULL> method=<NULL> revision=<NULL> stamped
+--- PASS: TestSaveResult_NoCriteriaStampsNullCopy (0.02s)
+    checklist_criteria_snapshot_test.go:256: BRANCH_SHIPPED progress 1738: 4 copy-column UPDATEs refused, md5 e2d086efd0210628c29d790b03c7d265 unchanged
+    checklist_criteria_snapshot_test.go:256: DEPOT_RELEASED progress 2363: 4 copy-column UPDATEs refused, md5 419267e5fed6bb45e891f12f9224abcb unchanged
+    checklist_criteria_snapshot_test.go:256: DELIVERED progress 3282: 4 copy-column UPDATEs refused, md5 e7438c5e77c9e0fbec312c531e301cef unchanged
+--- PASS: TestChecklistFrozen_SnapshotColumnsRefusedBySQL (0.05s)
+    checklist_frozen_test.go:117: DEPOT_RELEASED EOL progress 2363: refused, row md5 419267e5fed6bb45e891f12f9224abcb unchanged
+    checklist_frozen_test.go:117: DELIVERED EOL progress 3282: refused, row md5 e7438c5e77c9e0fbec312c531e301cef unchanged
+    checklist_frozen_test.go:117: DELIVERED TEST progress 3432: refused, row md5 7e177ff2fc585c2f77cbb19aac10cfac unchanged
+    checklist_frozen_test.go:117: DELIVERED SHIPMENT progress 3386: refused, row md5 9a7f69cf7a7b96df5e5073da48b51247 unchanged
+    checklist_frozen_test.go:117: BRANCH_SHIPPED EOL progress 1738: refused, row md5 e2d086efd0210628c29d790b03c7d265 unchanged
+    checklist_frozen_test.go:117: BRANCH_SHIPPED TEST progress 1888: refused, row md5 c9683138f2dc102ef64f34de919e7b6c unchanged
+    checklist_frozen_test.go:117: BRANCH_SHIPPED SHIPMENT progress 1842: refused, row md5 afd648fa4c18c21bc8eccddf1afe5c39 unchanged
+--- PASS: TestChecklistFrozen_WritesRefused (0.08s)
+    checklist_item_text_snapshot_test.go:86: answer 1 (OK, template A):     snapshot=tmp metin A
+    checklist_item_text_snapshot_test.go:87: answer 2 (NOT_OK, template B): snapshot=tmp metin B list=tmp metin B
+    checklist_item_text_snapshot_test.go:94: back to PENDING (template C):  snapshot=tmp metin B
+--- PASS: TestSaveResult_ReCopiesItemTextOnEveryAnswer (0.04s)
+    checklist_note_save_test.go:74: step 1 OK             approved=ölçüm 12.6 conditional=<NULL> rejected=<NULL> rework=<NULL>
+    checklist_note_save_test.go:74: step 2 NOT_OK         approved=<NULL> conditional=<NULL> rejected=conta yırtık rework=<NULL>
+    checklist_note_save_test.go:74: step 3 OK             approved=<NULL> conditional=<NULL> rejected=<NULL> rework=<NULL>
+    checklist_note_save_test.go:74: step 4 CONDITIONAL_OK approved=<NULL> conditional=paspas sonra rejected=<NULL> rework=<NULL>
+--- PASS: TestSaveResult_NoteTransitionsKeepOneColumn (0.02s)
+PASS
+ok  	github.com/karea/backend/internal/repository/postgres	0.870s
+?   	github.com/karea/backend/cmd/api	[no test files]
+ok  	github.com/karea/backend/internal/delivery/http	14.956s
+ok  	github.com/karea/backend/internal/domain	0.453s
+ok  	github.com/karea/backend/internal/platform/applog	0.647s
+?   	github.com/karea/backend/internal/platform/auth	[no test files]
+ok  	github.com/karea/backend/internal/platform/config	1.056s
+ok  	github.com/karea/backend/internal/platform/storage	1.244s
+?   	github.com/karea/backend/internal/repository	[no test files]
+ok  	github.com/karea/backend/internal/repository/postgres	2.252s
+ok  	github.com/karea/backend/internal/usecase	8.218s
