@@ -1,0 +1,98 @@
+== API ==
+  [PASS] KY.FR-09 E009: criterion set, method set — {"AcceptanceCriterion":"Boşluk ve yüzey hizası çevre boyunca dengeli; belirgin fark veya temas olmamalı","ControlMethod":"Görsel kontrol"}
+  [PASS] KY.FR-19 1: criterion absent, method set — {"ControlMethod":"Doküman/Etiket kontrol"}
+  [PASS] Batarya (kept): criterion absent, method absent — {}
+  [PASS] Araç Motoru (kept): criterion absent, method absent — {}
+== web ==
+  [PASS] web tr 1280 E009 open shows both lines — Kabul kriteri: Boşluk ve yüzey hizası çevre boyunca dengeli; belirgin fark veya temas olmamalı / Kontrol yöntemi: Görsel kontrol
+  [PASS] web tr 1280 E009 lines above the answer buttons
+  [PASS] web tr 1280 E009 smaller than item text, contrast >= 4.5 — 13px vs 15px, rgb(91, 102, 114) on rgb(247, 249, 251) = 5.55:1
+  [PASS] web tr 1280 E009 no icon while open
+  [PASS] web tr 1280 closed E039 has icon and no text
+  [PASS] web tr 1280 closed Araç Motoru has no icon
+  [PASS] web tr 1280 print: E009 with both lines — 9. Bagaj kapağı gap / flush | Kabul kriteri: Boşluk ve yüzey hizası çevre boyunca dengeli; belirgin fark veya temas olmamalı | Kontrol yöntemi: Görsel kontrol | Durum: Bekliyor
+  [PASS] web tr 1280 print: Araç Motoru has no criteria line — Durum: Uygun değil
+  [PASS] web tr 1280 print: one line per filled field, none for empty ones — 136 printed, 136 filled (95 method + 39 criterion + 2 tmp)
+  [PASS] web tr 1280 KY.FR-19 1 open shows only the method — Kontrol yöntemi: Doküman/Etiket kontrol
+  [PASS] web tr 1280 KY.FR-19 1 has no criterion label
+  [PASS] web tr 1280 frozen branch cards unchanged (no icon, no criteria) — 46 frozen cards
+  [PASS] web tr 1280 Batarya open shows no extra text
+  [PASS] web tr 1280 long item: no overflow (card, criteria, page) — card 0px, criteria 0px, page 0px
+  [PASS] web tr 375 E009 open shows both lines — Kabul kriteri: Boşluk ve yüzey hizası çevre boyunca dengeli; belirgin fark veya temas olmamalı / Kontrol yöntemi: Görsel kontrol
+  [PASS] web tr 375 E009 lines above the answer buttons
+  [PASS] web tr 375 E009 smaller than item text, contrast >= 4.5 — 13px vs 15px, rgb(91, 102, 114) on rgb(247, 249, 251) = 5.55:1
+  [PASS] web tr 375 E009 no icon while open
+  [PASS] web tr 375 closed E039 has icon and no text
+  [PASS] web tr 375 closed Araç Motoru has no icon
+  [PASS] web tr 375 KY.FR-19 1 open shows only the method — Kontrol yöntemi: Doküman/Etiket kontrol
+  [PASS] web tr 375 KY.FR-19 1 has no criterion label
+  [PASS] web tr 375 frozen branch cards unchanged (no icon, no criteria) — 46 frozen cards
+  [PASS] web tr 375 Batarya open shows no extra text
+  [PASS] web tr 375 long item: no overflow (card, criteria, page) — card 0px, criteria 0px, page 0px
+  [PASS] web en 1280 E009 open shows both lines — Acceptance criterion: Boşluk ve yüzey hizası çevre boyunca dengeli; belirgin fark veya temas olmamalı / Control method: Görsel kontrol
+  [PASS] web en 1280 E009 lines above the answer buttons
+  [PASS] web en 1280 E009 smaller than item text, contrast >= 4.5 — 13px vs 15px, rgb(91, 102, 114) on rgb(247, 249, 251) = 5.55:1
+  [PASS] web en 1280 E009 no icon while open
+  [PASS] web en 1280 closed E039 has icon and no text
+  [PASS] web en 1280 closed Araç Motoru has no icon
+  [PASS] web en 1280 print: E009 with both lines — 9. Bagaj kapağı gap / flush | Acceptance criterion: Boşluk ve yüzey hizası çevre boyunca dengeli; belirgin fark veya temas olmamalı | Control method: Görsel kontrol | Status: Pending
+  [PASS] web en 1280 print: Araç Motoru has no criteria line — Status: Not OK
+  [PASS] web en 1280 print: one line per filled field, none for empty ones — 136 printed, 136 filled (95 method + 39 criterion + 2 tmp)
+  [PASS] web en 1280 KY.FR-19 1 open shows only the method — Control method: Doküman/Etiket kontrol
+  [PASS] web en 1280 KY.FR-19 1 has no criterion label
+  [PASS] web en 1280 frozen branch cards unchanged (no icon, no criteria) — 46 frozen cards
+  [PASS] web en 1280 Batarya open shows no extra text
+  [PASS] web en 1280 long item: no overflow (card, criteria, page) — card 0px, criteria 0px, page 0px
+  [PASS] web en 375 E009 open shows both lines — Acceptance criterion: Boşluk ve yüzey hizası çevre boyunca dengeli; belirgin fark veya temas olmamalı / Control method: Görsel kontrol
+  [PASS] web en 375 E009 lines above the answer buttons
+  [PASS] web en 375 E009 smaller than item text, contrast >= 4.5 — 13px vs 15px, rgb(91, 102, 114) on rgb(247, 249, 251) = 5.55:1
+  [PASS] web en 375 E009 no icon while open
+  [PASS] web en 375 closed E039 has icon and no text
+  [PASS] web en 375 closed Araç Motoru has no icon
+  [PASS] web en 375 KY.FR-19 1 open shows only the method — Control method: Doküman/Etiket kontrol
+  [PASS] web en 375 KY.FR-19 1 has no criterion label
+  [PASS] web en 375 frozen branch cards unchanged (no icon, no criteria) — 46 frozen cards
+  [PASS] web en 375 Batarya open shows no extra text
+  [PASS] web en 375 long item: no overflow (card, criteria, page) — card 0px, criteria 0px, page 0px
+== mobile (react-native-web harness, real EOLChecklistScreen) ==
+  [PASS] mobile tr 375 E009 open shows both lines — Kabul kriteri: Boşluk ve yüzey hizası çevre boyunca dengeli; belirgin fark veya temas olmamalı / Kontrol yöntemi: Görsel kontrol
+  [PASS] mobile tr 375 E009 lines above the answer buttons
+  [PASS] mobile tr 375 E009 smaller than item text, contrast >= 4.5 — 13px vs 15px, rgb(91, 102, 114) on rgb(247, 249, 251) = 5.55:1
+  [PASS] mobile tr 375 E009 no icon while open
+  [PASS] mobile tr 375 closed E039 has icon and no text
+  [PASS] mobile tr 375 closed Araç Motoru has no icon
+  [PASS] mobile tr 375 read-only (no write request) — 0
+  [PASS] mobile tr 375 KY.FR-19 1 open shows only the method — Kontrol yöntemi: Doküman/Etiket kontrol
+  [PASS] mobile tr 375 Batarya open shows no extra text
+  [PASS] mobile tr 375 long item: no overflow (card, criteria, page) — card 0px, criteria 0px, page 0px
+  [PASS] mobile tr 1280 E009 open shows both lines — Kabul kriteri: Boşluk ve yüzey hizası çevre boyunca dengeli; belirgin fark veya temas olmamalı / Kontrol yöntemi: Görsel kontrol
+  [PASS] mobile tr 1280 E009 lines above the answer buttons
+  [PASS] mobile tr 1280 E009 smaller than item text, contrast >= 4.5 — 13px vs 15px, rgb(91, 102, 114) on rgb(247, 249, 251) = 5.55:1
+  [PASS] mobile tr 1280 E009 no icon while open
+  [PASS] mobile tr 1280 closed E039 has icon and no text
+  [PASS] mobile tr 1280 closed Araç Motoru has no icon
+  [PASS] mobile tr 1280 read-only (no write request) — 0
+  [PASS] mobile tr 1280 KY.FR-19 1 open shows only the method — Kontrol yöntemi: Doküman/Etiket kontrol
+  [PASS] mobile tr 1280 Batarya open shows no extra text
+  [PASS] mobile tr 1280 long item: no overflow (card, criteria, page) — card 0px, criteria 0px, page 0px
+  [PASS] mobile en 375 E009 open shows both lines — Acceptance criterion: Boşluk ve yüzey hizası çevre boyunca dengeli; belirgin fark veya temas olmamalı / Control method: Görsel kontrol
+  [PASS] mobile en 375 E009 lines above the answer buttons
+  [PASS] mobile en 375 E009 smaller than item text, contrast >= 4.5 — 13px vs 15px, rgb(91, 102, 114) on rgb(247, 249, 251) = 5.55:1
+  [PASS] mobile en 375 E009 no icon while open
+  [PASS] mobile en 375 closed E039 has icon and no text
+  [PASS] mobile en 375 closed Araç Motoru has no icon
+  [PASS] mobile en 375 read-only (no write request) — 0
+  [PASS] mobile en 375 KY.FR-19 1 open shows only the method — Control method: Doküman/Etiket kontrol
+  [PASS] mobile en 375 Batarya open shows no extra text
+  [PASS] mobile en 375 long item: no overflow (card, criteria, page) — card 0px, criteria 0px, page 0px
+  [PASS] mobile en 1280 E009 open shows both lines — Acceptance criterion: Boşluk ve yüzey hizası çevre boyunca dengeli; belirgin fark veya temas olmamalı / Control method: Görsel kontrol
+  [PASS] mobile en 1280 E009 lines above the answer buttons
+  [PASS] mobile en 1280 E009 smaller than item text, contrast >= 4.5 — 13px vs 15px, rgb(91, 102, 114) on rgb(247, 249, 251) = 5.55:1
+  [PASS] mobile en 1280 E009 no icon while open
+  [PASS] mobile en 1280 closed E039 has icon and no text
+  [PASS] mobile en 1280 closed Araç Motoru has no icon
+  [PASS] mobile en 1280 read-only (no write request) — 0
+  [PASS] mobile en 1280 KY.FR-19 1 open shows only the method — Control method: Doküman/Etiket kontrol
+  [PASS] mobile en 1280 Batarya open shows no extra text
+  [PASS] mobile en 1280 long item: no overflow (card, criteria, page) — card 0px, criteria 0px, page 0px
+RESULT: PASS
