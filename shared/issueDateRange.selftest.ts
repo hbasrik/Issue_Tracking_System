@@ -2,6 +2,7 @@
 import {
   editIssueDateRange,
   isCalendarDay,
+  plantCalendarDay,
   plantToday,
   presetRange,
   readIssueDateFilter,
@@ -55,6 +56,12 @@ check('resolve custom', resolveIssueDateRange({ to: '2026-10-07' }, lateUtc), { 
 check('edit from past to moves to', editIssueDateRange({ from: '2026-10-01', to: '2026-10-03' }, { from: '2026-10-05' }), { from: '2026-10-05', to: '2026-10-05' });
 check('edit to before from moves from', editIssueDateRange({ from: '2026-10-05', to: '2026-10-07' }, { to: '2026-10-02' }), { from: '2026-10-02', to: '2026-10-02' });
 check('edit clears one end', editIssueDateRange({ from: '2026-10-05', to: '2026-10-07' }, { from: '' }), { to: '2026-10-07' });
+
+// Analysis drill-down day of an issue (web analysisIssueStats issueCalendarDay).
+check('issue day: 00:00:00 local', plantCalendarDay(new Date('2026-09-14T21:00:00Z')), '2026-09-15');
+check('issue day: 23:59:59.999 local', plantCalendarDay(new Date('2026-09-16T20:59:59.999Z')), '2026-09-16');
+check('issue day: 02:00 local, UTC the day before', plantCalendarDay(new Date('2026-09-15T23:00:00Z')), '2026-09-16');
+check('issue day: invalid instant', plantCalendarDay(new Date('nope')), '');
 
 console.log(failed ? `FAILED: ${failed}` : 'ALL PASS');
 process.exit(failed ? 1 : 0);
