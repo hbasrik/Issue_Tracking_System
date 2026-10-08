@@ -257,6 +257,9 @@ func (r *ChecklistProgressRepo) ListApplicableItems(ctx context.Context, vin str
 // follow the new status: OK/CONDITIONAL_OK write approved_*; NOT_OK writes
 // rejected_*; any other status clears both so a later NOT_OK cannot keep an
 // older Onay stamp. Description CHECK and depot sequencing stay in the DB.
+// Every non-PENDING answer copies the template item's acceptance criterion,
+// control method and form revision with criteria_snapshot_at (Karar 30);
+// the client never supplies them. PENDING keeps the previous copy.
 func (r *ChecklistProgressRepo) SaveResult(ctx context.Context, result domain.ChecklistProgress) error {
 	tag, err := executor(ctx, r.pool).Exec(ctx,
 		`UPDATE checklist_item_progress p
@@ -274,9 +277,27 @@ func (r *ChecklistProgressRepo) SaveResult(ctx context.Context, result domain.Ch
 		     item_text_snapshot = CASE
 		       WHEN $3::check_status_enum = 'PENDING' THEN p.item_text_snapshot
 		       WHEN NULLIF(trim(p.item_text_snapshot), '') IS NOT NULL THEN p.item_text_snapshot
-		       ELSE (SELECT cti.item_text FROM checklist_template_items cti WHERE cti.id = p.check_item_id)
+		       ELSE cti.item_text
+		     END,
+		     acceptance_criterion_snapshot = CASE
+		       WHEN $3::check_status_enum = 'PENDING' THEN p.acceptance_criterion_snapshot
+		       ELSE NULLIF(trim(cti.acceptance_criterion), '')
+		     END,
+		     control_method_snapshot = CASE
+		       WHEN $3::check_status_enum = 'PENDING' THEN p.control_method_snapshot
+		       ELSE NULLIF(trim(cti.control_method), '')
+		     END,
+		     form_revision_snapshot = CASE
+		       WHEN $3::check_status_enum = 'PENDING' THEN p.form_revision_snapshot
+		       ELSE NULLIF(trim(cti.form_revision), '')
+		     END,
+		     criteria_snapshot_at = CASE
+		       WHEN $3::check_status_enum = 'PENDING' THEN p.criteria_snapshot_at
+		       ELSE now()
 		     END
-		 WHERE p.vin = $1 AND p.check_item_id = $2 AND p.checklist_type = $8`,
+		 FROM checklist_template_items cti
+		 WHERE cti.id = p.check_item_id
+		   AND p.vin = $1 AND p.check_item_id = $2 AND p.checklist_type = $8`,
 		result.VIN, result.CheckItemID, string(result.CheckStatus), result.CheckerID,
 		result.ReworkDesc, result.ConditionalDesc, result.RejectedDesc, string(result.ChecklistType),
 		result.ApprovedDesc)
