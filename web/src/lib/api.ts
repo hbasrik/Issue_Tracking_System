@@ -944,6 +944,13 @@ export type ChecklistType = 'eol' | 'shipment' | 'test';
 
 export type ChecklistFrozenReason = 'DELIVERED' | 'BRANCH_SHIPPED' | 'DEPOT_RELEASED';
 
+export interface ChecklistAnsweredCriteria {
+  AcceptanceCriterion?: string | null;
+  ControlMethod?: string | null;
+  FormRevision?: string | null;
+  CopiedAt: string;
+}
+
 export interface ChecklistItem {
   ItemID: number;
   ItemNo: number;
@@ -957,9 +964,12 @@ export interface ChecklistItem {
   EolPhase?: 'BRANCH' | 'DEPOT' | null;
   SectionKey?: string | null;
   SectionSort?: number | null;
-  /** From the printed form; absent when the form gives none. */
+  /** Template's current values from the printed form; absent when the form gives none. */
   AcceptanceCriterion?: string | null;
   ControlMethod?: string | null;
+  FormRevision?: string | null;
+  /** Copy taken with the current answer; absent on PENDING and pre-copy answers. */
+  AnsweredCriteria?: ChecklistAnsweredCriteria | null;
   IsActive?: boolean;
   /** Stage passed, never completed — shown collapsed, counts nowhere. */
   StageClosed?: boolean;

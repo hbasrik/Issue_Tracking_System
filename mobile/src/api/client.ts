@@ -240,9 +240,17 @@ export interface ChecklistItem {
   EolPhase?: EOLItemPhase | null;
   SectionKey?: string | null;
   SectionSort?: number | null;
-  /** From the printed form; absent when the form gives none. */
+  /** Template's current values from the printed form; absent when the form gives none. */
   AcceptanceCriterion?: string | null;
   ControlMethod?: string | null;
+  FormRevision?: string | null;
+  /** Copy taken with the current answer; absent on PENDING and pre-copy answers. */
+  AnsweredCriteria?: {
+    AcceptanceCriterion?: string | null;
+    ControlMethod?: string | null;
+    FormRevision?: string | null;
+    CopiedAt: string;
+  } | null;
   IsActive?: boolean;
   /** Stage passed, never completed — shown collapsed, counts nowhere. */
   StageClosed?: boolean;
