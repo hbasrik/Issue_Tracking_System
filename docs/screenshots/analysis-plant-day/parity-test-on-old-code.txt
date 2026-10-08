@@ -1,0 +1,19 @@
+TestAnalysisAndBoardCountTheSamePlantDays run on the pre-fix code (HEAD 057212c
+in a throwaway git worktree; only change: AnalysisRepo.pool typed dbExecutor so
+the test can pass its transaction, plus the three date helpers the test calls).
+The lock fails there and passes after the fix.
+
+--- FAIL: TestAnalysisAndBoardCountTheSamePlantDays (0.27s)
+    analysis_board_parity_test.go:78: 15–16 Mar: board 4, analysis OpenedIssues 3, daily sum 3
+    analysis_board_parity_test.go:82: 15–16 Mar: analysis days map[2031-03-15:1 2031-03-16:2], board days map[2031-03-15:2 2031-03-16:2]
+    analysis_board_parity_test.go:78: 15 Mar: board 2, analysis OpenedIssues 1, daily sum 1
+    analysis_board_parity_test.go:82: 15 Mar: analysis days map[2031-03-15:1], board days map[2031-03-15:2]
+    analysis_board_parity_test.go:78: from 15 Mar: board 5, analysis OpenedIssues 3, daily sum 3
+    analysis_board_parity_test.go:82: from 15 Mar: analysis days map[2031-03-15:1 2031-03-16:2], board days map[2031-03-15:2 2031-03-16:2 2031-03-17:1]
+    analysis_board_parity_test.go:78: to 16 Mar (with seed issues): board 28, analysis OpenedIssues 29, daily sum 29
+FAIL
+FAIL	github.com/karea/backend/internal/repository/postgres	0.702s
+
+After the fix:
+=== RUN   TestAnalysisAndBoardCountTheSamePlantDays
+--- PASS: TestAnalysisAndBoardCountTheSamePlantDays (0.33s)

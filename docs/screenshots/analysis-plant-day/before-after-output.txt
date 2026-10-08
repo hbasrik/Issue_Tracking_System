@@ -1,0 +1,9 @@
+range            | sql | before: board analysis daily | after: board analysis daily
+15–16 Sep        |   4 |             4        3     3 |            4        4     4  SAME
+15 Sep           |   2 |             2        1     1 |            2        2     2  SAME
+16 Sep           |   2 |             2        2     2 |            2        2     2  SAME
+from 15 Sep      |  22 |            22       20    20 |           22       22    22  SAME
+to 16 Sep        |   5 |             5        6     6 |            5        5     5  SAME
+1–8 Oct (seed)   |  16 |            16       16    16 |           16       16    16  SAME
+
+after: every range SAME on board, analysis, daily buckets and SQL

@@ -1,0 +1,7 @@
+== issue board vs Analysis, TR 1280 ==
+  [PASS] 2026-09-15 – 2026-09-16: board 4 = analysis CSV 4 = donut 4 = cumulative 4 = SQL 4 — {"2026-09-15":2,"2026-09-16":2}
+  [PASS] 2026-09-15 – 2026-09-15: board 2 = analysis CSV 2 = donut 2 = cumulative 2 = SQL 2 — {"2026-09-15":2}
+  [PASS] 2026-09-16 – 2026-09-16: board 2 = analysis CSV 2 = donut 2 = cumulative 2 = SQL 2 — {"2026-09-16":2}
+  [PASS] 2026-10-01 – 2026-10-08: board 16 = analysis CSV 16 = donut 16 = cumulative 16 = SQL 16 — {"2026-10-01":1,"2026-10-02":1,"2026-10-03":1,"2026-10-04":2,"2026-10-05":1,"2026-10-06":8,"2026-10-07":2}
+
+ALL CHECKS PASSED
