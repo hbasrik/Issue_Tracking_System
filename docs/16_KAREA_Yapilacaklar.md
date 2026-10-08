@@ -1089,6 +1089,23 @@ başlatılınca devreye girer.
   13, 14)", "2 open issue(s) remain (issue ids: 13, 14)", "1 depot-phase
   EoL item(s) incomplete").
 
+### A58. `templates-confirm` betikleri test yığınına bağlandı `[x]` — 2026-10-08
+- **Sorun:** `capture.mjs` ve `capture.cjs` kullanıcının API'sine (:8080) ve
+  Vite'ına (:5173) bağlanıyor, geçici şablonu `docker compose exec postgres
+  psql -d karea` ile ekleyip siliyordu: kural 7 ve "8080'e dokunma"
+  kuralının ihlali. `.mjs` ayrıca `require` kullandığı için hiç
+  çalışmıyordu; UI girişi "beni hatırla" olmadan oturumu bellekte
+  tuttuğundan tam sayfa geçişte `/login`'e düşüyordu.
+- **Şimdi:** API :18081, web :5175, SQL `psql` ile `karea_eolnote_test`;
+  8080'e ya da `_test` olmayan veritabanına işaret ederse betik başlamadan
+  durur. `.mjs` gerçek ESM; oturum diğer betikler gibi
+  `karea.auth.session` ile verilir; şablon listesi sabit bekleme yerine
+  satır sayısı API listesine eşitlenince tıklanır.
+- **Kanıt:** iki betik de test yığınında çıkış 0; geçici şablon (mjs id 9,
+  maddeler 212–213) silindi, `checklist_templates` 3 satıra, geçici madde
+  0'a döndü; çıktı `$TMPDIR/karea-shots/templates-confirm/`, commit'li
+  PNG'ler değişmedi.
+
 ### A57. Arıza listesinde açılış tarihi filtresi `[x]` — 2026-10-08
 - **Ne:** Arıza panosunda "Açılış tarihi": Bugün / Son 7 gün / Bu ay
   hazır aralıkları ve isteğe bağlı başlangıç–bitiş günü (biri tek başına

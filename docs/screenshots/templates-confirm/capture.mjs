@@ -4,39 +4,32 @@
  * Creates its own disposable EOL template (inactive so it does not collide
  * with the unique active-generic-EOL constraint) and two items on it.
  * Never touches seed templates (e.g. id 3 Default EoL).
+ *
+ * Runs against a test stack only: API on :18081 and Vite on :5175 (pointed at
+ * that API), database karea_eolnote_test. Never the API on :8080 or the
+ * live database.
  */
-const { chromium } = require('playwright');
-const path = require('path');
-const fs = require('fs');
-const { execFileSync } = require('child_process');
+import path from 'node:path';
+import { execFileSync } from 'node:child_process';
+import { chromium } from '../../../web/node_modules/playwright/index.mjs';
+import { scriptOutputDir } from '../lib/output-dir.mjs';
 
-let OUT;
-const ROOT = '/Users/Basri/Desktop/kts_kms_project';
-const BASE = 'http://localhost:5173';
-const API = 'http://localhost:8080/api/v1';
+const OUT = scriptOutputDir(import.meta.url);
+const BASE = 'http://localhost:5175';
+const API = 'http://localhost:18081/api/v1';
+const DB = 'postgres://karea:karea_secret@localhost:5432/karea_eolnote_test?sslmode=disable';
+const PSQL = '/opt/homebrew/opt/libpq/bin/psql';
 const MARKER = `SCREENSHOT_TEMP_EOL_${Date.now()}`;
+
+if (API.includes(':8080') || !DB.split('?')[0].endsWith('_test')) {
+  throw new Error('templates-confirm runs only against the test API and a *_test database');
+}
 
 function sql(query) {
   const out = execFileSync(
-    'docker',
-    [
-      'compose',
-      'exec',
-      '-T',
-      'postgres',
-      'psql',
-      '-U',
-      'karea',
-      '-d',
-      'karea',
-      '-v',
-      'ON_ERROR_STOP=1',
-      '-t',
-      '-A',
-      '-c',
-      query,
-    ],
-    { cwd: ROOT, encoding: 'utf8' },
+    PSQL,
+    [DB, '-X', '-v', 'ON_ERROR_STOP=1', '-t', '-A', '-c', query],
+    { encoding: 'utf8' },
   ).trim();
   // compose/psql may append "INSERT 0 1" after RETURNING; keep data lines only.
   const dataLine = out
@@ -56,16 +49,7 @@ async function apiLogin() {
     }),
   });
   if (!res.ok) throw new Error(`login ${res.status} ${await res.text()}`);
-  const body = await res.json();
-  return body.token || body.Token || body.access_token;
-}
-
-async function login(page) {
-  await page.goto(`${BASE}/login`);
-  await page.fill('input[type="email"]', 'manager@karea.local');
-  await page.fill('input[type="password"]', 'changeme123');
-  await page.click('button[type="submit"]');
-  await page.waitForURL((u) => !u.pathname.includes('/login'), { timeout: 15000 });
+  return res.json();
 }
 
 async function apiJson(method, urlPath, token, body) {
@@ -89,9 +73,8 @@ async function apiJson(method, urlPath, token, body) {
 }
 
 (async () => {
-  const { outputDir } = await import('../lib/output-dir.mjs');
-  OUT = outputDir('/Users/Basri/Desktop/kts_kms_project/docs/screenshots/templates-confirm');
-  const token = await apiLogin();
+  const session = await apiLogin();
+  const token = session.token;
 
   // Own template: inactive + unassigned so seed EOL stays sole active generic.
   const templateId = Number(
@@ -133,9 +116,14 @@ async function apiJson(method, urlPath, token, body) {
     });
     const page = await context.newPage();
 
-    await page.addInitScript(() => {
-      localStorage.setItem('karea-theme-mode', 'light');
-    });
+    // Without "remember me" the web keeps the session in memory only, so a
+    // full navigation would land on /login; seed the persisted session.
+    await page.addInitScript((data) => {
+      localStorage.setItem('karea.auth.session', JSON.stringify(data));
+      if (!localStorage.getItem('karea-theme-mode')) {
+        localStorage.setItem('karea-theme-mode', 'light');
+      }
+    }, { token: session.token, user: session.user, permissions: session.permissions });
 
     async function openOwnTemplate(page) {
       const listed = await apiJson('GET', '/checklist-templates', token);
@@ -143,18 +131,17 @@ async function apiJson(method, urlPath, token, body) {
       const idx = rows.findIndex((t) => (t.Name || t.name) === MARKER);
       if (idx < 0) throw new Error(`temp template ${MARKER} missing from list`);
       await page.goto(`${BASE}/templates`);
-      await page.waitForTimeout(800);
-      const desktop = page.locator('table tbody tr');
-      if ((await desktop.count()) > idx) {
-        await desktop.nth(idx).click();
-      } else {
-        await page.locator('[class*="cursor-pointer"]').nth(idx).click();
-      }
+      const desktop = page.locator('table tbody tr.cursor-pointer');
+      await page.waitForFunction(
+        (n) => document.querySelectorAll('table tbody tr.cursor-pointer').length === n,
+        rows.length,
+        { timeout: 15000 },
+      );
+      await desktop.nth(idx).click();
       await page.getByText(MARKER, { exact: false }).first().waitFor({ timeout: 10000 });
       await page.waitForTimeout(500);
     }
 
-    await login(page);
     await openOwnTemplate(page);
 
     const hide = page.getByLabel(/Pasif maddeleri gizle|Hide inactive/i);

@@ -1,40 +1,32 @@
 /**
  * Alternate capture (CJS) for template confirm screenshots.
  * Own disposable EOL template only — never mutates seed template id 3.
+ *
+ * Runs against a test stack only: API on :18081 and Vite on :5175 (pointed at
+ * that API), database karea_eolnote_test. Never the API on :8080 or the
+ * live database.
  */
-const { chromium } = require('/Users/Basri/Desktop/kts_kms_project/web/node_modules/playwright');
 const path = require('path');
-const fs = require('fs');
+const { chromium } = require(path.join(__dirname, '../../../web/node_modules/playwright'));
 const { execFileSync } = require('child_process');
 
 let OUT;
-const ROOT = '/Users/Basri/Desktop/kts_kms_project';
-const BASE = 'http://localhost:5173';
-const API = 'http://localhost:8080/api/v1';
+const BASE = 'http://localhost:5175';
+const API = 'http://localhost:18081/api/v1';
+const DB = 'postgres://karea:karea_secret@localhost:5432/karea_eolnote_test?sslmode=disable';
+const PSQL = '/opt/homebrew/opt/libpq/bin/psql';
 const AUTH_KEY = 'karea.auth.session';
 const MARKER = `SCREENSHOT_TEMP_EOL_${Date.now()}`;
 
+if (API.includes(':8080') || !DB.split('?')[0].endsWith('_test')) {
+  throw new Error('templates-confirm runs only against the test API and a *_test database');
+}
+
 function sql(query) {
   const out = execFileSync(
-    'docker',
-    [
-      'compose',
-      'exec',
-      '-T',
-      'postgres',
-      'psql',
-      '-U',
-      'karea',
-      '-d',
-      'karea',
-      '-v',
-      'ON_ERROR_STOP=1',
-      '-t',
-      '-A',
-      '-c',
-      query,
-    ],
-    { cwd: ROOT, encoding: 'utf8' },
+    PSQL,
+    [DB, '-X', '-v', 'ON_ERROR_STOP=1', '-t', '-A', '-c', query],
+    { encoding: 'utf8' },
   ).trim();
   const dataLine = out
     .split(/\r?\n/)
@@ -78,7 +70,7 @@ async function apiJson(method, urlPath, token, body) {
 
 (async () => {
   const { outputDir } = await import('../lib/output-dir.mjs');
-  OUT = outputDir('/Users/Basri/Desktop/kts_kms_project/docs/screenshots/templates-confirm');
+  OUT = outputDir(__dirname);
   const session = await apiLogin();
   const token = session.token;
 
@@ -141,8 +133,12 @@ async function apiJson(method, urlPath, token, body) {
       const idx = rows.findIndex((t) => (t.Name || t.name) === MARKER);
       if (idx < 0) throw new Error(`temp template ${MARKER} missing from list`);
       await page.goto(`${BASE}/templates`);
-      await page.waitForTimeout(1000);
-      await page.locator('table tbody tr').nth(idx).click();
+      await page.waitForFunction(
+        (n) => document.querySelectorAll('table tbody tr.cursor-pointer').length === n,
+        rows.length,
+        { timeout: 15000 },
+      );
+      await page.locator('table tbody tr.cursor-pointer').nth(idx).click();
       await page.getByText(MARKER, { exact: false }).first().waitFor({ timeout: 10000 });
       await page.waitForTimeout(500);
     }
