@@ -1175,8 +1175,11 @@ başlatılınca devreye girer.
   ve 0040 değişmedi. Kanıt: `docs/screenshots/checklist-criteria/`.
 - **Donmuş kartta kriter `[x]` (karar 2026-10-08):** donmuş EOL kartı
   olduğu gibi kalır: kapalı, ne ikon ne kriter.
-- **Cevapta kriter kopyası `[~]` (2026-10-08, docs/11 Karar 30):**
-  - Migration 0042 yazıldı, canlıya UYGULANMADI (onay bekliyor). Dört
+- **Cevapta kriter kopyası `[x]` (2026-10-08, docs/11 Karar 30):**
+  - Migration 0042 canlıya kullanıcı tarafından uygulandı; `karea_ro` ile
+    doğrulandı (sürüm 42, kolonlar, kısıt, fonksiyon md5'leri, 53000 satır
+    md5'i 0040 ölçümüyle aynı, /health 200):
+    `docs/screenshots/migration-0042/live-check-output.txt`. Dört
     nullable kolon (`acceptance_criterion_snapshot`,
     `control_method_snapshot`, `form_revision_snapshot`,
     `criteria_snapshot_at`), `chk_criteria_snapshot_stamped`, 0040
@@ -1186,9 +1189,24 @@ başlatılınca devreye girer.
     md5'i 0041 durumuyla aynı (b1b936d1…), donmuş maddede yalnız kopya
     kolonunu değiştiren UPDATE reddediliyor, açık maddede geçiyor. Kanıt:
     `docs/screenshots/migration-0042/verify-output.txt`.
-  - **Bekleyen `[ ]`:** SaveResult her cevapta kopyalar (madde metni ayrı
-    commit + ayrı test), API cevaplı maddede kopyayı döndürür, web / mobil /
-    baskı kaynak kuralı, seed 06 yardımcıları kopya + damga yazar.
+  - **Kod `[x]`:** `SaveResult` PENDING dışı her cevapta, aynı UPDATE
+    içinde şablondan madde metnini, kriteri, yöntemi, revizyonu ve damgayı
+    yazar; PENDING önceki kopyayı korur. Madde metni artık ilk cevapta
+    değil her cevapta kopyalanıyor (ayrı commit + ayrı test; eski kodda
+    test kırılıyor). API: mevcut `AcceptanceCriterion` / `ControlMethod`
+    şablonun güncel değeri, yeni `FormRevision` da öyle; kopya ayrı
+    `AnsweredCriteria` alanında, yalnız cevaplı ve kopyalı maddede.
+    `shared/checklistCriteria.ts` kaynak seçer: açık kart şablon; kapalı
+    kart ikonu ve baskı cevaplıysa kopya, PENDING ise şablon, kopyasız eski
+    cevapta hiçbir şey. Baskı revizyonu da basar ("Form revizyonu").
+    Seed 06 tick yardımcıları aynı kopyayı ve damgayı (cevap zamanı) yazar.
+  - Kanıt: `docs/screenshots/criteria-snapshot/` — API denemesi (eski/yeni
+    kopya yan yana, kriterleri olmayan maddede damga + NULL, donmuş maddede
+    API 409 ve SQL reddi, md5 aynı), web + mobil TR/EN 1280/375, baskı
+    PDF/PNG, Go test çıktısı.
+  - **Not:** 0020'deki `item_text_snapshot` kolon açıklaması hâlâ "ilk
+    cevapta dondurulur" diyor; artık yanlış. Yalnız açıklama değişikliği
+    için migration gerekir, yazılmadı.
 - **Kalite ekibine:** belirsiz sekiz eşleşme; Araç Motoru ve Yağmur Testi
   dört formun hiçbirinde yok (su sızdırmazlık kontrolü tamamen düşüyor).
 

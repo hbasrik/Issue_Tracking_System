@@ -731,10 +731,15 @@ kalıyordu.
   - **Ne zaman:** sunucu, PENDING olmayan **her** cevapta, cevabı yazan
     aynı UPDATE içinde şablondan kopyalar; istemcinin gönderdiğine
     güvenilmez. Madde metni (`item_text_snapshot`, 0020) da aynı kurala
-    geçer (bugün yalnız ilk cevapta kopyalanıyor). Cevapla kopya
-    arasındaki yarış kabul edilmiştir.
-  - **Kaynak kuralı:** cevaplıysa kopya, PENDING ise şablon. Açık kart her
-    zaman şablonu gösterir; baskı cevaplı maddede revizyonu kopyadan okur.
+    geçti: ilk cevapta değil, her cevapta kopyalanır. PENDING'e dönüş
+    kopyaları korur. Cevapla kopya arasındaki yarış kabul edilmiştir.
+  - **API:** `AcceptanceCriterion`, `ControlMethod`, `FormRevision`
+    şablonun güncel değeridir; kopya ayrı `AnsweredCriteria` alanında
+    gelir (PENDING ve kopyasız cevapta yok).
+  - **Kaynak kuralı:** cevaplıysa kopya, PENDING ise şablon. Açık kart
+    (cevaplı maddeyi yeniden düzenlerken dahil) şablonu gösterir; operatör
+    o kritere göre değerlendiriyor ve kaydedince kopya o olur. Kapalı kart
+    ikonu ve baskı kuralı izler; baskı revizyonu da basar.
   - **Kopyasız eski cevaplar** (`criteria_snapshot_at` NULL) kriter
     göstermez; şablona düşülmez, çünkü bu tam olarak düzeltilen yanlış
     tarihtir. Geriye dönük doldurma yok.

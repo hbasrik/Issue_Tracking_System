@@ -472,10 +472,13 @@ referans almamış kayıtlarda.
 **Snapshot pattern** — Kaydın oluştuğu andaki metnin kaydın içine
 kopyalanması. *Katalog veya şablon sonradan değişince geçmişin yeniden
 yazılmasını engeller.*
-**Bizde:** `checklist_item_progress.item_text_snapshot`, hata
-kayıtlarındaki parça/kusur adı anlık görüntüleri. Madde 3 kez
-değiştirilse bile her kayıt kendi zamanındaki metni taşır — bu yüzden
-"kaç revizyon olursa olsun tek kolon yeter".
+**Bizde:** `checklist_item_progress.item_text_snapshot` ve kabul
+kriteri / kontrol yöntemi / form revizyonu kopyaları (migration 0042,
+`criteria_snapshot_at` ile), hata kayıtlarındaki parça/kusur adı anlık
+görüntüleri. Checklist kopyaları her cevapta yenilenir, yani son cevabın
+verildiği andaki metni taşır. Madde 3 kez değiştirilse bile her kayıt
+kendi cevabının zamanındaki metni taşır — bu yüzden "kaç revizyon olursa
+olsun tek kolon yeter".
 
 **Backfill** — Yeni eklenen kolonu veya eksik satırları geçmişe dönük
 doldurmak. **Bizde:** Migration 0023 ile eksik ilerleme satırları.
