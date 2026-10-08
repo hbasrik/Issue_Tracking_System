@@ -240,6 +240,9 @@ export interface ChecklistItem {
   EolPhase?: EOLItemPhase | null;
   SectionKey?: string | null;
   SectionSort?: number | null;
+  /** From the printed form; absent when the form gives none. */
+  AcceptanceCriterion?: string | null;
+  ControlMethod?: string | null;
   IsActive?: boolean;
   /** Stage passed, never completed — shown collapsed, counts nowhere. */
   StageClosed?: boolean;
