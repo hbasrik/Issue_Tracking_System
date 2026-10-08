@@ -1,0 +1,65 @@
+== build karea_m0042_test: migrations 0001-0041 + seeds 01-06
+  41 migrations, last 0041_checklist_item_form_identity.up.sql
+
+== 1. before 0042
+  fn_enforce_checklist_frozen      md5 b1b936d1cf26270008be07b361d850c8
+  fn_checklist_item_frozen_reason  md5 2db664f186b122d913d390ad76367380
+  fn_enforce_checklist_media_frozen md5 0ef403007299cdd1c23fb2fac1f5c5f2
+  trigger: trg_enforce_checklist_frozen O fn_enforce_checklist_frozen
+  checklist_item_progress: 3474 rows md5 7924359410624851f4b2da6cb7c0e75e
+  [PASS] new columns absent
+  [PASS] installed body before 0042 == 0040 file body (text)
+  [PASS] down file body == 0040 file body (text)
+  [PASS] up file body == 0040 body + only the 4 columns in NEW and OLD
+
+== 2. up (psql -1)
+  columns: acceptance_criterion_snapshot text null=YES default=-; control_method_snapshot text null=YES default=-; criteria_snapshot_at timestamp with time zone null=YES default=-; form_revision_snapshot text null=YES default=-
+  [PASS] 4 columns, nullable, no default
+  constraint: CHECK (((criteria_snapshot_at IS NOT NULL) OR ((acceptance_criterion_snapshot IS NULL) AND (control_method_snapshot IS NULL) AND (form_revision_snapshot IS NULL))))
+  [PASS] chk_criteria_snapshot_stamped present
+  [PASS] 4 column comments — 4
+  [PASS] no backfill (every new column NULL) — 0 rows with a value
+  [PASS] existing rows unchanged — 3474 rows md5 7924359410624851f4b2da6cb7c0e75e
+  fn_enforce_checklist_frozen md5 08ccc7fa73d914b367473769230aafd8
+  [PASS] fn_enforce_checklist_frozen replaced
+  [PASS] fn_checklist_item_frozen_reason unchanged (freeze rule)
+  [PASS] fn_enforce_checklist_media_frozen unchanged
+  [PASS] trigger unchanged — trg_enforce_checklist_frozen O fn_enforce_checklist_frozen
+  [PASS] protected list holds the 4 columns (NEW and OLD)
+  [PASS] installed body after up == up file body (text)
+
+-- behaviour on marked temp rows (tmp-m0042)
+  open vehicle N7V1K1SA0TK000003 (template 3), branch-shipped vehicle N7V1K1SA1TK000012 (template 3)
+  [PASS] PENDING insert on a frozen (branch-shipped) item still passes
+  [PASS] open vehicle: answer + copy + stamp accepted — OK|tmp kriter|tmp yontem|tmp rev|t
+  [PASS] copy without stamp refused (chk_criteria_snapshot_stamped) — ERROR:  new row for relation "checklist_item_progress" violates check constraint "chk_criteria_snapshot_stamped"
+  [PASS] stamp with NULL copy accepted (form gave none)
+  [PASS] frozen item: changing only acceptance_criterion_snapshot refused — ERROR:  cannot change branch-stage checklist items after the vehicle has shipped from the branch
+  [PASS] frozen item: changing only control_method_snapshot refused — ERROR:  cannot change branch-stage checklist items after the vehicle has shipped from the branch
+  [PASS] frozen item: changing only form_revision_snapshot refused — ERROR:  cannot change branch-stage checklist items after the vehicle has shipped from the branch
+  [PASS] frozen item: changing only criteria_snapshot_at refused — ERROR:  cannot change branch-stage checklist items after the vehicle has shipped from the branch
+  [PASS] frozen item: non-answer update (updated_at, item_text_snapshot) still passes
+  [PASS] frozen item: answering still refused — ERROR:  cannot change branch-stage checklist items after the vehicle has shipped from the branch
+  audit rows written by the temp fixtures: 0
+  [PASS] temp rows deleted — 0 items, 0 progress, 0 audit
+  [PASS] seed rows still unchanged
+
+== 3. down (psql -1)
+  fn_enforce_checklist_frozen md5 b1b936d1cf26270008be07b361d850c8 (before 0042: b1b936d1cf26270008be07b361d850c8)
+  [PASS] down restores the 0040 body byte for byte (md5 of pg_get_functiondef)
+  [PASS] columns gone
+  [PASS] constraint gone
+  [PASS] freeze rule unchanged
+  [PASS] trigger unchanged
+  [PASS] rows unchanged after down
+  [PASS] down a second time succeeds and changes nothing
+
+== 4. up again, then up twice
+  [PASS] up again: same function md5 as the first up
+  [PASS] up again: columns and constraint back
+  [PASS] up a second time succeeds and changes nothing
+  [PASS] rows unchanged after up/down/up/up
+
+  dropped karea_m0042_test
+
+RESULT: ALL PASS
