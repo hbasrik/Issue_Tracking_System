@@ -39,7 +39,8 @@ for (const locale of ['tr', 'en']) {
     const text = await closed.innerText();
     check(key, 'answered item 1 starts closed', await closed.isVisible());
     check(key, 'header shows number + name and the answer pill', (await header.innerText()).includes('1. Araç kimliği ve varyant') && (await header.innerText()).includes(t.ok), JSON.stringify((await header.innerText()).split('\n')));
-    check(key, 'header has a chevron icon', (await header.locator('svg').count()) === 1);
+    check(key, 'header has a chevron icon', (await header.locator('svg:not([data-testid="eol-criteria-icon"] svg)').count()) === 1);
+    check(key, 'closed header shows the criteria icon (item 1 has criteria)', (await header.locator('[data-testid="eol-criteria-icon"]').count()) === 1);
     check(key, 'header aria-expanded=false when closed', (await header.getAttribute('aria-expanded')) === 'false');
     check(key, 'no "Edit" label anywhere', !(await page.locator('#root').innerText()).split('\n').includes(t.edit));
     check(key, 'closed body shows the note', text.includes(t.note));
