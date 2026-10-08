@@ -1089,6 +1089,33 @@ başlatılınca devreye girer.
   13, 14)", "2 open issue(s) remain (issue ids: 13, 14)", "1 depot-phase
   EoL item(s) incomplete").
 
+### A57. Arıza listesinde açılış tarihi filtresi `[x]` — 2026-10-08
+- **Ne:** Arıza panosunda "Açılış tarihi": Bugün / Son 7 gün / Bu ay
+  hazır aralıkları ve isteğe bağlı başlangıç–bitiş günü (biri tek başına
+  verilebilir). Durum, önem derecesi, VIN/bildiren aramasıyla birlikte
+  çalışır. Adres çubuğunda `opened=today|7d|month` ya da
+  `opened_from` / `opened_to`; yenilemede ve paylaşılan bağlantıda kalır.
+  Boş sonuçta aralığı söyleyen mesaj; yazdırma başlığında aralık.
+- **Saat dilimi:** Europe/Istanbul (docs/11 Karar 31). API
+  `GET /issues?opened_from=YYYY-MM-DD&opened_to=YYYY-MM-DD`; ters aralık ve
+  bozuk biçim 400.
+- **Dışa aktarma:** CSV, ZIP, yazdırma ve sayaç `fetchMatchingIssues`
+  üzerinden aynı aralıkla tüm eşleşenleri alır.
+- **İndeks:** 0030'un `idx_issue_list_issue_date`'i yeterli, yeni indeks
+  yok. 300.016 satırlık geri alınan hacim testinde altı sorgunun hepsi
+  `Index Scan using idx_issue_list_issue_date` + `Index Cond` aralığı;
+  ilk sayfa 0,5–2,2 ms, "Bu ay" tam dışa aktarma (2.069 satır) 7,3 ms.
+  Durum filtresi indeks taramasından sonra Filter olarak uygulanır.
+  Canlıda (27 satır) Seq Scan, 0,8 ms.
+- **Kanıt:** `docs/screenshots/issue-date-filter/`: `explain-*-output.txt`;
+  `api-output.txt` (sınır kayıtları: yerel 00:00:00 ve 23:59:59.999,
+  UTC'de önceki güne düşen 01:30; yalnız başlangıç, yalnız bitiş, ikisi
+  birden; 57 satırlık aralıkta sayfalama); `capture-output.txt` (pano,
+  CSV, ZIP, yazdırma satırları = ekrandaki toplam; TR/EN 1280/375) ve
+  ekran görüntüleri. Go: `domain/plant_time_test.go`,
+  `delivery/http/issue_list_query_test.go`,
+  `postgres/issue_opened_range_test.go`.
+
 ### A56. Doğrulama betikleri commit'li kanıtın üzerine yazmıyor `[x]` — 2026-10-08
 - **Sorun:** betikler çıktılarını kendi `docs/screenshots/<klasör>/`
   klasörlerine yazıyordu; her koşu commit'li PNG/PDF/JSON/txt dosyalarını

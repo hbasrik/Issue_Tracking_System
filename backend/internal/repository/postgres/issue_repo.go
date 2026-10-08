@@ -209,6 +209,16 @@ func (r *IssueRepo) listIssues(ctx context.Context, vin string, q domain.IssueLi
 		args = append(args, vin)
 		argN++
 	}
+	if q.OpenedFrom != nil {
+		where += ` AND i.issue_date >= $` + strconv.Itoa(argN) + `::timestamptz`
+		args = append(args, *q.OpenedFrom)
+		argN++
+	}
+	if q.OpenedUntil != nil {
+		where += ` AND i.issue_date < $` + strconv.Itoa(argN) + `::timestamptz`
+		args = append(args, *q.OpenedUntil)
+		argN++
+	}
 	if useKeyset {
 		where += ` AND (i.issue_date, i.id) < ($` + strconv.Itoa(argN) + `::timestamptz, $` + strconv.Itoa(argN+1) + `::bigint)`
 		args = append(args, *q.BeforeDate, *q.BeforeID)

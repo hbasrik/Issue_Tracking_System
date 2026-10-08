@@ -748,6 +748,30 @@ kalıyordu.
   - Dört kolon donmuş maddede korunan cevabın parçasıdır (0040 tetikleyici
     listesi genişledi; hangi maddenin ne zaman donduğu değişmedi).
 
+## Karar 31 — Gün filtreleri fabrika takvimine göre keser (NEW — 2026-10-08)
+
+- **Kural:** Kullanıcının seçtiği bir gün (YYYY-MM-DD) Europe/Istanbul
+  günüdür. Sunucu `opened_from`'u o günün yerel 00:00'ına, `opened_to`'yu
+  ertesi günün yerel 00:00'ına çevirir ve yarı açık aralıkla süzer:
+  `issue_date >= başlangıç AND issue_date < bitiş` (`domain.PlantDayStart`,
+  `PlantDayEnd`; tzdata binary'ye gömülü, sunucunun saat dilimine
+  bağlı değil). Tarayıcının saat dilimi de kullanılmaz: "Bugün", "Son 7
+  gün" (bugün dahil 7 takvim günü) ve "Bu ay" (ayın 1'i–bugün) İstanbul'a
+  göre hesaplanır (`shared/issueDateRange.ts`).
+- **Neden:** Tarihler veritabanında UTC. UTC gününe göre kesmek, gece
+  00:00–03:00 arası açılan arızayı bir önceki güne yazar: "Bugün" o
+  kayıtları düşürür, dünün son üç saatini gösterir. Fabrika tek saat
+  diliminde çalışıyor.
+- **URL:** Hazır aralık göreli kalır (`opened=today|7d|month`); paylaşılan
+  bağlantı açıldığı günün "Bugün"ünü gösterir. Elle seçilen günler
+  `opened_from` / `opened_to` olarak durur. Analiz'den gelen `from` / `to`
+  ayrı parametredir.
+- **Dışa aktarma:** CSV, ZIP ve yazdırma aynı aralıkla sunucudan tüm
+  eşleşenleri çeker; yüklü sayfalarla sınırlı değildir.
+- **Bilinen sapma:** Analiz sayfasının `from` / `to` aralığı hâlâ UTC
+  gününe göre kesiyor (`IntersectWindow`, `StartOfUTCDay`, web
+  `issueCalendarDay`). Ayrı iş.
+
 ## Değişmeyen / Yeniden Kullanılacaklar
 
 Şunlara **dokunulmuyor**, olduğu gibi kalıyor: JWT auth + bcrypt (üstteki JWT_SECRET ve iptal sıkılaştırmaları hariç), CORS allowlist mimarisi, Unit-of-Work (pgx.Tx) transaction pattern, `.cursor/rules` (commit ve environment-check kuralları), Analysis sekmesi temel yapısı (VIN×severity kırılımı, Pie/Bar chart'lar — yeni station/EOL alanlarıyla genişleyecek ama sıfırdan kurulmayacak), Docker/migration/seed altyapısı.

@@ -595,6 +595,8 @@ export const api = {
     if (opts.offset != null) params.set('offset', String(opts.offset));
     if (opts.beforeDate) params.set('before_date', opts.beforeDate);
     if (opts.beforeId != null) params.set('before_id', String(opts.beforeId));
+    if (opts.openedFrom) params.set('opened_from', opts.openedFrom);
+    if (opts.openedTo) params.set('opened_to', opts.openedTo);
     const q = params.toString();
     return request<IssueListResponse>(`/issues${q ? `?${q}` : ''}`);
   },
@@ -1043,6 +1045,9 @@ export interface ListIssuesOptions {
   offset?: number;
   beforeDate?: string;
   beforeId?: number;
+  /** Inclusive plant calendar days (YYYY-MM-DD), see shared/issueDateRange.ts. */
+  openedFrom?: string;
+  openedTo?: string;
 }
 
 export interface IssueListResponse {

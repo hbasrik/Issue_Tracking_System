@@ -48,11 +48,24 @@ import {
   downloadBlob,
   type IssueExportPhoto,
 } from '../lib/issueExport';
-import { useI18n, type Translate } from '../i18n';
+import { useI18n, type Locale, type Translate } from '../i18n';
 import { isAuthError, isTransportError } from '../../../shared/networkError';
 import { issueReportedAtIso } from '../../../shared/issueCardLayout';
 import { detectNewCriticalIds } from '../../../shared/newCriticalIds';
 import { localeTag } from '../../../shared/i18n';
+import {
+  ISSUE_DATE_PARAM,
+  ISSUE_DATE_PRESETS,
+  editIssueDateRange,
+  hasIssueDateFilter,
+  plantToday,
+  readIssueDateFilter,
+  resolveIssueDateRange,
+  writeIssueDateFilter,
+  type IssueDateFilter,
+  type IssueDatePreset,
+  type IssueDateRange,
+} from '../../../shared/issueDateRange';
 import { IssueListPrint } from '../components/print/IssuePrint';
 import {
   playCriticalAlert,
@@ -187,6 +200,19 @@ export default function IssuesPage() {
     : null;
   const analysisFrom = searchParams.get('from') ?? undefined;
   const analysisTo = searchParams.get('to') ?? undefined;
+  const openedPresetParam = searchParams.get(ISSUE_DATE_PARAM.preset);
+  const openedFromParam = searchParams.get(ISSUE_DATE_PARAM.from);
+  const openedToParam = searchParams.get(ISSUE_DATE_PARAM.to);
+  const dateFilter = useMemo<IssueDateFilter>(() => {
+    const raw: Record<string, string | null> = {
+      [ISSUE_DATE_PARAM.preset]: openedPresetParam,
+      [ISSUE_DATE_PARAM.from]: openedFromParam,
+      [ISSUE_DATE_PARAM.to]: openedToParam,
+    };
+    return readIssueDateFilter({ get: (name) => raw[name] ?? null });
+  }, [openedPresetParam, openedFromParam, openedToParam]);
+  /** Plant calendar day; re-read on every refresh so "Bugün" moves at midnight. */
+  const [plantDay, setPlantDay] = useState(() => plantToday(new Date()));
 
   const boot = useMemo(() => initialBoardFilters(), []);
   const [listQuery, setListQuery] = useState(boot.listQuery);
@@ -244,6 +270,17 @@ export default function IssuesPage() {
   hasMoreRef.current = hasMore;
 
   const drillDown = Boolean(homeStat || analysisStat);
+
+  /** Opening-date days sent to the API (drill-down links carry their own scope). */
+  const openedRange = useMemo<IssueDateRange>(() => {
+    if (drillDown) return {};
+    // plantDay is a dependency only so presets resolve again after midnight.
+    return resolveIssueDateRange(dateFilter, new Date());
+  }, [drillDown, dateFilter, plantDay]);
+  const openedQuery = useMemo(
+    () => ({ openedFrom: openedRange.from, openedTo: openedRange.to }),
+    [openedRange],
+  );
 
   useEffect(() => {
     function onResize() {
@@ -359,6 +396,7 @@ export default function IssuesPage() {
           ? api.listIssues({ status, unlimited: true })
           : api.listIssues({
               status,
+              ...openedQuery,
               limit: PAGE_SIZE,
               offset: 0,
             });
@@ -418,6 +456,7 @@ export default function IssuesPage() {
     [
       flashCritical,
       boardStatusParam,
+      openedQuery,
       homeStat,
       analysisStat,
       loadCatalogs,
@@ -442,12 +481,14 @@ export default function IssuesPage() {
         useKeyset
           ? {
               status,
+              ...openedQuery,
               limit: PAGE_SIZE,
               beforeDate: cursor.beforeDate,
               beforeId: cursor.beforeId,
             }
           : {
               status,
+              ...openedQuery,
               limit: PAGE_SIZE,
               offset: cursor.nextOffset ?? itemsRef.current.length,
             },
@@ -473,7 +514,7 @@ export default function IssuesPage() {
         setLoadingMore(false);
       }
     }
-  }, [homeStat, analysisStat, boardStatusParam, applyPageMeta]);
+  }, [homeStat, analysisStat, boardStatusParam, openedQuery, applyPageMeta]);
 
   useEffect(() => {
     const prev = window.history.scrollRestoration;
@@ -502,6 +543,7 @@ export default function IssuesPage() {
 
   useEffect(() => {
     const id = window.setInterval(() => {
+      setPlantDay(plantToday(new Date()));
       void load({ silent: true });
     }, AUTO_REFRESH_MS);
     return () => window.clearInterval(id);
@@ -605,6 +647,23 @@ export default function IssuesPage() {
     );
   }
 
+  function setOpenedFilter(next: IssueDateFilter) {
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        // Same as clearHomeStat, in one update: two setSearchParams calls in
+        // one tick would drop the first change.
+        params.delete('homeStat');
+        params.delete('analysisStat');
+        params.delete('from');
+        params.delete('to');
+        writeIssueDateFilter(params, next);
+        return params;
+      },
+      { replace: true },
+    );
+  }
+
   function toggleType(id: number) {
     if (homeStat || analysisStat) clearHomeStat();
     setTypeIds((prev) => {
@@ -662,7 +721,16 @@ export default function IssuesPage() {
     return n;
   }, [typeIds, defectZoneIds, defectPartIds, defectTypeIds]);
 
+  const openedActive = !drillDown && hasIssueDateFilter(dateFilter);
+  const openedSummary = useMemo(() => {
+    if (!openedActive) return null;
+    const range = openedRangeLabel(openedRange, t, locale);
+    if (!dateFilter.preset) return range;
+    return `${openedPresetLabel(dateFilter.preset, t)} (${range})`;
+  }, [openedActive, openedRange, dateFilter, t, locale]);
+
   const boardFilterActive =
+    openedActive ||
     statuses.size > 0 ||
     severities.size > 0 ||
     typeIds.size > 0 ||
@@ -686,6 +754,7 @@ export default function IssuesPage() {
       if (advancedActiveCount > 0) {
         parts.push(t('issue.advancedFiltersActive', { n: advancedActiveCount }));
       }
+      if (openedSummary) parts.push(openedSummary);
     }
     return parts.filter(Boolean).join(' · ');
   }, [
@@ -694,6 +763,7 @@ export default function IssuesPage() {
     statuses,
     severities,
     advancedActiveCount,
+    openedSummary,
     t,
   ]);
 
@@ -704,7 +774,7 @@ export default function IssuesPage() {
     setDefectZoneIds(new Set());
     setDefectPartIds(new Set());
     setDefectTypeIds(new Set());
-    if (homeStat || analysisStat) clearHomeStat();
+    setOpenedFilter({});
   }
 
   function toggleDefectType(id: number) {
@@ -806,9 +876,9 @@ export default function IssuesPage() {
   /** Server full list for current status param, then client filters. */
   const fetchMatchingIssues = useCallback(async (): Promise<Issue[]> => {
     const status = boardStatusParam();
-    const res = await api.listIssues({ status, unlimited: true });
+    const res = await api.listIssues({ status, ...openedQuery, unlimited: true });
     return applyClientFilters(sortIssuesNewestFirst(res.items ?? []));
-  }, [boardStatusParam, applyClientFilters]);
+  }, [boardStatusParam, openedQuery, applyClientFilters]);
 
   useEffect(() => {
     let cancelled = false;
@@ -1019,6 +1089,9 @@ export default function IssuesPage() {
           list: [...statuses].map((s) => issueStatusLabel(s, t)).join(', '),
         }),
       );
+    }
+    if (openedSummary) {
+      printFilters.push(t('print.filterOpened', { range: openedSummary }));
     }
   }
 
@@ -1276,6 +1349,72 @@ export default function IssuesPage() {
                 })}
               </div>
             </div>
+            <div className="min-w-0 max-w-full" data-testid="issue-opened-filter">
+              <p
+                className="mb-2 text-[13px] font-semibold"
+                style={{ color: 'var(--text-secondary)' }}
+                title={t('issue.openedDateHint')}
+              >
+                {t('issue.openedDate')}
+              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                {ISSUE_DATE_PRESETS.map((preset) => {
+                  const selected = !drillDown && dateFilter.preset === preset;
+                  return (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => setOpenedFilter(selected ? {} : { preset })}
+                      className={TYPE_CHIP_CLASS}
+                      style={typeChipStyle(selected)}
+                      aria-pressed={selected}
+                      data-testid={`issue-opened-${preset}`}
+                    >
+                      {openedPresetLabel(preset, t)}
+                    </button>
+                  );
+                })}
+                <label className="inline-flex items-center gap-1.5 text-[12px] text-[var(--text-secondary)]">
+                  {t('issue.openedFrom')}
+                  <input
+                    type="date"
+                    value={openedRange.from ?? ''}
+                    max={openedRange.to}
+                    onChange={(e) =>
+                      setOpenedFilter(editIssueDateRange(openedRange, { from: e.target.value }))
+                    }
+                    className="min-h-[36px] rounded-lg border bg-[var(--bg-page)] px-2 text-[13px] text-[var(--text-primary)]"
+                    style={{ borderColor: 'var(--border)' }}
+                    data-testid="issue-opened-from"
+                  />
+                </label>
+                <label className="inline-flex items-center gap-1.5 text-[12px] text-[var(--text-secondary)]">
+                  {t('issue.openedTo')}
+                  <input
+                    type="date"
+                    value={openedRange.to ?? ''}
+                    min={openedRange.from}
+                    onChange={(e) =>
+                      setOpenedFilter(editIssueDateRange(openedRange, { to: e.target.value }))
+                    }
+                    className="min-h-[36px] rounded-lg border bg-[var(--bg-page)] px-2 text-[13px] text-[var(--text-primary)]"
+                    style={{ borderColor: 'var(--border)' }}
+                    data-testid="issue-opened-to"
+                  />
+                </label>
+                {openedActive ? (
+                  <button
+                    type="button"
+                    onClick={() => setOpenedFilter({})}
+                    className="min-h-[36px] rounded-lg border px-3 text-[12px] font-medium hover:bg-[var(--bg-surface-2)]"
+                    style={{ borderColor: 'var(--border)' }}
+                    data-testid="issue-opened-clear"
+                  >
+                    {t('issue.openedClear')}
+                  </button>
+                ) : null}
+              </div>
+            </div>
           </div>
 
         <div className="min-w-0 border-t pt-3" style={{ borderColor: 'var(--border)' }}>
@@ -1433,6 +1572,9 @@ export default function IssuesPage() {
             items={visible}
             highlightedIds={highlightedIds}
             onStatusChanged={() => void load()}
+            emptyLabel={
+              openedSummary ? t('issue.openedEmpty', { range: openedSummary }) : undefined
+            }
           />
           {loadingMore ? (
             <p
@@ -1488,6 +1630,37 @@ function severityChipStyle(selected: boolean, color: string): CSSProperties {
       ? `color-mix(in srgb, ${color} 22%, var(--bg-surface-1))`
       : 'transparent',
   };
+}
+
+function openedPresetLabel(preset: IssueDatePreset, t: Translate): string {
+  switch (preset) {
+    case 'today':
+      return t('issue.openedToday');
+    case '7d':
+      return t('issue.opened7d');
+    case 'month':
+      return t('issue.openedMonth');
+  }
+}
+
+/** YYYY-MM-DD as a local date label; formatted in UTC so the day never shifts. */
+function formatCalendarDay(day: string, locale: Locale): string {
+  const [y, m, d] = day.split('-').map(Number);
+  return new Intl.DateTimeFormat(localeTag(locale), {
+    timeZone: 'UTC',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).format(new Date(Date.UTC(y!, m! - 1, d!)));
+}
+
+function openedRangeLabel(range: IssueDateRange, t: Translate, locale: Locale): string {
+  const from = range.from ? formatCalendarDay(range.from, locale) : null;
+  const to = range.to ? formatCalendarDay(range.to, locale) : null;
+  if (from && to) return t('issue.openedRange', { from, to });
+  if (from) return t('issue.openedFromOnly', { from });
+  if (to) return t('issue.openedToOnly', { to });
+  return '';
 }
 
 /** Server/network failures get a translated reason; a local build error only the title. */

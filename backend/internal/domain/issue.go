@@ -199,6 +199,11 @@ type IssueListQuery struct {
 	Offset     int
 	BeforeDate *time.Time
 	BeforeID   *int64
+	// OpenedFrom / OpenedUntil bound issue_date as a half-open range
+	// [OpenedFrom, OpenedUntil); either may be nil. The handler builds them
+	// from inclusive plant calendar days (PlantDayStart / PlantDayEnd).
+	OpenedFrom  *time.Time
+	OpenedUntil *time.Time
 }
 
 // IssueListPage is one chunk of the issues board list.

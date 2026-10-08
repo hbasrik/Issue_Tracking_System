@@ -96,6 +96,8 @@ func (s *server) handleIssueTypeList(w http.ResponseWriter, r *http.Request) {
 //   - ?limit=&before_date=&before_id= — keyset paging (stable under inserts)
 //   - omit limit → full list (Home KPIs / vehicle panels)
 // Multi-status: ?status=OPEN,IN_PROGRESS (comma-separated).
+// Opening date: ?opened_from=&opened_to= (YYYY-MM-DD, inclusive, either
+// optional), calendar days in the plant time zone (domain.PlantTimeZone).
 func (s *server) handleIssueList(w http.ResponseWriter, r *http.Request) {
 	q, err := parseIssueListQuery(r)
 	if err != nil {
@@ -187,6 +189,24 @@ func parseIssueListQuery(r *http.Request) (domain.IssueListQuery, error) {
 		q.BeforeDate = &t
 		q.BeforeID = &id
 	}
+
+	if raw := strings.TrimSpace(r.URL.Query().Get("opened_from")); raw != "" {
+		t, err := domain.PlantDayStart(raw)
+		if err != nil {
+			return q, errInvalidOpenedDate
+		}
+		q.OpenedFrom = &t
+	}
+	if raw := strings.TrimSpace(r.URL.Query().Get("opened_to")); raw != "" {
+		t, err := domain.PlantDayEnd(raw)
+		if err != nil {
+			return q, errInvalidOpenedDate
+		}
+		q.OpenedUntil = &t
+	}
+	if q.OpenedFrom != nil && q.OpenedUntil != nil && !q.OpenedFrom.Before(*q.OpenedUntil) {
+		return q, errOpenedRangeReversed
+	}
 	return q, nil
 }
 
@@ -195,6 +215,8 @@ var (
 	errInvalidLimit        = errString("limit must be a non-negative integer")
 	errInvalidOffset       = errString("offset must be a non-negative integer")
 	errInvalidCursor       = errString("before_date and before_id must both be set (RFC3339 + id)")
+	errInvalidOpenedDate   = errString("opened_from and opened_to must be YYYY-MM-DD")
+	errOpenedRangeReversed = errString("opened_from must not be after opened_to")
 )
 
 type errString string
