@@ -1,0 +1,19 @@
+== new SaveResult (fc03e0b)
+    checklist_item_text_snapshot_test.go:86: answer 1 (OK, template A):     snapshot=tmp metin A
+    checklist_item_text_snapshot_test.go:87: answer 2 (NOT_OK, template B): snapshot=tmp metin B list=tmp metin B
+    checklist_item_text_snapshot_test.go:94: back to PENDING (template C):  snapshot=tmp metin B
+--- PASS: TestSaveResult_ReCopiesItemTextOnEveryAnswer (0.05s)
+PASS
+ok  	github.com/karea/backend/internal/repository/postgres	0.353s
+
+== old SaveResult (9a12c0c, item text copied on the first answer only) — expected to FAIL
+    checklist_item_text_snapshot_test.go:81: answer 2: snapshot tmp metin A, want tmp metin B
+    checklist_item_text_snapshot_test.go:84: after answer 2 the list shows "tmp metin A", want tmp metin B
+    checklist_item_text_snapshot_test.go:86: answer 1 (OK, template A):     snapshot=tmp metin A
+    checklist_item_text_snapshot_test.go:87: answer 2 (NOT_OK, template B): snapshot=tmp metin A list=tmp metin A
+    checklist_item_text_snapshot_test.go:92: PENDING must keep the last copy, got tmp metin A
+    checklist_item_text_snapshot_test.go:94: back to PENDING (template C):  snapshot=tmp metin A
+--- FAIL: TestSaveResult_ReCopiesItemTextOnEveryAnswer (0.06s)
+FAIL
+FAIL	github.com/karea/backend/internal/repository/postgres	0.350s
+FAIL
