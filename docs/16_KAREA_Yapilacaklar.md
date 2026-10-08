@@ -1089,6 +1089,32 @@ başlatılınca devreye girer.
   13, 14)", "2 open issue(s) remain (issue ids: 13, 14)", "1 depot-phase
   EoL item(s) incomplete").
 
+### A59. Eski `templates-confirm` koşularının canlıdaki izi `[x]` — 2026-10-08
+- **Soru:** A58 öncesi betikler canlı `karea`ya yazıyor muydu, iz kaldı mı?
+  Kontrol yalnız `karea_ro` ile SELECT
+  (`docs/screenshots/templates-confirm-live-trace/check.py`, çıktı
+  `check-output.txt`).
+- **Ne oldu (ajan kaydı, 2026-09-07):** İlk sürüm (seed şablon 3'te gerçek
+  bir maddeyi pasife çekip geri açan) hiç çalışmadı: `.mjs` içinde
+  `require` modül yüklenirken düştü. Çalışan sürümler seed şablon 3'e API
+  ile `SCREENSHOT_TEMP_INACTIVE_ITEM` maddesi ekleyip pasife çekti ve API ile
+  sildi. Yarıda kalan bir koşunun maddesi (id 214) ve o maddenin kendi
+  `checklist_item_progress` satırları canlıda doğrudan SQL ile silindi;
+  ardından `SCREENSHOT_TEMP%` desenli tüm maddeler ve ilerlemeleri. Kendi
+  şablonunu `SCREENSHOT_TEMP_EOL_<ms>` adıyla SQL'le açan 2026-09-09 sürümü
+  kayıtta hiç koşmadı.
+- **Canlıda bugün:** 3 şablon (3, 4, 5), 108 madde (17 + 46 + 45).
+  `SCREENSHOT` geçen şablon/madde 0; madde 214'e bağlı ilerleme 0; maddesi
+  olmayan ilerleme 0; `CHECKLIST_TEMPLATE_CHANGE` audit satırı 0 (tür 0038
+  ile 2026-10-04'te geldi, koşular ondan önce); audit metinlerinde
+  `SCREENSHOT` 0.
+- **Kanıtlanamayan:** Sekanslar şablonda 41, maddede 281; canlıda 3 şablon,
+  108 madde. 36 şablon ve 173 madde id'si kullanılmış, satırları yok. Silinen
+  satırın içeriği kalmadığından hangisinin bu betikten, hangisinin başka
+  kaynaktan geldiği ayrılamaz. Madde 214 dışında betiğin oluşturduğu madde
+  id'leri kayıtta yok. Silinen ilerleme satırları yalnız o geçici maddeye
+  aitti; içerikleri (PENDING mi, cevaplı mı) bilinmiyor.
+
 ### A58. `templates-confirm` betikleri test yığınına bağlandı `[x]` — 2026-10-08
 - **Sorun:** `capture.mjs` ve `capture.cjs` kullanıcının API'sine (:8080) ve
   Vite'ına (:5173) bağlanıyor, geçici şablonu `docker compose exec postgres
