@@ -1,0 +1,164 @@
+== 1. karea_sections_test: production path
+  built karea_sections_test: 41 migrations (last 0041_checklist_item_form_identity.up.sql), seeds 01_stations.sql, 02_stations_and_steps.sql, 03_checklist_templates.sql, 05_defect_catalog.sql, reset_and_load_vins.sql
+  [PASS] EOL template has 104 items — 104
+  [PASS] every EOL item has a section (no 'Other items' group) — none
+  [PASS] every section key and sort equals the catalog — none
+
+-- sections (sort | key | phase | items | tr | en)
+   10 | eol_entry          | BRANCH | 1-2 (2) | Giriş | Entry
+   20 | eol_exterior       | BRANCH | 3-6 (4) | Dış | Exterior
+   30 | eol_gap_flush      | BRANCH | 7-10 (4) | Gap & flush | Gap & flush
+   40 | eol_exterior_2     | BRANCH | 11-18 (8) | Dış | Exterior
+   50 | eol_interior       | BRANCH | 19-39 (21) | İç | Interior
+   60 | eol_physical_tests | BRANCH | 40-46 (7) | Fiziksel testler | Physical tests
+  110 | final_identity     | DEPOT  | 47-51 (5) | Kimlik & Evrak | Identity & documents
+  120 | final_exterior     | DEPOT  | 52-60 (9) | Dış Görünüş | Exterior appearance
+  130 | final_doors        | DEPOT  | 61-66 (6) | Kapılar | Doors
+  140 | final_interior     | DEPOT  | 67-73 (7) | İç Donanım | Interior equipment
+  150 | final_mechanical   | DEPOT  | 74-80 (7) | Mekanik | Mechanical
+  160 | final_electrical   | DEPOT  | 81-88 (8) | Elektrik | Electrical
+  170 | final_function     | DEPOT  | 89-92 (4) | Fonksiyon | Function
+  180 | final_road_test    | DEPOT  | 93-97 (5) | Yol Testi | Road test
+  190 | final_shipment     | DEPOT  | 98-102 (5) | Sevkiyat | Shipment
+  200 | final_extra_checks | DEPOT  | 103-104 (2) | Ek kontroller | Additional checks
+  [PASS] section order equals catalog order — eol_entry > eol_exterior > eol_gap_flush > eol_exterior_2 > eol_interior > eol_physical_tests > final_identity > final_exterior > final_doors > final_interior > final_mechanical > final_electrical > final_function > final_road_test > final_shipment > final_extra_checks
+  [PASS] every section has a TR and EN title
+
+-- kept 9 pre-form items
+   40 BRANCH eol_physical_tests  60 Araç Motoru        seed_key=76226bc61498249a5d332a56261c2988 = md5(text): True
+   41 BRANCH eol_physical_tests  60 Batarya            seed_key=121079da646cc26c63b1a4208c2a4d01 = md5(text): True
+   42 BRANCH eol_physical_tests  60 Süspansiyon Testi  seed_key=c01849b8ddc7f1cd4991668d1ebbeaa2 = md5(text): True
+   43 BRANCH eol_physical_tests  60 Fren/El Testi      seed_key=4392dd780f191f81f78adc365826798d = md5(text): True
+   44 BRANCH eol_physical_tests  60 Far Ayarı          seed_key=4c22202b9d501bbcb17443e406ccb6f8 = md5(text): True
+   45 BRANCH eol_physical_tests  60 Rot Balans         seed_key=168e818ca7a9ea63b8b841e7a5076507 = md5(text): True
+   46 BRANCH eol_physical_tests  60 Sürüş              seed_key=69cfc631726e3a5c3c18ef24d12a35ef = md5(text): True
+  103 DEPOT  final_extra_checks 200 Bumpy Road         seed_key=ca52361815d05ea558e54e89bdaf8d61 = md5(text): True
+  104 DEPOT  final_extra_checks 200 Yağmur Testi       seed_key=5ceb9b0fd0c2a762ed1232b99987b338 = md5(text): True
+  [PASS] 7 branch items in eol_physical_tests (60), item_no 40-46
+  [PASS] Bumpy Road + Yağmur Testi in final_extra_checks (200), item_no 103-104
+  [PASS] kept items keep md5(text) seed_key and no form
+  [PASS] Bumpy Road not in Yol Testi
+
+-- seed 03 run a second time
+  before: 193 items md5 1bd8f2439b04fc4432395567605214c3
+  after:  193 items md5 1bd8f2439b04fc4432395567605214c3
+  [PASS] second run adds and changes nothing
+  [PASS] every loaded VIN has 104 EOL progress rows — 104 rows x 500 vins
+  dropped karea_sections_test
+
+== 2. karea_eolnote_test: seed 06 findings and the items they sit on
+  built karea_eolnote_test: 41 migrations (last 0041_checklist_item_form_identity.up.sql), seeds 01_stations.sql, 02_stations_and_steps.sql, 03_checklist_templates.sql, 04_users.sql, 05_defect_catalog.sql, 06_test_vehicles.sql
+
+  000004 N7V1K1SA2TK000004 STATION_STEP CRITICAL OPEN
+     item:     STATION #4/4 [-] "High voltage connector lock check"
+     issue:    High voltage connector lock did not engage on the left-hand pack cable.
+
+  000005 N7V1K1SA4TK000005 STATION_STEP MEDIUM OPEN
+     item:     STATION #5/2 [-] "Seat installation and torque check"
+     issue:    Passenger seat mounting bolt below torque spec.
+
+  000006 N7V1K1SA6TK000006 STATION_STEP LOW IN_PROGRESS
+     item:     STATION #6/1 [-] "Windshield installation inspection"
+     issue:    Windshield adhesive bead incomplete at the upper-right corner.
+
+  000006 N7V1K1SA6TK000006 TEST_ITEM LOW DONE
+     item:     TEST #4 [bcm_ee] "Dış aydınlatma — Kısa, uzun, selektör, park, sis, sol/sağ sinyal, dörtlü, stop, geri vites lambası."
+     issue:    Left headlamp aim out of spec during test.
+     answer:   NOT_OK "Low-beam cutoff 0.4° high on left lamp."
+     solution: Aim adjusted; retest pending quality decision.
+
+  000007 N7V1K1SA8TK000007 EOL_ITEM CRITICAL OPEN
+     item:     EOL BRANCH #4 [eol_exterior] "Sol kapı contası"
+     issue:    Left door seal not seated; water ingress risk.
+     answer:   NOT_OK "Left door seal lifted at the upper rear corner; daylight visible."
+
+  000007 N7V1K1SA8TK000007 EOL_ITEM MEDIUM IN_PROGRESS
+     item:     EOL BRANCH #35 [eol_interior] "Sol / sağ emniyet kemeri ve askıları"
+     issue:    Driver seat belt twisted at the B-pillar anchor.
+     answer:   REWORK "Driver seat belt twisted at the upper anchor; re-routed, awaiting recheck."
+
+  000008 N7V1K1SAXTK000008 EOL_ITEM CRITICAL DONE
+     item:     EOL BRANCH #40 [eol_physical_tests] "Araç Motoru"
+     issue:    Abnormal drive-motor noise during branch EoL.
+     answer:   NOT_OK "Drive motor whine above 40 km/h on the branch test drive."
+     solution: Motor mount bolts retorqued; noise gone on retest. Awaiting quality sign-off.
+
+  000008 N7V1K1SAXTK000008 SHIPMENT_ITEM LOW OPEN
+     item:     SHIPMENT #11 [interior_fit] "C_Pillar Stop tırnaklarının kesilmesi"
+     issue:    C-pillar stop tabs left uncut on the left side.
+     answer:   NOT_OK "Left C-pillar stop tabs not cut; trim does not seat."
+
+  000009 N7V1K1SA1TK000009 TEST_ITEM MEDIUM OPEN
+     item:     TEST #17 [road_test] "Fren — 30 $\rightarrow$ 0 x5 (~300m). Her frenlemede sağa/sola ekstrem çekme var mı? Anormal pedal, ses veya titreşim var mı?"
+     issue:    Dynamic service brake performance outside spec.
+     answer:   NOT_OK "Service brake stopping distance above limit on first run."
+
+  000010 N7V1K1SA8TK000010 STATION_STEP MEDIUM APPROVED
+     item:     STATION #2/7 [-] "Surface defect inspection"
+     issue:    Clear-coat dust nib on roof — repaired and re-ticked OK.
+     solution: Spot repaired, recleared, and signed off by quality.
+
+  000010 N7V1K1SA8TK000010 EOL_ITEM LOW CONDITIONAL_APPROVED
+     item:     EOL DEPOT #51 [final_identity] "Anahtar, uzaktan kumanda ve aksesuar seti tam"
+     issue:    Accessory pack missing one wheel chock.
+     answer:   CONDITIONAL_OK "Tool kit missing wheel chock; accepted for depot with note."
+     solution: Ship with note; chock to be added at dealer PDI.
+
+  000010 N7V1K1SA8TK000010 TEST_ITEM CRITICAL APPROVED
+     item:     TEST #13 [bcm_ee] "Geri görüş kamerası — R'ye alınca görüntü geliyor mu? Görüntü temiz mi?"
+     issue:    Rear-view camera image dropped out on first R selection.
+     answer:   OK ""
+     solution: Camera connector reseated, retest passed. Full quality approval.
+
+  000010 N7V1K1SA8TK000010 SHIPMENT_ITEM MEDIUM APPROVED
+     item:     SHIPMENT #39 [brake_sealing] "Arka davlumbaz sol fren borusu girişim bölgesi kesimi"
+     issue:    Left rear wheel-arch liner not trimmed at the brake line; liner touches the pipe.
+     answer:   OK ""
+     solution: Liner trimmed at the brake line and rechecked.
+
+  000012 N7V1K1SA1TK000012 EOL_ITEM CRITICAL OPEN
+     item:     EOL DEPOT #79 [final_mechanical] "Fren hortum ve hatlarında sıvı kaçağı yok"
+     issue:    Brake fluid leak found during depot inspection.
+     answer:   NOT_OK "Brake fluid weep at the left-front hose union."
+
+  000012 N7V1K1SA1TK000012 TEST_ITEM MEDIUM IN_PROGRESS
+     item:     TEST #42 [eng_quality] "DTC / Diyagnostik tarama — Aktif veya geçmiş hata varsa kayıt altına al. Tarama bitiş saatini not et."
+     issue:    OBD scan shows active drive-motor DTC at depot.
+     answer:   OK ""
+
+  000013 N7V1K1SA3TK000013 SHIPMENT_ITEM LOW CONDITIONAL_APPROVED
+     item:     SHIPMENT #32 [rubber_film] "Kelebek camı düşmemesi için sünger konulması"
+     issue:    Right quarter-glass foam shorter than specified.
+     answer:   CONDITIONAL_OK "Right quarter-glass foam fitted short; slight rattle. Accepted with note."
+     solution: Glass holds in place; dealer to fit full-length foam at PDI.
+  [PASS] 16 fixture issues (4 station + 12 checklist) — 16
+  [PASS] N7V1K1SA2TK000004 station issue on 'High voltage connector lock check' — High voltage connector lock check
+  [PASS] N7V1K1SA4TK000005 station issue on 'Seat installation and torque check' — Seat installation and torque check
+  [PASS] N7V1K1SA6TK000006 station issue on 'Windshield installation inspection' — Windshield installation inspection
+  [PASS] N7V1K1SA8TK000010 station issue on 'Surface defect inspection' — Surface defect inspection
+  [PASS] 'Left door seal not seated; water ingress ris' on 'Sol kapı contası' — Sol kapı contası
+  [PASS] 'Driver seat belt twisted at the B-pillar anc' on 'Sol / sağ emniyet kemeri ve askıları' — Sol / sağ emniyet kemeri ve askıları
+  [PASS] 'Abnormal drive-motor noise during branch EoL' on 'Araç Motoru' — Araç Motoru
+  [PASS] 'C-pillar stop tabs left uncut on the left si' on 'C_Pillar Stop tırnaklarının kesilmesi' — C_Pillar Stop tırnaklarının kesilmesi
+  [PASS] 'Dynamic service brake performance outside sp' on 'Fren — 30' — Fren — 30 $\rightarrow$ 0 x5 (~300m). Her frenlemede sağa/so
+  [PASS] 'Accessory pack missing one wheel chock.' on 'Anahtar, uzaktan kumanda ve aksesuar set' — Anahtar, uzaktan kumanda ve aksesuar seti tam
+  [PASS] 'Rear-view camera image dropped out on first ' on 'Geri görüş kamerası' — Geri görüş kamerası — R'ye alınca görüntü geliyor mu? Görünt
+  [PASS] 'Left rear wheel-arch liner not trimmed at th' on 'Arka davlumbaz sol fren borusu girişim b' — Arka davlumbaz sol fren borusu girişim bölgesi kesimi
+  [PASS] 'Brake fluid leak found during depot inspecti' on 'Fren hortum ve hatlarında sıvı kaçağı yo' — Fren hortum ve hatlarında sıvı kaçağı yok
+  [PASS] 'OBD scan shows active drive-motor DTC at dep' on 'DTC / Diyagnostik tarama' — DTC / Diyagnostik tarama — Aktif veya geçmiş hata varsa kayı
+  [PASS] 'Right quarter-glass foam shorter than specif' on 'Kelebek camı düşmemesi için sünger konul' — Kelebek camı düşmemesi için sünger konulması
+  [PASS] 'Left headlamp aim out of spec during test.' on 'Dış aydınlatma' — Dış aydınlatma — Kısa, uzun, selektör, park, sis, sol/sağ si
+
+-- scenarios the fixtures exist for
+  000007 N7V1K1SA8TK000007 stage=BRANCH unresolved issues=2
+  000008 N7V1K1SAXTK000008 stage=BRANCH unresolved issues=2
+  000009 N7V1K1SA1TK000009 stage=BRANCH unresolved issues=1
+  000010 N7V1K1SA8TK000010 stage=DEPOT unresolved issues=0
+  000011 N7V1K1SAXTK000011 stage=DEPOT unresolved issues=0
+  000012 N7V1K1SA1TK000012 stage=DEPOT unresolved issues=2
+  000013 N7V1K1SA3TK000013 stage=COMPLETED unresolved issues=0
+  [PASS] 10051 at DEPOT with no unresolved issue (depot-release passes) — ('DEPOT', 0)
+  [PASS] 10053 at DEPOT with an OPEN CRITICAL depot finding (depot-release blocked)
+  [PASS] 10048 at BRANCH with OPEN + IN_PROGRESS branch findings (branch-ship warning) — ('BRANCH', 2)
+
+RESULT: ALL PASS

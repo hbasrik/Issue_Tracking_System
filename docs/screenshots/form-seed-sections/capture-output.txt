@@ -1,0 +1,75 @@
+== web ==
+  [PASS] web tr 1280 branch: section keys in paper order — eol_entry, eol_exterior, eol_gap_flush, eol_exterior_2, eol_interior, eol_physical_tests
+  [PASS] web tr 1280 branch: headings — Giriş (2) | Dış (4) | Gap & flush (4) | Dış (8) | İç (21) | Fiziksel testler (7)
+  [PASS] web tr 1280 branch: no raw section key on screen — none
+  [PASS] web tr 1280 branch: item counts per section — 2,4,4,8,21,7
+  [PASS] web tr 1280 depot: section keys in paper order — final_identity, final_exterior, final_doors, final_interior, final_mechanical, final_electrical, final_function, final_road_test, final_shipment, final_extra_checks
+  [PASS] web tr 1280 depot: headings — Kimlik & Evrak (5) | Dış Görünüş (9) | Kapılar (6) | İç Donanım (7) | Mekanik (7) | Elektrik (8) | Fonksiyon (4) | Yol Testi (5) | Sevkiyat (5) | Ek kontroller (2)
+  [PASS] web tr 1280 depot: no raw section key on screen — none
+  [PASS] web tr 1280 depot: item counts per section — 5,9,6,7,7,8,4,5,5,2
+  [PASS] web tr 375 branch: section keys in paper order — eol_entry, eol_exterior, eol_gap_flush, eol_exterior_2, eol_interior, eol_physical_tests
+  [PASS] web tr 375 branch: headings — Giriş (2) | Dış (4) | Gap & flush (4) | Dış (8) | İç (21) | Fiziksel testler (7)
+  [PASS] web tr 375 branch: no raw section key on screen — none
+  [PASS] web tr 375 branch: item counts per section — 2,4,4,8,21,7
+  [PASS] web tr 375 depot: section keys in paper order — final_identity, final_exterior, final_doors, final_interior, final_mechanical, final_electrical, final_function, final_road_test, final_shipment, final_extra_checks
+  [PASS] web tr 375 depot: headings — Kimlik & Evrak (5) | Dış Görünüş (9) | Kapılar (6) | İç Donanım (7) | Mekanik (7) | Elektrik (8) | Fonksiyon (4) | Yol Testi (5) | Sevkiyat (5) | Ek kontroller (2)
+  [PASS] web tr 375 depot: no raw section key on screen — none
+  [PASS] web tr 375 depot: item counts per section — 5,9,6,7,7,8,4,5,5,2
+  [PASS] web en 1280 branch: section keys in paper order — eol_entry, eol_exterior, eol_gap_flush, eol_exterior_2, eol_interior, eol_physical_tests
+  [PASS] web en 1280 branch: headings — Entry (2) | Exterior (4) | Gap & flush (4) | Exterior (8) | Interior (21) | Physical tests (7)
+  [PASS] web en 1280 branch: no raw section key on screen — none
+  [PASS] web en 1280 branch: item counts per section — 2,4,4,8,21,7
+  [PASS] web en 1280 depot: section keys in paper order — final_identity, final_exterior, final_doors, final_interior, final_mechanical, final_electrical, final_function, final_road_test, final_shipment, final_extra_checks
+  [PASS] web en 1280 depot: headings — Identity & documents (5) | Exterior appearance (9) | Doors (6) | Interior equipment (7) | Mechanical (7) | Electrical (8) | Function (4) | Road test (5) | Shipment (5) | Additional checks (2)
+  [PASS] web en 1280 depot: no raw section key on screen — none
+  [PASS] web en 1280 depot: item counts per section — 5,9,6,7,7,8,4,5,5,2
+  [PASS] web en 375 branch: section keys in paper order — eol_entry, eol_exterior, eol_gap_flush, eol_exterior_2, eol_interior, eol_physical_tests
+  [PASS] web en 375 branch: headings — Entry (2) | Exterior (4) | Gap & flush (4) | Exterior (8) | Interior (21) | Physical tests (7)
+  [PASS] web en 375 branch: no raw section key on screen — none
+  [PASS] web en 375 branch: item counts per section — 2,4,4,8,21,7
+  [PASS] web en 375 depot: section keys in paper order — final_identity, final_exterior, final_doors, final_interior, final_mechanical, final_electrical, final_function, final_road_test, final_shipment, final_extra_checks
+  [PASS] web en 375 depot: headings — Identity & documents (5) | Exterior appearance (9) | Doors (6) | Interior equipment (7) | Mechanical (7) | Electrical (8) | Function (4) | Road test (5) | Shipment (5) | Additional checks (2)
+  [PASS] web en 375 depot: no raw section key on screen — none
+  [PASS] web en 375 depot: item counts per section — 5,9,6,7,7,8,4,5,5,2
+== mobile (react-native-web harness, real EOLChecklistScreen) ==
+  [PASS] mobile tr 375 branch: section keys in paper order — eol_entry, eol_exterior, eol_gap_flush, eol_exterior_2, eol_interior, eol_physical_tests
+  [PASS] mobile tr 375 branch: headings — Giriş (2) | Dış (4) | Gap & flush (4) | Dış (8) | İç (21) | Fiziksel testler (7)
+  [PASS] mobile tr 375 branch: no raw section key on screen — none
+  [PASS] mobile tr 375 branch: item counts per section — 2,4,4,8,21,7
+  [PASS] mobile tr 375 branch: read-only (no write request) — 0
+  [PASS] mobile tr 375 depot: section keys in paper order — final_identity, final_exterior, final_doors, final_interior, final_mechanical, final_electrical, final_function, final_road_test, final_shipment, final_extra_checks
+  [PASS] mobile tr 375 depot: headings — Kimlik & Evrak (5) | Dış Görünüş (9) | Kapılar (6) | İç Donanım (7) | Mekanik (7) | Elektrik (8) | Fonksiyon (4) | Yol Testi (5) | Sevkiyat (5) | Ek kontroller (2)
+  [PASS] mobile tr 375 depot: no raw section key on screen — none
+  [PASS] mobile tr 375 depot: item counts per section — 5,9,6,7,7,8,4,5,5,2
+  [PASS] mobile tr 375 depot: read-only (no write request) — 0
+  [PASS] mobile tr 1280 branch: section keys in paper order — eol_entry, eol_exterior, eol_gap_flush, eol_exterior_2, eol_interior, eol_physical_tests
+  [PASS] mobile tr 1280 branch: headings — Giriş (2) | Dış (4) | Gap & flush (4) | Dış (8) | İç (21) | Fiziksel testler (7)
+  [PASS] mobile tr 1280 branch: no raw section key on screen — none
+  [PASS] mobile tr 1280 branch: item counts per section — 2,4,4,8,21,7
+  [PASS] mobile tr 1280 branch: read-only (no write request) — 0
+  [PASS] mobile tr 1280 depot: section keys in paper order — final_identity, final_exterior, final_doors, final_interior, final_mechanical, final_electrical, final_function, final_road_test, final_shipment, final_extra_checks
+  [PASS] mobile tr 1280 depot: headings — Kimlik & Evrak (5) | Dış Görünüş (9) | Kapılar (6) | İç Donanım (7) | Mekanik (7) | Elektrik (8) | Fonksiyon (4) | Yol Testi (5) | Sevkiyat (5) | Ek kontroller (2)
+  [PASS] mobile tr 1280 depot: no raw section key on screen — none
+  [PASS] mobile tr 1280 depot: item counts per section — 5,9,6,7,7,8,4,5,5,2
+  [PASS] mobile tr 1280 depot: read-only (no write request) — 0
+  [PASS] mobile en 375 branch: section keys in paper order — eol_entry, eol_exterior, eol_gap_flush, eol_exterior_2, eol_interior, eol_physical_tests
+  [PASS] mobile en 375 branch: headings — Entry (2) | Exterior (4) | Gap & flush (4) | Exterior (8) | Interior (21) | Physical tests (7)
+  [PASS] mobile en 375 branch: no raw section key on screen — none
+  [PASS] mobile en 375 branch: item counts per section — 2,4,4,8,21,7
+  [PASS] mobile en 375 branch: read-only (no write request) — 0
+  [PASS] mobile en 375 depot: section keys in paper order — final_identity, final_exterior, final_doors, final_interior, final_mechanical, final_electrical, final_function, final_road_test, final_shipment, final_extra_checks
+  [PASS] mobile en 375 depot: headings — Identity & documents (5) | Exterior appearance (9) | Doors (6) | Interior equipment (7) | Mechanical (7) | Electrical (8) | Function (4) | Road test (5) | Shipment (5) | Additional checks (2)
+  [PASS] mobile en 375 depot: no raw section key on screen — none
+  [PASS] mobile en 375 depot: item counts per section — 5,9,6,7,7,8,4,5,5,2
+  [PASS] mobile en 375 depot: read-only (no write request) — 0
+  [PASS] mobile en 1280 branch: section keys in paper order — eol_entry, eol_exterior, eol_gap_flush, eol_exterior_2, eol_interior, eol_physical_tests
+  [PASS] mobile en 1280 branch: headings — Entry (2) | Exterior (4) | Gap & flush (4) | Exterior (8) | Interior (21) | Physical tests (7)
+  [PASS] mobile en 1280 branch: no raw section key on screen — none
+  [PASS] mobile en 1280 branch: item counts per section — 2,4,4,8,21,7
+  [PASS] mobile en 1280 branch: read-only (no write request) — 0
+  [PASS] mobile en 1280 depot: section keys in paper order — final_identity, final_exterior, final_doors, final_interior, final_mechanical, final_electrical, final_function, final_road_test, final_shipment, final_extra_checks
+  [PASS] mobile en 1280 depot: headings — Identity & documents (5) | Exterior appearance (9) | Doors (6) | Interior equipment (7) | Mechanical (7) | Electrical (8) | Function (4) | Road test (5) | Shipment (5) | Additional checks (2)
+  [PASS] mobile en 1280 depot: no raw section key on screen — none
+  [PASS] mobile en 1280 depot: item counts per section — 5,9,6,7,7,8,4,5,5,2
+  [PASS] mobile en 1280 depot: read-only (no write request) — 0
+RESULT: PASS
