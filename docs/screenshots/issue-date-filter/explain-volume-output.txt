@@ -1,0 +1,589 @@
+== volume (karea_eolnote_test, rolled back)
+bounds (today, plant day): 2026-10-07 21:00:00+00 | 2026-10-01 21:00:00+00 | 2026-09-30 21:00:00+00 | 2026-10-08 21:00:00+00 | 2025-09-02 21:00:00+00
+BEGIN
+INSERT 0 300000
+ANALYZE
+          ?column?           
+-----------------------------
+ issues after insert: 300016
+(1 row)
+
+== Bugün, ilk sayfa (limit 51)
+                                                                                                               QUERY PLAN                                                                                                               
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=10.20..739.54 rows=51 width=869) (actual rows=51 loops=1)
+   Buffers: shared hit=113
+   ->  Nested Loop Left Join  (cost=10.20..1883.60 rows=131 width=869) (actual rows=51 loops=1)
+         Buffers: shared hit=113
+         ->  Nested Loop Left Join  (cost=2.03..806.45 rows=131 width=5981) (actual rows=51 loops=1)
+               Buffers: shared hit=11
+               ->  Nested Loop Left Join  (cost=1.88..737.11 rows=131 width=5465) (actual rows=51 loops=1)
+                     Buffers: shared hit=11
+                     ->  Nested Loop Left Join  (cost=1.74..667.83 rows=131 width=4949) (actual rows=51 loops=1)
+                           Buffers: shared hit=11
+                           ->  Nested Loop Left Join  (cost=1.59..598.16 rows=131 width=4433) (actual rows=51 loops=1)
+                                 Buffers: shared hit=11
+                                 ->  Nested Loop Left Join  (cost=1.45..528.49 rows=131 width=3913) (actual rows=51 loops=1)
+                                       Buffers: shared hit=11
+                                       ->  Nested Loop Left Join  (cost=1.31..459.47 rows=131 width=3595) (actual rows=51 loops=1)
+                                             Buffers: shared hit=11
+                                             ->  Nested Loop Left Join  (cost=1.17..390.46 rows=131 width=3277) (actual rows=51 loops=1)
+                                                   Buffers: shared hit=11
+                                                   ->  Nested Loop Left Join  (cost=1.03..321.44 rows=131 width=2959) (actual rows=51 loops=1)
+                                                         Buffers: shared hit=11
+                                                         ->  Nested Loop Left Join  (cost=0.89..252.42 rows=131 width=2641) (actual rows=51 loops=1)
+                                                               Buffers: shared hit=11
+                                                               ->  Nested Loop Left Join  (cost=0.73..247.57 rows=131 width=2423) (actual rows=51 loops=1)
+                                                                     Buffers: shared hit=9
+                                                                     ->  Nested Loop Left Join  (cost=0.57..242.71 rows=131 width=2205) (actual rows=51 loops=1)
+                                                                           Buffers: shared hit=7
+                                                                           ->  Index Scan using idx_issue_list_issue_date on issue_list i  (cost=0.42..237.92 rows=131 width=1887) (actual rows=51 loops=1)
+                                                                                 Index Cond: ((issue_date >= '2026-10-07 21:00:00+00'::timestamp with time zone) AND (issue_date < '2026-10-08 21:00:00+00'::timestamp with time zone))
+                                                                                 Buffers: shared hit=5
+                                                                           ->  Memoize  (cost=0.15..0.53 rows=1 width=322) (actual rows=1 loops=51)
+                                                                                 Cache Key: i.issue_reporter_id
+                                                                                 Cache Mode: logical
+                                                                                 Hits: 50  Misses: 1  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+                                                                                 Buffers: shared hit=2
+                                                                                 ->  Index Scan using users_pkey on users u  (cost=0.14..0.52 rows=1 width=322) (actual rows=1 loops=1)
+                                                                                       Index Cond: (id = i.issue_reporter_id)
+                                                                                       Buffers: shared hit=2
+                                                                     ->  Memoize  (cost=0.16..0.54 rows=1 width=222) (actual rows=1 loops=51)
+                                                                           Cache Key: i.issue_type_id
+                                                                           Cache Mode: logical
+                                                                           Hits: 50  Misses: 1  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+                                                                           Buffers: shared hit=2
+                                                                           ->  Index Scan using issue_types_pkey on issue_types it  (cost=0.15..0.53 rows=1 width=222) (actual rows=1 loops=1)
+                                                                                 Index Cond: (id = i.issue_type_id)
+                                                                                 Buffers: shared hit=2
+                                                               ->  Memoize  (cost=0.16..0.54 rows=1 width=222) (actual rows=1 loops=51)
+                                                                     Cache Key: i.station_id
+                                                                     Cache Mode: logical
+                                                                     Hits: 50  Misses: 1  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+                                                                     Buffers: shared hit=2
+                                                                     ->  Index Scan using stations_pkey on stations st  (cost=0.15..0.53 rows=1 width=222) (actual rows=1 loops=1)
+                                                                           Index Cond: (id = i.station_id)
+                                                                           Buffers: shared hit=2
+                                                         ->  Index Scan using users_pkey on users up  (cost=0.14..0.52 rows=1 width=322) (actual rows=0 loops=51)
+                                                               Index Cond: (id = i.process_reporter_id)
+                                                   ->  Index Scan using users_pkey on users uf  (cost=0.14..0.52 rows=1 width=322) (actual rows=0 loops=51)
+                                                         Index Cond: (id = i.finish_reporter_id)
+                                             ->  Index Scan using users_pkey on users ua  (cost=0.14..0.52 rows=1 width=322) (actual rows=0 loops=51)
+                                                   Index Cond: (id = i.approve_reporter_id)
+                                       ->  Index Scan using users_pkey on users uc  (cost=0.14..0.52 rows=1 width=322) (actual rows=0 loops=51)
+                                             Index Cond: (id = i.conditional_approve_reporter_id)
+                                 ->  Index Scan using defect_parts_pkey on defect_parts dp  (cost=0.14..0.53 rows=1 width=524) (actual rows=0 loops=51)
+                                       Index Cond: (id = i.defect_part_id)
+                           ->  Index Scan using defect_types_pkey on defect_types dt  (cost=0.14..0.53 rows=1 width=520) (actual rows=0 loops=51)
+                                 Index Cond: (id = i.defect_type_id)
+                     ->  Index Scan using defect_zones_pkey on defect_zones dz  (cost=0.14..0.53 rows=1 width=520) (actual rows=0 loops=51)
+                           Index Cond: (id = dp.zone_id)
+               ->  Index Scan using defect_processes_pkey on defect_processes dpr  (cost=0.14..0.53 rows=1 width=520) (actual rows=0 loops=51)
+                     Index Cond: (id = i.responsible_process_id)
+         ->  Limit  (cost=8.18..8.18 rows=1 width=48) (actual rows=0 loops=51)
+               Buffers: shared hit=102
+               ->  Sort  (cost=8.18..8.18 rows=1 width=48) (actual rows=0 loops=51)
+                     Sort Key: m.uploaded_at, m.id
+                     Sort Method: quicksort  Memory: 25kB
+                     Buffers: shared hit=102
+                     ->  Index Scan using idx_media_attachments_entity on media_attachments m  (cost=0.15..8.17 rows=1 width=48) (actual rows=0 loops=51)
+                           Index Cond: (((entity_type)::text = 'ISSUE'::text) AND (entity_id = (i.id)::text))
+                           Buffers: shared hit=102
+ Planning:
+   Buffers: shared hit=441
+ Planning Time: 12.053 ms
+ Execution Time: 0.714 ms
+(82 rows)
+
+== Son 7 gün, ilk sayfa
+                                                                                                               QUERY PLAN                                                                                                               
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=10.21..581.88 rows=51 width=869) (actual rows=51 loops=1)
+   Buffers: shared hit=113
+   ->  Nested Loop Left Join  (cost=10.21..19603.75 rows=1748 width=869) (actual rows=51 loops=1)
+         Buffers: shared hit=113
+         ->  Nested Loop Left Join  (cost=2.04..5230.82 rows=1748 width=5981) (actual rows=51 loops=1)
+               Buffers: shared hit=11
+               ->  Nested Loop Left Join  (cost=1.89..4903.09 rows=1748 width=5465) (actual rows=51 loops=1)
+                     Buffers: shared hit=11
+                     ->  Nested Loop Left Join  (cost=1.74..4790.34 rows=1748 width=4949) (actual rows=51 loops=1)
+                           Buffers: shared hit=11
+                           ->  Nested Loop Left Join  (cost=1.59..4458.24 rows=1748 width=4433) (actual rows=51 loops=1)
+                                 Buffers: shared hit=11
+                                 ->  Nested Loop Left Join  (cost=1.45..4126.15 rows=1748 width=3913) (actual rows=51 loops=1)
+                                       Buffers: shared hit=11
+                                       ->  Nested Loop Left Join  (cost=1.31..3802.79 rows=1748 width=3595) (actual rows=51 loops=1)
+                                             Buffers: shared hit=11
+                                             ->  Nested Loop Left Join  (cost=1.17..3479.44 rows=1748 width=3277) (actual rows=51 loops=1)
+                                                   Buffers: shared hit=11
+                                                   ->  Nested Loop Left Join  (cost=1.03..3156.08 rows=1748 width=2959) (actual rows=51 loops=1)
+                                                         Buffers: shared hit=11
+                                                         ->  Nested Loop Left Join  (cost=0.89..2832.73 rows=1748 width=2641) (actual rows=51 loops=1)
+                                                               Buffers: shared hit=11
+                                                               ->  Nested Loop Left Join  (cost=0.73..2788.53 rows=1748 width=2423) (actual rows=51 loops=1)
+                                                                     Buffers: shared hit=9
+                                                                     ->  Nested Loop Left Join  (cost=0.57..2744.33 rows=1748 width=2205) (actual rows=51 loops=1)
+                                                                           Buffers: shared hit=7
+                                                                           ->  Index Scan using idx_issue_list_issue_date on issue_list i  (cost=0.42..2700.51 rows=1748 width=1887) (actual rows=51 loops=1)
+                                                                                 Index Cond: ((issue_date >= '2026-10-01 21:00:00+00'::timestamp with time zone) AND (issue_date < '2026-10-08 21:00:00+00'::timestamp with time zone))
+                                                                                 Buffers: shared hit=5
+                                                                           ->  Memoize  (cost=0.15..0.19 rows=1 width=322) (actual rows=1 loops=51)
+                                                                                 Cache Key: i.issue_reporter_id
+                                                                                 Cache Mode: logical
+                                                                                 Hits: 50  Misses: 1  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+                                                                                 Buffers: shared hit=2
+                                                                                 ->  Index Scan using users_pkey on users u  (cost=0.14..0.18 rows=1 width=322) (actual rows=1 loops=1)
+                                                                                       Index Cond: (id = i.issue_reporter_id)
+                                                                                       Buffers: shared hit=2
+                                                                     ->  Memoize  (cost=0.16..0.20 rows=1 width=222) (actual rows=1 loops=51)
+                                                                           Cache Key: i.issue_type_id
+                                                                           Cache Mode: logical
+                                                                           Hits: 50  Misses: 1  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+                                                                           Buffers: shared hit=2
+                                                                           ->  Index Scan using issue_types_pkey on issue_types it  (cost=0.15..0.19 rows=1 width=222) (actual rows=1 loops=1)
+                                                                                 Index Cond: (id = i.issue_type_id)
+                                                                                 Buffers: shared hit=2
+                                                               ->  Memoize  (cost=0.16..0.20 rows=1 width=222) (actual rows=1 loops=51)
+                                                                     Cache Key: i.station_id
+                                                                     Cache Mode: logical
+                                                                     Hits: 50  Misses: 1  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+                                                                     Buffers: shared hit=2
+                                                                     ->  Index Scan using stations_pkey on stations st  (cost=0.15..0.19 rows=1 width=222) (actual rows=1 loops=1)
+                                                                           Index Cond: (id = i.station_id)
+                                                                           Buffers: shared hit=2
+                                                         ->  Index Scan using users_pkey on users up  (cost=0.14..0.18 rows=1 width=322) (actual rows=0 loops=51)
+                                                               Index Cond: (id = i.process_reporter_id)
+                                                   ->  Index Scan using users_pkey on users uf  (cost=0.14..0.18 rows=1 width=322) (actual rows=0 loops=51)
+                                                         Index Cond: (id = i.finish_reporter_id)
+                                             ->  Index Scan using users_pkey on users ua  (cost=0.14..0.18 rows=1 width=322) (actual rows=0 loops=51)
+                                                   Index Cond: (id = i.approve_reporter_id)
+                                       ->  Index Scan using users_pkey on users uc  (cost=0.14..0.18 rows=1 width=322) (actual rows=0 loops=51)
+                                             Index Cond: (id = i.conditional_approve_reporter_id)
+                                 ->  Index Scan using defect_parts_pkey on defect_parts dp  (cost=0.14..0.19 rows=1 width=524) (actual rows=0 loops=51)
+                                       Index Cond: (id = i.defect_part_id)
+                           ->  Index Scan using defect_types_pkey on defect_types dt  (cost=0.14..0.19 rows=1 width=520) (actual rows=0 loops=51)
+                                 Index Cond: (id = i.defect_type_id)
+                     ->  Memoize  (cost=0.15..0.54 rows=1 width=520) (actual rows=0 loops=51)
+                           Cache Key: dp.zone_id
+                           Cache Mode: logical
+                           Hits: 50  Misses: 1  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+                           ->  Index Scan using defect_zones_pkey on defect_zones dz  (cost=0.14..0.53 rows=1 width=520) (actual rows=0 loops=1)
+                                 Index Cond: (id = dp.zone_id)
+               ->  Index Scan using defect_processes_pkey on defect_processes dpr  (cost=0.14..0.19 rows=1 width=520) (actual rows=0 loops=51)
+                     Index Cond: (id = i.responsible_process_id)
+         ->  Limit  (cost=8.18..8.18 rows=1 width=48) (actual rows=0 loops=51)
+               Buffers: shared hit=102
+               ->  Sort  (cost=8.18..8.18 rows=1 width=48) (actual rows=0 loops=51)
+                     Sort Key: m.uploaded_at, m.id
+                     Sort Method: quicksort  Memory: 25kB
+                     Buffers: shared hit=102
+                     ->  Index Scan using idx_media_attachments_entity on media_attachments m  (cost=0.15..8.17 rows=1 width=48) (actual rows=0 loops=51)
+                           Index Cond: (((entity_type)::text = 'ISSUE'::text) AND (entity_id = (i.id)::text))
+                           Buffers: shared hit=102
+ Planning:
+   Buffers: shared hit=14
+ Planning Time: 29.991 ms
+ Execution Time: 2.226 ms
+(86 rows)
+
+== Son 7 gün + durum OPEN,IN_PROGRESS, ilk sayfa
+                                                                                                               QUERY PLAN                                                                                                               
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=10.21..761.07 rows=51 width=869) (actual rows=51 loops=1)
+   Buffers: shared hit=115
+   ->  Nested Loop Left Join  (cost=10.21..8652.39 rows=587 width=869) (actual rows=51 loops=1)
+         Buffers: shared hit=115
+         ->  Nested Loop Left Join  (cost=2.04..3825.79 rows=587 width=5981) (actual rows=51 loops=1)
+               Buffers: shared hit=13
+               ->  Nested Loop Left Join  (cost=1.89..3683.77 rows=587 width=5465) (actual rows=51 loops=1)
+                     Buffers: shared hit=13
+                     ->  Nested Loop Left Join  (cost=1.74..3600.05 rows=587 width=4949) (actual rows=51 loops=1)
+                           Buffers: shared hit=13
+                           ->  Nested Loop Left Join  (cost=1.59..3456.57 rows=587 width=4433) (actual rows=51 loops=1)
+                                 Buffers: shared hit=13
+                                 ->  Nested Loop Left Join  (cost=1.45..3313.08 rows=587 width=3913) (actual rows=51 loops=1)
+                                       Buffers: shared hit=13
+                                       ->  Nested Loop Left Join  (cost=1.31..3172.53 rows=587 width=3595) (actual rows=51 loops=1)
+                                             Buffers: shared hit=13
+                                             ->  Nested Loop Left Join  (cost=1.17..3031.98 rows=587 width=3277) (actual rows=51 loops=1)
+                                                   Buffers: shared hit=13
+                                                   ->  Nested Loop Left Join  (cost=1.03..2891.43 rows=587 width=2959) (actual rows=51 loops=1)
+                                                         Buffers: shared hit=13
+                                                         ->  Nested Loop Left Join  (cost=0.89..2750.87 rows=587 width=2641) (actual rows=51 loops=1)
+                                                               Buffers: shared hit=13
+                                                               ->  Nested Loop Left Join  (cost=0.73..2735.50 rows=587 width=2423) (actual rows=51 loops=1)
+                                                                     Buffers: shared hit=11
+                                                                     ->  Nested Loop Left Join  (cost=0.57..2720.12 rows=587 width=2205) (actual rows=51 loops=1)
+                                                                           Buffers: shared hit=9
+                                                                           ->  Index Scan using idx_issue_list_issue_date on issue_list i  (cost=0.42..2704.88 rows=587 width=1887) (actual rows=51 loops=1)
+                                                                                 Index Cond: ((issue_date >= '2026-10-01 21:00:00+00'::timestamp with time zone) AND (issue_date < '2026-10-08 21:00:00+00'::timestamp with time zone))
+                                                                                 Filter: (status = ANY ('{OPEN,IN_PROGRESS}'::issue_status_enum[]))
+                                                                                 Rows Removed by Filter: 100
+                                                                                 Buffers: shared hit=7
+                                                                           ->  Memoize  (cost=0.15..0.25 rows=1 width=322) (actual rows=1 loops=51)
+                                                                                 Cache Key: i.issue_reporter_id
+                                                                                 Cache Mode: logical
+                                                                                 Hits: 50  Misses: 1  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+                                                                                 Buffers: shared hit=2
+                                                                                 ->  Index Scan using users_pkey on users u  (cost=0.14..0.24 rows=1 width=322) (actual rows=1 loops=1)
+                                                                                       Index Cond: (id = i.issue_reporter_id)
+                                                                                       Buffers: shared hit=2
+                                                                     ->  Memoize  (cost=0.16..0.26 rows=1 width=222) (actual rows=1 loops=51)
+                                                                           Cache Key: i.issue_type_id
+                                                                           Cache Mode: logical
+                                                                           Hits: 50  Misses: 1  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+                                                                           Buffers: shared hit=2
+                                                                           ->  Index Scan using issue_types_pkey on issue_types it  (cost=0.15..0.25 rows=1 width=222) (actual rows=1 loops=1)
+                                                                                 Index Cond: (id = i.issue_type_id)
+                                                                                 Buffers: shared hit=2
+                                                               ->  Memoize  (cost=0.16..0.26 rows=1 width=222) (actual rows=1 loops=51)
+                                                                     Cache Key: i.station_id
+                                                                     Cache Mode: logical
+                                                                     Hits: 50  Misses: 1  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+                                                                     Buffers: shared hit=2
+                                                                     ->  Index Scan using stations_pkey on stations st  (cost=0.15..0.25 rows=1 width=222) (actual rows=1 loops=1)
+                                                                           Index Cond: (id = i.station_id)
+                                                                           Buffers: shared hit=2
+                                                         ->  Index Scan using users_pkey on users up  (cost=0.14..0.24 rows=1 width=322) (actual rows=0 loops=51)
+                                                               Index Cond: (id = i.process_reporter_id)
+                                                   ->  Index Scan using users_pkey on users uf  (cost=0.14..0.24 rows=1 width=322) (actual rows=0 loops=51)
+                                                         Index Cond: (id = i.finish_reporter_id)
+                                             ->  Index Scan using users_pkey on users ua  (cost=0.14..0.24 rows=1 width=322) (actual rows=0 loops=51)
+                                                   Index Cond: (id = i.approve_reporter_id)
+                                       ->  Index Scan using users_pkey on users uc  (cost=0.14..0.24 rows=1 width=322) (actual rows=0 loops=51)
+                                             Index Cond: (id = i.conditional_approve_reporter_id)
+                                 ->  Index Scan using defect_parts_pkey on defect_parts dp  (cost=0.14..0.24 rows=1 width=524) (actual rows=0 loops=51)
+                                       Index Cond: (id = i.defect_part_id)
+                           ->  Index Scan using defect_types_pkey on defect_types dt  (cost=0.14..0.24 rows=1 width=520) (actual rows=0 loops=51)
+                                 Index Cond: (id = i.defect_type_id)
+                     ->  Memoize  (cost=0.15..0.54 rows=1 width=520) (actual rows=0 loops=51)
+                           Cache Key: dp.zone_id
+                           Cache Mode: logical
+                           Hits: 50  Misses: 1  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+                           ->  Index Scan using defect_zones_pkey on defect_zones dz  (cost=0.14..0.53 rows=1 width=520) (actual rows=0 loops=1)
+                                 Index Cond: (id = dp.zone_id)
+               ->  Index Scan using defect_processes_pkey on defect_processes dpr  (cost=0.14..0.24 rows=1 width=520) (actual rows=0 loops=51)
+                     Index Cond: (id = i.responsible_process_id)
+         ->  Limit  (cost=8.18..8.18 rows=1 width=48) (actual rows=0 loops=51)
+               Buffers: shared hit=102
+               ->  Sort  (cost=8.18..8.18 rows=1 width=48) (actual rows=0 loops=51)
+                     Sort Key: m.uploaded_at, m.id
+                     Sort Method: quicksort  Memory: 25kB
+                     Buffers: shared hit=102
+                     ->  Index Scan using idx_media_attachments_entity on media_attachments m  (cost=0.15..8.17 rows=1 width=48) (actual rows=0 loops=51)
+                           Index Cond: (((entity_type)::text = 'ISSUE'::text) AND (entity_id = (i.id)::text))
+                           Buffers: shared hit=102
+ Planning:
+   Buffers: shared hit=17
+ Planning Time: 16.696 ms
+ Execution Time: 0.744 ms
+(88 rows)
+
+== Bu ay, dışa aktarma / toplam (limit yok)
+                                                                                                            QUERY PLAN                                                                                                            
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=20009.14..20014.19 rows=2018 width=869) (actual rows=2069 loops=1)
+   Sort Key: i.issue_date DESC, i.id DESC
+   Sort Method: quicksort  Memory: 534kB
+   Buffers: shared hit=4224
+   ->  Nested Loop Left Join  (cost=117.49..19898.37 rows=2018 width=869) (actual rows=2069 loops=1)
+         Buffers: shared hit=4224
+         ->  Hash Left Join  (cost=109.31..3305.36 rows=2018 width=5981) (actual rows=2069 loops=1)
+               Hash Cond: (i.responsible_process_id = dpr.id)
+               Buffers: shared hit=86
+               ->  Hash Left Join  (cost=96.61..3287.37 rows=2018 width=5465) (actual rows=2069 loops=1)
+                     Hash Cond: (i.defect_type_id = dt.id)
+                     Buffers: shared hit=85
+                     ->  Hash Left Join  (cost=83.69..3269.14 rows=2018 width=4949) (actual rows=2069 loops=1)
+                           Hash Cond: (i.defect_part_id = dp.id)
+                           Buffers: shared hit=84
+                           ->  Hash Left Join  (cost=57.49..3235.36 rows=2018 width=3913) (actual rows=2069 loops=1)
+                                 Hash Cond: (i.conditional_approve_reporter_id = uc.id)
+                                 Buffers: shared hit=82
+                                 ->  Hash Left Join  (cost=46.14..3218.72 rows=2018 width=3595) (actual rows=2069 loops=1)
+                                       Hash Cond: (i.approve_reporter_id = ua.id)
+                                       Buffers: shared hit=81
+                                       ->  Hash Left Join  (cost=34.79..3202.07 rows=2018 width=3277) (actual rows=2069 loops=1)
+                                             Hash Cond: (i.finish_reporter_id = uf.id)
+                                             Buffers: shared hit=80
+                                             ->  Hash Left Join  (cost=23.44..3185.42 rows=2018 width=2959) (actual rows=2069 loops=1)
+                                                   Hash Cond: (i.process_reporter_id = up.id)
+                                                   Buffers: shared hit=79
+                                                   ->  Nested Loop Left Join  (cost=12.09..3168.78 rows=2018 width=2641) (actual rows=2069 loops=1)
+                                                         Buffers: shared hit=78
+                                                         ->  Nested Loop Left Join  (cost=11.93..3117.85 rows=2018 width=2423) (actual rows=2069 loops=1)
+                                                               Buffers: shared hit=70
+                                                               ->  Hash Left Join  (cost=11.77..3066.93 rows=2018 width=2205) (actual rows=2069 loops=1)
+                                                                     Hash Cond: (i.issue_reporter_id = u.id)
+                                                                     Buffers: shared hit=66
+                                                                     ->  Index Scan using idx_issue_list_issue_date on issue_list i  (cost=0.42..3049.91 rows=2018 width=1887) (actual rows=2069 loops=1)
+                                                                           Index Cond: ((issue_date >= '2026-09-30 21:00:00+00'::timestamp with time zone) AND (issue_date < '2026-10-08 21:00:00+00'::timestamp with time zone))
+                                                                           Buffers: shared hit=65
+                                                                     ->  Hash  (cost=10.60..10.60 rows=60 width=322) (actual rows=5 loops=1)
+                                                                           Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                                                           Buffers: shared hit=1
+                                                                           ->  Seq Scan on users u  (cost=0.00..10.60 rows=60 width=322) (actual rows=5 loops=1)
+                                                                                 Buffers: shared hit=1
+                                                               ->  Memoize  (cost=0.16..0.20 rows=1 width=222) (actual rows=1 loops=2069)
+                                                                     Cache Key: i.issue_type_id
+                                                                     Cache Mode: logical
+                                                                     Hits: 2067  Misses: 2  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+                                                                     Buffers: shared hit=4
+                                                                     ->  Index Scan using issue_types_pkey on issue_types it  (cost=0.15..0.19 rows=1 width=222) (actual rows=1 loops=2)
+                                                                           Index Cond: (id = i.issue_type_id)
+                                                                           Buffers: shared hit=4
+                                                         ->  Memoize  (cost=0.16..0.20 rows=1 width=222) (actual rows=1 loops=2069)
+                                                               Cache Key: i.station_id
+                                                               Cache Mode: logical
+                                                               Hits: 2064  Misses: 5  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+                                                               Buffers: shared hit=8
+                                                               ->  Index Scan using stations_pkey on stations st  (cost=0.15..0.19 rows=1 width=222) (actual rows=1 loops=5)
+                                                                     Index Cond: (id = i.station_id)
+                                                                     Buffers: shared hit=8
+                                                   ->  Hash  (cost=10.60..10.60 rows=60 width=322) (actual rows=5 loops=1)
+                                                         Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                                         Buffers: shared hit=1
+                                                         ->  Seq Scan on users up  (cost=0.00..10.60 rows=60 width=322) (actual rows=5 loops=1)
+                                                               Buffers: shared hit=1
+                                             ->  Hash  (cost=10.60..10.60 rows=60 width=322) (actual rows=5 loops=1)
+                                                   Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                                   Buffers: shared hit=1
+                                                   ->  Seq Scan on users uf  (cost=0.00..10.60 rows=60 width=322) (actual rows=5 loops=1)
+                                                         Buffers: shared hit=1
+                                       ->  Hash  (cost=10.60..10.60 rows=60 width=322) (actual rows=5 loops=1)
+                                             Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                             Buffers: shared hit=1
+                                             ->  Seq Scan on users ua  (cost=0.00..10.60 rows=60 width=322) (actual rows=5 loops=1)
+                                                   Buffers: shared hit=1
+                                 ->  Hash  (cost=10.60..10.60 rows=60 width=322) (actual rows=5 loops=1)
+                                       Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                       Buffers: shared hit=1
+                                       ->  Seq Scan on users uc  (cost=0.00..10.60 rows=60 width=322) (actual rows=5 loops=1)
+                                             Buffers: shared hit=1
+                           ->  Hash  (cost=24.58..24.58 rows=130 width=1040) (actual rows=24 loops=1)
+                                 Buckets: 1024  Batches: 1  Memory Usage: 11kB
+                                 Buffers: shared hit=2
+                                 ->  Hash Left Join  (cost=12.93..24.58 rows=130 width=1040) (actual rows=24 loops=1)
+                                       Hash Cond: (dp.zone_id = dz.id)
+                                       Buffers: shared hit=2
+                                       ->  Seq Scan on defect_parts dp  (cost=0.00..11.30 rows=130 width=524) (actual rows=24 loops=1)
+                                             Buffers: shared hit=1
+                                       ->  Hash  (cost=11.30..11.30 rows=130 width=520) (actual rows=5 loops=1)
+                                             Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                             Buffers: shared hit=1
+                                             ->  Seq Scan on defect_zones dz  (cost=0.00..11.30 rows=130 width=520) (actual rows=5 loops=1)
+                                                   Buffers: shared hit=1
+                     ->  Hash  (cost=11.30..11.30 rows=130 width=520) (actual rows=10 loops=1)
+                           Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                           Buffers: shared hit=1
+                           ->  Seq Scan on defect_types dt  (cost=0.00..11.30 rows=130 width=520) (actual rows=10 loops=1)
+                                 Buffers: shared hit=1
+               ->  Hash  (cost=11.20..11.20 rows=120 width=520) (actual rows=4 loops=1)
+                     Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                     Buffers: shared hit=1
+                     ->  Seq Scan on defect_processes dpr  (cost=0.00..11.20 rows=120 width=520) (actual rows=4 loops=1)
+                           Buffers: shared hit=1
+         ->  Limit  (cost=8.18..8.18 rows=1 width=48) (actual rows=0 loops=2069)
+               Buffers: shared hit=4138
+               ->  Sort  (cost=8.18..8.18 rows=1 width=48) (actual rows=0 loops=2069)
+                     Sort Key: m.uploaded_at, m.id
+                     Sort Method: quicksort  Memory: 25kB
+                     Buffers: shared hit=4138
+                     ->  Index Scan using idx_media_attachments_entity on media_attachments m  (cost=0.15..8.17 rows=1 width=48) (actual rows=0 loops=2069)
+                           Index Cond: (((entity_type)::text = 'ISSUE'::text) AND (entity_id = (i.id)::text))
+                           Buffers: shared hit=4138
+ Planning:
+   Buffers: shared hit=14
+ Planning Time: 2.825 ms
+ Execution Time: 7.281 ms
+(114 rows)
+
+== Yalnız başlangıç (Son 7 gün başı), ilk sayfa
+                                                                                                  QUERY PLAN                                                                                                  
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=10.21..581.75 rows=51 width=869) (actual rows=51 loops=1)
+   Buffers: shared hit=113
+   ->  Nested Loop Left Join  (cost=10.21..19599.38 rows=1748 width=869) (actual rows=51 loops=1)
+         Buffers: shared hit=113
+         ->  Nested Loop Left Join  (cost=2.04..5226.45 rows=1748 width=5981) (actual rows=51 loops=1)
+               Buffers: shared hit=11
+               ->  Nested Loop Left Join  (cost=1.89..4898.72 rows=1748 width=5465) (actual rows=51 loops=1)
+                     Buffers: shared hit=11
+                     ->  Nested Loop Left Join  (cost=1.74..4785.97 rows=1748 width=4949) (actual rows=51 loops=1)
+                           Buffers: shared hit=11
+                           ->  Nested Loop Left Join  (cost=1.59..4453.87 rows=1748 width=4433) (actual rows=51 loops=1)
+                                 Buffers: shared hit=11
+                                 ->  Nested Loop Left Join  (cost=1.45..4121.78 rows=1748 width=3913) (actual rows=51 loops=1)
+                                       Buffers: shared hit=11
+                                       ->  Nested Loop Left Join  (cost=1.31..3798.42 rows=1748 width=3595) (actual rows=51 loops=1)
+                                             Buffers: shared hit=11
+                                             ->  Nested Loop Left Join  (cost=1.17..3475.07 rows=1748 width=3277) (actual rows=51 loops=1)
+                                                   Buffers: shared hit=11
+                                                   ->  Nested Loop Left Join  (cost=1.03..3151.71 rows=1748 width=2959) (actual rows=51 loops=1)
+                                                         Buffers: shared hit=11
+                                                         ->  Nested Loop Left Join  (cost=0.89..2828.36 rows=1748 width=2641) (actual rows=51 loops=1)
+                                                               Buffers: shared hit=11
+                                                               ->  Nested Loop Left Join  (cost=0.73..2784.16 rows=1748 width=2423) (actual rows=51 loops=1)
+                                                                     Buffers: shared hit=9
+                                                                     ->  Nested Loop Left Join  (cost=0.57..2739.96 rows=1748 width=2205) (actual rows=51 loops=1)
+                                                                           Buffers: shared hit=7
+                                                                           ->  Index Scan using idx_issue_list_issue_date on issue_list i  (cost=0.42..2696.14 rows=1748 width=1887) (actual rows=51 loops=1)
+                                                                                 Index Cond: (issue_date >= '2026-10-01 21:00:00+00'::timestamp with time zone)
+                                                                                 Buffers: shared hit=5
+                                                                           ->  Memoize  (cost=0.15..0.19 rows=1 width=322) (actual rows=1 loops=51)
+                                                                                 Cache Key: i.issue_reporter_id
+                                                                                 Cache Mode: logical
+                                                                                 Hits: 50  Misses: 1  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+                                                                                 Buffers: shared hit=2
+                                                                                 ->  Index Scan using users_pkey on users u  (cost=0.14..0.18 rows=1 width=322) (actual rows=1 loops=1)
+                                                                                       Index Cond: (id = i.issue_reporter_id)
+                                                                                       Buffers: shared hit=2
+                                                                     ->  Memoize  (cost=0.16..0.20 rows=1 width=222) (actual rows=1 loops=51)
+                                                                           Cache Key: i.issue_type_id
+                                                                           Cache Mode: logical
+                                                                           Hits: 50  Misses: 1  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+                                                                           Buffers: shared hit=2
+                                                                           ->  Index Scan using issue_types_pkey on issue_types it  (cost=0.15..0.19 rows=1 width=222) (actual rows=1 loops=1)
+                                                                                 Index Cond: (id = i.issue_type_id)
+                                                                                 Buffers: shared hit=2
+                                                               ->  Memoize  (cost=0.16..0.20 rows=1 width=222) (actual rows=1 loops=51)
+                                                                     Cache Key: i.station_id
+                                                                     Cache Mode: logical
+                                                                     Hits: 50  Misses: 1  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+                                                                     Buffers: shared hit=2
+                                                                     ->  Index Scan using stations_pkey on stations st  (cost=0.15..0.19 rows=1 width=222) (actual rows=1 loops=1)
+                                                                           Index Cond: (id = i.station_id)
+                                                                           Buffers: shared hit=2
+                                                         ->  Index Scan using users_pkey on users up  (cost=0.14..0.18 rows=1 width=322) (actual rows=0 loops=51)
+                                                               Index Cond: (id = i.process_reporter_id)
+                                                   ->  Index Scan using users_pkey on users uf  (cost=0.14..0.18 rows=1 width=322) (actual rows=0 loops=51)
+                                                         Index Cond: (id = i.finish_reporter_id)
+                                             ->  Index Scan using users_pkey on users ua  (cost=0.14..0.18 rows=1 width=322) (actual rows=0 loops=51)
+                                                   Index Cond: (id = i.approve_reporter_id)
+                                       ->  Index Scan using users_pkey on users uc  (cost=0.14..0.18 rows=1 width=322) (actual rows=0 loops=51)
+                                             Index Cond: (id = i.conditional_approve_reporter_id)
+                                 ->  Index Scan using defect_parts_pkey on defect_parts dp  (cost=0.14..0.19 rows=1 width=524) (actual rows=0 loops=51)
+                                       Index Cond: (id = i.defect_part_id)
+                           ->  Index Scan using defect_types_pkey on defect_types dt  (cost=0.14..0.19 rows=1 width=520) (actual rows=0 loops=51)
+                                 Index Cond: (id = i.defect_type_id)
+                     ->  Memoize  (cost=0.15..0.54 rows=1 width=520) (actual rows=0 loops=51)
+                           Cache Key: dp.zone_id
+                           Cache Mode: logical
+                           Hits: 50  Misses: 1  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+                           ->  Index Scan using defect_zones_pkey on defect_zones dz  (cost=0.14..0.53 rows=1 width=520) (actual rows=0 loops=1)
+                                 Index Cond: (id = dp.zone_id)
+               ->  Index Scan using defect_processes_pkey on defect_processes dpr  (cost=0.14..0.19 rows=1 width=520) (actual rows=0 loops=51)
+                     Index Cond: (id = i.responsible_process_id)
+         ->  Limit  (cost=8.18..8.18 rows=1 width=48) (actual rows=0 loops=51)
+               Buffers: shared hit=102
+               ->  Sort  (cost=8.18..8.18 rows=1 width=48) (actual rows=0 loops=51)
+                     Sort Key: m.uploaded_at, m.id
+                     Sort Method: quicksort  Memory: 25kB
+                     Buffers: shared hit=102
+                     ->  Index Scan using idx_media_attachments_entity on media_attachments m  (cost=0.15..8.17 rows=1 width=48) (actual rows=0 loops=51)
+                           Index Cond: (((entity_type)::text = 'ISSUE'::text) AND (entity_id = (i.id)::text))
+                           Buffers: shared hit=102
+ Planning:
+   Buffers: shared hit=10
+ Planning Time: 14.703 ms
+ Execution Time: 0.547 ms
+(86 rows)
+
+== Yalnız bitiş (eski bir gün), ilk sayfa
+                                                                                                   QUERY PLAN                                                                                                    
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=10.21..496.21 rows=51 width=869) (actual rows=51 loops=1)
+   Buffers: shared hit=114
+   ->  Nested Loop Left Join  (cost=10.21..1809710.26 rows=189906 width=869) (actual rows=51 loops=1)
+         Buffers: shared hit=114
+         ->  Nested Loop Left Join  (cost=2.04..248208.17 rows=189906 width=5981) (actual rows=51 loops=1)
+               Buffers: shared hit=12
+               ->  Nested Loop Left Join  (cost=1.89..217775.19 rows=189906 width=5465) (actual rows=51 loops=1)
+                     Buffers: shared hit=12
+                     ->  Nested Loop Left Join  (cost=1.74..212979.85 rows=189906 width=4949) (actual rows=51 loops=1)
+                           Buffers: shared hit=12
+                           ->  Nested Loop Left Join  (cost=1.59..182072.11 rows=189906 width=4433) (actual rows=51 loops=1)
+                                 Buffers: shared hit=12
+                                 ->  Nested Loop Left Join  (cost=1.45..151164.37 rows=189906 width=3913) (actual rows=51 loops=1)
+                                       Buffers: shared hit=12
+                                       ->  Nested Loop Left Join  (cost=1.31..121206.15 rows=189906 width=3595) (actual rows=51 loops=1)
+                                             Buffers: shared hit=12
+                                             ->  Nested Loop Left Join  (cost=1.17..91247.94 rows=189906 width=3277) (actual rows=51 loops=1)
+                                                   Buffers: shared hit=12
+                                                   ->  Nested Loop Left Join  (cost=1.03..61289.73 rows=189906 width=2959) (actual rows=51 loops=1)
+                                                         Buffers: shared hit=12
+                                                         ->  Nested Loop Left Join  (cost=0.89..31331.52 rows=189906 width=2641) (actual rows=51 loops=1)
+                                                               Buffers: shared hit=12
+                                                               ->  Nested Loop Left Join  (cost=0.73..26592.22 rows=189906 width=2423) (actual rows=51 loops=1)
+                                                                     Buffers: shared hit=10
+                                                                     ->  Nested Loop Left Join  (cost=0.57..21852.91 rows=189906 width=2205) (actual rows=51 loops=1)
+                                                                           Buffers: shared hit=8
+                                                                           ->  Index Scan using idx_issue_list_issue_date on issue_list i  (cost=0.42..17150.72 rows=189906 width=1887) (actual rows=51 loops=1)
+                                                                                 Index Cond: (issue_date < '2025-09-02 21:00:00+00'::timestamp with time zone)
+                                                                                 Buffers: shared hit=6
+                                                                           ->  Memoize  (cost=0.15..0.17 rows=1 width=322) (actual rows=1 loops=51)
+                                                                                 Cache Key: i.issue_reporter_id
+                                                                                 Cache Mode: logical
+                                                                                 Hits: 50  Misses: 1  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+                                                                                 Buffers: shared hit=2
+                                                                                 ->  Index Scan using users_pkey on users u  (cost=0.14..0.16 rows=1 width=322) (actual rows=1 loops=1)
+                                                                                       Index Cond: (id = i.issue_reporter_id)
+                                                                                       Buffers: shared hit=2
+                                                                     ->  Memoize  (cost=0.16..0.18 rows=1 width=222) (actual rows=1 loops=51)
+                                                                           Cache Key: i.issue_type_id
+                                                                           Cache Mode: logical
+                                                                           Hits: 50  Misses: 1  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+                                                                           Buffers: shared hit=2
+                                                                           ->  Index Scan using issue_types_pkey on issue_types it  (cost=0.15..0.17 rows=1 width=222) (actual rows=1 loops=1)
+                                                                                 Index Cond: (id = i.issue_type_id)
+                                                                                 Buffers: shared hit=2
+                                                               ->  Memoize  (cost=0.16..0.18 rows=1 width=222) (actual rows=1 loops=51)
+                                                                     Cache Key: i.station_id
+                                                                     Cache Mode: logical
+                                                                     Hits: 50  Misses: 1  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+                                                                     Buffers: shared hit=2
+                                                                     ->  Index Scan using stations_pkey on stations st  (cost=0.15..0.17 rows=1 width=222) (actual rows=1 loops=1)
+                                                                           Index Cond: (id = i.station_id)
+                                                                           Buffers: shared hit=2
+                                                         ->  Index Scan using users_pkey on users up  (cost=0.14..0.16 rows=1 width=322) (actual rows=0 loops=51)
+                                                               Index Cond: (id = i.process_reporter_id)
+                                                   ->  Index Scan using users_pkey on users uf  (cost=0.14..0.16 rows=1 width=322) (actual rows=0 loops=51)
+                                                         Index Cond: (id = i.finish_reporter_id)
+                                             ->  Index Scan using users_pkey on users ua  (cost=0.14..0.16 rows=1 width=322) (actual rows=0 loops=51)
+                                                   Index Cond: (id = i.approve_reporter_id)
+                                       ->  Index Scan using users_pkey on users uc  (cost=0.14..0.16 rows=1 width=322) (actual rows=0 loops=51)
+                                             Index Cond: (id = i.conditional_approve_reporter_id)
+                                 ->  Index Scan using defect_parts_pkey on defect_parts dp  (cost=0.14..0.16 rows=1 width=524) (actual rows=0 loops=51)
+                                       Index Cond: (id = i.defect_part_id)
+                           ->  Index Scan using defect_types_pkey on defect_types dt  (cost=0.14..0.16 rows=1 width=520) (actual rows=0 loops=51)
+                                 Index Cond: (id = i.defect_type_id)
+                     ->  Memoize  (cost=0.15..0.54 rows=1 width=520) (actual rows=0 loops=51)
+                           Cache Key: dp.zone_id
+                           Cache Mode: logical
+                           Hits: 50  Misses: 1  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+                           ->  Index Scan using defect_zones_pkey on defect_zones dz  (cost=0.14..0.53 rows=1 width=520) (actual rows=0 loops=1)
+                                 Index Cond: (id = dp.zone_id)
+               ->  Index Scan using defect_processes_pkey on defect_processes dpr  (cost=0.14..0.16 rows=1 width=520) (actual rows=0 loops=51)
+                     Index Cond: (id = i.responsible_process_id)
+         ->  Limit  (cost=8.18..8.18 rows=1 width=48) (actual rows=0 loops=51)
+               Buffers: shared hit=102
+               ->  Sort  (cost=8.18..8.18 rows=1 width=48) (actual rows=0 loops=51)
+                     Sort Key: m.uploaded_at, m.id
+                     Sort Method: quicksort  Memory: 25kB
+                     Buffers: shared hit=102
+                     ->  Index Scan using idx_media_attachments_entity on media_attachments m  (cost=0.15..8.17 rows=1 width=48) (actual rows=0 loops=51)
+                           Index Cond: (((entity_type)::text = 'ISSUE'::text) AND (entity_id = (i.id)::text))
+                           Buffers: shared hit=102
+ Planning:
+   Buffers: shared hit=6
+ Planning Time: 16.607 ms
+ Execution Time: 0.702 ms
+(86 rows)
+
+ROLLBACK
+         ?column?          
+---------------------------
+ issues after rollback: 16
+(1 row)
+
+ 

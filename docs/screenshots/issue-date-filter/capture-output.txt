@@ -1,0 +1,43 @@
+== TR 1280: presets, URL, combined filters, exports ==
+  [PASS] Bugün: URL opened=today, board = SQL (2) — screen 2, board 2
+  [PASS] Son 7 gün: URL opened=7d, board = SQL (19) — screen 19, board 19
+  [PASS] Bu ay: URL opened=month, board = SQL (22) — screen 22, board 22
+  [PASS] reload keeps opened=month (chip pressed, same total) — /issues?opened=month
+  [PASS] Bu ay: CSV rows = on-screen 22 — 22 rows
+  [PASS] Bu ay: ZIP issues.csv rows = on-screen 22 — 22 rows
+  [PASS] Bu ay: print rows = on-screen 22 — 22 rows
+  [PASS] typing a day drops the preset from the URL — /issues?opened_from=2026-09-28&opened_to=2026-09-30
+  [PASS] 28.09–30.09: board = SQL (57, first page 50) — screen 57, board 57
+  [PASS] 28.09–30.09: CSV rows = on-screen 57 — 57 rows
+  [PASS] 28.09–30.09: ZIP issues.csv rows = on-screen 57 — 57 rows
+  [PASS] 28.09–30.09: print rows = on-screen 57 — 57 rows
+  [PASS] print header names the range — Issue ListesiUygulanan filtrelerAçılış tarihi: 28.09.2026 – 30.09.2026Yazdırma tarihi08.10.2026 11:49YazdıranLocal Manager
+  [PASS] yalnız başlangıç 01.10: board = SQL (22) — screen 22, board 22
+  [PASS] yalnız başlangıç 01.10: CSV rows = on-screen 22 — 22 rows
+  [PASS] yalnız başlangıç 01.10: ZIP issues.csv rows = on-screen 22 — 22 rows
+  [PASS] yalnız başlangıç 01.10: print rows = on-screen 22 — 22 rows
+  [PASS] yalnız bitiş 30.09: board = SQL (58) — screen 58, board 58
+  [PASS] yalnız bitiş 30.09: CSV rows = on-screen 58 — 58 rows
+  [PASS] yalnız bitiş 30.09: ZIP issues.csv rows = on-screen 58 — 58 rows
+  [PASS] yalnız bitiş 30.09: print rows = on-screen 58 — 58 rows
+  [PASS] Son 7 gün + VIN + Kritik + Açık = SQL (2) — screen 2
+  [PASS] birleşik filtre: CSV rows = on-screen 2 — 2 rows
+  [PASS] birleşik filtre: ZIP issues.csv rows = on-screen 2 — 2 rows
+  [PASS] birleşik filtre: print rows = on-screen 2 — 2 rows
+  [PASS] print header lists every filter — Issue ListesiUygulanan filtrelerArama: N7V1K1SA2TK000004 · Şiddet: Kritik · Durum: Açık · Açılış tarihi: Son 7 gün (02.10.2026 – 08.10.2026)Yazdırma tarihi08.10.2026 11:50YazdıranLocal Manager
+  [PASS] empty range: message names the range, exports disabled — screen 0
+== TR/EN 1280/375: custom range + empty range ==
+  [PASS] tr 1280: 28.09–30.09 board = SQL (57), no horizontal overflow — screen 57, board 57
+  [PASS] tr 1280: empty range message
+  [PASS] tr 1280: Bugün = SQL (2)
+  [PASS] tr 375: 28.09–30.09 board = SQL (57), no horizontal overflow — screen 57, board 57
+  [PASS] tr 375: empty range message
+  [PASS] tr 375: Bugün = SQL (2)
+  [PASS] en 1280: 28.09–30.09 board = SQL (57), no horizontal overflow — screen 57, board 57
+  [PASS] en 1280: empty range message
+  [PASS] en 1280: Bugün = SQL (2)
+  [PASS] en 375: 28.09–30.09 board = SQL (57), no horizontal overflow — screen 57, board 57
+  [PASS] en 375: empty range message
+  [PASS] en 375: Bugün = SQL (2)
+
+ALL CHECKS PASSED

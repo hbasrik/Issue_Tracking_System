@@ -1,0 +1,24 @@
+== API ids vs SQL day test ((issue_date AT TIME ZONE 'Europe/Istanbul')::date)
+  [PASS] Bugün (08.10): 2 issues — status 200, A C
+  [PASS] Son 7 gün (02.10–08.10): 19 issues — status 200, A B C D seed#10 seed#11 seed#12 seed#13 seed#14 seed#15 seed#16 seed#2 seed#3 seed#4 seed#5 seed#6 seed#7 seed#8 seed#9
+  [PASS] Bu ay (01.10–08.10): 22 issues — status 200, A B C D E F seed#1 seed#10 seed#11 seed#12 seed#13 seed#14 seed#15 seed#16 seed#2 seed#3 seed#4 seed#5 seed#6 seed#7 seed#8 seed#9
+  [PASS] ikisi birden 28.09–30.09: 57 issues — status 200, G H + 55×J
+  [PASS] yalnız başlangıç 01.10: 22 issues — status 200, A B C D E F seed#1 seed#10 seed#11 seed#12 seed#13 seed#14 seed#15 seed#16 seed#2 seed#3 seed#4 seed#5 seed#6 seed#7 seed#8 seed#9
+  [PASS] yalnız bitiş 30.09: 58 issues — status 200, G H I + 55×J
+  [PASS] Son 7 gün + durum OPEN,IN_PROGRESS: 12 issues — status 200, A B C D seed#13 seed#14 seed#2 seed#3 seed#4 seed#5 seed#7 seed#8
+  [PASS] boş aralık 01.08–02.08: 0 issues — status 200, 
+== boundaries
+  [PASS] Bugün includes 00:00:00 local (A) and 01:30 local whose UTC day is 7 Oct (C)
+  [PASS] Bugün excludes yesterday 23:59:59.999 local (B)
+     a UTC day cut would return nothing instead of A C
+  [PASS] 28–30 Sep includes the start day's first record (H 28 Sep 00:00:00)
+  [PASS] 28–30 Sep includes the end day's last record (G 30 Sep 23:59:59.999)
+  [PASS] 28–30 Sep excludes 27 Sep 23:59:59.999 (I) and 1 Oct 00:00 (F)
+== board paging keeps the range (limit 50 + keyset)
+  [PASS] page 1 has 50 and has_more
+  [PASS] page 1 + page 2 = the full range, no extra row — 57 rows
+== rejected input
+  [PASS] opened_from=2026-10-08&opened_to=2026-10-01 -> 400 — 400 {'error': 'opened_from must not be after opened_to', 'request_id': "Basri's Macbook/acrtUW5kOU-000015"}
+  [PASS] opened_from=08.10.2026 -> 400 — 400 {'error': 'opened_from and opened_to must be YYYY-MM-DD', 'request_id': "Basri's Macbook/acrtUW5kOU-000016"}
+
+ALL CHECKS PASSED
