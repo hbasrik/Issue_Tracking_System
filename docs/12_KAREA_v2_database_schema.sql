@@ -408,6 +408,10 @@ CREATE TABLE checklist_item_progress (
 
     related_issue_id  BIGINT REFERENCES issue_list(id),
 
+    -- migration 0020 (comment corrected by 0043): item text copied from the
+    -- template on every non-PENDING answer; PENDING keeps the last copy.
+    item_text_snapshot VARCHAR(250),
+
     -- migration 0042 (docs/11 Karar 30): copies of the template item's
     -- acceptance_criterion / control_method / form_revision, taken by the
     -- server on every non-PENDING answer. criteria_snapshot_at NULL = never

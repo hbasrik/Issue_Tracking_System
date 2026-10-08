@@ -1204,9 +1204,22 @@ başlatılınca devreye girer.
     kopya yan yana, kriterleri olmayan maddede damga + NULL, donmuş maddede
     API 409 ve SQL reddi, md5 aynı), web + mobil TR/EN 1280/375, baskı
     PDF/PNG, Go test çıktısı.
-  - **Not:** 0020'deki `item_text_snapshot` kolon açıklaması hâlâ "ilk
-    cevapta dondurulur" diyor; artık yanlış. Yalnız açıklama değişikliği
-    için migration gerekir, yazılmadı.
+  - **Migration 0043 `[~]`:** 0020'deki `item_text_snapshot` açıklaması
+    ("ilk cevapta dondurulur") artık yanlıştı; 0043 yalnız açıklamayı
+    düzeltir, down 0020 metnini birebir geri yazar. Test DB'de
+    up/down/up/up: şema dökümünde tek fark o açıklama satırı, down sonrası
+    döküm byte byte aynı, satırlar aynı
+    (`docs/screenshots/migration-0043/verify-output.txt`). Canlıya
+    uygulanmadı (kullanıcıda); kesinti gerekmez.
+- **Mobil EOL ekranı donmuş maddeyi bilmiyor `[ ]` (2026-10-08, ayrı iş):**
+  `mobile/src/api/client.ts` `ChecklistItem` tipinde `FrozenReason` yok ve
+  `EOLChecklistScreen` onu hiç okumuyor. Web donmuş kartı kilitliyor
+  (Karar 29); mobilde ise bayat ekranda donmuş madde açık görünebiliyor,
+  operatör cevaplayıp kaydedince 409 alıyor (0040 testinde görüldü). Veri
+  korunuyor (tetikleyici + 409) ama kullanıcı boşuna uğraşıyor. Yapılacak:
+  tipe `FrozenReason`, donmuş kartı kapalı ve kilitli göster (web ile aynı:
+  ikon ve kriter yok), 409 sonrası listeyi yenile ve donma mesajını göster.
+  Henüz yapılmadı.
 - **Kalite ekibine:** belirsiz sekiz eşleşme; Araç Motoru ve Yağmur Testi
   dört formun hiçbirinde yok (su sızdırmazlık kontrolü tamamen düşüyor).
 
