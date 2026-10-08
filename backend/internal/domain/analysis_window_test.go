@@ -15,11 +15,12 @@ func TestIntersectWindow_ClipsToFilter(t *testing.T) {
 	if empty {
 		t.Fatal("expected a non-empty intersection")
 	}
-	if !gotFrom.Equal(StartOfUTCDay(from)) {
-		t.Fatalf("from = %v", gotFrom)
+	// 24 Aug is a plant day: 23 Aug 21:00 UTC to 24 Aug 21:00 UTC.
+	if want := time.Date(2026, 8, 23, 21, 0, 0, 0, time.UTC); !gotFrom.Equal(want) {
+		t.Fatalf("from = %v, want %v", gotFrom, want)
 	}
-	if !gotUntil.Equal(StartOfUTCDay(to).Add(24 * time.Hour)) {
-		t.Fatalf("until = %v", gotUntil)
+	if want := time.Date(2026, 8, 24, 21, 0, 0, 0, time.UTC); !gotUntil.Equal(want) {
+		t.Fatalf("until = %v, want %v", gotUntil, want)
 	}
 }
 

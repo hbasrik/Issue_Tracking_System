@@ -75,13 +75,13 @@ export function formatDateRangeShort(
   if (!from || !to) return '';
   const tag = localeTag(locale);
   const dayMonth = (d: Date) =>
-    d.toLocaleDateString(tag, { day: 'numeric', month: 'short' });
+    d.toLocaleDateString(tag, { day: 'numeric', month: 'short', timeZone: 'UTC' });
   if (from.getTime() === to.getTime()) return dayMonth(from);
   const sameMonth =
     from.getUTCFullYear() === to.getUTCFullYear() &&
     from.getUTCMonth() === to.getUTCMonth();
   if (sameMonth) {
-    const month = to.toLocaleDateString(tag, { month: 'short' });
+    const month = to.toLocaleDateString(tag, { month: 'short', timeZone: 'UTC' });
     return `${from.getUTCDate()}–${to.getUTCDate()} ${month}`;
   }
   return `${dayMonth(from)}–${dayMonth(to)}`;
@@ -103,6 +103,7 @@ export function formatDateRangeFull(
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
+      timeZone: 'UTC',
     });
   if (from.getTime() === to.getTime()) return one(from);
   return `${one(from)} – ${one(to)}`;

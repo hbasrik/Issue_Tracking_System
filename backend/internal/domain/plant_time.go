@@ -41,3 +41,39 @@ func PlantDayEnd(day string) (time.Time, error) {
 	}
 	return start.AddDate(0, 0, 1), nil
 }
+
+// PlantCalendarDay is the plant calendar day (YYYY-MM-DD) an instant falls on.
+func PlantCalendarDay(t time.Time) string {
+	return t.In(mustPlantLocation()).Format(time.DateOnly)
+}
+
+// DateOnlyDay is the YYYY-MM-DD a date-only value carries. Date-only values
+// (Analysis from/to, compare windows) are UTC midnight of the chosen day, so
+// their UTC date is the day; never use it for a real instant.
+func DateOnlyDay(d time.Time) string {
+	return d.UTC().Format(time.DateOnly)
+}
+
+// DateOnly is the date-only value of a YYYY-MM-DD plant day (UTC midnight).
+func DateOnly(day string) (time.Time, error) {
+	return time.Parse(time.DateOnly, day)
+}
+
+// PlantDayBounds maps a date-only value to its plant day [start, end).
+func PlantDayBounds(d time.Time) (start, end time.Time) {
+	day := DateOnlyDay(d)
+	start, err := PlantDayStart(day)
+	if err != nil {
+		panic(err) // only a missing zone fails here; tzdata is embedded
+	}
+	end, _ = PlantDayEnd(day)
+	return start, end
+}
+
+func mustPlantLocation() *time.Location {
+	loc, err := PlantLocation()
+	if err != nil {
+		panic(err) // tzdata is embedded; this is a broken build
+	}
+	return loc
+}

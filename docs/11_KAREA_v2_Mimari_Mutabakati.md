@@ -768,9 +768,18 @@ kalıyordu.
   ayrı parametredir.
 - **Dışa aktarma:** CSV, ZIP ve yazdırma aynı aralıkla sunucudan tüm
   eşleşenleri çeker; yüklü sayfalarla sınırlı değildir.
-- **Bilinen sapma:** Analiz sayfasının `from` / `to` aralığı hâlâ UTC
-  gününe göre kesiyor (`IntersectWindow`, `StartOfUTCDay`, web
-  `issueCalendarDay`). Ayrı iş.
+- **Analiz de aynı kuralla (2026-10-08):** `from` / `to` tarih-only değer
+  (seçilen günün UTC gece yarısı) olarak taşınır; zaman sınırına yalnız
+  `PlantDayBounds` → `PlantDayStart` / `PlantDayEnd` ile çevrilir
+  (`InclusiveDateBounds`, `IntersectWindow`). `StartOfUTCDay` kaldırıldı.
+  Karşılaştırma penceresi tarih-only günlerle hesaplanır, varsayılan "son 7
+  gün" fabrika bugününe göre. Günlük seriler (açılan, kapanan, açık stok,
+  üretim) `AT TIME ZONE 'Europe/Istanbul'` ile gruplanır; haftalık/aylık
+  gruplama yok. RFC3339 bir an verilirse düştüğü fabrika günü alınır.
+  Web: analizden panoya drill-down `plantCalendarDay` ile; tarih-only
+  değerler (grafik günleri, aralık etiketleri) UTC'de biçimlenir, gün
+  kaymaz. Aynı aralıkta pano toplamı = analiz "Açılan hatalar" = günlük
+  kovaların toplamı; test bunu kilitler.
 
 ## Değişmeyen / Yeniden Kullanılacaklar
 

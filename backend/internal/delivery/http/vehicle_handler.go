@@ -128,7 +128,7 @@ func applyVehicleAnalysisStat(w http.ResponseWriter, r *http.Request, filter *do
 	}
 
 	today := domain.IstanbulDayStart(time.Now())
-	todayEnd := today.Add(24 * time.Hour)
+	todayEnd := today.AddDate(0, 0, 1)
 	switch stat {
 	case domain.VehicleAnalysisStatShippedToday:
 		from, until, empty := domain.IntersectWindow(af.From, af.To, today, todayEnd)

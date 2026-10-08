@@ -1,5 +1,6 @@
 import type { Issue } from './api';
 import type { MessageKey, Translate } from '../../../shared/i18n';
+import { plantCalendarDay } from '../../../shared/issueDateRange';
 
 /** Analysis KPI card drill-down on the Issues list. */
 export type AnalysisIssueStatKey = 'open_active' | 'completed';
@@ -22,10 +23,11 @@ export function isAnalysisIssueStatKey(
   return value === 'open_active' || value === 'completed';
 }
 
-function issueCalendarDay(issue: Issue): string | null {
+/** Plant day the issue was opened (Karar 31), matching the Analysis window. */
+export function issueCalendarDay(issue: Pick<Issue, 'IssueDate' | 'CreatedAt'>): string | null {
   const raw = issue.IssueDate || issue.CreatedAt;
   if (!raw) return null;
-  return raw.slice(0, 10);
+  return plantCalendarDay(new Date(raw)) || null;
 }
 
 function inInclusiveRange(day: string | null, from?: string, to?: string): boolean {

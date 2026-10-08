@@ -1089,6 +1089,34 @@ başlatılınca devreye girer.
   13, 14)", "2 open issue(s) remain (issue ids: 13, 14)", "1 depot-phase
   EoL item(s) incomplete").
 
+### A60. Analiz sayfası fabrika gününe göre kesiyor `[x]` — 2026-10-08
+- **Sorun:** Pano Europe/Istanbul gününe göre (A57), analiz UTC gününe göre
+  kesiyordu; aynı aralığa iki ekrandan bakınca farklı sayı çıkıyordu.
+- **Değişen:** `domain.InclusiveDateBounds` / `IntersectWindow`
+  `PlantDayBounds` (→ `PlantDayStart` / `PlantDayEnd`) kullanır;
+  `StartOfUTCDay` kaldırıldı; `IstanbulDayStart` `PlantCalendarDay` ile.
+  `compareWindows` tarih-only gün aritmetiği. Günlük gruplama dört sorguda
+  `AT TIME ZONE 'Europe/Istanbul'`. `parseDateParam` RFC3339 anı fabrika
+  gününe çevirir. `AnalysisRepo.pool` artık `dbExecutor` (test
+  transaction'ı verebilmek için; yapıcı aynı). Web: drill-down
+  `issueCalendarDay` → `plantCalendarDay`; `formatChartDay`,
+  `formatDateRangeShort/Full` UTC'de biçimler; analiz CSV dosya adı
+  fabrika günü. Karar 31 güncellendi.
+- **Önce / sonra (test API, `docs/screenshots/analysis-plant-day/`):**
+  15–16 Eylül pano 4 / analiz 3 → 4 / 4; 15 Eylül 2 / 1 → 2 / 2;
+  "15 Eylül'den" 22 / 20 → 22 / 22; "16 Eylül'e kadar" 5 / 6 → 5 / 5;
+  16 Eylül 2 / 2 → 2 / 2 (önce sayı tesadüfen aynıydı, küme yanlıştı:
+  yerel 02:00 kaydı dışarıda, ertesi günün 00:00'ı içerideydi). Tarayıcıda
+  pano sayacı = analiz CSV "Açılan hatalar" = iş durumu halkası = kümülatif
+  açılan = SQL.
+- **Kilit:** `postgres/analysis_board_parity_test.go` (pano satırı =
+  `Cards.OpenedIssues` = günlük kova toplamı, kovalar = pano satırlarının
+  fabrika günleri; eski kodda düştüğü `parity-test-on-old-code.txt`),
+  `http/day_range_parity_test.go` (iki ayrıştırıcı aynı anları verir),
+  `domain/analysis_window_test.go`, `shared/issueDateRange.selftest.ts`.
+- **Kapsam dışı:** Etkinlik sayfası `from` / `to`'yu istemciden RFC3339 an
+  olarak alır, gün kesmez; değişmedi.
+
 ### A59. Eski `templates-confirm` koşularının canlıdaki izi `[x]` — 2026-10-08
 - **Soru:** A58 öncesi betikler canlı `karea`ya yazıyor muydu, iz kaldı mı?
   Kontrol yalnız `karea_ro` ile SELECT

@@ -97,37 +97,27 @@ type AnalysisKPIs struct {
 
 const istanbulTZ = "Europe/Istanbul"
 
-// StartOfUTCDay truncates t to midnight UTC (calendar-day bound for filters).
-func StartOfUTCDay(t time.Time) time.Time {
-	y, m, d := t.UTC().Date()
-	return time.Date(y, m, d, 0, 0, 0, 0, time.UTC)
-}
-
-// IstanbulDayStart is local midnight in Europe/Istanbul for now.
+// IstanbulDayStart is the start of the plant day now falls on.
 func IstanbulDayStart(now time.Time) time.Time {
-	loc, err := time.LoadLocation(istanbulTZ)
+	day, err := DateOnly(PlantCalendarDay(now))
 	if err != nil {
-		loc = time.UTC
+		panic(err) // PlantCalendarDay always formats YYYY-MM-DD
 	}
-	n := now.In(loc)
-	return time.Date(n.Year(), n.Month(), n.Day(), 0, 0, 0, 0, loc)
+	start, _ := PlantDayBounds(day)
+	return start
 }
 
-// IntersectWindow clips an Istanbul (or other) [winFrom, winUntil) half-open
-// range with optional inclusive calendar From/To. empty is true when the
-// intersection has no duration.
+// IntersectWindow clips a [winFrom, winUntil) half-open range with optional
+// inclusive date-only From/To, cut on plant days (PlantDayBounds). empty is
+// true when the intersection has no duration.
 func IntersectWindow(from, to *time.Time, winFrom, winUntil time.Time) (clippedFrom, clippedUntil time.Time, empty bool) {
 	clippedFrom, clippedUntil = winFrom, winUntil
-	if from != nil {
-		if StartOfUTCDay(*from).After(clippedFrom) {
-			clippedFrom = StartOfUTCDay(*from)
-		}
+	fromTS, untilTS := InclusiveDateBounds(from, to)
+	if fromTS != nil && fromTS.After(clippedFrom) {
+		clippedFrom = *fromTS
 	}
-	if to != nil {
-		end := StartOfUTCDay(*to).Add(24 * time.Hour)
-		if end.Before(clippedUntil) {
-			clippedUntil = end
-		}
+	if untilTS != nil && untilTS.Before(clippedUntil) {
+		clippedUntil = *untilTS
 	}
 	if !clippedFrom.Before(clippedUntil) {
 		return clippedFrom, clippedUntil, true
@@ -135,16 +125,17 @@ func IntersectWindow(from, to *time.Time, winFrom, winUntil time.Time) (clippedF
 	return clippedFrom, clippedUntil, false
 }
 
-// InclusiveDateBounds maps optional inclusive calendar dates to [from, until)
-// timestamps. Nil inputs stay nil.
+// InclusiveDateBounds maps optional inclusive date-only From/To to the
+// [from, until) instants of those plant days, the same cut as the issue
+// list's opened_from / opened_to (Karar 31). Nil inputs stay nil.
 func InclusiveDateBounds(from, to *time.Time) (fromTS, untilTS *time.Time) {
 	if from != nil {
-		t := StartOfUTCDay(*from)
-		fromTS = &t
+		start, _ := PlantDayBounds(*from)
+		fromTS = &start
 	}
 	if to != nil {
-		t := StartOfUTCDay(*to).Add(24 * time.Hour)
-		untilTS = &t
+		_, end := PlantDayBounds(*to)
+		untilTS = &end
 	}
 	return fromTS, untilTS
 }

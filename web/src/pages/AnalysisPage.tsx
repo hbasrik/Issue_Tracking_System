@@ -55,6 +55,7 @@ import {
   type Station,
 } from '../lib/api';
 import { isAuthError } from '../../../shared/networkError';
+import { plantToday } from '../../../shared/issueDateRange';
 import { buildAnalysisCsv } from '../lib/analysisExport';
 import { AnalysisVinMultiSelect, type VinChip } from '../components/AnalysisVinMultiSelect';
 import { SeverityIndicator, severityFillColor } from '../components/SeverityIndicator';
@@ -764,7 +765,7 @@ export default function AnalysisPage() {
       const csv = buildAnalysisCsv(dash, applied, t);
       downloadBlob(
         new Blob([csv], { type: 'text/csv;charset=utf-8' }),
-        `karea-analysis-${new Date().toISOString().slice(0, 10)}.csv`,
+        `karea-analysis-${plantToday(new Date())}.csv`,
       );
     } catch {
       setExportError(t('analysis.exportCsvFailed'));
@@ -1754,10 +1755,11 @@ function sparkSeries(
   }));
 }
 
+/** Day buckets are plant days sent as UTC midnight; format in UTC so they never shift. */
 function formatChartDay(iso: string, locale: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso.slice(5, 10);
-  return d.toLocaleDateString(locale, { day: '2-digit', month: '2-digit' });
+  return d.toLocaleDateString(locale, { day: '2-digit', month: '2-digit', timeZone: 'UTC' });
 }
 
 function compareLabel(mode: string | undefined, t: ReturnType<typeof useI18n>['t']): string {

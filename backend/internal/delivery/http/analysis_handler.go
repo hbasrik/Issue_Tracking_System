@@ -90,10 +90,15 @@ func parseDateParam(raw string) (*time.Time, error) {
 	if raw == "" {
 		return nil, nil
 	}
-	if t, err := time.Parse("2006-01-02", raw); err == nil {
+	if t, err := domain.DateOnly(raw); err == nil {
 		return &t, nil
 	}
-	t, err := time.Parse(time.RFC3339, raw)
+	ts, err := time.Parse(time.RFC3339, raw)
+	if err != nil {
+		return nil, err
+	}
+	// An instant names the plant day it falls on, not its UTC date.
+	t, err := domain.DateOnly(domain.PlantCalendarDay(ts))
 	if err != nil {
 		return nil, err
 	}

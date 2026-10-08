@@ -15,7 +15,7 @@ import (
 // AnalysisRepo reads Analysis-tab metrics from the live tables so every
 // series can honor the same from/to (inclusive calendar day) filter.
 type AnalysisRepo struct {
-	pool *pgxpool.Pool
+	pool dbExecutor
 }
 
 // NewAnalysisRepo constructs an AnalysisRepo.
@@ -166,7 +166,7 @@ func intersectWindow(f domain.AnalysisFilter, winFrom, winUntil time.Time) (from
 func (r *AnalysisRepo) DailyPendingIssues(ctx context.Context, f domain.AnalysisFilter) ([]domain.DailyPendingIssue, error) {
 	b := bounds(f)
 	rows, err := r.pool.Query(ctx,
-		`SELECT date_trunc('day', i.issue_date AT TIME ZONE 'UTC')::date AS day,
+		`SELECT (i.issue_date AT TIME ZONE '`+domain.PlantTimeZone+`')::date AS day,
 		        count(*) FILTER (WHERE i.status IN ('OPEN','IN_PROGRESS','DONE'))::bigint
 		 `+issueJoin+issueWhere("i.issue_date")+`
 		 GROUP BY 1
@@ -192,7 +192,7 @@ func (r *AnalysisRepo) DailyPendingIssues(ctx context.Context, f domain.Analysis
 func (r *AnalysisRepo) CompletedIssuesDaily(ctx context.Context, f domain.AnalysisFilter) ([]domain.CompletedIssuesDaily, error) {
 	b := bounds(f)
 	rows, err := r.pool.Query(ctx,
-		`SELECT date_trunc('day', i.finish_date AT TIME ZONE 'UTC')::date AS day, count(*)
+		`SELECT (i.finish_date AT TIME ZONE '`+domain.PlantTimeZone+`')::date AS day, count(*)
 		 `+issueJoin+issueWhere("i.finish_date")+`
 		   AND i.finish_date IS NOT NULL
 		 GROUP BY 1 ORDER BY 1`, b.slice()...)
@@ -499,47 +499,43 @@ func compareWindows(f domain.AnalysisFilter) (primaryFrom, primaryTo time.Time, 
 	}
 	cmp.CompareMode = mode
 
-	from, until := domain.InclusiveDateBounds(f.From, f.To)
-	now := time.Now().UTC()
-	if until == nil {
-		u := domain.StartOfUTCDay(now).Add(24 * time.Hour)
-		until = &u
+	// Date-only arithmetic (UTC midnight values, whole days); bounds() turns
+	// the days into plant-day instants. Default: the 7 plant days to today.
+	if f.To != nil {
+		primaryTo, err = domain.DateOnly(domain.DateOnlyDay(*f.To))
+	} else {
+		primaryTo, err = domain.DateOnly(domain.PlantCalendarDay(time.Now()))
 	}
-	if from == nil {
-		fr := until.AddDate(0, 0, -7)
-		from = &fr
+	if err != nil {
+		return primaryFrom, primaryTo, cmp, err
 	}
-	dur := until.Sub(*from)
-	if dur <= 0 {
+	if f.From != nil {
+		primaryFrom, err = domain.DateOnly(domain.DateOnlyDay(*f.From))
+		if err != nil {
+			return primaryFrom, primaryTo, cmp, err
+		}
+	} else {
+		primaryFrom = primaryTo.AddDate(0, 0, -6)
+	}
+	days := int(primaryTo.Sub(primaryFrom).Hours()/24) + 1
+	if days <= 0 {
 		return primaryFrom, primaryTo, cmp, fmt.Errorf("empty primary window")
 	}
 
-	// Inclusive calendar ends: until is exclusive → last day is until-1ns day.
-	primaryFrom = domain.StartOfUTCDay(*from)
-	lastPrimary := until.Add(-time.Hour)
-	y, m, d := lastPrimary.UTC().Date()
-	primaryTo = time.Date(y, m, d, 0, 0, 0, 0, time.UTC)
-
-	var cFrom, cUntil time.Time
+	var cFrom time.Time
 	switch mode {
 	case "previous_day":
-		cUntil = *from
-		cFrom = cUntil.AddDate(0, 0, -1)
+		cFrom = primaryFrom.AddDate(0, 0, -1)
 	case "previous_week":
-		cUntil = *from
-		cFrom = cUntil.AddDate(0, 0, -7)
+		cFrom = primaryFrom.AddDate(0, 0, -7)
 	case "previous_month":
-		cUntil = *from
-		cFrom = cUntil.AddDate(0, -1, 0)
+		cFrom = primaryFrom.AddDate(0, -1, 0)
 	default: // previous_period
-		cUntil = *from
-		cFrom = cUntil.Add(-dur)
+		cFrom = primaryFrom.AddDate(0, 0, -days)
 	}
+	cTo := primaryFrom.AddDate(0, 0, -1)
 	cmp.From = &cFrom
-	toDay := cUntil.Add(-time.Hour)
-	cy, cm, cd := toDay.UTC().Date()
-	toInclusive := time.Date(cy, cm, cd, 0, 0, 0, 0, time.UTC)
-	cmp.To = &toInclusive
+	cmp.To = &cTo
 	return primaryFrom, primaryTo, cmp, nil
 }
 
@@ -591,7 +587,7 @@ func (r *AnalysisRepo) scanWorkAndStatus(ctx context.Context, f domain.AnalysisF
 func (r *AnalysisRepo) kpis(ctx context.Context, f domain.AnalysisFilter) (domain.AnalysisKPIs, error) {
 	var k domain.AnalysisKPIs
 	today := domain.IstanbulDayStart(time.Now())
-	todayEnd := today.Add(24 * time.Hour)
+	todayEnd := today.AddDate(0, 0, 1)
 	weekStart := today.AddDate(0, 0, -6)
 
 	shipped, err := r.countShipped(ctx, f, nil, nil)
@@ -1063,7 +1059,7 @@ func (r *AnalysisRepo) sparklines(ctx context.Context, f domain.AnalysisFilter) 
 
 	b := bounds(f)
 	rows, err := r.pool.Query(ctx,
-		`SELECT date_trunc('day', i.issue_date AT TIME ZONE 'UTC')::date AS day, count(*)
+		`SELECT (i.issue_date AT TIME ZONE '`+domain.PlantTimeZone+`')::date AS day, count(*)
 		 `+issueJoin+issueWhere("i.issue_date")+`
 		 GROUP BY 1 ORDER BY 1`, b.slice()...)
 	if err != nil {
@@ -1082,7 +1078,7 @@ func (r *AnalysisRepo) sparklines(ctx context.Context, f domain.AnalysisFilter) 
 	}
 
 	vrows, err := r.pool.Query(ctx, `
-		SELECT date_trunc('day', v.created_at AT TIME ZONE 'UTC')::date AS day, count(*)
+		SELECT (v.created_at AT TIME ZONE '`+domain.PlantTimeZone+`')::date AS day, count(*)
 		  FROM vehicles v
 		  `+vehicleEOLJoin+`
 		 WHERE v.current_global_status <> 'PLANNED'
