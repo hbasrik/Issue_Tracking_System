@@ -14,6 +14,7 @@ export type ChecklistSectionCatalogEntry = {
   key: string;
   sort: number;
   titleKey: MessageKey;
+  formRef?: string;
 };
 
 /**
@@ -43,11 +44,36 @@ export const SHIPMENT_CHECKLIST_SECTIONS: ChecklistSectionCatalogEntry[] = [
   { key: 'final_adjust', sort: 60, titleKey: 'checklist.section.final_adjust' },
 ];
 
+/**
+ * EoL sections follow the printed forms (docs/21): KY.FR-09 for the branch
+ * phase (10-50), KY.FR-19 for the depot phase (110-190). The paper splits
+ * "Dış" around "Gap & flush", so two keys share one title. Seed 03 writes
+ * these keys and sorts; change them together. formRef tells the two apart
+ * in the admin picker.
+ */
+export const EOL_CHECKLIST_SECTIONS: ChecklistSectionCatalogEntry[] = [
+  { key: 'eol_entry', sort: 10, titleKey: 'checklist.section.eol_entry', formRef: 'KY.FR-09 E001–E002' },
+  { key: 'eol_exterior', sort: 20, titleKey: 'checklist.section.eol_exterior', formRef: 'KY.FR-09 E003–E006' },
+  { key: 'eol_gap_flush', sort: 30, titleKey: 'checklist.section.eol_gap_flush', formRef: 'KY.FR-09 E007–E010' },
+  { key: 'eol_exterior_2', sort: 40, titleKey: 'checklist.section.eol_exterior', formRef: 'KY.FR-09 E011–E018' },
+  { key: 'eol_interior', sort: 50, titleKey: 'checklist.section.eol_interior', formRef: 'KY.FR-09 E019–E039' },
+  { key: 'final_identity', sort: 110, titleKey: 'checklist.section.final_identity', formRef: 'KY.FR-19 1–5' },
+  { key: 'final_exterior', sort: 120, titleKey: 'checklist.section.final_exterior', formRef: 'KY.FR-19 6–14' },
+  { key: 'final_doors', sort: 130, titleKey: 'checklist.section.final_doors', formRef: 'KY.FR-19 15–20' },
+  { key: 'final_interior', sort: 140, titleKey: 'checklist.section.final_interior', formRef: 'KY.FR-19 21–27' },
+  { key: 'final_mechanical', sort: 150, titleKey: 'checklist.section.final_mechanical', formRef: 'KY.FR-19 28–34' },
+  { key: 'final_electrical', sort: 160, titleKey: 'checklist.section.final_electrical', formRef: 'KY.FR-19 35–42' },
+  { key: 'final_function', sort: 170, titleKey: 'checklist.section.final_function', formRef: 'KY.FR-19 46–49' },
+  { key: 'final_road_test', sort: 180, titleKey: 'checklist.section.final_road_test', formRef: 'KY.FR-19 50–54' },
+  { key: 'final_shipment', sort: 190, titleKey: 'checklist.section.final_shipment', formRef: 'KY.FR-19 55–59' },
+];
+
 const KNOWN_TITLE: Record<string, MessageKey> = Object.fromEntries(
-  [...TEST_CHECKLIST_SECTIONS, ...SHIPMENT_CHECKLIST_SECTIONS].map((e) => [
-    e.key,
-    e.titleKey,
-  ]),
+  [
+    ...TEST_CHECKLIST_SECTIONS,
+    ...SHIPMENT_CHECKLIST_SECTIONS,
+    ...EOL_CHECKLIST_SECTIONS,
+  ].map((e) => [e.key, e.titleKey]),
 );
 
 export function sectionsForTemplateType(
@@ -56,6 +82,7 @@ export function sectionsForTemplateType(
   const t = type.toUpperCase();
   if (t === 'TEST') return TEST_CHECKLIST_SECTIONS;
   if (t === 'SHIPMENT') return SHIPMENT_CHECKLIST_SECTIONS;
+  if (t === 'EOL') return EOL_CHECKLIST_SECTIONS;
   return [];
 }
 
