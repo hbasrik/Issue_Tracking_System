@@ -721,6 +721,27 @@ kalıyordu.
   maddeler" (bölümsüz) yalnız admin'in bölüm vermeden eklediği maddeler
   için kalır. Kalite kararı gelince bu iki bölüm boşalır ve katalogdan
   çıkar.
+- **Cevap, verildiği formun kopyasını taşır (2026-10-08, migration 0042):**
+  Kabul kriteri, kontrol yöntemi ve form revizyonu şablon maddesinde durur;
+  kalite ekibi formu revize edince geçmiş cevaplar bugünün metnini
+  gösterirdi. `checklist_item_progress` artık üçünün kopyasını
+  (`acceptance_criterion_snapshot`, `control_method_snapshot`,
+  `form_revision_snapshot`) ve kopyanın zamanını (`criteria_snapshot_at`)
+  taşır.
+  - **Ne zaman:** sunucu, PENDING olmayan **her** cevapta, cevabı yazan
+    aynı UPDATE içinde şablondan kopyalar; istemcinin gönderdiğine
+    güvenilmez. Madde metni (`item_text_snapshot`, 0020) da aynı kurala
+    geçer (bugün yalnız ilk cevapta kopyalanıyor). Cevapla kopya
+    arasındaki yarış kabul edilmiştir.
+  - **Kaynak kuralı:** cevaplıysa kopya, PENDING ise şablon. Açık kart her
+    zaman şablonu gösterir; baskı cevaplı maddede revizyonu kopyadan okur.
+  - **Kopyasız eski cevaplar** (`criteria_snapshot_at` NULL) kriter
+    göstermez; şablona düşülmez, çünkü bu tam olarak düzeltilen yanlış
+    tarihtir. Geriye dönük doldurma yok.
+  - Damga dolu, kopya NULL: "formda yoktu". Damgasız kopya
+    `chk_criteria_snapshot_stamped` ile reddedilir.
+  - Dört kolon donmuş maddede korunan cevabın parçasıdır (0040 tetikleyici
+    listesi genişledi; hangi maddenin ne zaman donduğu değişmedi).
 
 ## Değişmeyen / Yeniden Kullanılacaklar
 

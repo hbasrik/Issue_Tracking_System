@@ -1173,8 +1173,22 @@ başlatılınca devreye girer.
   yöntem varsa yalnız bilgi ikonu. ChecklistPrint her maddenin altına
   dolu alanları basıyor. Test/Sevk ekranları, cevap/not/fotoğraf/kaydetme
   ve 0040 değişmedi. Kanıt: `docs/screenshots/checklist-criteria/`.
-- **Karar bekliyor `[ ]` — donmuş kartta kriter:** donmuş EOL kartı
-  kapalı kalıyor ve şu an ne ikon ne kriter gösteriyor.
+- **Donmuş kartta kriter `[x]` (karar 2026-10-08):** donmuş EOL kartı
+  olduğu gibi kalır: kapalı, ne ikon ne kriter.
+- **Cevapta kriter kopyası `[~]` (2026-10-08, docs/11 Karar 30):**
+  - Migration 0042 yazıldı, canlıya UYGULANMADI (onay bekliyor). Dört
+    nullable kolon (`acceptance_criterion_snapshot`,
+    `control_method_snapshot`, `form_revision_snapshot`,
+    `criteria_snapshot_at`), `chk_criteria_snapshot_stamped`, 0040
+    tetikleyicisinin korunan listesine dört kolon. Geriye dönük doldurma
+    yok; kesinti gerekmez (önce migration, sonra kod).
+  - Test DB'de up/down/up/up: down sonrası `fn_enforce_checklist_frozen`
+    md5'i 0041 durumuyla aynı (b1b936d1…), donmuş maddede yalnız kopya
+    kolonunu değiştiren UPDATE reddediliyor, açık maddede geçiyor. Kanıt:
+    `docs/screenshots/migration-0042/verify-output.txt`.
+  - **Bekleyen `[ ]`:** SaveResult her cevapta kopyalar (madde metni ayrı
+    commit + ayrı test), API cevaplı maddede kopyayı döndürür, web / mobil /
+    baskı kaynak kuralı, seed 06 yardımcıları kopya + damga yazar.
 - **Kalite ekibine:** belirsiz sekiz eşleşme; Araç Motoru ve Yağmur Testi
   dört formun hiçbirinde yok (su sızdırmazlık kontrolü tamamen düşüyor).
 

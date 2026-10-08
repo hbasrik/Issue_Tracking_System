@@ -408,10 +408,27 @@ CREATE TABLE checklist_item_progress (
 
     related_issue_id  BIGINT REFERENCES issue_list(id),
 
+    -- migration 0042 (docs/11 Karar 30): copies of the template item's
+    -- acceptance_criterion / control_method / form_revision, taken by the
+    -- server on every non-PENDING answer. criteria_snapshot_at NULL = never
+    -- copied (PENDING or answered before 0042): show nothing, never fall
+    -- back to the template. No backfill.
+    acceptance_criterion_snapshot TEXT,
+    control_method_snapshot       TEXT,
+    form_revision_snapshot        TEXT,
+    criteria_snapshot_at          TIMESTAMPTZ,
+
     created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
 
     UNIQUE (vin, check_item_id),
+
+    CONSTRAINT chk_criteria_snapshot_stamped CHECK (
+        criteria_snapshot_at IS NOT NULL
+        OR (acceptance_criterion_snapshot IS NULL
+            AND control_method_snapshot IS NULL
+            AND form_revision_snapshot IS NULL)
+    ),
 
     -- Mandatory-description rule (v1 PRD FR-3.3, carried into v2).
     -- Updated 2026-08-17: this only applies to EOL items — Test and
@@ -984,6 +1001,11 @@ CREATE TRIGGER trg_enforce_eol_deliver
 --     eklenemez; degismeyen UPDATE gecer, DELETE kapsam disi.
 --   Hicbir satir degismez; down dosyasi iki tetikleyici + dort fonksiyonu
 --   kaldirir.
+-- 2026-10-08 (migration 0042): fn_enforce_checklist_frozen korunan cevap
+--   listesine acceptance_criterion_snapshot, control_method_snapshot,
+--   form_revision_snapshot, criteria_snapshot_at eklendi; donma kurali
+--   (fn_checklist_item_frozen_reason) degismedi. Down 0040 govdesini birebir
+--   geri yazar.
 
 -- --- fn_check_shipment_completion — KALDIRILDI ---------------------------
 -- 2026-08-31 (migration 0013): sevk/musteri checklist'i artik otomatik
