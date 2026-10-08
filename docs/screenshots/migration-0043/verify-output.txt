@@ -1,0 +1,30 @@
+== build karea_m0043_test: migrations 0001-0042 + seeds 01-06
+  42 migrations, last 0042_checklist_criteria_snapshot.up.sql
+
+== before 0043
+  comment: Item text frozen at first non-PENDING evaluation. NULL for PENDING and legacy rows; UI falls back to checklist_template_items.item_text.
+  checklist_item_progress: 3474 rows md5 1e59852cd4b233a672ecb7af3678f752
+  [PASS] comment is the 0020 text
+
+== up (psql -1)
+  comment: Item text copied from the template item on every non-PENDING answer; PENDING keeps the last copy. NULL for never-answered and legacy rows; UI falls back to checklist_template_items.item_text.
+    -COMMENT ON COLUMN public.checklist_item_progress.item_text_snapshot IS 'Item text frozen at first non-PENDING evaluation. NULL for PENDING and legacy rows; UI falls back to checklist_template_items.item_text.';
+    +COMMENT ON COLUMN public.checklist_item_progress.item_text_snapshot IS 'Item text copied from the template item on every non-PENDING answer; PENDING keeps the last copy. NULL for never-answered and legacy rows; UI falls back to checklist_template_items.item_text.';
+  [PASS] comment is the new text
+  [PASS] schema dump differs only in that comment line
+  [PASS] rows unchanged — 3474 rows md5 1e59852cd4b233a672ecb7af3678f752
+
+== down (psql -1)
+  [PASS] comment is the 0020 text again
+  [PASS] schema dump byte-identical to before 0043
+  [PASS] rows unchanged
+  [PASS] down twice: still identical
+
+== up again, up twice
+  [PASS] up again: same schema as the first up
+  [PASS] up twice: unchanged
+  [PASS] rows unchanged after up/down/up/up
+
+  dropped karea_m0043_test
+
+RESULT: ALL PASS
