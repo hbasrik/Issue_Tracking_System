@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"encoding/json"
 	"strings"
 	"testing"
 
@@ -124,6 +125,81 @@ func TestSaveResult_CopiesCriteriaOnEveryAnswer(t *testing.T) {
 		t.Errorf("PENDING must keep the copy, got %s", pending)
 	}
 	t.Logf("back to PENDING:   %s", pending)
+}
+
+// TestListItems_AnsweredCriteriaSource: the template fields always carry the
+// current template values; AnsweredCriteria is the answer's copy, absent on
+// PENDING and on an answer saved without a copy (pre-0042). Rolled back.
+func TestListItems_AnsweredCriteriaSource(t *testing.T) {
+	ctx, tx := stageTestTx(t)
+	vin, itemID := tempCriteriaItem(ctx, t, tx, 9204, strp("Kriter A"), strp("Yöntem A"), strp("Rev. A"))
+	legacyVIN, legacyID := tempCriteriaItem(ctx, t, tx, 9205, strp("Kriter L"), strp("Yöntem L"), nil)
+	repo := NewChecklistProgressRepo(nil)
+	view := func(v string, id int) domain.ChecklistItemView {
+		t.Helper()
+		var tid int
+		if err := tx.QueryRow(ctx, `SELECT template_id FROM checklist_template_items WHERE id = $1`, id).Scan(&tid); err != nil {
+			t.Fatal(err)
+		}
+		items, err := repo.ListItemsWithProgress(ctx, v, domain.ChecklistTypeEOL, tid)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, it := range items {
+			if it.ItemID == id {
+				return it
+			}
+		}
+		t.Fatalf("item %d missing", id)
+		return domain.ChecklistItemView{}
+	}
+	js := func(it domain.ChecklistItemView) string {
+		b, _ := json.Marshal(map[string]any{
+			"Status": it.Status, "AcceptanceCriterion": it.AcceptanceCriterion, "ControlMethod": it.ControlMethod,
+			"FormRevision": it.FormRevision, "AnsweredCriteria": it.AnsweredCriteria,
+		})
+		return string(b)
+	}
+
+	pending := view(vin, itemID)
+	if pending.AnsweredCriteria != nil || !eqp(pending.AcceptanceCriterion, strp("Kriter A")) ||
+		!eqp(pending.FormRevision, strp("Rev. A")) {
+		t.Errorf("PENDING: %s", js(pending))
+	}
+	t.Logf("PENDING:               %s", js(pending))
+
+	if err := repo.SaveResult(ctx, domain.ChecklistProgress{
+		VIN: vin, ChecklistType: domain.ChecklistTypeEOL, CheckItemID: itemID,
+		CheckStatus: domain.CheckStatusOK, CheckerID: ptrInt(1),
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := tx.Exec(ctx, `UPDATE checklist_template_items
+		SET acceptance_criterion = 'Kriter B', control_method = NULL, form_revision = 'Rev. B' WHERE id = $1`, itemID); err != nil {
+		t.Fatal(err)
+	}
+	answered := view(vin, itemID)
+	a := answered.AnsweredCriteria
+	if a == nil || !eqp(a.AcceptanceCriterion, strp("Kriter A")) || !eqp(a.ControlMethod, strp("Yöntem A")) ||
+		!eqp(a.FormRevision, strp("Rev. A")) || a.CopiedAt.IsZero() {
+		t.Errorf("answered copy: %s", js(answered))
+	}
+	if !eqp(answered.AcceptanceCriterion, strp("Kriter B")) || answered.ControlMethod != nil ||
+		!eqp(answered.FormRevision, strp("Rev. B")) {
+		t.Errorf("template fields must be current: %s", js(answered))
+	}
+	t.Logf("OK, template changed:  %s", js(answered))
+
+	// An answer stored without a copy, as before 0042.
+	if _, err := tx.Exec(ctx, `UPDATE checklist_item_progress SET check_status = 'OK', check_date = now()
+		WHERE vin = $1 AND check_item_id = $2`, legacyVIN, legacyID); err != nil {
+		t.Fatal(err)
+	}
+	legacy := view(legacyVIN, legacyID)
+	if legacy.AnsweredCriteria != nil || !eqp(legacy.AcceptanceCriterion, strp("Kriter L")) {
+		t.Errorf("legacy answer: %s", js(legacy))
+	}
+	t.Logf("OK without copy:       %s", js(legacy))
 }
 
 // TestSaveResult_NoCriteriaStampsNullCopy: an item whose form gives no
