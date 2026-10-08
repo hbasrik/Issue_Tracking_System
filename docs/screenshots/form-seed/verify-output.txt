@@ -1,0 +1,188 @@
+== 1. karea_formseed_test: migrations + seeds 01, 02, 03, 05 + reset_and_load_vins.sql
+  built: 41 migrations, schema version file 0041_checklist_item_form_identity.up.sql
+
+-- templates and item counts
+  3 EOL "Default EoL Template (Branch + Depot)" items=104; 4 SHIPMENT "Default Customer Vehicle Checklist" items=46; 5 TEST "Default Test Checklist" items=43
+  [PASS] EOL template has 104 items — 104
+  [PASS] all active
+  [PASS] item_no 1..104 without gaps
+  [PASS] BRANCH = item_no 1-46
+  [PASS] DEPOT = item_no 47-104
+
+-- full EOL listing (item_no | phase | section | sort | form | text)
+    1 | BRANCH | eol_entry        Giriş            |  10 | KY.FR-09 E001 | Araç kimliği ve varyant
+    2 | BRANCH | eol_entry        Giriş            |  10 | KY.FR-09 E002 | Üretim teslim kaydı
+    3 | BRANCH | eol_exterior     Dış              |  20 | KY.FR-09 E003 | Genel boya ve kozmetik kontrolü
+    4 | BRANCH | eol_exterior     Dış              |  20 | KY.FR-09 E004 | Sol kapı contası
+    5 | BRANCH | eol_exterior     Dış              |  20 | KY.FR-09 E005 | Sağ kapı contası
+    6 | BRANCH | eol_exterior     Dış              |  20 | KY.FR-09 E006 | Bagaj kapağı contası
+    7 | BRANCH | eol_gap_flush    Gap & flush      |  30 | KY.FR-09 E007 | Sol kapı gap / flush
+    8 | BRANCH | eol_gap_flush    Gap & flush      |  30 | KY.FR-09 E008 | Sağ kapı gap / flush
+    9 | BRANCH | eol_gap_flush    Gap & flush      |  30 | KY.FR-09 E009 | Bagaj kapağı gap / flush
+   10 | BRANCH | eol_gap_flush    Gap & flush      |  30 | KY.FR-09 E010 | Ön kaput gap / flush
+   11 | BRANCH | eol_exterior_2   Dış              |  40 | KY.FR-09 E011 | Sol / sağ ön çamurluk kaplamaları
+   12 | BRANCH | eol_exterior_2   Dış              |  40 | KY.FR-09 E012 | Sol / sağ arka çamurluk kaplamaları
+   13 | BRANCH | eol_exterior_2   Dış              |  40 | KY.FR-09 E013 | Sol / sağ far hizası ve çerçeveleri
+   14 | BRANCH | eol_exterior_2   Dış              |  40 | KY.FR-09 E014 | Sol / sağ dış ayna gövdesi
+   15 | BRANCH | eol_exterior_2   Dış              |  40 | KY.FR-09 E015 | Sol / sağ cam çerçevesi ve çıtaları
+   16 | BRANCH | eol_exterior_2   Dış              |  40 | KY.FR-09 E016 | Sol / sağ ayna kapağı yapışması
+   17 | BRANCH | eol_exterior_2   Dış              |  40 | KY.FR-09 E017 | Arka kamera fiziksel montajı
+   18 | BRANCH | eol_exterior_2   Dış              |  40 | KY.FR-09 E018 | Araç dışı logolar
+   19 | BRANCH | eol_interior     İç               |  50 | KY.FR-09 E019 | Ön konsol / ekran / havalandırma çerçeveleri
+   20 | BRANCH | eol_interior     İç               |  50 | KY.FR-09 E020 | Orta konsol ve konsol kapakları
+   21 | BRANCH | eol_interior     İç               |  50 | KY.FR-09 E021 | Sol kapı iç döşemesi
+   22 | BRANCH | eol_interior     İç               |  50 | KY.FR-09 E022 | Sağ kapı iç döşemesi
+   23 | BRANCH | eol_interior     İç               |  50 | KY.FR-09 E023 | Tavan döşemesi
+   24 | BRANCH | eol_interior     İç               |  50 | KY.FR-09 E024 | Sol iç yan döşeme
+   25 | BRANCH | eol_interior     İç               |  50 | KY.FR-09 E025 | Sağ iç yan döşeme
+   26 | BRANCH | eol_interior     İç               |  50 | KY.FR-09 E026 | Bagaj iç döşemesi / taban
+   27 | BRANCH | eol_interior     İç               |  50 | KY.FR-09 E027 | Taban döşemesi / eşik kaplamaları
+   28 | BRANCH | eol_interior     İç               |  50 | KY.FR-09 E028 | Araç içi klips, kapak ve tapalar
+   29 | BRANCH | eol_interior     İç               |  50 | KY.FR-09 E029 | Bagaj içi yapıştırıcı / sızdırmazlık uygulaması
+   30 | BRANCH | eol_interior     İç               |  50 | KY.FR-09 E030 | Bagaj amortisörleri ve çevre boyası
+   31 | BRANCH | eol_interior     İç               |  50 | KY.FR-09 E031 | Sürücü / yolcu koltukları ve yan kapakları
+   32 | BRANCH | eol_interior     İç               |  50 | KY.FR-09 E032 | Sol ön konsol alt kapağı
+   33 | BRANCH | eol_interior     İç               |  50 | KY.FR-09 E033 | Sağ ön konsol alt kapağı
+   34 | BRANCH | eol_interior     İç               |  50 | KY.FR-09 E034 | İç dikiz aynası
+   35 | BRANCH | eol_interior     İç               |  50 | KY.FR-09 E035 | Sol / sağ emniyet kemeri ve askıları
+   36 | BRANCH | eol_interior     İç               |  50 | KY.FR-09 E036 | Araç kimlik kartı ve tanımlama etiketleri
+   37 | BRANCH | eol_interior     İç               |  50 | KY.FR-09 E037 | Bagaj kapağı iç yüzeyi ve kaplamaları
+   38 | BRANCH | eol_interior     İç               |  50 | KY.FR-09 E038 | Direksiyon / anahtar üzeri logo
+   39 | BRANCH | eol_interior     İç               |  50 | KY.FR-09 E039 | Sol / sağ ayna iç kapakları
+   40 | BRANCH | -                Diğer maddeler   |   - | -             | Araç Motoru
+   41 | BRANCH | -                Diğer maddeler   |   - | -             | Batarya
+   42 | BRANCH | -                Diğer maddeler   |   - | -             | Süspansiyon Testi
+   43 | BRANCH | -                Diğer maddeler   |   - | -             | Fren/El Testi
+   44 | BRANCH | -                Diğer maddeler   |   - | -             | Far Ayarı
+   45 | BRANCH | -                Diğer maddeler   |   - | -             | Rot Balans
+   46 | BRANCH | -                Diğer maddeler   |   - | -             | Sürüş
+   47 | DEPOT  | final_identity   Kimlik & Evrak   | 110 | KY.FR-19 1    | Şasi ve seri numarası okunaklı ve doğru
+   48 | DEPOT  | final_identity   Kimlik & Evrak   | 110 | KY.FR-19 2    | Model ve versiyon etiketi doğru
+   49 | DEPOT  | final_identity   Kimlik & Evrak   | 110 | KY.FR-19 3    | Sevkiyat evrakları, irsaliye ve teslim formu hazır
+   50 | DEPOT  | final_identity   Kimlik & Evrak   | 110 | KY.FR-19 4    | Kullanım kılavuzu ve garanti dokümanı mevcut
+   51 | DEPOT  | final_identity   Kimlik & Evrak   | 110 | KY.FR-19 5    | Anahtar, uzaktan kumanda ve aksesuar seti tam
+   52 | DEPOT  | final_exterior   Dış Görünüş      | 120 | KY.FR-19 6    | Boya yüzeyi homojen, portakal kabuğu, akma ve kabarcık yok
+   53 | DEPOT  | final_exterior   Dış Görünüş      | 120 | KY.FR-19 7    | Çizik, göçük ve deformasyon yok
+   54 | DEPOT  | final_exterior   Dış Görünüş      | 120 | KY.FR-19 8    | Keskin kenar ve çapak yok
+   55 | DEPOT  | final_exterior   Dış Görünüş      | 120 | KY.FR-19 9    | Panel boşlukları dengeli ve simetrik
+   56 | DEPOT  | final_exterior   Dış Görünüş      | 120 | KY.FR-19 10   | Logolar ve etiketler düzgün yapışmış ve hizalı
+   57 | DEPOT  | final_exterior   Dış Görünüş      | 120 | KY.FR-19 11   | Cam ve pleksi yüzeylerde çatlak veya kırık yok
+   58 | DEPOT  | final_exterior   Dış Görünüş      | 120 | KY.FR-19 12   | Silecekler ve cam suyu sistemi tam fonksiyonlu çalışıyor
+   59 | DEPOT  | final_exterior   Dış Görünüş      | 120 | KY.FR-19 13   | Aynalar sorunsuz ayarlanabiliyor
+   60 | DEPOT  | final_exterior   Dış Görünüş      | 120 | KY.FR-19 14   | Far konumlandırması
+   61 | DEPOT  | final_doors      Kapılar          | 130 | KY.FR-19 15   | Kapılar düzgün kapanıyor ve açılıyor
+   62 | DEPOT  | final_doors      Kapılar          | 130 | KY.FR-19 16   | Cam açma ve kapama mekanizmaları sorunsuz çalışıyor
+   63 | DEPOT  | final_doors      Kapılar          | 130 | KY.FR-19 17   | Kapı menteşe bağlantıları sağlam ve gevşeklik yok
+   64 | DEPOT  | final_doors      Kapılar          | 130 | KY.FR-19 18   | Kapı kilit mekanizması çalışıyor
+   65 | DEPOT  | final_doors      Kapılar          | 130 | KY.FR-19 19   | Kapı fitilleri düzgün ve kopuk değil
+   66 | DEPOT  | final_doors      Kapılar          | 130 | KY.FR-19 20   | Kapı boşluk ve hiza uyumu standartlar dahilinde
+   67 | DEPOT  | final_interior   İç Donanım       | 140 | KY.FR-19 21   | Koltuklar sabit ve sağlam
+   68 | DEPOT  | final_interior   İç Donanım       | 140 | KY.FR-19 22   | Emniyet kemerleri mevcut ve mekanizması çalışır durumda
+   69 | DEPOT  | final_interior   İç Donanım       | 140 | KY.FR-19 23   | Trim parçalarında kırık ve çatlak yok
+   70 | DEPOT  | final_interior   İç Donanım       | 140 | KY.FR-19 24   | Keskin kenar ve dışarı çıkan vida yok
+   71 | DEPOT  | final_interior   İç Donanım       | 140 | KY.FR-19 25   | Klima ve havalandırma sistemi fonksiyonel çalışıyor
+   72 | DEPOT  | final_interior   İç Donanım       | 140 | KY.FR-19 26   | Multimedya ve bilgi ekranları sorunsuz çalışıyor
+   73 | DEPOT  | final_interior   İç Donanım       | 140 | KY.FR-19 27   | Pedallar, kollar ve mandallar serbest hareket ediyor
+   74 | DEPOT  | final_mechanical Mekanik          | 150 | KY.FR-19 28   | Tekerlek bijonları sabit ve gevşeklik yok
+   75 | DEPOT  | final_mechanical Mekanik          | 150 | KY.FR-19 29   | Lastiklerde hasar yok ve basınç seviyeleri uygun
+   76 | DEPOT  | final_mechanical Mekanik          | 150 | KY.FR-19 30   | Süspansiyon bağlantılarında gevşeklik yok
+   77 | DEPOT  | final_mechanical Mekanik          | 150 | KY.FR-19 31   | Direksiyon boşluğu standart limitler dahilinde
+   78 | DEPOT  | final_mechanical Mekanik          | 150 | KY.FR-19 32   | Fren sistemi statik olarak çalışıyor
+   79 | DEPOT  | final_mechanical Mekanik          | 150 | KY.FR-19 33   | Fren hortum ve hatlarında sıvı kaçağı yok
+   80 | DEPOT  | final_mechanical Mekanik          | 150 | KY.FR-19 34   | Alt takımda sürtme ve temas izi yok
+   81 | DEPOT  | final_electrical Elektrik         | 160 | KY.FR-19 35   | Kontak ve ana güç sistemi çalışıyor
+   82 | DEPOT  | final_electrical Elektrik         | 160 | KY.FR-19 36   | Kısa ve uzun farlar çalışıyor
+   83 | DEPOT  | final_electrical Elektrik         | 160 | KY.FR-19 37   | Sağ ve sol sinyaller çalışıyor
+   84 | DEPOT  | final_electrical Elektrik         | 160 | KY.FR-19 38   | Stop lambaları çalışıyor
+   85 | DEPOT  | final_electrical Elektrik         | 160 | KY.FR-19 39   | Geri vites ikaz sistemi çalışıyor
+   86 | DEPOT  | final_electrical Elektrik         | 160 | KY.FR-19 40   | Korna ve dış uyarı sesi çalışıyor
+   87 | DEPOT  | final_electrical Elektrik         | 160 | KY.FR-19 41   | Gösterge paneli uyarı ışıkları eksiksiz çalışıyor
+   88 | DEPOT  | final_electrical Elektrik         | 160 | KY.FR-19 42   | Şarj soketi ve koruyucu kapağı sağlam
+   89 | DEPOT  | final_function   Fonksiyon        | 170 | KY.FR-19 46   | İleri ve geri hareket komutu doğru
+   90 | DEPOT  | final_function   Fonksiyon        | 170 | KY.FR-19 47   | Hızlanma tepkisi standartlara uygun
+   91 | DEPOT  | final_function   Fonksiyon        | 170 | KY.FR-19 48   | Rejeneratif ve elektronik frenleme normal
+   92 | DEPOT  | final_function   Fonksiyon        | 170 | KY.FR-19 49   | Park freni sistemi çalışıyor
+   93 | DEPOT  | final_road_test  Yol Testi        | 180 | KY.FR-19 50   | Düz yolda doğrusal ilerleme sağlanıyor
+   94 | DEPOT  | final_road_test  Yol Testi        | 180 | KY.FR-19 51   | Frenleme sırasında araca sapma etkisi yok
+   95 | DEPOT  | final_road_test  Yol Testi        | 180 | KY.FR-19 52   | Dönüşlerde anormal mekanik ses yok
+   96 | DEPOT  | final_road_test  Yol Testi        | 180 | KY.FR-19 53   | Titreşim ve rezonans değerleri standartlar dahilinde
+   97 | DEPOT  | final_road_test  Yol Testi        | 180 | KY.FR-19 54   | Sürüş sırasında panelde uyarı veya arıza ışığı yanmıyor
+   98 | DEPOT  | final_shipment   Sevkiyat         | 190 | KY.FR-19 55   | Araç iç ve dış temizliği sevk standartlarına uygun
+   99 | DEPOT  | final_shipment   Sevkiyat         | 190 | KY.FR-19 56   | Koruyucu ambalaj ve kaplama doğru uygulanmış
+  100 | DEPOT  | final_shipment   Sevkiyat         | 190 | KY.FR-19 57   | Sevkiyat etiketi ve yönlendirme işaretleri uygun
+  101 | DEPOT  | final_shipment   Sevkiyat         | 190 | KY.FR-19 58   | Şarj seviyesi son kullanıcı teslimatı için yeterli seviyede
+  102 | DEPOT  | final_shipment   Sevkiyat         | 190 | KY.FR-19 59   | Odo kontrol
+  103 | DEPOT  | -                Diğer maddeler   |   - | -             | Bumpy Road
+  104 | DEPOT  | -                Diğer maddeler   |   - | -             | Yağmur Testi
+
+-- form items vs docs/21 (text, kabul kriteri, yöntem, bölüm, form_code, ref, seed_key, phase)
+  [PASS] 95 form items — 95
+  [PASS] docs/21 has 95 rows (39 + 56) — 95
+  [PASS] every form item equals docs/21 field by field (95 x 9 fields) — 0 difference(s)
+  [PASS] KY.FR-19 acceptance_criterion NULL (Gereklilik empty) — 56/56
+  [PASS] KY.FR-09 acceptance_criterion filled — 39/39
+  [PASS] KY.FR-19 refs 1-42, 46-59 (43-45 absent on paper)
+
+-- sections: paper order, two Dış keys, titles in both languages
+   10 eol_entry        BRANCH items 1-2 (2) tr="Giriş" en="Entry"
+   20 eol_exterior     BRANCH items 3-6 (4) tr="Dış" en="Exterior"
+   30 eol_gap_flush    BRANCH items 7-10 (4) tr="Gap & flush" en="Gap & flush"
+   40 eol_exterior_2   BRANCH items 11-18 (8) tr="Dış" en="Exterior"
+   50 eol_interior     BRANCH items 19-39 (21) tr="İç" en="Interior"
+  110 final_identity   DEPOT  items 47-51 (5) tr="Kimlik & Evrak" en="Identity & documents"
+  120 final_exterior   DEPOT  items 52-60 (9) tr="Dış Görünüş" en="Exterior appearance"
+  130 final_doors      DEPOT  items 61-66 (6) tr="Kapılar" en="Doors"
+  140 final_interior   DEPOT  items 67-73 (7) tr="İç Donanım" en="Interior equipment"
+  150 final_mechanical DEPOT  items 74-80 (7) tr="Mekanik" en="Mechanical"
+  160 final_electrical DEPOT  items 81-88 (8) tr="Elektrik" en="Electrical"
+  170 final_function   DEPOT  items 89-92 (4) tr="Fonksiyon" en="Function"
+  180 final_road_test  DEPOT  items 93-97 (5) tr="Yol Testi" en="Road test"
+  190 final_shipment   DEPOT  items 98-102 (5) tr="Sevkiyat" en="Shipment"
+  [PASS] no raw section key (every key has tr + en title)
+  [PASS] Dış split into eol_exterior (E003-E006) and eol_exterior_2 (E011-E018)
+  [PASS] section_sort follows item_no (paper order)
+
+-- kept 9 pre-form items vs live (karea_ro, SELECT only)
+  Araç Motoru        live seed_key=76226bc61498249a5d332a56261c2988 phase=BRANCH item_no=2 | test seed_key=76226bc61498249a5d332a56261c2988 phase=BRANCH item_no=40 form=NULL crit=<NULL> method=<NULL> section=NULL
+  [PASS] kept 'Araç Motoru': text, seed_key and phase equal live; form/criterion/method/section NULL
+  Batarya            live seed_key=121079da646cc26c63b1a4208c2a4d01 phase=BRANCH item_no=3 | test seed_key=121079da646cc26c63b1a4208c2a4d01 phase=BRANCH item_no=41 form=NULL crit=<NULL> method=<NULL> section=NULL
+  [PASS] kept 'Batarya': text, seed_key and phase equal live; form/criterion/method/section NULL
+  Süspansiyon Testi  live seed_key=c01849b8ddc7f1cd4991668d1ebbeaa2 phase=BRANCH item_no=4 | test seed_key=c01849b8ddc7f1cd4991668d1ebbeaa2 phase=BRANCH item_no=42 form=NULL crit=<NULL> method=<NULL> section=NULL
+  [PASS] kept 'Süspansiyon Testi': text, seed_key and phase equal live; form/criterion/method/section NULL
+  Fren/El Testi      live seed_key=4392dd780f191f81f78adc365826798d phase=BRANCH item_no=6 | test seed_key=4392dd780f191f81f78adc365826798d phase=BRANCH item_no=43 form=NULL crit=<NULL> method=<NULL> section=NULL
+  [PASS] kept 'Fren/El Testi': text, seed_key and phase equal live; form/criterion/method/section NULL
+  Far Ayarı          live seed_key=4c22202b9d501bbcb17443e406ccb6f8 phase=BRANCH item_no=7 | test seed_key=4c22202b9d501bbcb17443e406ccb6f8 phase=BRANCH item_no=44 form=NULL crit=<NULL> method=<NULL> section=NULL
+  [PASS] kept 'Far Ayarı': text, seed_key and phase equal live; form/criterion/method/section NULL
+  Rot Balans         live seed_key=168e818ca7a9ea63b8b841e7a5076507 phase=BRANCH item_no=8 | test seed_key=168e818ca7a9ea63b8b841e7a5076507 phase=BRANCH item_no=45 form=NULL crit=<NULL> method=<NULL> section=NULL
+  [PASS] kept 'Rot Balans': text, seed_key and phase equal live; form/criterion/method/section NULL
+  Sürüş              live seed_key=69cfc631726e3a5c3c18ef24d12a35ef phase=BRANCH item_no=9 | test seed_key=69cfc631726e3a5c3c18ef24d12a35ef phase=BRANCH item_no=46 form=NULL crit=<NULL> method=<NULL> section=NULL
+  [PASS] kept 'Sürüş': text, seed_key and phase equal live; form/criterion/method/section NULL
+  Bumpy Road         live seed_key=ca52361815d05ea558e54e89bdaf8d61 phase=DEPOT item_no=12 | test seed_key=ca52361815d05ea558e54e89bdaf8d61 phase=DEPOT item_no=103 form=NULL crit=<NULL> method=<NULL> section=NULL
+  [PASS] kept 'Bumpy Road': text, seed_key and phase equal live; form/criterion/method/section NULL
+  Yağmur Testi       live seed_key=5ceb9b0fd0c2a762ed1232b99987b338 phase=DEPOT item_no=13 | test seed_key=5ceb9b0fd0c2a762ed1232b99987b338 phase=DEPOT item_no=104 form=NULL crit=<NULL> method=<NULL> section=NULL
+  [PASS] kept 'Yağmur Testi': text, seed_key and phase equal live; form/criterion/method/section NULL
+  [PASS] 6 replaced items absent on a fresh install — none
+
+-- seed 03 run a second time
+  before: 193 items md5 a2dc56f9381b195c5ef3e2d7c42e7809
+  after:  193 items md5 a2dc56f9381b195c5ef3e2d7c42e7809
+  [PASS] second run adds and changes nothing
+  [PASS] no duplicate (template_id, seed_key) — 0
+
+-- reset_and_load_vins.sql: progress rows for the new items
+  vehicles=500; EOL progress per vin: 104 rows x 500 vins; progress rows on form items=47500
+  [PASS] every VIN has 104 EOL progress rows
+  [PASS] form items materialised for every VIN — 47500
+  dropped karea_formseed_test
+
+== 2. karea_eolnote_test: 0040 on a delivered vehicle
+  vehicle N7V1K1SA2TK000018 (branch shipped, depot released, delivered), EOL template 3
+  [PASS] PENDING row on a delivered vehicle is accepted — 3475
+  [PASS] answered (OK) row on a delivered vehicle is refused — ERROR:  cannot change depot-stage EoL items after the vehicle has been released from the depot
+  [PASS] answering that PENDING row is refused — ERROR:  cannot change depot-stage EoL items after the vehicle has been released from the depot
+  temp rows left: 0 items, 0 progress
+  vehicle progress before: 193 rows md5 00bf80431612cb70e1bc18907198541e
+  vehicle progress after:  193 rows md5 00bf80431612cb70e1bc18907198541e
+  [PASS] temp rows deleted, vehicle's own rows unchanged
+
+RESULT: ALL PASS
