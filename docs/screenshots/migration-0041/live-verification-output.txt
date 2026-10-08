@@ -1,0 +1,23 @@
+--- session
+session_user=karea_ro transaction_read_only=on now=2026-10-08 05:51:41.798606+00
+--- schema_migrations
+version=41 dirty=false
+--- checklist_template_items form columns (name | type | nullable | default | non-NULL rows)
+form_code | text | nullable=YES | default=none | non_null=0
+form_item_ref | text | nullable=YES | default=none | non_null=0
+form_revision | text | nullable=YES | default=none | non_null=0
+form_published_at | date | nullable=YES | default=none | non_null=0
+--- checklist_templates form columns (expect none)
+none
+--- index
+uq_checklist_template_items_template_seed_key | CREATE UNIQUE INDEX uq_checklist_template_items_template_seed_key ON public.checklist_template_items USING btree (template_id, seed_key) WHERE (seed_key IS NOT NULL)
+--- templates
+3 | EOL | Default EoL Template (Branch + Depot) | active=true
+4 | SHIPMENT | Default Customer Vehicle Checklist | active=true
+5 | TEST | Default Test Checklist | active=true
+--- counts
+items=108 templates=3
+--- GET /health
+{"status":"ok"}
+
+HTTP 200

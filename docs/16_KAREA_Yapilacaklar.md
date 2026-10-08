@@ -1111,7 +1111,19 @@ başlatılınca devreye girer.
   up'ı durdurur ve işlem geri alınır; geçici `tmp-0041-verify` şablonu
   silindi); `go-test-output.txt` (0041 şemasında `go test ./...` yeşil).
 - **Canlıya alma:** kod bu kolonları ve şablon adlarını okumuyor; kesinti
-  yok, sıra serbest. Canlıya kullanıcı onayıyla uygulanır.
+  yok, sıra serbest.
+- **Canlıya uygulandı (2026-10-08, kullanıcı tarafından):** salt okunur
+  kontrol `docs/screenshots/migration-0041/live-verification-output.txt`
+  (`karea_ro`): `schema_migrations` 41, `dirty=false`; dört madde kolonu
+  var, nullable, varsayılan yok, dolu satır 0; şablonda form kolonu yok;
+  index kısmi benzersiz olarak kayıtlı; adlar "Default EoL Template
+  (Branch + Depot)", "Default Customer Vehicle Checklist", "Default Test
+  Checklist"; 108 madde / 3 şablon; `GET /health` 200.
+- **Not — koruma sırası:** up dosyasında koruma ilk ifade değil (önce madde
+  kolonları eklenir). Uygulanmış dosya değiştirilmedi; golang-migrate
+  dosyayı tek çok-ifadeli sorgu olarak gönderdiği için PostgreSQL bunu
+  örtük tek işlemde çalıştırır, koruma hata verirse eklenen kolonlar da
+  geri alınır.
 - **Adım 2 — seed 03 `[ ]`:** 39 KY.FR-09 (şube) + 56 KY.FR-19 (depo)
   maddesi; seed_key "KY.FR-09:E001" / "KY.FR-19:46"; iki ayrı "Dış"
   bölümü; seed 06 aşama bazlı işaretleme; EOL bölüm kataloğu + i18n.
