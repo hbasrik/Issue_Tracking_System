@@ -1,0 +1,100 @@
+######## 01-drop-create
+== 2026-10-08 13:20:22 drop + create
+DROP DATABASE
+CREATE DATABASE
+CREATE EXTENSION
+CREATE EXTENSION
+0
+pg_trgm
+plpgsql
+uuid-ossp
+######## 02-migrate
+== 2026-10-08 13:20:27 migrate up
+1/u init (146.758166ms)
+2/u v2_architecture (400.4885ms)
+3/u document_approval_after_trigger (408.17725ms)
+4/u eol_depot_after_branch (416.0855ms)
+5/u manual_issue_source (422.087209ms)
+6/u manual_issue_check_and_types (431.086583ms)
+7/u planned_vehicles (436.727959ms)
+8/u media_attachments_vin (449.049458ms)
+9/u planned_vehicle_progress (456.66975ms)
+10/u rbac_phase2 (469.751625ms)
+11/u eol_two_stage_depot_ships (480.220042ms)
+12/u must_change_password (342.998583ms)
+13/u eol_deliver_flow (98.100959ms)
+14/u branch_ship_station_steps (97.945958ms)
+15/u one_way_status_and_hold (98.855792ms)
+16/u ops_set_vehicle_status (101.680208ms)
+17/u harden_ops_set_vehicle_status (98.769167ms)
+18/u defect_catalog (113.155916ms)
+19/u issue_classification_audit (106.9ms)
+20/u freeze_catalogue_snapshots (104.493042ms)
+21/u clear_ambiguous_process_defaults (105.731709ms)
+22/u template_aware_checklist_gates (103.960542ms)
+23/u backfill_missing_checklist_progress (100.522708ms)
+24/u checklist_item_sections (98.996167ms)
+25/u model_aware_templates (99.570416ms)
+26/u template_item_no_unique (96.492958ms)
+27/u issue_client_request_id (96.8245ms)
+28/u login_rate_limit_audit (100.393042ms)
+29/u tokens_valid_from (85.845083ms)
+30/u issue_list_reporter_date_indexes (91.82875ms)
+31/u depot_sequencing_ignores_closed_branch (92.697833ms)
+32/u drop_stored_progress_percentage (88.431167ms)
+33/u other_part_own_zone (91.47175ms)
+34/u checklist_item_seed_key (98.661125ms)
+35/u checklist_sections_by_content (106.602334ms)
+36/u shipment_sections_by_process (107.800709ms)
+37/u branch_ship_status_audit (111.057583ms)
+38/u admin_audit_events (113.804458ms)
+39/u checklist_form_fields (112.957875ms)
+40/u freeze_passed_checklist_items (111.256625ms)
+41/u checklist_item_form_identity (109.594917ms)
+42/u checklist_criteria_snapshot (117.19725ms)
+43/u item_text_snapshot_comment (120.294583ms)
+== version
+43
+######## 03-seed
+== 2026-10-08 13:20:38 01_stations
+== 2026-10-08 13:20:38 02_stations_and_steps
+== 2026-10-08 13:20:38 03_checklist_templates
+== 2026-10-08 13:20:38 05_defect_catalog
+######## 04-admin
+1|admin@karea.local|MANAGER_ADMIN|t|t
+INSERT 0 1
+######## 05-vins
+== 2026-10-08 13:20:51 reset_and_load_vins
+BEGIN
+TRUNCATE TABLE
+INSERT 0 500
+ total_vehicles 
+----------------
+            500
+(1 row)
+
+ current_global_status | count 
+-----------------------+-------
+ PLANNED               |   500
+(1 row)
+
+ issues 
+--------
+      0
+(1 row)
+
+ media 
+-------
+     0
+(1 row)
+
+        vin        
+-------------------
+ N7V1K1SA0TK000003
+ N7V1K1SA0TK000017
+ N7V1K1SA0TK000020
+(3 rows)
+
+COMMIT
+$P/psql "$D" -v ON_ERROR_STOP=1 -f database/scripts/reset_and_load_vins.sql  0.02s user 0.01s system 0% cpu 7.067 total
+######## 06-ro-grants

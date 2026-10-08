@@ -1089,6 +1089,29 @@ başlatılınca devreye girer.
   13, 14)", "2 open issue(s) remain (issue ids: 13, 14)", "1 depot-phase
   EoL item(s) incomplete").
 
+### A61. Yerel veritabanı üretim kurulum yoluyla sıfırdan kuruldu `[x]` — 2026-10-08
+- **Neden:** Yerel `karea` hâlâ eski 15 EOL maddesiyle duruyordu; seed'deki
+  form maddeleri ve kriterler görünmüyordu. İçerik test verisiydi; kullanıcı
+  onayıyla düşürüldü.
+- **Önce yedek:** `backups/karea_20261008_131941_before_fresh_install.dump`
+  (`pg_dump -Fc`) + `_uploads.tar.gz`. Geri yüklenebilirliği geçici bir
+  `_test` veritabanında denendi: 500 araç, 27 issue, 4 kullanıcı, 45 medya,
+  108 madde, 53000 progress, 527 audit, sürüm 43 — canlıyla aynı.
+- **Kurulum:** `DROP DATABASE … WITH (FORCE)` → `CREATE DATABASE` →
+  `database/init/00_extensions.sql` → migration 0001–0043 → seed 01, 02, 03,
+  05 → tek yönetici (`admin@karea.local`, MANAGER_ADMIN,
+  `must_change_password`; 04 demo hesapları yok) → `reset_and_load_vins.sql`
+  → `karea_ro` yetkileri (şifresine dokunulmadan) yeniden verildi. Seed 06
+  çalıştırılmadı (04'ün demo hesaplarını şart koşuyor).
+- **Doğrulama (`docs/screenshots/fresh-local-install/`):** EOL 104 madde,
+  fabrika 46 / depo 58; kabul kriteri 39 (KY.FR-09), kontrol yöntemi 95
+  (KY.FR-09 39 + KY.FR-19 56); eski 6 madde yok; korunan 9 madde 40–46
+  `eol_physical_tests`, 103–104 `final_extra_checks`; 500 araç, her birinde
+  104 EOL satırı. Tarayıcı (test kopyası, :18081/:5175) 23/23 PASS.
+- **Gözlem:** Araçlar listesi varsayılan olarak PLANNED araçları göstermez
+  (Karar 10); yeni kurulumda liste boş görünür, "Planlandı" filtresi veya
+  üst VIN araması gerekir.
+
 ### A60. Analiz sayfası fabrika gününe göre kesiyor `[x]` — 2026-10-08
 - **Sorun:** Pano Europe/Istanbul gününe göre (A57), analiz UTC gününe göre
   kesiyordu; aynı aralığa iki ekrandan bakınca farklı sayı çıkıyordu.

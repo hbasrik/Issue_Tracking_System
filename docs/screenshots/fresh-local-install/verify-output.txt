@@ -1,0 +1,90 @@
+== schema version
+ version | dirty 
+---------+-------
+      43 | f
+
+== templates: total / active items
+ id |   type   |                 name                  | items | active 
+----+----------+---------------------------------------+-------+--------
+  3 | EOL      | Default EoL Template (Branch + Depot) |   104 |    104
+  4 | SHIPMENT | Default Customer Vehicle Checklist    |    46 |     46
+  5 | TEST     | Default Test Checklist                |    43 |     43
+
+== EOL: branch / depot split (active items)
+ eol_phase | items | min | max 
+-----------+-------+-----+-----
+ BRANCH    |    46 |   1 |  46
+ DEPOT     |    58 |  47 | 104
+
+== EOL: acceptance criterion / control method filled
+ items | with_criterion | with_method | form_items 
+-------+----------------+-------------+------------
+   104 |             39 |          95 |         95
+
+== EOL: per form
+      form       | eol_phase | count | with_criterion | with_method 
+-----------------+-----------+-------+----------------+-------------
+ (kept pre-form) | BRANCH    |     7 |              0 |           0
+ (kept pre-form) | DEPOT     |     2 |              0 |           0
+ KY.FR-09        | BRANCH    |    39 |             39 |          39
+ KY.FR-19        | DEPOT     |    56 |              0 |          56
+
+== the six replaced items must be absent (expect 0 rows)
+ id | item_no | item_text | is_active 
+----+---------+-----------+-----------
+
+== kept pre-form items and their sections (expect 9)
+ item_no | eol_phase |    section_key     |     item_text     
+---------+-----------+--------------------+-------------------
+      40 | BRANCH    | eol_physical_tests | Araç Motoru
+      41 | BRANCH    | eol_physical_tests | Batarya
+      42 | BRANCH    | eol_physical_tests | Süspansiyon Testi
+      43 | BRANCH    | eol_physical_tests | Fren/El Testi
+      44 | BRANCH    | eol_physical_tests | Far Ayarı
+      45 | BRANCH    | eol_physical_tests | Rot Balans
+      46 | BRANCH    | eol_physical_tests | Sürüş
+     103 | DEPOT     | final_extra_checks | Bumpy Road
+     104 | DEPOT     | final_extra_checks | Yağmur Testi
+
+== EOL sections
+ eol_phase | section_sort |    section_key     | count | min | max 
+-----------+--------------+--------------------+-------+-----+-----
+ BRANCH    |           10 | eol_entry          |     2 |   1 |   2
+ BRANCH    |           20 | eol_exterior       |     4 |   3 |   6
+ BRANCH    |           30 | eol_gap_flush      |     4 |   7 |  10
+ BRANCH    |           40 | eol_exterior_2     |     8 |  11 |  18
+ BRANCH    |           50 | eol_interior       |    21 |  19 |  39
+ BRANCH    |           60 | eol_physical_tests |     7 |  40 |  46
+ DEPOT     |          110 | final_identity     |     5 |  47 |  51
+ DEPOT     |          120 | final_exterior     |     9 |  52 |  60
+ DEPOT     |          130 | final_doors        |     6 |  61 |  66
+ DEPOT     |          140 | final_interior     |     7 |  67 |  73
+ DEPOT     |          150 | final_mechanical   |     7 |  74 |  80
+ DEPOT     |          160 | final_electrical   |     8 |  81 |  88
+ DEPOT     |          170 | final_function     |     4 |  89 |  92
+ DEPOT     |          180 | final_road_test    |     5 |  93 |  97
+ DEPOT     |          190 | final_shipment     |     5 |  98 | 102
+ DEPOT     |          200 | final_extra_checks |     2 | 103 | 104
+
+== vehicles and EOL rows per vehicle
+ vehicles | min_eol_rows | max_eol_rows | vehicles_not_104 
+----------+--------------+--------------+------------------
+      500 |          104 |          104 |                0
+
+== all progress rows by type
+ checklist_type | count | count 
+----------------+-------+-------
+ EOL            | 52000 |   500
+ SHIPMENT       | 23000 |   500
+ TEST           | 21500 |   500
+
+== users
+ id |       email       |     role      | is_active | must_change_password 
+----+-------------------+---------------+-----------+----------------------
+  1 | admin@karea.local | MANAGER_ADMIN | t         | t
+
+== operational tables
+ issues | media | audit_logs | stations | defect_parts 
+--------+-------+------------+----------+--------------
+      0 |     0 |          0 |        8 |           24
+

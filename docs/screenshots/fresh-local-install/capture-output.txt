@@ -1,0 +1,29 @@
+1) login form
+  [PASS] signed in — /
+2) Araçlar list hides PLANNED by default (Karar 10); open the VIN from the top search
+  [PASS] Araçlar default list is empty on a fresh install (all 500 PLANNED)
+  [PASS] Yaşam döngüsü = Planlandı lists them — 500 toplam
+  [PASS] EoL items on the page — 104
+  [PASS] pending cards start open — 104
+  [PASS] criteria boxes on open cards (95 form items) — 95
+  [PASS] Kabul kriteri lines (KY.FR-09) — 39
+  [PASS] Kontrol yöntemi lines (KY.FR-09 + KY.FR-19) — 95
+  [PASS] replaced item absent: Software Update
+  [PASS] replaced item absent: Fonksiyonel Komponet Kontrolü
+  [PASS] replaced item absent: EE Check
+  [PASS] replaced item absent: Görsel Kontrol 2
+  [PASS] replaced item absent: Depo Sürüş
+  [PASS] replaced item absent: Görsel Kontrol (exact line)
+  [PASS] kept item 40 Araç Motoru: present, no criteria box
+  [PASS] kept item 46 Sürüş: present, no criteria box
+  [PASS] kept item 103 Bumpy Road: present, no criteria box
+  [PASS] kept item 104 Yağmur Testi: present, no criteria box
+3) item 1 (KY.FR-09): criterion + method on the open card
+  [PASS] item 1 box — criterion,method
+    Kabul kriteri | Araç ve kayıt bilgileri eşleşmeli | Kontrol yöntemi | Kayıt / etiket karşılaştırma
+4) close item 1 -> info icon on the closed card
+  [PASS] item 1 closed shows the icon
+  [PASS] icon tooltip
+5) depot item 47 (KY.FR-19): method only
+  [PASS] item 47 box — method
+ALL CHECKS PASSED
