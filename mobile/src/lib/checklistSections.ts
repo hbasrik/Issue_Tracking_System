@@ -9,8 +9,9 @@ import type { ChecklistItem } from '../api/client';
 export function groupChecklistSections(
   items: ChecklistItem[],
   t: Translate,
-): { title: string; items: ChecklistItem[] }[] {
+): { key: string; title: string; items: ChecklistItem[] }[] {
   return groupItemsBySectionKey(items, t).map((g) => ({
+    key: g.sectionKey ?? '__other',
     title: g.title,
     items: g.items,
   }));
