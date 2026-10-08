@@ -576,7 +576,7 @@ export default function TemplatesPage() {
                       <option value="">{t('templates.sectionNone')}</option>
                       {sectionsForTemplateType(selected.Type).map((s) => (
                         <option key={s.key} value={s.key}>
-                          {t(s.titleKey)}
+                          {s.formRef ? `${t(s.titleKey)} · ${s.formRef}` : t(s.titleKey)}
                         </option>
                       ))}
                       <option value="__custom__">{t('templates.sectionCustom')}</option>
@@ -877,7 +877,7 @@ function SectionKeyEditor({
         <option value="">{t('templates.sectionNone')}</option>
         {catalog.map((s) => (
           <option key={s.key} value={s.key}>
-            {t(s.titleKey)}
+            {s.formRef ? `${t(s.titleKey)} · ${s.formRef}` : t(s.titleKey)}
           </option>
         ))}
         <option value="__custom__">{t('templates.sectionCustom')}</option>

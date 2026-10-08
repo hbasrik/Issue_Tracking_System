@@ -133,9 +133,10 @@ export function ChecklistPanel({
   const grouped = useMemo(() => {
     const hasSection = activeItems.some((i) => Boolean(i.SectionKey?.trim()));
     if (!hasSection) {
-      return [{ title: null as string | null, items: activeItems }];
+      return [{ key: '__flat', title: null as string | null, items: activeItems }];
     }
     return groupItemsBySectionKey(activeItems, t).map((g) => ({
+      key: g.sectionKey ?? '__other',
       title: g.title as string | null,
       items: g.items,
     }));
@@ -210,7 +211,7 @@ export function ChecklistPanel({
         data-checklist-active-list
       >
         {grouped.map((g) => (
-          <li key={g.title ?? '__flat'} className="list-none">
+          <li key={g.key} className="list-none" data-checklist-section={g.key}>
             {g.title ? (
               <p className="px-1 pb-2 pt-3 text-[13px] font-semibold text-[var(--text-secondary)] first:pt-0">
                 {g.title}
