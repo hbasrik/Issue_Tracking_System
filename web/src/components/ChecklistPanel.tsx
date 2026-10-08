@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { ChevronDown, Lock } from 'lucide-react';
+import { ChevronDown, Info, Lock } from 'lucide-react';
 import {
   api,
   ApiError,
@@ -18,6 +18,7 @@ import { useAuth } from '../auth/AuthProvider';
 import { Perm } from '../auth/permissions';
 import { ChecklistPrint } from './print/ChecklistPrint';
 import { groupItemsBySectionKey } from '../../../shared/checklistSections';
+import { checklistCriteriaLines, type CriteriaLine } from '../../../shared/checklistCriteria';
 import {
   countActiveChecklistProgress,
   filterByEolPhase,
@@ -426,6 +427,7 @@ function EolItemRow({
   const actorLines = checklistActorLines(item, t, locale);
   const photos = item.Photos ?? [];
   const showClosedBody = answered && (savedNote || actorLines.length > 0 || photos.length > 0);
+  const criteria = checklistCriteriaLines(item);
   const headerContent = (
     <>
       <span className="min-w-0 flex-1 break-words">
@@ -434,6 +436,16 @@ function EolItemRow({
         </span>
         {item.ItemText}
       </span>
+      {!open && !frozen && criteria.length > 0 ? (
+        <Info
+          role="img"
+          aria-label={t('checklist.hasCriteria')}
+          data-checklist-criteria-icon
+          className="h-4 w-4 shrink-0 text-[var(--text-secondary)]"
+        >
+          <title>{t('checklist.hasCriteria')}</title>
+        </Info>
+      ) : null}
       <StatusBadge kind="eol" value={item.Status} className="shrink-0" />
     </>
   );
@@ -482,6 +494,7 @@ function EolItemRow({
         ) : null
       ) : (
         <div id={bodyId} className="px-3 pb-3">
+          <ChecklistCriteria lines={criteria} />
           <ChecklistItemPhotos photos={photos} />
           <div className="mt-2 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
             {EOL_STATUSES.map((value) => {
@@ -574,6 +587,26 @@ function EolItemRow({
         </div>
       )}
     </li>
+  );
+}
+
+/** Form guidance shown above the answer buttons; nothing when the form gives none. */
+function ChecklistCriteria({ lines }: { lines: CriteriaLine[] }) {
+  const { t } = useI18n();
+  if (lines.length === 0) return null;
+  return (
+    <dl
+      className="mb-1 flex flex-col gap-1.5 rounded-lg px-3 py-2 text-[13px] leading-snug text-[var(--text-secondary)]"
+      style={{ backgroundColor: 'var(--bg-page)' }}
+      data-checklist-criteria
+    >
+      {lines.map((line) => (
+        <div key={line.kind} data-checklist-criteria-line={line.kind}>
+          <dt className="text-[12px] font-semibold">{t(line.labelKey)}</dt>
+          <dd className="whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{line.text}</dd>
+        </div>
+      ))}
+    </dl>
   );
 }
 
