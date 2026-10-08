@@ -63,6 +63,7 @@ import {
 } from '../../../shared/checklistActive';
 import type { MessageKey, Translate } from '../../../shared/i18n';
 import { groupChecklistSections } from '../lib/checklistSections';
+import { checklistCriteriaLines } from '../../../shared/checklistCriteria';
 
 const STATUS_KEYS = [
   { value: 'OK', key: 'status.eol.ok' as const, color: statusColors.ok },
@@ -86,6 +87,18 @@ function ChevronIcon({ color, open }: { color: string; open: boolean }) {
     <View style={{ transform: [{ rotate: open ? '180deg' : '0deg' }] }}>
       <Svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
         <Path d="m6 9 6 6 6-6" />
+      </Svg>
+    </View>
+  );
+}
+
+function InfoIcon({ color, label }: { color: string; label: string }) {
+  return (
+    <View accessible accessibilityRole="image" accessibilityLabel={label} aria-label={label} testID="eol-criteria-icon">
+      <Svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+        <Path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" />
+        <Path d="M12 16v-4" />
+        <Path d="M12 8h.01" />
       </Svg>
     </View>
   );
@@ -450,6 +463,7 @@ export default function EOLChecklistScreen() {
               const label = s ? t(s.key) : t('status.eol.pending');
               const pillColor = s?.color ?? tokens.textSecondary;
               const note = (item.Note ?? '').trim();
+              const criteria = checklistCriteriaLines(item);
               const header = (
                 <Pressable
                   onPress={() => setEditing(item.ItemID, !open)}
@@ -471,6 +485,9 @@ export default function EOLChecklistScreen() {
                   <Text style={{ flex: 1, color: tokens.textPrimary, fontSize: 15 }}>
                     {item.ItemNo}. {item.ItemText}
                   </Text>
+                  {!open && criteria.length > 0 ? (
+                    <InfoIcon color={tokens.textSecondary} label={t('checklist.hasCriteria')} />
+                  ) : null}
                   <View
                     style={{
                       paddingHorizontal: 10,
@@ -511,6 +528,23 @@ export default function EOLChecklistScreen() {
                 <Card key={item.ItemID} style={{ padding: 0, overflow: 'hidden' }}>
                   {header}
                   <View style={{ paddingHorizontal: 14, paddingBottom: 14 }}>
+                    {criteria.length > 0 ? (
+                      <View
+                        testID={`eol-criteria-${item.ItemID}`}
+                        style={{ backgroundColor: tokens.bgPage, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, gap: 6 }}
+                      >
+                        {criteria.map((line) => (
+                          <View key={line.kind} testID={`eol-criteria-${line.kind}-${item.ItemID}`}>
+                            <Text style={{ color: tokens.textSecondary, fontSize: 12, fontWeight: '600' }}>
+                              {t(line.labelKey)}
+                            </Text>
+                            <Text style={{ color: tokens.textSecondary, fontSize: 13, lineHeight: 18 }}>
+                              {line.text}
+                            </Text>
+                          </View>
+                        ))}
+                      </View>
+                    ) : null}
                     <ChecklistItemPhotos photos={item.Photos ?? []} />
                     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
                       {STATUS_KEYS.map((s) => {
