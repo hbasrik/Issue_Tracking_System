@@ -699,6 +699,17 @@ kalıyordu.
   index; admin'in eklediği maddelerde NULL serbest).
 - **Şablon adları** madde sayısı taşımaz; sayı madde eklenip çıkınca
   bayatlıyordu.
+- **Eski EOL maddeleri (2026-10-08):** Yalnız yerini somut bir şeyin aldığı
+  altı madde seed'den çıkar: Software Update, Fonksiyonel Komponet
+  Kontrolü, EE Check (E/E, API'den gelecek), Görsel Kontrol (KY.FR-09),
+  Görsel Kontrol 2 (KY.FR-19 6–14), Depo Sürüş (KY.FR-19 50–54). Formlarda
+  karşılığı olmayan veya belirsiz dokuz madde kalır (Araç Motoru, Batarya,
+  Süspansiyon Testi, Fren/El Testi, Far Ayarı, Rot Balans, Sürüş; depoda
+  Bumpy Road, Yağmur Testi): metin, aşama ve md5 seed_key aynı; form ve
+  kabul alanları NULL; bölüm yok ("Diğer maddeler"). Seed'den çıkarmak o
+  kontrolleri kayıttan kaldırmak olurdu; kalite ekibi teyit edene kadar
+  dururlar. EOL şablonu 104 madde: şube 1–39 KY.FR-09, 40–46 eski; depo
+  47–102 KY.FR-19, 103–104 eski.
 
 ## Değişmeyen / Yeniden Kullanılacaklar
 

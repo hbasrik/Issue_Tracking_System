@@ -101,7 +101,7 @@ GUC'unu kullanır.
 
 - **Migration aracı:** `golang-migrate` (`make migrate-up`). Her değişiklik `NNNN_description.up.sql` / `.down.sql` çifti olarak versiyonlanır.
 - **Geliştirme seed sırası** (`make seed` → `database/seed/01`…`06`): stations → station_steps → checklist template items → users → defect catalog → (dev-only) 18 fixture vehicles.
-- **Checklist maddeleri:** `database/seed/03_checklist_templates.sql` canlı üretim içeriğinin aktif maddelerini taşır (EOL / SHIPMENT / TEST). İngilizce yer tutucu metinler kaldırılmıştır; script idempotenttir.
+- **Checklist maddeleri:** `database/seed/03_checklist_templates.sql` SHIPMENT (46) ve TEST (43) için canlı üretim içeriğini, EOL için 104 maddeyi taşır: KY.FR-09 (39, şube) + KY.FR-19 (56, depo) form maddeleri (`docs/21`) ve formda karşılığı olmayan 9 eski madde. Script yalnız ekler ve idempotenttir; migration 0041 gerekir.
 - **500 VIN yüklemesi seed değildir.** Dosya: `database/scripts/reset_and_load_vins.sql`. Operasyonel tabloları truncate edip 500 PLANNED VIN yazar; `make seed` bunu çalıştırmaz (kurulumu yavaşlatır, ~52k progress satırı üretir). Üretim/staging’de bilinçli ayrı adım.
 - **Üretimde `06_test_vehicles.sql` çalıştırılmaz** (demo araçlar / `changeme123` kullanıcı seed’i B3 ile ayrılmalıdır).
 - **Yük testi:** `pgbench`/`k6` ile 1M+ `issue_list`/`audit_logs` (TC-013 P95 < 100ms).
