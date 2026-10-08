@@ -463,7 +463,8 @@ export default function EOLChecklistScreen() {
               const label = s ? t(s.key) : t('status.eol.pending');
               const pillColor = s?.color ?? tokens.textSecondary;
               const note = (item.Note ?? '').trim();
-              const criteria = checklistCriteriaLines(item);
+              const criteria = checklistCriteriaLines(item, 'edit');
+              const recordCriteria = checklistCriteriaLines(item, 'record');
               const header = (
                 <Pressable
                   onPress={() => setEditing(item.ItemID, !open)}
@@ -485,7 +486,7 @@ export default function EOLChecklistScreen() {
                   <Text style={{ flex: 1, color: tokens.textPrimary, fontSize: 15 }}>
                     {item.ItemNo}. {item.ItemText}
                   </Text>
-                  {!open && criteria.length > 0 ? (
+                  {!open && recordCriteria.length > 0 ? (
                     <InfoIcon color={tokens.textSecondary} label={t('checklist.hasCriteria')} />
                   ) : null}
                   <View

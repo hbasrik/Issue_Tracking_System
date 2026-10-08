@@ -427,7 +427,8 @@ function EolItemRow({
   const actorLines = checklistActorLines(item, t, locale);
   const photos = item.Photos ?? [];
   const showClosedBody = answered && (savedNote || actorLines.length > 0 || photos.length > 0);
-  const criteria = checklistCriteriaLines(item);
+  const criteria = checklistCriteriaLines(item, 'edit');
+  const recordCriteria = checklistCriteriaLines(item, 'record');
   const headerContent = (
     <>
       <span className="min-w-0 flex-1 break-words">
@@ -436,7 +437,7 @@ function EolItemRow({
         </span>
         {item.ItemText}
       </span>
-      {!open && !frozen && criteria.length > 0 ? (
+      {!open && !frozen && recordCriteria.length > 0 ? (
         <Info
           role="img"
           aria-label={t('checklist.hasCriteria')}

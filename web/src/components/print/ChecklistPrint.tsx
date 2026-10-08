@@ -122,7 +122,7 @@ export function ChecklistPrint({
                     <p className="print-item-title">
                       {item.ItemNo}. {item.ItemText}
                     </p>
-                    {checklistCriteriaLines(item).map((line) => (
+                    {checklistCriteriaLines(item, 'record', { revision: true }).map((line) => (
                       <p key={line.kind} className="print-item-criteria" data-print-criteria={line.kind}>
                         {t(line.labelKey)}: {line.text}
                       </p>

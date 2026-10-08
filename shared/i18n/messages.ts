@@ -654,6 +654,7 @@ export const tr = {
   'checklist.noteLabel': 'Not: {note}',
   'checklist.acceptanceCriterion': 'Kabul kriteri',
   'checklist.controlMethod': 'Kontrol yöntemi',
+  'checklist.formRevision': 'Form revizyonu',
   'checklist.hasCriteria': 'Bu maddenin kabul kriteri veya kontrol yöntemi var',
   'checklist.photoOffline': 'Çevrimdışı görünüyorsunuz. Yine de Kaydet’e basabilirsiniz; bağlantı yoksa hata gösterilir.',
   'checklist.photoUploadFailed':
@@ -1822,6 +1823,7 @@ export const en: Record<MessageKey, string> = {
   'checklist.noteLabel': 'Note: {note}',
   'checklist.acceptanceCriterion': 'Acceptance criterion',
   'checklist.controlMethod': 'Control method',
+  'checklist.formRevision': 'Form revision',
   'checklist.hasCriteria': 'This item has an acceptance criterion or control method',
   'checklist.photoOffline': 'You appear to be offline. You can still press Save; if there is no connection you will see the error.',
   'checklist.photoUploadFailed':
