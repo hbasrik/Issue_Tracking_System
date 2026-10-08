@@ -267,6 +267,10 @@ type ChecklistItemView struct {
 	EolPhase    *EOLItemPhase
 	SectionKey  *string `json:"SectionKey,omitempty"`
 	SectionSort *int16  `json:"SectionSort,omitempty"`
+	// AcceptanceCriterion and ControlMethod come from the printed form
+	// (Karar 30); nil when the form gives none, so the UI shows nothing.
+	AcceptanceCriterion *string `json:"AcceptanceCriterion,omitempty"`
+	ControlMethod       *string `json:"ControlMethod,omitempty"`
 	ProgressID  *int64
 	IsActive    bool
 	// StageClosed marks an active item the vehicle can no longer complete:
