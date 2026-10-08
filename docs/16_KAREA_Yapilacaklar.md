@@ -1164,8 +1164,17 @@ başlatılınca devreye girer.
   KY.FR-19:33 fren hortumu kaçağı, SHIPMENT 11 / 32 / 39, TEST 13 kamera).
   Önem derecesi, durum ve araç senaryoları aynı (10053 depo çıkışı
   OPEN arızayla kilitli, 10051 geçer).
-- **Sonraki iş `[ ]`:** kabul kriteri ve kontrol yöntemi hiçbir ekranda
-  gösterilmiyor; gösterim ayrı iş olarak yapılacak.
+- **Kabul kriteri ve kontrol yöntemi ekranda `[x]` (2026-10-08):** EOL
+  checklist API'si iki alanı döndürüyor (boşsa alan hiç yok). Web ve mobil
+  EOL kartında, madde açıkken cevap düğmelerinin üstünde "Kabul kriteri" /
+  "Kontrol yöntemi" (TR/EN); daha küçük (13 px, madde 15 px) ve ikincil
+  renkte, kontrast 5.55:1. Boş alanın satırı yok; KY.FR-19'da yalnız
+  yöntem, korunan 9 maddede hiç ek metin yok. Kapalı kartta kriter veya
+  yöntem varsa yalnız bilgi ikonu. ChecklistPrint her maddenin altına
+  dolu alanları basıyor. Test/Sevk ekranları, cevap/not/fotoğraf/kaydetme
+  ve 0040 değişmedi. Kanıt: `docs/screenshots/checklist-criteria/`.
+- **Karar bekliyor `[ ]` — donmuş kartta kriter:** donmuş EOL kartı
+  kapalı kalıyor ve şu an ne ikon ne kriter gösteriyor.
 - **Kalite ekibine:** belirsiz sekiz eşleşme; Araç Motoru ve Yağmur Testi
   dört formun hiçbirinde yok (su sızdırmazlık kontrolü tamamen düşüyor).
 
