@@ -257,9 +257,10 @@ func (r *ChecklistProgressRepo) ListApplicableItems(ctx context.Context, vin str
 // follow the new status: OK/CONDITIONAL_OK write approved_*; NOT_OK writes
 // rejected_*; any other status clears both so a later NOT_OK cannot keep an
 // older Onay stamp. Description CHECK and depot sequencing stay in the DB.
-// Every non-PENDING answer copies the template item's acceptance criterion,
-// control method and form revision with criteria_snapshot_at (Karar 30);
-// the client never supplies them. PENDING keeps the previous copy.
+// Every non-PENDING answer copies the template item's text, acceptance
+// criterion, control method and form revision, the last three with
+// criteria_snapshot_at (Karar 30); the client never supplies them. PENDING
+// keeps the previous copy.
 func (r *ChecklistProgressRepo) SaveResult(ctx context.Context, result domain.ChecklistProgress) error {
 	tag, err := executor(ctx, r.pool).Exec(ctx,
 		`UPDATE checklist_item_progress p
@@ -276,7 +277,6 @@ func (r *ChecklistProgressRepo) SaveResult(ctx context.Context, result domain.Ch
 		     approved_date = CASE WHEN $3::check_status_enum IN ('OK', 'CONDITIONAL_OK') THEN now() ELSE NULL END,
 		     item_text_snapshot = CASE
 		       WHEN $3::check_status_enum = 'PENDING' THEN p.item_text_snapshot
-		       WHEN NULLIF(trim(p.item_text_snapshot), '') IS NOT NULL THEN p.item_text_snapshot
 		       ELSE cti.item_text
 		     END,
 		     acceptance_criterion_snapshot = CASE
