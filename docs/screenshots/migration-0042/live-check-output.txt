@@ -1,0 +1,19 @@
+== live (karea_ro, read-only)
+  session: karea_ro read_only=on default_ro=on
+  [PASS] schema_migrations 42, dirty=false — 42|f
+  columns: acceptance_criterion_snapshot text null=YES default=-; control_method_snapshot text null=YES default=-; criteria_snapshot_at timestamp with time zone null=YES default=-; form_revision_snapshot text null=YES default=-
+  [PASS] 4 columns, nullable, no default
+  [PASS] chk_criteria_snapshot_stamped present — CHECK (((criteria_snapshot_at IS NOT NULL) OR ((acceptance_criterion_snapshot IS NULL) AND (control_method_snapshot IS NULL) AND (form_revision_snapshot IS NULL))))
+  fn_enforce_checklist_frozen  live db434c9253888eb4e6df4d05ab9883d3  0042 up file db434c9253888eb4e6df4d05ab9883d3
+  [PASS] fn_enforce_checklist_frozen body == 0042 up file body (md5)
+  fn_checklist_item_frozen_reason  live 15241735b940e2766eac9056af4177aa  0040 up file 15241735b940e2766eac9056af4177aa
+  [PASS] fn_checklist_item_frozen_reason body == 0040 up file body (md5)
+  [PASS] trigger present and enabled — trg_enforce_checklist_frozen O fn_enforce_checklist_frozen
+  [PASS] no backfill: every new column NULL — 0 rows with a value
+  checklist_item_progress fingerprint (pre-0042 columns): 53000 rows md5 18ea1ac458830fe4aa26dc720bc1141e
+  max(updated_at): 2026-10-07 15:00:16.600206+00
+  [PASS] every row text ends with the four NULL columns — 0 rows without
+  [PASS] checklist_item_progress rows and md5 == pre-0042 measurement (0040 live check) — now 53000|e94d6bcd1db26a143392d94359852782, before 53000|e94d6bcd1db26a143392d94359852782
+  [PASS] /health 200 — 200 {"status":"ok"}
+
+RESULT: ALL PASS
