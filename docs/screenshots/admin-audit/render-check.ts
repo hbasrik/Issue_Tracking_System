@@ -9,8 +9,9 @@ import { translate, type Locale, type MessageKey } from '../../../shared/i18n';
 import { isAdminAuditEvent } from '../../../shared/adminAudit';
 import { activityDetailLine } from '../../../web/src/lib/activityDetail';
 import type { HomeActivityEntry } from '../../../web/src/lib/api';
+import { outputDir } from '../lib/output-dir.mjs';
 
-const dir = 'docs/screenshots/admin-audit';
+const dir = outputDir('docs/screenshots/admin-audit');
 const page = JSON.parse(readFileSync(`${dir}/api-activity-manager.json`, 'utf8')) as { Items: HomeActivityEntry[] };
 const rows = page.Items.filter((r) => isAdminAuditEvent(r.EventType));
 

@@ -7,9 +7,7 @@ const path = require('path');
 const fs = require('fs');
 const { execFileSync } = require('child_process');
 
-const OUT = path.join(
-  '/Users/Basri/Desktop/kts_kms_project/docs/screenshots/templates-confirm',
-);
+let OUT;
 const ROOT = '/Users/Basri/Desktop/kts_kms_project';
 const BASE = 'http://localhost:5173';
 const API = 'http://localhost:8080/api/v1';
@@ -79,7 +77,8 @@ async function apiJson(method, urlPath, token, body) {
 }
 
 (async () => {
-  fs.mkdirSync(OUT, { recursive: true });
+  const { outputDir } = await import('../lib/output-dir.mjs');
+  OUT = outputDir('/Users/Basri/Desktop/kts_kms_project/docs/screenshots/templates-confirm');
   const session = await apiLogin();
   const token = session.token;
 

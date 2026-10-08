@@ -5,9 +5,10 @@ import { chromium } from '../../../web/node_modules/playwright/index.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { scriptOutputDir } from '../lib/output-dir.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const OUT = __dirname;
+const OUT = scriptOutputDir(import.meta.url);
 const BASE = 'http://localhost:5173';
 const API = 'http://localhost:8080/api/v1';
 const AUTH_KEY = 'karea.auth.session';

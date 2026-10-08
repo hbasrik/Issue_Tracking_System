@@ -1089,6 +1089,55 @@ başlatılınca devreye girer.
   13, 14)", "2 open issue(s) remain (issue ids: 13, 14)", "1 depot-phase
   EoL item(s) incomplete").
 
+### A56. Doğrulama betikleri commit'li kanıtın üzerine yazmıyor `[x]` — 2026-10-08
+- **Sorun:** betikler çıktılarını kendi `docs/screenshots/<klasör>/`
+  klasörlerine yazıyordu; her koşu commit'li PNG/PDF/JSON/txt dosyalarını
+  değiştiriyor, yan etkisiz tekrar koşu için `git checkout` gerekiyordu.
+- **Kural:** `docs/screenshots/lib/output-dir.mjs` (Node) ve
+  `lib/output_dir.py` (Python). `docs/screenshots/` altındaki bir hedef
+  varsayılan olarak aynı göreli düzenle `$TMPDIR/karea-shots/` altına
+  yazılır; commit'li dosyalar yalnız `UPDATE_SCREENSHOTS=1` ile güncellenir.
+  Betik başta çıktı klasörünü stderr'e yazar. Aynı kuralı okuyucular da
+  kullanır (yazanla aynı yerden okur): `render-check.ts`,
+  `catalog-codes/error-messages.check.ts`, iki `check-mobile-facts.py`,
+  `issue-card-severity-right/compose.mjs`. Bayrak yerine ortam değişkeni:
+  birçok betik `argv[2]`'yi konumsal argüman olarak okuyor.
+- **Düzeltilen betikler (60):** kendi klasörüne yazan 39 Playwright betiği
+  (`admin-audit`, `analysis-defect`, `analysis-fix`, `analysis-labels-vin`
+  ×2, `analysis-print`, `analysis-tv`, `approval-undo`, `catalog-codes`,
+  `catalog-fixes`, `checklist-criteria`, `checklist-inactive`,
+  `checklist-sections`, `criteria-snapshot`, `eol-freeze` ×2, `eol-note`,
+  `eol-photo` ×8, `favicon`, `form-focus-ring`, `form-seed`,
+  `form-seed-sections`, `home`, `issue-cards`, `issue-cards-compact`,
+  `issues-filters`, `mobile-filters`, `readiness-hint`,
+  `shipment-sections-process`, `stage-closed-checklist`, `templates-type`,
+  `vehicle-timeline`); `templates-confirm/capture.{mjs,cjs}` (sabit mutlak
+  yol); `issue-card-severity-right/{capture-web,compose}.mjs`;
+  `vehicle-issue-layout/harness/{capture,capture-web,verify-mobile-card-press}.mjs`;
+  çıktı klasörünü argümanla alan `mobile-harness/run.mjs` ve
+  `catalog-codes/mobile-flows.mjs`; `scripts/verify-anchored-popover.mjs`,
+  `verify-card-photo-navigation.mjs`, `verify-web-errors.mjs`; JSON yazan
+  `admin-audit/run-verification.py`, `catalog-codes/run-verification.py`,
+  `vehicle-timeline/run-verification.py`,
+  `eol-photo/run-photos-verification.py` (çalışma klasörüne yazıyordu),
+  `stage-closed-checklist/api-compare.py`; okuyucular yukarıda.
+  `analysis-labels-vin/capture.mjs` `web/` yolunu çıktı klasöründen
+  türetiyordu, artık betik klasöründen.
+- **Dokunulmayanlar:** yalnız stdout'a yazan Python/shell betikleri
+  (`*-output.txt` çağıran komuttaki yönlendirmeyle oluşur, betik yazmaz);
+  `/tmp` kullanan `criteria-snapshot/api-trial.py`; bundle'ı verilen
+  geçici klasöre yazan iki `build.mjs`.
+- **Kanıt:** koşudan önce ve sonra `docs/screenshots` altındaki 990 dosyanın
+  mtime + md5'i: çıktı dosyası değişmedi ve dokunulmadı. Koşulanlar:
+  `eol-photo/capture-mobile-collapse` (108 PASS), `capture-mobile`,
+  `offline-retry`, `capture-mobile-photos`, `repro-offline`;
+  `mobile-harness/run.mjs docs/screenshots/shipment-sections-process/mobile`
+  → geçici klasör ve `check-mobile-facts.py` oradan okudu;
+  `analysis-labels-vin/capture.mjs after` (8080 isteği 0);
+  `render-check.ts` (NO RAW VALUES). `UPDATE_SCREENSHOTS=1` ile Node ve
+  Python yardımcısı commit'li klasörü döndürüyor, `docs/screenshots` dışı
+  yol olduğu gibi kalıyor.
+
 ### A55. Form maddelerinin gömülmesi (KY.FR-09 / KY.FR-19) `[~]` — 2026-10-07
 - **Adım 1 — migration 0041 `[x]` (test DB'de doğrulandı, canlıya
   uygulanmadı):** `checklist_template_items` üzerine `form_code`,

@@ -1,9 +1,10 @@
 import { chromium } from 'playwright';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { scriptOutputDir } from '../lib/output-dir.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const OUT = __dirname;
+const OUT = scriptOutputDir(import.meta.url);
 const BASE = process.env.WEB_URL || 'http://localhost:5173';
 const EMAIL = process.env.KAREA_EMAIL || 'manager@karea.local';
 const PASS = process.env.KAREA_PASSWORD || 'changeme123';

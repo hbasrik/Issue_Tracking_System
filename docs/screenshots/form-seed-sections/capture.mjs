@@ -12,8 +12,9 @@ import os from 'node:os';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import { build } from '../mobile-harness/build.mjs';
 import { chromium } from '../../../web/node_modules/playwright/index.mjs';
+import { scriptOutputDir } from '../lib/output-dir.mjs';
 
-const OUT = path.dirname(fileURLToPath(import.meta.url));
+const OUT = scriptOutputDir(import.meta.url);
 const BASE = 'http://localhost:5175';
 const API = 'http://localhost:18081/api/v1';
 const BRANCH_VIN = 'N7V1K1SA8TK000007';

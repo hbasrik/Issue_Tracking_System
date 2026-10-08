@@ -12,7 +12,9 @@ import re
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-facts = json.load(open(os.path.join(HERE, "mobile", "facts.json")))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "lib"))
+from output_dir import script_output_dir  # noqa: E402
+facts = json.load(open(os.path.join(script_output_dir(__file__, "mobile"), "facts.json")))
 RAW = [
     re.compile(r"\b[A-Z]{2,}(?:_[A-Z0-9]+)+\b"),
     re.compile(r"\b[a-z]+_[a-z_]+\b"),

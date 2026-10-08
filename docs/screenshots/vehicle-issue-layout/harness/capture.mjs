@@ -7,9 +7,10 @@
 import { chromium } from '../../../../web/node_modules/playwright/index.mjs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { outputDir } from '../../lib/output-dir.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const outDir = path.resolve(here, '..');
+const outDir = outputDir(path.resolve(here, '..'));
 const bundle = path.resolve(process.argv[2]);
 const prefix = process.argv[3] ?? 'after';
 const url = (q) => `${pathToFileURL(path.join(bundle, 'index.html')).href}?${q}`;

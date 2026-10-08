@@ -8,7 +8,8 @@
  * counted. No login, no database. The Vite child is killed on exit.
  *
  * Usage (repo root): node docs/screenshots/analysis-labels-vin/capture.mjs before|after
- * Writes <phase>-*.png and <phase>-facts.json next to this file.
+ * Writes <phase>-*.png and <phase>-facts.json to $TMPDIR/karea-shots/
+ * (next to this file with UPDATE_SCREENSHOTS=1, see ../lib/output-dir.mjs).
  */
 import path from 'node:path';
 import fs from 'node:fs';
@@ -16,11 +17,12 @@ import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { chromium } from '../../../web/node_modules/playwright/index.mjs';
 import { dashboard, stations, issue, session } from './fixture.mjs';
+import { scriptOutputDir } from '../lib/output-dir.mjs';
 
 const phase = process.argv[2];
 if (phase !== 'before' && phase !== 'after') throw new Error('usage: capture.mjs before|after');
-const OUT = path.dirname(fileURLToPath(import.meta.url));
-const WEB = path.resolve(OUT, '../../../web');
+const OUT = scriptOutputDir(import.meta.url);
+const WEB = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../web');
 const PORT = 15173;
 const BASE = `http://127.0.0.1:${PORT}`;
 const API_HOST = '127.0.0.1:18081';

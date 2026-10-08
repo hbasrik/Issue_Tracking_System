@@ -13,10 +13,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from '../../../web/node_modules/playwright/index.mjs';
+import { outputDir } from '../lib/output-dir.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const prefix = process.argv[2] ?? 'after';
-const outDir = path.join(here, 'web', prefix);
+const outDir = outputDir(path.join(here, 'web', prefix));
 const WEB = process.env.WEB_BASE || 'http://localhost:5173';
 const VIN = 'KAREA0LAYOUT00042';
 const HOUR = 3_600_000;

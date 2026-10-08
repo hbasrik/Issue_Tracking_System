@@ -12,9 +12,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from '../../../web/node_modules/playwright/index.mjs';
+import { outputDir } from '../lib/output-dir.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const outDir = path.join(here, 'compare');
+const outDir = outputDir(path.join(here, 'compare'));
 fs.mkdirSync(outDir, { recursive: true });
 
 const platforms = [
@@ -47,7 +48,7 @@ const browser = await chromium.launch({ headless: true });
 const page = await browser.newPage({ viewport: { width: 1600, height: 600 }, deviceScaleFactor: 1 });
 
 for (const p of platforms) {
-  const facts = JSON.parse(fs.readFileSync(path.join(here, p.dir, 'facts.json'), 'utf8'));
+  const facts = JSON.parse(fs.readFileSync(path.join(outputDir(path.join(here, p.dir)), 'facts.json'), 'utf8'));
   const cardsOf = (k) => (facts[k].cards ?? facts[k].issue_cards);
   for (const locale of locales) {
     for (const width of widths) {
@@ -63,7 +64,7 @@ for (const p of platforms) {
       }
       if (locale !== 'tr' && width !== 375) continue;
       const img = (screen) =>
-        fs.readFileSync(path.join(here, p.dir, `${screen}-${locale}-${width}-card.png`)).toString('base64');
+        fs.readFileSync(path.join(outputDir(path.join(here, p.dir)), `${screen}-${locale}-${width}-card.png`)).toString('base64');
       const side = (title, screen) => `
         <figure style="margin:0;display:flex;flex-direction:column;gap:8px;align-items:flex-start">
           <figcaption style="font:600 15px system-ui">${title}</figcaption>

@@ -27,7 +27,9 @@ PSQL = "/opt/homebrew/opt/libpq/bin/psql"
 URL = "postgres://karea:karea_secret@localhost:5432/{db}?sslmode=disable"
 MIGRATIONS = ROOT + "/database/migrations"
 SEEDS = ROOT + "/database/seed"
-OUT = ROOT + "/docs/screenshots/admin-audit"
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "lib"))
+from output_dir import output_dir  # noqa: E402
+OUT = output_dir(ROOT + "/docs/screenshots/admin-audit")
 TEST_DB = "karea_admin_test"
 MIG_DB = "karea_admin_mig_test"
 API = "http://localhost:18081/api/v1"

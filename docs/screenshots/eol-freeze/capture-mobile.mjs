@@ -19,8 +19,9 @@ import { execFileSync } from 'node:child_process';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import { build } from '../mobile-harness/build.mjs';
 import { chromium } from '../../../web/node_modules/playwright/index.mjs';
+import { scriptOutputDir } from '../lib/output-dir.mjs';
 
-const OUT = path.dirname(fileURLToPath(import.meta.url));
+const OUT = scriptOutputDir(import.meta.url);
 const API = 'http://localhost:18081/api/v1';
 const DB = 'postgres://karea:karea_secret@localhost:5432/karea_eolnote_test?sslmode=disable';
 const PSQL = '/opt/homebrew/opt/libpq/bin/psql';

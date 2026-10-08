@@ -10,8 +10,9 @@ import os from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { build } from '../mobile-harness/build.mjs';
 import { chromium } from '../../../web/node_modules/playwright/index.mjs';
+import { scriptOutputDir } from '../lib/output-dir.mjs';
 
-const OUT = path.dirname(fileURLToPath(import.meta.url));
+const OUT = scriptOutputDir(import.meta.url);
 const bundle = await build(fs.mkdtempSync(path.join(os.tmpdir(), 'karea-vin-link-')));
 const browser = await chromium.launch({ headless: true });
 let failed = false;

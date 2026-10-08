@@ -1,4 +1,7 @@
-import json, sys, urllib.request, urllib.error
+import json, os, sys, urllib.request, urllib.error
+
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "lib"))
+from output_dir import output_dir  # noqa: E402
 
 TOK = open('/tmp/karea-verify/tok').read().strip()
 OLD, NEW = 18081, 18082
@@ -94,5 +97,6 @@ for r in rows:
           f"{c['eol']['new'] + ' / ' + c['eol']['old']:>12} {c['eol']['closed']:>6} "
           f"{str(r['branch_eol_remaining_old']) + ' / ' + str(r['branch_eol_remaining_new']):>16} "
           f"{str(r['shipment_remaining_old']) + ' / ' + str(r['shipment_remaining_new']):>14} {r['progress_new']:>6}")
-json.dump(rows, open(sys.argv[1], 'w'), indent=1, ensure_ascii=False)
+target = os.path.join(output_dir(os.path.dirname(os.path.abspath(sys.argv[1]))), os.path.basename(sys.argv[1]))
+json.dump(rows, open(target, 'w'), indent=1, ensure_ascii=False)
 print('LINE VEHICLES UNCHANGED' if ok else 'LINE VEHICLE DIFF FOUND')

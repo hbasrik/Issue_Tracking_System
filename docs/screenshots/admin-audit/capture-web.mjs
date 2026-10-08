@@ -7,8 +7,9 @@ import { chromium } from '../../../web/node_modules/playwright/index.mjs';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
+import { scriptOutputDir } from '../lib/output-dir.mjs';
 
-const OUT = path.dirname(fileURLToPath(import.meta.url));
+const OUT = scriptOutputDir(import.meta.url);
 const BASE = process.env.BASE ?? 'http://localhost:5175';
 const API = process.env.API ?? 'http://localhost:18081/api/v1';
 const RAW = [

@@ -9,10 +9,11 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import pw from '../../../../web/node_modules/playwright/index.js';
 import { fixtureIssues, fixtureSteps, fixtureVehicle } from './fixtures.mjs';
+import { outputDir } from '../../lib/output-dir.mjs';
 
 const { chromium } = pw;
 const here = path.dirname(fileURLToPath(import.meta.url));
-const outDir = path.resolve(here, '..');
+const outDir = outputDir(path.resolve(here, '..'));
 const prefix = process.argv[2] ?? 'after';
 const WEB = process.env.WEB_BASE || 'http://localhost:5173';
 const API = process.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1';

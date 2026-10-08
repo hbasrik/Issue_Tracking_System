@@ -5,12 +5,16 @@
  *   ../../../web/node_modules/.bin/esbuild error-messages.check.ts --bundle \
  *     --platform=node --format=esm --outfile=/tmp/codes-error-messages.check.mjs
  *   node /tmp/codes-error-messages.check.mjs server-errors.json
+ * A path under docs/screenshots/ is read from the same place
+ * run-verification.py wrote it (../lib/output-dir.mjs).
  */
 import fs from 'node:fs';
+import path from 'node:path';
 import { translate, translateApiError } from '../../../shared/i18n';
 import type { Locale } from '../../../shared/i18n/types';
+import { outputDir } from '../lib/output-dir.mjs';
 
-const recorded = JSON.parse(fs.readFileSync(process.argv[2], 'utf8')) as Record<
+const recorded = JSON.parse(fs.readFileSync(path.join(outputDir(path.dirname(path.resolve(process.argv[2]))), path.basename(process.argv[2])), 'utf8')) as Record<
   string,
   { status: number; error: string }
 >;

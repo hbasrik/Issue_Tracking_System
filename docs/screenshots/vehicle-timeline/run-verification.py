@@ -13,6 +13,7 @@
 The live database and the API on 8080 are never used.
 """
 import json
+import os
 import subprocess
 import sys
 import urllib.error
@@ -23,7 +24,9 @@ PSQL = "/opt/homebrew/opt/libpq/bin/psql"
 URL = "postgres://karea:karea_secret@localhost:5432/{db}?sslmode=disable"
 MIGRATIONS = ROOT + "/database/migrations"
 SEEDS = ROOT + "/database/seed"
-OUT = ROOT + "/docs/screenshots/vehicle-timeline"
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "lib"))
+from output_dir import output_dir  # noqa: E402
+OUT = output_dir(ROOT + "/docs/screenshots/vehicle-timeline")
 TEST_DB = "karea_timeline_test"
 MIG_DB = "karea_timeline_mig_test"
 API = "http://localhost:18081/api/v1"

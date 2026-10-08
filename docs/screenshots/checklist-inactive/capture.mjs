@@ -13,9 +13,10 @@ import {
   filterByEolPhase,
   splitChecklistByActive,
 } from '../../../shared/checklistActive.ts';
+import { scriptOutputDir } from '../lib/output-dir.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const OUT = __dirname;
+const OUT = scriptOutputDir(import.meta.url);
 const BASE = 'http://localhost:5173';
 const API = 'http://localhost:8080/api/v1';
 const VIN = 'N7V1K1SA6TK000068';

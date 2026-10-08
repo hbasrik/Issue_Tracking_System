@@ -12,11 +12,15 @@
 The live database and the API on 8080 are never used.
 """
 import json
+import os
 import subprocess
 import sys
 import time
 import urllib.request
 import uuid
+
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "lib"))
+from output_dir import script_output_dir  # noqa: E402
 
 PSQL = "/opt/homebrew/opt/libpq/bin/psql"
 DB = "karea_eolnote_test"
@@ -141,7 +145,8 @@ def phase_api():
     check("4 statements for the whole request, independent of item/photo count", len(stmts) == 4)
     check("media read only inside the item-list statement (2 = its two UNION branches)", media_reads == 2)
 
-    json.dump(by_no[1], open("api-item1.json", "w"), ensure_ascii=False, indent=1, default=str)
+    json.dump(by_no[1], open(os.path.join(script_output_dir(__file__), "api-item1.json"), "w"),
+              ensure_ascii=False, indent=1, default=str)
     print("\nALL CHECKS PASSED" if not failures else f"\nFAILED: {failures}")
     sys.exit(1 if failures else 0)
 

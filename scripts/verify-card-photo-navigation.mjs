@@ -13,6 +13,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import pw from '../web/node_modules/playwright/index.js';
+import { outputDir } from '../docs/screenshots/lib/output-dir.mjs';
 
 const { chromium } = pw;
 const API = process.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1';
@@ -21,7 +22,7 @@ const ISSUE_ID = Number(process.env.ISSUE_ID || 8);
 const ORIGINAL_BYTES = Number(process.env.ORIGINAL_BYTES);
 const ORIGINAL_W = Number(process.env.ORIGINAL_W);
 const ORIGINAL_H = Number(process.env.ORIGINAL_H);
-const OUT = path.resolve('docs/screenshots/card-photo-navigation');
+const OUT = outputDir('docs/screenshots/card-photo-navigation');
 fs.mkdirSync(OUT, { recursive: true });
 
 let failures = 0;

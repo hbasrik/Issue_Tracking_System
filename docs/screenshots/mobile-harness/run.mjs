@@ -4,7 +4,9 @@
  *
  * Usage (from mobile/):  npm run screenshots -- <outDir> [scene,scene] [--locales tr,en]
  *   or: node docs/screenshots/mobile-harness/run.mjs <outDir> ...
- * Writes <scene>-<locale>-<width>[-open].png and facts.json into <outDir>;
+ * Writes <scene>-<locale>-<width>[-open].png and facts.json into <outDir>
+ * (an <outDir> under docs/screenshots/ goes to $TMPDIR/karea-shots/ unless
+ * UPDATE_SCREENSHOTS=1, see ../lib/output-dir.mjs);
  * with CARD_TEXT=<text> also a crop of the issue card containing that text.
  * EXPECT_ISSUE_LAYOUT=1 fails on visible severity text or a card whose
  * status/severity/meta corners do not match.
@@ -17,6 +19,7 @@ import os from 'node:os';
 import { pathToFileURL } from 'node:url';
 import { build } from './build.mjs';
 import { chromium } from '../../../web/node_modules/playwright/index.mjs';
+import { outputDir } from '../lib/output-dir.mjs';
 
 const TOGGLES = ['checklist-stage-closed-toggle', 'checklist-inactive-toggle'];
 const RAW_STATUS = /\b(PENDING|NOT_OK|CONDITIONAL_OK)\b/;
@@ -30,7 +33,7 @@ const locales = option('--locales') ?? ['tr'];
 const WIDTHS = (option('--widths') ?? ['375', '390', '430']).map(Number);
 const positional = args.filter((a, i) => !a.startsWith('--') && !(i > 0 && args[i - 1].startsWith('--')));
 if (!positional[0]) throw new Error('usage: run.mjs <outDir> [scene,scene] [--locales tr,en] [--widths 375,1280]');
-const outDir = path.resolve(positional[0]);
+const outDir = outputDir(positional[0]);
 const sceneArg = positional[1];
 
 const bundle = await build(fs.mkdtempSync(path.join(os.tmpdir(), 'karea-mobile-harness-')));

@@ -3,8 +3,9 @@
 import { chromium } from '../../../web/node_modules/playwright/index.mjs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { scriptOutputDir } from '../lib/output-dir.mjs';
 
-const OUT = path.dirname(fileURLToPath(import.meta.url));
+const OUT = scriptOutputDir(import.meta.url);
 const BASE = 'http://localhost:5175';
 const API = 'http://localhost:18081/api/v1';
 const VIN = 'N7V1K1SA0TK000003';

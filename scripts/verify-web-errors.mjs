@@ -10,13 +10,14 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import pw from '../web/node_modules/playwright/index.js';
+import { outputDir } from '../docs/screenshots/lib/output-dir.mjs';
 const { chromium } = pw;
 
 const API = process.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1';
 const WEB = process.env.WEB_BASE || 'http://localhost:5173';
 const EMAIL = process.env.KAREA_EMAIL;
 const PASS = process.env.KAREA_PASSWORD;
-const OUT = path.resolve('../docs/screenshots/web-errors');
+const OUT = outputDir('../docs/screenshots/web-errors');
 const SKIP_TIMEOUT = process.env.SKIP_TIMEOUT === '1';
 
 const RAW_MARKERS = [

@@ -7,8 +7,9 @@
 import { chromium } from '../../../web/node_modules/playwright/index.mjs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { scriptOutputDir } from '../lib/output-dir.mjs';
 
-const OUT = path.dirname(fileURLToPath(import.meta.url));
+const OUT = scriptOutputDir(import.meta.url);
 const BASE = 'http://localhost:5174';
 const API = 'http://127.0.0.1:18081/api/v1';
 if (API.includes(':8080') || BASE.includes(':5173')) throw new Error('never touch the live stack');

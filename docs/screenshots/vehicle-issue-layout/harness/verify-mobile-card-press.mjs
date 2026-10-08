@@ -7,9 +7,10 @@
 import { chromium } from '../../../../web/node_modules/playwright/index.mjs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { outputDir } from '../../lib/output-dir.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const out = path.resolve(here, '../../card-photo-navigation');
+const out = outputDir(path.resolve(here, '../../card-photo-navigation'));
 const bundle = path.resolve(process.argv[2]);
 const url = `${pathToFileURL(path.join(bundle, 'index.html')).href}?theme=light&locale=tr`;
 

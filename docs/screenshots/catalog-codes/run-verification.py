@@ -23,6 +23,8 @@ ROOT = "/Users/Basri/Desktop/kts_kms_project"
 SEED = ROOT + "/database/seed/05_defect_catalog.sql"
 OLD_SEED_REV = "5c0052b^"  # last commit with the DO UPDATE seed
 HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "lib"))
+from output_dir import output_dir  # noqa: E402
 
 assert ":8080" not in BASE, "never touch the live API"
 assert DB.split("?")[0].rsplit("/", 1)[1].endswith("_test"), "database must be *_test"
@@ -191,7 +193,7 @@ s, b = call("PATCH", f"/defect-parts/{legacy}",
             {"zone_id": BODY, "code": "ZZY", "name_tr": "Eski kayıt (yeni ad)", "name_en": "Legacy row", "sort_order": 99, "is_active": False})
 expect("changing the legacy code to another bad code rejected", s, b, 400)
 
-with open(os.path.join(HERE, "server-errors.json"), "w") as f:
+with open(os.path.join(output_dir(HERE), "server-errors.json"), "w") as f:
     json.dump(SERVER_ERRORS, f, ensure_ascii=False, indent=1)
 
 print()

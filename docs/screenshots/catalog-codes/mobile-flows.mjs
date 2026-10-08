@@ -12,9 +12,9 @@ import os from 'node:os';
 import { pathToFileURL } from 'node:url';
 import { build } from '../mobile-harness/build.mjs';
 import { chromium } from '../../../web/node_modules/playwright/index.mjs';
+import { outputDir } from '../lib/output-dir.mjs';
 
-const outDir = path.resolve(process.argv[2] ?? 'mobile-flows-out');
-fs.mkdirSync(outDir, { recursive: true });
+const outDir = outputDir(process.argv[2] ?? 'mobile-flows-out');
 const bundle = await build(fs.mkdtempSync(path.join(os.tmpdir(), 'karea-mobile-flows-')));
 const QUEUED_ID = '6f1c2a9e-4b7d-4c1e-9a3f-2d8b5e7c1a40';
 const WIDTH = 390;

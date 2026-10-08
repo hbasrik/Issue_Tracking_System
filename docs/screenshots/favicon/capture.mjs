@@ -6,9 +6,10 @@ import { chromium } from '/Users/Basri/Desktop/kts_kms_project/web/node_modules/
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
+import { scriptOutputDir } from '../lib/output-dir.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const OUT = __dirname;
+const OUT = scriptOutputDir(import.meta.url);
 const BASE = 'http://localhost:5173';
 const API = 'http://localhost:8080/api/v1';
 const AUTH_KEY = 'karea.auth.session';
