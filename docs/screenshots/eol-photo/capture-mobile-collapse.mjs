@@ -38,7 +38,7 @@ for (const locale of ['tr', 'en']) {
     const closed = page.locator('[data-testid="eol-answered-1"]');
     const text = await closed.innerText();
     check(key, 'answered item 1 starts closed', await closed.isVisible());
-    check(key, 'header shows number + name and the answer pill', (await header.innerText()).includes('1. Software Update') && (await header.innerText()).includes(t.ok), JSON.stringify((await header.innerText()).split('\n')));
+    check(key, 'header shows number + name and the answer pill', (await header.innerText()).includes('1. Araç kimliği ve varyant') && (await header.innerText()).includes(t.ok), JSON.stringify((await header.innerText()).split('\n')));
     check(key, 'header has a chevron icon', (await header.locator('svg').count()) === 1);
     check(key, 'header aria-expanded=false when closed', (await header.getAttribute('aria-expanded')) === 'false');
     check(key, 'no "Edit" label anywhere', !(await page.locator('#root').innerText()).split('\n').includes(t.edit));
@@ -68,7 +68,7 @@ for (const locale of ['tr', 'en']) {
     await header.click();
     await page.waitForTimeout(200);
     check(key, 'header tap opens the editor', !(await closed.count()) && (await header.getAttribute('aria-expanded')) === 'true');
-    const editor = page.locator('div', { has: page.getByText(t.cancel, { exact: true }) }).filter({ hasText: '1. Software Update' }).last();
+    const editor = page.locator('div', { has: page.getByText(t.cancel, { exact: true }) }).filter({ hasText: '1. Araç kimliği ve varyant' }).last();
     const noteValue = await editor.locator('textarea').first().inputValue();
     check(key, 'editor prefilled with the saved note', noteValue === 'ölçüm 12.6', JSON.stringify(noteValue));
     check(key, 'open card still shows all 3 photos', (await editor.locator('[data-testid="checklist-item-photos"] img').count()) === 3);
@@ -96,7 +96,7 @@ for (const locale of ['tr', 'en']) {
 
     await header.click();
     await page.waitForTimeout(200);
-    const ed2 = page.locator('div', { has: page.getByText(t.cancel, { exact: true }) }).filter({ hasText: '1. Software Update' }).last();
+    const ed2 = page.locator('div', { has: page.getByText(t.cancel, { exact: true }) }).filter({ hasText: '1. Araç kimliği ve varyant' }).last();
     await ed2.getByText(t.notOk, { exact: true }).click();
     await ed2.locator('textarea').first().fill('conta yırtık');
     await ed2.getByText(t.save, { exact: true }).click();

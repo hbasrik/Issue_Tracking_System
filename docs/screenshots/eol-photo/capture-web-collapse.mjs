@@ -90,7 +90,7 @@ for (const [width, locale] of [[1280, 'tr'], [375, 'tr'], [1280, 'en'], [375, 'e
   // Closed card
   check('answered item 1 starts closed', (await card.getAttribute('data-checklist-collapsed')) === '1');
   const headerText = await header.innerText();
-  check('header: number + name and answer pill', headerText.includes('Software Update') && headerText.includes(L.ok), JSON.stringify(headerText.split('\n')));
+  check('header: number + name and answer pill', headerText.includes(item1.ItemText) && headerText.includes(L.ok), JSON.stringify(headerText.split('\n')));
   check('header: chevron icon', (await header.locator('svg').count()) === 1);
   check('header: aria-expanded=false', (await header.getAttribute('aria-expanded')) === 'false');
   const cardStyle = await card.evaluate((el) => ({ border: getComputedStyle(el).borderTopWidth, radius: getComputedStyle(el).borderTopLeftRadius }));

@@ -155,14 +155,58 @@ const shipmentLine = [
   item(LATE_SHIPMENT.id, LATE_SHIPMENT.no, LATE_SHIPMENT.text, 'PENDING'),
 ];
 
+// EoL items as seed 03 builds them (Karar 30): KY.FR-09 branch items, a kept
+// branch item in "Fiziksel testler", KY.FR-19 depot items and the kept
+// Bumpy Road in "Ek kontroller". Answered items carry the answer copy the
+// API returns (AnsweredCriteria) next to the template's current values.
+function eolItem(
+  id: number,
+  no: number,
+  text: string,
+  status: Status,
+  form: { phase: 'BRANCH' | 'DEPOT'; section: string; sort: number; criterion?: string; method?: string },
+  extra: Record<string, unknown> = {},
+) {
+  const criteria = {
+    ...(form.criterion ? { AcceptanceCriterion: form.criterion } : {}),
+    ...(form.method ? { ControlMethod: form.method } : {}),
+  };
+  return item(id, no, text, status, {
+    EolPhase: form.phase,
+    SectionKey: form.section,
+    SectionSort: form.sort,
+    ...criteria,
+    ...(status !== 'PENDING' ? { AnsweredCriteria: { ...criteria, CopiedAt: ago(48) } } : {}),
+    ...extra,
+  });
+}
+
+const FR09_ENTRY = { phase: 'BRANCH', section: 'eol_entry', sort: 10 } as const;
+const FR09_EXTERIOR = { phase: 'BRANCH', section: 'eol_exterior', sort: 20 } as const;
+const KEPT_BRANCH = { phase: 'BRANCH', section: 'eol_physical_tests', sort: 60 } as const;
+const FR19_IDENTITY = { phase: 'DEPOT', section: 'final_identity', sort: 110 } as const;
+const FR19_MECHANICAL = { phase: 'DEPOT', section: 'final_mechanical', sort: 150 } as const;
+const KEPT_DEPOT = { phase: 'DEPOT', section: 'final_extra_checks', sort: 200 } as const;
+
 const eolBranch = (closed: boolean, depot: Status[]) => [
-  item(1, 1, 'Software Update', 'OK', { EolPhase: 'BRANCH', CheckerName: 'Quality Operator' }),
-  item(2, 2, 'Fren Testi', 'OK', { EolPhase: 'BRANCH', CheckerName: 'Quality Operator' }),
-  item(3, 3, 'Far Ayarı', 'OK', { EolPhase: 'BRANCH', CheckerName: 'Quality Operator' }),
-  item(113, 16, 'Şarj kapağı kontrolü', 'PENDING', { EolPhase: 'BRANCH', StageClosed: closed }),
-  item(11, 11, 'Depo Sürüş', depot[0], { EolPhase: 'DEPOT' }),
-  item(12, 12, 'Bumpy Road', depot[1], { EolPhase: 'DEPOT', RejectedDesc: 'Visible coolant weep at water-pump housing.' }),
-  item(13, 13, 'Yağmur Testi', depot[2], { EolPhase: 'DEPOT' }),
+  eolItem(1, 1, 'Araç kimliği ve varyant', 'OK',
+    { ...FR09_ENTRY, criterion: 'Araç ve kayıt bilgileri eşleşmeli', method: 'Kayıt / etiket karşılaştırma' },
+    { CheckerName: 'Quality Operator' }),
+  eolItem(2, 2, 'Üretim teslim kaydı', 'OK',
+    { ...FR09_ENTRY, criterion: 'Üretim tamam; açık uygunsuzluk olmamalı', method: 'Üretim kaydı inceleme' },
+    { CheckerName: 'Quality Operator' }),
+  eolItem(3, 3, 'Genel boya ve kozmetik kontrolü', 'OK',
+    { ...FR09_EXTERIOR, criterion: 'Kusur kataloğu sınırları içinde olmalı', method: 'Görsel' },
+    { CheckerName: 'Quality Operator' }),
+  eolItem(113, 44, 'Far Ayarı', 'PENDING', KEPT_BRANCH, { StageClosed: closed }),
+  eolItem(11, 47, 'Şasi ve seri numarası okunaklı ve doğru', depot[0],
+    { ...FR19_IDENTITY, method: 'Doküman/Etiket kontrol' }),
+  eolItem(12, 79, 'Fren hortum ve hatlarında sıvı kaçağı yok', depot[1],
+    { ...FR19_MECHANICAL, method: 'Görsel kontrol' },
+    depot[1] === 'NOT_OK'
+      ? { RejectedDesc: 'Sol ön fren hortumu bağlantısında sıvı izi.', Note: 'Sol ön fren hortumu bağlantısında sıvı izi.' }
+      : {}),
+  eolItem(13, 103, 'Bumpy Road', depot[2], KEPT_DEPOT),
 ];
 
 const stationSteps = {

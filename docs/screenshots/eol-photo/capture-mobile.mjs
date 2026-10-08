@@ -39,7 +39,7 @@ async function open(scene, locale, width) {
 
 const firstCard = (page, t) =>
   page.locator('div', { has: page.getByText(t.save, { exact: true }) })
-    .filter({ hasText: '1. Software Update' }).last();
+    .filter({ hasText: '1. Araç kimliği ve varyant' }).last();
 
 async function shootCard(page, card, file) {
   await card.scrollIntoViewIfNeeded();

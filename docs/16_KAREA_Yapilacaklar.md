@@ -1220,6 +1220,16 @@ başlatılınca devreye girer.
   tipe `FrozenReason`, donmuş kartı kapalı ve kilitli göster (web ile aynı:
   ikon ve kriter yok), 409 sonrası listeyi yenile ve donma mesajını göster.
   Henüz yapılmadı.
+- **Mobil düzenek EOL mock'u `[x]` (2026-10-08):**
+  `docs/screenshots/mobile-harness/scenes.ts` EOL maddeleri seed 03'ten:
+  1 Araç kimliği ve varyant, 2 Üretim teslim kaydı, 3 Genel boya (KY.FR-09,
+  kriter + yöntem + bölüm), 44 Far Ayarı (Fiziksel testler, aşaması
+  kapanmış), depoda 47 Şasi ve seri numarası, 79 Fren hortumu (NOT_OK notu
+  seed 06'daki kaçak bulgusuyla aynı), 103 Bumpy Road (Ek kontroller).
+  Cevaplı maddeler API'deki gibi `AnsweredCriteria` taşıyor. Silinmiş
+  "Software Update", "Depo Sürüş" ve Bumpy Road'daki "coolant" notu gitti;
+  ItemID'ler aynı kaldı. `eol-photo/` betiklerindeki "1. Software Update"
+  beklentisi yeni ada çekildi; web betiği adı API'den okuyor.
 - **Kalite ekibine:** belirsiz sekiz eşleşme; Araç Motoru ve Yağmur Testi
   dört formun hiçbirinde yok (su sızdırmazlık kontrolü tamamen düşüyor).
 

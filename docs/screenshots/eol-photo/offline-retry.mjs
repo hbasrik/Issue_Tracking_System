@@ -38,7 +38,7 @@ async function open(scene) {
 }
 const collapsedAgain = (page) => page.locator('[data-testid="eol-answered-1"]').isVisible();
 const card = (page) => page.locator('div', { has: page.getByText(T.save, { exact: true }) })
-  .filter({ hasText: '1. Software Update' }).last();
+  .filter({ hasText: '1. Araç kimliği ve varyant' }).last();
 const calls = (page) => page.evaluate(() => window.__calls.map((c) => c.name));
 const has = async (page, text) => (await card(page).innerText()).includes(text);
 const buttonDisabled = (page) => card(page).getByText(T.gallery, { exact: true }).or(card(page).getByText(T.picked))

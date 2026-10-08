@@ -24,7 +24,7 @@ async function open(page) {
   await page.waitForTimeout(300);
 }
 const card = (page) => page.locator('div', { has: page.getByText(T.save, { exact: true }) })
-  .filter({ hasText: '1. Software Update' }).last();
+  .filter({ hasText: '1. Araç kimliği ve varyant' }).last();
 async function state(page, label) {
   const c = card(page);
   const btn = c.getByText(T.gallery, { exact: true }).or(c.getByText(T.picked));
