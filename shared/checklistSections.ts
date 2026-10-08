@@ -50,6 +50,10 @@ export const SHIPMENT_CHECKLIST_SECTIONS: ChecklistSectionCatalogEntry[] = [
  * "Dış" around "Gap & flush", so two keys share one title. Seed 03 writes
  * these keys and sorts; change them together. formRef tells the two apart
  * in the admin picker.
+ *
+ * eol_physical_tests (60) and final_extra_checks (200) hold the pre-form
+ * items kept until the quality team decides on them (Karar 30). They are
+ * not on either form, so they sit after each form's last section.
  */
 export const EOL_CHECKLIST_SECTIONS: ChecklistSectionCatalogEntry[] = [
   { key: 'eol_entry', sort: 10, titleKey: 'checklist.section.eol_entry', formRef: 'KY.FR-09 E001–E002' },
@@ -57,6 +61,7 @@ export const EOL_CHECKLIST_SECTIONS: ChecklistSectionCatalogEntry[] = [
   { key: 'eol_gap_flush', sort: 30, titleKey: 'checklist.section.eol_gap_flush', formRef: 'KY.FR-09 E007–E010' },
   { key: 'eol_exterior_2', sort: 40, titleKey: 'checklist.section.eol_exterior', formRef: 'KY.FR-09 E011–E018' },
   { key: 'eol_interior', sort: 50, titleKey: 'checklist.section.eol_interior', formRef: 'KY.FR-09 E019–E039' },
+  { key: 'eol_physical_tests', sort: 60, titleKey: 'checklist.section.eol_physical_tests' },
   { key: 'final_identity', sort: 110, titleKey: 'checklist.section.final_identity', formRef: 'KY.FR-19 1–5' },
   { key: 'final_exterior', sort: 120, titleKey: 'checklist.section.final_exterior', formRef: 'KY.FR-19 6–14' },
   { key: 'final_doors', sort: 130, titleKey: 'checklist.section.final_doors', formRef: 'KY.FR-19 15–20' },
@@ -66,6 +71,7 @@ export const EOL_CHECKLIST_SECTIONS: ChecklistSectionCatalogEntry[] = [
   { key: 'final_function', sort: 170, titleKey: 'checklist.section.final_function', formRef: 'KY.FR-19 46–49' },
   { key: 'final_road_test', sort: 180, titleKey: 'checklist.section.final_road_test', formRef: 'KY.FR-19 50–54' },
   { key: 'final_shipment', sort: 190, titleKey: 'checklist.section.final_shipment', formRef: 'KY.FR-19 55–59' },
+  { key: 'final_extra_checks', sort: 200, titleKey: 'checklist.section.final_extra_checks' },
 ];
 
 const KNOWN_TITLE: Record<string, MessageKey> = Object.fromEntries(

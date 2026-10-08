@@ -1146,8 +1146,13 @@ başlatılınca devreye girer.
   satır girer, cevaplı satır ve cevaplama reddedilir); `capture-output.txt`
   + `web-*`, `mobile-*` PNG (TR/EN × 1280/375, ham anahtar yok);
   `shared/checklistSections.selftest.ts`; `go test ./...` yeşil.
-- **Öneri — korunan 9 maddenin bölümü (karar bekliyor):** şimdilik
-  "Diğer maddeler" altında.
+- **Korunan 9 maddenin bölümü `[x]` (2026-10-08, Karar 30, GEÇİCİ):**
+  şubedeki 7 madde "Fiziksel testler" (`eol_physical_tests`, sıra 60),
+  depodaki Bumpy Road / Yağmur Testi "Ek kontroller"
+  (`final_extra_checks`, sıra 200); TR/EN başlık. EOL'da bölümsüz madde
+  kalmadı. Seed insert-only: yalnız sıfırdan kurulumda geçerli, mevcut
+  satırların bölümü güncellenmez. Kanıt:
+  `docs/screenshots/form-seed-sections/`.
 - **Sonraki iş `[ ]`:** kabul kriteri ve kontrol yöntemi hiçbir ekranda
   gösterilmiyor; gösterim ayrı iş olarak yapılacak.
 - **Kalite ekibine:** belirsiz sekiz eşleşme; Araç Motoru ve Yağmur Testi

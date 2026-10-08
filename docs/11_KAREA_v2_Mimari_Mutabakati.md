@@ -706,10 +706,21 @@ kalıyordu.
   karşılığı olmayan veya belirsiz dokuz madde kalır (Araç Motoru, Batarya,
   Süspansiyon Testi, Fren/El Testi, Far Ayarı, Rot Balans, Sürüş; depoda
   Bumpy Road, Yağmur Testi): metin, aşama ve md5 seed_key aynı; form ve
-  kabul alanları NULL; bölüm yok ("Diğer maddeler"). Seed'den çıkarmak o
-  kontrolleri kayıttan kaldırmak olurdu; kalite ekibi teyit edene kadar
-  dururlar. EOL şablonu 104 madde: şube 1–39 KY.FR-09, 40–46 eski; depo
-  47–102 KY.FR-19, 103–104 eski.
+  kabul alanları NULL. Seed'den çıkarmak o kontrolleri kayıttan kaldırmak
+  olurdu; kalite ekibi teyit edene kadar dururlar. EOL şablonu 104 madde:
+  şube 1–39 KY.FR-09, 40–46 eski; depo 47–102 KY.FR-19, 103–104 eski.
+- **Bu dokuz madde GEÇİCİDİR (2026-10-08):** kalite ekibinin kararını
+  bekliyorlar (form maddesine dönüşecek mi, kaldırılacak mı). Bu yüzden
+  formların bölümlerine karıştırılmaz, kendi bölümlerinde dururlar:
+  şubede yedisi "Fiziksel testler" (`eol_physical_tests`, sıra 60,
+  KY.FR-09'un son bölümü İç'ten sonra), depoda Bumpy Road ve Yağmur Testi
+  "Ek kontroller" (`final_extra_checks`, sıra 200, KY.FR-19'un son bölümü
+  Sevkiyat'tan sonra). Form bölümüne konsalar formun parçası gibi görünür,
+  ekranda "bunlar yeni formlarda yok" bilgisi kaybolurdu. Bumpy Road
+  "Yol Testi"ne katılmaz; Yağmur Testi için ayrı bölüm açılmaz. "Diğer
+  maddeler" (bölümsüz) yalnız admin'in bölüm vermeden eklediği maddeler
+  için kalır. Kalite kararı gelince bu iki bölüm boşalır ve katalogdan
+  çıkar.
 
 ## Değişmeyen / Yeniden Kullanılacaklar
 

@@ -10,7 +10,9 @@ the following order:
 - `03_checklist_templates.sql` — real shop-floor checklist items;
   insert-only. SHIPMENT (46) and TEST (43) are exported from production
   content. EOL (104) = KY.FR-09 (39, branch, item_no 1–39) + 9 kept
-  pre-form items (7 branch at 40–46, 2 depot at 103–104) + KY.FR-19 (56,
+  pre-form items (7 branch at 40–46 in section `eol_physical_tests`, 2
+  depot at 103–104 in `final_extra_checks`; temporary until the quality
+  team decides, Karar 30) + KY.FR-19 (56,
   depot, 47–102), form items copied from `docs/21_KAREA_Yeni_Formlar.md`
   with acceptance criterion, control method, section, `form_code` and
   `form_item_ref`. A seed item is present when its template has a row with

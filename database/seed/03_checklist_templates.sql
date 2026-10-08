@@ -27,16 +27,17 @@ WITH legacy_items (
         -- EOL: 9 items kept from the pre-form list (no form counterpart yet;
         -- quality team to confirm). Text unchanged, so seed_key = md5(text) as
         -- before. item_no: branch after KY.FR-09 (1-39), depot after KY.FR-19
-        -- (47-102). No section yet.
-        ('Default EoL Template (Branch + Depot)', 40::SMALLINT, 'Araç Motoru', 'BRANCH'::eol_item_phase_enum, NULL::varchar, NULL::smallint),
-        ('Default EoL Template (Branch + Depot)', 41, 'Batarya', 'BRANCH', NULL, NULL),
-        ('Default EoL Template (Branch + Depot)', 42, 'Süspansiyon Testi', 'BRANCH', NULL, NULL),
-        ('Default EoL Template (Branch + Depot)', 43, 'Fren/El Testi', 'BRANCH', NULL, NULL),
-        ('Default EoL Template (Branch + Depot)', 44, 'Far Ayarı', 'BRANCH', NULL, NULL),
-        ('Default EoL Template (Branch + Depot)', 45, 'Rot Balans', 'BRANCH', NULL, NULL),
-        ('Default EoL Template (Branch + Depot)', 46, 'Sürüş', 'BRANCH', NULL, NULL),
-        ('Default EoL Template (Branch + Depot)', 103, 'Bumpy Road', 'DEPOT', NULL, NULL),
-        ('Default EoL Template (Branch + Depot)', 104, 'Yağmur Testi', 'DEPOT', NULL, NULL),
+        -- (47-102). Temporary sections outside the forms' sections (Karar 30):
+        -- branch "eol_physical_tests" (60), depot "final_extra_checks" (200).
+        ('Default EoL Template (Branch + Depot)', 40::SMALLINT, 'Araç Motoru', 'BRANCH'::eol_item_phase_enum, 'eol_physical_tests'::varchar, 60::smallint),
+        ('Default EoL Template (Branch + Depot)', 41, 'Batarya', 'BRANCH', 'eol_physical_tests', 60),
+        ('Default EoL Template (Branch + Depot)', 42, 'Süspansiyon Testi', 'BRANCH', 'eol_physical_tests', 60),
+        ('Default EoL Template (Branch + Depot)', 43, 'Fren/El Testi', 'BRANCH', 'eol_physical_tests', 60),
+        ('Default EoL Template (Branch + Depot)', 44, 'Far Ayarı', 'BRANCH', 'eol_physical_tests', 60),
+        ('Default EoL Template (Branch + Depot)', 45, 'Rot Balans', 'BRANCH', 'eol_physical_tests', 60),
+        ('Default EoL Template (Branch + Depot)', 46, 'Sürüş', 'BRANCH', 'eol_physical_tests', 60),
+        ('Default EoL Template (Branch + Depot)', 103, 'Bumpy Road', 'DEPOT', 'final_extra_checks', 200),
+        ('Default EoL Template (Branch + Depot)', 104, 'Yağmur Testi', 'DEPOT', 'final_extra_checks', 200),
 
         -- SHIPMENT: 46 active items
         ('Default Customer Vehicle Checklist', 1, E'Rear Bota Ses İzolasyonu Montaj\n', NULL, 'interior_fit', 10),
