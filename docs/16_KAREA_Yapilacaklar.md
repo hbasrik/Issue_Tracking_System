@@ -1089,6 +1089,19 @@ başlatılınca devreye girer.
   13, 14)", "2 open issue(s) remain (issue ids: 13, 14)", "1 depot-phase
   EoL item(s) incomplete").
 
+### A62. Web / mobil ayrışma envanteri `[x]` — 2026-10-08
+- `docs/22_KAREA_Web_Mobil_Ayrisma_Envanteri.md`: 13 alan, her satırda web /
+  mobil / fark (kasıtlı, unutulmuş, eşit) ve kanıt yolu; sonunda öncelik
+  sırası. Kural Karar 32. Kod değişmedi.
+- **Envanterden çıkan açık işler (henüz yapılmadı):**
+  - `[ ]` Mobil araç listesi ilk 20 araçla sınırlı: `VehiclesScreen`
+    `listVehicles`'ı sayfa vermeden çağırıyor (sunucu varsayılanı 20), VIN
+    araması yalnız bu 20 araçta. Sahada engelleyici.
+  - `[ ]` Mobilde donma kilidi (A55'teki açık iş; Test / Sevkiyat için de).
+  - `[ ]` Mobil Test / Sevkiyat'ta işaret geri alınamıyor (web OK ↔ NOT_OK).
+  - `[ ]` Mobil arıza detayında sonradan bildirim fotoğrafı ekleme.
+  - `[ ]` Mobil arıza listesinde açılış tarihi filtresi (A57'nin mobil eşi).
+
 ### A61. Yerel veritabanı üretim kurulum yoluyla sıfırdan kuruldu `[x]` — 2026-10-08
 - **Neden:** Yerel `karea` hâlâ eski 15 EOL maddesiyle duruyordu; seed'deki
   form maddeleri ve kriterler görünmüyordu. İçerik test verisiydi; kullanıcı

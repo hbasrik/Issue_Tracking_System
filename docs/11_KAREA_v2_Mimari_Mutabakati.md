@@ -781,6 +781,18 @@ kalıyordu.
   kaymaz. Aynı aralıkta pano toplamı = analiz "Açılan hatalar" = günlük
   kovaların toplamı; test bunu kilitler.
 
+## Karar 32 — Web / mobil farkları tek dosyada izlenir (NEW — 2026-10-08)
+
+- **Neden:** Web'e eklenen birçok özellik mobile gelmedi; hangisinin bilinçli,
+  hangisinin unutulmuş olduğu bilinmiyordu.
+- **Kural:** `docs/22_KAREA_Web_Mobil_Ayrisma_Envanteri.md` kullanıcıya görünen
+  her özellik için web / mobil durumunu ve farkın kasıtlı mı, unutulmuş mu
+  olduğunu tutar. Bir özellik iki taraftan birinde eklenince, kaldırılınca ya
+  da değişince dosya aynı commit'te güncellenir.
+- **Kasıtlılık ölçütü:** PRD §5 ve MoSCoW #13'teki rol ayrımı (operatör
+  mobil, yönetici web) ve MoSCoW #30 (Faz 1'de çevrimdışı senkronizasyon
+  yok). Yazılı bir gerekçesi olmayan fark "unutulmuş" sayılır.
+
 ## Değişmeyen / Yeniden Kullanılacaklar
 
 Şunlara **dokunulmuyor**, olduğu gibi kalıyor: JWT auth + bcrypt (üstteki JWT_SECRET ve iptal sıkılaştırmaları hariç), CORS allowlist mimarisi, Unit-of-Work (pgx.Tx) transaction pattern, `.cursor/rules` (commit ve environment-check kuralları), Analysis sekmesi temel yapısı (VIN×severity kırılımı, Pie/Bar chart'lar — yeni station/EOL alanlarıyla genişleyecek ama sıfırdan kurulmayacak), Docker/migration/seed altyapısı.
