@@ -17,9 +17,10 @@ const seed = readFileSync(
   'utf8',
 );
 const rowRe =
-  /\('Default EoL Template \(Branch \+ Depot\)', (\d+)(?:::SMALLINT)?, '((?:[^']|'')*)', '(BRANCH|DEPOT)'(?:::eol_item_phase_enum)?, (?:'([a-z0-9_]+)'|NULL(?:::varchar)?), (\d+|NULL(?:::smallint)?)/g;
+  /\('Default EoL Template \(Branch \+ Depot\)', (\d+)(?:::SMALLINT)?, '((?:[^']|'')*)', '(BRANCH|DEPOT)'(?:::eol_item_phase_enum)?, (?:'([a-z0-9_]+)'|NULL)(?:::varchar)?, (\d+|NULL)(?:::smallint)?/g;
 const rows = [...seed.matchAll(rowRe)].map((m) => ({
   itemNo: Number(m[1]),
+  text: m[2],
   phase: m[3],
   key: m[4] ?? null,
   sort: m[5].startsWith('NULL') ? null : Number(m[5]),
@@ -28,10 +29,7 @@ assert.equal(rows.length, 104, 'EOL seed rows');
 
 const catalog = new Map(EOL_CHECKLIST_SECTIONS.map((e) => [e.key, e]));
 for (const r of rows) {
-  if (r.key === null) {
-    assert.equal(r.sort, null, `item ${r.itemNo}: sort without key`);
-    continue;
-  }
+  assert.ok(r.key, `item ${r.itemNo}: no section`);
   const entry = catalog.get(r.key);
   assert.ok(entry, `item ${r.itemNo}: ${r.key} missing from EOL_CHECKLIST_SECTIONS`);
   assert.equal(r.sort, entry.sort, `item ${r.itemNo}: sort`);
@@ -43,6 +41,14 @@ assert.deepEqual(
   'every catalog key is used by the seed',
 );
 assert.equal(sectionsForTemplateType('EOL'), EOL_CHECKLIST_SECTIONS);
+
+const textsIn = (key: string) => rows.filter((r) => r.key === key).map((r) => r.text);
+assert.deepEqual(
+  textsIn('eol_physical_tests'),
+  ['Araç Motoru', 'Batarya', 'Süspansiyon Testi', 'Fren/El Testi', 'Far Ayarı', 'Rot Balans', 'Sürüş'],
+  'kept branch items in their own section',
+);
+assert.deepEqual(textsIn('final_extra_checks'), ['Bumpy Road', 'Yağmur Testi'], 'kept depot items in their own section');
 
 for (const [name, dict] of [['tr', tr], ['en', en]] as const) {
   const t = ((k: string) => (dict as Record<string, string>)[k] ?? k) as never;
@@ -61,8 +67,8 @@ for (const [name, dict] of [['tr', tr], ['en', en]] as const) {
   assert.equal(exterior[0].title, exterior[1].title, `${name}: same exterior title`);
   assert.deepEqual(
     groups.map((g) => g.sectionKey ?? null),
-    [...EOL_CHECKLIST_SECTIONS.map((e) => e.key), null],
-    `${name}: paper order, unsectioned last`,
+    EOL_CHECKLIST_SECTIONS.map((e) => e.key),
+    `${name}: paper order, no unsectioned group`,
   );
   console.log(`${name}: ${groups.map((g) => `${g.title} (${g.items.length})`).join(' | ')}`);
 }
