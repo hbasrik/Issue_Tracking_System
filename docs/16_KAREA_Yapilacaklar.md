@@ -1124,9 +1124,30 @@ başlatılınca devreye girer.
   dosyayı tek çok-ifadeli sorgu olarak gönderdiği için PostgreSQL bunu
   örtük tek işlemde çalıştırır, koruma hata verirse eklenen kolonlar da
   geri alınır.
-- **Adım 2 — seed 03 `[ ]`:** 39 KY.FR-09 (şube) + 56 KY.FR-19 (depo)
-  maddesi; seed_key "KY.FR-09:E001" / "KY.FR-19:46"; iki ayrı "Dış"
-  bölümü; seed 06 aşama bazlı işaretleme; EOL bölüm kataloğu + i18n.
+- **Adım 2 — seed 03 `[x]` (2026-10-08, canlıda çalıştırılmadı):** EOL
+  104 madde: şube 1–39 KY.FR-09, 40–46 korunan 7 eski madde; depo 47–102
+  KY.FR-19, 103–104 Bumpy Road / Yağmur Testi. Form maddelerinde metin,
+  `acceptance_criterion` (KY.FR-19'da NULL), `control_method`, bölüm,
+  `form_code`, `form_item_ref`; `form_revision` / `form_published_at` NULL.
+  seed_key "KY.FR-09:E001" / "KY.FR-19:46"; korunan 9 maddenin md5
+  seed_key'i aynı. Çıkan 6 madde (Software Update, Fonksiyonel Komponet
+  Kontrolü, EE Check, Görsel Kontrol, Görsel Kontrol 2, Depo Sürüş) yalnız
+  sıfırdan kurulumda yok; çalışan kurulumda admin ekranından pasife alınır.
+  Bölümler `EOL_CHECKLIST_SECTIONS` (shared) + TR/EN; iki "Dış" anahtarı
+  (`eol_exterior`, `eol_exterior_2`) aynı başlıkla; admin seçicide form
+  aralığı yazılı. Mobil EOL ekranı da bölüm başlıklarıyla gruplanıyor;
+  web/mobil bölüm React anahtarı artık başlık değil bölüm anahtarı. Seed
+  06 EOL'u madde numarası yerine aşama + aşama içi sıra ile işaretliyor.
+- **Kanıt:** `docs/screenshots/form-seed/verify-output.txt` (üretim yolu:
+  migration'lar + seed 01/02/03/05 + `reset_and_load_vins.sql`; 104 madde,
+  sıra ve aşama; 95 madde × 9 alan docs/21 ile birebir, 0 fark; korunan 9
+  maddenin seed_key'i canlıyla aynı; seed ikinci kez çalışınca md5 aynı;
+  500 VIN × 104 EOL ilerleme satırı; 0040: teslim edilmiş araca PENDING
+  satır girer, cevaplı satır ve cevaplama reddedilir); `capture-output.txt`
+  + `web-*`, `mobile-*` PNG (TR/EN × 1280/375, ham anahtar yok);
+  `shared/checklistSections.selftest.ts`; `go test ./...` yeşil.
+- **Öneri — korunan 9 maddenin bölümü (karar bekliyor):** şimdilik
+  "Diğer maddeler" altında.
 - **Sonraki iş `[ ]`:** kabul kriteri ve kontrol yöntemi hiçbir ekranda
   gösterilmiyor; gösterim ayrı iş olarak yapılacak.
 - **Kalite ekibine:** belirsiz sekiz eşleşme; Araç Motoru ve Yağmur Testi
