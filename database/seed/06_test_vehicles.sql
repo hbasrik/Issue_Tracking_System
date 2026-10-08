@@ -163,6 +163,8 @@ BEGIN
 END;
 $$;
 
+-- The tick helpers write the same copy SaveResult takes with an answer
+-- (item text, criterion, method, revision, stamp = answer time; Karar 30).
 -- Ticks the first p_count items of an EOL phase OK (NULL = the whole phase).
 CREATE OR REPLACE FUNCTION pg_temp.tick_eol_phase(
     p_vin varchar, p_phase eol_item_phase_enum, p_count int,
@@ -170,9 +172,14 @@ CREATE OR REPLACE FUNCTION pg_temp.tick_eol_phase(
 ) RETURNS void LANGUAGE plpgsql AS $$
 BEGIN
     UPDATE checklist_item_progress cip
-    SET check_status = 'OK', checker_id = p_user, check_date = p_at
+    SET check_status = 'OK', checker_id = p_user, check_date = p_at,
+        item_text_snapshot = picked.item_text,
+        acceptance_criterion_snapshot = NULLIF(trim(picked.acceptance_criterion), ''),
+        control_method_snapshot = NULLIF(trim(picked.control_method), ''),
+        form_revision_snapshot = NULLIF(trim(picked.form_revision), ''),
+        criteria_snapshot_at = p_at
     FROM (
-        SELECT cti.id
+        SELECT cti.id, cti.item_text, cti.acceptance_criterion, cti.control_method, cti.form_revision
         FROM vehicles v
         JOIN checklist_template_items cti ON cti.template_id = v.eol_template_id
         WHERE v.vin = p_vin AND cti.eol_phase = p_phase AND cti.is_active
@@ -200,7 +207,12 @@ BEGIN
         rework_desc   = CASE WHEN p_status = 'REWORK' THEN p_desc ELSE cip.rework_desc END,
         rework_date   = CASE WHEN p_status = 'REWORK' THEN p_at ELSE cip.rework_date END,
         conditional_desc = CASE WHEN p_status = 'CONDITIONAL_OK' THEN p_desc ELSE cip.conditional_desc END,
-        conditional_date = CASE WHEN p_status = 'CONDITIONAL_OK' THEN p_at ELSE cip.conditional_date END
+        conditional_date = CASE WHEN p_status = 'CONDITIONAL_OK' THEN p_at ELSE cip.conditional_date END,
+        item_text_snapshot = cti.item_text,
+        acceptance_criterion_snapshot = NULLIF(trim(cti.acceptance_criterion), ''),
+        control_method_snapshot = NULLIF(trim(cti.control_method), ''),
+        form_revision_snapshot = NULLIF(trim(cti.form_revision), ''),
+        criteria_snapshot_at = p_at
     FROM checklist_template_items cti
     WHERE cip.check_item_id = cti.id
       AND cip.vin = p_vin
@@ -213,9 +225,16 @@ CREATE OR REPLACE FUNCTION pg_temp.tick_all_checklist(
     p_vin varchar, p_type checklist_type_enum, p_user int, p_at timestamptz
 ) RETURNS void LANGUAGE plpgsql AS $$
 BEGIN
-    UPDATE checklist_item_progress
-    SET check_status = 'OK', checker_id = p_user, check_date = p_at
-    WHERE vin = p_vin AND checklist_type = p_type;
+    UPDATE checklist_item_progress cip
+    SET check_status = 'OK', checker_id = p_user, check_date = p_at,
+        item_text_snapshot = cti.item_text,
+        acceptance_criterion_snapshot = NULLIF(trim(cti.acceptance_criterion), ''),
+        control_method_snapshot = NULLIF(trim(cti.control_method), ''),
+        form_revision_snapshot = NULLIF(trim(cti.form_revision), ''),
+        criteria_snapshot_at = p_at
+    FROM checklist_template_items cti
+    WHERE cti.id = cip.check_item_id
+      AND cip.vin = p_vin AND cip.checklist_type = p_type;
 END;
 $$;
 
