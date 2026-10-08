@@ -243,6 +243,16 @@ func (r ChecklistFrozenReason) Err() error {
 	return nil
 }
 
+// ChecklistAnsweredCriteria is the form guidance an answer was given
+// against, copied from the template item on every non-PENDING answer
+// (Karar 30). A nil field means the form gave none at that time.
+type ChecklistAnsweredCriteria struct {
+	AcceptanceCriterion *string   `json:"AcceptanceCriterion,omitempty"`
+	ControlMethod       *string   `json:"ControlMethod,omitempty"`
+	FormRevision        *string   `json:"FormRevision,omitempty"`
+	CopiedAt            time.Time `json:"CopiedAt"`
+}
+
 // ChecklistItemView is the operator-facing join of template items with
 // per-vehicle checklist progress. EolPhase is set only for EoL items so the
 // Vehicle Detail stepper can split Branch vs Depot without a second query.
@@ -267,10 +277,15 @@ type ChecklistItemView struct {
 	EolPhase    *EOLItemPhase
 	SectionKey  *string `json:"SectionKey,omitempty"`
 	SectionSort *int16  `json:"SectionSort,omitempty"`
-	// AcceptanceCriterion and ControlMethod come from the printed form
-	// (Karar 30); nil when the form gives none, so the UI shows nothing.
+	// AcceptanceCriterion, ControlMethod and FormRevision are the template
+	// item's current values from the printed form (Karar 30); nil when the
+	// form gives none, so the UI shows nothing.
 	AcceptanceCriterion *string `json:"AcceptanceCriterion,omitempty"`
 	ControlMethod       *string `json:"ControlMethod,omitempty"`
+	FormRevision        *string `json:"FormRevision,omitempty"`
+	// AnsweredCriteria is the copy taken with the current answer; nil for
+	// PENDING items and for answers given before the copy existed.
+	AnsweredCriteria *ChecklistAnsweredCriteria `json:"AnsweredCriteria,omitempty"`
 	ProgressID  *int64
 	IsActive    bool
 	// StageClosed marks an active item the vehicle can no longer complete:

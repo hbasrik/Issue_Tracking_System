@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -119,6 +120,9 @@ func (r *ChecklistProgressRepo) ListItemsWithProgress(ctx context.Context, vin s
 		        cti.eol_phase::text, p.id, cti.is_active,
 		        cti.section_key, cti.section_sort,
 		        NULLIF(trim(cti.acceptance_criterion), ''), NULLIF(trim(cti.control_method), ''),
+		        NULLIF(trim(cti.form_revision), ''),
+		        p.acceptance_criterion_snapshot, p.control_method_snapshot, p.form_revision_snapshot,
+		        p.criteria_snapshot_at,
 		        p.check_date, COALESCE(checker.full_name, ''),
 		        p.rejected_date, COALESCE(rej.full_name, ''),
 		        p.approved_date, COALESCE(appr.full_name, ''),
@@ -145,6 +149,9 @@ func (r *ChecklistProgressRepo) ListItemsWithProgress(ctx context.Context, vin s
 		        cti.eol_phase::text, p.id, cti.is_active,
 		        cti.section_key, cti.section_sort,
 		        NULLIF(trim(cti.acceptance_criterion), ''), NULLIF(trim(cti.control_method), ''),
+		        NULLIF(trim(cti.form_revision), ''),
+		        p.acceptance_criterion_snapshot, p.control_method_snapshot, p.form_revision_snapshot,
+		        p.criteria_snapshot_at,
 		        p.check_date, COALESCE(checker.full_name, ''),
 		        p.rejected_date, COALESCE(rej.full_name, ''),
 		        p.approved_date, COALESCE(appr.full_name, ''),
@@ -175,13 +182,17 @@ func (r *ChecklistProgressRepo) ListItemsWithProgress(ctx context.Context, vin s
 		var eolPhase *string
 		var photos []byte
 		var frozen *string
+		var answered domain.ChecklistAnsweredCriteria
+		var copiedAt *time.Time
 		if err := rows.Scan(
 			&item.ItemID, &item.ItemNo, &item.ItemText, &status,
 			&item.ReworkDesc, &item.ConditionalDesc, &item.RejectedDesc,
 			&item.ApprovedDesc,
 			&eolPhase, &item.ProgressID, &item.IsActive,
 			&item.SectionKey, &item.SectionSort,
-			&item.AcceptanceCriterion, &item.ControlMethod,
+			&item.AcceptanceCriterion, &item.ControlMethod, &item.FormRevision,
+			&answered.AcceptanceCriterion, &answered.ControlMethod, &answered.FormRevision,
+			&copiedAt,
 			&item.CheckDate, &item.CheckerName,
 			&item.RejectedAt, &item.RejectedByName,
 			&item.ApprovedAt, &item.ApprovedByName,
@@ -208,6 +219,10 @@ func (r *ChecklistProgressRepo) ListItemsWithProgress(ctx context.Context, vin s
 		if eolPhase != nil && *eolPhase != "" {
 			p := domain.EOLItemPhase(*eolPhase)
 			item.EolPhase = &p
+		}
+		if copiedAt != nil && item.Status != domain.CheckStatusPending {
+			answered.CopiedAt = *copiedAt
+			item.AnsweredCriteria = &answered
 		}
 		if item.Status == domain.CheckStatusPending {
 			item.CheckerName = ""
