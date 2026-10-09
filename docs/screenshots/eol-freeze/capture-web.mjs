@@ -2,7 +2,8 @@
 // API on karea_eolnote_test after run-api-trials.sh (never the live DB).
 // TR and EN at 1280 and 375:
 // - N7V1K1SA1TK000012 (shipped from the branch): branch EOL panel frozen,
-//   depot panel still editable; Test and Shipment panels frozen.
+//   depot panel still editable; Test panel frozen. No Shipment tab
+//   (Karar 33).
 // - N7V1K1SAXTK000011 (released from the depot): depot panel frozen, the
 //   photo added before release opens full size.
 // - N7V1K1SA2TK000018 (delivered): both EOL panels frozen.
@@ -101,19 +102,17 @@ for (const locale of ['tr', 'en']) {
     check(`${DEPOT} depot EOL: not frozen`, (await depotPanel.getAttribute('data-checklist-frozen')) === null);
     const openHeaders = await depotPanel.locator('button[data-checklist-item-header]').count();
     check(`${DEPOT} depot EOL: headers clickable`, openHeaders > 0, `${openHeaders}`);
-    for (const tab of ['test', 'shipment']) {
-      await page.goto(`${BASE}/vehicles/${DEPOT}?tab=${tab}`, { waitUntil: 'networkidle' });
-      await checkFrozenPanel(page, panels().first(), 'BRANCH_SHIPPED', locale, `${DEPOT} ${tab}`);
-      if (tab === 'test') {
-        const p = panels().first();
-        await p.evaluate((el) => el.scrollIntoView({ block: 'start' }));
-        const box = await p.boundingBox();
-        await page.screenshot({
-          path: path.join(OUT, `web-${locale}-${width}-test-frozen.png`),
-          clip: { x: box.x, y: box.y, width: box.width, height: Math.min(box.height, height - box.y, 360) },
-        });
-      }
-    }
+    await page.goto(`${BASE}/vehicles/${DEPOT}?tab=test`, { waitUntil: 'networkidle' });
+    await checkFrozenPanel(page, panels().first(), 'BRANCH_SHIPPED', locale, `${DEPOT} test`);
+    const testPanel = panels().first();
+    await testPanel.evaluate((el) => el.scrollIntoView({ block: 'start' }));
+    const box = await testPanel.boundingBox();
+    await page.screenshot({
+      path: path.join(OUT, `web-${locale}-${width}-test-frozen.png`),
+      clip: { x: box.x, y: box.y, width: box.width, height: Math.min(box.height, height - box.y, 360) },
+    });
+    const shipmentTabs = await page.getByRole('tab', { name: locale === 'tr' ? 'Sevkiyat' : 'Shipment', exact: true }).count();
+    check(`${DEPOT}: no Shipment tab`, shipmentTabs === 0, `${shipmentTabs}`);
 
     await page.goto(`${BASE}/vehicles/${RELEASED}?tab=eol`, { waitUntil: 'networkidle' });
     const released = panels().nth(1);

@@ -1,0 +1,224 @@
+trg_enforce_checklist_frozen=1 trg_enforce_checklist_media_frozen=1
+
+--- fixtures (test DB, through the API)
+photo on N7V1K1SAXTK000011 depot item 47 (progress 1517) before release: {"id":1,"entity_type":"CHECKLIST_ITEM_PROGRESS","entity_id":"1517","vin":"N7V1K1SAXTK000011","file_name":"eol-freeze.jpg","storage_path":"checklist_item_progress/1517/17f148ecdee9790e39abdec4b35c66f9.jpg","mime_type":"image/jpeg","file_size":31982,"uploaded_by":3,"uploaded_at":"0001-01-01T00:00:00Z"}
+ HTTP 201
+depot release N7V1K1SAXTK000011: HTTP 200
+deliver N7V1K1SA2TK000018: HTTP 200
+
+--- API writes to frozen items (expect 409, nothing changes)
+=== 1 depot vehicle, branch EOL item (N7V1K1SA1TK000012 EOL item 1)
+response : {"error":"cannot change branch-stage checklist items after the vehicle has shipped from the branch","request_id":"Basri's Macbook/WeUFnqOHs1-000102"}
+ HTTP 409
+before   : row=01b600637336678b480e22b21cbaaaa8 audit_rows=2 audit_md5=9c5784d16a72cf84a4cd3b52eaabc76a media_rows=0 media_md5=none
+ upload_files=1
+after    : row=01b600637336678b480e22b21cbaaaa8 audit_rows=2 audit_md5=9c5784d16a72cf84a4cd3b52eaabc76a media_rows=0 media_md5=none
+ upload_files=1
+PASS (UNCHANGED)
+
+=== 2 depot vehicle, Test item (N7V1K1SA1TK000012 TEST item 105)
+response : {"error":"cannot change branch-stage checklist items after the vehicle has shipped from the branch","request_id":"Basri's Macbook/WeUFnqOHs1-000103"}
+ HTTP 409
+before   : row=b6f32b43d5fb2b2934abe6db8ceeba2a audit_rows=2 audit_md5=9c5784d16a72cf84a4cd3b52eaabc76a media_rows=0 media_md5=none
+ upload_files=1
+after    : row=b6f32b43d5fb2b2934abe6db8ceeba2a audit_rows=2 audit_md5=9c5784d16a72cf84a4cd3b52eaabc76a media_rows=0 media_md5=none
+ upload_files=1
+PASS (UNCHANGED)
+
+=== 4 depot vehicle, photo on branch EOL item (N7V1K1SA1TK000012 EOL item 1)
+response : {"error":"cannot change branch-stage checklist items after the vehicle has shipped from the branch","request_id":"Basri's Macbook/WeUFnqOHs1-000104"}
+ HTTP 409
+before   : row=01b600637336678b480e22b21cbaaaa8 audit_rows=2 audit_md5=9c5784d16a72cf84a4cd3b52eaabc76a media_rows=0 media_md5=none
+ upload_files=1
+after    : row=01b600637336678b480e22b21cbaaaa8 audit_rows=2 audit_md5=9c5784d16a72cf84a4cd3b52eaabc76a media_rows=0 media_md5=none
+ upload_files=1
+PASS (UNCHANGED)
+
+=== 5 delivered vehicle, branch EOL item (N7V1K1SA2TK000018 EOL item 1)
+response : {"error":"cannot change checklist items of a delivered vehicle","request_id":"Basri's Macbook/WeUFnqOHs1-000105"}
+ HTTP 409
+before   : row=c8b1e4836e531f0be11147834b365aad audit_rows=4 audit_md5=5ec666b44d3760b5a075d262b2bbbdd7 media_rows=0 media_md5=none
+ upload_files=1
+after    : row=c8b1e4836e531f0be11147834b365aad audit_rows=4 audit_md5=5ec666b44d3760b5a075d262b2bbbdd7 media_rows=0 media_md5=none
+ upload_files=1
+PASS (UNCHANGED)
+
+=== 6 delivered vehicle, depot EOL item (N7V1K1SA2TK000018 EOL item 47)
+response : {"error":"cannot change checklist items of a delivered vehicle","request_id":"Basri's Macbook/WeUFnqOHs1-000106"}
+ HTTP 409
+before   : row=61dc0e6bdc19fc5908b902413424ec66 audit_rows=4 audit_md5=5ec666b44d3760b5a075d262b2bbbdd7 media_rows=0 media_md5=none
+ upload_files=1
+after    : row=61dc0e6bdc19fc5908b902413424ec66 audit_rows=4 audit_md5=5ec666b44d3760b5a075d262b2bbbdd7 media_rows=0 media_md5=none
+ upload_files=1
+PASS (UNCHANGED)
+
+=== 7 delivered vehicle, photo on depot item (N7V1K1SA2TK000018 EOL item 47)
+response : {"error":"cannot change checklist items of a delivered vehicle","request_id":"Basri's Macbook/WeUFnqOHs1-000107"}
+ HTTP 409
+before   : row=61dc0e6bdc19fc5908b902413424ec66 audit_rows=4 audit_md5=5ec666b44d3760b5a075d262b2bbbdd7 media_rows=0 media_md5=none
+ upload_files=1
+after    : row=61dc0e6bdc19fc5908b902413424ec66 audit_rows=4 audit_md5=5ec666b44d3760b5a075d262b2bbbdd7 media_rows=0 media_md5=none
+ upload_files=1
+PASS (UNCHANGED)
+
+=== 8 depot-released vehicle, depot EOL item (N7V1K1SAXTK000011 EOL item 47)
+response : {"error":"cannot change depot-stage EoL items after the vehicle has been released from the depot","request_id":"Basri's Macbook/WeUFnqOHs1-000108"}
+ HTTP 409
+before   : row=03d31cdcf5fa2affbaf90ce89c776c68 audit_rows=3 audit_md5=d1528e62e15fc027d10953b3269272bf media_rows=1 media_md5=f0ba41998cbe752558501e96184b312f
+ upload_files=1
+after    : row=03d31cdcf5fa2affbaf90ce89c776c68 audit_rows=3 audit_md5=d1528e62e15fc027d10953b3269272bf media_rows=1 media_md5=f0ba41998cbe752558501e96184b312f
+ upload_files=1
+PASS (UNCHANGED)
+
+=== 9 depot-released vehicle, photo on depot item (N7V1K1SAXTK000011 EOL item 47)
+response : {"error":"cannot change depot-stage EoL items after the vehicle has been released from the depot","request_id":"Basri's Macbook/WeUFnqOHs1-000109"}
+ HTTP 409
+before   : row=03d31cdcf5fa2affbaf90ce89c776c68 audit_rows=3 audit_md5=d1528e62e15fc027d10953b3269272bf media_rows=1 media_md5=f0ba41998cbe752558501e96184b312f
+ upload_files=1
+after    : row=03d31cdcf5fa2affbaf90ce89c776c68 audit_rows=3 audit_md5=d1528e62e15fc027d10953b3269272bf media_rows=1 media_md5=f0ba41998cbe752558501e96184b312f
+ upload_files=1
+PASS (UNCHANGED)
+
+--- the same attempts as direct SQL (expect trigger error, nothing changes)
+=== 10 sql: depot vehicle, branch EOL item (N7V1K1SA1TK000012 EOL item 1)
+response : ERROR:  cannot change branch-stage checklist items after the vehicle has shipped from the branch CONTEXT:  PL/pgSQL function fn_enforce_checklist_frozen() line 32 at RAISE 
+before   : row=01b600637336678b480e22b21cbaaaa8 audit_rows=2 audit_md5=9c5784d16a72cf84a4cd3b52eaabc76a media_rows=0 media_md5=none
+ upload_files=1
+after    : row=01b600637336678b480e22b21cbaaaa8 audit_rows=2 audit_md5=9c5784d16a72cf84a4cd3b52eaabc76a media_rows=0 media_md5=none
+ upload_files=1
+PASS (UNCHANGED)
+
+=== 11 sql: depot vehicle, Test item (N7V1K1SA1TK000012 TEST item 105)
+response : ERROR:  cannot change branch-stage checklist items after the vehicle has shipped from the branch CONTEXT:  PL/pgSQL function fn_enforce_checklist_frozen() line 32 at RAISE 
+before   : row=b6f32b43d5fb2b2934abe6db8ceeba2a audit_rows=2 audit_md5=9c5784d16a72cf84a4cd3b52eaabc76a media_rows=0 media_md5=none
+ upload_files=1
+after    : row=b6f32b43d5fb2b2934abe6db8ceeba2a audit_rows=2 audit_md5=9c5784d16a72cf84a4cd3b52eaabc76a media_rows=0 media_md5=none
+ upload_files=1
+PASS (UNCHANGED)
+
+=== 12 sql: delivered vehicle, branch EOL item (N7V1K1SA2TK000018 EOL item 1)
+response : ERROR:  cannot change checklist items of a delivered vehicle CONTEXT:  PL/pgSQL function fn_enforce_checklist_frozen() line 32 at RAISE 
+before   : row=c8b1e4836e531f0be11147834b365aad audit_rows=4 audit_md5=5ec666b44d3760b5a075d262b2bbbdd7 media_rows=0 media_md5=none
+ upload_files=1
+after    : row=c8b1e4836e531f0be11147834b365aad audit_rows=4 audit_md5=5ec666b44d3760b5a075d262b2bbbdd7 media_rows=0 media_md5=none
+ upload_files=1
+PASS (UNCHANGED)
+
+=== 13 sql: delivered vehicle, depot EOL item (N7V1K1SA2TK000018 EOL item 47)
+response : ERROR:  cannot change checklist items of a delivered vehicle CONTEXT:  PL/pgSQL function fn_enforce_checklist_frozen() line 32 at RAISE 
+before   : row=61dc0e6bdc19fc5908b902413424ec66 audit_rows=4 audit_md5=5ec666b44d3760b5a075d262b2bbbdd7 media_rows=0 media_md5=none
+ upload_files=1
+after    : row=61dc0e6bdc19fc5908b902413424ec66 audit_rows=4 audit_md5=5ec666b44d3760b5a075d262b2bbbdd7 media_rows=0 media_md5=none
+ upload_files=1
+PASS (UNCHANGED)
+
+=== 14 sql: depot-released vehicle, depot EOL item (N7V1K1SAXTK000011 EOL item 47)
+response : ERROR:  cannot change depot-stage EoL items after the vehicle has been released from the depot CONTEXT:  PL/pgSQL function fn_enforce_checklist_frozen() line 32 at RAISE 
+before   : row=03d31cdcf5fa2affbaf90ce89c776c68 audit_rows=3 audit_md5=d1528e62e15fc027d10953b3269272bf media_rows=1 media_md5=f0ba41998cbe752558501e96184b312f
+ upload_files=1
+after    : row=03d31cdcf5fa2affbaf90ce89c776c68 audit_rows=3 audit_md5=d1528e62e15fc027d10953b3269272bf media_rows=1 media_md5=f0ba41998cbe752558501e96184b312f
+ upload_files=1
+PASS (UNCHANGED)
+
+=== 15 sql: photo row on depot-released item (N7V1K1SAXTK000011 EOL item 47)
+response : ERROR:  cannot change depot-stage EoL items after the vehicle has been released from the depot CONTEXT:  PL/pgSQL function fn_enforce_checklist_media_frozen() line 17 at RAISE 
+before   : row=03d31cdcf5fa2affbaf90ce89c776c68 audit_rows=3 audit_md5=d1528e62e15fc027d10953b3269272bf media_rows=1 media_md5=f0ba41998cbe752558501e96184b312f
+ upload_files=1
+after    : row=03d31cdcf5fa2affbaf90ce89c776c68 audit_rows=3 audit_md5=d1528e62e15fc027d10953b3269272bf media_rows=1 media_md5=f0ba41998cbe752558501e96184b312f
+ upload_files=1
+PASS (UNCHANGED)
+
+--- positive controls (expect 200 and a change)
+=== 16 branch vehicle, branch EOL item (N7V1K1SA9TK000002 EOL item 1)
+response : {"gate_open":false,"proposed_status":""}
+ HTTP 200
+before   : row=e9ccdf7b8d1fe59cf5de6032cff20bc8 audit_rows=0 audit_md5=none media_rows=0 media_md5=none
+ upload_files=1
+after    : row=a061ab2230753005da82dff07737bc0e audit_rows=1 audit_md5=a02e69b33ee10f8c54033d27e545fbec media_rows=0 media_md5=none
+ upload_files=1
+PASS (CHANGED)
+
+=== 17 branch vehicle, photo on branch EOL item (N7V1K1SA9TK000002 EOL item 1)
+response : {"id":3,"entity_type":"CHECKLIST_ITEM_PROGRESS","entity_id":"148","vin":"N7V1K1SA9TK000002","file_name":"eol-freeze.jpg","storage_path":"checklist_item_progress/148/d626e69ca843f9f55de027bc085a649f.jpg","mime_type":"image/jpeg","file_size":31982,"uploaded_by":3,"uploaded_at":"0001-01-01T00:00:00Z"}
+ HTTP 201
+before   : row=a061ab2230753005da82dff07737bc0e audit_rows=1 audit_md5=a02e69b33ee10f8c54033d27e545fbec media_rows=0 media_md5=none
+ upload_files=1
+after    : row=a061ab2230753005da82dff07737bc0e audit_rows=1 audit_md5=a02e69b33ee10f8c54033d27e545fbec media_rows=1 media_md5=8aaf74cac75ebb06fc516134b6d9ae71
+ upload_files=2
+PASS (CHANGED)
+
+=== 18 depot vehicle, depot EOL item (still open) (N7V1K1SA1TK000012 EOL item 47)
+response : {"gate_open":false,"proposed_status":""}
+ HTTP 200
+before   : row=d91b10161c3e758dbf50515fc9b6a075 audit_rows=2 audit_md5=9c5784d16a72cf84a4cd3b52eaabc76a media_rows=0 media_md5=none
+ upload_files=2
+after    : row=f7890f4feee0d20261858cbcab972682 audit_rows=3 audit_md5=c9598dd4b071c0d7c9d79a218df97c8d media_rows=0 media_md5=none
+ upload_files=2
+PASS (CHANGED)
+
+--- depot release 409 names the real reason
+19 N7V1K1SA1TK000012 (depot items + open issues): {"error":"depot release blocked for N7V1K1SA1TK000012: 57 depot-phase EoL item(s) incomplete; 2 open issue(s) remain (issue ids: 13, 14)","request_id":"Basri's Macbook/WeUFnqOHs1-000113","blocking_issues":[{"id":13,"status":"OPEN","severity":"CRITICAL"},{"id":14,"status":"IN_PROGRESS","severity":"MEDIUM"}],"depot_items_remaining":57}
+ HTTP 409
+   answer depot item 48 OK:  HTTP 200
+   answer depot item 49 OK:  HTTP 200
+   answer depot item 50 OK:  HTTP 200
+   answer depot item 51 OK:  HTTP 200
+   answer depot item 52 OK:  HTTP 200
+   answer depot item 53 OK:  HTTP 200
+   answer depot item 54 OK:  HTTP 200
+   answer depot item 55 OK:  HTTP 200
+   answer depot item 56 OK:  HTTP 200
+   answer depot item 57 OK:  HTTP 200
+   answer depot item 58 OK:  HTTP 200
+   answer depot item 59 OK:  HTTP 200
+   answer depot item 60 OK:  HTTP 200
+   answer depot item 61 OK:  HTTP 200
+   answer depot item 62 OK:  HTTP 200
+   answer depot item 63 OK:  HTTP 200
+   answer depot item 64 OK:  HTTP 200
+   answer depot item 65 OK:  HTTP 200
+   answer depot item 66 OK:  HTTP 200
+   answer depot item 67 OK:  HTTP 200
+   answer depot item 68 OK:  HTTP 200
+   answer depot item 69 OK:  HTTP 200
+   answer depot item 70 OK:  HTTP 200
+   answer depot item 71 OK:  HTTP 200
+   answer depot item 72 OK:  HTTP 200
+   answer depot item 73 OK:  HTTP 200
+   answer depot item 74 OK:  HTTP 200
+   answer depot item 75 OK:  HTTP 200
+   answer depot item 76 OK:  HTTP 200
+   answer depot item 77 OK:  HTTP 200
+   answer depot item 78 OK:  HTTP 200
+   answer depot item 80 OK:  HTTP 200
+   answer depot item 81 OK:  HTTP 200
+   answer depot item 82 OK:  HTTP 200
+   answer depot item 83 OK:  HTTP 200
+   answer depot item 84 OK:  HTTP 200
+   answer depot item 85 OK:  HTTP 200
+   answer depot item 86 OK:  HTTP 200
+   answer depot item 87 OK:  HTTP 200
+   answer depot item 88 OK:  HTTP 200
+   answer depot item 89 OK:  HTTP 200
+   answer depot item 90 OK:  HTTP 200
+   answer depot item 91 OK:  HTTP 200
+   answer depot item 92 OK:  HTTP 200
+   answer depot item 93 OK:  HTTP 200
+   answer depot item 94 OK:  HTTP 200
+   answer depot item 95 OK:  HTTP 200
+   answer depot item 96 OK:  HTTP 200
+   answer depot item 97 OK:  HTTP 200
+   answer depot item 98 OK:  HTTP 200
+   answer depot item 99 OK:  HTTP 200
+   answer depot item 100 OK:  HTTP 200
+   answer depot item 101 OK:  HTTP 200
+   answer depot item 102 OK:  HTTP 200
+   answer depot item 103 OK:  HTTP 200
+   answer depot item 104 OK:  HTTP 200
+   answer depot item 79 OK:  HTTP 200
+20 N7V1K1SA1TK000012 (open issues only): {"error":"depot release blocked for N7V1K1SA1TK000012: 2 open issue(s) remain (issue ids: 13, 14)","request_id":"Basri's Macbook/WeUFnqOHs1-000171","blocking_issues":[{"id":13,"status":"OPEN","severity":"CRITICAL"},{"id":14,"status":"IN_PROGRESS","severity":"MEDIUM"}]}
+ HTTP 409
+21 N7V1K1SA8TK000010 (one depot item PENDING, no open issues): {"error":"depot release blocked for N7V1K1SA8TK000010: 1 depot-phase EoL item(s) incomplete","request_id":"Basri's Macbook/WeUFnqOHs1-000172","depot_items_remaining":1}
+ HTTP 409
+
+ALL FREEZE TRIALS PASS

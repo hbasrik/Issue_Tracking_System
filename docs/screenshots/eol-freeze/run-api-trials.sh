@@ -24,7 +24,7 @@ TOKEN=$(curl -s -X POST "$API/auth/login" -H 'Content-Type: application/json' \
 AUTH="Authorization: Bearer $TOKEN"
 sips -s format jpeg "$(dirname "$0")/../eol-photo/mobile-collapse-tr-375-badge.png" --out /tmp/eol-freeze.jpg >/dev/null
 
-# item_id <vin> <EOL|TEST|SHIPMENT> <BRANCH|DEPOT|-> : first template item id
+# item_id <vin> <EOL|TEST> <BRANCH|DEPOT|-> : first template item id
 item_id() {
   local phase_filter=""
   [ "$3" = "-" ] || phase_filter="and ti.eol_phase = '$3'"
@@ -91,11 +91,11 @@ echo "deliver $DELIVERED: $(curl -s -o /dev/null -w 'HTTP %{http_code}' -X POST 
 echo
 
 echo "--- API writes to frozen items (expect 409, nothing changes)"
-B_EOL=$(item_id $DEPOT EOL BRANCH); B_TEST=$(item_id $DEPOT TEST -); B_SHIP=$(item_id $DEPOT SHIPMENT -)
+B_EOL=$(item_id $DEPOT EOL BRANCH); B_TEST=$(item_id $DEPOT TEST -)
 MSG_BRANCH="after the vehicle has shipped from the branch"
 expect "1 depot vehicle, branch EOL item" UNCHANGED "$MSG_BRANCH" $DEPOT EOL "$B_EOL" api_answer $DEPOT EOL "$B_EOL" NOT_OK
 expect "2 depot vehicle, Test item" UNCHANGED "$MSG_BRANCH" $DEPOT TEST "$B_TEST" api_answer $DEPOT TEST "$B_TEST" NOT_OK
-expect "3 depot vehicle, Shipment item" UNCHANGED "$MSG_BRANCH" $DEPOT SHIPMENT "$B_SHIP" api_answer $DEPOT SHIPMENT "$B_SHIP" NOT_OK
+# 3 (Shipment item) is gone: migration 0045 removed the Shipment checklist (Karar 33).
 expect "4 depot vehicle, photo on branch EOL item" UNCHANGED "$MSG_BRANCH" $DEPOT EOL "$B_EOL" api_photo "$(progress_id $DEPOT EOL "$B_EOL")"
 
 D_BR=$(item_id $DELIVERED EOL BRANCH); D_DE=$(item_id $DELIVERED EOL DEPOT)

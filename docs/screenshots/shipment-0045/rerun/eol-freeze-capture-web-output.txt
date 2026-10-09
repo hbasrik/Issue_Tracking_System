@@ -1,0 +1,186 @@
+output: /var/folders/3w/tv_2bjpd3bn2dyt52ng0c77r0000gp/T/karea-shots/eol-freeze
+== tr 1280x720 ==
+  [PASS] N7V1K1SA1TK000012 branch EOL: panel frozen BRANCH_SHIPPED — data-checklist-frozen=BRANCH_SHIPPED
+  [PASS] N7V1K1SA1TK000012 branch EOL: hint text — Araç fabrikadan sevk edildi; bu maddeler kilitli. Cevaplar değiştirilemez, yeni fotoğraf eklenemez.
+  [PASS] N7V1K1SA1TK000012 branch EOL: not dimmed — opacity 1
+  [PASS] N7V1K1SA1TK000012 branch EOL: every item frozen — 46/46
+  [PASS] N7V1K1SA1TK000012 branch EOL: no clickable item header — 0
+  [PASS] N7V1K1SA1TK000012 branch EOL: no answer or Save buttons — 0 buttons, 0 photo
+  [PASS] N7V1K1SA1TK000012 branch EOL: no file input, checkbox or note field — 0
+  [PASS] N7V1K1SA1TK000012 branch EOL: header click opens nothing
+  [PASS] N7V1K1SA1TK000012 depot EOL: not frozen
+  [PASS] N7V1K1SA1TK000012 depot EOL: headers clickable — 58
+  [PASS] N7V1K1SA1TK000012 test: panel frozen BRANCH_SHIPPED — data-checklist-frozen=BRANCH_SHIPPED
+  [PASS] N7V1K1SA1TK000012 test: hint text — Araç fabrikadan sevk edildi; bu maddeler kilitli. Cevaplar değiştirilemez, yeni fotoğraf eklenemez.
+  [PASS] N7V1K1SA1TK000012 test: not dimmed — opacity 1
+  [PASS] N7V1K1SA1TK000012 test: every item frozen — 43/43
+  [PASS] N7V1K1SA1TK000012 test: no clickable item header — 0
+  [PASS] N7V1K1SA1TK000012 test: no answer or Save buttons — 0 buttons, 0 photo
+  [PASS] N7V1K1SA1TK000012 test: no file input, checkbox or note field — 0
+  [PASS] N7V1K1SA1TK000012: no Shipment tab — 0
+  [PASS] N7V1K1SAXTK000011 depot EOL: panel frozen DEPOT_RELEASED — data-checklist-frozen=DEPOT_RELEASED
+  [PASS] N7V1K1SAXTK000011 depot EOL: hint text — Araç depodan çıktı; bu maddeler kilitli. Cevaplar değiştirilemez, yeni fotoğraf eklenemez.
+  [PASS] N7V1K1SAXTK000011 depot EOL: not dimmed — opacity 1
+  [PASS] N7V1K1SAXTK000011 depot EOL: every item frozen — 58/58
+  [PASS] N7V1K1SAXTK000011 depot EOL: no clickable item header — 0
+  [PASS] N7V1K1SAXTK000011 depot EOL: no answer or Save buttons — 1 buttons, 1 photo
+  [PASS] N7V1K1SAXTK000011 depot EOL: no file input, checkbox or note field — 0
+  [PASS] N7V1K1SAXTK000011 depot EOL: header click opens nothing
+  [PASS] N7V1K1SAXTK000011: photo added before release is shown
+  [PASS] N7V1K1SAXTK000011: photo opens full size — naturalWidth 686
+  [PASS] N7V1K1SAXTK000011: viewer closes
+  [PASS] N7V1K1SA2TK000018 branch EOL: panel frozen DELIVERED — data-checklist-frozen=DELIVERED
+  [PASS] N7V1K1SA2TK000018 branch EOL: hint text — Araç teslim edildi; bu maddeler kilitli. Cevaplar değiştirilemez, yeni fotoğraf eklenemez.
+  [PASS] N7V1K1SA2TK000018 branch EOL: not dimmed — opacity 1
+  [PASS] N7V1K1SA2TK000018 branch EOL: every item frozen — 46/46
+  [PASS] N7V1K1SA2TK000018 branch EOL: no clickable item header — 0
+  [PASS] N7V1K1SA2TK000018 branch EOL: no answer or Save buttons — 0 buttons, 0 photo
+  [PASS] N7V1K1SA2TK000018 branch EOL: no file input, checkbox or note field — 0
+  [PASS] N7V1K1SA2TK000018 branch EOL: header click opens nothing
+  [PASS] N7V1K1SA2TK000018 depot EOL: panel frozen DELIVERED — data-checklist-frozen=DELIVERED
+  [PASS] N7V1K1SA2TK000018 depot EOL: hint text — Araç teslim edildi; bu maddeler kilitli. Cevaplar değiştirilemez, yeni fotoğraf eklenemez.
+  [PASS] N7V1K1SA2TK000018 depot EOL: not dimmed — opacity 1
+  [PASS] N7V1K1SA2TK000018 depot EOL: every item frozen — 58/58
+  [PASS] N7V1K1SA2TK000018 depot EOL: no clickable item header — 0
+  [PASS] N7V1K1SA2TK000018 depot EOL: no answer or Save buttons — 0 buttons, 0 photo
+  [PASS] N7V1K1SA2TK000018 depot EOL: no file input, checkbox or note field — 0
+  [PASS] N7V1K1SA2TK000018 depot EOL: header click opens nothing
+== tr 375x667 ==
+  [PASS] N7V1K1SA1TK000012 branch EOL: panel frozen BRANCH_SHIPPED — data-checklist-frozen=BRANCH_SHIPPED
+  [PASS] N7V1K1SA1TK000012 branch EOL: hint text — Araç fabrikadan sevk edildi; bu maddeler kilitli. Cevaplar değiştirilemez, yeni fotoğraf eklenemez.
+  [PASS] N7V1K1SA1TK000012 branch EOL: not dimmed — opacity 1
+  [PASS] N7V1K1SA1TK000012 branch EOL: every item frozen — 46/46
+  [PASS] N7V1K1SA1TK000012 branch EOL: no clickable item header — 0
+  [PASS] N7V1K1SA1TK000012 branch EOL: no answer or Save buttons — 0 buttons, 0 photo
+  [PASS] N7V1K1SA1TK000012 branch EOL: no file input, checkbox or note field — 0
+  [PASS] N7V1K1SA1TK000012 branch EOL: header click opens nothing
+  [PASS] N7V1K1SA1TK000012 depot EOL: not frozen
+  [PASS] N7V1K1SA1TK000012 depot EOL: headers clickable — 58
+  [PASS] N7V1K1SA1TK000012 test: panel frozen BRANCH_SHIPPED — data-checklist-frozen=BRANCH_SHIPPED
+  [PASS] N7V1K1SA1TK000012 test: hint text — Araç fabrikadan sevk edildi; bu maddeler kilitli. Cevaplar değiştirilemez, yeni fotoğraf eklenemez.
+  [PASS] N7V1K1SA1TK000012 test: not dimmed — opacity 1
+  [PASS] N7V1K1SA1TK000012 test: every item frozen — 43/43
+  [PASS] N7V1K1SA1TK000012 test: no clickable item header — 0
+  [PASS] N7V1K1SA1TK000012 test: no answer or Save buttons — 0 buttons, 0 photo
+  [PASS] N7V1K1SA1TK000012 test: no file input, checkbox or note field — 0
+  [PASS] N7V1K1SA1TK000012: no Shipment tab — 0
+  [PASS] N7V1K1SAXTK000011 depot EOL: panel frozen DEPOT_RELEASED — data-checklist-frozen=DEPOT_RELEASED
+  [PASS] N7V1K1SAXTK000011 depot EOL: hint text — Araç depodan çıktı; bu maddeler kilitli. Cevaplar değiştirilemez, yeni fotoğraf eklenemez.
+  [PASS] N7V1K1SAXTK000011 depot EOL: not dimmed — opacity 1
+  [PASS] N7V1K1SAXTK000011 depot EOL: every item frozen — 58/58
+  [PASS] N7V1K1SAXTK000011 depot EOL: no clickable item header — 0
+  [PASS] N7V1K1SAXTK000011 depot EOL: no answer or Save buttons — 1 buttons, 1 photo
+  [PASS] N7V1K1SAXTK000011 depot EOL: no file input, checkbox or note field — 0
+  [PASS] N7V1K1SAXTK000011 depot EOL: header click opens nothing
+  [PASS] N7V1K1SAXTK000011: photo added before release is shown
+  [PASS] N7V1K1SAXTK000011: photo opens full size — naturalWidth 686
+  [PASS] N7V1K1SAXTK000011: viewer closes
+  [PASS] N7V1K1SA2TK000018 branch EOL: panel frozen DELIVERED — data-checklist-frozen=DELIVERED
+  [PASS] N7V1K1SA2TK000018 branch EOL: hint text — Araç teslim edildi; bu maddeler kilitli. Cevaplar değiştirilemez, yeni fotoğraf eklenemez.
+  [PASS] N7V1K1SA2TK000018 branch EOL: not dimmed — opacity 1
+  [PASS] N7V1K1SA2TK000018 branch EOL: every item frozen — 46/46
+  [PASS] N7V1K1SA2TK000018 branch EOL: no clickable item header — 0
+  [PASS] N7V1K1SA2TK000018 branch EOL: no answer or Save buttons — 0 buttons, 0 photo
+  [PASS] N7V1K1SA2TK000018 branch EOL: no file input, checkbox or note field — 0
+  [PASS] N7V1K1SA2TK000018 branch EOL: header click opens nothing
+  [PASS] N7V1K1SA2TK000018 depot EOL: panel frozen DELIVERED — data-checklist-frozen=DELIVERED
+  [PASS] N7V1K1SA2TK000018 depot EOL: hint text — Araç teslim edildi; bu maddeler kilitli. Cevaplar değiştirilemez, yeni fotoğraf eklenemez.
+  [PASS] N7V1K1SA2TK000018 depot EOL: not dimmed — opacity 1
+  [PASS] N7V1K1SA2TK000018 depot EOL: every item frozen — 58/58
+  [PASS] N7V1K1SA2TK000018 depot EOL: no clickable item header — 0
+  [PASS] N7V1K1SA2TK000018 depot EOL: no answer or Save buttons — 0 buttons, 0 photo
+  [PASS] N7V1K1SA2TK000018 depot EOL: no file input, checkbox or note field — 0
+  [PASS] N7V1K1SA2TK000018 depot EOL: header click opens nothing
+== en 1280x720 ==
+  [PASS] N7V1K1SA1TK000012 branch EOL: panel frozen BRANCH_SHIPPED — data-checklist-frozen=BRANCH_SHIPPED
+  [PASS] N7V1K1SA1TK000012 branch EOL: hint text — The vehicle has shipped from the Factory; these items are locked. Answers cannot change and no new photos can be added.
+  [PASS] N7V1K1SA1TK000012 branch EOL: not dimmed — opacity 1
+  [PASS] N7V1K1SA1TK000012 branch EOL: every item frozen — 46/46
+  [PASS] N7V1K1SA1TK000012 branch EOL: no clickable item header — 0
+  [PASS] N7V1K1SA1TK000012 branch EOL: no answer or Save buttons — 0 buttons, 0 photo
+  [PASS] N7V1K1SA1TK000012 branch EOL: no file input, checkbox or note field — 0
+  [PASS] N7V1K1SA1TK000012 branch EOL: header click opens nothing
+  [PASS] N7V1K1SA1TK000012 depot EOL: not frozen
+  [PASS] N7V1K1SA1TK000012 depot EOL: headers clickable — 58
+  [PASS] N7V1K1SA1TK000012 test: panel frozen BRANCH_SHIPPED — data-checklist-frozen=BRANCH_SHIPPED
+  [PASS] N7V1K1SA1TK000012 test: hint text — The vehicle has shipped from the Factory; these items are locked. Answers cannot change and no new photos can be added.
+  [PASS] N7V1K1SA1TK000012 test: not dimmed — opacity 1
+  [PASS] N7V1K1SA1TK000012 test: every item frozen — 43/43
+  [PASS] N7V1K1SA1TK000012 test: no clickable item header — 0
+  [PASS] N7V1K1SA1TK000012 test: no answer or Save buttons — 0 buttons, 0 photo
+  [PASS] N7V1K1SA1TK000012 test: no file input, checkbox or note field — 0
+  [PASS] N7V1K1SA1TK000012: no Shipment tab — 0
+  [PASS] N7V1K1SAXTK000011 depot EOL: panel frozen DEPOT_RELEASED — data-checklist-frozen=DEPOT_RELEASED
+  [PASS] N7V1K1SAXTK000011 depot EOL: hint text — The vehicle has been released from the depot; these items are locked. Answers cannot change and no new photos can be added.
+  [PASS] N7V1K1SAXTK000011 depot EOL: not dimmed — opacity 1
+  [PASS] N7V1K1SAXTK000011 depot EOL: every item frozen — 58/58
+  [PASS] N7V1K1SAXTK000011 depot EOL: no clickable item header — 0
+  [PASS] N7V1K1SAXTK000011 depot EOL: no answer or Save buttons — 1 buttons, 1 photo
+  [PASS] N7V1K1SAXTK000011 depot EOL: no file input, checkbox or note field — 0
+  [PASS] N7V1K1SAXTK000011 depot EOL: header click opens nothing
+  [PASS] N7V1K1SAXTK000011: photo added before release is shown
+  [PASS] N7V1K1SAXTK000011: photo opens full size — naturalWidth 686
+  [PASS] N7V1K1SAXTK000011: viewer closes
+  [PASS] N7V1K1SA2TK000018 branch EOL: panel frozen DELIVERED — data-checklist-frozen=DELIVERED
+  [PASS] N7V1K1SA2TK000018 branch EOL: hint text — The vehicle has been delivered; these items are locked. Answers cannot change and no new photos can be added.
+  [PASS] N7V1K1SA2TK000018 branch EOL: not dimmed — opacity 1
+  [PASS] N7V1K1SA2TK000018 branch EOL: every item frozen — 46/46
+  [PASS] N7V1K1SA2TK000018 branch EOL: no clickable item header — 0
+  [PASS] N7V1K1SA2TK000018 branch EOL: no answer or Save buttons — 0 buttons, 0 photo
+  [PASS] N7V1K1SA2TK000018 branch EOL: no file input, checkbox or note field — 0
+  [PASS] N7V1K1SA2TK000018 branch EOL: header click opens nothing
+  [PASS] N7V1K1SA2TK000018 depot EOL: panel frozen DELIVERED — data-checklist-frozen=DELIVERED
+  [PASS] N7V1K1SA2TK000018 depot EOL: hint text — The vehicle has been delivered; these items are locked. Answers cannot change and no new photos can be added.
+  [PASS] N7V1K1SA2TK000018 depot EOL: not dimmed — opacity 1
+  [PASS] N7V1K1SA2TK000018 depot EOL: every item frozen — 58/58
+  [PASS] N7V1K1SA2TK000018 depot EOL: no clickable item header — 0
+  [PASS] N7V1K1SA2TK000018 depot EOL: no answer or Save buttons — 0 buttons, 0 photo
+  [PASS] N7V1K1SA2TK000018 depot EOL: no file input, checkbox or note field — 0
+  [PASS] N7V1K1SA2TK000018 depot EOL: header click opens nothing
+== en 375x667 ==
+  [PASS] N7V1K1SA1TK000012 branch EOL: panel frozen BRANCH_SHIPPED — data-checklist-frozen=BRANCH_SHIPPED
+  [PASS] N7V1K1SA1TK000012 branch EOL: hint text — The vehicle has shipped from the Factory; these items are locked. Answers cannot change and no new photos can be added.
+  [PASS] N7V1K1SA1TK000012 branch EOL: not dimmed — opacity 1
+  [PASS] N7V1K1SA1TK000012 branch EOL: every item frozen — 46/46
+  [PASS] N7V1K1SA1TK000012 branch EOL: no clickable item header — 0
+  [PASS] N7V1K1SA1TK000012 branch EOL: no answer or Save buttons — 0 buttons, 0 photo
+  [PASS] N7V1K1SA1TK000012 branch EOL: no file input, checkbox or note field — 0
+  [PASS] N7V1K1SA1TK000012 branch EOL: header click opens nothing
+  [PASS] N7V1K1SA1TK000012 depot EOL: not frozen
+  [PASS] N7V1K1SA1TK000012 depot EOL: headers clickable — 58
+  [PASS] N7V1K1SA1TK000012 test: panel frozen BRANCH_SHIPPED — data-checklist-frozen=BRANCH_SHIPPED
+  [PASS] N7V1K1SA1TK000012 test: hint text — The vehicle has shipped from the Factory; these items are locked. Answers cannot change and no new photos can be added.
+  [PASS] N7V1K1SA1TK000012 test: not dimmed — opacity 1
+  [PASS] N7V1K1SA1TK000012 test: every item frozen — 43/43
+  [PASS] N7V1K1SA1TK000012 test: no clickable item header — 0
+  [PASS] N7V1K1SA1TK000012 test: no answer or Save buttons — 0 buttons, 0 photo
+  [PASS] N7V1K1SA1TK000012 test: no file input, checkbox or note field — 0
+  [PASS] N7V1K1SA1TK000012: no Shipment tab — 0
+  [PASS] N7V1K1SAXTK000011 depot EOL: panel frozen DEPOT_RELEASED — data-checklist-frozen=DEPOT_RELEASED
+  [PASS] N7V1K1SAXTK000011 depot EOL: hint text — The vehicle has been released from the depot; these items are locked. Answers cannot change and no new photos can be added.
+  [PASS] N7V1K1SAXTK000011 depot EOL: not dimmed — opacity 1
+  [PASS] N7V1K1SAXTK000011 depot EOL: every item frozen — 58/58
+  [PASS] N7V1K1SAXTK000011 depot EOL: no clickable item header — 0
+  [PASS] N7V1K1SAXTK000011 depot EOL: no answer or Save buttons — 1 buttons, 1 photo
+  [PASS] N7V1K1SAXTK000011 depot EOL: no file input, checkbox or note field — 0
+  [PASS] N7V1K1SAXTK000011 depot EOL: header click opens nothing
+  [PASS] N7V1K1SAXTK000011: photo added before release is shown
+  [PASS] N7V1K1SAXTK000011: photo opens full size — naturalWidth 686
+  [PASS] N7V1K1SAXTK000011: viewer closes
+  [PASS] N7V1K1SA2TK000018 branch EOL: panel frozen DELIVERED — data-checklist-frozen=DELIVERED
+  [PASS] N7V1K1SA2TK000018 branch EOL: hint text — The vehicle has been delivered; these items are locked. Answers cannot change and no new photos can be added.
+  [PASS] N7V1K1SA2TK000018 branch EOL: not dimmed — opacity 1
+  [PASS] N7V1K1SA2TK000018 branch EOL: every item frozen — 46/46
+  [PASS] N7V1K1SA2TK000018 branch EOL: no clickable item header — 0
+  [PASS] N7V1K1SA2TK000018 branch EOL: no answer or Save buttons — 0 buttons, 0 photo
+  [PASS] N7V1K1SA2TK000018 branch EOL: no file input, checkbox or note field — 0
+  [PASS] N7V1K1SA2TK000018 branch EOL: header click opens nothing
+  [PASS] N7V1K1SA2TK000018 depot EOL: panel frozen DELIVERED — data-checklist-frozen=DELIVERED
+  [PASS] N7V1K1SA2TK000018 depot EOL: hint text — The vehicle has been delivered; these items are locked. Answers cannot change and no new photos can be added.
+  [PASS] N7V1K1SA2TK000018 depot EOL: not dimmed — opacity 1
+  [PASS] N7V1K1SA2TK000018 depot EOL: every item frozen — 58/58
+  [PASS] N7V1K1SA2TK000018 depot EOL: no clickable item header — 0
+  [PASS] N7V1K1SA2TK000018 depot EOL: no answer or Save buttons — 0 buttons, 0 photo
+  [PASS] N7V1K1SA2TK000018 depot EOL: no file input, checkbox or note field — 0
+  [PASS] N7V1K1SA2TK000018 depot EOL: header click opens nothing
+RESULT: PASS
