@@ -1,0 +1,13 @@
+# Negative control: harness run BEFORE the station-screen button was removed
+# (mobile code at a835e00, harness already carrying EXPECT_ABSENT), output dir
+# $TMPDIR/karea-shiprm-before. The check catches the button in both locales.
+# Command (from mobile/):
+#   EXPECT_ABSENT='Sevk Checklist|Shipment Checklist|Sevkiyat' npm run screenshots -- \
+#     $TMPDIR/karea-shiprm-before station-line,station-readiness --locales tr,en --widths 375
+output: /var/folders/3w/tv_2bjpd3bn2dyt52ng0c77r0000gp/T/karea-shiprm-before
+station-line-tr-375 overflow=0 errors=0 raw=0 absentFound=["Sevk Checklist"]
+station-line-en-375 overflow=0 errors=0 raw=0 absentFound=["Shipment Checklist"]
+station-readiness-tr-375 overflow=0 errors=0 raw=0 absentFound=["Sevk Checklist"]
+station-readiness-en-375 overflow=0 errors=0 raw=0 absentFound=["Shipment Checklist"]
+mobile harness: FAILED
+EXIT=1

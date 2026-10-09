@@ -1,0 +1,11 @@
+
+output: /Users/Basri/Desktop/kts_kms_project/docs/screenshots/shipment-removal/mobile (UPDATE_SCREENSHOTS=1, committed files)
+station-line-tr-375 overflow=0 errors=0 raw=0 absentFound=[]
+station-line-tr-1280 overflow=0 errors=0 raw=0 absentFound=[]
+station-line-en-375 overflow=0 errors=0 raw=0 absentFound=[]
+station-line-en-1280 overflow=0 errors=0 raw=0 absentFound=[]
+station-readiness-tr-375 overflow=0 errors=0 raw=0 absentFound=[]
+station-readiness-tr-1280 overflow=0 errors=0 raw=0 absentFound=[]
+station-readiness-en-375 overflow=0 errors=0 raw=0 absentFound=[]
+station-readiness-en-1280 overflow=0 errors=0 raw=0 absentFound=[]
+mobile harness: ok -> /Users/Basri/Desktop/kts_kms_project/docs/screenshots/shipment-removal/mobile
