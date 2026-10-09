@@ -252,7 +252,6 @@ func TestApplicableSet_ProgressMatchesOpenItems(t *testing.T) {
 	if len(strayVINs) == 0 {
 		t.Fatal("fixture needs branch-shipped or delivered vehicles")
 	}
-	attachPendingShipmentTemplate(ctx, t, tx, allVINs)
 
 	var sawDelivered bool
 	for _, v := range vehicles {

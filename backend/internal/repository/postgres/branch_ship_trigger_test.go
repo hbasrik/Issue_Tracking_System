@@ -5,13 +5,13 @@ import (
 	"testing"
 )
 
-// TestBranchShipTrigger_ShipmentNoLongerGates drives fn_enforce_branch_shipment
-// (migration 0044) with direct SQL: a vehicle whose station steps, EOL BRANCH
-// and TEST items are all OK ships even with every SHIPMENT item open; taking
-// away a TEST item, an EOL BRANCH item or a station step is still refused,
+// TestBranchShipTrigger_Gates drives fn_enforce_branch_shipment (migration
+// 0044) with direct SQL on a schema without the Shipment checklist (0045): a
+// vehicle whose station steps, EOL BRANCH and TEST items are all OK ships;
+// taking away a TEST item, an EOL BRANCH item or a station step is refused,
 // and a refused attempt leaves the workflow and vehicle rows unchanged.
 // Rolled back.
-func TestBranchShipTrigger_ShipmentNoLongerGates(t *testing.T) {
+func TestBranchShipTrigger_Gates(t *testing.T) {
 	ctx, tx := stageTestTx(t)
 	const vin = "TMPSHIPTRIG000001"
 
@@ -27,14 +27,13 @@ func TestBranchShipTrigger_ShipmentNoLongerGates(t *testing.T) {
 	        FROM checklist_template_items c
 	       WHERE c.id = p.check_item_id AND p.vin = $1
 	         AND (p.checklist_type = 'TEST' OR (p.checklist_type = 'EOL' AND c.eol_phase = 'BRANCH'))`, vin)
-	attachPendingShipmentTemplate(ctx, t, tx, []string{vin})
 
-	var shipmentOpen int
-	if err := tx.QueryRow(ctx, `SELECT count(*) FROM checklist_item_progress WHERE vin = $1 AND checklist_type = 'SHIPMENT' AND check_status <> 'OK'`, vin).Scan(&shipmentOpen); err != nil {
+	var shipmentRows int
+	if err := tx.QueryRow(ctx, `SELECT count(*) FROM checklist_item_progress WHERE vin = $1 AND checklist_type = 'SHIPMENT'`, vin).Scan(&shipmentRows); err != nil {
 		t.Fatal(err)
 	}
-	if shipmentOpen == 0 {
-		t.Fatal("fixture needs open SHIPMENT rows")
+	if shipmentRows != 0 {
+		t.Fatalf("new vehicle got %d SHIPMENT row(s), want 0", shipmentRows)
 	}
 
 	rowsMD5 := func() string {
@@ -56,7 +55,7 @@ func TestBranchShipTrigger_ShipmentNoLongerGates(t *testing.T) {
 		breakIt string
 		wantErr string // "" = accepted
 	}{
-		{"shipment open, all else done", ``, ""},
+		{"all gates done", ``, ""},
 		{"test item missing", `DELETE FROM checklist_item_progress WHERE id = (` + firstTest + `)`, "test checklist item(s) not yet on the vehicle"},
 		{"test item NOT_OK", `UPDATE checklist_item_progress SET check_status = 'NOT_OK', rejected_desc = 'probe' WHERE id = (` + firstTest + `)`, "test checklist is not fully OK/CONDITIONAL_OK"},
 		{"branch EOL item missing", `DELETE FROM checklist_item_progress WHERE id = (` + firstBranch + `)`, "branch-phase EoL item(s) not yet on the vehicle"},
@@ -88,7 +87,7 @@ func TestBranchShipTrigger_ShipmentNoLongerGates(t *testing.T) {
 
 			if tc.wantErr == "" {
 				if shipErr != nil {
-					t.Fatalf("ship with only SHIPMENT open must pass the trigger: %v", shipErr)
+					t.Fatalf("ship with every gate done must pass the trigger: %v", shipErr)
 				}
 				var stage, status string
 				if err := probe.QueryRow(ctx, `
@@ -99,7 +98,7 @@ func TestBranchShipTrigger_ShipmentNoLongerGates(t *testing.T) {
 				if stage != "DEPOT" || status != "IN_WAREHOUSE" {
 					t.Errorf("after ship: stage=%s status=%s", stage, status)
 				}
-				t.Logf("accepted with %d open SHIPMENT row(s): stage=%s status=%s", shipmentOpen, stage, status)
+				t.Logf("accepted: stage=%s status=%s", stage, status)
 				_ = probe.Rollback(ctx)
 				return
 			}

@@ -188,41 +188,6 @@ func TestProgress_HundredOnlyAfterDepotItems(t *testing.T) {
 		before[vin] = check("after test item", vin)
 	}
 
-	// A SHIPMENT template with a pending item on every vehicle (Karar 33):
-	// progress, applicable and open counts do not move, not even on the line.
-	attachPendingShipmentTemplate(ctx, t, tx, all)
-	for _, vin := range all {
-		s := check("pending shipment template", vin)
-		if b := before[vin]; s != b {
-			t.Errorf("shipment item %s moved progress: %+v → %+v", vin, b, s)
-		}
-	}
-}
-
-// attachPendingShipmentTemplate gives the VINs a fresh SHIPMENT template with
-// one active item and a PENDING progress row each, so retired shipment rows
-// exist regardless of the seed.
-func attachPendingShipmentTemplate(ctx context.Context, t *testing.T, tx pgx.Tx, vins []string) int {
-	t.Helper()
-	var tmpl, item int
-	if err := tx.QueryRow(ctx,
-		`INSERT INTO checklist_templates (type, name, is_active) VALUES ('SHIPMENT', 'TMP_SHIPMENT_RETIRED', false) RETURNING id`).Scan(&tmpl); err != nil {
-		t.Fatal(err)
-	}
-	if err := tx.QueryRow(ctx,
-		`INSERT INTO checklist_template_items (template_id, item_no, item_text) VALUES ($1, 1, 'TMP_SHIPMENT_RETIRED item') RETURNING id`, tmpl).Scan(&item); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := tx.Exec(ctx, `UPDATE vehicles SET shipment_template_id = $2 WHERE vin = ANY($1)`, vins, tmpl); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := tx.Exec(ctx, `
-		INSERT INTO checklist_item_progress (vin, checklist_type, check_item_id, check_status)
-		SELECT vin, 'SHIPMENT', $2, 'PENDING' FROM vehicles WHERE vin = ANY($1)
-		ON CONFLICT DO NOTHING`, vins, item); err != nil {
-		t.Fatal(err)
-	}
-	return tmpl
 }
 
 // Every read path that returns the percentage (detail, list/print, VIN

@@ -142,9 +142,9 @@ func TestChecklistFrozen_WritesRefused(t *testing.T) {
 
 // TestChecklistFrozen_EOLAndTestReadPath: on the API read path every EOL and
 // TEST item carries the Karar 29 reason (DELIVERED; EOL DEPOT after depot
-// release; everything else after branch ship), with or without a SHIPMENT
-// template on the vehicle. The digest over (vin, type, item, reason,
-// StageClosed) is logged so runs on different commits can be compared.
+// release; everything else after branch ship). The digest over (vin, type,
+// item, reason, StageClosed) is logged so runs on different commits can be
+// compared.
 // Rolled back.
 func TestChecklistFrozen_EOLAndTestReadPath(t *testing.T) {
 	ctx, tx := stageTestTx(t)
@@ -200,17 +200,7 @@ func TestChecklistFrozen_EOLAndTestReadPath(t *testing.T) {
 		return sum
 	}
 
-	before := digest("seeded")
-	var vins []string
-	for _, v := range vehicles {
-		vins = append(vins, v.vin)
-	}
-	if _, err := tx.Exec(ctx, `UPDATE vehicles SET shipment_template_id = NULL WHERE vin = ANY($1)`, vins); err != nil {
-		t.Fatal(err)
-	}
-	if got := digest("no shipment template"); got != before {
-		t.Errorf("EOL/TEST read path changed when the SHIPMENT template was removed: %s → %s", before, got)
-	}
+	digest("seeded")
 }
 
 func deliverOne(ctx context.Context, t *testing.T, tx pgx.Tx) {
