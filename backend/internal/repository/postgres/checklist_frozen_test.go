@@ -2,7 +2,10 @@ package postgres
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
+	"fmt"
 	"strconv"
 	"testing"
 
@@ -76,7 +79,7 @@ func TestChecklistFrozen_WritesRefused(t *testing.T) {
 		"DELIVERED":      domain.ErrChecklistFrozenDelivered,
 	}
 	for reason, sentinel := range want {
-		for _, typ := range []domain.ChecklistType{domain.ChecklistTypeEOL, domain.ChecklistTypeTest, domain.ChecklistTypeShipment} {
+		for _, typ := range []domain.ChecklistType{domain.ChecklistTypeEOL, domain.ChecklistTypeTest} {
 			row, ok := findFrozenRow(ctx, t, tx, reason, typ)
 			if !ok {
 				continue
@@ -134,6 +137,79 @@ func TestChecklistFrozen_WritesRefused(t *testing.T) {
 		})
 	}); err != nil {
 		t.Errorf("open TEST item on %s: %v", vin, err)
+	}
+}
+
+// TestChecklistFrozen_EOLAndTestReadPath: on the API read path every EOL and
+// TEST item carries the Karar 29 reason (DELIVERED; EOL DEPOT after depot
+// release; everything else after branch ship), with or without a SHIPMENT
+// template on the vehicle. The digest over (vin, type, item, reason,
+// StageClosed) is logged so runs on different commits can be compared.
+// Rolled back.
+func TestChecklistFrozen_EOLAndTestReadPath(t *testing.T) {
+	ctx, tx := stageTestTx(t)
+	deliverOne(ctx, t, tx)
+	repo := NewChecklistProgressRepo(nil)
+	vehicles := loadStageVehicles(ctx, t, tx)
+
+	digest := func(label string) string {
+		h := sha256.New()
+		counts := map[string]int{}
+		for _, v := range vehicles {
+			for _, tc := range []struct {
+				typ domain.ChecklistType
+				col string
+			}{
+				{domain.ChecklistTypeEOL, "eol_template_id"},
+				{domain.ChecklistTypeTest, "test_template_id"},
+			} {
+				typ, col := tc.typ, tc.col
+				var tmpl *int
+				if err := tx.QueryRow(ctx, `SELECT `+col+` FROM vehicles WHERE vin = $1`, v.vin).Scan(&tmpl); err != nil {
+					t.Fatal(err)
+				}
+				if tmpl == nil {
+					continue
+				}
+				items, err := repo.ListItemsWithProgress(ctx, v.vin, typ, *tmpl)
+				if err != nil {
+					t.Fatal(err)
+				}
+				for _, it := range items {
+					want := domain.ChecklistFrozenReason("")
+					switch {
+					case v.terminal():
+						want = domain.ChecklistFrozenDelivered
+					case typ == domain.ChecklistTypeEOL && it.EolPhase != nil && *it.EolPhase == domain.EOLItemPhaseDepot:
+						if v.depotReleased {
+							want = domain.ChecklistFrozenDepotReleased
+						}
+					case v.branchShipped:
+						want = domain.ChecklistFrozenBranchShipped
+					}
+					if it.FrozenReason != want {
+						t.Errorf("%s %s %s item %d: frozen %q, want %q", label, v.vin, typ, it.ItemID, it.FrozenReason, want)
+					}
+					counts[string(typ)+" "+string(it.FrozenReason)]++
+					fmt.Fprintf(h, "%s|%s|%d|%s|%t\n", v.vin, typ, it.ItemID, it.FrozenReason, it.StageClosed)
+				}
+			}
+		}
+		sum := hex.EncodeToString(h.Sum(nil))
+		t.Logf("%s: digest %s counts %v", label, sum, counts)
+		return sum
+	}
+
+	before := digest("seeded")
+	var vins []string
+	for _, v := range vehicles {
+		vins = append(vins, v.vin)
+	}
+	if _, err := tx.Exec(ctx, `UPDATE vehicles SET shipment_template_id = NULL WHERE vin = ANY($1)`, vins); err != nil {
+		t.Fatal(err)
+	}
+	if got := digest("no shipment template"); got != before {
+		t.Errorf("EOL/TEST read path changed when the SHIPMENT template was removed: %s → %s", before, got)
 	}
 }
 

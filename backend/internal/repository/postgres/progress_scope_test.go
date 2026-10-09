@@ -24,7 +24,7 @@ func openApplicable(ctx context.Context, t *testing.T, tx pgx.Tx, vin string) (o
 	if err := tx.QueryRow(ctx, `SELECT count(*)::int FROM (`+applicableStationStepsSQL("$1")+`) s`, vin).Scan(&applicable); err != nil {
 		t.Fatal(err)
 	}
-	for _, typ := range []domain.ChecklistType{domain.ChecklistTypeEOL, domain.ChecklistTypeTest, domain.ChecklistTypeShipment} {
+	for _, typ := range []domain.ChecklistType{domain.ChecklistTypeEOL, domain.ChecklistTypeTest} {
 		items, err := checklists.ListApplicableItems(ctx, vin, typ)
 		if err != nil {
 			t.Fatal(err)
@@ -40,7 +40,7 @@ func openApplicable(ctx context.Context, t *testing.T, tx pgx.Tx, vin string) (o
 }
 
 // Progress covers all work up to depot release — station steps, EOL branch,
-// TEST, SHIPMENT and EOL depot items — and reads 100% only when none is open.
+// TEST and EOL depot items — and reads 100% only when none is open.
 // A new template item lowers it exactly for vehicles whose stage is still
 // open, before and after distribution.
 func TestProgress_HundredOnlyAfterDepotItems(t *testing.T) {
@@ -164,26 +164,65 @@ func TestProgress_HundredOnlyAfterDepotItems(t *testing.T) {
 		before[vin] = check("after depot item", vin)
 	}
 
-	// New SHIPMENT item: only the vehicle still on the line is affected.
-	shipTmpl := templateOf(ctx, t, tx, "shipment_template_id")
-	shipItem, err := checklists.CreateTemplateItem(ctx, &domain.ChecklistTemplateItem{TemplateID: shipTmpl, ItemText: "TMP_PROGRESS new shipment item"})
+	// New TEST item: only the vehicle still on the line is affected.
+	testTmpl := templateOf(ctx, t, tx, "test_template_id")
+	testItem, err := checklists.CreateTemplateItem(ctx, &domain.ChecklistTemplateItem{TemplateID: testTmpl, ItemText: "TMP_PROGRESS new test item"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := checklists.InsertPendingForVehicles(ctx, shipItem.ID, shipTmpl, domain.ChecklistTypeShipment, domain.PropagationScopeIncomplete); err != nil {
+	if _, err := checklists.InsertPendingForVehicles(ctx, testItem.ID, testTmpl, domain.ChecklistTypeTest, domain.PropagationScopeIncomplete); err != nil {
 		t.Fatal(err)
 	}
 	for _, vin := range all {
-		s := check("new shipment item", vin)
+		s := check("new test item", vin)
 		b := before[vin]
 		wantExtra := 0
 		if vin == onLine {
 			wantExtra = 1
 		}
 		if s.applicable != b.applicable+wantExtra || s.open != b.open+wantExtra {
-			t.Errorf("shipment item %s: applicable %d→%d open %d→%d, want +%d each", vin, b.applicable, s.applicable, b.open, s.open, wantExtra)
+			t.Errorf("test item %s: applicable %d→%d open %d→%d, want +%d each", vin, b.applicable, s.applicable, b.open, s.open, wantExtra)
 		}
 	}
+	for _, vin := range all {
+		before[vin] = check("after test item", vin)
+	}
+
+	// A SHIPMENT template with a pending item on every vehicle (Karar 33):
+	// progress, applicable and open counts do not move, not even on the line.
+	attachPendingShipmentTemplate(ctx, t, tx, all)
+	for _, vin := range all {
+		s := check("pending shipment template", vin)
+		if b := before[vin]; s != b {
+			t.Errorf("shipment item %s moved progress: %+v → %+v", vin, b, s)
+		}
+	}
+}
+
+// attachPendingShipmentTemplate gives the VINs a fresh SHIPMENT template with
+// one active item and a PENDING progress row each, so retired shipment rows
+// exist regardless of the seed.
+func attachPendingShipmentTemplate(ctx context.Context, t *testing.T, tx pgx.Tx, vins []string) int {
+	t.Helper()
+	var tmpl, item int
+	if err := tx.QueryRow(ctx,
+		`INSERT INTO checklist_templates (type, name, is_active) VALUES ('SHIPMENT', 'TMP_SHIPMENT_RETIRED', false) RETURNING id`).Scan(&tmpl); err != nil {
+		t.Fatal(err)
+	}
+	if err := tx.QueryRow(ctx,
+		`INSERT INTO checklist_template_items (template_id, item_no, item_text) VALUES ($1, 1, 'TMP_SHIPMENT_RETIRED item') RETURNING id`, tmpl).Scan(&item); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := tx.Exec(ctx, `UPDATE vehicles SET shipment_template_id = $2 WHERE vin = ANY($1)`, vins, tmpl); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := tx.Exec(ctx, `
+		INSERT INTO checklist_item_progress (vin, checklist_type, check_item_id, check_status)
+		SELECT vin, 'SHIPMENT', $2, 'PENDING' FROM vehicles WHERE vin = ANY($1)
+		ON CONFLICT DO NOTHING`, vins, item); err != nil {
+		t.Fatal(err)
+	}
+	return tmpl
 }
 
 // Every read path that returns the percentage (detail, list/print, VIN

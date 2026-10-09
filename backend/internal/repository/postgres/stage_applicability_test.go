@@ -102,7 +102,7 @@ func templateOf(ctx context.Context, t *testing.T, tx pgx.Tx, col string) int {
 }
 
 // A new item reaches only vehicles that have not passed its stage: on line
-// gets a shipment item, branch-shipped / depot-released / delivered do not;
+// gets a test item, branch-shipped / depot-released / delivered do not;
 // an EOL DEPOT item still reaches branch-shipped vehicles awaiting release.
 func TestInsertPendingForVehicles_OnlyBeforeItemStage(t *testing.T) {
 	ctx, tx := stageTestTx(t)
@@ -117,7 +117,7 @@ func TestInsertPendingForVehicles_OnlyBeforeItemStage(t *testing.T) {
 		// wantSome: a vehicle state that must receive the item.
 		wantSome func(stageVehicle) bool
 	}{
-		{"shipment", domain.ChecklistTypeShipment, "shipment_template_id", "",
+		{"test", domain.ChecklistTypeTest, "test_template_id", "",
 			func(v stageVehicle) bool { return v.status == "IN_PRODUCTION" }},
 		{"eol depot", domain.ChecklistTypeEOL, "eol_template_id", domain.EOLItemPhaseDepot,
 			func(v stageVehicle) bool { return v.branchShipped && !v.depotReleased && !v.terminal() }},
@@ -231,19 +231,20 @@ func TestApplicableSet_ProgressMatchesOpenItems(t *testing.T) {
 	addDeliveredVehicle(ctx, t, tx, "TMPDELIVER0000001")
 	vehicles := loadStageVehicles(ctx, t, tx)
 
-	shipTmpl := templateOf(ctx, t, tx, "shipment_template_id")
-	stray, err := checklists.CreateTemplateItem(ctx, &domain.ChecklistTemplateItem{TemplateID: shipTmpl, ItemText: "TMP_STAGE_RULE stray"})
+	testTmpl := templateOf(ctx, t, tx, "test_template_id")
+	stray, err := checklists.CreateTemplateItem(ctx, &domain.ChecklistTemplateItem{TemplateID: testTmpl, ItemText: "TMP_STAGE_RULE stray"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	var strayVINs []string
+	var strayVINs, allVINs []string
 	for _, v := range vehicles {
+		allVINs = append(allVINs, v.vin)
 		if v.branchShipped || v.terminal() {
 			strayVINs = append(strayVINs, v.vin)
 			if _, err := tx.Exec(ctx,
 				`INSERT INTO checklist_item_progress (vin, checklist_type, check_item_id, check_status)
-				 SELECT vin, 'SHIPMENT', $2, 'PENDING' FROM vehicles WHERE vin = $1 AND shipment_template_id = $3`,
-				v.vin, stray.ID, shipTmpl); err != nil {
+				 SELECT vin, 'TEST', $2, 'PENDING' FROM vehicles WHERE vin = $1 AND test_template_id = $3`,
+				v.vin, stray.ID, testTmpl); err != nil {
 				t.Fatal(err)
 			}
 		}
@@ -251,6 +252,7 @@ func TestApplicableSet_ProgressMatchesOpenItems(t *testing.T) {
 	if len(strayVINs) == 0 {
 		t.Fatal("fixture needs branch-shipped or delivered vehicles")
 	}
+	attachPendingShipmentTemplate(ctx, t, tx, allVINs)
 
 	var sawDelivered bool
 	for _, v := range vehicles {
@@ -268,7 +270,14 @@ func TestApplicableSet_ProgressMatchesOpenItems(t *testing.T) {
 			(SELECT count(*) FROM (`+applicableChecklistItemsSQL("$1")+`) c)`, v.vin).Scan(&applicable); err != nil {
 			t.Fatal(err)
 		}
-		for _, typ := range []domain.ChecklistType{domain.ChecklistTypeShipment, domain.ChecklistTypeTest, domain.ChecklistTypeEOL} {
+		shipment, err := checklists.ListApplicableItems(ctx, v.vin, domain.ChecklistTypeShipment)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(shipment) != 0 {
+			t.Errorf("%s (%s): %d SHIPMENT item(s) applicable, want none (Karar 33)", v.vin, v.status, len(shipment))
+		}
+		for _, typ := range []domain.ChecklistType{domain.ChecklistTypeTest, domain.ChecklistTypeEOL} {
 			items, err := checklists.ListApplicableItems(ctx, v.vin, typ)
 			if err != nil {
 				t.Fatal(err)
@@ -314,16 +323,15 @@ func TestListItemsWithProgress_StageClosedIsApplicableComplement(t *testing.T) {
 	repo := &ChecklistProgressRepo{}
 	vehicles := loadStageVehicles(ctx, t, tx)
 
-	shipTmpl := templateOf(ctx, t, tx, "shipment_template_id")
-	late, err := repo.CreateTemplateItem(ctx, &domain.ChecklistTemplateItem{TemplateID: shipTmpl, ItemText: "TMP_STAGE_RULE late"})
+	testTmpl := templateOf(ctx, t, tx, "test_template_id")
+	late, err := repo.CreateTemplateItem(ctx, &domain.ChecklistTemplateItem{TemplateID: testTmpl, ItemText: "TMP_STAGE_RULE late"})
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	cols := map[domain.ChecklistType]string{
-		domain.ChecklistTypeShipment: "shipment_template_id",
-		domain.ChecklistTypeTest:     "test_template_id",
-		domain.ChecklistTypeEOL:      "eol_template_id",
+		domain.ChecklistTypeTest: "test_template_id",
+		domain.ChecklistTypeEOL:  "eol_template_id",
 	}
 	var closedOnPassed, lineChecked int
 	for _, v := range vehicles {
@@ -377,7 +385,7 @@ func TestListItemsWithProgress_StageClosedIsApplicableComplement(t *testing.T) {
 			if blocking+missing != open {
 				t.Errorf("%s %s: gate counts %d, open applicable %d", v.vin, typ, blocking+missing, open)
 			}
-			if typ == domain.ChecklistTypeShipment && v.passed(domain.EOLItemPhaseBranch) {
+			if typ == domain.ChecklistTypeTest && v.passed(domain.EOLItemPhaseBranch) {
 				for _, it := range all {
 					if it.ItemID == late.ID && !it.StageClosed {
 						t.Errorf("%s (%s): late item on a passed stage is not closed", v.vin, v.status)

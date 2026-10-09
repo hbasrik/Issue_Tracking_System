@@ -1,6 +1,7 @@
 package usecase_test
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -9,7 +10,8 @@ import (
 )
 
 // TestAppLayerGatesMatchDBTriggers proves BuildEOLGates.Ready is the inverse
-// of the migration-0022 trigger block predicates for the same counters.
+// of the trigger block predicates (branch ship: migration 0044; depot
+// release: 0022) for the same counters.
 // Defense-in-depth: UI/API and fn_enforce_* must agree on when an action is allowed.
 func TestAppLayerGatesMatchDBTriggers(t *testing.T) {
 	now := time.Now()
@@ -33,11 +35,6 @@ func TestAppLayerGatesMatchDBTriggers(t *testing.T) {
 			{
 				name:    "test remaining",
 				gate:    domain.EOLBranchShipGate{TestRemaining: 1},
-				wantApp: false,
-			},
-			{
-				name:    "shipment remaining",
-				gate:    domain.EOLBranchShipGate{ShipmentRemaining: 3},
 				wantApp: false,
 			},
 			{
@@ -170,6 +167,60 @@ func TestAppLayerGatesMatchDBTriggers(t *testing.T) {
 		}
 	})
 
+	// Every combination of the branch-ship counters, with and without a
+	// SHIPMENT blocker handed in: BuildEOLGates.Ready is exactly "not done and
+	// nothing left in EOL BRANCH, TEST or station steps", the trigger mirror
+	// blocks exactly when a not-yet-shipped vehicle is not ready, and the
+	// SHIPMENT blocker changes neither (Karar 33).
+	t.Run("branch_ship_every_combination", func(t *testing.T) {
+		branch := domain.EOLItemPhaseBranch
+		combos := 0
+		for _, done := range []bool{false, true} {
+			for _, eol := range []int{0, 1} {
+				for _, test := range []int{0, 1} {
+					for _, steps := range []int{0, 1} {
+						for _, issues := range []int{0, 1} {
+							for _, ship := range []int{0, 5} {
+								wf := &domain.EOLWorkflow{VIN: "TESTVIN"}
+								if done {
+									wf.BranchShippedAt = &now
+								}
+								var blockers []domain.EOLChecklistBlocker
+								if eol > 0 {
+									blockers = append(blockers, domain.EOLChecklistBlocker{ChecklistType: domain.ChecklistTypeEOL, EolPhase: &branch, Remaining: eol, Missing: eol})
+								}
+								if test > 0 {
+									blockers = append(blockers, domain.EOLChecklistBlocker{ChecklistType: domain.ChecklistTypeTest, Remaining: test})
+								}
+								if ship > 0 {
+									blockers = append(blockers, domain.EOLChecklistBlocker{ChecklistType: domain.ChecklistTypeShipment, Remaining: ship, Missing: ship})
+								}
+								g := usecase.BuildEOLGates(wf, blockers, steps, 0, 0, issues).BranchShip
+								want := !done && eol == 0 && test == 0 && steps == 0
+								label := fmt.Sprintf("done=%v eol=%d test=%d steps=%d issues=%d shipment=%d", done, eol, test, steps, issues, ship)
+								if g.Ready != want {
+									t.Errorf("%s: Ready=%v want %v", label, g.Ready, want)
+								}
+								if g.Ready != BuildBranchReady(g) {
+									t.Errorf("%s: BuildEOLGates.Ready=%v but counters say %v", label, g.Ready, BuildBranchReady(g))
+								}
+								blocks := usecase.TriggerBranchShipWouldBlock(g)
+								if done && blocks {
+									t.Errorf("%s: trigger must not fire on an already shipped vehicle", label)
+								}
+								if !done && blocks == g.Ready {
+									t.Errorf("%s: parity broken: Ready=%v triggerBlocks=%v", label, g.Ready, blocks)
+								}
+								combos++
+							}
+						}
+					}
+				}
+			}
+		}
+		t.Logf("%d combinations: app and trigger agree, SHIPMENT never decides", combos)
+	})
+
 	t.Run("count_remainders_match_trigger_incomplete_plus_missing", func(t *testing.T) {
 		// DB: incomplete = progress not OK/CONDITIONAL_OK; missing = no progress row.
 		// App CountGateRemainders = len(blocking)+len(missing).
@@ -202,7 +253,6 @@ func BuildBranchReady(g domain.EOLBranchShipGate) bool {
 	return !g.AlreadyDone &&
 		g.BranchEOLRemaining == 0 &&
 		g.TestRemaining == 0 &&
-		g.ShipmentRemaining == 0 &&
 		g.StationStepsRemaining == 0
 }
 

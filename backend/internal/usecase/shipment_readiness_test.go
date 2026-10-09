@@ -50,6 +50,7 @@ func TestShipmentReadiness_ListsIncompleteChecklistsAndOpenIssues(t *testing.T) 
 	}
 	checklists.views[vin+"|TEST"] = []domain.ChecklistItemView{
 		{ItemID: 20, ItemNo: 1, ItemText: "Road test", Status: domain.CheckStatusOK, IsActive: true},
+		{ItemID: 21, ItemNo: 2, ItemText: "Brake test", Status: domain.CheckStatusPending, IsActive: true},
 	}
 	checklists.views[vin+"|EOL"] = []domain.ChecklistItemView{
 		{ItemID: 1, ItemNo: 1, ItemText: "Paint finish", Status: domain.CheckStatusPending, IsActive: true},
@@ -83,8 +84,11 @@ func TestShipmentReadiness_ListsIncompleteChecklistsAndOpenIssues(t *testing.T) 
 	for _, w := range got.Warnings {
 		joined += w.Message + "\n"
 	}
-	if !strings.Contains(joined, "Shipment checklist maddesi 1") || !strings.Contains(joined, "Battery disconnect") {
-		t.Errorf("missing shipment item: %s", joined)
+	if strings.Contains(joined, "Shipment") || strings.Contains(joined, "Battery disconnect") {
+		t.Errorf("SHIPMENT items must not warn (Karar 33): %s", joined)
+	}
+	if !strings.Contains(joined, "Test checklist maddesi 2") || !strings.Contains(joined, "Brake test") {
+		t.Errorf("missing test item: %s", joined)
 	}
 	if !strings.Contains(joined, "EOL checklist maddesi 1") {
 		t.Errorf("missing EOL item: %s", joined)
@@ -99,16 +103,19 @@ func TestShipmentReadiness_ListsIncompleteChecklistsAndOpenIssues(t *testing.T) 
 	// Structured fields let clients localize the line instead of showing Message.
 	var sawItem, sawIssue bool
 	for _, w := range got.Warnings {
-		if w.Code == domain.ShipmentWarningShipmentIncomplete && w.ItemID == 10 {
-			sawItem = w.ItemNo == 1 && w.ItemText == "Battery disconnect" &&
-				w.ItemStatus == domain.CheckStatusPending && w.ChecklistType == domain.ChecklistTypeShipment
+		if w.ChecklistType == domain.ChecklistTypeShipment {
+			t.Errorf("SHIPMENT warning present: %+v", w)
+		}
+		if w.Code == domain.ShipmentWarningTestIncomplete && w.ItemID == 21 {
+			sawItem = w.ItemNo == 2 && w.ItemText == "Brake test" &&
+				w.ItemStatus == domain.CheckStatusPending && w.ChecklistType == domain.ChecklistTypeTest
 		}
 		if w.Code == domain.ShipmentWarningOpenIssue {
 			sawIssue = w.IssueDescription == "scratch on door" && w.IssueStatus == domain.IssueStatusOpen
 		}
 	}
 	if !sawItem {
-		t.Errorf("shipment item warning lacks structured fields: %+v", got.Warnings)
+		t.Errorf("test item warning lacks structured fields: %+v", got.Warnings)
 	}
 	if !sawIssue {
 		t.Errorf("open issue warning lacks structured fields: %+v", got.Warnings)
@@ -134,8 +141,8 @@ func TestShipmentReadiness_ReadFailureDoesNotLeakError(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got.Ready || len(got.Warnings) != 3 {
-		t.Fatalf("want 3 read-failed warnings, got %+v", got)
+	if got.Ready || len(got.Warnings) != 2 {
+		t.Fatalf("want 2 read-failed warnings (TEST, EOL), got %+v", got)
 	}
 	for _, w := range got.Warnings {
 		if !w.ReadFailed || w.ChecklistType == "" {
