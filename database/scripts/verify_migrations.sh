@@ -2,12 +2,21 @@
 # Prove migrations apply cleanly on an empty database:
 #   1) migrate up (fresh)
 #   2) migrate up again (no-op)
-#   3) re-apply every *.up.sql via psql (idempotent DDL)
+#   3) re-apply the *.up.sql files below LAST_DESTRUCTIVE via psql, on a
+#      schema stepped back to LAST_DESTRUCTIVE - 1 (idempotent DDL)
 #   4) migrate down to version 0, then up again (up → down → up)
 # Uses an ephemeral Postgres container; never touches the live DB.
+#
+# Why step 3 stops at the last destructive migration: once a migration
+# removes an object an earlier one created (0045 drops
+# vehicles.shipment_template_id and forbids SHIPMENT templates), the earlier
+# up files cannot be expected to run again on their own against the final
+# schema. What has to work is a fresh, ordered install, and step 1 proves
+# that. Raise LAST_DESTRUCTIVE when a newer migration drops something.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 MIG="$ROOT/database/migrations"
+LAST_DESTRUCTIVE=45
 NAME="karea_migrate_verify_$$"
 PORT="${MIGRATE_VERIFY_PORT:-55432}"
 URL="postgres://karea:karea_secret@127.0.0.1:${PORT}/karea?sslmode=disable"
@@ -57,14 +66,22 @@ OUT="$("$MIGRATE_BIN" -path "$MIG" -database "$URL" up 2>&1 || true)"
 echo "    ${OUT:-"(no output — already up)"}"
 "$MIGRATE_BIN" -path "$MIG" -database "$URL" version
 
-echo "==> [3/4] re-apply every *.up.sql via psql (full idempotency)"
+BEFORE=$((LAST_DESTRUCTIVE - 1))
+echo "==> [3/4] re-apply *.up.sql below ${LAST_DESTRUCTIVE} via psql at version ${BEFORE}"
+"$MIGRATE_BIN" -path "$MIG" -database "$URL" goto "$BEFORE"
 shopt -s nullglob
 for f in "$MIG"/*.up.sql; do
   base="$(basename "$f")"
+  num=$((10#${base%%_*}))
+  if (( num >= LAST_DESTRUCTIVE )); then
+    continue
+  fi
   echo "    $base"
   psql_file "$f"
 done
 echo "    re-apply complete; migrate version still: $("$MIGRATE_BIN" -path "$MIG" -database "$URL" version 2>&1 || true)"
+"$MIGRATE_BIN" -path "$MIG" -database "$URL" up
+echo "    back to latest: $("$MIGRATE_BIN" -path "$MIG" -database "$URL" version 2>&1 || true)"
 
 echo "==> [4/4] up → down → up"
 echo "    migrate down to 0"

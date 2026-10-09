@@ -850,6 +850,11 @@ kalıyordu.
 - **Yeniden uygulama:** 0045 sonrası 0001/0002 (SHIPMENT şablonu ekler,
   CHECK reddeder) ve 0009/0023 (`shipment_template_id` okur) bir daha
   baştan koşturulamaz; uygulanmış migration'lar değiştirilmez.
+  `verify_migrations.sh` 3. adımı bu yüzden şemayı son yıkıcı migration'ın
+  bir öncesine (`LAST_DESTRUCTIVE=45` → 44) indirip yalnız ondan önceki up
+  dosyalarını yeniden koşturur. İstisna listesi tutulmaz; asıl güvence
+  sıfırdan sıralı kurulumdur (1. adım). Yeni bir yıkıcı migration
+  geldiğinde `LAST_DESTRUCTIVE` yükseltilir.
 - **Metinler:** rol ekranındaki iki Sevkiyat yetkisi, şablon tipi etiketi,
   Sevkiyat bölüm kataloğu (6 bölüm anahtarı), etkinlik ve zaman çizelgesi
   etiketleri kalktı. Kalanlar sevkiyat checklist'i değildir: Test rozeti,

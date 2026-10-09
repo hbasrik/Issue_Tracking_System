@@ -1,0 +1,366 @@
+==> starting ephemeral postgres on :55432
+==> [1/4] migrate up (fresh)
+1/u init (94.592625ms)
+2/u v2_architecture (283.224959ms)
+3/u document_approval_after_trigger (290.371917ms)
+4/u eol_depot_after_branch (300.539375ms)
+5/u manual_issue_source (314.137667ms)
+6/u manual_issue_check_and_types (324.076459ms)
+7/u planned_vehicles (337.698709ms)
+8/u media_attachments_vin (378.623167ms)
+9/u planned_vehicle_progress (395.079167ms)
+10/u rbac_phase2 (408.225791ms)
+11/u eol_two_stage_depot_ships (420.425041ms)
+12/u must_change_password (336.422333ms)
+13/u eol_deliver_flow (182.737792ms)
+14/u branch_ship_station_steps (204.9685ms)
+15/u one_way_status_and_hold (205.349291ms)
+16/u ops_set_vehicle_status (199.645667ms)
+17/u harden_ops_set_vehicle_status (199.193166ms)
+18/u defect_catalog (235.759916ms)
+19/u issue_classification_audit (202.662834ms)
+20/u freeze_catalogue_snapshots (195.516333ms)
+21/u clear_ambiguous_process_defaults (186.76825ms)
+22/u template_aware_checklist_gates (183.737209ms)
+23/u backfill_missing_checklist_progress (181.725708ms)
+24/u checklist_item_sections (153.276291ms)
+25/u model_aware_templates (132.407459ms)
+26/u template_item_no_unique (127.372834ms)
+27/u issue_client_request_id (125.664166ms)
+28/u login_rate_limit_audit (122.869ms)
+29/u tokens_valid_from (79.537542ms)
+30/u issue_list_reporter_date_indexes (76.859584ms)
+31/u depot_sequencing_ignores_closed_branch (74.6675ms)
+32/u drop_stored_progress_percentage (79.560375ms)
+33/u other_part_own_zone (81.415042ms)
+34/u checklist_item_seed_key (86.991041ms)
+35/u checklist_sections_by_content (87.47275ms)
+36/u shipment_sections_by_process (85.732042ms)
+37/u branch_ship_status_audit (87.32875ms)
+38/u admin_audit_events (87.04525ms)
+39/u checklist_form_fields (86.23975ms)
+40/u freeze_passed_checklist_items (85.826625ms)
+41/u checklist_item_form_identity (88.221542ms)
+42/u checklist_criteria_snapshot (91.75075ms)
+43/u item_text_snapshot_comment (86.706542ms)
+44/u branch_ship_drop_shipment_gate (84.812583ms)
+45/u drop_shipment_checklist (82.712375ms)
+    version: 45
+==> [2/4] migrate up again (must be no-op / already at latest)
+    no change
+45
+==> [3/4] re-apply *.up.sql below 45 via psql at version 44
+45/d drop_shipment_checklist (12.800458ms)
+    0001_init.up.sql
+NOTICE:  extension "pg_trgm" already exists, skipping
+NOTICE:  extension "uuid-ossp" already exists, skipping
+NOTICE:  relation "users" already exists, skipping
+NOTICE:  relation "vehicle_models" already exists, skipping
+NOTICE:  relation "stations" already exists, skipping
+NOTICE:  relation "issue_types" already exists, skipping
+NOTICE:  relation "checklist_templates" already exists, skipping
+NOTICE:  relation "checklist_template_items" already exists, skipping
+NOTICE:  relation "vehicles" already exists, skipping
+NOTICE:  relation "issue_list" already exists, skipping
+NOTICE:  relation "audit_logs" already exists, skipping
+NOTICE:  relation "idx_vehicles_vin_trgm" already exists, skipping
+NOTICE:  relation "idx_vehicles_status" already exists, skipping
+NOTICE:  relation "idx_vehicles_model" already exists, skipping
+NOTICE:  relation "idx_issue_list_vin" already exists, skipping
+NOTICE:  relation "idx_issue_list_open_by_vin" already exists, skipping
+NOTICE:  relation "idx_issue_list_status_date" already exists, skipping
+NOTICE:  relation "idx_issue_list_station" already exists, skipping
+NOTICE:  relation "idx_issue_list_severity" already exists, skipping
+NOTICE:  relation "idx_issue_list_issue_date_day" already exists, skipping
+NOTICE:  relation "idx_audit_logs_vin_event_at" already exists, skipping
+NOTICE:  relation "idx_audit_logs_type_event_at" already exists, skipping
+NOTICE:  relation "idx_audit_logs_event_at_brin" already exists, skipping
+NOTICE:  trigger "trg_ppp_updated_at" for relation "production_phase_progress" does not exist, skipping
+NOTICE:  trigger "trg_eol_ship_updated_at" for relation "eol_and_shipment_checklist_progress" does not exist, skipping
+NOTICE:  trigger "trg_recalculate_vehicle_progress" for relation "production_phase_progress" does not exist, skipping
+NOTICE:  trigger "trg_recheck_eol_gate" for relation "eol_and_shipment_checklist_progress" does not exist, skipping
+NOTICE:  trigger "trg_check_shipment_completion" for relation "eol_and_shipment_checklist_progress" does not exist, skipping
+    0002_v2_architecture.up.sql
+NOTICE:  view "vw_vehicle_completion_split" does not exist, skipping
+NOTICE:  drop cascades to trigger trg_recalculate_vehicle_progress on table vehicle_station_step_progress
+NOTICE:  drop cascades to trigger trg_enforce_branch_shipment on table vehicle_eol_workflow
+NOTICE:  drop cascades to trigger trg_enforce_depot_release on table vehicle_eol_workflow
+NOTICE:  truncate cascades to table "vehicle_station_step_progress"
+NOTICE:  truncate cascades to table "checklist_item_progress"
+NOTICE:  truncate cascades to table "production_phase_progress"
+NOTICE:  truncate cascades to table "eol_and_shipment_checklist_progress"
+NOTICE:  truncate cascades to table "issue_list"
+NOTICE:  truncate cascades to table "audit_logs"
+NOTICE:  truncate cascades to table "vehicle_station_step_progress"
+NOTICE:  truncate cascades to table "checklist_item_progress"
+NOTICE:  truncate cascades to table "vehicle_eol_workflow"
+NOTICE:  truncate cascades to table "media_attachments"
+NOTICE:  truncate cascades to table "production_phase_progress"
+NOTICE:  truncate cascades to table "eol_and_shipment_checklist_progress"
+NOTICE:  index "idx_ppp_vin_phase" does not exist, skipping
+NOTICE:  index "idx_ppp_checkpoint" does not exist, skipping
+NOTICE:  index "idx_ppp_checked_at" does not exist, skipping
+NOTICE:  index "idx_eol_ship_vin_type" does not exist, skipping
+NOTICE:  index "idx_eol_ship_status" does not exist, skipping
+NOTICE:  column "source_checkpoint_id" of relation "issue_list" does not exist, skipping
+NOTICE:  column "phase_number" of relation "audit_logs" does not exist, skipping
+NOTICE:  drop cascades to 2 other objects
+DETAIL:  drop cascades to constraint issue_list_source_station_step_id_fkey on table issue_list
+drop cascades to constraint vehicle_station_step_progress_station_step_id_fkey on table vehicle_station_step_progress
+NOTICE:  drop cascades to 2 other objects
+DETAIL:  drop cascades to constraint vehicles_current_station_id_fkey on table vehicles
+drop cascades to constraint vehicle_station_step_progress_station_id_fkey on table vehicle_station_step_progress
+NOTICE:  relation "roles" already exists, skipping
+NOTICE:  relation "permissions" already exists, skipping
+NOTICE:  relation "role_permissions" already exists, skipping
+NOTICE:  column "role_id" of relation "users" already exists, skipping
+NOTICE:  column "role" of relation "users" does not exist, skipping
+NOTICE:  checklist_type_enum already includes TEST — skip recreate
+NOTICE:  issue_status_enum already includes CONDITIONAL_APPROVED — skip recreate
+NOTICE:  issue_source_enum already at v2 — skip recreate
+NOTICE:  audit_event_enum already at v2 — skip recreate
+NOTICE:  station_step_status_enum already exists — skip
+NOTICE:  eol_item_phase_enum already exists — skip
+NOTICE:  eol_workflow_stage_enum already exists — skip
+NOTICE:  constraint "checklist_template_items_station_id_fkey" of relation "checklist_template_items" does not exist, skipping
+NOTICE:  constraint "issue_list_station_id_fkey" of relation "issue_list" does not exist, skipping
+NOTICE:  constraint "audit_logs_station_id_fkey" of relation "audit_logs" does not exist, skipping
+NOTICE:  column "current_phase" of relation "vehicles" does not exist, skipping
+NOTICE:  column "current_station_id" of relation "vehicles" already exists, skipping
+NOTICE:  column "test_template_id" of relation "vehicles" already exists, skipping
+NOTICE:  column "eol_phase" of relation "checklist_template_items" already exists, skipping
+NOTICE:  column "source_station_step_id" of relation "issue_list" already exists, skipping
+NOTICE:  column "conditional_approve_reporter_id" of relation "issue_list" already exists, skipping
+NOTICE:  column "conditional_approve_date" of relation "issue_list" already exists, skipping
+NOTICE:  constraint "chk_issue_source" of relation "issue_list" does not exist, skipping
+NOTICE:  relation "vehicle_station_step_progress" already exists, skipping
+NOTICE:  relation "checklist_item_progress" already exists, skipping
+NOTICE:  relation "vehicle_eol_workflow" already exists, skipping
+NOTICE:  relation "media_attachments" already exists, skipping
+NOTICE:  relation "idx_vehicles_vin_trgm" already exists, skipping
+NOTICE:  relation "idx_vehicles_status" already exists, skipping
+NOTICE:  relation "idx_vehicles_model" already exists, skipping
+NOTICE:  relation "idx_vehicles_current_station" already exists, skipping
+NOTICE:  relation "idx_issue_list_vin" already exists, skipping
+NOTICE:  relation "idx_issue_list_status_date" already exists, skipping
+NOTICE:  relation "idx_issue_list_station" already exists, skipping
+NOTICE:  relation "idx_issue_list_severity" already exists, skipping
+NOTICE:  relation "idx_issue_list_issue_date_day" already exists, skipping
+NOTICE:  relation "idx_vssp_vin_station" already exists, skipping
+NOTICE:  relation "idx_vssp_station_step" already exists, skipping
+NOTICE:  relation "idx_vssp_checked_at" already exists, skipping
+NOTICE:  relation "idx_cip_vin_type" already exists, skipping
+NOTICE:  relation "idx_cip_status" already exists, skipping
+NOTICE:  relation "idx_eol_workflow_stage" already exists, skipping
+NOTICE:  relation "idx_media_attachments_entity" already exists, skipping
+NOTICE:  relation "idx_role_permissions_permission" already exists, skipping
+NOTICE:  relation "idx_audit_logs_vin_event_at" already exists, skipping
+NOTICE:  relation "idx_audit_logs_type_event_at" already exists, skipping
+NOTICE:  relation "idx_audit_logs_event_at_brin" already exists, skipping
+NOTICE:  trigger "trg_vehicles_updated_at" for relation "vehicles" does not exist, skipping
+NOTICE:  trigger "trg_issue_list_updated_at" for relation "issue_list" does not exist, skipping
+NOTICE:  trigger "trg_assign_checklist_templates" for relation "vehicles" does not exist, skipping
+NOTICE:  trigger "trg_initialize_vehicle_progress" for relation "vehicles" does not exist, skipping
+NOTICE:  trigger "trg_recalculate_vehicle_progress" for relation "vehicle_station_step_progress" does not exist, skipping
+NOTICE:  trigger "trg_enforce_branch_shipment" for relation "vehicle_eol_workflow" does not exist, skipping
+NOTICE:  trigger "trg_enforce_depot_release" for relation "vehicle_eol_workflow" does not exist, skipping
+NOTICE:  trigger "trg_enforce_document_approval" for relation "vehicle_eol_workflow" does not exist, skipping
+NOTICE:  trigger "trg_check_shipment_completion" for relation "checklist_item_progress" does not exist, skipping
+NOTICE:  trigger "trg_enforce_manual_status_change" for relation "vehicles" does not exist, skipping
+NOTICE:  trigger "trg_link_latest_issue_to_source" for relation "issue_list" does not exist, skipping
+    0003_document_approval_after_trigger.up.sql
+    0004_eol_depot_after_branch.up.sql
+    0005_manual_issue_source.up.sql
+NOTICE:  enum label "MANUAL" already exists, skipping
+    0006_manual_issue_check_and_types.up.sql
+    0007_planned_vehicles.up.sql
+NOTICE:  enum label "PLANNED" already exists, skipping
+    0008_media_attachments_vin.up.sql
+NOTICE:  column "vin" of relation "media_attachments" already exists, skipping
+NOTICE:  relation "idx_media_attachments_vin" already exists, skipping
+    0009_planned_vehicle_progress.up.sql
+    0010_rbac_phase2.up.sql
+    0011_eol_two_stage_depot_ships.up.sql
+NOTICE:  trigger "trg_eol_depot_release_ships" for relation "vehicle_eol_workflow" does not exist, skipping
+    0012_must_change_password.up.sql
+NOTICE:  column "must_change_password" of relation "users" already exists, skipping
+    0013_eol_deliver_flow.up.sql
+NOTICE:  column "delivered_at" of relation "vehicle_eol_workflow" already exists, skipping
+NOTICE:  column "delivered_by" of relation "vehicle_eol_workflow" already exists, skipping
+    0014_branch_ship_station_steps.up.sql
+    0015_one_way_status_and_hold.up.sql
+NOTICE:  column "status_before_hold" of relation "vehicles" already exists, skipping
+NOTICE:  column "hold_reason" of relation "vehicles" already exists, skipping
+    0016_ops_set_vehicle_status.up.sql
+    0017_harden_ops_set_vehicle_status.up.sql
+    0018_defect_catalog.up.sql
+NOTICE:  relation "defect_processes" already exists, skipping
+NOTICE:  relation "defect_zones" already exists, skipping
+NOTICE:  relation "defect_parts" already exists, skipping
+NOTICE:  relation "idx_defect_parts_zone" already exists, skipping
+NOTICE:  relation "defect_types" already exists, skipping
+NOTICE:  column "defect_part_id" of relation "issue_list" already exists, skipping
+NOTICE:  column "defect_type_id" of relation "issue_list" already exists, skipping
+NOTICE:  column "responsible_process_id" of relation "issue_list" already exists, skipping
+NOTICE:  column "custom_part_name" of relation "issue_list" already exists, skipping
+NOTICE:  column "custom_defect_name" of relation "issue_list" already exists, skipping
+NOTICE:  column "defect_code" of relation "issue_list" already exists, skipping
+NOTICE:  relation "idx_issue_list_defect_part" already exists, skipping
+NOTICE:  relation "idx_issue_list_defect_type" already exists, skipping
+    0019_issue_classification_audit.up.sql
+NOTICE:  enum label "ISSUE_CLASSIFICATION_CHANGE" already exists, skipping
+    0020_freeze_catalogue_snapshots.up.sql
+NOTICE:  column "item_text_snapshot" of relation "checklist_item_progress" already exists, skipping
+NOTICE:  column "defect_part_name_tr" of relation "issue_list" already exists, skipping
+NOTICE:  column "defect_type_name_tr" of relation "issue_list" already exists, skipping
+NOTICE:  column "defect_part_name_en" of relation "issue_list" already exists, skipping
+NOTICE:  column "defect_type_name_en" of relation "issue_list" already exists, skipping
+    0021_clear_ambiguous_process_defaults.up.sql
+    0022_template_aware_checklist_gates.up.sql
+    0023_backfill_missing_checklist_progress.up.sql
+    0024_checklist_item_sections.up.sql
+NOTICE:  column "section_key" of relation "checklist_template_items" already exists, skipping
+NOTICE:  column "section_sort" of relation "checklist_template_items" already exists, skipping
+    0025_model_aware_templates.up.sql
+NOTICE:  relation "uq_checklist_templates_active_type_model" already exists, skipping
+NOTICE:  relation "uq_checklist_templates_active_type_generic" already exists, skipping
+    0026_template_item_no_unique.up.sql
+    0027_issue_client_request_id.up.sql
+NOTICE:  column "client_request_id" of relation "issue_list" already exists, skipping
+NOTICE:  relation "uq_issue_list_client_request_id" already exists, skipping
+    0028_login_rate_limit_audit.up.sql
+    0029_tokens_valid_from.up.sql
+NOTICE:  column "tokens_valid_from" of relation "users" already exists, skipping
+    0030_issue_list_reporter_date_indexes.up.sql
+NOTICE:  relation "idx_issue_list_reporter" already exists, skipping
+NOTICE:  relation "idx_issue_list_issue_date" already exists, skipping
+    0031_depot_sequencing_ignores_closed_branch.up.sql
+    0032_drop_stored_progress_percentage.up.sql
+NOTICE:  view "vw_vehicle_completion_split" does not exist, skipping
+NOTICE:  column "total_progress_percentage" of relation "vehicles" does not exist, skipping
+    0033_other_part_own_zone.up.sql
+    0034_checklist_item_seed_key.up.sql
+    0035_checklist_sections_by_content.up.sql
+    0036_shipment_sections_by_process.up.sql
+    0037_branch_ship_status_audit.up.sql
+    0038_admin_audit_events.up.sql
+NOTICE:  enum label "USER_ADMIN_CHANGE" already exists, skipping
+NOTICE:  enum label "ROLE_PERMISSION_CHANGE" already exists, skipping
+NOTICE:  enum label "CHECKLIST_TEMPLATE_CHANGE" already exists, skipping
+NOTICE:  enum label "DEFECT_CATALOG_CHANGE" already exists, skipping
+    0039_checklist_form_fields.up.sql
+NOTICE:  column "acceptance_criterion" of relation "checklist_template_items" already exists, skipping
+NOTICE:  column "control_method" of relation "checklist_template_items" already exists, skipping
+    0040_freeze_passed_checklist_items.up.sql
+    0041_checklist_item_form_identity.up.sql
+NOTICE:  column "form_code" of relation "checklist_template_items" already exists, skipping
+NOTICE:  column "form_item_ref" of relation "checklist_template_items" already exists, skipping
+NOTICE:  column "form_revision" of relation "checklist_template_items" already exists, skipping
+NOTICE:  column "form_published_at" of relation "checklist_template_items" already exists, skipping
+NOTICE:  relation "uq_checklist_template_items_template_seed_key" already exists, skipping
+    0042_checklist_criteria_snapshot.up.sql
+NOTICE:  column "acceptance_criterion_snapshot" of relation "checklist_item_progress" already exists, skipping
+NOTICE:  column "control_method_snapshot" of relation "checklist_item_progress" already exists, skipping
+NOTICE:  column "form_revision_snapshot" of relation "checklist_item_progress" already exists, skipping
+NOTICE:  column "criteria_snapshot_at" of relation "checklist_item_progress" already exists, skipping
+    0043_item_text_snapshot_comment.up.sql
+    0044_branch_ship_drop_shipment_gate.up.sql
+    re-apply complete; migrate version still: 44
+45/u drop_shipment_checklist (32.987958ms)
+    back to latest: 45
+==> [4/4] up → down → up
+    migrate down to 0
+45/d drop_shipment_checklist (86.80825ms)
+44/d branch_ship_drop_shipment_gate (102.322709ms)
+43/d item_text_snapshot_comment (116.284167ms)
+42/d checklist_criteria_snapshot (126.201209ms)
+41/d checklist_item_form_identity (134.301542ms)
+40/d freeze_passed_checklist_items (142.034708ms)
+39/d checklist_form_fields (150.66525ms)
+38/d admin_audit_events (169.351459ms)
+37/d branch_ship_status_audit (176.793458ms)
+36/d shipment_sections_by_process (184.184084ms)
+35/d checklist_sections_by_content (195.162667ms)
+34/d checklist_item_seed_key (115.371084ms)
+33/d other_part_own_zone (105.766417ms)
+32/d drop_stored_progress_percentage (101.190667ms)
+31/d depot_sequencing_ignores_closed_branch (97.35925ms)
+30/d issue_list_reporter_date_indexes (93.784667ms)
+29/d tokens_valid_from (94.384875ms)
+28/d login_rate_limit_audit (91.920292ms)
+27/d issue_client_request_id (80.59ms)
+26/d template_item_no_unique (78.259291ms)
+25/d model_aware_templates (76.941959ms)
+24/d checklist_item_sections (74.503583ms)
+23/d backfill_missing_checklist_progress (73.97375ms)
+22/d template_aware_checklist_gates (73.50425ms)
+21/d clear_ambiguous_process_defaults (70.17175ms)
+20/d freeze_catalogue_snapshots (71.089667ms)
+19/d issue_classification_audit (68.71975ms)
+18/d defect_catalog (75.623792ms)
+17/d harden_ops_set_vehicle_status (77.133709ms)
+16/d ops_set_vehicle_status (76.521417ms)
+15/d one_way_status_and_hold (77.941833ms)
+14/d branch_ship_station_steps (77.2395ms)
+13/d eol_deliver_flow (81.159916ms)
+12/d must_change_password (81.622708ms)
+11/d eol_two_stage_depot_ships (82.187583ms)
+10/d rbac_phase2 (83.695459ms)
+9/d planned_vehicle_progress (82.632042ms)
+8/d media_attachments_vin (83.941834ms)
+7/d planned_vehicles (80.966709ms)
+6/d manual_issue_check_and_types (79.978458ms)
+5/d manual_issue_source (79.230541ms)
+4/d eol_depot_after_branch (78.933834ms)
+3/d document_approval_after_trigger (79.468084ms)
+2/d v2_architecture (263.982084ms)
+1/d init (312.790917ms)
+    version after down: error: no migration
+    migrate up again
+1/u init (139.526291ms)
+2/u v2_architecture (392.527083ms)
+3/u document_approval_after_trigger (399.531792ms)
+4/u eol_depot_after_branch (407.064292ms)
+5/u manual_issue_source (412.144792ms)
+6/u manual_issue_check_and_types (420.159875ms)
+7/u planned_vehicles (426.578042ms)
+8/u media_attachments_vin (435.937583ms)
+9/u planned_vehicle_progress (443.196209ms)
+10/u rbac_phase2 (451.531833ms)
+11/u eol_two_stage_depot_ships (458.548375ms)
+12/u must_change_password (325.494542ms)
+13/u eol_deliver_flow (80.349792ms)
+14/u branch_ship_station_steps (78.745833ms)
+15/u one_way_status_and_hold (78.400666ms)
+16/u ops_set_vehicle_status (79.186625ms)
+17/u harden_ops_set_vehicle_status (76.495625ms)
+18/u defect_catalog (90.825875ms)
+19/u issue_classification_audit (86.837834ms)
+20/u freeze_catalogue_snapshots (85.361959ms)
+21/u clear_ambiguous_process_defaults (82.544333ms)
+22/u template_aware_checklist_gates (81.799708ms)
+23/u backfill_missing_checklist_progress (86.260167ms)
+24/u checklist_item_sections (92.214916ms)
+25/u model_aware_templates (96.067209ms)
+26/u template_item_no_unique (94.702334ms)
+27/u issue_client_request_id (95.912667ms)
+28/u login_rate_limit_audit (96.7405ms)
+29/u tokens_valid_from (81.491042ms)
+30/u issue_list_reporter_date_indexes (83.926292ms)
+31/u depot_sequencing_ignores_closed_branch (84.765208ms)
+32/u drop_stored_progress_percentage (91.246292ms)
+33/u other_part_own_zone (97.4255ms)
+34/u checklist_item_seed_key (163.103541ms)
+35/u checklist_sections_by_content (157.122042ms)
+36/u shipment_sections_by_process (153.548208ms)
+37/u branch_ship_status_audit (154.017208ms)
+38/u admin_audit_events (156.156041ms)
+39/u checklist_form_fields (167.631208ms)
+40/u freeze_passed_checklist_items (169.7795ms)
+41/u checklist_item_form_identity (182.246417ms)
+42/u checklist_criteria_snapshot (184.493708ms)
+43/u item_text_snapshot_comment (183.267125ms)
+44/u branch_ship_drop_shipment_gate (178.763792ms)
+45/u drop_shipment_checklist (113.218ms)
+    version after re-up: 45
+==> OK: fresh up + second up + full SQL re-apply + up/down/up

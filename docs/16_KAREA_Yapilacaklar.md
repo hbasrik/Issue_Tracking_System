@@ -1111,8 +1111,10 @@ uygulanmadı).
   `repository/postgres/shipment_retired_test.go` artık şemanın boş olduğunu
   ve CHECK'i (23514) doğrular.
 - `[ ]` Canlıya 0045 (onay bekliyor; önce 8080'de yeni kod).
-- `[ ]` Karar: `verify_migrations.sh` 3. adımı (tüm up dosyalarını yeniden
-  koşturma) 0045 sonrası 0001/0002/0009/0023'te hata verir; v44'te 0 hata.
+- `[x]` `verify_migrations.sh` 3. adımı yalnız son yıkıcı migration'a kadar
+  koşar (`LAST_DESTRUCTIVE=45`: v44'e iner, 0001–0044'ü yeniden uygular,
+  sonra 45'e döner). Tüm dosyalar v45'te 0001/0002/0009/0023'te hata
+  veriyordu; v44'te 0 hata. Kanıt: `shipment-0045/verify-migrations/`.
 - **Ara durum (kod yayında, 0045 öncesi):** iki yetki satırı veritabanında
   durduğu için rol ekranı onları "Diğer" grubunda veritabanı açıklamasıyla
   gösterir; 0045 bu satırları siler (`shipment-0045/roles-*.png`: grup yok).
