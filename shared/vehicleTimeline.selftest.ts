@@ -46,9 +46,9 @@ const all: VehicleTimelineEntry[] = [
   entry({ OldValue: 'ON_HOLD', NewValue: 'IN_PRODUCTION', Action: 'release_from_hold' }),
   entry({ OldValue: 'IN_PRODUCTION', NewValue: 'ON_HOLD', Action: 'place_on_hold', HoldReason: 'Parça bekleniyor' }),
   entry({ OldValue: 'IN_PRODUCTION', NewValue: 'IN_WAREHOUSE' }),
-  entry({ EventType: 'CHECKLIST_ITEM_UPDATE', ChecklistType: 'SHIPMENT', OldValue: 'PENDING', NewValue: 'OK', ItemNo: 3, ItemText: 'Ayna' }),
-  entry({ EventType: 'CHECKLIST_ITEM_UPDATE', ChecklistType: 'SHIPMENT', OldValue: 'PENDING', NewValue: 'CONDITIONAL_OK', ItemNo: 2, ItemText: 'Paspas' }),
-  entry({ EventType: 'CHECKLIST_ITEM_UPDATE', ChecklistType: 'SHIPMENT', OldValue: 'PENDING', NewValue: 'OK', ItemNo: 1, ItemText: 'Koltuk' }),
+  entry({ EventType: 'CHECKLIST_ITEM_UPDATE', ChecklistType: 'EOL', OldValue: 'PENDING', NewValue: 'OK', ItemNo: 3, ItemText: 'Ayna' }),
+  entry({ EventType: 'CHECKLIST_ITEM_UPDATE', ChecklistType: 'EOL', OldValue: 'PENDING', NewValue: 'CONDITIONAL_OK', ItemNo: 2, ItemText: 'Paspas' }),
+  entry({ EventType: 'CHECKLIST_ITEM_UPDATE', ChecklistType: 'EOL', OldValue: 'PENDING', NewValue: 'OK', ItemNo: 1, ItemText: 'Koltuk' }),
   entry({ EventType: 'CHECKLIST_ITEM_UPDATE', ChecklistType: 'TEST', OldValue: 'OK', NewValue: 'NOT_OK', ItemNo: 4 }),
   entry({ EventType: 'CHECKLIST_ITEM_UPDATE', ChecklistType: 'EOL', NewValue: 'REWORK' }),
   entry({ EventType: 'ISSUE_STATUS_CHANGE', OldValue: 'OPEN', NewValue: 'IN_PROGRESS', IssueID: 49 }),
@@ -94,12 +94,12 @@ assert.deepEqual(describeTimelineEntry(all[7], tr, 'tr').details, [
   'Neden: Parça bekleniyor',
 ]);
 assert.equal(describeTimelineEntry(all[5], tr, 'tr').title, 'Fabrikadan depoya sevk edildi');
-assert.equal(describeTimelineEntry(all[9], tr, 'tr').title, 'Sevk maddesi 3: Bekliyor → Uygun');
+assert.equal(describeTimelineEntry(all[9], tr, 'tr').title, 'EOL maddesi 3: Bekliyor → Uygun');
 assert.equal(describeTimelineEntry(all[14], tr, 'tr').title, 'Hata #49: Açık → İşlemde');
 assert.equal(describeTimelineEntry(all[19], tr, 'tr').details[0], 'Durum: Hatta → Bilinmeyen değer');
 
 const en = (key: MessageKey, vars?: Record<string, string | number>) => translate('en', key, vars);
-assert.equal(describeTimelineEntry(all[9], en, 'en').title, 'Shipment item 3: Pending → OK');
+assert.equal(describeTimelineEntry(all[9], en, 'en').title, 'EOL item 3: Pending → OK');
 // Only the deliberately unknown status falls back to the generic name.
 for (const [locale, tf, unknown] of [['tr', tr, 'Bilinmeyen değer'], ['en', en, 'Unknown value']] as const) {
   const hits = all.filter((e) => {
@@ -109,13 +109,13 @@ for (const [locale, tf, unknown] of [['tr', tr, 'Bilinmeyen değer'], ['en', en,
   assert.deepEqual(hits.map((e) => e.NewValue), ['SOME_FUTURE_STATUS'], `${locale} unknown fallback`);
 }
 
-// Three Shipment ticks by the same person fold; the single Test and EOL ticks stay.
+// Three EOL ticks by the same person fold; the single Test and EOL ticks stay.
 const rows = buildTimelineRows(all, 'all');
 const groups = rows.filter((r) => r.kind === 'checklistGroup');
 assert.equal(groups.length, 1);
 assert.equal(groups[0].kind === 'checklistGroup' && groups[0].entries.length, 3);
 if (groups[0].kind === 'checklistGroup') {
-  assert.equal(checklistGroupTitle(groups[0], tr), 'Sevk listesinde 3 işaretleme');
+  assert.equal(checklistGroupTitle(groups[0], tr), 'EOL listesinde 3 işaretleme');
   assert.equal(checklistGroupSummary(groups[0], tr), 'Uygun: 2 · Şartlı uygun: 1');
 }
 assert.equal(rows.length, all.length - 2);

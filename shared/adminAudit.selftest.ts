@@ -59,14 +59,14 @@ const samples: AdminAuditDetail[] = [
     changes: [
       { field: 'item_text', from: { tr: 'Şarj kapağı', en: 'Şarj kapağı' }, to: { tr: 'Şarj kapağı kontrolü', en: 'Şarj kapağı kontrolü' } },
       { field: 'eol_phase', from: { code: 'BRANCH' }, to: { code: 'DEPOT' } },
-      { field: 'section', from: {}, to: { code: 'final_adjust' } },
+      { field: 'section', from: {}, to: { code: 'final_extra_checks' } },
     ],
   },
   {
     action: 'reorder',
     entity: 'template_item',
     subject: {},
-    template_type: 'SHIPMENT',
+    template_type: 'TEST',
     moved: [{ subject: { tr: 'Paspas', en: 'Paspas' }, from: 3, to: 1 }],
   },
   {
@@ -128,13 +128,13 @@ assert.equal(
 );
 assert.ok(adminAuditDetailLine(samples[6], tr, 'tr', labels).includes('Verilen izin: Kullanıcı yönetimi'));
 assert.ok(adminAuditDetailLine(samples[8], tr, 'tr', labels).includes('EoL aşaması: Fabrika → Depo'));
-assert.ok(adminAuditDetailLine(samples[8], tr, 'tr', labels).includes('Bölüm: Diğer maddeler → Son Ayar & Kontroller'));
+assert.ok(adminAuditDetailLine(samples[8], tr, 'tr', labels).includes('Bölüm: Diğer maddeler → Ek kontroller'));
 assert.ok(adminAuditDetailLine(samples[10], en, 'en', labels).includes('Zone: Body (10) → Chassis (20)'));
 assert.ok(adminAuditDetailLine(samples[10], tr, 'tr', labels).startsWith('Parça «Kapı (10-01)» (Şasi) — güncellendi'));
 assert.ok(adminAuditDetailLine(samples[11], tr, 'tr', labels).includes('Varsayılan süreç: — → Montaj'));
 assert.equal(
   adminAuditDetailLine(samples[9], tr, 'tr', labels),
-  'Şablon maddesi (Sevkiyat) — sıralama değiştirildi · Paspas: 3. sıradan 1. sıraya',
+  'Şablon maddesi (Test) — sıralama değiştirildi · Paspas: 3. sıradan 1. sıraya',
 );
 const trOnlyRename: AdminAuditDetail = {
   action: 'update',
