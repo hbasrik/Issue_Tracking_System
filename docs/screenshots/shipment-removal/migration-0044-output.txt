@@ -1,0 +1,158 @@
+== version 43
+== row md5: v43
+              tbl              |  n   |               md5                
+-------------------------------+------+----------------------------------
+ vehicles                      |   18 | 82da6e5c011ec8d6272d518ddb65dbac
+ vehicle_eol_workflow          |   18 | 85da86e0273392a05ba338f093ca6f48
+ checklist_item_progress       | 3474 | fd143c89e80eb9fac4a0fede78cc1a98
+ vehicle_station_step_progress | 1152 | f0bf0e0e45a5a6f41e286cd00b0f6ef2
+ checklist_templates           |    3 | f26a1c5c745a744b1121c765d2a6f763
+ checklist_template_items      |  193 | a55b3f9e6099bfaff6bbcf3be100ef40
+ audit_logs                    |   24 | 1a43bbc837990d818973011f1dd42f7f
+
+== trigger probes at v43
+ shipment_template_id | shipment_items | shipment_rows | shipment_not_ok 
+----------------------+----------------+---------------+-----------------
+                    4 |             46 |            45 |              45
+
+           case_label           |                                                      result                                                       |                            rows_unchanged                             
+--------------------------------+-------------------------------------------------------------------------------------------------------------------+-----------------------------------------------------------------------
+ 1 shipment open, all else done | REJECTED: Cannot ship vehicle TMPSHIPRM00000001 from branch — 1 shipment checklist item(s) not yet on the vehicle | yes bf272b90cc0b202f1c5764536644dbfd/2c20c526873e1842f765a3e0e9d32d83
+
+     case_label      |                                                    result                                                     |                            rows_unchanged                             
+---------------------+---------------------------------------------------------------------------------------------------------------+-----------------------------------------------------------------------
+ 2 test item missing | REJECTED: Cannot ship vehicle TMPSHIPRM00000001 from branch — 1 test checklist item(s) not yet on the vehicle | yes bf272b90cc0b202f1c5764536644dbfd/2c20c526873e1842f765a3e0e9d32d83
+
+     case_label     |                                                   result                                                    |                            rows_unchanged                             
+--------------------+-------------------------------------------------------------------------------------------------------------+-----------------------------------------------------------------------
+ 3 test item NOT_OK | REJECTED: Cannot ship vehicle TMPSHIPRM00000001 from branch — test checklist is not fully OK/CONDITIONAL_OK | yes bf272b90cc0b202f1c5764536644dbfd/2c20c526873e1842f765a3e0e9d32d83
+
+        case_label         |                                                     result                                                      |                            rows_unchanged                             
+---------------------------+-----------------------------------------------------------------------------------------------------------------+-----------------------------------------------------------------------
+ 4 branch EOL item missing | REJECTED: Cannot ship vehicle TMPSHIPRM00000001 from branch — 1 branch-phase EoL item(s) not yet on the vehicle | yes bf272b90cc0b202f1c5764536644dbfd/2c20c526873e1842f765a3e0e9d32d83
+
+        case_label        |                                                       result                                                       |                            rows_unchanged                             
+--------------------------+--------------------------------------------------------------------------------------------------------------------+-----------------------------------------------------------------------
+ 5 branch EOL item NOT_OK | REJECTED: Cannot ship vehicle TMPSHIPRM00000001 from branch — branch-phase EoL items are not all OK/CONDITIONAL_OK | yes bf272b90cc0b202f1c5764536644dbfd/2c20c526873e1842f765a3e0e9d32d83
+
+       case_label       |                                                      result                                                       |                            rows_unchanged                             
+------------------------+-------------------------------------------------------------------------------------------------------------------+-----------------------------------------------------------------------
+ 6 station step PENDING | REJECTED: Cannot ship vehicle TMPSHIPRM00000001 from branch — 1 shipment checklist item(s) not yet on the vehicle | yes bf272b90cc0b202f1c5764536644dbfd/a50dd94cecef0e9553ad17d875b86b23
+
+ fixture_rows_left 
+-------------------
+                 0
+
+44/u branch_ship_drop_shipment_gate (9.163667ms)
+== version 44
+== row md5: after up
+              tbl              |  n   |               md5                
+-------------------------------+------+----------------------------------
+ vehicles                      |   18 | 82da6e5c011ec8d6272d518ddb65dbac
+ vehicle_eol_workflow          |   18 | 85da86e0273392a05ba338f093ca6f48
+ checklist_item_progress       | 3474 | fd143c89e80eb9fac4a0fede78cc1a98
+ vehicle_station_step_progress | 1152 | f0bf0e0e45a5a6f41e286cd00b0f6ef2
+ checklist_templates           |    3 | f26a1c5c745a744b1121c765d2a6f763
+ checklist_template_items      |  193 | a55b3f9e6099bfaff6bbcf3be100ef40
+ audit_logs                    |   24 | 1a43bbc837990d818973011f1dd42f7f
+
+== diff functiondef v43 -> v44 (only lines starting < or > are changes)
+11,12d10
+<     v_shipment_incomplete INT;
+<     v_shipment_missing INT;
+69,81d66
+<         SELECT
+<             count(*) FILTER (
+<                 WHERE p.id IS NOT NULL
+<                   AND p.check_status NOT IN ('OK', 'CONDITIONAL_OK')
+<             )::int,
+<             count(*) FILTER (WHERE p.id IS NULL)::int
+<         INTO v_shipment_incomplete, v_shipment_missing
+<         FROM vehicles v
+<         JOIN checklist_template_items cti
+<           ON cti.template_id = v.shipment_template_id AND cti.is_active
+<         LEFT JOIN checklist_item_progress p
+<           ON p.check_item_id = cti.id AND p.vin = v.vin
+<         WHERE v.vin = NEW.vin;
+83,93d67
+<         IF v_shipment_missing > 0 THEN
+<             RAISE EXCEPTION
+<                 'Cannot ship vehicle % from branch — % shipment checklist item(s) not yet on the vehicle',
+<                 NEW.vin, v_shipment_missing;
+<         END IF;
+<         IF v_shipment_incomplete > 0 THEN
+<             RAISE EXCEPTION
+<                 'Cannot ship vehicle % from branch — shipment checklist is not fully OK/CONDITIONAL_OK',
+<                 NEW.vin;
+<         END IF;
+< 
+== changed lines: removed 26, added 0
+== trigger probes at v44
+ shipment_template_id | shipment_items | shipment_rows | shipment_not_ok 
+----------------------+----------------+---------------+-----------------
+                    4 |             46 |            45 |              45
+
+           case_label           |                  result                  |                            rows_unchanged                             
+--------------------------------+------------------------------------------+-----------------------------------------------------------------------
+ 1 shipment open, all else done | ACCEPTED stage=DEPOT status=IN_WAREHOUSE | yes aed58f06d394796b9625604417b05ec3/6da2b30f276b2c7721b29f6329686f7e
+
+     case_label      |                                                    result                                                     |                            rows_unchanged                             
+---------------------+---------------------------------------------------------------------------------------------------------------+-----------------------------------------------------------------------
+ 2 test item missing | REJECTED: Cannot ship vehicle TMPSHIPRM00000001 from branch — 1 test checklist item(s) not yet on the vehicle | yes aed58f06d394796b9625604417b05ec3/6da2b30f276b2c7721b29f6329686f7e
+
+     case_label     |                                                   result                                                    |                            rows_unchanged                             
+--------------------+-------------------------------------------------------------------------------------------------------------+-----------------------------------------------------------------------
+ 3 test item NOT_OK | REJECTED: Cannot ship vehicle TMPSHIPRM00000001 from branch — test checklist is not fully OK/CONDITIONAL_OK | yes aed58f06d394796b9625604417b05ec3/6da2b30f276b2c7721b29f6329686f7e
+
+        case_label         |                                                     result                                                      |                            rows_unchanged                             
+---------------------------+-----------------------------------------------------------------------------------------------------------------+-----------------------------------------------------------------------
+ 4 branch EOL item missing | REJECTED: Cannot ship vehicle TMPSHIPRM00000001 from branch — 1 branch-phase EoL item(s) not yet on the vehicle | yes aed58f06d394796b9625604417b05ec3/6da2b30f276b2c7721b29f6329686f7e
+
+        case_label        |                                                       result                                                       |                            rows_unchanged                             
+--------------------------+--------------------------------------------------------------------------------------------------------------------+-----------------------------------------------------------------------
+ 5 branch EOL item NOT_OK | REJECTED: Cannot ship vehicle TMPSHIPRM00000001 from branch — branch-phase EoL items are not all OK/CONDITIONAL_OK | yes aed58f06d394796b9625604417b05ec3/6da2b30f276b2c7721b29f6329686f7e
+
+       case_label       |                                              result                                              |                            rows_unchanged                             
+------------------------+--------------------------------------------------------------------------------------------------+-----------------------------------------------------------------------
+ 6 station step PENDING | REJECTED: Cannot ship vehicle TMPSHIPRM00000001 from branch — 1 station step(s) still incomplete | yes aed58f06d394796b9625604417b05ec3/23cc3e1fb8fb2c829f419e1da51c6713
+
+ fixture_rows_left 
+-------------------
+                 0
+
+== apply 0044 up file a second time (idempotency)
+44/d branch_ship_drop_shipment_gate (8.223833ms)
+== version 43
+== row md5: after down
+              tbl              |  n   |               md5                
+-------------------------------+------+----------------------------------
+ vehicles                      |   18 | 82da6e5c011ec8d6272d518ddb65dbac
+ vehicle_eol_workflow          |   18 | 85da86e0273392a05ba338f093ca6f48
+ checklist_item_progress       | 3474 | fd143c89e80eb9fac4a0fede78cc1a98
+ vehicle_station_step_progress | 1152 | f0bf0e0e45a5a6f41e286cd00b0f6ef2
+ checklist_templates           |    3 | f26a1c5c745a744b1121c765d2a6f763
+ checklist_template_items      |  193 | a55b3f9e6099bfaff6bbcf3be100ef40
+ audit_logs                    |   24 | 1a43bbc837990d818973011f1dd42f7f
+
+44/u branch_ship_drop_shipment_gate (13.1145ms)
+== version 44
+== row md5: after up again
+              tbl              |  n   |               md5                
+-------------------------------+------+----------------------------------
+ vehicles                      |   18 | 82da6e5c011ec8d6272d518ddb65dbac
+ vehicle_eol_workflow          |   18 | 85da86e0273392a05ba338f093ca6f48
+ checklist_item_progress       | 3474 | fd143c89e80eb9fac4a0fede78cc1a98
+ vehicle_station_step_progress | 1152 | f0bf0e0e45a5a6f41e286cd00b0f6ef2
+ checklist_templates           |    3 | f26a1c5c745a744b1121c765d2a6f763
+ checklist_template_items      |  193 | a55b3f9e6099bfaff6bbcf3be100ef40
+ audit_logs                    |   24 | 1a43bbc837990d818973011f1dd42f7f
+
+== functiondef md5
+fdef-v43.sql                 52371f035e3dfcce78ff737534a1ed78
+fdef-v43-after-down.sql      52371f035e3dfcce78ff737534a1ed78
+fdef-v44.sql                 f22e56f29d1ed67c4781b49852a4e181
+fdef-v44-again.sql           f22e56f29d1ed67c4781b49852a4e181
+fdef-v44-after-reup.sql      f22e56f29d1ed67c4781b49852a4e181
+== file md5: 0037 up body (lines 13-141) vs 0044 down body (after 4-line header)
+33711c51282104d73d5e43ae9d45a333
+33711c51282104d73d5e43ae9d45a333
