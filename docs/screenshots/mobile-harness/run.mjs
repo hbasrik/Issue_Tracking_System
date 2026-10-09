@@ -10,6 +10,7 @@
  * with CARD_TEXT=<text> also a crop of the issue card containing that text.
  * EXPECT_ISSUE_LAYOUT=1 fails on visible severity text or a card whose
  * status/severity/meta corners do not match.
+ * EXPECT_ABSENT='a|b' fails when any body line contains one of those texts.
  * Exits non-zero on page errors, horizontal overflow or raw status text in
  * the collapsed checklist sections.
  */
@@ -162,8 +163,10 @@ for (const scene of scenes) {
         await fitAndShoot(page, width, `${key}-${id}.png`);
         clicked[id] = await page.evaluate(bodyLines);
       }
-      facts[key] = { sections: texts, overflow, raw_status_in_sections: raw, issue_cards: issueCards, errors, calls: await page.evaluate(() => window.__calls), lines, clicked };
-      if (errors.length || overflow || raw.length) failed = true;
+      const absent = (process.env.EXPECT_ABSENT ?? '').split('|').filter(Boolean);
+      const foundAbsent = absent.filter((s) => lines.some((l) => l.includes(s)));
+      facts[key] = { sections: texts, overflow, raw_status_in_sections: raw, issue_cards: issueCards, errors, calls: await page.evaluate(() => window.__calls), lines, clicked, expected_absent: absent, found_absent: foundAbsent };
+      if (errors.length || overflow || raw.length || foundAbsent.length) failed = true;
       if (process.env.EXPECT_ISSUE_LAYOUT === '1' && issueCards.some((c) =>
         c.severity_word_visible || !c.severity_aria || c.outside ||
         !c.layout || Object.values(c.layout).includes(false))) failed = true;
@@ -181,7 +184,8 @@ for (const [k, v] of Object.entries(facts)) {
       ` layoutOk=${v.issue_cards.filter((c) => c.layout && !Object.values(c.layout).includes(false)).length}` +
       ` cardOverflow=${v.issue_cards.reduce((n, c) => n + c.outside, 0)}`
     : '';
-  console.log(k, `overflow=${v.overflow}`, `errors=${v.errors.length}`, `raw=${v.raw_status_in_sections.length}${cards}`);
+  const absent = v.expected_absent.length ? ` absentFound=${JSON.stringify(v.found_absent)}` : '';
+  console.log(k, `overflow=${v.overflow}`, `errors=${v.errors.length}`, `raw=${v.raw_status_in_sections.length}${cards}${absent}`);
 }
 fs.rmSync(bundle, { recursive: true, force: true });
 if (failed) {

@@ -2,7 +2,6 @@ import { createRoot } from 'react-dom/client';
 import { ThemeProvider } from '../../../mobile/src/theme/ThemeProvider';
 import { I18nProvider } from '../../../mobile/src/i18n';
 import VehicleStationScreen from '../../../mobile/src/screens/VehicleStationScreen';
-import ShipmentChecklistScreen from '../../../mobile/src/screens/ShipmentChecklistScreen';
 import TestChecklistScreen from '../../../mobile/src/screens/TestChecklistScreen';
 import EOLChecklistScreen from '../../../mobile/src/screens/EOLChecklistScreen';
 import MyIssuesScreen from '../../../mobile/src/screens/MyIssuesScreen';
@@ -32,7 +31,6 @@ if (scene.live) {
 
 const screens: ScreenMap = {
   'vehicle-station': VehicleStationScreen,
-  shipment: ShipmentChecklistScreen,
   test: TestChecklistScreen,
   eol: EOLChecklistScreen,
   'my-issues': MyIssuesScreen,

@@ -13,7 +13,7 @@ import vehicleTimeline from '../vehicle-timeline/api-timeline.json';
 type Status = 'PENDING' | 'OK' | 'NOT_OK' | 'REWORK' | 'CONDITIONAL_OK';
 
 export type SceneScreen =
-  | 'vehicle-station' | 'shipment' | 'test' | 'eol' | 'my-issues' | 'issue-detail' | 'pending-reports';
+  | 'vehicle-station' | 'test' | 'eol' | 'my-issues' | 'issue-detail' | 'pending-reports';
 
 /**
  * Live scenes run the real reference-cache and issue-queue providers on the
@@ -39,7 +39,7 @@ export interface Scene {
     stationSteps?: unknown;
     issues?: unknown[];
     readiness?: unknown;
-    checklists?: Partial<Record<'eol' | 'shipment' | 'test', unknown[]>>;
+    checklists?: Partial<Record<'eol' | 'test', unknown[]>>;
     eolWorkflow?: unknown;
     issue?: unknown;
     issueHistory?: unknown[];
@@ -82,18 +82,6 @@ function item(
   };
 }
 
-const SHIPMENT_TEXTS: [number, number, string][] = [
-  [39, 24, 'Arka davlumbaz sol fren borusu girişim bölgesi kesimi'],
-  [40, 25, 'Arka davlumbaz sağ fren borusu girişim bölgesi kesimi'],
-  [41, 26, 'Direksiyon yumuşatma ayarı'],
-  [42, 27, 'Stop delik genişletme yapıldı mı'],
-  [43, 28, 'Kaput ayar pulu atıldı mı'],
-  [44, 44, 'Direksiyon kolonu dip lastiği yerine tam olarak oturmuş mu'],
-  [45, 45, 'Kaput civatalarının piano black rötuş kalemi ile boyanması'],
-  [46, 46, 'Bagaj kapağı su sızdırma problemi parça entegrasyonu'],
-];
-const LATE_SHIPMENT = { id: 112, no: 47, text: 'Bagaj kilidi kontrolü' };
-
 const vehicle = (vin: string, status: string, stage: string | null, pct: number) => ({
   VIN: vin,
   VehicleModelID: 1,
@@ -120,7 +108,6 @@ function eolWorkflow(vin: string, current: string, branchH: number | null, depot
         ready: false, already_done: branchH != null,
         branch_eol_remaining: 0, branch_eol_missing: 0,
         test_remaining: 0, test_missing: 0,
-        shipment_remaining: 0, shipment_missing: 0,
         station_steps_remaining: 0, open_issue_count: 0,
       },
       depot_release: {
@@ -137,23 +124,6 @@ const BRANCH_VIN = 'N7V1K1SA1TK000012';
 const LINE_VIN = 'N7V1K1SA1TK000009';
 const TIMELINE_VIN = 'N7V1K1SA6TK000006';
 const DELIVERED_VIN = 'N7V1K1SA9TK000016';
-
-const shipmentPassed = [
-  ...SHIPMENT_TEXTS.map(([id, no, text]) => item(id, no, text, 'OK')),
-  item(LATE_SHIPMENT.id, LATE_SHIPMENT.no, LATE_SHIPMENT.text, 'PENDING', { StageClosed: true }),
-  item(90, 12, 'Eski tampon braketi kontrolü', 'OK', { IsActive: false }),
-];
-
-const shipmentDelivered = [
-  ...SHIPMENT_TEXTS.map(([id, no, text]) => item(id, no, text, 'OK')),
-  item(LATE_SHIPMENT.id, LATE_SHIPMENT.no, LATE_SHIPMENT.text, 'PENDING', { StageClosed: true }),
-  item(91, 30, 'Yan ayna kapak klipsi', 'NOT_OK', { StageClosed: true }),
-];
-
-const shipmentLine = [
-  ...SHIPMENT_TEXTS.map(([id, no, text]) => item(id, no, text, 'PENDING')),
-  item(LATE_SHIPMENT.id, LATE_SHIPMENT.no, LATE_SHIPMENT.text, 'PENDING'),
-];
 
 // EoL items as seed 03 builds them (Karar 30): KY.FR-09 branch items, a kept
 // branch item in "Fiziksel testler", KY.FR-19 depot items and the kept
@@ -360,40 +330,38 @@ export const SCENES: Scene[] = [
     api: { vehicle: vehicle(LINE_VIN, 'IN_PRODUCTION', null, 43.53), stationSteps, issues: [] },
   },
   {
-    id: 'shipment-passed',
-    screen: 'shipment',
-    params: { vin: PASSED_VIN },
-    api: { checklists: { shipment: shipmentPassed } },
-  },
-  {
-    id: 'shipment-delivered',
-    screen: 'shipment',
-    params: { vin: DELIVERED_VIN },
-    api: { checklists: { shipment: shipmentDelivered } },
-  },
-  {
-    id: 'shipment-line',
-    screen: 'shipment',
+    // Karar 33: the pre-shipment warning lists Test and EoL items only and
+    // the station screen has no Shipment checklist button.
+    id: 'station-readiness',
+    screen: 'vehicle-station',
     params: { vin: LINE_VIN },
-    api: { checklists: { shipment: shipmentLine } },
-  },
-  {
-    id: 'shipment-sections',
-    screen: 'shipment',
-    params: { vin: LINE_VIN },
-    api: { checklists: { shipment: sectionChecklists.shipment } },
+    api: {
+      vehicle: vehicle(LINE_VIN, 'IN_PRODUCTION', null, 43.53),
+      stationSteps,
+      issues: [],
+      readiness: {
+        vin: LINE_VIN,
+        status: 'IN_PRODUCTION',
+        ready: false,
+        warnings: [
+          { code: 'STATION_STEPS_INCOMPLETE', message: '3 istasyon adımı tamamlanmadı', remaining_count: 3 },
+          {
+            code: 'TEST_INCOMPLETE', message: 'Test checklist maddesi 2', checklist_type: 'TEST',
+            item_id: 21, item_no: 2, item_text: 'Fren testi', item_status: 'PENDING',
+          },
+          {
+            code: 'EOL_INCOMPLETE', message: 'EOL checklist maddesi 1', checklist_type: 'EOL',
+            item_id: 1, item_no: 1, item_text: 'Boya yüzeyi', item_status: 'PENDING',
+          },
+        ],
+      },
+    },
   },
   {
     id: 'test-sections',
     screen: 'test',
     params: { vin: LINE_VIN },
     api: { checklists: { test: sectionChecklists.test } },
-  },
-  {
-    id: 'shipment-process-sections',
-    screen: 'shipment',
-    params: { vin: LINE_VIN },
-    api: { checklists: { shipment: processChecklists.shipment } },
   },
   {
     id: 'test-process-sections',
