@@ -1,5 +1,7 @@
--- Populate default EOL / SHIPMENT / TEST templates (migration 0002).
--- Source: SHIPMENT / TEST and the 9 kept EOL items come from the live DB
+-- Populate default EOL / TEST templates (migration 0002).
+-- No SHIPMENT items (Karar 33): those assembly steps are done at stations
+-- now. The SHIPMENT template row from migrations 0001/0002 stays, empty.
+-- Source: TEST and the 9 kept EOL items come from the live DB
 -- (exact text, incl. trailing newlines); the 95 EOL form items come from
 -- docs/21_KAREA_Yeni_Formlar.md (KY.FR-09 branch, KY.FR-19 depot).
 -- Insert-only: existing items are never updated, so admin edits to text,
@@ -12,8 +14,7 @@
 -- the last item.
 -- Excludes inactive and test-only items (see seed README / task report).
 -- section_key / section_sort must equal the migrations (TEST: 0035, by item
--- content; SHIPMENT: 0036, consecutive work steps) and
--- shared/checklistSections.ts; change them together.
+-- content) and shared/checklistSections.ts; change them together.
 WITH legacy_items (
     template_name,
     item_no,
@@ -38,54 +39,6 @@ WITH legacy_items (
         ('Default EoL Template (Branch + Depot)', 46, 'Sürüş', 'BRANCH', 'eol_physical_tests', 60),
         ('Default EoL Template (Branch + Depot)', 103, 'Bumpy Road', 'DEPOT', 'final_extra_checks', 200),
         ('Default EoL Template (Branch + Depot)', 104, 'Yağmur Testi', 'DEPOT', 'final_extra_checks', 200),
-
-        -- SHIPMENT: 46 active items
-        ('Default Customer Vehicle Checklist', 1, E'Rear Bota Ses İzolasyonu Montaj\n', NULL, 'interior_fit', 10),
-        ('Default Customer Vehicle Checklist', 2, 'Front Dash Ses İzolasyonu Montaj', NULL, 'interior_fit', 10),
-        ('Default Customer Vehicle Checklist', 3, 'Sol Air Flap Montaj', NULL, 'interior_fit', 10),
-        ('Default Customer Vehicle Checklist', 4, 'Sağ Air Flap Montaj', NULL, 'interior_fit', 10),
-        ('Default Customer Vehicle Checklist', 5, 'C_Pillar Inner Sol Kesim', NULL, 'interior_fit', 10),
-        ('Default Customer Vehicle Checklist', 6, E'C_Pillar Inner Sağ Kesim\n', NULL, 'interior_fit', 10),
-        ('Default Customer Vehicle Checklist', 7, 'Polen Filtresi Montaj', NULL, 'interior_fit', 10),
-        ('Default Customer Vehicle Checklist', 8, 'C_Pillar Inner Support M5 Delik Sağ', NULL, 'interior_fit', 10),
-        ('Default Customer Vehicle Checklist', 9, 'C_Pillar Inner Support M5 Delik Sol', NULL, 'interior_fit', 10),
-        ('Default Customer Vehicle Checklist', 10, 'C_Pillar Yeni Clips Değişmesi', NULL, 'interior_fit', 10),
-        ('Default Customer Vehicle Checklist', 11, 'C_Pillar Stop tırnaklarının kesilmesi', NULL, 'interior_fit', 10),
-        ('Default Customer Vehicle Checklist', 12, 'Headliner Yeni Clips Değişmesi', NULL, 'interior_fit', 10),
-        ('Default Customer Vehicle Checklist', 13, 'Knuckle 2,5 mm Slot Açılması ve 1 derece Ayarı', NULL, 'chassis_exterior', 20),
-        ('Default Customer Vehicle Checklist', 14, 'CCB Korna Şasi Almaması Dolaylı Harness', NULL, 'chassis_exterior', 20),
-        ('Default Customer Vehicle Checklist', 15, 'Kapı direk plastik parça sıvı conta uygulaması', NULL, 'chassis_exterior', 20),
-        ('Default Customer Vehicle Checklist', 16, 'Ayarlı dış aynaların takılması', NULL, 'chassis_exterior', 20),
-        ('Default Customer Vehicle Checklist', 17, 'Logo montajı', NULL, 'badges_trim', 30),
-        ('Default Customer Vehicle Checklist', 18, E'Anahtarlık logosu değişimi\n', NULL, 'badges_trim', 30),
-        ('Default Customer Vehicle Checklist', 19, 'Direksiyon Logo Değişimi', NULL, 'badges_trim', 30),
-        ('Default Customer Vehicle Checklist', 20, 'Jant Logo Değişimi', NULL, 'badges_trim', 30),
-        ('Default Customer Vehicle Checklist', 21, E'HVAC kapama parçası takılması\n', NULL, 'badges_trim', 30),
-        ('Default Customer Vehicle Checklist', 22, E'Trunk Diveder parça takılması\n', NULL, 'badges_trim', 30),
-        ('Default Customer Vehicle Checklist', 23, E'Araç tanıtım etiketi perçinlenmesi\n', NULL, 'badges_trim', 30),
-        ('Default Customer Vehicle Checklist', 24, 'VIN markalaması', NULL, 'badges_trim', 30),
-        ('Default Customer Vehicle Checklist', 25, 'Kapı ayar kauçuklarının takılması', NULL, 'rubber_film', 40),
-        ('Default Customer Vehicle Checklist', 26, 'Kaput ayar kauçuklarının takılması', NULL, 'rubber_film', 40),
-        ('Default Customer Vehicle Checklist', 27, 'Chogori IP68 kablonun araca konulması', NULL, 'rubber_film', 40),
-        ('Default Customer Vehicle Checklist', 28, 'Anti Scratch film tampona kaplanması', NULL, 'rubber_film', 40),
-        ('Default Customer Vehicle Checklist', 29, 'Anti Fog Film cama kaplanması', NULL, 'rubber_film', 40),
-        ('Default Customer Vehicle Checklist', 30, 'Kaput altı sızdırmazlık contasının kullanılması', NULL, 'rubber_film', 40),
-        ('Default Customer Vehicle Checklist', 31, 'P silinmiş combination switch kullanılması', NULL, 'rubber_film', 40),
-        ('Default Customer Vehicle Checklist', 32, 'Kelebek camı düşmemesi için sünger konulması', NULL, 'rubber_film', 40),
-        ('Default Customer Vehicle Checklist', 33, 'El Fren Ayarı yapılması ve arka disklere denk gelen noktada doğru konumlanması', NULL, 'brake_sealing', 50),
-        ('Default Customer Vehicle Checklist', 34, 'IP yanı kapı harness ve kapı clips bölgesinde sızdırmazlıkların tam olması', NULL, 'brake_sealing', 50),
-        ('Default Customer Vehicle Checklist', 35, 'Arka kapı sağ alt sızdırmazlık şeridi çekilmesi', NULL, 'brake_sealing', 50),
-        ('Default Customer Vehicle Checklist', 36, 'Arka kapı sol alt sızdırmazlık şeridi çekilmesi', NULL, 'brake_sealing', 50),
-        ('Default Customer Vehicle Checklist', 37, 'Arka kapı sağ üst sızdırmazlık şeridi çekilmesi', NULL, 'brake_sealing', 50),
-        ('Default Customer Vehicle Checklist', 38, 'Arka kapı sol üst sızdırmazlık şeridi çekilmesi', NULL, 'brake_sealing', 50),
-        ('Default Customer Vehicle Checklist', 39, 'Arka davlumbaz sol fren borusu girişim bölgesi kesimi', NULL, 'brake_sealing', 50),
-        ('Default Customer Vehicle Checklist', 40, 'Arka davlumbaz sağ fren borusu girişim bölgesi kesimi', NULL, 'brake_sealing', 50),
-        ('Default Customer Vehicle Checklist', 41, E'Direksiyon yumusatma ayari\n', NULL, 'final_adjust', 60),
-        ('Default Customer Vehicle Checklist', 42, E'Stop delik genisletme yapildi mi\n', NULL, 'final_adjust', 60),
-        ('Default Customer Vehicle Checklist', 43, 'Kaput ayar pulu atıldı mı', NULL, 'final_adjust', 60),
-        ('Default Customer Vehicle Checklist', 44, 'Direksiyon kolonu dip lastiği yerine tam olarak oturmuş mu', NULL, 'final_adjust', 60),
-        ('Default Customer Vehicle Checklist', 45, 'Kaput civatalarinin piano black rötuş kalemi ile boyanmasi', NULL, 'final_adjust', 60),
-        ('Default Customer Vehicle Checklist', 46, 'Bagaj kapagi su sizdirma problemi parca entegrasyonu', NULL, 'final_adjust', 60),
 
         -- TEST: 43 active items
         ('Default Test Checklist', 1, 'N''de aracı ittir — Anormal direnç var mı?', NULL, 'cold_drag', 10),

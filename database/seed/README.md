@@ -8,8 +8,9 @@ the following order:
 - `02_stations_and_steps.sql` — insert-only `DO NOTHING`; finds stations by
   `sequence_no`, so renamed stations still get their missing steps
 - `03_checklist_templates.sql` — real shop-floor checklist items;
-  insert-only. SHIPMENT (46) and TEST (43) are exported from production
-  content. EOL (104) = KY.FR-09 (39, branch, item_no 1–39) + 9 kept
+  insert-only. TEST (43) is exported from production content. No SHIPMENT
+  items (Karar 33): the SHIPMENT template row from migrations 0001/0002
+  stays and stays empty. EOL (104) = KY.FR-09 (39, branch, item_no 1–39) + 9 kept
   pre-form items (7 branch at 40–46 in section `eol_physical_tests`, 2
   depot at 103–104 in `final_extra_checks`; temporary until the quality
   team decides, Karar 30) + KY.FR-19 (56,

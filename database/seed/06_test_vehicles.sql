@@ -15,7 +15,8 @@
 -- here if they are missing.
 --
 -- Triggers do the heavy lifting after each INSERT INTO vehicles:
---   trg_assign_checklist_templates  — EOL / SHIPMENT / TEST templates
+--   trg_assign_checklist_templates  — EOL / TEST templates (the empty
+--                                     SHIPMENT template too, no rows)
 --   trg_initialize_vehicle_progress — station-step + checklist rows +
 --                                     vehicle_eol_workflow at BRANCH
 -- Targeted UPDATEs below then move each vehicle to a known lifecycle
@@ -284,13 +285,11 @@ DECLARE
 BEGIN
     v_checklist := CASE p_source
         WHEN 'EOL_ITEM' THEN 'EOL'::checklist_type_enum
-        WHEN 'SHIPMENT_ITEM' THEN 'SHIPMENT'::checklist_type_enum
         WHEN 'TEST_ITEM' THEN 'TEST'::checklist_type_enum
     END;
 
     SELECT CASE v_checklist
         WHEN 'EOL' THEN v.eol_template_id
-        WHEN 'SHIPMENT' THEN v.shipment_template_id
         WHEN 'TEST' THEN v.test_template_id
     END INTO v_template_id
     FROM vehicles v WHERE v.vin = p_vin;
@@ -443,13 +442,13 @@ BEGIN
         p_finish_by => op1, p_finish_at => now() - interval '18 hours',
         p_solution => 'Motor mount bolts retorqued; noise gone on retest. Awaiting quality sign-off.'
     );
-    -- SHIPMENT 11 "C_Pillar Stop tırnaklarının kesilmesi"
+    -- TEST 8 "Aynalar & iç donanım" (was a SHIPMENT item before Karar 33)
     PERFORM pg_temp.tick_checklist_item(
-        'N7V1K1SAXTK000008', 'SHIPMENT', 11, 'NOT_OK', op1, now() - interval '2 days',
-        'Left C-pillar stop tabs not cut; trim does not seat.'
+        'N7V1K1SAXTK000008', 'TEST', 8, 'NOT_OK', op1, now() - interval '2 days',
+        'Left C-pillar trim does not seat; stop tabs left uncut.'
     );
     PERFORM pg_temp.add_checklist_issue(
-        'N7V1K1SAXTK000008', 'SHIPMENT_ITEM', 11, 'Tamir Gerekiyor', 'LOW',
+        'N7V1K1SAXTK000008', 'TEST_ITEM', 8, 'Tamir Gerekiyor', 'LOW',
         'C-pillar stop tabs left uncut on the left side.',
         'OPEN', op1, now() - interval '2 days'
     );
@@ -518,12 +517,12 @@ BEGIN
         p_approve_by => mgr, p_approve_at => now() - interval '36 hours',
         p_solution => 'Camera connector reseated, retest passed. Full quality approval.'
     );
-    -- SHIPMENT 39 "Arka davlumbaz sol fren borusu girişim bölgesi kesimi"
+    -- TEST 16 "Düşük hız" (was a SHIPMENT item before Karar 33)
     PERFORM pg_temp.tick_checklist_item(
-        'N7V1K1SA8TK000010', 'SHIPMENT', 39, 'OK', op1, now() - interval '2 days', NULL
+        'N7V1K1SA8TK000010', 'TEST', 16, 'OK', op1, now() - interval '2 days', NULL
     );
     PERFORM pg_temp.add_checklist_issue(
-        'N7V1K1SA8TK000010', 'SHIPMENT_ITEM', 39, 'Tamir Gerekiyor', 'MEDIUM',
+        'N7V1K1SA8TK000010', 'TEST_ITEM', 16, 'Tamir Gerekiyor', 'MEDIUM',
         'Left rear wheel-arch liner not trimmed at the brake line; liner touches the pipe.',
         'APPROVED', op1, now() - interval '2 days',
         p_process_by => op1, p_process_at => now() - interval '40 hours',
@@ -533,13 +532,11 @@ BEGIN
     );
     PERFORM pg_temp.tick_eol_phase('N7V1K1SAXTK000011', 'DEPOT', NULL, op1, now() - interval '20 hours');
 
-    -- Branch-ship gate (0022): EOL BRANCH + full TEST + full SHIPMENT must be OK.
+    -- Branch-ship gate (0044): EOL BRANCH + full TEST must be OK.
     FOREACH v_vin IN ARRAY depot_ready LOOP
         PERFORM pg_temp.tick_all_checklist(v_vin, 'TEST', op1, now() - interval '26 hours');
-        PERFORM pg_temp.tick_all_checklist(v_vin, 'SHIPMENT', op1, now() - interval '26 hours');
     END LOOP;
     PERFORM pg_temp.tick_all_checklist('N7V1K1SA1TK000012', 'TEST', op2, now() - interval '26 hours');
-    PERFORM pg_temp.tick_all_checklist('N7V1K1SA1TK000012', 'SHIPMENT', op2, now() - interval '26 hours');
 
     FOREACH v_vin IN ARRAY depot_ready LOOP
         UPDATE vehicle_eol_workflow
@@ -580,17 +577,16 @@ BEGIN
         PERFORM pg_temp.mark_all_stations_ok(v_vin, op1, now() - interval '3 days');
         PERFORM pg_temp.tick_all_checklist(v_vin, 'EOL', op2, now() - interval '2 days');
         PERFORM pg_temp.tick_all_checklist(v_vin, 'TEST', op1, now() - interval '2 days');
-        PERFORM pg_temp.tick_all_checklist(v_vin, 'SHIPMENT', op1, now() - interval '2 days');
     END LOOP;
 
-    -- Closed shipment issue on 10054 so Analysis has another CONDITIONAL_APPROVED.
-    -- SHIPMENT 32 "Kelebek camı düşmemesi için sünger konulması"
+    -- Closed Test issue on 10054 so Analysis has another CONDITIONAL_APPROVED.
+    -- TEST 6 "Camlar" (was a SHIPMENT item before Karar 33)
     PERFORM pg_temp.tick_checklist_item(
-        'N7V1K1SA3TK000013', 'SHIPMENT', 32, 'CONDITIONAL_OK', op2, now() - interval '2 days',
+        'N7V1K1SA3TK000013', 'TEST', 6, 'CONDITIONAL_OK', op2, now() - interval '2 days',
         'Right quarter-glass foam fitted short; slight rattle. Accepted with note.'
     );
     PERFORM pg_temp.add_checklist_issue(
-        'N7V1K1SA3TK000013', 'SHIPMENT_ITEM', 32, 'Hata', 'LOW',
+        'N7V1K1SA3TK000013', 'TEST_ITEM', 6, 'Hata', 'LOW',
         'Right quarter-glass foam shorter than specified.',
         'CONDITIONAL_APPROVED', op2, now() - interval '2 days',
         p_process_by => op1, p_process_at => now() - interval '36 hours',
@@ -617,7 +613,6 @@ BEGIN
         PERFORM pg_temp.mark_all_stations_ok(v_vin, op2, now() - interval '2 days');
         PERFORM pg_temp.tick_all_checklist(v_vin, 'EOL', op1, now() - interval '36 hours');
         PERFORM pg_temp.tick_all_checklist(v_vin, 'TEST', op2, now() - interval '30 hours');
-        PERFORM pg_temp.tick_all_checklist(v_vin, 'SHIPMENT', op1, now() - interval '28 hours');
         UPDATE vehicle_eol_workflow
         SET branch_shipped_at = now() - interval '30 hours',
             branch_shipped_by = mgr
