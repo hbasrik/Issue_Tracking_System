@@ -1,0 +1,11 @@
+  vin  | source_type | item_no |              item              |        status        | severity |      type       |  check_status  
+-------+-------------+---------+--------------------------------+----------------------+----------+-----------------+----------------
+ 00006 | TEST_ITEM   |       4 | Dış aydınlatma — Kısa, uzun, s | DONE                 | LOW      | Hata            | NOT_OK
+ 00008 | TEST_ITEM   |       8 | Aynalar & iç donanım — Aynalar | OPEN                 | LOW      | Tamir Gerekiyor | NOT_OK
+ 00009 | TEST_ITEM   |      17 | Fren — 30 $\rightarrow$ 0 x5 ( | OPEN                 | MEDIUM   | Tamir Gerekiyor | NOT_OK
+ 00010 | TEST_ITEM   |      13 | Geri görüş kamerası — R'ye alı | APPROVED             | CRITICAL | Hata            | OK
+ 00010 | TEST_ITEM   |      16 | Düşük hız — 500m, 0 $\rightarr | APPROVED             | MEDIUM   | Tamir Gerekiyor | OK
+ 00012 | TEST_ITEM   |      42 | DTC / Diyagnostik tarama — Akt | IN_PROGRESS          | MEDIUM   | Hata            | OK
+ 00013 | TEST_ITEM   |       6 | Camlar — Tüm camlar açılıp kap | CONDITIONAL_APPROVED | LOW      | Hata            | CONDITIONAL_OK
+(7 rows)
+

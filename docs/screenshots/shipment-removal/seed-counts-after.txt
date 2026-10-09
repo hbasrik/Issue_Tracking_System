@@ -1,0 +1,85 @@
+ version | dirty 
+---------+-------
+      44 | f
+(1 row)
+
+    metric    | n  
+--------------+----
+ issues_total | 16
+
+        status        | n 
+----------------------+---
+ OPEN                 | 6
+ IN_PROGRESS          | 3
+ DONE                 | 2
+ APPROVED             | 3
+ CONDITIONAL_APPROVED | 2
+
+ severity | n 
+----------+---
+ CRITICAL | 5
+ MEDIUM   | 6
+ LOW      | 5
+
+   issue_type    | n  
+-----------------+----
+ Hata            | 10
+ Tamir Gerekiyor |  6
+
+ source_type  | n 
+--------------+---
+ STATION_STEP | 4
+ EOL_ITEM     | 5
+ TEST_ITEM    | 7
+
+ vin_tail |        status        | severity | n 
+----------+----------------------+----------+---
+ 00004    | OPEN                 | CRITICAL | 1
+ 00005    | OPEN                 | MEDIUM   | 1
+ 00006    | IN_PROGRESS          | LOW      | 1
+ 00006    | DONE                 | LOW      | 1
+ 00007    | OPEN                 | CRITICAL | 1
+ 00007    | IN_PROGRESS          | MEDIUM   | 1
+ 00008    | OPEN                 | LOW      | 1
+ 00008    | DONE                 | CRITICAL | 1
+ 00009    | OPEN                 | MEDIUM   | 1
+ 00010    | APPROVED             | CRITICAL | 1
+ 00010    | APPROVED             | MEDIUM   | 2
+ 00010    | CONDITIONAL_APPROVED | LOW      | 1
+ 00012    | OPEN                 | CRITICAL | 1
+ 00012    | IN_PROGRESS          | MEDIUM   | 1
+ 00013    | CONDITIONAL_APPROVED | LOW      | 1
+
+ current_global_status | n 
+-----------------------+---
+ IN_PRODUCTION         | 9
+ IN_WAREHOUSE          | 9
+
+ current_stage | n 
+---------------+---
+ BRANCH        | 9
+ DEPOT         | 3
+ COMPLETED     | 6
+
+   type   |                 name                  | is_active | items 
+----------+---------------------------------------+-----------+-------
+ EOL      | Default EoL Template (Branch + Depot) | t         |   104
+ SHIPMENT | Default Customer Vehicle Checklist    | t         |     0
+ TEST     | Default Test Checklist                | t         |    43
+
+ checklist_type |  check_status  |  n  
+----------------+----------------+-----
+ EOL            | PENDING        | 932
+ EOL            | OK             | 935
+ EOL            | NOT_OK         |   3
+ EOL            | REWORK         |   1
+ EOL            | CONDITIONAL_OK |   1
+ TEST           | PENDING        | 384
+ TEST           | OK             | 386
+ TEST           | NOT_OK         |   3
+ TEST           | CONDITIONAL_OK |   1
+
+ vehicles_with_shipment_template | vehicles 
+---------------------------------+----------
+                              18 |       18
+
