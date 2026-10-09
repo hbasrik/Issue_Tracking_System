@@ -1,0 +1,16 @@
+vin=N7V1K1SA0TK000003 shipment_template=4 shipment_item=105 shipment_progress=491
+GET  checklist/shipment                      400  {"error":"type must be one of: eol, test","request_id":"Basri's Macbook/AOIfW5RhkW-000014"}
+POST checklist/shipment/{item}               400  {"error":"type must be one of: eol, test","request_id":"Basri's Macbook/AOIfW5RhkW-000015"}
+POST media on SHIPMENT progress row          400  {"error":"invalid enum value","request_id":"Basri's Macbook/AOIfW5RhkW-000016"}
+GET  checklist-templates/{ship}/items        404  {"error":"entity not found","request_id":"Basri's Macbook/AOIfW5RhkW-000017"}
+POST checklist-templates/{ship}/items        404  {"error":"entity not found","request_id":"Basri's Macbook/AOIfW5RhkW-000018"}
+DELETE checklist-templates/{ship}/items/{i}  404  {"error":"entity not found","request_id":"Basri's Macbook/AOIfW5RhkW-000019"}
+
+template list types:
+   1 "Type":"EOL"
+   1 "Type":"TEST"
+vehicle payload template fields:
+"EOLTemplateID":3
+"TestTemplateID":5
+GET  checklist/eol (control)                 200  {"items":[{"ItemID":1,"ItemNo":1,"ItemText":"Araç kimliği ve varyant","Status":"PENDING","ReworkDesc":"","ConditionalDesc":"","RejectedDesc"
+GET  shipment-readiness (control)            200  {"vin":"N7V1K1SA0TK000003","status":"IN_PRODUCTION","ready":false,"warnings":[{"code":"STATION_STEPS_INCOMPLETE","message":"56 istasyon adım

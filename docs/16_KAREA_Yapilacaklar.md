@@ -1089,6 +1089,34 @@ başlatılınca devreye girer.
   13, 14)", "2 open issue(s) remain (issue ids: 13, 14)", "1 depot-phase
   EoL item(s) incomplete").
 
+### A63. Sevkiyat checklist'inin tamamen kaldırılması `[~]` — 2026-10-09
+Karar 33. Sıra: önce kod (yapıldı), sonra migration 0045 (yazılacak).
+- `[x]` Uyarı paneli `vehicle.view` ile açılır (borç: D8).
+- `[x]` API: `ChecklistType.Valid()` SHIPMENT'ı reddeder;
+  `/checklist/shipment` okuma ve kaydetme 400, Sevkiyat ilerleme satırına
+  medya 400. Şablon yönetimi SHIPMENT şablonunu görmez (liste süzer, madde
+  uçları 404, madde doğrulaması tipi reddeder).
+- `[x]` Kod `vehicles.shipment_template_id` okumaz; araç yanıtında
+  `ShipmentTemplateID` yok.
+- `[x]` Metinler: rol ekranı yetki etiketleri, şablon tipi etiketi, Sevkiyat
+  bölüm kataloğu (6 anahtar), etkinlik ve zaman çizelgesi etiketleri.
+- `[ ]` Migration 0045: koruma (PENDING dışı Sevkiyat satırı ya da
+  `SHIPMENT_ITEM` hatası varsa RAISE), beş fonksiyonun Sevkiyat'sız hali,
+  PENDING Sevkiyat satırları + kolon + SHIPMENT şablonu + iki yetki satırı
+  silinir, `checklist_templates` üzerinde `type <> 'SHIPMENT'` CHECK. Boş ve
+  dolu `_test` veritabanında up/down/up. Kısa duraklama gerekir.
+- **Ara durum (kod yayında, 0045 öncesi):** iki yetki satırı veritabanında
+  durduğu için rol ekranı onları "Diğer" grubunda veritabanı açıklamasıyla
+  gösterir; 0045 bu satırları siler.
+- **Kanıt:** `docs/screenshots/shipment-api-retired/` — `api-trial.sh` +
+  `api-trial-output.txt` (18081, `karea_shiprm_test`: 400/400/400/404/404/404,
+  liste yalnız EOL ve TEST, araç yanıtında yalnız `EOLTemplateID` /
+  `TestTemplateID`; öncesi/sonrası satır sayıları aynı);
+  `capture-interim.mjs` + 8 PNG (rol ekranı "Diğer", şablon ekranı TR/EN
+  1280/375). Testler: `delivery/http/shipment_retired_test.go`,
+  `repository/postgres/shipment_retired_test.go`,
+  `TestRecordChecklistResult_ShipmentTypeRejected`.
+
 ### A62. Web / mobil ayrışma envanteri `[x]` — 2026-10-08
 - `docs/22_KAREA_Web_Mobil_Ayrisma_Envanteri.md`: 13 alan, her satırda web /
   mobil / fark (kasıtlı, unutulmuş, eşit) ve kanıt yolu; sonunda öncelik

@@ -1,0 +1,17 @@
+output: /Users/Basri/Desktop/kts_kms_project/docs/screenshots/shipment-api-retired (UPDATE_SCREENSHOTS=1, committed files)
+== tr 1280 roles ==  group: Diğer
+  row: Update Shipment checklist itemschecklist.shipment.edit
+  row: View the Shipment checklistchecklist.shipment.view
+== tr 1280 templates ==  shipment label present: false
+== tr 375 roles ==  group: Diğer
+  row: Update Shipment checklist itemschecklist.shipment.edit
+  row: View the Shipment checklistchecklist.shipment.view
+== tr 375 templates ==  shipment label present: false
+== en 1280 roles ==  group: Other
+  row: Update Shipment checklist itemschecklist.shipment.edit
+  row: View the Shipment checklistchecklist.shipment.view
+== en 1280 templates ==  shipment label present: false
+== en 375 roles ==  group: Other
+  row: Update Shipment checklist itemschecklist.shipment.edit
+  row: View the Shipment checklistchecklist.shipment.view
+== en 375 templates ==  shipment label present: false
