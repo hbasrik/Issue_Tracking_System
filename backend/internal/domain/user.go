@@ -42,8 +42,6 @@ const (
 	PermissionStationStepEdit                   = "station.step.edit"
 	PermissionChecklistTestView                 = "checklist.test.view"
 	PermissionChecklistTestEdit                 = "checklist.test.edit"
-	PermissionChecklistShipmentView             = "checklist.shipment.view"
-	PermissionChecklistShipmentEdit             = "checklist.shipment.edit"
 	PermissionChecklistEOLView                  = "checklist.eol.view"
 	PermissionChecklistEOLEdit                  = "checklist.eol.edit"
 	PermissionEOLBranchShip                     = "eol.branch_ship"
@@ -67,8 +65,6 @@ func ChecklistViewPermission(t ChecklistType) string {
 	switch t {
 	case ChecklistTypeTest:
 		return PermissionChecklistTestView
-	case ChecklistTypeShipment:
-		return PermissionChecklistShipmentView
 	case ChecklistTypeEOL:
 		return PermissionChecklistEOLView
 	default:
@@ -81,8 +77,6 @@ func ChecklistEditPermission(t ChecklistType) string {
 	switch t {
 	case ChecklistTypeTest:
 		return PermissionChecklistTestEdit
-	case ChecklistTypeShipment:
-		return PermissionChecklistShipmentEdit
 	case ChecklistTypeEOL:
 		return PermissionChecklistEOLEdit
 	default:

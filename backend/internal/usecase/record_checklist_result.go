@@ -197,8 +197,6 @@ func (r *ChecklistResultRecorder) ListForVehicle(ctx context.Context, vin string
 	switch checklistType {
 	case domain.ChecklistTypeEOL:
 		templateID = vehicle.EOLTemplateID
-	case domain.ChecklistTypeShipment:
-		templateID = vehicle.ShipmentTemplateID
 	case domain.ChecklistTypeTest:
 		templateID = vehicle.TestTemplateID
 	}

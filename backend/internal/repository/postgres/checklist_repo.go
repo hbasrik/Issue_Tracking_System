@@ -773,8 +773,6 @@ func vehicleTemplateColumn(checklistType domain.ChecklistType) (string, error) {
 	switch checklistType {
 	case domain.ChecklistTypeEOL:
 		return "eol_template_id", nil
-	case domain.ChecklistTypeShipment:
-		return "shipment_template_id", nil
 	case domain.ChecklistTypeTest:
 		return "test_template_id", nil
 	default:

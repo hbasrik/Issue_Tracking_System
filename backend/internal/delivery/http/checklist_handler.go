@@ -36,7 +36,7 @@ func (s *server) handleRecordChecklist(w http.ResponseWriter, r *http.Request) {
 
 	checklistType, ok := parseChecklistType(chi.URLParam(r, "type"))
 	if !ok {
-		badRequest(w, "type must be one of: eol, shipment, test")
+		badRequest(w, "type must be one of: eol, test")
 		return
 	}
 	if !s.requireCode(w, r, domain.ChecklistEditPermission(checklistType)) {
@@ -117,14 +117,12 @@ func (s *server) handleChecklistTemplateItems(w http.ResponseWriter, r *http.Req
 	writeJSON(w, http.StatusOK, map[string]any{"items": items})
 }
 
-// parseChecklistType maps the URL segment (eol|shipment|test) to the domain
-// enum.
+// parseChecklistType maps the URL segment (eol|test) to the domain enum.
+// "shipment" is rejected (Karar 33).
 func parseChecklistType(raw string) (domain.ChecklistType, bool) {
 	switch strings.ToLower(raw) {
 	case "eol":
 		return domain.ChecklistTypeEOL, true
-	case "shipment":
-		return domain.ChecklistTypeShipment, true
 	case "test":
 		return domain.ChecklistTypeTest, true
 	default:

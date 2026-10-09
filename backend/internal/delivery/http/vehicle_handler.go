@@ -220,15 +220,15 @@ func (s *server) handleVehicleTimeline(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// handleVehicleChecklistGet returns checklist items for eol, shipment, or
-// test. vehicle.view gets the caller onto the vehicle; the matching
+// handleVehicleChecklistGet returns checklist items for eol or test.
+// vehicle.view gets the caller onto the vehicle; the matching
 // checklist.*.view code is required on top so Quality can open Test without
-// seeing Shipment/EoL.
+// seeing EoL.
 func (s *server) handleVehicleChecklistGet(w http.ResponseWriter, r *http.Request) {
 	vin := chi.URLParam(r, "vin")
 	checklistType, ok := parseChecklistType(chi.URLParam(r, "type"))
 	if !ok {
-		badRequest(w, "type must be one of: eol, shipment, test")
+		badRequest(w, "type must be one of: eol, test")
 		return
 	}
 	if !s.requireCode(w, r, domain.ChecklistViewPermission(checklistType)) {

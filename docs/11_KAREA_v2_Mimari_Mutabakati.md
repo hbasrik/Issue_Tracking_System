@@ -814,9 +814,12 @@ kalıyordu.
     donar; Karar 29'daki "Sevkiyat" ifadesi artık hiçbir maddeye denk gelmez.
   - Web'de Sevkiyat sekmesi, mobilde Sevkiyat ekranı ve seed'deki SHIPMENT
     şablonu kaldırılır.
-- **Kalanlar:** `checklist_type_enum` içindeki `SHIPMENT`, `SHIPMENT_ITEM`
-  hata kaynağı ve `checklist.shipment.*` yetkileri silinmez; denetim kayıtları
-  ve geçmiş satırlar onlara atıf yapıyor.
+- **Enum kalır, API reddeder:** `checklist_type_enum` içindeki `SHIPMENT` ve
+  `SHIPMENT_ITEM` hata kaynağı silinmez (PostgreSQL'de enum değeri silmek
+  tablo yeniden yazımı ister; faydası CHECK kısıtıyla ucuza alınır). Go'da
+  `ChecklistType.Valid()` yalnız EOL ve TEST'i kabul eder; `/checklists/shipment`
+  okuma ve kaydetme 400, Sevkiyat ilerleme satırına medya yükleme 400 döner.
+  `checklist.shipment.view/edit` yetkileri koddan kalktı.
 - **Uyarı paneli yetkisi:** "Sevk öncesi uyarı" (`GET
   /vehicles/{vin}/shipment-readiness`, web paneli, mobil istasyon ekranı)
   `vehicle.view` ister; panel aracın sevk özetidir. Dört rolde de var:

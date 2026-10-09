@@ -11,8 +11,8 @@ type ChecklistType string
 
 const (
 	ChecklistTypeEOL ChecklistType = "EOL"
-	// ChecklistTypeShipment is retired (Karar 33): no gate, progress or
-	// warning counts it. Kept because audit and historical rows reference it.
+	// ChecklistTypeShipment is retired (Karar 33): the enum value stays in
+	// the database, but Valid rejects it, so no API path accepts it.
 	ChecklistTypeShipment ChecklistType = "SHIPMENT"
 	// ChecklistTypeTest is Karar 4's third checklist. It reuses the same
 	// template and progress machinery as the other two but, unlike them, is
@@ -20,10 +20,10 @@ const (
 	ChecklistTypeTest ChecklistType = "TEST"
 )
 
-// Valid reports whether the checklist type is a known enum value.
+// Valid reports whether the checklist type is one in use (EOL, TEST).
 func (t ChecklistType) Valid() bool {
 	switch t {
-	case ChecklistTypeEOL, ChecklistTypeShipment, ChecklistTypeTest:
+	case ChecklistTypeEOL, ChecklistTypeTest:
 		return true
 	default:
 		return false
