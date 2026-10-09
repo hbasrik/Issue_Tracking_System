@@ -5,8 +5,6 @@ export const Perm = {
   StationStepEdit: 'station.step.edit',
   ChecklistTestView: 'checklist.test.view',
   ChecklistTestEdit: 'checklist.test.edit',
-  ChecklistShipmentView: 'checklist.shipment.view',
-  ChecklistShipmentEdit: 'checklist.shipment.edit',
   ChecklistEOLView: 'checklist.eol.view',
   ChecklistEOLEdit: 'checklist.eol.edit',
   EOLBranchShip: 'eol.branch_ship',

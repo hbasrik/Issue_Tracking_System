@@ -257,8 +257,6 @@ function checklistTypeName(t: Translate, type: string): string {
   switch (type.toUpperCase()) {
     case 'EOL':
       return t('templates.typeEol');
-    case 'SHIPMENT':
-      return t('templates.typeShipment');
     case 'TEST':
       return t('templates.typeTest');
     default:

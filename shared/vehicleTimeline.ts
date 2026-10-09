@@ -108,8 +108,6 @@ export function checklistKindLabel(type: string, t: Translate): string {
       return t('timeline.checklist.eol');
     case 'TEST':
       return t('timeline.checklist.test');
-    case 'SHIPMENT':
-      return t('timeline.checklist.shipment');
     default:
       return t('timeline.checklist.other');
   }

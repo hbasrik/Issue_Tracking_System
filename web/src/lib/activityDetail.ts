@@ -63,9 +63,7 @@ export function activityDetailLine(
           ? t('home.activity.detailEol')
           : row.ChecklistType === 'TEST'
             ? t('home.activity.detailTest')
-            : row.ChecklistType === 'SHIPMENT'
-              ? t('home.activity.detailShipment')
-              : t('home.activity.detailChecklist');
+            : t('home.activity.detailChecklist');
       const status = change(ov, nv, (v) => checklistStatusLabel(v, t), emDash);
       if (row.ItemNo != null && row.ItemNo > 0) {
         return t('home.activity.detailItemStatus', { kind, n: row.ItemNo, status });

@@ -32,19 +32,6 @@ export const TEST_CHECKLIST_SECTIONS: ChecklistSectionCatalogEntry[] = [
 ];
 
 /**
- * Shipment checklist sections follow the work order: each one is a run of
- * consecutive steps (migration 0036 / seed 03; change them together).
- */
-export const SHIPMENT_CHECKLIST_SECTIONS: ChecklistSectionCatalogEntry[] = [
-  { key: 'interior_fit', sort: 10, titleKey: 'checklist.section.interior_fit' },
-  { key: 'chassis_exterior', sort: 20, titleKey: 'checklist.section.chassis_exterior' },
-  { key: 'badges_trim', sort: 30, titleKey: 'checklist.section.badges_trim' },
-  { key: 'rubber_film', sort: 40, titleKey: 'checklist.section.rubber_film' },
-  { key: 'brake_sealing', sort: 50, titleKey: 'checklist.section.brake_sealing' },
-  { key: 'final_adjust', sort: 60, titleKey: 'checklist.section.final_adjust' },
-];
-
-/**
  * EoL sections follow the printed forms (docs/21): KY.FR-09 for the branch
  * phase (10-50), KY.FR-19 for the depot phase (110-190). The paper splits
  * "Dış" around "Gap & flush", so two keys share one title. Seed 03 writes
@@ -77,7 +64,6 @@ export const EOL_CHECKLIST_SECTIONS: ChecklistSectionCatalogEntry[] = [
 const KNOWN_TITLE: Record<string, MessageKey> = Object.fromEntries(
   [
     ...TEST_CHECKLIST_SECTIONS,
-    ...SHIPMENT_CHECKLIST_SECTIONS,
     ...EOL_CHECKLIST_SECTIONS,
   ].map((e) => [e.key, e.titleKey]),
 );
@@ -87,7 +73,6 @@ export function sectionsForTemplateType(
 ): ChecklistSectionCatalogEntry[] {
   const t = type.toUpperCase();
   if (t === 'TEST') return TEST_CHECKLIST_SECTIONS;
-  if (t === 'SHIPMENT') return SHIPMENT_CHECKLIST_SECTIONS;
   if (t === 'EOL') return EOL_CHECKLIST_SECTIONS;
   return [];
 }

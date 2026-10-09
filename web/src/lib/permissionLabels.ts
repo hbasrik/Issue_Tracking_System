@@ -43,8 +43,6 @@ export const PERMISSION_CATALOG: PermissionGroupDef[] = [
     items: [
       { code: Perm.ChecklistTestView, labelKey: 'perm.checklist.test.view' },
       { code: Perm.ChecklistTestEdit, labelKey: 'perm.checklist.test.edit' },
-      { code: Perm.ChecklistShipmentView, labelKey: 'perm.checklist.shipment.view' },
-      { code: Perm.ChecklistShipmentEdit, labelKey: 'perm.checklist.shipment.edit' },
       { code: Perm.ChecklistEOLView, labelKey: 'perm.checklist.eol.view' },
       { code: Perm.ChecklistEOLEdit, labelKey: 'perm.checklist.eol.edit' },
     ],

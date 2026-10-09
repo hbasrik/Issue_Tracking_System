@@ -830,6 +830,11 @@ kalıyordu.
   SHIPMENT şablonu, maddeleri, PENDING ilerleme satırları ve
   `checklist.shipment.*` yetki satırları migration 0045 ile kalkar. Sıra:
   önce bu kod yayına alınır, sonra 0045 kısa bir duraklamayla uygulanır.
+- **Metinler:** rol ekranındaki iki Sevkiyat yetkisi, şablon tipi etiketi,
+  Sevkiyat bölüm kataloğu (6 bölüm anahtarı), etkinlik ve zaman çizelgesi
+  etiketleri kalktı. Kalanlar sevkiyat checklist'i değildir: Test rozeti,
+  EoL'un depo aşamasındaki "Sevkiyat" bölümü (KY.FR-19 55–59), formun
+  49. maddesi ve fiziksel sevk olayı metinleri.
 - **Uyarı paneli yetkisi:** "Sevk öncesi uyarı" (`GET
   /vehicles/{vin}/shipment-readiness`, web paneli, mobil istasyon ekranı)
   `vehicle.view` ister; panel aracın sevk özetidir. Dört rolde de var:

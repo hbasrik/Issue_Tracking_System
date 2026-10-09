@@ -91,7 +91,6 @@ const FIELD_LABEL: Record<string, MessageKey> = {
 const TEMPLATE_TYPE_LABEL: Record<string, MessageKey> = {
   EOL: 'home.activity.detailEol',
   TEST: 'home.activity.detailTest',
-  SHIPMENT: 'home.activity.detailShipment',
 };
 
 const PHASE_LABEL: Record<string, MessageKey> = {
