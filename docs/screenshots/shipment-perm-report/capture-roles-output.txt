@@ -1,0 +1,45 @@
+output: /Users/Basri/Desktop/kts_kms_project/docs/screenshots/shipment-perm-report (UPDATE_SCREENSHOTS=1, committed files)
+== tr 1280 ==  columns: İzin | Operator
+OPERATOR
+Kaydet | Manager / Admin
+MANAGER_ADMIN
+Kaydet | Quality
+QUALITY
+Kaydet | Assembly
+ASSEMBLY
+Kaydet
+  Shipment checklist: görüntülechecklist.shipment.view: [true,true,false,true]
+  Shipment checklist: düzenlechecklist.shipment.edit: [true,true,false,true]
+== tr 375 ==  columns: İzin | Operator
+OPERATOR
+Kaydet | Manager / Admin
+MANAGER_ADMIN
+Kaydet | Quality
+QUALITY
+Kaydet | Assembly
+ASSEMBLY
+Kaydet
+  Shipment checklist: görüntülechecklist.shipment.view: [true,true,false,true]
+  Shipment checklist: düzenlechecklist.shipment.edit: [true,true,false,true]
+== en 1280 ==  columns: Permission | Operator
+OPERATOR
+Save | Manager / Admin
+MANAGER_ADMIN
+Save | Quality
+QUALITY
+Save | Assembly
+ASSEMBLY
+Save
+  Shipment checklist: viewchecklist.shipment.view: [true,true,false,true]
+  Shipment checklist: editchecklist.shipment.edit: [true,true,false,true]
+== en 375 ==  columns: Permission | Operator
+OPERATOR
+Save | Manager / Admin
+MANAGER_ADMIN
+Save | Quality
+QUALITY
+Save | Assembly
+ASSEMBLY
+Save
+  Shipment checklist: viewchecklist.shipment.view: [true,true,false,true]
+  Shipment checklist: editchecklist.shipment.edit: [true,true,false,true]
