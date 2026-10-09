@@ -220,9 +220,9 @@ export interface StationStepItem {
   CheckedAt?: string | null;
 }
 
-export type ChecklistType = 'eol' | 'shipment' | 'test';
+export type ChecklistType = 'eol' | 'test';
 
-/** Which EoL stage an item belongs to (Karar 2). Null for shipment and test. */
+/** Which EoL stage an item belongs to (Karar 2). Null for test. */
 export type EOLItemPhase = 'BRANCH' | 'DEPOT';
 
 export interface ChecklistItem {

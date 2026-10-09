@@ -415,12 +415,6 @@ export default function VehicleStationScreen() {
               ))}
             </Card>
           ) : null}
-          {has(Perm.ChecklistShipmentView) ? (
-            <OutlineButton
-              label={t('checklist.shipmentLink')}
-              onPress={() => navigation.navigate('ShipmentChecklist', { vin })}
-            />
-          ) : null}
           {has(Perm.ChecklistTestView) ? (
             <OutlineButton
               label={t('checklist.testLink')}

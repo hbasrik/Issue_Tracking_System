@@ -33,9 +33,9 @@ import type { RootStackParamList } from '../navigation/types';
 import { groupChecklistSections } from '../lib/checklistSections';
 
 /**
- * Test checklist (Karar 4) — the third checklist alongside EoL and Shipment.
- * It tracks end-of-line functional quality only: unlike the other two it gates
- * nothing, so completing it never moves the vehicle's status.
+ * Test checklist (Karar 4) — the second checklist alongside EoL.
+ * It tracks end-of-line functional quality only: unlike EoL it never moves
+ * the vehicle's status; open Test items only block branch shipment.
  */
 export default function TestChecklistScreen() {
   const route = useRoute<RouteProp<RootStackParamList, 'TestChecklist'>>();

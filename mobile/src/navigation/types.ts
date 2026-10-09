@@ -20,7 +20,6 @@ export type RootStackParamList = {
   /** Standalone MANUAL Issue Bildir — no checklist/step source. */
   ManualIssueReport: undefined;
   EOLChecklist: { vin: string };
-  ShipmentChecklist: { vin: string };
   TestChecklist: { vin: string };
   IssueDetail: { id: number };
 };
