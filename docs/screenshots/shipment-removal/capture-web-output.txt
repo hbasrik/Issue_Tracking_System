@@ -1,0 +1,122 @@
+output: /Users/Basri/Desktop/kts_kms_project/docs/screenshots/shipment-removal (UPDATE_SCREENSHOTS=1, committed files)
+== tr 1280x900, N7V1K1SA1TK000009 ==
+  tabs: Genel bakış | Test | EoL | Issues | Denetim kaydı  selected: Genel bakış
+  [PASS] tab list has no Shipment tab — Genel bakış,Test,EoL,Issues,Denetim kaydı
+  [PASS] ?tab=shipment falls back to overview — Genel bakış
+  readiness lines (17):
+    • Test checklist maddesi 1 “N'de aracı ittir — Anormal direnç var mı?” — Bekliyor
+    • Test checklist maddesi 2 “D'de gaz ver — Araç normal hızlanıyor mu? Sıkma hissi veya anormal ses var mı?” — Bekliyor
+    • Test checklist maddesi 3 “R'de gaz ver — Geri viteste normal hızlanıyor mu? Sıkma hissi veya anormal ses var mı?” — Bekliyor
+    • Test checklist maddesi 4 “Dış aydınlatma — Kısa, uzun, selektör, park, sis, sol/sağ sinyal, dörtlü, stop, geri vites lambası.” — Bekliyor
+    • Test checklist maddesi 5 “Korna — Ses seviyesi ve çalışması normal mi?” — Bekliyor
+    • Test checklist maddesi 6 “Camlar — Tüm camlar açılıp kapanıyor mu? Takılma, yavaşlık veya ses var mı?” — Bekliyor
+    • Test checklist maddesi 7 “Merkezi kilit & kapılar — İçeriden ve anahtarla dışarıdan kilitle-aç. Her kapıda doğru çalışıyor mu?” — Bekliyor
+    • Test checklist maddesi 8 “Aynalar & iç donanım — Aynalar, IP kapakları, emniyet kemeri kapakları, düğmeler ve trim parçaları normal mi?” — Bekliyor — ve 35 madde daha
+    • EOL checklist maddesi 47 “Şasi ve seri numarası okunaklı ve doğru” — Bekliyor
+    • EOL checklist maddesi 48 “Model ve versiyon etiketi doğru” — Bekliyor
+    • EOL checklist maddesi 49 “Sevkiyat evrakları, irsaliye ve teslim formu hazır” — Bekliyor
+    • EOL checklist maddesi 50 “Kullanım kılavuzu ve garanti dokümanı mevcut” — Bekliyor
+    • EOL checklist maddesi 51 “Anahtar, uzaktan kumanda ve aksesuar seti tam” — Bekliyor
+    • EOL checklist maddesi 52 “Boya yüzeyi homojen, portakal kabuğu, akma ve kabarcık yok” — Bekliyor
+    • EOL checklist maddesi 53 “Çizik, göçük ve deformasyon yok” — Bekliyor
+    • EOL checklist maddesi 54 “Keskin kenar ve çapak yok” — Bekliyor — ve 50 madde daha
+    • Açık hata #8 (Açık): Dynamic service brake performance outside spec.
+  [PASS] readiness lists items — 17
+  [PASS] readiness has no Shipment line
+  hint: İstasyon adımları ile Test ve fabrika aşaması EOL maddeleri tamamlanmadan araç fabrikadan sevk edilemez. Depo aşaması EOL maddeleri tamamlanmadan ve açık hatalar kapanmadan depodan çıkamaz.
+  [PASS] readiness hint names no Shipment checklist
+  EoL tab Test blocker: Test: 43 madde kaldı
+  [PASS] EoL tab loaded with the Test blocker
+  [PASS] EoL tab names no Shipment checklist
+  [PASS] no page or console errors
+== tr 375x812, N7V1K1SA1TK000009 ==
+  tabs: Genel bakış | Test | EoL | Issues | Denetim kaydı  selected: Genel bakış
+  [PASS] tab list has no Shipment tab — Genel bakış,Test,EoL,Issues,Denetim kaydı
+  [PASS] ?tab=shipment falls back to overview — Genel bakış
+  readiness lines (17):
+    • Test checklist maddesi 1 “N'de aracı ittir — Anormal direnç var mı?” — Bekliyor
+    • Test checklist maddesi 2 “D'de gaz ver — Araç normal hızlanıyor mu? Sıkma hissi veya anormal ses var mı?” — Bekliyor
+    • Test checklist maddesi 3 “R'de gaz ver — Geri viteste normal hızlanıyor mu? Sıkma hissi veya anormal ses var mı?” — Bekliyor
+    • Test checklist maddesi 4 “Dış aydınlatma — Kısa, uzun, selektör, park, sis, sol/sağ sinyal, dörtlü, stop, geri vites lambası.” — Bekliyor
+    • Test checklist maddesi 5 “Korna — Ses seviyesi ve çalışması normal mi?” — Bekliyor
+    • Test checklist maddesi 6 “Camlar — Tüm camlar açılıp kapanıyor mu? Takılma, yavaşlık veya ses var mı?” — Bekliyor
+    • Test checklist maddesi 7 “Merkezi kilit & kapılar — İçeriden ve anahtarla dışarıdan kilitle-aç. Her kapıda doğru çalışıyor mu?” — Bekliyor
+    • Test checklist maddesi 8 “Aynalar & iç donanım — Aynalar, IP kapakları, emniyet kemeri kapakları, düğmeler ve trim parçaları normal mi?” — Bekliyor — ve 35 madde daha
+    • EOL checklist maddesi 47 “Şasi ve seri numarası okunaklı ve doğru” — Bekliyor
+    • EOL checklist maddesi 48 “Model ve versiyon etiketi doğru” — Bekliyor
+    • EOL checklist maddesi 49 “Sevkiyat evrakları, irsaliye ve teslim formu hazır” — Bekliyor
+    • EOL checklist maddesi 50 “Kullanım kılavuzu ve garanti dokümanı mevcut” — Bekliyor
+    • EOL checklist maddesi 51 “Anahtar, uzaktan kumanda ve aksesuar seti tam” — Bekliyor
+    • EOL checklist maddesi 52 “Boya yüzeyi homojen, portakal kabuğu, akma ve kabarcık yok” — Bekliyor
+    • EOL checklist maddesi 53 “Çizik, göçük ve deformasyon yok” — Bekliyor
+    • EOL checklist maddesi 54 “Keskin kenar ve çapak yok” — Bekliyor — ve 50 madde daha
+    • Açık hata #8 (Açık): Dynamic service brake performance outside spec.
+  [PASS] readiness lists items — 17
+  [PASS] readiness has no Shipment line
+  hint: İstasyon adımları ile Test ve fabrika aşaması EOL maddeleri tamamlanmadan araç fabrikadan sevk edilemez. Depo aşaması EOL maddeleri tamamlanmadan ve açık hatalar kapanmadan depodan çıkamaz.
+  [PASS] readiness hint names no Shipment checklist
+  EoL tab Test blocker: Test: 43 madde kaldı
+  [PASS] EoL tab loaded with the Test blocker
+  [PASS] EoL tab names no Shipment checklist
+  [PASS] no page or console errors
+== en 1280x900, N7V1K1SA1TK000009 ==
+  tabs: Overview | Test | EoL | Issues | Audit log  selected: Overview
+  [PASS] tab list has no Shipment tab — Overview,Test,EoL,Issues,Audit log
+  [PASS] ?tab=shipment falls back to overview — Overview
+  readiness lines (17):
+    • Test checklist item 1 “N'de aracı ittir — Anormal direnç var mı?” — Pending
+    • Test checklist item 2 “D'de gaz ver — Araç normal hızlanıyor mu? Sıkma hissi veya anormal ses var mı?” — Pending
+    • Test checklist item 3 “R'de gaz ver — Geri viteste normal hızlanıyor mu? Sıkma hissi veya anormal ses var mı?” — Pending
+    • Test checklist item 4 “Dış aydınlatma — Kısa, uzun, selektör, park, sis, sol/sağ sinyal, dörtlü, stop, geri vites lambası.” — Pending
+    • Test checklist item 5 “Korna — Ses seviyesi ve çalışması normal mi?” — Pending
+    • Test checklist item 6 “Camlar — Tüm camlar açılıp kapanıyor mu? Takılma, yavaşlık veya ses var mı?” — Pending
+    • Test checklist item 7 “Merkezi kilit & kapılar — İçeriden ve anahtarla dışarıdan kilitle-aç. Her kapıda doğru çalışıyor mu?” — Pending
+    • Test checklist item 8 “Aynalar & iç donanım — Aynalar, IP kapakları, emniyet kemeri kapakları, düğmeler ve trim parçaları normal mi?” — Pending — and 35 more
+    • EOL checklist item 47 “Şasi ve seri numarası okunaklı ve doğru” — Pending
+    • EOL checklist item 48 “Model ve versiyon etiketi doğru” — Pending
+    • EOL checklist item 49 “Sevkiyat evrakları, irsaliye ve teslim formu hazır” — Pending
+    • EOL checklist item 50 “Kullanım kılavuzu ve garanti dokümanı mevcut” — Pending
+    • EOL checklist item 51 “Anahtar, uzaktan kumanda ve aksesuar seti tam” — Pending
+    • EOL checklist item 52 “Boya yüzeyi homojen, portakal kabuğu, akma ve kabarcık yok” — Pending
+    • EOL checklist item 53 “Çizik, göçük ve deformasyon yok” — Pending
+    • EOL checklist item 54 “Keskin kenar ve çapak yok” — Pending — and 50 more
+    • Open issue #8 (Open): Dynamic service brake performance outside spec.
+  [PASS] readiness lists items — 17
+  [PASS] readiness has no Shipment line
+  hint: The vehicle cannot ship from the Factory until station steps and the Test and Factory-phase EOL items are complete. It cannot leave the depot until the depot-phase EOL items are complete and open issues are closed.
+  [PASS] readiness hint names no Shipment checklist
+  EoL tab Test blocker: Test: 43 items remaining
+  [PASS] EoL tab loaded with the Test blocker
+  [PASS] EoL tab names no Shipment checklist
+  [PASS] no page or console errors
+== en 375x812, N7V1K1SA1TK000009 ==
+  tabs: Overview | Test | EoL | Issues | Audit log  selected: Overview
+  [PASS] tab list has no Shipment tab — Overview,Test,EoL,Issues,Audit log
+  [PASS] ?tab=shipment falls back to overview — Overview
+  readiness lines (17):
+    • Test checklist item 1 “N'de aracı ittir — Anormal direnç var mı?” — Pending
+    • Test checklist item 2 “D'de gaz ver — Araç normal hızlanıyor mu? Sıkma hissi veya anormal ses var mı?” — Pending
+    • Test checklist item 3 “R'de gaz ver — Geri viteste normal hızlanıyor mu? Sıkma hissi veya anormal ses var mı?” — Pending
+    • Test checklist item 4 “Dış aydınlatma — Kısa, uzun, selektör, park, sis, sol/sağ sinyal, dörtlü, stop, geri vites lambası.” — Pending
+    • Test checklist item 5 “Korna — Ses seviyesi ve çalışması normal mi?” — Pending
+    • Test checklist item 6 “Camlar — Tüm camlar açılıp kapanıyor mu? Takılma, yavaşlık veya ses var mı?” — Pending
+    • Test checklist item 7 “Merkezi kilit & kapılar — İçeriden ve anahtarla dışarıdan kilitle-aç. Her kapıda doğru çalışıyor mu?” — Pending
+    • Test checklist item 8 “Aynalar & iç donanım — Aynalar, IP kapakları, emniyet kemeri kapakları, düğmeler ve trim parçaları normal mi?” — Pending — and 35 more
+    • EOL checklist item 47 “Şasi ve seri numarası okunaklı ve doğru” — Pending
+    • EOL checklist item 48 “Model ve versiyon etiketi doğru” — Pending
+    • EOL checklist item 49 “Sevkiyat evrakları, irsaliye ve teslim formu hazır” — Pending
+    • EOL checklist item 50 “Kullanım kılavuzu ve garanti dokümanı mevcut” — Pending
+    • EOL checklist item 51 “Anahtar, uzaktan kumanda ve aksesuar seti tam” — Pending
+    • EOL checklist item 52 “Boya yüzeyi homojen, portakal kabuğu, akma ve kabarcık yok” — Pending
+    • EOL checklist item 53 “Çizik, göçük ve deformasyon yok” — Pending
+    • EOL checklist item 54 “Keskin kenar ve çapak yok” — Pending — and 50 more
+    • Open issue #8 (Open): Dynamic service brake performance outside spec.
+  [PASS] readiness lists items — 17
+  [PASS] readiness has no Shipment line
+  hint: The vehicle cannot ship from the Factory until station steps and the Test and Factory-phase EOL items are complete. It cannot leave the depot until the depot-phase EOL items are complete and open issues are closed.
+  [PASS] readiness hint names no Shipment checklist
+  EoL tab Test blocker: Test: 43 items remaining
+  [PASS] EoL tab loaded with the Test blocker
+  [PASS] EoL tab names no Shipment checklist
+  [PASS] no page or console errors
+RESULT: PASS
