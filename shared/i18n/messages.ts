@@ -614,7 +614,7 @@ export const tr = {
   'vehicles.none': 'Araç bulunamadı',
   'vehicles.pageInfo': '{total} toplam · sayfa {page}',
   'vehicles.readinessHint':
-    'İstasyon adımları ile Test, Sevkiyat ve fabrika aşaması EOL maddeleri tamamlanmadan araç fabrikadan sevk edilemez. Depo aşaması EOL maddeleri tamamlanmadan ve açık hatalar kapanmadan depodan çıkamaz.',
+    'İstasyon adımları ile Test ve fabrika aşaması EOL maddeleri tamamlanmadan araç fabrikadan sevk edilemez. Depo aşaması EOL maddeleri tamamlanmadan ve açık hatalar kapanmadan depodan çıkamaz.',
   'vehicles.readinessListTest': 'Test checklist',
   'vehicles.readinessListEol': 'EOL checklist',
   'vehicles.readinessItem': '{list} maddesi {n} “{text}” — {status}',
@@ -1345,7 +1345,7 @@ export const tr = {
   'error.checklistFrozenDelivered':
     'Araç teslim edildi; kontrol listesi maddeleri değiştirilemez, fotoğraf eklenemez.',
   'error.checklistFrozenBranchShipped':
-    'Araç fabrikadan sevk edildi; fabrika aşaması EOL, Test ve Sevkiyat maddeleri değiştirilemez, fotoğraf eklenemez.',
+    'Araç fabrikadan sevk edildi; fabrika aşaması EOL ve Test maddeleri değiştirilemez, fotoğraf eklenemez.',
   'error.checklistFrozenDepotReleased':
     'Araç depodan çıktı; depo aşaması EOL maddeleri değiştirilemez, fotoğraf eklenemez.',
   'error.itemTextRequired': 'Madde metni gerekli.',
@@ -2251,7 +2251,7 @@ export const en: Record<MessageKey, string> = {
   'error.checklistFrozenDelivered':
     'The vehicle has been delivered; its checklist items cannot change and no photos can be added.',
   'error.checklistFrozenBranchShipped':
-    'The vehicle has shipped from the Factory; Factory-phase EOL, Test and Shipment items cannot change and no photos can be added.',
+    'The vehicle has shipped from the Factory; Factory-phase EOL and Test items cannot change and no photos can be added.',
   'error.checklistFrozenDepotReleased':
     'The vehicle has been released from the depot; depot-phase EOL items cannot change and no photos can be added.',
   'error.itemTextRequired': 'Item text is required.',
@@ -2849,7 +2849,7 @@ export const en: Record<MessageKey, string> = {
   'vehicles.plannedHint':
     'Planned status cannot be selected manually; the first station step on the line sets the status to On line automatically.',
   'vehicles.readinessHint':
-    'The vehicle cannot ship from the Factory until station steps and the Test, Shipment and Factory-phase EOL items are complete. It cannot leave the depot until the depot-phase EOL items are complete and open issues are closed.',
+    'The vehicle cannot ship from the Factory until station steps and the Test and Factory-phase EOL items are complete. It cannot leave the depot until the depot-phase EOL items are complete and open issues are closed.',
   'vehicles.readinessListTest': 'Test checklist',
   'vehicles.readinessListEol': 'EOL checklist',
   'vehicles.readinessItem': '{list} item {n} “{text}” — {status}',
