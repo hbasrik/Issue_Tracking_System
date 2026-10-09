@@ -886,8 +886,6 @@ func operatorPermissions() domain.PermissionSet {
 		{Code: domain.PermissionStationStepEdit},
 		{Code: domain.PermissionChecklistTestView},
 		{Code: domain.PermissionChecklistTestEdit},
-		{Code: domain.PermissionChecklistShipmentView},
-		{Code: domain.PermissionChecklistShipmentEdit},
 		{Code: domain.PermissionChecklistEOLView},
 		{Code: domain.PermissionChecklistEOLEdit},
 		{Code: domain.PermissionIssueView},
@@ -916,8 +914,6 @@ func assemblyPermissions() domain.PermissionSet {
 		{Code: domain.PermissionIssueCreate},
 		{Code: domain.PermissionIssueTransitionProgress},
 		{Code: domain.PermissionStationStepEdit},
-		{Code: domain.PermissionChecklistShipmentView},
-		{Code: domain.PermissionChecklistShipmentEdit},
 	})
 }
 

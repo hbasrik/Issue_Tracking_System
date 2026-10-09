@@ -35,12 +35,11 @@ func TestChangeStatus_RejectsFreeEdits(t *testing.T) {
 func TestShipmentReadiness_ListsIncompleteChecklistsAndOpenIssues(t *testing.T) {
 	vin := "N7V1K1SA9SK000001"
 	vehicles := newFakeVehicleRepo()
-	eolID, shipID, testID := 3, 4, 5
+	eolID, testID := 3, 5
 	vehicles.vehicles[vin] = &domain.Vehicle{
 		VIN:                 vin,
 		CurrentGlobalStatus: domain.VehicleStatusInProduction,
 		EOLTemplateID:       &eolID,
-		ShipmentTemplateID:  &shipID,
 		TestTemplateID:      &testID,
 	}
 	checklists := newFakeChecklistRepo()

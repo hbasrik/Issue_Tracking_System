@@ -67,20 +67,20 @@ func TestRecordChecklistAudit_NoNoteKeysOutsideEOL(t *testing.T) {
 	const vin = "1HGCM82633A004352"
 	checklist := newFakeChecklistRepo()
 	checklist.rows[vin] = []domain.ChecklistProgress{
-		{VIN: vin, ChecklistType: domain.ChecklistTypeShipment, CheckItemID: 1, CheckStatus: domain.CheckStatusPending},
+		{VIN: vin, ChecklistType: domain.ChecklistTypeTest, CheckItemID: 1, CheckStatus: domain.CheckStatusPending},
 	}
 	vehicles := newFakeVehicleRepo()
 	vehicles.vehicles[vin] = &domain.Vehicle{VIN: vin, CurrentGlobalStatus: domain.VehicleStatusInWarehouse}
 	audit := &fakeAuditRepo{}
 	rec := usecase.NewChecklistResultRecorder(vehicles, checklist, audit, nil)
 	if _, err := rec.Record(context.Background(), usecase.RecordChecklistInput{
-		VIN: vin, ChecklistType: domain.ChecklistTypeShipment, ItemID: 1,
+		VIN: vin, ChecklistType: domain.ChecklistTypeTest, ItemID: 1,
 		Status: domain.CheckStatusOK, CheckerID: 7, Note: "torque ok",
 	}); err != nil {
 		t.Fatal(err)
 	}
 	md := audit.entries[0].Metadata
 	if _, ok := md["new_note"]; ok {
-		t.Errorf("shipment metadata %v carries new_note", md)
+		t.Errorf("test metadata %v carries new_note", md)
 	}
 }

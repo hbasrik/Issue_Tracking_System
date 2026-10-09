@@ -25,7 +25,6 @@ func TestRecordChecklist_FrozenItemRefused(t *testing.T) {
 	}{
 		{"branch item after branch ship", domain.ChecklistTypeEOL, domain.ChecklistFrozenBranchShipped, domain.ErrChecklistFrozenBranchShipped},
 		{"test item after branch ship", domain.ChecklistTypeTest, domain.ChecklistFrozenBranchShipped, domain.ErrChecklistFrozenBranchShipped},
-		{"shipment item after branch ship", domain.ChecklistTypeShipment, domain.ChecklistFrozenBranchShipped, domain.ErrChecklistFrozenBranchShipped},
 		{"depot item after depot release", domain.ChecklistTypeEOL, domain.ChecklistFrozenDepotReleased, domain.ErrChecklistFrozenDepotReleased},
 		{"any item of a delivered vehicle", domain.ChecklistTypeEOL, domain.ChecklistFrozenDelivered, domain.ErrChecklistFrozenDelivered},
 	}

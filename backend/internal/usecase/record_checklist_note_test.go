@@ -10,7 +10,7 @@ import (
 )
 
 // recordNote records one item. EoL validation runs before the repo is touched;
-// storage is exercised on Shipment so the fake needs no EoL depot fixture.
+// storage is exercised on Test so the fake needs no EoL depot fixture.
 func recordNote(t *testing.T, ct domain.ChecklistType, in usecase.RecordChecklistInput) (domain.ChecklistProgress, error) {
 	t.Helper()
 	const vin = "1HGCM82633A004352"
@@ -40,7 +40,7 @@ func TestRecordChecklistNote_StoredInColumnOwnedByAnswer(t *testing.T) {
 		{domain.CheckStatusRework, domain.ChecklistNotes{Rework: "12.4 V"}},
 	}
 	for _, tc := range cases {
-		row, err := recordNote(t, domain.ChecklistTypeShipment, usecase.RecordChecklistInput{Status: tc.status, Note: "  12.4 V "})
+		row, err := recordNote(t, domain.ChecklistTypeTest, usecase.RecordChecklistInput{Status: tc.status, Note: "  12.4 V "})
 		if err != nil {
 			t.Fatalf("%s: %v", tc.status, err)
 		}
@@ -55,7 +55,7 @@ func TestRecordChecklistNote_StoredInColumnOwnedByAnswer(t *testing.T) {
 }
 
 func TestRecordChecklistNote_LegacyFieldsStillAccepted(t *testing.T) {
-	row, err := recordNote(t, domain.ChecklistTypeShipment, usecase.RecordChecklistInput{
+	row, err := recordNote(t, domain.ChecklistTypeTest, usecase.RecordChecklistInput{
 		Status:       domain.CheckStatusNotOK,
 		RejectedDesc: "seal failed",
 	})

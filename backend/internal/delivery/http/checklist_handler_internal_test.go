@@ -9,7 +9,8 @@ import (
 // TestParseChecklistType guards the URL contract for the checklist routes. The
 // {type} segment is what makes POST /vehicles/{vin}/checklist/test/{itemId}
 // reachable, since Karar 4's Test checklist reuses the same generic route as
-// EoL and Shipment rather than getting one of its own.
+// EoL rather than getting one of its own. "shipment" is retired
+// (Karar 33) and must not parse.
 func TestParseChecklistType(t *testing.T) {
 	cases := []struct {
 		raw    string
@@ -17,7 +18,7 @@ func TestParseChecklistType(t *testing.T) {
 		wantOK bool
 	}{
 		{"eol", domain.ChecklistTypeEOL, true},
-		{"shipment", domain.ChecklistTypeShipment, true},
+		{"shipment", "", false},
 		{"test", domain.ChecklistTypeTest, true},
 		{"TEST", domain.ChecklistTypeTest, true},
 		{"tests", "", false},

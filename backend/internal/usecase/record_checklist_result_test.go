@@ -9,10 +9,10 @@ import (
 	"github.com/karea/backend/internal/usecase"
 )
 
-// TestRecordChecklistResult_ShipmentGateExitRejected proves checklist gate
-// exits no longer drive vehicle status: shipment completion is enforced by the
-// explicit EoL branch-ship action instead.
-func TestRecordChecklistResult_ShipmentGateExitRejected(t *testing.T) {
+// TestRecordChecklistResult_GateExitRejected proves checklist gate exits no
+// longer drive vehicle status: shipment readiness is enforced by the explicit
+// EoL branch-ship action instead.
+func TestRecordChecklistResult_GateExitRejected(t *testing.T) {
 	const vin = "1HGCM82633A004352"
 
 	vehicles := newFakeVehicleRepo()
@@ -20,9 +20,9 @@ func TestRecordChecklistResult_ShipmentGateExitRejected(t *testing.T) {
 
 	checklist := newFakeChecklistRepo()
 	checklist.rows[vin] = []domain.ChecklistProgress{
-		{VIN: vin, ChecklistType: domain.ChecklistTypeShipment, CheckItemID: 1, CheckStatus: domain.CheckStatusOK},
-		{VIN: vin, ChecklistType: domain.ChecklistTypeShipment, CheckItemID: 2, CheckStatus: domain.CheckStatusConditionalOK, ConditionalDesc: "minor scuff, accepted"},
-		{VIN: vin, ChecklistType: domain.ChecklistTypeShipment, CheckItemID: 3, CheckStatus: domain.CheckStatusNotOK, RejectedDesc: "seal failed"},
+		{VIN: vin, ChecklistType: domain.ChecklistTypeTest, CheckItemID: 1, CheckStatus: domain.CheckStatusOK},
+		{VIN: vin, ChecklistType: domain.ChecklistTypeTest, CheckItemID: 2, CheckStatus: domain.CheckStatusConditionalOK, ConditionalDesc: "minor scuff, accepted"},
+		{VIN: vin, ChecklistType: domain.ChecklistTypeTest, CheckItemID: 3, CheckStatus: domain.CheckStatusNotOK, RejectedDesc: "seal failed"},
 	}
 
 	rec := usecase.NewChecklistResultRecorder(vehicles, checklist, nil, nil)
@@ -30,7 +30,7 @@ func TestRecordChecklistResult_ShipmentGateExitRejected(t *testing.T) {
 
 	_, err := rec.Record(ctx, usecase.RecordChecklistInput{
 		VIN:             vin,
-		ChecklistType:   domain.ChecklistTypeShipment,
+		ChecklistType:   domain.ChecklistTypeTest,
 		ItemID:          1,
 		Status:          domain.CheckStatusOK,
 		CheckerID:       7,
@@ -45,9 +45,9 @@ func TestRecordChecklistResult_ShipmentGateExitRejected(t *testing.T) {
 	}
 }
 
-// TestRecordChecklistResult_ShipmentGateExitStillRejectedWhenOpen confirms
+// TestRecordChecklistResult_GateExitStillRejectedWhenOpen confirms
 // RequestGateExit is refused even when every item already passes.
-func TestRecordChecklistResult_ShipmentGateExitStillRejectedWhenOpen(t *testing.T) {
+func TestRecordChecklistResult_GateExitStillRejectedWhenOpen(t *testing.T) {
 	const vin = "1HGCM82633A004352"
 
 	vehicles := newFakeVehicleRepo()
@@ -55,8 +55,8 @@ func TestRecordChecklistResult_ShipmentGateExitStillRejectedWhenOpen(t *testing.
 
 	checklist := newFakeChecklistRepo()
 	checklist.rows[vin] = []domain.ChecklistProgress{
-		{VIN: vin, ChecklistType: domain.ChecklistTypeShipment, CheckItemID: 1, CheckStatus: domain.CheckStatusOK},
-		{VIN: vin, ChecklistType: domain.ChecklistTypeShipment, CheckItemID: 2, CheckStatus: domain.CheckStatusPending},
+		{VIN: vin, ChecklistType: domain.ChecklistTypeTest, CheckItemID: 1, CheckStatus: domain.CheckStatusOK},
+		{VIN: vin, ChecklistType: domain.ChecklistTypeTest, CheckItemID: 2, CheckStatus: domain.CheckStatusPending},
 	}
 
 	rec := usecase.NewChecklistResultRecorder(vehicles, checklist, nil, nil)
@@ -64,7 +64,7 @@ func TestRecordChecklistResult_ShipmentGateExitStillRejectedWhenOpen(t *testing.
 
 	_, err := rec.Record(ctx, usecase.RecordChecklistInput{
 		VIN:             vin,
-		ChecklistType:   domain.ChecklistTypeShipment,
+		ChecklistType:   domain.ChecklistTypeTest,
 		ItemID:          2,
 		Status:          domain.CheckStatusOK,
 		CheckerID:       7,
@@ -103,28 +103,36 @@ func TestRecordChecklistResult_MissingDescriptionRejected(t *testing.T) {
 	}
 }
 
-// TestRecordChecklistResult_ShipmentItemDoesNotRequireDescription proves
-// Shipment items no longer inherit FR-3.3: NOT_OK with no note is accepted.
-func TestRecordChecklistResult_ShipmentItemDoesNotRequireDescription(t *testing.T) {
+// TestRecordChecklistResult_ShipmentTypeRejected proves a leftover SHIPMENT
+// progress row cannot be answered (Karar 33): the type is refused before the
+// row or the audit log is touched.
+func TestRecordChecklistResult_ShipmentTypeRejected(t *testing.T) {
 	const vin = "1HGCM82633A004352"
 
 	vehicles := newFakeVehicleRepo()
-	vehicles.vehicles[vin] = &domain.Vehicle{VIN: vin, CurrentGlobalStatus: domain.VehicleStatusInWarehouse}
+	vehicles.vehicles[vin] = &domain.Vehicle{VIN: vin, CurrentGlobalStatus: domain.VehicleStatusInProduction}
 	checklist := newFakeChecklistRepo()
 	checklist.rows[vin] = []domain.ChecklistProgress{
 		{VIN: vin, ChecklistType: domain.ChecklistTypeShipment, CheckItemID: 1, CheckStatus: domain.CheckStatusPending},
 	}
+	audit := newFakeAuditRepo()
 
-	rec := usecase.NewChecklistResultRecorder(vehicles, checklist, nil, nil)
+	rec := usecase.NewChecklistResultRecorder(vehicles, checklist, audit, nil)
 	_, err := rec.Record(context.Background(), usecase.RecordChecklistInput{
 		VIN:           vin,
 		ChecklistType: domain.ChecklistTypeShipment,
 		ItemID:        1,
-		Status:        domain.CheckStatusNotOK,
+		Status:        domain.CheckStatusOK,
 		CheckerID:     7,
 	})
-	if err != nil {
-		t.Fatalf("shipment NOT_OK without description should succeed, got %v", err)
+	if !errors.Is(err, domain.ErrInvalidEnumValue) {
+		t.Fatalf("expected ErrInvalidEnumValue, got %v", err)
+	}
+	if got := checklist.rows[vin][0].CheckStatus; got != domain.CheckStatusPending {
+		t.Errorf("row status = %s, want PENDING", got)
+	}
+	if len(audit.entries) != 0 {
+		t.Errorf("audit rows = %d, want 0", len(audit.entries))
 	}
 }
 

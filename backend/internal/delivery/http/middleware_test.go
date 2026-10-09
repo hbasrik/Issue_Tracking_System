@@ -40,8 +40,6 @@ func newFakeRoleRepo() *fakeRoleRepo {
 		domain.PermissionStationStepEdit,
 		domain.PermissionChecklistTestView,
 		domain.PermissionChecklistTestEdit,
-		domain.PermissionChecklistShipmentView,
-		domain.PermissionChecklistShipmentEdit,
 		domain.PermissionChecklistEOLView,
 		domain.PermissionChecklistEOLEdit,
 		domain.PermissionIssueView,
@@ -55,8 +53,6 @@ func newFakeRoleRepo() *fakeRoleRepo {
 		domain.PermissionStationStepEdit,
 		domain.PermissionChecklistTestView,
 		domain.PermissionChecklistTestEdit,
-		domain.PermissionChecklistShipmentView,
-		domain.PermissionChecklistShipmentEdit,
 		domain.PermissionChecklistEOLView,
 		domain.PermissionChecklistEOLEdit,
 		domain.PermissionEOLBranchShip,
@@ -86,8 +82,6 @@ func newFakeRoleRepo() *fakeRoleRepo {
 		domain.PermissionIssueCreate,
 		domain.PermissionIssueTransitionProgress,
 		domain.PermissionStationStepEdit,
-		domain.PermissionChecklistShipmentView,
-		domain.PermissionChecklistShipmentEdit,
 	)
 	return &fakeRoleRepo{byUser: map[int][]domain.Permission{
 		managerUserID:  manager,
