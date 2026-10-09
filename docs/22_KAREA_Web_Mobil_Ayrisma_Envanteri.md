@@ -1,6 +1,6 @@
 # KAREA — Web / Mobil Ayrışma Envanteri
 
-Son güncelleme: 2026-10-08 (kod tabanı `061c220`).
+Son güncelleme: 2026-10-09 (Sevkiyat kontrol listesi kalktı, Karar 33).
 
 **Kural:** Web'e veya mobile kullanıcıya görünen bir özellik eklendiğinde,
 kaldırıldığında ya da değiştiğinde bu dosya aynı commit'te güncellenir. Yeni
@@ -106,7 +106,10 @@ Kanıt yolları: web `web/src/…`, mobil `mobile/src/…`.
 | EOL sıfırlama | Var | Yok | Kasıtlı — geri alma yönetici işi |
 | Yazdırma | Var | Yok | Kasıtlı |
 
-## 7. Test ve Sevkiyat kontrol listeleri
+## 7. Test kontrol listesi
+
+Sevkiyat kontrol listesi iki tarafta da kalktı (Karar 33, migration 0045):
+web'de sekme, mobilde ekran yok. Fark yok.
 
 | Özellik | Web | Mobil | Fark |
 |---|---|---|---|
@@ -181,7 +184,7 @@ Kanıt yolları: web `web/src/…`, mobil `mobile/src/…`.
 2. **Mobilde donma kilidi yok** (§6, §7; A55). Sevk edilmiş araçta operatör
    cevap verip Kaydet'e basınca 409 alır. Veri korunuyor, ama emek boşa
    gidiyor ve ne olduğu anlaşılmıyor.
-3. **Mobil Test / Sevkiyat'ta yanlış tik geri alınamıyor** (§7). Yanlış
+3. **Mobil Test'te yanlış tik geri alınamıyor** (§7). Yanlış
    işaretlenen madde ancak web'den düzeltilebilir.
 
 **Orta (işi yavaşlatır, engellemez):**

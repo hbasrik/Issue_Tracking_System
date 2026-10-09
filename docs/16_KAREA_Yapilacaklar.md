@@ -1089,10 +1089,17 @@ başlatılınca devreye girer.
   13, 14)", "2 open issue(s) remain (issue ids: 13, 14)", "1 depot-phase
   EoL item(s) incomplete").
 
-### A63. Sevkiyat checklist'inin tamamen kaldırılması `[~]` — 2026-10-09
-Karar 33. Sıra: önce kod (yapıldı), sonra migration 0045 (yazıldı, canlıya
-uygulanmadı).
-- `[x]` Uyarı paneli `vehicle.view` ile açılır (borç: D8).
+### A63. Sevkiyat checklist'inin tamamen kaldırılması `[x]` — 2026-10-09
+Karar 33. Sıra: önce kod, sonra migration 0045; ikisi de yapıldı. Yerel
+veritabanı 0045'e kadar sıfırdan kurulur (aşağıda).
+- `[x]` Uyarı paneli `vehicle.view` ile açılır. Kalan borçlar: kendi
+  yetkisi (D9, A kararı) ve ASSEMBLY'nin madde metinlerini görmesi (D8).
+- `[x]` C kararı (yeni SHIPMENT şablonunu API'de ayrıca engellememek):
+  şablon oluşturan bir API yok; 0045'teki CHECK veritabanında engeller.
+  Borç kalmadı.
+- `[x]` docs/22 §7 Test'e indirildi; `readiness-hint/capture-web.mjs`,
+  `eol-freeze/capture-web.mjs` ve `eol-freeze/run-api-trials.sh` Sevkiyat
+  denetimlerinden arındırıldı ve geçti (`shipment-0045/rerun/`).
 - `[x]` API: `ChecklistType.Valid()` SHIPMENT'ı reddeder;
   `/checklist/shipment` okuma ve kaydetme 400, Sevkiyat ilerleme satırına
   medya 400. Şablon yönetimi SHIPMENT şablonunu görmez (liste süzer, madde
@@ -1110,7 +1117,8 @@ uygulanmadı).
   `progress_scope`, `stage_applicability`, `checklist_frozen`);
   `repository/postgres/shipment_retired_test.go` artık şemanın boş olduğunu
   ve CHECK'i (23514) doğrular.
-- `[ ]` Canlıya 0045 (onay bekliyor; önce 8080'de yeni kod).
+- `[ ]` Yerel veritabanının 0001–0045 ile yeniden kurulumu (8080'de yeni
+  kod 10:37'den beri çalışıyor).
 - `[x]` `verify_migrations.sh` 3. adımı yalnız son yıkıcı migration'a kadar
   koşar (`LAST_DESTRUCTIVE=45`: v44'e iner, 0001–0044'ü yeniden uygular,
   sonra 45'e döner). Tüm dosyalar v45'te 0001/0002/0009/0023'te hata
