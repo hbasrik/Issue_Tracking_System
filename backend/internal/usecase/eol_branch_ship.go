@@ -11,8 +11,8 @@ import (
 // EOLBranchShipper performs stage 1 of the EOL workflow (Karar 2): shipping a
 // vehicle from the branch to the depot.
 //
-// Branch shipment hard-blocks on EOL BRANCH + TEST + SHIPMENT checklists and
-// on incomplete station steps. Open issues are counted and reported back as a
+// Branch shipment hard-blocks on EOL BRANCH + TEST checklists and on
+// incomplete station steps. Open issues are counted and reported back as a
 // soft warning but never block the transition.
 type EOLBranchShipper struct {
 	vehicles     repository.VehicleRepository

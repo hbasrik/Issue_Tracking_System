@@ -10,7 +10,9 @@ import (
 type ChecklistType string
 
 const (
-	ChecklistTypeEOL      ChecklistType = "EOL"
+	ChecklistTypeEOL ChecklistType = "EOL"
+	// ChecklistTypeShipment is retired (Karar 33): no gate, progress or
+	// warning counts it. Kept because audit and historical rows reference it.
 	ChecklistTypeShipment ChecklistType = "SHIPMENT"
 	// ChecklistTypeTest is Karar 4's third checklist. It reuses the same
 	// template and progress machinery as the other two but, unlike them, is
@@ -26,14 +28,6 @@ func (t ChecklistType) Valid() bool {
 	default:
 		return false
 	}
-}
-
-// HasStatusGate reports whether completing this checklist unlocks a vehicle
-// status transition. EoL and Shipment are hard-block gates (FR-3.5/FR-4.3);
-// the Test checklist deliberately has none, so its results never move a
-// vehicle through the status machine.
-func (t ChecklistType) HasStatusGate() bool {
-	return t == ChecklistTypeEOL || t == ChecklistTypeShipment
 }
 
 // CheckStatus mirrors the check_status_enum type.

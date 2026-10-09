@@ -33,18 +33,16 @@ func BranchShipBlockers(
 		})
 	}
 
-	for _, typ := range []domain.ChecklistType{domain.ChecklistTypeTest, domain.ChecklistTypeShipment} {
-		items, err := checklists.ListForVehicle(ctx, vin, typ)
-		if err != nil && !errors.Is(err, domain.ErrNotFound) {
-			return nil, err
-		}
-		if remaining, missing := CountGateRemainders(items); remaining > 0 {
-			blockers = append(blockers, domain.EOLChecklistBlocker{
-				ChecklistType: typ,
-				Remaining:     remaining,
-				Missing:       missing,
-			})
-		}
+	testItems, err := checklists.ListForVehicle(ctx, vin, domain.ChecklistTypeTest)
+	if err != nil && !errors.Is(err, domain.ErrNotFound) {
+		return nil, err
+	}
+	if remaining, missing := CountGateRemainders(testItems); remaining > 0 {
+		blockers = append(blockers, domain.EOLChecklistBlocker{
+			ChecklistType: domain.ChecklistTypeTest,
+			Remaining:     remaining,
+			Missing:       missing,
+		})
 	}
 
 	return blockers, nil
@@ -121,15 +119,11 @@ func BuildEOLGates(
 		case domain.ChecklistTypeTest:
 			branch.TestRemaining = b.Remaining
 			branch.TestMissing = b.Missing
-		case domain.ChecklistTypeShipment:
-			branch.ShipmentRemaining = b.Remaining
-			branch.ShipmentMissing = b.Missing
 		}
 	}
 	branch.Ready = !branch.AlreadyDone &&
 		branch.BranchEOLRemaining == 0 &&
 		branch.TestRemaining == 0 &&
-		branch.ShipmentRemaining == 0 &&
 		branch.StationStepsRemaining == 0
 
 	depot := domain.EOLDepotReleaseGate{
@@ -158,7 +152,7 @@ func BuildEOLGates(
 }
 
 // TriggerBranchShipWouldBlock encodes fn_enforce_branch_shipment (migration
-// 0022) as a pure decision over the same counters the application layer uses.
+// 0044) as a pure decision over the same counters the application layer uses.
 // Returns true when the trigger would RAISE EXCEPTION.
 func TriggerBranchShipWouldBlock(g domain.EOLBranchShipGate) bool {
 	if g.AlreadyDone {
@@ -166,7 +160,6 @@ func TriggerBranchShipWouldBlock(g domain.EOLBranchShipGate) bool {
 	}
 	return g.BranchEOLRemaining > 0 ||
 		g.TestRemaining > 0 ||
-		g.ShipmentRemaining > 0 ||
 		g.StationStepsRemaining > 0
 }
 

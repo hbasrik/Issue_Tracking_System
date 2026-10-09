@@ -106,8 +106,6 @@ type EOLBranchShipGate struct {
 	BranchEOLMissing      int  `json:"branch_eol_missing"`
 	TestRemaining         int  `json:"test_remaining"`
 	TestMissing           int  `json:"test_missing"`
-	ShipmentRemaining     int  `json:"shipment_remaining"`
-	ShipmentMissing       int  `json:"shipment_missing"`
 	StationStepsRemaining int  `json:"station_steps_remaining"`
 	OpenIssueCount        int  `json:"open_issue_count"`
 }

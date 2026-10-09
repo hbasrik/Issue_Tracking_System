@@ -66,7 +66,6 @@ func (r *ShipmentReadinessReader) ForVIN(ctx context.Context, vin string) (*doma
 			})
 		}
 	}
-	out.Warnings = append(out.Warnings, r.checklistWarnings(ctx, vin, domain.ChecklistTypeShipment)...)
 	out.Warnings = append(out.Warnings, r.checklistWarnings(ctx, vin, domain.ChecklistTypeTest)...)
 	out.Warnings = append(out.Warnings, r.checklistWarnings(ctx, vin, domain.ChecklistTypeEOL)...)
 
@@ -144,23 +143,15 @@ func (r *ShipmentReadinessReader) checklistWarnings(ctx context.Context, vin str
 }
 
 func codeForChecklist(typ domain.ChecklistType) domain.ShipmentWarningCode {
-	switch typ {
-	case domain.ChecklistTypeTest:
+	if typ == domain.ChecklistTypeTest {
 		return domain.ShipmentWarningTestIncomplete
-	case domain.ChecklistTypeEOL:
-		return domain.ShipmentWarningEOLIncomplete
-	default:
-		return domain.ShipmentWarningShipmentIncomplete
 	}
+	return domain.ShipmentWarningEOLIncomplete
 }
 
 func checklistLabel(typ domain.ChecklistType) string {
-	switch typ {
-	case domain.ChecklistTypeTest:
+	if typ == domain.ChecklistTypeTest {
 		return "Test checklist"
-	case domain.ChecklistTypeEOL:
-		return "EOL checklist"
-	default:
-		return "Shipment checklist"
 	}
+	return "EOL checklist"
 }

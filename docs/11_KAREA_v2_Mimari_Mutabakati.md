@@ -793,6 +793,35 @@ kalıyordu.
   mobil, yönetici web) ve MoSCoW #30 (Faz 1'de çevrimdışı senkronizasyon
   yok). Yazılı bir gerekçesi olmayan fark "unutulmuş" sayılır.
 
+## Karar 33 — Sevkiyat kontrol listesi kaldırıldı (NEW — 2026-10-09)
+
+- **Neden:** Sevkiyat listesindeki 46 montaj maddesi artık istasyonlarda
+  yapılıyor; kontrol listesinde ikinci kez tutulmasına gerek yok. Yerine
+  ileride E/E gelecek; o ayrı bir iş ve API şartnamesini bekliyor.
+- **Kural:** Sevkiyat maddeleri hiçbir yerde sayılmaz. Katmanlar şablonun
+  varlığına değil türe bakar; böylece eski kurulumda kalan SHIPMENT şablonu
+  ve satırları da hiçbir sonucu etkilemez:
+  - Şubeden çıkış kapısı (`BranchShipBlockers`, `BuildEOLGates`,
+    `TriggerBranchShipWouldBlock`; tetikleyici `fn_enforce_branch_shipment`
+    migration 0044). Kalan sert şartlar: yetki `eol.branch.ship`, araç daha
+    önce çıkmamış, aktif şube EOL maddeleri ve aktif Test maddeleri
+    OK/CONDITIONAL_OK, istasyon adımlarının hepsi OK. Açık hata yalnız
+    uyarıdır.
+  - Aşama uygunluğu (`applicableChecklistItemsSQL`): ilerleme yüzdesi ve
+    "Sevk öncesi uyarı" listesi yalnız istasyon adımları + EOL + Test
+    maddelerini sayar. Karar 16'daki "+ SHIPMENT" kapsamı bu kararla kalktı.
+  - Donma kuralı (Karar 29) değişmedi: EOL ve Test maddeleri aynı biçimde
+    donar; Karar 29'daki "Sevkiyat" ifadesi artık hiçbir maddeye denk gelmez.
+  - Web'de Sevkiyat sekmesi, mobilde Sevkiyat ekranı ve seed'deki SHIPMENT
+    şablonu kaldırılır.
+- **Kalanlar:** `checklist_type_enum` içindeki `SHIPMENT`, `SHIPMENT_ITEM`
+  hata kaynağı ve `checklist.shipment.*` yetkileri silinmez; denetim kayıtları
+  ve geçmiş satırlar onlara atıf yapıyor. "Sevk öncesi uyarı" paneli hâlâ
+  `checklist.shipment.view` yetkisine bağlı; yetkiyi değiştirmek ayrı bir
+  RBAC işidir (docs/16).
+- **Sıra:** Önce kod (eski şemada da çalışır; yalnız şablonu atanmış araçta
+  eski tetikleyici hâlâ reddeder), sonra migration 0044; kesinti yok.
+
 ## Değişmeyen / Yeniden Kullanılacaklar
 
 Şunlara **dokunulmuyor**, olduğu gibi kalıyor: JWT auth + bcrypt (üstteki JWT_SECRET ve iptal sıkılaştırmaları hariç), CORS allowlist mimarisi, Unit-of-Work (pgx.Tx) transaction pattern, `.cursor/rules` (commit ve environment-check kuralları), Analysis sekmesi temel yapısı (VIN×severity kırılımı, Pie/Bar chart'lar — yeni station/EOL alanlarıyla genişleyecek ama sıfırdan kurulmayacak), Docker/migration/seed altyapısı.

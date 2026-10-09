@@ -4,10 +4,9 @@ package domain
 type ShipmentWarningCode string
 
 const (
-	ShipmentWarningShipmentIncomplete ShipmentWarningCode = "SHIPMENT_INCOMPLETE"
-	ShipmentWarningTestIncomplete     ShipmentWarningCode = "TEST_INCOMPLETE"
-	ShipmentWarningEOLIncomplete      ShipmentWarningCode = "EOL_INCOMPLETE"
-	ShipmentWarningOpenIssue          ShipmentWarningCode = "OPEN_ISSUE"
+	ShipmentWarningTestIncomplete ShipmentWarningCode = "TEST_INCOMPLETE"
+	ShipmentWarningEOLIncomplete  ShipmentWarningCode = "EOL_INCOMPLETE"
+	ShipmentWarningOpenIssue      ShipmentWarningCode = "OPEN_ISSUE"
 	// ShipmentWarningStationSteps carries RemainingCount = applicable station
 	// steps not yet OK.
 	ShipmentWarningStationSteps ShipmentWarningCode = "STATION_STEPS_INCOMPLETE"

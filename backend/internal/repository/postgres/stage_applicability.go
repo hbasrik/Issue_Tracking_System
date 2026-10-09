@@ -7,8 +7,9 @@ import "fmt"
 // percentage, so the three can never disagree.
 //
 // Every checklist item and station step belongs to the stage whose gate
-// guards it (migration 0022): station steps, TEST, SHIPMENT and EOL BRANCH
-// items gate branch ship; EOL DEPOT items gate depot release. A vehicle has
+// guards it (migration 0044): station steps, TEST and EOL BRANCH items gate
+// branch ship; EOL DEPOT items gate depot release. SHIPMENT items are retired
+// (Karar 33) and are never applicable. A vehicle has
 // passed that stage once the workflow stamp is set, or once it is terminal
 // (DELIVERED / legacy SHIPPED).
 //
@@ -70,7 +71,7 @@ func applicableChecklistItemsSQL(vinExpr string) string {
 		FROM vehicles av
 		JOIN checklist_template_items cti
 		  ON cti.is_active
-		 AND cti.template_id IN (av.eol_template_id, av.shipment_template_id, av.test_template_id)
+		 AND cti.template_id IN (av.eol_template_id, av.test_template_id)
 		JOIN checklist_templates t ON t.id = cti.template_id
 		LEFT JOIN vehicle_eol_workflow aw ON aw.vin = av.vin
 		LEFT JOIN checklist_item_progress p ON p.check_item_id = cti.id AND p.vin = av.vin
