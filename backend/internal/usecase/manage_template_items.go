@@ -298,6 +298,10 @@ func (r *ChecklistResultRecorder) DeleteTemplateItem(ctx context.Context, actorI
 }
 
 func (r *ChecklistResultRecorder) deleteTemplateItemTx(ctx context.Context, actorID, templateID, itemID int) error {
+	tmpl, err := r.checklist.GetTemplate(ctx, templateID)
+	if err != nil {
+		return err
+	}
 	item, err := r.checklist.GetTemplateItem(ctx, itemID)
 	if err != nil {
 		return err
@@ -327,10 +331,6 @@ func (r *ChecklistResultRecorder) deleteTemplateItemTx(ctx context.Context, acto
 		return err
 	}
 	if err := r.checklist.DeleteTemplateItem(ctx, itemID); err != nil {
-		return err
-	}
-	tmpl, err := r.checklist.GetTemplate(ctx, templateID)
-	if err != nil {
 		return err
 	}
 	d := templateItemDetail(domain.AdminActionDelete, tmpl, item)

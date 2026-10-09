@@ -137,6 +137,9 @@ func (p EOLItemPhase) Valid() bool {
 // ValidateTemplateItemFields enforces catalogue rules: non-empty text, EOL
 // items must carry BRANCH/DEPOT, SHIPMENT/TEST items must not.
 func ValidateTemplateItemFields(templateType ChecklistType, itemText string, phase *EOLItemPhase) error {
+	if !templateType.Valid() {
+		return ErrInvalidEnumValue
+	}
 	text := strings.TrimSpace(itemText)
 	if text == "" {
 		return ErrTemplateItemTextRequired

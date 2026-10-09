@@ -820,6 +820,11 @@ kalıyordu.
   `ChecklistType.Valid()` yalnız EOL ve TEST'i kabul eder; `/checklists/shipment`
   okuma ve kaydetme 400, Sevkiyat ilerleme satırına medya yükleme 400 döner.
   `checklist.shipment.view/edit` yetkileri koddan kalktı.
+- **Yeni SHIPMENT şablonu açılamaz:** şablon oluşturan bir API yok; şablon
+  yönetimi (`/checklist-templates` liste, madde listesi, ekleme, düzenleme,
+  silme, sıralama, etki önizleme) SHIPMENT şablonunu görmez — liste
+  süzer, tekil erişim 404 döner, madde doğrulaması SHIPMENT tipini reddeder.
+  Web şablon ekranının tip seçenekleri yalnız EOL ve TEST'tir.
 - **Uyarı paneli yetkisi:** "Sevk öncesi uyarı" (`GET
   /vehicles/{vin}/shipment-readiness`, web paneli, mobil istasyon ekranı)
   `vehicle.view` ister; panel aracın sevk özetidir. Dört rolde de var:

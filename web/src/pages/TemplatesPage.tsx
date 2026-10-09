@@ -34,8 +34,6 @@ function templateTypeLabel(
   switch (type) {
     case 'EOL':
       return t('templates.typeEol');
-    case 'SHIPMENT':
-      return t('templates.typeShipment');
     case 'TEST':
       return t('templates.typeTest');
     default:
@@ -563,8 +561,7 @@ export default function TemplatesPage() {
                   </select>
                 ) : null}
                 {sectionsForTemplateType(selected.Type).length > 0 ||
-                selected.Type === 'TEST' ||
-                selected.Type === 'SHIPMENT' ? (
+                selected.Type === 'TEST' ? (
                   <>
                     <select
                       className={inputClass}
@@ -662,8 +659,7 @@ export default function TemplatesPage() {
                             </select>
                           ) : null}
                           {sectionsForTemplateType(selected.Type).length > 0 ||
-                          selected.Type === 'TEST' ||
-                          selected.Type === 'SHIPMENT' ? (
+                          selected.Type === 'TEST' ? (
                             <SectionKeyEditor
                               catalog={sectionsForTemplateType(selected.Type)}
                               value={draftSection[item.ID] ?? item.SectionKey ?? ''}

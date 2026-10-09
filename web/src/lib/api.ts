@@ -74,7 +74,7 @@ export interface ApiErrorBody {
 }
 
 export interface EOLChecklistBlocker {
-  checklist_type: 'EOL' | 'TEST' | 'SHIPMENT';
+  checklist_type: 'EOL' | 'TEST';
   eol_phase?: 'BRANCH' | 'DEPOT';
   remaining: number;
 }
@@ -830,7 +830,7 @@ export interface StationStepItem {
   CheckedAt?: string | null;
 }
 
-export type ChecklistTemplateType = 'EOL' | 'SHIPMENT' | 'TEST';
+export type ChecklistTemplateType = 'EOL' | 'TEST';
 
 export type DefectCatalogueWrite = {
   code: string;

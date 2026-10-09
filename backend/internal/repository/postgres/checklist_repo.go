@@ -325,21 +325,22 @@ func (r *ChecklistProgressRepo) SaveResult(ctx context.Context, result domain.Ch
 	return nil
 }
 
-// ListTemplates returns every checklist template with a live count of its
-// active items. Inactive items are excluded from the count so the admin page
-// matches what operators see on the vehicle checklists.
+// ListTemplates returns every checklist template except SHIPMENT (Karar 33)
+// with a live count of its active items. Inactive items are excluded from
+// the count so the admin page matches what operators see on the vehicle
+// checklists.
 func (r *ChecklistProgressRepo) ListTemplates(ctx context.Context) ([]domain.ChecklistTemplateSummary, error) {
 	rows, err := executor(ctx, r.pool).Query(ctx,
 		`SELECT ct.id, ct.vehicle_model_id, ct.type::text, ct.name, ct.is_active,
 		        COUNT(cti.id) FILTER (WHERE cti.is_active = TRUE)::int AS item_count
 		 FROM checklist_templates ct
 		 LEFT JOIN checklist_template_items cti ON cti.template_id = ct.id
+		 WHERE ct.type <> 'SHIPMENT'
 		 GROUP BY ct.id
 		 ORDER BY CASE ct.type::text
 		            WHEN 'EOL' THEN 1
-		            WHEN 'SHIPMENT' THEN 2
-		            WHEN 'TEST' THEN 3
-		            ELSE 4
+		            WHEN 'TEST' THEN 2
+		            ELSE 3
 		          END,
 		          ct.id`)
 	if err != nil {
@@ -420,13 +421,14 @@ func scanTemplateItem(row pgx.Row) (*domain.ChecklistTemplateItem, error) {
 	return &item, nil
 }
 
-// GetTemplate returns one checklist_templates row.
+// GetTemplate returns one checklist_templates row. A SHIPMENT template is
+// ErrNotFound (Karar 33), so no template-item route can reach one.
 func (r *ChecklistProgressRepo) GetTemplate(ctx context.Context, templateID int) (*domain.ChecklistTemplate, error) {
 	var row domain.ChecklistTemplate
 	var typeText string
 	err := executor(ctx, r.pool).QueryRow(ctx,
 		`SELECT id, vehicle_model_id, type::text, name, is_active
-		 FROM checklist_templates WHERE id = $1`, templateID).
+		 FROM checklist_templates WHERE id = $1 AND type <> 'SHIPMENT'`, templateID).
 		Scan(&row.ID, &row.VehicleModelID, &typeText, &row.Name, &row.IsActive)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, domain.ErrNotFound
