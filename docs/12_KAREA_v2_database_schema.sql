@@ -210,9 +210,12 @@ CREATE TABLE checklist_templates (
     type              checklist_type_enum NOT NULL,
     name              VARCHAR(150) NOT NULL,
     is_active         BOOLEAN NOT NULL DEFAULT TRUE,
-    created_at        TIMESTAMPTZ NOT NULL DEFAULT now()
+    created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
     -- form_code / form_revision / form_published_at: added by 0039, dropped by
     -- 0041 (Karar 30: one template carries two forms; identity is per item).
+    -- migration 0045 (Karar 33): the Shipment checklist is gone; the enum
+    -- value stays for historical issue/audit rows.
+    CONSTRAINT checklist_templates_type_not_shipment CHECK (type <> 'SHIPMENT')
 );
 
 CREATE TABLE checklist_template_items (
@@ -272,9 +275,7 @@ CREATE TABLE vehicles (
     -- EOL factory/depot + TEST items; SHIPMENT retired, Karar 33), see
     -- stage_applicability.go.
     eol_template_id             INT REFERENCES checklist_templates(id),
-    -- Karar 33: no gate, progress or warning reads it; NULL when no active
-    -- SHIPMENT template exists. Kept for historical rows.
-    shipment_template_id        INT REFERENCES checklist_templates(id),
+    -- shipment_template_id: dropped by migration 0045 (Karar 33).
     test_template_id            INT REFERENCES checklist_templates(id),  -- Karar 4
     created_at                  TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at                  TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -659,25 +660,18 @@ CREATE TRIGGER trg_eol_workflow_updated_at
 -- Multi-template rule (v1 Decision Log #3): pick the model-specific
 -- template if one is active, otherwise fall back to the generic default
 -- (vehicle_model_id IS NULL) template of the same type. Karar 4 extends
--- this to also assign a TEST template.
+-- this to also assign a TEST template. Migration 0045 (Karar 33): no
+-- SHIPMENT template any more.
 CREATE OR REPLACE FUNCTION fn_assign_checklist_templates()
 RETURNS TRIGGER AS $$
 DECLARE
     v_eol_template_id INT;
-    v_shipment_template_id INT;
     v_test_template_id INT;
     v_first_station_id INT;
 BEGIN
     SELECT id INTO v_eol_template_id
     FROM checklist_templates
     WHERE type = 'EOL' AND is_active = TRUE
-      AND (vehicle_model_id = NEW.vehicle_model_id OR vehicle_model_id IS NULL)
-    ORDER BY vehicle_model_id NULLS LAST
-    LIMIT 1;
-
-    SELECT id INTO v_shipment_template_id
-    FROM checklist_templates
-    WHERE type = 'SHIPMENT' AND is_active = TRUE
       AND (vehicle_model_id = NEW.vehicle_model_id OR vehicle_model_id IS NULL)
     ORDER BY vehicle_model_id NULLS LAST
     LIMIT 1;
@@ -692,7 +686,6 @@ BEGIN
     SELECT id INTO v_first_station_id FROM stations WHERE is_active = TRUE ORDER BY sequence_no LIMIT 1;
 
     NEW.eol_template_id := v_eol_template_id;
-    NEW.shipment_template_id := v_shipment_template_id;
     NEW.test_template_id := v_test_template_id;
     NEW.current_station_id := v_first_station_id;
     RETURN NEW;
@@ -704,8 +697,8 @@ CREATE TRIGGER trg_assign_checklist_templates
     FOR EACH ROW EXECUTE FUNCTION fn_assign_checklist_templates();
 
 -- --- Materialize station-step / checklist / EOL-workflow rows for a ----
--- new vehicle. Copies the active station_steps catalogue and the three
--- assigned templates into vehicle-scoped progress rows so the mobile app
+-- new vehicle. Copies the active station_steps catalogue and the EOL and
+-- TEST templates into vehicle-scoped progress rows so the mobile app
 -- always has a concrete row to tick against (status = PENDING), and
 -- opens the EOL workflow at stage BRANCH.
 CREATE OR REPLACE FUNCTION fn_initialize_vehicle_progress()
@@ -722,11 +715,6 @@ BEGIN
     WHERE cti.template_id = NEW.eol_template_id AND cti.is_active = TRUE;
 
     INSERT INTO checklist_item_progress (vin, checklist_type, check_item_id, check_status)
-    SELECT NEW.vin, 'SHIPMENT', cti.id, 'PENDING'
-    FROM checklist_template_items cti
-    WHERE cti.template_id = NEW.shipment_template_id AND cti.is_active = TRUE;
-
-    INSERT INTO checklist_item_progress (vin, checklist_type, check_item_id, check_status)
     SELECT NEW.vin, 'TEST', cti.id, 'PENDING'
     FROM checklist_template_items cti
     WHERE cti.template_id = NEW.test_template_id AND cti.is_active = TRUE;
@@ -741,6 +729,11 @@ $$ LANGUAGE plpgsql;
 CREATE TRIGGER trg_initialize_vehicle_progress
     AFTER INSERT ON vehicles
     FOR EACH ROW EXECUTE FUNCTION fn_initialize_vehicle_progress();
+
+-- Not shown here (see migrations): the model-change triggers
+-- fn_reassign_checklist_templates / fn_rematerialize_checklist_after_template_reassign
+-- and their helper fn_materialize_vehicle_progress(vin, eol_template_id,
+-- test_template_id). Migration 0045 dropped the shipment argument (was 4 args).
 
 -- --- Move current_station (+ PLANNED -> IN_PRODUCTION) ------------------
 -- Soft-warning rule (v1 Decision Log #2, unchanged): a NOT_OK step never
@@ -1254,8 +1247,9 @@ INSERT INTO stations (name, sequence_no) VALUES
 -- Migration 0002 creates them with item counts in the name; 0041 drops the counts.
 INSERT INTO checklist_templates (vehicle_model_id, type, name, is_active) VALUES
     (NULL, 'EOL', 'Default EoL Template (Branch + Depot)', TRUE),
-    (NULL, 'SHIPMENT', 'Default Customer Vehicle Checklist', TRUE),
     (NULL, 'TEST', 'Default Test Checklist', TRUE);
+-- Migrations 0001/0002 also insert a SHIPMENT template and 0010 adds
+-- checklist.shipment.view/edit; 0045 deletes all three (Karar 33).
 
 -- Item rows are omitted here for brevity — see 09_KAREA_DB_Mimari_ve_Kurulum_Notlari.md
 -- for the seed-data loading plan (to be updated alongside the v2 prompt sequence).

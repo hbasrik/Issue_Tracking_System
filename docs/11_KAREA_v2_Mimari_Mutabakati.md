@@ -828,8 +828,28 @@ kalıyordu.
 - **`vehicles.shipment_template_id` düşer:** uygulama kodu kolonu okumaz
   (araç sorguları ve API yanıtı `ShipmentTemplateID` taşımaz); kolon,
   SHIPMENT şablonu, maddeleri, PENDING ilerleme satırları ve
-  `checklist.shipment.*` yetki satırları migration 0045 ile kalkar. Sıra:
-  önce bu kod yayına alınır, sonra 0045 kısa bir duraklamayla uygulanır.
+  `checklist.shipment.*` yetki satırları (rol atamalarıyla) migration 0045
+  ile kalkar; `checklist_templates` üzerinde `type <> 'SHIPMENT'` CHECK
+  eklenir. Beş tetikleyici fonksiyonu Sevkiyat'sız haline geçer;
+  `fn_materialize_vehicle_progress` 3 argümanlıdır (vin, EOL, Test).
+- **0045 koruması:** PENDING dışı bir Sevkiyat ilerleme satırı, Sevkiyat
+  kaynaklı bir hata, Sevkiyat satırına bağlı fotoğraf ya da Sevkiyat audit
+  kaydı varsa migration RAISE ile durur ve hiçbir şey silinmez (tek
+  işlem, tamamı geri alınır). golang-migrate sürümü 45 "dirty" bırakır;
+  geri dönüş `migrate force 44`'tür, veri değişmemiştir. Böyle bir
+  kurulumda geçmiş önce kararla ele alınır.
+- **0045 sırası ve kesinti:** Önce bu kod yayına alınır (kolonu okuyan eski
+  sürüm kalkar), sonra 0045 uygulanır; uygulama durdurulmaz. Silme yalnız
+  Sevkiyat satırlarına dokunur, araç güncellenmediği için EOL/Test satırları
+  yeniden üretilmez (id'leri ve sıra değeri aynı kalır). `DROP COLUMN`
+  `vehicles` üzerinde kısa bir özel kilit alır (500 araç / 23.000 satırlık
+  kopyada 0,2 sn).
+- **0045 down:** kolonu (araçlarda NULL), boş bir SHIPMENT şablonunu, iki
+  yetkiyi ve 0010'daki rol atamalarını, 0044 fonksiyonlarını geri koyar.
+  Silinen maddeler ve ilerleme satırları geri gelmez.
+- **Yeniden uygulama:** 0045 sonrası 0001/0002 (SHIPMENT şablonu ekler,
+  CHECK reddeder) ve 0009/0023 (`shipment_template_id` okur) bir daha
+  baştan koşturulamaz; uygulanmış migration'lar değiştirilmez.
 - **Metinler:** rol ekranındaki iki Sevkiyat yetkisi, şablon tipi etiketi,
   Sevkiyat bölüm kataloğu (6 bölüm anahtarı), etkinlik ve zaman çizelgesi
   etiketleri kalktı. Kalanlar sevkiyat checklist'i değildir: Test rozeti,

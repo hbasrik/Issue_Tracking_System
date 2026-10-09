@@ -15,8 +15,7 @@
 -- here if they are missing.
 --
 -- Triggers do the heavy lifting after each INSERT INTO vehicles:
---   trg_assign_checklist_templates  — EOL / TEST templates (the empty
---                                     SHIPMENT template too, no rows)
+--   trg_assign_checklist_templates  — EOL / TEST templates
 --   trg_initialize_vehicle_progress — station-step + checklist rows +
 --                                     vehicle_eol_workflow at BRANCH
 -- Targeted UPDATEs below then move each vehicle to a known lifecycle

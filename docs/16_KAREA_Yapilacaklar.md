@@ -1090,7 +1090,8 @@ başlatılınca devreye girer.
   EoL item(s) incomplete").
 
 ### A63. Sevkiyat checklist'inin tamamen kaldırılması `[~]` — 2026-10-09
-Karar 33. Sıra: önce kod (yapıldı), sonra migration 0045 (yazılacak).
+Karar 33. Sıra: önce kod (yapıldı), sonra migration 0045 (yazıldı, canlıya
+uygulanmadı).
 - `[x]` Uyarı paneli `vehicle.view` ile açılır (borç: D8).
 - `[x]` API: `ChecklistType.Valid()` SHIPMENT'ı reddeder;
   `/checklist/shipment` okuma ve kaydetme 400, Sevkiyat ilerleme satırına
@@ -1100,14 +1101,27 @@ Karar 33. Sıra: önce kod (yapıldı), sonra migration 0045 (yazılacak).
   `ShipmentTemplateID` yok.
 - `[x]` Metinler: rol ekranı yetki etiketleri, şablon tipi etiketi, Sevkiyat
   bölüm kataloğu (6 anahtar), etkinlik ve zaman çizelgesi etiketleri.
-- `[ ]` Migration 0045: koruma (PENDING dışı Sevkiyat satırı ya da
-  `SHIPMENT_ITEM` hatası varsa RAISE), beş fonksiyonun Sevkiyat'sız hali,
-  PENDING Sevkiyat satırları + kolon + SHIPMENT şablonu + iki yetki satırı
-  silinir, `checklist_templates` üzerinde `type <> 'SHIPMENT'` CHECK. Boş ve
-  dolu `_test` veritabanında up/down/up. Kısa duraklama gerekir.
+- `[x]` Migration 0045 yazıldı (`_test` veritabanlarında denendi): koruma
+  (PENDING dışı Sevkiyat satırı, `SHIPMENT_ITEM` hatası, fotoğraf ya da
+  audit kaydı varsa RAISE), beş fonksiyonun Sevkiyat'sız hali, PENDING
+  Sevkiyat satırları + kolon + SHIPMENT şablonu + iki yetki satırı silinir,
+  `type <> 'SHIPMENT'` CHECK. Uygulama durdurulmaz (önce kod).
+- `[x]` CHECK'e takılan dört test fixture'ı uyarlandı (`branch_ship_trigger`,
+  `progress_scope`, `stage_applicability`, `checklist_frozen`);
+  `repository/postgres/shipment_retired_test.go` artık şemanın boş olduğunu
+  ve CHECK'i (23514) doğrular.
+- `[ ]` Canlıya 0045 (onay bekliyor; önce 8080'de yeni kod).
+- `[ ]` Karar: `verify_migrations.sh` 3. adımı (tüm up dosyalarını yeniden
+  koşturma) 0045 sonrası 0001/0002/0009/0023'te hata verir; v44'te 0 hata.
 - **Ara durum (kod yayında, 0045 öncesi):** iki yetki satırı veritabanında
   durduğu için rol ekranı onları "Diğer" grubunda veritabanı açıklamasıyla
-  gösterir; 0045 bu satırları siler.
+  gösterir; 0045 bu satırları siler (`shipment-0045/roles-*.png`: grup yok).
+- **0045 kanıtı:** `docs/screenshots/shipment-0045/` — `run-0045.sh`
+  (`fresh` / `full` / `guard` / `idem` / `reapply`) ve çıktıları. Dolu
+  kopyada 23.000 PENDING satır silindi, EOL/Test satır md5'i, id aralığı
+  ve sıra değeri (96500) aynı kaldı. `karea_shiprm_test`'te koruma 415
+  satır + 3 hata ile durdu, tablo md5'leri aynı. Down sonrası fonksiyon
+  md5'leri 0044 ile aynı. `capture-roles.mjs` + 4 PNG (TR/EN 1280/375).
 - **Kanıt:** `docs/screenshots/shipment-api-retired/` — `api-trial.sh` +
   `api-trial-output.txt` (18081, `karea_shiprm_test`: 400/400/400/404/404/404,
   liste yalnız EOL ve TEST, araç yanıtında yalnız `EOLTemplateID` /

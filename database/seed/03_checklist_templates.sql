@@ -1,6 +1,6 @@
 -- Populate default EOL / TEST templates (migration 0002).
 -- No SHIPMENT items (Karar 33): those assembly steps are done at stations
--- now. The SHIPMENT template row from migrations 0001/0002 stays, empty.
+-- now. Migration 0045 deletes the SHIPMENT template row from 0001/0002.
 -- Source: TEST and the 9 kept EOL items come from the live DB
 -- (exact text, incl. trailing newlines); the 95 EOL form items come from
 -- docs/21_KAREA_Yeni_Formlar.md (KY.FR-09 branch, KY.FR-19 depot).
