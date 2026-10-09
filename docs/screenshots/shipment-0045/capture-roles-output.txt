@@ -1,0 +1,6 @@
+output: /Users/Basri/Desktop/kts_kms_project/docs/screenshots/shipment-0045 (UPDATE_SCREENSHOTS=1, committed files)
+== tr 1280 ==  rows 25, "Diğer" header 0, shipment rows 0, last group "Analiz ve Yönetim"
+== tr 375 ==  rows 25, "Diğer" header 0, shipment rows 0, last group "Analiz ve Yönetim"
+== en 1280 ==  rows 25, "Other" header 0, shipment rows 0, last group "Analysis and admin"
+== en 375 ==  rows 25, "Other" header 0, shipment rows 0, last group "Analysis and admin"
+PASS: no other group, no checklist.shipment.* row

@@ -1,0 +1,8 @@
+item content, live (karea_ro, read-only) vs karea_s45_full_test after 0045:
+live:
+EOL|104|086db46bcaf800d0969a8346ae26ef8c
+SHIPMENT|46|5a2b9a398f0d9b3f4eb025ddfe6fae09
+TEST|43|2a52ea8402e9e78f63b84f67ecdafa77
+copy:
+EOL|104|086db46bcaf800d0969a8346ae26ef8c
+TEST|43|2a52ea8402e9e78f63b84f67ecdafa77

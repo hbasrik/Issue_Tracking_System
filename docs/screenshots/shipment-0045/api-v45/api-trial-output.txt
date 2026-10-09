@@ -1,0 +1,16 @@
+vin=N7V1K1SA0TK000003 shipment_template= shipment_item= shipment_progress=
+GET  checklist/shipment                      400  {"error":"type must be one of: eol, test","request_id":"Basri's Macbook/3mFrowwjFx-000019"}
+POST checklist/shipment/{item}               404  404 page not found
+POST media on SHIPMENT progress row          400  {"error":"entity_id is required and must be an integer id for entity_type CHECKLIST_ITEM_PROGRESS","request_id":"Basri's Macbook/3mFrowwjFx-
+GET  checklist-templates/{ship}/items        400  {"error":"id must be an integer","request_id":"Basri's Macbook/3mFrowwjFx-000022"}
+POST checklist-templates/{ship}/items        400  {"error":"id must be a positive integer","request_id":"Basri's Macbook/3mFrowwjFx-000023"}
+DELETE checklist-templates/{ship}/items/{i}  404  404 page not found
+
+template list types:
+   1 "Type":"EOL"
+   1 "Type":"TEST"
+vehicle payload template fields:
+"EOLTemplateID":3
+"TestTemplateID":5
+GET  checklist/eol (control)                 200  {"items":[{"ItemID":1,"ItemNo":1,"ItemText":"Araç kimliği ve varyant","Status":"PENDING","ReworkDesc":"","ConditionalDesc":"","RejectedDesc"
+GET  shipment-readiness (control)            200  {"vin":"N7V1K1SA0TK000003","status":"IN_PRODUCTION","ready":false,"warnings":[{"code":"STATION_STEPS_INCOMPLETE","message":"56 istasyon adım

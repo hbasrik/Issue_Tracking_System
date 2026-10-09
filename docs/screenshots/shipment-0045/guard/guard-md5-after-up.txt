@@ -1,0 +1,16 @@
+
+==== row md5: after failed up
+checklist_item_progress|3474 rows, md5 f610da5b7644c88ad9ed55664b147a9b
+checklist_templates|3 rows, md5 232f7bcea9455788cfcfa58d2c3f120f
+checklist_template_items|193 rows, md5 2351f643c00d08550d7a3f5c2bcb1b64
+vehicles|18 rows, md5 598c3e7a3012a091233aa39c47b1de93
+permissions|22 rows, md5 7f03660a05f3f9966119eabb8f362c6e
+role_permissions|48 rows, md5 d2cafed954d6e1f3238fd00d3c5680eb
+issue_list|16 rows, md5 b1da0cbc1c32ac390605c20ebee54a0b
+media_attachments|0 rows, md5 -
+audit_logs|24 rows, md5 73ffc0a1d4cb356190f80d67ef3fb49a
+vehicle_eol_workflow|18 rows, md5 9aa77d1d56ac91460715dbc866572398
+vehicle_station_step_progress|1152 rows, md5 1a9366c675ac7fee099a83e54bd640d6
+schema_migrations|1 rows, md5 26ad374c232d75e34f5fd91119569eb4
+functions|e6205b7e5f9f1404b5138f164024f0a8
+column vehicles.shipment_template_id|1

@@ -1,0 +1,100 @@
+
+==== state: karea_shiprm_test before
+schema_migrations|44
+column vehicles.shipment_template_id|1
+CHECK checklist_templates_type_not_shipment|0
+templates EOL|1 template(s), 104 item(s)
+templates SHIPMENT|1 template(s), 46 item(s)
+templates TEST|1 template(s), 43 item(s)
+vehicles|18
+progress EOL CONDITIONAL_OK|1
+progress EOL NOT_OK|3
+progress EOL OK|935
+progress EOL PENDING|932
+progress EOL REWORK|1
+progress SHIPMENT CONDITIONAL_OK|1
+progress SHIPMENT NOT_OK|1
+progress SHIPMENT OK|413
+progress SHIPMENT PENDING|413
+progress TEST NOT_OK|2
+progress TEST OK|387
+progress TEST PENDING|385
+permission checklist.shipment.edit|ASSEMBLY,MANAGER_ADMIN,OPERATOR
+permission checklist.shipment.view|ASSEMBLY,MANAGER_ADMIN,OPERATOR
+permission rows checklist.shipment.*|2
+fn_materialize_vehicle_progress signature|fn_materialize_vehicle_progress(character varying,integer,integer,integer)
+
+==== history the guard must find
+SHIPMENT progress CONDITIONAL_OK|1
+SHIPMENT progress NOT_OK|1
+SHIPMENT progress OK|413
+SHIPMENT progress PENDING|413
+issues source_type SHIPMENT_ITEM|3
+audit CHECKLIST_ITEM_UPDATE SHIPMENT|0
+
+==== row md5: before
+checklist_item_progress|3474 rows, md5 f610da5b7644c88ad9ed55664b147a9b
+checklist_templates|3 rows, md5 232f7bcea9455788cfcfa58d2c3f120f
+checklist_template_items|193 rows, md5 2351f643c00d08550d7a3f5c2bcb1b64
+vehicles|18 rows, md5 598c3e7a3012a091233aa39c47b1de93
+permissions|22 rows, md5 7f03660a05f3f9966119eabb8f362c6e
+role_permissions|48 rows, md5 d2cafed954d6e1f3238fd00d3c5680eb
+issue_list|16 rows, md5 b1da0cbc1c32ac390605c20ebee54a0b
+media_attachments|0 rows, md5 -
+audit_logs|24 rows, md5 73ffc0a1d4cb356190f80d67ef3fb49a
+vehicle_eol_workflow|18 rows, md5 9aa77d1d56ac91460715dbc866572398
+vehicle_station_step_progress|1152 rows, md5 1a9366c675ac7fee099a83e54bd640d6
+schema_migrations|1 rows, md5 17b50bcfdfbe0536c9af4d2df4d2f9f4
+functions|e6205b7e5f9f1404b5138f164024f0a8
+column vehicles.shipment_template_id|1
+
+==== dry run of 0045 up inside BEGIN ... ROLLBACK (notices)
+  ERROR:  0045: Shipment checklist has history, nothing deleted (non-PENDING progress rows: 415, issues: 3, photos: 0, audit rows: 0)
+  CONTEXT:  PL/pgSQL function inline_code_block line 37 at RAISE
+
+==== migrate up 1 (must fail)
+  migrate: error: migration failed: 0045: Shipment checklist has history, nothing deleted (non-PENDING progress rows: 415, issues: 3, photos: 0, audit rows: 0)
+  migrate:  (details: pq: 0045: Shipment checklist has history, nothing deleted (non-PENDING progress rows: 415, issues: 3, photos: 0, audit rows: 0))
+
+==== row md5: after failed up
+checklist_item_progress|3474 rows, md5 f610da5b7644c88ad9ed55664b147a9b
+checklist_templates|3 rows, md5 232f7bcea9455788cfcfa58d2c3f120f
+checklist_template_items|193 rows, md5 2351f643c00d08550d7a3f5c2bcb1b64
+vehicles|18 rows, md5 598c3e7a3012a091233aa39c47b1de93
+permissions|22 rows, md5 7f03660a05f3f9966119eabb8f362c6e
+role_permissions|48 rows, md5 d2cafed954d6e1f3238fd00d3c5680eb
+issue_list|16 rows, md5 b1da0cbc1c32ac390605c20ebee54a0b
+media_attachments|0 rows, md5 -
+audit_logs|24 rows, md5 73ffc0a1d4cb356190f80d67ef3fb49a
+vehicle_eol_workflow|18 rows, md5 9aa77d1d56ac91460715dbc866572398
+vehicle_station_step_progress|1152 rows, md5 1a9366c675ac7fee099a83e54bd640d6
+schema_migrations|1 rows, md5 26ad374c232d75e34f5fd91119569eb4
+functions|e6205b7e5f9f1404b5138f164024f0a8
+column vehicles.shipment_template_id|1
+
+==== migrate force 44 (clears the dirty flag golang-migrate left on 45)
+
+==== row md5: after force 44
+checklist_item_progress|3474 rows, md5 f610da5b7644c88ad9ed55664b147a9b
+checklist_templates|3 rows, md5 232f7bcea9455788cfcfa58d2c3f120f
+checklist_template_items|193 rows, md5 2351f643c00d08550d7a3f5c2bcb1b64
+vehicles|18 rows, md5 598c3e7a3012a091233aa39c47b1de93
+permissions|22 rows, md5 7f03660a05f3f9966119eabb8f362c6e
+role_permissions|48 rows, md5 d2cafed954d6e1f3238fd00d3c5680eb
+issue_list|16 rows, md5 b1da0cbc1c32ac390605c20ebee54a0b
+media_attachments|0 rows, md5 -
+audit_logs|24 rows, md5 73ffc0a1d4cb356190f80d67ef3fb49a
+vehicle_eol_workflow|18 rows, md5 9aa77d1d56ac91460715dbc866572398
+vehicle_station_step_progress|1152 rows, md5 1a9366c675ac7fee099a83e54bd640d6
+schema_migrations|1 rows, md5 17b50bcfdfbe0536c9af4d2df4d2f9f4
+functions|e6205b7e5f9f1404b5138f164024f0a8
+column vehicles.shipment_template_id|1
+
+==== diff before vs after failed up
+  13c13
+  < schema_migrations|1 rows, md5 17b50bcfdfbe0536c9af4d2df4d2f9f4
+  ---
+  > schema_migrations|1 rows, md5 26ad374c232d75e34f5fd91119569eb4
+
+==== diff before vs after force 44 (empty = identical)
+  identical

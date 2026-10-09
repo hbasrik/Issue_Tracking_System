@@ -1,0 +1,31 @@
+44/u branch_ship_drop_shipment_gate (98.560167ms)
+45/u drop_shipment_checklist (94.391583ms)
+seed done
+45|f
+EOL|1872
+TEST|774
+EOL|1
+TEST|1
+==== go test -count=1 ./... (TEST_DATABASE_URL and DATABASE_URL = karea_s45_dev_test)
+ok  	github.com/karea/backend/internal/delivery/http	16.533s
+ok  	github.com/karea/backend/internal/domain	0.770s
+ok  	github.com/karea/backend/internal/platform/applog	0.468s
+ok  	github.com/karea/backend/internal/platform/config	1.706s
+ok  	github.com/karea/backend/internal/platform/storage	1.090s
+ok  	github.com/karea/backend/internal/repository/postgres	3.602s
+ok  	github.com/karea/backend/internal/usecase	9.117s
+==== retired-schema + adapted fixtures (-v)
+--- PASS: TestBranchShipTrigger_Gates (0.12s)
+--- PASS: TestChecklistFrozen_EOLAndTestReadPath (0.09s)
+--- PASS: TestProgress_HundredOnlyAfterDepotItems (0.29s)
+--- PASS: TestProgress_SameNumberOnEveryReadPath (0.09s)
+--- PASS: TestShipmentChecklistSchemaRetired (0.02s)
+ok  	github.com/karea/backend/internal/repository/postgres	0.898s
+--- PASS: TestProgress_HundredOnlyAfterDepotItems (0.32s)
+--- PASS: TestProgress_SameNumberOnEveryReadPath (0.09s)
+--- PASS: TestSchema_NoStoredProgressPercentage (0.06s)
+--- PASS: TestInsertPendingForVehicles_OnlyBeforeItemStage (0.05s)
+--- PASS: TestApplicableSet_ProgressMatchesOpenItems (0.16s)
+--- PASS: TestListItemsWithProgress_StageClosedIsApplicableComplement (0.11s)
+--- PASS: TestDepotSequencingTrigger_IgnoresClosedBranchRows (0.02s)
+ok  	github.com/karea/backend/internal/repository/postgres	1.114s

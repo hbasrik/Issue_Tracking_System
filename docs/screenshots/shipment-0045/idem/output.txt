@@ -1,0 +1,129 @@
+
+==== state: start (45)
+schema_migrations|45
+column vehicles.shipment_template_id|0
+CHECK checklist_templates_type_not_shipment|1
+templates EOL|1 template(s), 104 item(s)
+templates TEST|1 template(s), 43 item(s)
+vehicles|500
+progress EOL PENDING|52000
+progress TEST PENDING|21500
+permission rows checklist.shipment.*|0
+fn_materialize_vehicle_progress signature|fn_materialize_vehicle_progress(character varying,integer,integer)
+
+==== function md5: start (45)
+fn_assign_checklist_templates()|76ec625c2bb0afae899b0588281012c3
+fn_initialize_vehicle_progress()|6ec0a07e9dc2758f3f2b1f36538a0ba0
+fn_materialize_vehicle_progress(character varying,integer,integer)|cbb941021f2f323aca6ae1fac32d08e0
+fn_reassign_checklist_templates_on_model_change()|3d76989116b9c596109030d900cbb326
+fn_rematerialize_checklist_after_template_reassign()|a4f16472da8508c83424777f28c3cf8f
+
+==== data md5: start (45)
+EOL/TEST progress|73500 rows, ids 1..73500, md5 aedbffc4fa92381bcb7302ec15dfebfc
+progress id sequence last_value|73647
+station step progress|32000 rows, md5 88b0b589f1670cb64bc3495b454ab4c8
+eol workflow|500 rows, md5 a57685efc5647e5d7ceb23a5de6c4f96
+vehicles (minus shipment_template_id)|500 rows, md5 5931ab2d8fcf670137db1815e0180ed2
+
+==== up.sql again (second run on 45)
+  psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0045_drop_shipment_checklist.up.sql:233: NOTICE:  function fn_materialize_vehicle_progress(pg_catalog.varchar,pg_catalog.int4,pg_catalog.int4,pg_catalog.int4) does not exist, skipping
+  psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0045_drop_shipment_checklist.up.sql:248: NOTICE:  0045: deleted 0 SHIPMENT progress row(s)
+  psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0045_drop_shipment_checklist.up.sql:250: NOTICE:  column "shipment_template_id" of relation "vehicles" does not exist, skipping
+  psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0045_drop_shipment_checklist.up.sql:265: NOTICE:  0045: deleted 0 SHIPMENT template(s) with 0 item(s)
+  psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0045_drop_shipment_checklist.up.sql:281: NOTICE:  0045: deleted 0 permission(s) with 0 role grant(s)
+
+==== state: after second up
+schema_migrations|45
+column vehicles.shipment_template_id|0
+CHECK checklist_templates_type_not_shipment|1
+templates EOL|1 template(s), 104 item(s)
+templates TEST|1 template(s), 43 item(s)
+vehicles|500
+progress EOL PENDING|52000
+progress TEST PENDING|21500
+permission rows checklist.shipment.*|0
+fn_materialize_vehicle_progress signature|fn_materialize_vehicle_progress(character varying,integer,integer)
+
+==== function md5: after second up
+fn_assign_checklist_templates()|76ec625c2bb0afae899b0588281012c3
+fn_initialize_vehicle_progress()|6ec0a07e9dc2758f3f2b1f36538a0ba0
+fn_materialize_vehicle_progress(character varying,integer,integer)|cbb941021f2f323aca6ae1fac32d08e0
+fn_reassign_checklist_templates_on_model_change()|3d76989116b9c596109030d900cbb326
+fn_rematerialize_checklist_after_template_reassign()|a4f16472da8508c83424777f28c3cf8f
+
+==== data md5: after second up
+EOL/TEST progress|73500 rows, ids 1..73500, md5 aedbffc4fa92381bcb7302ec15dfebfc
+progress id sequence last_value|73647
+station step progress|32000 rows, md5 88b0b589f1670cb64bc3495b454ab4c8
+eol workflow|500 rows, md5 a57685efc5647e5d7ceb23a5de6c4f96
+vehicles (minus shipment_template_id)|500 rows, md5 5931ab2d8fcf670137db1815e0180ed2
+
+==== down.sql, then down.sql again
+  psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0045_drop_shipment_checklist.down.sql:18: NOTICE:  constraint "checklist_templates_type_not_shipment" of relation "checklist_templates" does not exist, skipping
+  psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0045_drop_shipment_checklist.down.sql:21: NOTICE:  column "shipment_template_id" of relation "vehicles" already exists, skipping
+  psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0045_drop_shipment_checklist.down.sql:226: NOTICE:  function fn_materialize_vehicle_progress(pg_catalog.varchar,pg_catalog.int4,pg_catalog.int4) does not exist, skipping
+
+==== state: after two downs
+schema_migrations|45
+column vehicles.shipment_template_id|1
+CHECK checklist_templates_type_not_shipment|0
+templates EOL|1 template(s), 104 item(s)
+templates SHIPMENT|1 template(s), 0 item(s)
+templates TEST|1 template(s), 43 item(s)
+vehicles|500
+progress EOL PENDING|52000
+progress TEST PENDING|21500
+permission checklist.shipment.edit|ASSEMBLY,MANAGER_ADMIN,OPERATOR
+permission checklist.shipment.view|ASSEMBLY,MANAGER_ADMIN,OPERATOR
+permission rows checklist.shipment.*|2
+fn_materialize_vehicle_progress signature|fn_materialize_vehicle_progress(character varying,integer,integer,integer)
+
+==== function md5: after two downs
+fn_assign_checklist_templates()|e30e2bb4ed29f9b2fd416c9b9ec0b873
+fn_initialize_vehicle_progress()|3ac00949cddbb4f78640834b925f168d
+fn_materialize_vehicle_progress(character varying,integer,integer,integer)|3d90b15fb1de02bee057fd4dad4b7034
+fn_reassign_checklist_templates_on_model_change()|1e90fbbc2baea924bffad07d3907afef
+fn_rematerialize_checklist_after_template_reassign()|237c9aeeb50552465ec1d75ad67ad912
+
+==== data md5: after two downs
+EOL/TEST progress|73500 rows, ids 1..73500, md5 aedbffc4fa92381bcb7302ec15dfebfc
+progress id sequence last_value|73647
+station step progress|32000 rows, md5 88b0b589f1670cb64bc3495b454ab4c8
+eol workflow|500 rows, md5 a57685efc5647e5d7ceb23a5de6c4f96
+vehicles (minus shipment_template_id)|500 rows, md5 5931ab2d8fcf670137db1815e0180ed2
+
+==== up.sql, then up.sql again
+  psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0045_drop_shipment_checklist.up.sql:248: NOTICE:  0045: deleted 0 SHIPMENT progress row(s)
+  psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0045_drop_shipment_checklist.up.sql:265: NOTICE:  0045: deleted 1 SHIPMENT template(s) with 0 item(s)
+  psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0045_drop_shipment_checklist.up.sql:281: NOTICE:  0045: deleted 2 permission(s) with 6 role grant(s)
+  psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0045_drop_shipment_checklist.up.sql:233: NOTICE:  function fn_materialize_vehicle_progress(pg_catalog.varchar,pg_catalog.int4,pg_catalog.int4,pg_catalog.int4) does not exist, skipping
+  psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0045_drop_shipment_checklist.up.sql:248: NOTICE:  0045: deleted 0 SHIPMENT progress row(s)
+  psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0045_drop_shipment_checklist.up.sql:250: NOTICE:  column "shipment_template_id" of relation "vehicles" does not exist, skipping
+  psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0045_drop_shipment_checklist.up.sql:265: NOTICE:  0045: deleted 0 SHIPMENT template(s) with 0 item(s)
+  psql:/Users/Basri/Desktop/kts_kms_project/database/migrations/0045_drop_shipment_checklist.up.sql:281: NOTICE:  0045: deleted 0 permission(s) with 0 role grant(s)
+
+==== state: after two ups
+schema_migrations|45
+column vehicles.shipment_template_id|0
+CHECK checklist_templates_type_not_shipment|1
+templates EOL|1 template(s), 104 item(s)
+templates TEST|1 template(s), 43 item(s)
+vehicles|500
+progress EOL PENDING|52000
+progress TEST PENDING|21500
+permission rows checklist.shipment.*|0
+fn_materialize_vehicle_progress signature|fn_materialize_vehicle_progress(character varying,integer,integer)
+
+==== function md5: after two ups
+fn_assign_checklist_templates()|76ec625c2bb0afae899b0588281012c3
+fn_initialize_vehicle_progress()|6ec0a07e9dc2758f3f2b1f36538a0ba0
+fn_materialize_vehicle_progress(character varying,integer,integer)|cbb941021f2f323aca6ae1fac32d08e0
+fn_reassign_checklist_templates_on_model_change()|3d76989116b9c596109030d900cbb326
+fn_rematerialize_checklist_after_template_reassign()|a4f16472da8508c83424777f28c3cf8f
+
+==== data md5: after two ups
+EOL/TEST progress|73500 rows, ids 1..73500, md5 aedbffc4fa92381bcb7302ec15dfebfc
+progress id sequence last_value|73647
+station step progress|32000 rows, md5 88b0b589f1670cb64bc3495b454ab4c8
+eol workflow|500 rows, md5 a57685efc5647e5d7ceb23a5de6c4f96
+vehicles (minus shipment_template_id)|500 rows, md5 5931ab2d8fcf670137db1815e0180ed2
