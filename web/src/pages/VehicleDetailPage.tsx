@@ -26,13 +26,12 @@ import { useI18n } from '../i18n';
 import { formatActionStamp } from '../lib/actionStamp';
 import type { MessageKey } from '../../../shared/i18n';
 
-type Tab = 'overview' | 'eol' | 'shipment' | 'test' | 'issues' | 'audit';
+type Tab = 'overview' | 'eol' | 'test' | 'issues' | 'audit';
 
 function isTab(value: string | null): value is Tab {
   return (
     value === 'overview' ||
     value === 'eol' ||
-    value === 'shipment' ||
     value === 'test' ||
     value === 'issues' ||
     value === 'audit'
@@ -41,7 +40,6 @@ function isTab(value: string | null): value is Tab {
 
 const TAB_DEFS: { id: Tab; labelKey: MessageKey; perm?: string }[] = [
   { id: 'overview', labelKey: 'vehicles.tab.overview' },
-  { id: 'shipment', labelKey: 'vehicles.tab.shipment', perm: Perm.ChecklistShipmentView },
   { id: 'test', labelKey: 'vehicles.tab.test', perm: Perm.ChecklistTestView },
   { id: 'eol', labelKey: 'vehicles.tab.eol', perm: Perm.ChecklistEOLView },
   { id: 'issues', labelKey: 'vehicles.tab.issues', perm: Perm.IssueView },
@@ -378,14 +376,6 @@ export default function VehicleDetailPage() {
           </div>
         )}
 
-        {activeTab === 'shipment' && has(Perm.ChecklistShipmentView) && (
-          <ChecklistPanel
-            vin={vehicle.VIN}
-            type="shipment"
-            title={t('vehicles.shipmentTitle')}
-            hint={t('vehicles.shipmentHint')}
-          />
-        )}
         {activeTab === 'test' && has(Perm.ChecklistTestView) && (
           <ChecklistPanel
             vin={vehicle.VIN}

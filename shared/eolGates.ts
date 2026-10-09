@@ -10,8 +10,6 @@ export type EOLBranchShipGate = {
   branch_eol_missing?: number;
   test_remaining: number;
   test_missing?: number;
-  shipment_remaining: number;
-  shipment_missing?: number;
   station_steps_remaining: number;
   open_issue_count: number;
 };
@@ -43,7 +41,6 @@ export type EolGateReasonKey =
   | 'eol.needDepotRelease'
   | 'eol.branchRemaining'
   | 'eol.branchBlockerTest'
-  | 'eol.branchBlockerShipment'
   | 'eol.branchBlockerStationSteps'
   | 'eol.depotRemaining'
   | 'eol.depotOpenIssues';
@@ -65,12 +62,6 @@ export function branchShipGateReasons(
   }
   if (gate.test_remaining > 0) {
     out.push({ key: 'eol.branchBlockerTest', params: { n: gate.test_remaining } });
-  }
-  if (gate.shipment_remaining > 0) {
-    out.push({
-      key: 'eol.branchBlockerShipment',
-      params: { n: gate.shipment_remaining },
-    });
   }
   if (gate.station_steps_remaining > 0) {
     out.push({

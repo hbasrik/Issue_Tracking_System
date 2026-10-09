@@ -942,7 +942,7 @@ export interface TemplateItemMissingVehicles {
   Vehicles: TemplateItemMissingVehicle[];
 }
 
-export type ChecklistType = 'eol' | 'shipment' | 'test';
+export type ChecklistType = 'eol' | 'test';
 
 export type ChecklistFrozenReason = 'DELIVERED' | 'BRANCH_SHIPPED' | 'DEPOT_RELEASED';
 

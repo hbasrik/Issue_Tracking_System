@@ -19,14 +19,7 @@ export type ShipmentWarningLike = {
 };
 
 function checklistListLabel(type: string | undefined, t: Translate): string {
-  switch (type) {
-    case 'TEST':
-      return t('vehicles.readinessListTest');
-    case 'EOL':
-      return t('vehicles.readinessListEol');
-    default:
-      return t('vehicles.readinessListShipment');
-  }
+  return type === 'TEST' ? t('vehicles.readinessListTest') : t('vehicles.readinessListEol');
 }
 
 /** Localized line for a pre-shipment warning, built from structured fields. */

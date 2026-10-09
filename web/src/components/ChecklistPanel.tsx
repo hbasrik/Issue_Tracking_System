@@ -56,8 +56,6 @@ function checklistEditPerm(type: ChecklistType): string {
   switch (type) {
     case 'test':
       return Perm.ChecklistTestEdit;
-    case 'shipment':
-      return Perm.ChecklistShipmentEdit;
     default:
       return Perm.ChecklistEOLEdit;
   }

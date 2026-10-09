@@ -19,8 +19,7 @@ function itemNotes(item: ChecklistItem): string {
   return item.Note?.trim() ?? '';
 }
 
-function checklistTitleKey(type: ChecklistType): 'print.checklistEol' | 'print.checklistShipment' | 'print.checklistTest' {
-  if (type === 'shipment') return 'print.checklistShipment';
+function checklistTitleKey(type: ChecklistType): 'print.checklistEol' | 'print.checklistTest' {
   if (type === 'test') return 'print.checklistTest';
   return 'print.checklistEol';
 }
