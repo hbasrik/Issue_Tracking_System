@@ -75,7 +75,7 @@ export default function VehicleDetailPage() {
     const v = await api.getVehicle(vin);
     setVehicle(v);
     const [ready, historyRes] = await Promise.all([
-      has(Perm.ChecklistShipmentView)
+      has(Perm.VehicleView)
         ? api.shipmentReadiness(vin).catch(() => null)
         : Promise.resolve(null),
       api
@@ -100,7 +100,7 @@ export default function VehicleDetailPage() {
         const [v, stationRes, ready, historyRes] = await Promise.all([
           api.getVehicle(vin),
           api.listStations().catch(() => ({ items: [] as Station[] })),
-          has(Perm.ChecklistShipmentView)
+          has(Perm.VehicleView)
             ? api.shipmentReadiness(vin).catch(() => null)
             : Promise.resolve(null),
           api
@@ -240,7 +240,7 @@ export default function VehicleDetailPage() {
 
       {vehicle.CurrentGlobalStatus !== 'SHIPPED' &&
       vehicle.CurrentGlobalStatus !== 'DELIVERED' &&
-      has(Perm.ChecklistShipmentView) ? (
+      has(Perm.VehicleView) ? (
         <div className="mt-5">
           <ShipmentReadinessBanner readiness={readiness} />
         </div>

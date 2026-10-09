@@ -246,9 +246,10 @@ func (s *server) handleVehicleChecklistGet(w http.ResponseWriter, r *http.Reques
 	writeJSON(w, http.StatusOK, map[string]any{"items": items})
 }
 
-// handleShipmentReadiness returns the soft pre-shipment warning list.
+// handleShipmentReadiness returns the soft pre-shipment warning list. It is a
+// vehicle-level summary, so vehicle.view is enough (Karar 33).
 func (s *server) handleShipmentReadiness(w http.ResponseWriter, r *http.Request) {
-	if !s.requireCode(w, r, domain.PermissionChecklistShipmentView) {
+	if !s.requireCode(w, r, domain.PermissionVehicleView) {
 		return
 	}
 	if s.deps.ShipmentReadiness == nil {

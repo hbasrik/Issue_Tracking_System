@@ -183,7 +183,7 @@ export default function VehicleStationScreen() {
         has(Perm.IssueView)
           ? api.listIssues({ vin, unlimited: true }).catch(() => ({ items: [] as Issue[] }))
           : Promise.resolve({ items: [] as Issue[] }),
-        has(Perm.ChecklistShipmentView)
+        has(Perm.VehicleView)
           ? api.shipmentReadiness(vin).catch(() => null)
           : Promise.resolve(null),
         api.getVehicleStatusHistory(vin).catch(() => ({ items: [] as VehicleStatusHistoryEntry[] })),

@@ -816,9 +816,12 @@ kalıyordu.
     şablonu kaldırılır.
 - **Kalanlar:** `checklist_type_enum` içindeki `SHIPMENT`, `SHIPMENT_ITEM`
   hata kaynağı ve `checklist.shipment.*` yetkileri silinmez; denetim kayıtları
-  ve geçmiş satırlar onlara atıf yapıyor. "Sevk öncesi uyarı" paneli hâlâ
-  `checklist.shipment.view` yetkisine bağlı; yetkiyi değiştirmek ayrı bir
-  RBAC işidir (docs/16).
+  ve geçmiş satırlar onlara atıf yapıyor.
+- **Uyarı paneli yetkisi:** "Sevk öncesi uyarı" (`GET
+  /vehicles/{vin}/shipment-readiness`, web paneli, mobil istasyon ekranı)
+  `vehicle.view` ister; panel aracın sevk özetidir. Dört rolde de var:
+  QUALITY paneli kazandı, kimse kaybetmedi. ASSEMBLY'nin Test/EOL
+  görüntüleme yetkisi olmadan madde metinlerini görmesi borç (docs/16 D8).
 - **Sıra:** Önce kod (eski şemada da çalışır; yalnız şablonu atanmış araçta
   eski tetikleyici hâlâ reddeder), sonra migration 0044; kesinti yok.
 

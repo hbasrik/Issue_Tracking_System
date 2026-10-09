@@ -1647,6 +1647,15 @@ Geliştirme ortamındaki test araçları ve şablon maddeleri. Üretim
 sıfırdan kurulacağı için oraya taşınmayacak; sadece geliştirme
 ortamındaki dağınıklık meselesi.
 
+### D8. Uyarı panelinde liste bazlı görünürlük `[ ]` — borç
+"Sevk öncesi uyarı" paneli `vehicle.view` ister (Karar 33). Panel Test
+ve EOL madde metinlerini ve açık hata açıklamalarını listeliyor; ASSEMBLY
+rolünün `checklist.test.view` / `checklist.eol.view` yetkisi yok ama
+bu satırları görüyor. Eskiden `checklist.shipment.view` üzerinden de
+aynısı vardı; yeni bir açık değil. Çözüm: uç nokta satırları çağıranın
+liste yetkisine göre süzsün (Test satırı `checklist.test.view`, EOL
+satırı `checklist.eol.view`, hata satırı `issue.view`).
+
 ---
 
 ## Önerilen sıra
