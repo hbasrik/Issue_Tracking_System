@@ -1,0 +1,19 @@
+1) giriş formu
+  [PASS] first login goes to the forced password change — /change-password
+2) zorunlu şifre değişikliği
+  [PASS] password changed, app opens — /
+  back on /login after the change (session-expired message: true); signing in with the new password
+  [PASS] new password signs in, no second change prompt — /
+3) Roller
+  groups: Erişim | Araçlar | Checklistler | EOL akışı | Hatalar | Analiz ve Yönetim
+  [PASS] no checklist.shipment.* row
+  [PASS] no "Diğer" group — 6 groups
+4) Şablonlar
+  types: EOL, Test  items: 104, 43
+  [PASS] two templates — 2
+  [PASS] no Sevkiyat template
+5) araç detayı sekmeleri (üstteki aramadan)
+  tabs: Genel bakış | Test | EoL | Issues | Denetim kaydı
+  [PASS] no Sevkiyat tab
+  [PASS] EoL and Test tabs present
+RESULT: PASS

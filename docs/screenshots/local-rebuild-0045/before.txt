@@ -1,0 +1,27 @@
+=== database
+karea|karea|UTF8|en_US.utf8|en_US.utf8|{=c/karea,karea=CTc/karea,karea_ro=c/karea}
+=== schema public acl
+public|pg_database_owner|{pg_database_owner=UC/pg_database_owner,=U/pg_database_owner,karea_ro=U/pg_database_owner}
+=== default acl
+karea|r|{karea_ro=r/karea}
+karea|S|{karea_ro=r/karea}
+=== extensions
+pg_trgm|1.6
+plpgsql|1.0
+uuid-ossp|1.1
+=== version
+43|f
+=== counts
+vehicles|500
+users|1
+issues|0
+media|0
+audit|0
+progress EOL|52000
+progress SHIPMENT|23000
+progress TEST|21500
+templates EOL|1
+templates SHIPMENT|1
+templates TEST|1
+=== users (no hashes)
+1|admin@karea.local|MANAGER_ADMIN|t

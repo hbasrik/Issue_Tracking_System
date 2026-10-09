@@ -1117,8 +1117,20 @@ veritabanı 0045'e kadar sıfırdan kurulur (aşağıda).
   `progress_scope`, `stage_applicability`, `checklist_frozen`);
   `repository/postgres/shipment_retired_test.go` artık şemanın boş olduğunu
   ve CHECK'i (23514) doğrular.
-- `[ ]` Yerel veritabanının 0001–0045 ile yeniden kurulumu (8080'de yeni
-  kod 10:37'den beri çalışıyor).
+- `[x]` Yerel veritabanı 0001–0045 ile yeniden kuruldu (2026-10-09 10:43;
+  8080'de yeni kod 10:37'den beri çalışıyordu). Yedek
+  `backups/karea_20261009_104250.dump` (+ `_uploads.tar.gz`). Sıra: `DROP
+  DATABASE … WITH (FORCE)` → `CREATE` → `database/init/00_extensions.sql` →
+  migration 0001–0045 → seed 01, 02, 03, 05 → tek yönetici
+  (`admin@karea.local`, `must_change_password`) → `reset_and_load_vins.sql` →
+  `karea_ro` yetkileri (şifresine dokunulmadan; ACL öncesiyle aynı). Seed
+  04 ve 06 çalıştırılmadı.
+- **Kurulum kanıtı:** `docs/screenshots/local-rebuild-0045/` — `verify.sql`
+  (`karea_ro`): sürüm 45, şablon EOL 104 (fabrika 46 / depo 58) + TEST 43,
+  SHIPMENT şablonu, kolonu, satırı ve yetkisi yok; 500 araç, her birinde
+  104 EOL + 43 Test satırı. `capture.mjs` (kopya `karea_rebuild45_test`,
+  :18081/:5175): giriş → zorunlu şifre değişikliği → Roller'de 6 grup,
+  "Diğer" yok → Şablonlar yalnız EOL ve Test → araçta Sevkiyat sekmesi yok.
 - `[x]` `verify_migrations.sh` 3. adımı yalnız son yıkıcı migration'a kadar
   koşar (`LAST_DESTRUCTIVE=45`: v44'e iner, 0001–0044'ü yeniden uygular,
   sonra 45'e döner). Tüm dosyalar v45'te 0001/0002/0009/0023'te hata
@@ -1707,6 +1719,26 @@ bu satırları görüyor. Eskiden `checklist.shipment.view` üzerinden de
 aynısı vardı; yeni bir açık değil. Çözüm: uç nokta satırları çağıranın
 liste yetkisine göre süzsün (Test satırı `checklist.test.view`, EOL
 satırı `checklist.eol.view`, hata satırı `issue.view`).
+
+### D9. Uyarı paneline kendi yetkisi `[ ]` — borç
+Karar 33'teki A kararı: panel ve `/vehicles/{vin}/shipment-readiness`
+`checklist.shipment.view` kalkınca `vehicle.view`'a bağlandı. Panelin
+kimde açılacağını ayrıca yönetmek için kendi yetkisi (ör.
+`vehicle.readiness.view`) gerekir; bu, yetki kataloğu ve rol atamaları
+için ayrı bir RBAC migration'ı ister. Ayrı iş; D8 ile birlikte ele
+alınabilir.
+
+### D10. Şifre değişikliğinden sonra oturum düşüyor `[ ]` — hata
+2026-10-09 yerel kurulum doğrulamasında görüldü (`local-rebuild-0045/
+capture-output.txt`, `relogin.png`). Şifre değiştirmek
+`tokens_valid_from = now()` yapar (`user_repo.go`), bu da değişikliği yapan
+oturumun kendi JWT'sini de iptal eder; web istemcisi yeni token almaz
+(`markPasswordChanged` yalnız bayrağı kapatır). Giriş ile değişiklik aynı
+saniyeye düşmezse sonraki ilk istek 401 alır ve kullanıcı "Oturumunuzun
+süresi doldu" ile giriş ekranına döner; yeni şifreyle tekrar girmesi
+gerekir. Veri kaybı yok. Çözüm: `/auth/change-password` yeni bir token
+döndürsün ve istemci onu kullansın (mobilde de aynı akış kontrol
+edilmeli).
 
 ---
 

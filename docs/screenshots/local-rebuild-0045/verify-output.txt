@@ -1,0 +1,85 @@
+== schema version
+ version | dirty 
+---------+-------
+      45 | f
+
+== templates per type (no SHIPMENT expected)
+ type |                 name                  | is_active | items 
+------+---------------------------------------+-----------+-------
+ EOL  | Default EoL Template (Branch + Depot) | t         |   104
+ TEST | Default Test Checklist                | t         |    43
+
+== EOL items by phase (expect BRANCH 46, DEPOT 58)
+ eol_phase | count 
+-----------+-------
+ BRANCH    |    46
+ DEPOT     |    58
+
+== vehicles.shipment_template_id column (expect 0)
+ count 
+-------
+     0
+
+== CHECK checklist_templates_type_not_shipment (expect 1)
+ count 
+-------
+     1
+
+== progress rows per type
+ checklist_type | check_status | count 
+----------------+--------------+-------
+ EOL            | PENDING      | 52000
+ TEST           | PENDING      | 21500
+
+== SHIPMENT progress rows (expect 0)
+ count 
+-------
+     0
+
+== vehicles (expect 500) and per-vehicle EOL/TEST row counts (expect one row: 104 | 43 | 500)
+ count 
+-------
+   500
+
+ eol | test | vehicles 
+-----+------+----------
+ 104 |   43 |      500
+
+== shipment permissions (expect 0 rows)
+ code 
+------
+
+== permission catalogue
+                 code                 
+--------------------------------------
+ admin.manage_masters
+ admin.manage_users
+ analysis.view
+ checklist.eol.edit
+ checklist.eol.view
+ checklist.test.edit
+ checklist.test.view
+ eol.branch_ship
+ eol.deliver
+ eol.depot_release
+ eol.document_approve
+ issue.create
+ issue.transition.approve
+ issue.transition.conditional_approve
+ issue.transition.progress
+ issue.view
+ mobile.access
+ station.step.edit
+ vehicle.view
+ web.access
+
+== users (no hashes)
+ id |       email       |     role      | is_active | must_change_password 
+----+-------------------+---------------+-----------+----------------------
+  1 | admin@karea.local | MANAGER_ADMIN | t         | t
+
+== materialize signature (expect 3 args)
+                                oid                                 
+--------------------------------------------------------------------
+ fn_materialize_vehicle_progress(character varying,integer,integer)
+

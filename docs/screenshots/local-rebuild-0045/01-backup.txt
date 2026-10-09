@@ -1,0 +1,8 @@
+==> dumping database 'karea' via karea_postgres
+==> archiving uploads
+wrote /Users/Basri/Desktop/kts_kms_project/backups/karea_20261009_104250.dump (923855 bytes)
+wrote /Users/Basri/Desktop/kts_kms_project/backups/karea_20261009_104250_uploads.tar.gz (48711811 bytes)
+stamp=20261009_104250
+==> backup complete
+COPY public.schema_migrations (version, dirty) FROM stdin;
+43	f
