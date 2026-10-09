@@ -825,6 +825,11 @@ kalıyordu.
   silme, sıralama, etki önizleme) SHIPMENT şablonunu görmez — liste
   süzer, tekil erişim 404 döner, madde doğrulaması SHIPMENT tipini reddeder.
   Web şablon ekranının tip seçenekleri yalnız EOL ve TEST'tir.
+- **`vehicles.shipment_template_id` düşer:** uygulama kodu kolonu okumaz
+  (araç sorguları ve API yanıtı `ShipmentTemplateID` taşımaz); kolon,
+  SHIPMENT şablonu, maddeleri, PENDING ilerleme satırları ve
+  `checklist.shipment.*` yetki satırları migration 0045 ile kalkar. Sıra:
+  önce bu kod yayına alınır, sonra 0045 kısa bir duraklamayla uygulanır.
 - **Uyarı paneli yetkisi:** "Sevk öncesi uyarı" (`GET
   /vehicles/{vin}/shipment-readiness`, web paneli, mobil istasyon ekranı)
   `vehicle.view` ister; panel aracın sevk özetidir. Dört rolde de var:

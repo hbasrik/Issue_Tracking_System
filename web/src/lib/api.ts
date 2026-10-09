@@ -805,7 +805,6 @@ export interface Vehicle {
   CurrentStationID: number | null;
   TotalProgressPercentage: number;
   EOLTemplateID?: number | null;
-  ShipmentTemplateID?: number | null;
   TestTemplateID?: number | null;
   CreatedAt: string;
   UpdatedAt: string;

@@ -30,12 +30,12 @@ var _ repository.VehicleRepository = (*VehicleRepo)(nil)
 // agrees with the pre-shipment warning list.
 var vehicleColumns = `vin, vehicle_model_id,
 	current_global_status, current_station_id, ` + vehicleProgressSQL("vehicles.vin") + `,
-	eol_template_id, shipment_template_id, test_template_id,
+	eol_template_id, test_template_id,
 	status_before_hold, hold_reason, created_at, updated_at`
 
 var vehicleListSelect = `vehicles.vin, vehicles.vehicle_model_id,
 	vehicles.current_global_status, vehicles.current_station_id, ` + vehicleProgressSQL("vehicles.vin") + `,
-	vehicles.eol_template_id, vehicles.shipment_template_id, vehicles.test_template_id,
+	vehicles.eol_template_id, vehicles.test_template_id,
 	vehicles.status_before_hold, vehicles.hold_reason,
 	vehicles.created_at, vehicles.updated_at, w.current_stage`
 
@@ -45,7 +45,7 @@ func scanVehicle(row pgx.Row) (*domain.Vehicle, error) {
 	var beforeHold *string
 	if err := row.Scan(
 		&v.VIN, &v.VehicleModelID, &status, &v.CurrentStationID,
-		&v.TotalProgressPercentage, &v.EOLTemplateID, &v.ShipmentTemplateID,
+		&v.TotalProgressPercentage, &v.EOLTemplateID,
 		&v.TestTemplateID, &beforeHold, &v.HoldReason, &v.CreatedAt, &v.UpdatedAt,
 	); err != nil {
 		return nil, err
@@ -65,7 +65,7 @@ func scanVehicleListRow(row pgx.Row) (*domain.Vehicle, error) {
 	var eolStage *string
 	if err := row.Scan(
 		&v.VIN, &v.VehicleModelID, &status, &v.CurrentStationID,
-		&v.TotalProgressPercentage, &v.EOLTemplateID, &v.ShipmentTemplateID,
+		&v.TotalProgressPercentage, &v.EOLTemplateID,
 		&v.TestTemplateID, &beforeHold, &v.HoldReason,
 		&v.CreatedAt, &v.UpdatedAt, &eolStage,
 	); err != nil {

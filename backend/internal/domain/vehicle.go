@@ -116,7 +116,6 @@ type Vehicle struct {
 	CurrentStationID        *int
 	TotalProgressPercentage float64
 	EOLTemplateID           *int
-	ShipmentTemplateID      *int
 	TestTemplateID          *int
 	CreatedAt               time.Time
 	UpdatedAt               time.Time
