@@ -269,8 +269,11 @@ CREATE TABLE vehicles (
     current_station_id          INT REFERENCES stations(id),  -- Karar 1: replaces current_phase; set by trigger on first station
     -- No stored progress column (migration 0032, Karar 16): the completion %
     -- is computed on every read from the applicable set (station steps +
-    -- EOL factory/depot + TEST + SHIPMENT items), see stage_applicability.go.
+    -- EOL factory/depot + TEST items; SHIPMENT retired, Karar 33), see
+    -- stage_applicability.go.
     eol_template_id             INT REFERENCES checklist_templates(id),
+    -- Karar 33: no gate, progress or warning reads it; NULL when no active
+    -- SHIPMENT template exists. Kept for historical rows.
     shipment_template_id        INT REFERENCES checklist_templates(id),
     test_template_id            INT REFERENCES checklist_templates(id),  -- Karar 4
     created_at                  TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -280,8 +283,9 @@ CREATE TABLE vehicles (
 COMMENT ON COLUMN vehicles.current_global_status IS
     'Auto-transitioned by triggers (Karar 2, migration 0013). '
     'PLANNED -> IN_PRODUCTION on first station-step progress row (Karar 10). '
-    'IN_PRODUCTION -> IN_WAREHOUSE on branch ship, which requires EOL BRANCH + TEST + SHIPMENT '
-    'checklists to be fully OK/CONDITIONAL_OK (open issues are only a warning here). '
+    'IN_PRODUCTION -> IN_WAREHOUSE on branch ship, which requires EOL BRANCH + TEST '
+    'checklists to be fully OK/CONDITIONAL_OK and every station step OK (open issues are only '
+    'a warning here; the Shipment checklist stopped gating in migration 0044, Karar 33). '
     'Depot release does NOT change this column — the vehicle stays IN_WAREHOUSE, only the '
     'workflow stage becomes COMPLETED. '
     'IN_WAREHOUSE -> DELIVERED on the explicit deliver action, which requires depot release first. '
@@ -783,37 +787,38 @@ CREATE TRIGGER trg_recalculate_vehicle_progress
 -- montaji bitmemis arac depoya sevk edilemez).
 -- Acik issue kurali degismedi: hala sadece UYARI (soft-warning), sevki
 -- bloklamiyor, sayisi audit icin kaydediliyor.
+-- 2026-09-27 (migration 0022): kapilar sablon-farkinda — aracin sablonundaki
+-- aktif maddeler sayilir, satiri olmayan madde "missing" olarak reddeder.
+-- 2026-10-09 (migration 0044, Karar 33): Sevkiyat kontrol listesi artik
+-- sart DEGIL. 0037 govdesinden yalniz v_shipment_* bildirimleri ve sevkiyat
+-- blogu cikti; geri kalan her satir ayni. Kalan sert sartlar: aktif EOL
+-- BRANCH + aktif TEST maddeleri OK/CONDITIONAL_OK, tum istasyon adimlari OK.
+-- Asagidaki govde ozettir; yetkili metin 0044 up dosyasidir.
 CREATE OR REPLACE FUNCTION fn_enforce_branch_shipment()
 RETURNS TRIGGER AS $$
 DECLARE
     v_open_issue_count INT;
-    v_incomplete_count INT;
+    v_branch_incomplete INT;
+    v_branch_missing INT;
+    v_test_incomplete INT;
+    v_test_missing INT;
     v_station_steps_remaining INT;
     v_old_status TEXT;
 BEGIN
     IF NEW.branch_shipped_at IS NOT NULL AND OLD.branch_shipped_at IS NULL THEN
-        -- Hard-block 1: tum istasyon adimlari tamamlanmis olmali (0014)
-        SELECT count(*) INTO v_station_steps_remaining
-        FROM vehicle_station_step_progress
-        WHERE vin = NEW.vin AND status <> 'OK';
+        -- Hard-block 1: aracin EOL sablonundaki aktif BRANCH maddeleri
+        -- (missing -> RAISE, OK/CONDITIONAL_OK disi -> RAISE)
+        -- Hard-block 2: aracin TEST sablonundaki aktif maddeler (ayni kural)
+        -- (sayimlar icin bkz. migration 0044 up dosyasi)
+
+        -- Hard-block 3: tum istasyon adimlari tamamlanmis olmali (0014)
+        SELECT count(*)::int INTO v_station_steps_remaining
+          FROM vehicle_station_step_progress
+         WHERE vin = NEW.vin
+           AND status <> 'OK';
 
         IF v_station_steps_remaining > 0 THEN
-            RAISE EXCEPTION 'Cannot ship vehicle % to depot — % station step(s) still incomplete', NEW.vin, v_station_steps_remaining;
-        END IF;
-
-        -- Hard-block 2: EOL BRANCH + TEST + SHIPMENT maddelerinin tamami bitmeli
-        SELECT count(*) INTO v_incomplete_count
-        FROM checklist_item_progress cip
-        JOIN checklist_template_items cti ON cti.id = cip.check_item_id
-        WHERE cip.vin = NEW.vin
-          AND cip.check_status NOT IN ('OK', 'CONDITIONAL_OK')
-          AND (
-                cip.checklist_type IN ('TEST', 'SHIPMENT')
-             OR (cip.checklist_type = 'EOL' AND cti.eol_phase = 'BRANCH')
-          );
-
-        IF v_incomplete_count > 0 THEN
-            RAISE EXCEPTION 'Cannot ship vehicle % to depot — % checklist item(s) still incomplete (EOL branch / test / shipment)', NEW.vin, v_incomplete_count;
+            RAISE EXCEPTION 'Cannot ship vehicle % from branch — % station step(s) still incomplete', NEW.vin, v_station_steps_remaining;
         END IF;
 
         SELECT count(*) INTO v_open_issue_count
@@ -992,7 +997,7 @@ CREATE TRIGGER trg_enforce_eol_deliver
 --     teslim/SHIPPED arac -> 'cannot change checklist items of a delivered vehicle'
 --     EOL DEPOT maddesi + depot_released_at -> 'cannot change depot-stage EoL
 --       items after the vehicle has been released from the depot'
---     diger maddeler (EOL BRANCH, TEST, SHIPMENT) + branch_shipped_at ->
+--     diger maddeler (EOL BRANCH, TEST; eski SHIPMENT satirlari da) + branch_shipped_at ->
 --       'cannot change branch-stage checklist items after the vehicle has
 --       shipped from the branch'
 --     aksi halde NULL. Metinler domain.ErrChecklistFrozen* ile ayni.
